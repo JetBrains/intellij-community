@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
@@ -60,7 +59,7 @@ class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityI
       // TODO It's very slow. Probably it's better to sort by number of components in VirtualFileUrl or something
       val existingContentEntry = contentEntries
         .sortedByDescending { it.url.url.length }
-        .find { VfsUtil.isEqualOrAncestor(it.url.url, sourceRoot.url.url) }
+        .find { it.url.isEqualOrParentOf(sourceRoot.url) }
 
       val contentEntry = existingContentEntry ?: object : ContentRootEntity {
         override val url: VirtualFileUrl
