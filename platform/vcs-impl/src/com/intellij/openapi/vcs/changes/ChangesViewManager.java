@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -16,7 +17,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
@@ -260,8 +261,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      PreviewDiffVirtualFile vcsContentFile = ((EditorTabPreview) diffPreview).getVcsContentFile();
-      FileEditorManager.getInstance(myProject).closeFile(vcsContentFile);
+      ((EditorTabPreview)diffPreview).closeEditorPreview();
     }
   }
 
@@ -270,13 +270,13 @@ public class ChangesViewManager implements ChangesViewEx,
       return;
     }
 
+    if (!VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+      return;
+    }
+
     ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      EditorTabPreview editorTabPreview = (EditorTabPreview) diffPreview;
-      PreviewDiffVirtualFile vcsContentFile = editorTabPreview.getVcsContentFile();
-      if (editorTabPreview.getCurrentName() != null) {
-        FileEditorManager.getInstance(myProject).openFile(vcsContentFile, true, true);
-      }
+      ((EditorTabPreview)diffPreview).openEditorPreview(false);
     }
   }
 
@@ -352,11 +352,14 @@ public class ChangesViewManager implements ChangesViewEx,
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      boolean isPreviewInEditor = Registry.is("show.diff.preview.as.editor.tab");
+      String place = isPreviewInEditor ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
+
+      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
       Disposer.register(this, changeProcessor);
 
       JComponent mainPanel;
-      if (Registry.is("show.diff.preview.as.editor.tab")) {
+      if (isPreviewInEditor) {
         myDiffPreview = new EditorTabPreview(changeProcessor,
           contentPanel, myView){
 
@@ -367,19 +370,27 @@ public class ChangesViewManager implements ChangesViewEx,
 
           @Override
           protected boolean skipPreviewUpdate() {
-            if (super.skipPreviewUpdate())
+            if (super.skipPreviewUpdate()) {
               return true;
+            }
 
-            return myModelUpdateInProgress;
+            if (!IdeFocusManager.getInstance(myProject).getFocusOwner().equals(myView)) {
+              return true;
+            }
+
+            return !myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN || myModelUpdateInProgress;
+          }
+
+          @Override
+          protected boolean hasContent() {
+            return changeProcessor.getCurrentChangeName() != null;
           }
 
           @Override
           protected void doRefresh() {
             changeProcessor.refresh(false);
-            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
-            if (changeProcessor.getCurrentChangeName() == null) {
-              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
-            }
+
+            closeEditorPreviewIfEmpty();
           }
         };
         mainPanel = contentPanel;

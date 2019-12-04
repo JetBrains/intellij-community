@@ -2,15 +2,18 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -21,15 +24,22 @@ import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+
 public abstract class EditorTabPreview implements ChangesViewPreview {
   private final Project myProject;
   @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
   private final VcsConfiguration myVcsConfiguration;
   private final DiffRequestProcessor myChangeProcessor;
 
+  private MergingUpdateQueue mySelectInEditor;
+
   public EditorTabPreview(@NotNull DiffRequestProcessor changeProcessor,
                    @NotNull JComponent contentPanel, @NotNull ChangesTree changesTree) {
-    myProject = changesTree.getProject();
+    myProject = changeProcessor.getProject();
+
+    mySelectInEditor = new MergingUpdateQueue("selectInEditorQueue", 100, true, MergingUpdateQueue.ANY_COMPONENT, changeProcessor.getProject(), null, true);
+    mySelectInEditor.setRestartTimerOnAdd(true);
 
     myChangeProcessor = changeProcessor;
     MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor, this::getCurrentName);
@@ -41,11 +51,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
       if (myProject.isDisposed()) return;
 
       changesTree.addSelectionListener(() -> {
-        if (!myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return;
+        mySelectInEditor.queue(Update.create(this, () -> {
+          if (skipPreviewUpdate()) return;
 
-        if (skipPreviewUpdate()) return;
-
-        setDiffPreviewVisible(true);
+          setDiffPreviewVisible(true);
+        }));
       });
     });
 
@@ -56,7 +66,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, true, true);
+        openEditorPreview(true);
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -71,7 +81,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
     //todo use Commit tw name when it will be in platform
     return toolWindowManager.isEditorComponentActive()
-      || !Objects.equals(toolWindowManager.getActiveToolWindowId(), "Commit");
+      || !Objects.equals(toolWindowManager.getActiveToolWindowId(), ToolWindowId.VCS);
   }
 
   protected boolean isContentEmpty() {
@@ -80,7 +90,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
   @Override
   public void updatePreview(boolean fromModelRefresh) {
-    if (VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+    if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
       doRefresh();
     }
   }
@@ -89,30 +99,32 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   public void setDiffPreviewVisible(boolean isVisible) {
     updatePreview(false);
 
-    if (!isVisible) {
+    if (!isVisible || isContentEmpty()) {
       FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
     }
     else {
-      FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, false, true);
+      openEditorPreview(false);
     }
   }
 
   @Override
   public void setAllowExcludeFromCommit(boolean value) {
-    myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
+    myChangeProcessor.putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, value);
     myChangeProcessor.updateRequest(true);
   }
 
   @NotNull
-  protected PreviewDiffVirtualFile getVcsContentFile() {
+  private PreviewDiffVirtualFile getVcsContentFile() {
     return myPreviewDiffVirtualFile;
   }
 
   private static class MyDiffPreviewProvider implements DiffPreviewProvider {
+    @NotNull
     private final DiffRequestProcessor myChangeProcessor;
+    @NotNull
     private final Supplier<String> myGetName;
 
-    private MyDiffPreviewProvider(DiffRequestProcessor changeProcessor, Supplier<String> getName) {
+    private MyDiffPreviewProvider(@NotNull DiffRequestProcessor changeProcessor, @NotNull Supplier<String> getName) {
       myChangeProcessor = changeProcessor;
       myGetName = getName;
     }
@@ -131,8 +143,43 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
     @Override
     public String getEditorTabName() {
-      String name = myGetName.get();
-      return name == null ? "" : name;
+      return notNullize(myGetName.get());
+    }
+  }
+
+  protected abstract boolean hasContent();
+
+  public void closeEditorPreviewIfEmpty() {
+    if (!hasContent()) closeEditorPreview();
+  }
+
+  public void closeEditorPreview() {
+    FileEditorManager.getInstance(myProject).closeFile(getVcsContentFile());
+  }
+
+  public void openEditorPreview(boolean focus) {
+    if (hasContent()) {
+      boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewDiffVirtualFile);
+
+      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), focus, true);
+
+      if (!wasOpen) {
+        DumbAwareAction action = new DumbAwareAction() {
+          {
+            setShortcutSet(CommonShortcuts.ESCAPE);
+          }
+
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            ToolWindowManager.getInstance(myProject).getToolWindow("Commit").activate(() -> { });
+          }
+        };
+        action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
+
+        Disposer.register(fileEditors[0], () -> {
+          action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
+        });
+      }
     }
   }
 }

@@ -15,8 +15,9 @@ private fun wrap(changes: Stream<Change>, unversioned: Stream<FilePath>): Stream
     unversioned.map { UnversionedFileWrapper(it) }
   )
 
-private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView) :
-  ChangeViewDiffRequestProcessor(changesView.project, DiffPlaces.CHANGES_VIEW) {
+private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,
+                                              place : String) :
+  ChangeViewDiffRequestProcessor(changesView.project, place) {
 
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
