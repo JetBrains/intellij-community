@@ -1113,6 +1113,7 @@
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.migLayout.DebugMigLayoutAction"
                 text="UI DSL Debug Mode"/>
         <action id="ShowcaseUiDslAction" internal="true" class="com.intellij.ui.layout.ShowcaseUiDslAction" text="UI DSL Showcase"/>
+        <action id="WebBrowser" class="com.intellij.internal.WebBrowser" text="Show &amp;Web Browser"/>
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" text="Top Anomalies"
              popup="true"/>
