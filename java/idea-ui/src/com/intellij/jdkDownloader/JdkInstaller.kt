@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
@@ -22,6 +23,27 @@ data class JdkInstallRequest(
 
 object JdkInstaller {
   private val LOG = logger<JdkInstaller>()
+
+  fun defaultInstallDir(newVersion: JdkItem) : String {
+    val installFolderName = newVersion.installFolderName
+
+    val home = FileUtil.toCanonicalPath(System.getProperty("user.home") ?: ".")
+    val targetDir = when {
+      SystemInfo.isLinux ->  "$home/.jdks/$installFolderName"
+      //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
+      SystemInfo.isMac ->  "$home/Library/Java/JavaVirtualMachines/$installFolderName"
+      SystemInfo.isWindows -> "$home\\.jdks\\${installFolderName}"
+      else -> error("Unsupported OS")
+    }
+
+    var count = 1
+    var uniqueDir = targetDir
+    while(File(uniqueDir).exists()) {
+      uniqueDir = targetDir + "-" + count++
+    }
+    return FileUtil.toSystemDependentName(uniqueDir)
+  }
+
 
   fun validateInstallDir(selectedPath: String): Pair<File?, String?> {
     if (selectedPath.isBlank()) return null to "Target path is empty"

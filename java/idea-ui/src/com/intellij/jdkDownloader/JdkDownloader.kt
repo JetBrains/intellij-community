@@ -49,13 +49,10 @@ internal class JdkDownloader : SdkDownload {
       JdkInstaller.prepareJdkInstallation(jdkItem, jdkHome)
     } ?: return
 
-    val jdkVersion = request.item.jdkVersion
-    val safeVersion = JavaVersion.tryParse(jdkVersion)?.let(JdkVersionDetector::formatVersionString) ?: jdkVersion
-
     sdkCreatedCallback.accept(object : SdkDownloadTask {
       override fun getSuggestedSdkName() = request.item.suggestedSdkName
       override fun getPlannedHomeDir() = request.targetDir.absolutePath
-      override fun getPlannedVersion() = safeVersion
+      override fun getPlannedVersion() = request.item.versionString
       override fun doDownload(indicator: ProgressIndicator) {
         JdkInstaller.installJdk(request, indicator)
       }

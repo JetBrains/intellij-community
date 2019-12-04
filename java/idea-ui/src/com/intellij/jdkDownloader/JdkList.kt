@@ -13,8 +13,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -86,6 +88,12 @@ data class JdkItem(
   val archiveFileName: String,
   val installFolderName: String
 ) : Comparable<JdkItem> {
+
+  /**
+   * Returns versionString for the Java Sdk object in specific format
+   */
+  val versionString
+    get() = JavaVersion.tryParse(jdkVersion)?.let(JdkVersionDetector::formatVersionString) ?: jdkVersion
 
   override fun compareTo(other: JdkItem): Int {
     var cmp = this.jdkMajorVersion.compareTo(other.jdkMajorVersion)
