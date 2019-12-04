@@ -490,7 +490,7 @@
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider" dynamic="true"/>
 
-    <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+    <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.IdIndexer"/>
     </extensionPoint>
 
