@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 class JpsOutputsDownloader {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.JpsOutputsDownloader");
+  private static final byte MAX_RETRY_COUNT = 3;
   private final List<DownloadableFileDescription> myFilesDescriptions;
   private final SegmentedProgressIndicatorManager myProgressIndicatorManager;
 
@@ -40,7 +41,7 @@ class JpsOutputsDownloader {
 
     try {
       myProgressIndicatorManager.setText(this, IdeBundle.message("progress.downloading.0.files.text", myFilesDescriptions.size()));
-      int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
+      int maxParallelDownloads = Runtime.getRuntime().availableProcessors() - 1;
       LOG.debug("Downloading " + myFilesDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl Pool", maxParallelDownloads);
@@ -52,17 +53,28 @@ class JpsOutputsDownloader {
           indicator.checkCanceled();
 
           final File existing = new File(targetDir, description.getDefaultFileName());
-          File downloaded;
-          try {
-            downloaded = downloadFile(description, existing, indicator);
-          } catch (IOException e) {
-            if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
-              LOG.info("File not found to download " + description.getDownloadUrl());
-              indicator.finished();
-              return null;
+          byte attempt = 0;
+          File downloaded = null;
+          while (downloaded == null && attempt++ < MAX_RETRY_COUNT) {
+            try {
+              downloaded = downloadFile(description, existing, indicator);
+            } catch (IOException e) {
+              if (e  instanceof HttpRequests.HttpStatusException && ((HttpRequests.HttpStatusException)e).getStatusCode() == 404) {
+                LOG.info("File not found to download " + description.getDownloadUrl());
+                indicator.finished();
+                return null;
+              }
+
+              // If max attempt count exceeded, rethrow exception further
+              if (attempt != MAX_RETRY_COUNT) {
+                LOG.info("Failed to download " + description.getDownloadUrl() + ". Attempt " + attempt + " to download file again");
+              } else {
+                throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
+              }
             }
-            throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
           }
+
+          assert downloaded != null : "Download result shouldn't be NULL";
           if (FileUtil.filesEqual(downloaded, existing)) {
             existingFiles.add(Pair.create(existing, description));
           }

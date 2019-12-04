@@ -60,7 +60,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), fileName);
 
     LOG.debug("Downloading JPS metadata from: " + downloadUrl);
-    File metadataFile = null;
+    File metadataFile;
     try {
       List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(targetDir);
       Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
@@ -74,9 +74,6 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     catch (ProcessCanceledException | IOException e) {
       //noinspection InstanceofCatchParameter
       if (e instanceof IOException) LOG.warn("Failed to download JPS metadata from URL: " + downloadUrl, e);
-      if (metadataFile != null && metadataFile.exists()) {
-        FileUtil.delete(metadataFile);
-      }
       return null;
     }
   }
@@ -92,7 +89,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     JpsOutputsDownloader outputsDownloader = new JpsOutputsDownloader(Collections.singletonList(description), downloadIndicatorManager);
 
     LOG.debug("Downloading JPS caches from: " + downloadUrl);
-    File zipFile = null;
+    File zipFile;
     try {
       List<Pair<File, DownloadableFileDescription>> pairs = outputsDownloader.download(targetDir);
       downloadIndicatorManager.finished(this);
@@ -105,9 +102,6 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     catch (ProcessCanceledException | IOException e) {
       //noinspection InstanceofCatchParameter
       if (e instanceof IOException) LOG.warn("Failed to download JPS caches from URL: " + downloadUrl, e);
-      if (zipFile != null && zipFile.exists()) {
-        FileUtil.delete(zipFile);
-      }
     }
     return null;
   }
@@ -173,7 +167,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
         });
     }
     catch (IOException e) {
-      LOG.warn("Failed request to cache artifactory", e);
+      LOG.warn("Failed request to cache server", e);
     }
     return null;
   }
