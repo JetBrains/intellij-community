@@ -22,7 +22,7 @@ import static com.intellij.util.PlatformUtils.isIntelliJ;
  */
 public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
-  private static Logger LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autoimport");
+  private static final Logger LOG = Logger.getInstance(ExternalProjectSettings.class);
 
   private String myExternalProjectPath;
   @Nullable private Set<String> myModules = new HashSet<>();
