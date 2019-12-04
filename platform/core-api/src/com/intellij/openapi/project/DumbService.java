@@ -248,6 +248,8 @@ public abstract class DumbService {
    * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").<p/>
    * <p>
    * Should be invoked on dispatch thread.
+   * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc.
    */
   public abstract void completeJustSubmittedTasks();
 

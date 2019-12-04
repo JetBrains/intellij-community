@@ -226,7 +226,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
-    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
@@ -234,16 +233,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           return null;
         }
 
-        // This is very special magic only needed by threads that need read actions and can be executed
-        // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
-        // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
-
-        // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
-        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
-          if (isDisposed()) {
-            return null;
-          }
-
+        try {
           return action.call();
         }
         catch (ProcessCanceledException e) {
@@ -1175,6 +1165,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isWriteLocked();
   }
 
+  /**
+   * If called inside a write action, executes the given code under a modal progress with write lock released (e.g. to allow for read-action parallelization).
+   * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write actions itself,
+   * callers should be ready for those.
+   */
+  @ApiStatus.Internal
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     assertIsDispatchThread();
     if (!myLock.isWriteLocked()) {
@@ -1185,11 +1182,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     int prevBase = myWriteStackBase;
     myWriteStackBase = myWriteActionsStack.size();
     try (AccessToken ignored = myLock.writeSuspend()) {
-      runModalProgress(project, title, () -> {
-        try (AccessToken ignored1 = myLock.grantReadPrivilege()) {
-          runnable.run();
-        }
-      });
+      runModalProgress(project, title, runnable);
     } finally {
       myWriteStackBase = prevBase;
     }
