@@ -462,6 +462,17 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @Override
+  public boolean isRecord() {
+    final PsiClassStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.isRecord();
+    }
+
+    final ASTNode keyword = getNode().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
+    return keyword != null && keyword.getElementType() == JavaTokenType.RECORD_KEYWORD;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitClass(this);

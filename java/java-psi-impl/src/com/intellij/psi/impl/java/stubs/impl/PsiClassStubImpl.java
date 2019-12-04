@@ -29,6 +29,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int ANONYMOUS_INNER = 0x100;
   private static final int LOCAL_CLASS_INNER = 0x200;
   private static final int HAS_DOC_COMMENT = 0x400;
+  private static final int RECORD = 0x800;
 
   private final String myQualifiedName;
   private final String myName;
@@ -86,6 +87,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   @Override
   public boolean isEnum() {
     return BitUtil.isSet(myFlags, ENUM);
+  }
+
+  @Override
+  public boolean isRecord() {
+    return BitUtil.isSet(myFlags, RECORD);
   }
 
   @Override
@@ -157,6 +163,32 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                 boolean anonymousInner,
                                 boolean localClassInner,
                                 boolean hasDocComment) {
+    return packFlags(isDeprecated,
+                     isInterface,
+                     isEnum,
+                     isEnumConstantInitializer,
+                     isAnonymous,
+                     isAnnotationType,
+                     isInQualifiedNew,
+                     hasDeprecatedAnnotation,
+                     anonymousInner,
+                     localClassInner,
+                     hasDocComment,
+                     false);
+  }
+
+  public static short packFlags(boolean isDeprecated,
+                                boolean isInterface,
+                                boolean isEnum,
+                                boolean isEnumConstantInitializer,
+                                boolean isAnonymous,
+                                boolean isAnnotationType,
+                                boolean isInQualifiedNew,
+                                boolean hasDeprecatedAnnotation,
+                                boolean anonymousInner,
+                                boolean localClassInner,
+                                boolean hasDocComment,
+                                boolean isRecord) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -169,6 +201,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (anonymousInner) flags |= ANONYMOUS_INNER;
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
+    if (isRecord) flags |= RECORD;
     return flags;
   }
 
@@ -195,6 +228,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
     if (isEnum()) {
       builder.append("enum ");
+    }
+
+    if (isRecord()) {
+      builder.append("record ");
     }
 
     if (isAnnotationType()) {

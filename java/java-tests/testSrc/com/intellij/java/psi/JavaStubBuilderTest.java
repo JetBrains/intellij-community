@@ -519,7 +519,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
            "PsiJavaFileStub []\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
-           "  CLASS:PsiClassStub[name=A fqn=A]\n" +
+           "  CLASS:PsiClassStub[record name=A fqn=A]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    RECORD_HEADER:PsiRecordHeaderStub\n" +

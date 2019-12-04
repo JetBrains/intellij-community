@@ -62,6 +62,15 @@ public interface PsiClass
   boolean isEnum();
 
   /**
+   * Checks if the class is a record.
+   *
+   * @return true if the class is an record, false otherwise.
+   */
+  default boolean isRecord() {
+    return false;
+  }
+
+  /**
    * Returns the list of classes that this class or interface extends.
    *
    * @return the extends list, or null for anonymous classes.
