@@ -323,10 +323,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
 
+    super.dispose();
+
+    // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.shutdownAppScheduledExecutorService();
 
-    super.dispose();
     Disposer.dispose(myLastDisposable);
 
     if (gatherStatistics) {
