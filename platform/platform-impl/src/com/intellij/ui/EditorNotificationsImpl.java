@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -110,12 +111,14 @@ public class EditorNotificationsImpl extends EditorNotifications {
                AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
       });
 
-      Iterator<FileEditor> it = editors.iterator();
-      while (it.hasNext()) {
-        FileEditor e = it.next();
-        if (!e.getComponent().isShowing()) {
-          e.putUserData(PENDING_UPDATE, Boolean.TRUE);
-          it.remove();
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        Iterator<FileEditor> it = editors.iterator();
+        while (it.hasNext()) {
+          FileEditor e = it.next();
+          if (!e.getComponent().isShowing()) {
+            e.putUserData(PENDING_UPDATE, Boolean.TRUE);
+            it.remove();
+          }
         }
       }
       if (!editors.isEmpty()) updateEditors(file, editors);
