@@ -298,6 +298,7 @@
       <param name="filters/filter" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
       <param name="applicationXml" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$FilePath"/>
       <param name="encoding" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$Encoding"/>
+      <param name="outputFileNameMapping" disableReferences="true"/>
     </pluginDescriptor>
 
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-ejb-plugin">
