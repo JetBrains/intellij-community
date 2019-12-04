@@ -11,7 +11,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHGitRefName
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
@@ -105,8 +105,8 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       return builder.toString()
     }
 
-    private fun reviewersHTML(added: Collection<GHPullRequestReviewer> = emptyList(),
-                              removed: Collection<GHPullRequestReviewer> = emptyList()): String {
+    private fun reviewersHTML(added: Collection<GHPullRequestRequestedReviewer> = emptyList(),
+                              removed: Collection<GHPullRequestRequestedReviewer> = emptyList()): String {
       val builder = StringBuilder()
       if (added.isNotEmpty()) {
         builder.append(added.joinToString(prefix = "requested a review from ") { "<b>${extractReviewerName(it)}</b>" })
@@ -118,10 +118,10 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       return builder.toString()
     }
 
-    private fun extractReviewerName(reviewer: GHPullRequestReviewer): String {
-      return when (reviewer) {
-        is GHUser -> reviewer.login
-        is GHPullRequestReviewer.Team -> "team"
+    private fun extractReviewerName(requestedReviewer: GHPullRequestRequestedReviewer): String {
+      return when (requestedReviewer) {
+        is GHUser -> requestedReviewer.login
+        is GHPullRequestRequestedReviewer.Team -> "team"
         else -> throw IllegalArgumentException()
       }
     }
