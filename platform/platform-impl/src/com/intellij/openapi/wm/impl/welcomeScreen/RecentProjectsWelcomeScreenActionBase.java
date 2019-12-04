@@ -2,7 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ProjectGroupActionGroup;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -76,7 +76,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
 
   public static void rebuildRecentProjectDataModel(@NotNull DefaultListModel model) {
     model.clear();
-    for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
+    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
       //noinspection unchecked
       model.addElement(action);
     }

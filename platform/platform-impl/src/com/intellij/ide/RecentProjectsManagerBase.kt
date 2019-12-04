@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -34,9 +33,6 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.toArray
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
@@ -62,8 +58,6 @@ import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private const val MAX_PROJECTS_IN_MAIN_MENU = 6
-
 /**
  * Used directly by IntelliJ IDEA.
  *
@@ -72,6 +66,8 @@ private const val MAX_PROJECTS_IN_MAIN_MENU = 6
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
+    const val MAX_PROJECTS_IN_MAIN_MENU = 6
+
     @JvmStatic
     val instanceEx: RecentProjectsManagerBase
       get() = getInstance() as RecentProjectsManagerBase
@@ -228,106 +224,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return projectIconHelper.getProjectOrAppIcon(path)
   }
 
-  private fun getDuplicateProjectNames(openedPaths: Set<String>, recentPaths: Set<String>): Set<String> {
-    val names = mutableSetOf<String>()
-    val duplicates = mutableSetOf<String>()
-    for (path in ContainerUtil.concat(openedPaths, recentPaths)) {
-      val name = getProjectName(path)
-      if (!names.add(name)) {
-        duplicates.add(name)
-      }
-    }
-    return duplicates
+  override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {
+    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
-  // nullable for IDE Features Trainer
-  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction?> {
-    return getRecentProjectsActions(forMainMenu, false)
-  }
-
-  // nullable for IDE Features Trainer
-  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction?> {
-    var paths: MutableSet<String>
-    synchronized(stateLock) {
-      state.validateRecentProjects(modCounter)
-      paths = LinkedHashSet(state.additionalInfo.keys.toList().asReversed())
-    }
-
-    val openedPaths = mutableSetOf<String>()
-    for (openProject in ProjectUtil.getOpenProjects()) {
-      ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject))
-    }
-
-    val actions: MutableList<AnAction?> = SmartList()
-    val duplicates = getDuplicateProjectNames(openedPaths, paths)
-    if (useGroups) {
-      val groups = synchronized(stateLock) {
-        state.groups.toMutableList()
-      }
-
-      val projectPaths = paths.toMutableList()
-      groups.sortWith(object : Comparator<ProjectGroup> {
-        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-          val ind1 = getGroupIndex(o1)
-          val ind2 = getGroupIndex(o2)
-          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
-        }
-
-        private fun getGroupIndex(group: ProjectGroup): Int {
-          var index = Integer.MAX_VALUE
-          for (path in group.projects) {
-            val i = projectPaths.indexOf(path)
-            if (i in 0 until index) {
-              index = i
-            }
-          }
-          return index
-        }
-      })
-
-      for (group in groups) {
-        paths.removeAll(group.projects)
-      }
-
-      for (group in groups) {
-        val children: MutableList<AnAction?> = ArrayList()
-        for (path in group.projects) {
-          children.add(createOpenAction(path!!, duplicates))
-          if (forMainMenu && children.size >= MAX_PROJECTS_IN_MAIN_MENU) {
-            break
-          }
-        }
-        actions.add(ProjectGroupActionGroup(group, children))
-        if (group.isExpanded) {
-          actions.addAll(children)
-        }
-      }
-    }
-
-    for (path in paths) {
-      actions.add(createOpenAction(path, duplicates))
-    }
-
-    return actions.toArray(AnAction.EMPTY_ARRAY)
-  }
-
-  // for Rider
-  @Suppress("MemberVisibilityCanBePrivate")
-  protected open fun createOpenAction(path: String, duplicates: Set<String>): AnAction {
-    var displayName = synchronized(stateLock) {
-      state.additionalInfo.get(path)?.displayName
-    }
-
-    val projectName = getProjectName(path)
-
-    if (displayName.isNullOrBlank()) {
-      displayName = if (duplicates.contains(projectName)) FileUtil.toSystemDependentName(path) else projectName
-    }
-
-    // It's better don't to remove non-existent projects. Sometimes projects stored
-    // on USB-sticks or flash-cards, and it will be nice to have them in the list
-    // when USB device or SD-card is mounted
-    return ReopenProjectAction(path, projectName, displayName)
+  override fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction?> {
+    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem, useGroups = useGroups).toTypedArray()
   }
 
   private fun markPathRecent(path: String, project: Project) {
@@ -361,7 +263,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
-  protected open fun getProjectPath(project: Project): String? {
+  open fun getProjectPath(project: Project): String? {
     return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
@@ -425,6 +327,19 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  fun getRecentPaths(): List<String> {
+    synchronized(stateLock) {
+      state.validateRecentProjects(modCounter)
+      return state.additionalInfo.keys.toList().asReversed()
+    }
+  }
+
+  fun getDisplayName(path: String): String? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.displayName
+    }
+  }
+
   fun getProjectName(path: String): String {
     val cached = nameCache.get(path)
     if (cached != null) {
@@ -475,7 +390,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
     }
 
-  override fun getGroups(): List<ProjectGroup?> {
+  override fun getGroups(): List<ProjectGroup> {
     synchronized(stateLock) {
       return Collections.unmodifiableList(state.groups)
     }

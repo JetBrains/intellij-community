@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +31,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
     NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable) {
       @Override
       protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
-        return super.createList(RecentProjectsGroup.removeCurrentProject(project, recentProjectActions), size);
+        return super.createList(RecentProjectsGroup.removeCurrentProject(project, Arrays.asList(recentProjectActions)), size);
       }
     };
     JList list = UIUtil.findComponentOfType(panel, JList.class);
@@ -51,11 +52,7 @@ final class ManageRecentProjectsAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    boolean enable = false;
-    if (project != null) {
-      enable = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length > 0;
-    }
-
+    boolean enable = project != null && !RecentProjectListActionProvider.getInstance().getActions(false).isEmpty();
     e.getPresentation().setEnabledAndVisible(enable);
   }
 }

@@ -37,12 +37,17 @@ public abstract class RecentProjectsManager {
   public abstract void removePath(@NotNull @SystemIndependent String path);
 
   /**
-   * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
+   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
    */
   @NotNull
+  @Deprecated
   public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
 
+  /**
+   * @deprecated Use {@link RecentProjectListActionProvider#getActions}
+   */
   @NotNull
+  @Deprecated
   public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     return getRecentProjectsActions(addClearListItem);
   }

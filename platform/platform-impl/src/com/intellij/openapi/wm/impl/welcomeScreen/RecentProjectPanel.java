@@ -101,7 +101,7 @@ public class RecentProjectPanel extends JPanel {
   public RecentProjectPanel(@NotNull Disposable parentDisposable) {
     super(new BorderLayout());
 
-    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
+    List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false, isUseGroups());
 
     myPathShortener = new UniqueNameBuilder<>(SystemProperties.getUserHome(), File.separator, 40);
     Collection<String> pathsToCheck = new HashSet<>();
@@ -126,7 +126,7 @@ public class RecentProjectPanel extends JPanel {
       Disposer.register(parentDisposable, myChecker);
     }
 
-    myList = createList(recentProjectActions, getPreferredScrollableViewportSize());
+    myList = createList(recentProjectActions.toArray(AnAction.EMPTY_ARRAY), getPreferredScrollableViewportSize());
     myList.setCellRenderer(createRenderer(myPathShortener));
 
     new ClickListener(){
@@ -194,7 +194,7 @@ public class RecentProjectPanel extends JPanel {
       = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setBorder(null);
 
-    JComponent list = recentProjectActions.length == 0
+    JComponent list = recentProjectActions.isEmpty()
                       ? myList
                       : ListWithFilter.wrap(myList, scroll, o -> {
                         if (o instanceof ReopenProjectAction) {
@@ -461,7 +461,7 @@ public class RecentProjectPanel extends JPanel {
 
     /**
      * Used by IDE Features Trainer.
-     * 
+     *
      * @deprecated use empty constructor
      */
     @Deprecated
