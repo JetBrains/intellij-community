@@ -4,7 +4,6 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +74,6 @@ public class CaptionPanel extends JPanel {
   }
 
   protected boolean containsSettingsControls() {
-    return mySettingComponent != null;
+    return mySettingComponent != null || myButtonComponent != null;
   }
 }
