@@ -37,6 +37,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
   private final boolean myHasErrorStream;
+  @NotNull
   private final ModalityState myModality;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
@@ -54,7 +55,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   @NotNull
-  private static ModalityState getDefaultModality() {
+  public static ModalityState getDefaultModality() {
     Application app = ApplicationManager.getApplication();
     return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
   }
