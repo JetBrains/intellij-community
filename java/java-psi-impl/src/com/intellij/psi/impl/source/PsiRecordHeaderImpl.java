@@ -2,13 +2,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiRecordComponent;
-import com.intellij.psi.PsiRecordHeader;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRecordHeaderStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiRecordHeaderImpl extends JavaStubPsiElement<PsiRecordHeaderStub> implements PsiRecordHeader {
 
@@ -18,6 +16,13 @@ public class PsiRecordHeaderImpl extends JavaStubPsiElement<PsiRecordHeaderStub>
 
   public PsiRecordHeaderImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Nullable
+  @Override
+  public PsiClass getContainingClass() {
+    PsiElement parent = getParent();
+    return parent instanceof PsiClass ? (PsiClass)parent : null;
   }
 
   @Override

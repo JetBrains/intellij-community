@@ -2,8 +2,12 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiRecordHeader extends PsiElement {
   @NotNull
   PsiRecordComponent[] getRecordComponents();
+
+  @Nullable
+  PsiClass getContainingClass();
 }
