@@ -356,7 +356,7 @@ private fun checkJavaSwingTimersAreDisposed() {
   val swingTimer = getTimer!!.invoke(timer) as Timer
   text = "Timer (listeners: ${Arrays.asList(*swingTimer.actionListeners)}) $text"
   try {
-    throw AssertionFailedError("Not disposed java.swing.Timer: $text; queue:$timerQueue")
+    throw AssertionFailedError("Not disposed javax.swing.Timer: $text; queue:$timerQueue")
   }
   finally {
     swingTimer.stop()
