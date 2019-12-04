@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -29,7 +30,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   protected void doTest() {
-    //CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
