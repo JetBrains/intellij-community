@@ -36,7 +36,17 @@ To register:
 
 An activity to be executed after project opening.
 
-See [StartupActivity](https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/startup/StartupActivity.java). Do not forget to implement `DumbAware` to indicate that activity can be performed not in EDT and not during indexing.
+Executed after project is opened on a background thread with no visible progress indicator and regardless of the current indexing mode. [DumbAware] is respected currently, but it maybe changed soon. 
+
+* Use [ProgressManager.run(Task.Backgroundable)] to execute work that needs to be visible to users. Including work that consumes CPU over a noticeable period. Using of `Application.executeOnPooledThread` is not needed if you use the `ProgressManager` API.
+* Use [AppUiUtil.invokeLaterIfProjectAlive] to execute work that needs to be performed in the UI thread.
+* Use [DumbService] to execute work that requires access to indices.
+
+<!--
+    todo runWhenSmart is not good method, because it implies EDT thread, but should be executed in a background thread with read action instead
+-->
+
+See [StartupActivity]. Do not forget to implement `DumbAware` to indicate that activity can be performed not in EDT and during indexing.
 
 There are two extension points:
 
@@ -50,3 +60,9 @@ To register:
   <postStartupActivity implementation="com.example.CatColoringStartupActivity"/>
 </extensions>
 ```
+
+[DumbAware]: https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/project/DumbAware.java
+[ProgressManager.run(Task.Backgroundable)]: https://github.com/JetBrains/intellij-community/blob/747b08812b83e744d130e315a54cca6b41906f57/platform/core-api/src/com/intellij/openapi/progress/ProgressManager.java#L183
+[StartupActivity]: https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/startup/StartupActivity.java
+[AppUiUtil.invokeLaterIfProjectAlive]: https://github.com/JetBrains/intellij-community/blob/747b08812b83e744d130e315a54cca6b41906f57/platform/platform-impl/src/com/intellij/ui/AppUIUtil.java#L204
+[DumbService]: https://github.com/JetBrains/intellij-community/blob/master/platform/core-api/src/com/intellij/openapi/project/DumbService.java
