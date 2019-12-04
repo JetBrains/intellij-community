@@ -157,6 +157,7 @@ public class InferenceSession {
 
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
+          LOG.assertTrue(parameterType != null);
           if (!ignoreLambdaConstraintTree(args[i])) {
             addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
           }
@@ -1660,7 +1661,7 @@ public class InferenceSession {
 
     final int paramsLength = !varargs ? parameters1.length : Math.max(parameters1.length, parameters2.length) - 1;
     for (int i = 0; i < paramsLength; i++) {
-      PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
+      PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, varargs);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
       if (PsiUtil.isRawSubstitutor(m2, siteSubstitutor1)) {
         tType = TypeConversionUtil.erasure(tType);
