@@ -93,7 +93,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.findUsagesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.findUsagesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.findUsages.FindUsagesProvider"/>
     </extensionPoint>
 
