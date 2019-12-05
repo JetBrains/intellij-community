@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.impl.SdkUsagesCollector
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.lang.JavaVersion
 
 class JdkAuto(
@@ -26,7 +28,7 @@ class JdkAuto(
     if (!sdkType.allowCreationByUser()) return
 
     // make sure SDK does not exists
-    if (runReadAction { ProjectJdkTable.getInstance().findJdk(name) } != null) return
+    if (runReadAction { ProjectJdkTable.getInstance().findJdk(name, sdkTypeName) } != null) return
 
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, "Configuring JDKs", true, ALWAYS_BACKGROUND) {
