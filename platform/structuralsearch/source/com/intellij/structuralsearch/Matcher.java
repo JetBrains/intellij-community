@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +49,6 @@ public class Matcher {
 
   // project being worked on
   final Project project;
-  final DumbService myDumbService;
 
   // context of matching
   final MatchContext matchContext;
@@ -77,7 +75,6 @@ public class Matcher {
       matchContext.setOptions(matchOptions);
       matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false, true));
     }
-    myDumbService = DumbService.getInstance(project);
   }
 
   public static Matcher buildMatcher(Project project, LanguageFileType fileType, String constraint) {
@@ -604,16 +601,14 @@ public class Matcher {
           matchContext.getSink().processFile((PsiFile)file);
         }
 
-        myDumbService.runReadActionInSmartMode(
+        ReadAction.nonBlocking(
           () -> {
             if (!file.isValid()) return;
             final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
-            if (profile == null) {
-              return;
-            }
+            if (profile == null) return;
             match(profile.extendMatchOnePsiFile(file), patternLanguage);
           }
-        );
+        ).inSmartMode(project).executeSynchronously();
       }
     }
 
