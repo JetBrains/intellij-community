@@ -114,12 +114,6 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @Nullable
   @Override
-  protected Element loadRootElement(@NotNull Path file) {
-    return super.loadRootElement(file);
-  }
-
-  @Nullable
-  @Override
   protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     Path externalConfigDir = resolveExternalProjectConfig("project");
     Element data = super.loadComponentData(serializer, configFile);
