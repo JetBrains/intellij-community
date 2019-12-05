@@ -642,18 +642,20 @@ public class PluginManagerCore {
                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
                                         @NotNull List<? super String> errors) {
     List<List<PluginId>> cycles = new ArrayList<>();
-    Set<PluginId> visited = new HashSet<>();
+    THashMap<PluginId, int[]> countMap = new THashMap<>(ContainerUtil.identityStrategy());
     Set<PluginId> ignored = new HashSet<>();
     JBIterable<PluginId> dfs = traverser.withRoots(idMap.keySet())
       .forceIgnore(ignored::contains)
-      .traverse();
+      .traverse(TreeTraversal.BI_ORDER_DFS);
     for (TreeTraversal.TracingIt<PluginId> it = dfs.typedIterator(); it.hasNext(); ) {
       PluginId id = it.next();
-      if (visited.add(id)) continue;
-      JBIterable<PluginId> backtrace = it.backtrace().skip(1);
-      int idx = backtrace.indexOf(Conditions.equalTo(id));
-      if (idx == -1) continue;
-      List<PluginId> cycle = backtrace.take(idx + 1).toList();
+      int[] counter = countMap.get(id);
+      if (counter == null) countMap.put(id, counter = new int[] { 1 });
+      else counter[0] ++;
+      if (counter[0] % 2 != 0 || !it.isDescending()) continue;
+      List<PluginId> backtrace = it.backtrace().skip(1).toList();
+      int idx = backtrace.indexOf(id);
+      List<PluginId> cycle = backtrace.subList(0, idx + 1);
       cycles.add(cycle);
       ignored.addAll(cycle);
     }
