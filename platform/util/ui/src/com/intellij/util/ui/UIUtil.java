@@ -99,7 +99,7 @@ public final class UIUtil {
   }
 
   public static void decorateWindowHeader(JRootPane pane) {
-    if (pane != null && SystemInfo.isMac) {
+    if (pane != null && SystemInfo.isMacOSMojave) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
     }
   }
