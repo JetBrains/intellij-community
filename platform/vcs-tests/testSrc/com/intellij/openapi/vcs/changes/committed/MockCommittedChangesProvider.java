@@ -6,17 +6,14 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import com.intellij.openapi.vcs.versionBrowser.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockContentRevision;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -26,60 +23,55 @@ public class MockCommittedChangesProvider implements CachingCommittedChangesProv
   private final List<CommittedChangeListImpl> myChangeLists = new ArrayList<>();
   private int myRefreshCount = 0;
 
+  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor createFilterUI(final boolean showDateFilter) {
-    return null;
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
+    return new StandardVersionFilterComponent<ChangeBrowserSettings>(showDateFilter) {
+      @NotNull
+      @Override
+      public JComponent getComponent() {
+        return (JComponent)getStandardPanel();
+      }
+    };
   }
 
+  @NotNull
   @Override
-  public RepositoryLocation getLocationFor(FilePath root) {
+  public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     return new DefaultRepositoryLocation(root.getPath());
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public VcsCommittedListsZipper getZipper() {
-    return null;
-  }
-
-  @Override
-  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount) {
+  public List<CommittedChangeListImpl> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount) {
     myRefreshCount++;
     return myChangeLists;
   }
 
   @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
-                                   RepositoryLocation location,
+                                   @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<? super CommittedChangeList> consumer) {
-    ++ myRefreshCount;
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) {
+    ++myRefreshCount;
     for (CommittedChangeListImpl changeList : myChangeLists) {
       consumer.consume(changeList);
     }
     consumer.finished();
   }
 
+  @NotNull
   @Override
-  public Pair<CommittedChangeListImpl, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
-    ++ myRefreshCount;
+  public Pair<CommittedChangeListImpl, FilePath> getOneList(@NotNull VirtualFile file, VcsRevisionNumber number) {
+    ++myRefreshCount;
     return new Pair<>(myChangeLists.get(0), VcsUtil.getFilePath(file));
-  }
-
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public boolean supportsIncomingChanges() {
-    return true;
   }
 
   public int getRefreshCount() {
     return myRefreshCount;
   }
 
+  @NotNull
   @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[0];

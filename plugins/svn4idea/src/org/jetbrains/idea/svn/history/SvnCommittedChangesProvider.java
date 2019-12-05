@@ -284,11 +284,6 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   }
 
   @Override
-  public boolean supportsIncomingChanges() {
-    return true;
-  }
-
-  @Override
   public int getFormatVersion() {
     return VERSION_WITH_REPLACED_PATHS;
   }

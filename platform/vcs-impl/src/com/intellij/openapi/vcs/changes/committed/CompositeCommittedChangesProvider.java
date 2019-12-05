@@ -26,9 +26,6 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author yole
- */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private final Project myProject;
   private final List<AbstractVcs> myBaseVcss;
@@ -51,13 +48,15 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return new CompositeChangeBrowserSettings(map);
   }
 
+  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor<CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
+  public ChangesBrowserSettingsEditor<CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new CompositeChangesBrowserSettingsEditor();
   }
 
+  @Nullable
   @Override
-  public CompositeRepositoryLocation getLocationFor(final FilePath root) {
+  public CompositeRepositoryLocation getLocationFor(@NotNull FilePath root) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root);
     if (vcs != null) {
       final CommittedChangesProvider committedChangesProvider = vcs.getCommittedChangesProvider();
@@ -75,20 +74,23 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public List<CommittedChangeList> getCommittedChanges(CompositeCommittedChangesProvider.CompositeChangeBrowserSettings settings,
-                                                       RepositoryLocation location, final int maxCount) {
+                                                       RepositoryLocation location,
+                                                       int maxCount) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public void loadCommittedChanges(CompositeChangeBrowserSettings settings,
-                                   RepositoryLocation location,
+                                   @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   AsynchConsumer<? super CommittedChangeList> consumer) {
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public ChangeListColumn[] getColumns() {
     Set<ChangeListColumn> columns = new LinkedHashSet<>();
@@ -147,19 +149,16 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
   public Pair<CommittedChangeList, FilePath> getOneList(VirtualFile file, VcsRevisionNumber number) {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
+  public RepositoryLocation getForNonLocal(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean supportsIncomingChanges() {
-    return true;
   }
 
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {

@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -379,9 +378,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
                                                           String title,
-                                                          boolean showSearchAgain,
-                                                          @Nullable final Component parent, Consumer<? super ChangesBrowserDialog> initRunnable) {
-    final ChangesBrowserDialog.Mode mode = showSearchAgain ? ChangesBrowserDialog.Mode.Browse : ChangesBrowserDialog.Mode.Simple;
+                                                          @Nullable Component parent,
+                                                          Consumer<? super ChangesBrowserDialog> initRunnable) {
+    final ChangesBrowserDialog.Mode mode = ChangesBrowserDialog.Mode.Browse;
     final ChangesBrowserDialog dlg = parent != null
                                      ? new ChangesBrowserDialog(myProject, parent, changelists, mode, initRunnable)
                                      : new ChangesBrowserDialog(myProject, changelists, mode, initRunnable);
@@ -410,24 +409,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesBrowser(final CommittedChangesProvider provider,
-                                 final RepositoryLocation location,
+  public void showChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                 @NotNull RepositoryLocation location,
                                  @Nls String title,
                                  Component parent) {
-    final ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
+    ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     ChangeBrowserSettings settings = provider.createDefaultSettings();
-    boolean ok;
-    if (filterUI != null) {
-      final CommittedChangesFilterDialog dlg = new CommittedChangesFilterDialog(myProject, filterUI, settings);
-      dlg.show();
-      ok = dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-      settings = dlg.getSettings();
-    }
-    else {
-      ok = true;
-    }
+    CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, filterUI, settings);
 
-    if (ok) {
+    if (filterDialog.showAndGet()) {
+      settings = filterDialog.getSettings();
+
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
           (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
@@ -438,7 +430,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         final CommittedChangesTableModel model = new CommittedChangesTableModel(versions, true);
         final AsynchronousListsLoader[] task = new AsynchronousListsLoader[1];
         final ChangeBrowserSettings finalSettings = settings;
-        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent, changesBrowserDialog -> {
+        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, parent, changesBrowserDialog -> {
           task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
           ProgressManager.getInstance().run(task[0]);
         });
@@ -602,7 +594,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
         //noinspection unchecked
         final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
-        if (changes != null && changes.size() == 1) {
+        if (changes.size() == 1) {
           return Pair.create(changes.get(0), null);
         }
       }
@@ -626,11 +618,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       final ChangeBrowserSettings settings = provider.createDefaultSettings();
       //noinspection unchecked
       final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-      if (changes != null) {
-        for (CommittedChangeList change : changes) {
-          if (number.equals(String.valueOf(change.getNumber()))) {
-            return change;
-          }
+      for (CommittedChangeList change : changes) {
+        if (number.equals(String.valueOf(change.getNumber()))) {
+          return change;
         }
       }
     }
@@ -643,8 +633,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private static class AsynchronousListsLoader extends Task.Backgroundable {
-    private final CommittedChangesProvider myProvider;
-    private final RepositoryLocation myLocation;
+    @NotNull private final CommittedChangesProvider myProvider;
+    @NotNull private final RepositoryLocation myLocation;
     private final ChangeBrowserSettings mySettings;
     private final ChangesBrowserDialog myDlg;
     private final List<VcsException> myExceptions;
@@ -652,8 +642,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private boolean myRevisionsReturned;
 
     private AsynchronousListsLoader(@Nullable Project project,
-                                    final CommittedChangesProvider provider,
-                                    final RepositoryLocation location,
+                                    @NotNull CommittedChangesProvider provider,
+                                    @NotNull RepositoryLocation location,
                                     final ChangeBrowserSettings settings,
                                     final ChangesBrowserDialog dlg) {
       super(project, VcsBundle.message("browse.changes.progress.title"), true);

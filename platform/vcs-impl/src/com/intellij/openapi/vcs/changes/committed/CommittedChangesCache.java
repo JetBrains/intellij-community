@@ -410,7 +410,8 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     debug("Finished refreshing all caches");
   }
 
-  private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+  @NotNull
+  private List<CommittedChangeList> initCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
@@ -448,6 +449,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
+  @NotNull
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Refreshing cache for " + cacheFile.getLocation());
     final List<CommittedChangeList> newLists = new ArrayList<>();
@@ -494,7 +496,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
-                                                        final List<? extends CommittedChangeList> newChanges) throws IOException {
+                                                        @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
       fireChangesLoaded(location, savedChanges);
@@ -503,9 +505,10 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
-                                                                    final List<? extends CommittedChangeList> newChanges) throws IOException {
+                                                                    @NotNull List<? extends CommittedChangeList> newChanges)
+    throws IOException {
     // ensure that changes are loaded before taking read action, to avoid stalling UI
-    for(CommittedChangeList changeList: newChanges) {
+    for (CommittedChangeList changeList : newChanges) {
       changeList.getChanges();
     }
     final Ref<IOException> ref = new Ref<>();
@@ -524,9 +527,10 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return savedChanges;
   }
 
-  private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
+  @NotNull
+  private static List<CommittedChangeList> trimToSize(@NotNull List<CommittedChangeList> changes, int maxCount) {
     if (maxCount > 0) {
-      while(changes.size() > maxCount) {
+      while (changes.size() > maxCount) {
         changes.remove(0);
       }
     }

@@ -434,6 +434,7 @@ public class ChangesCacheFile {
     }
   }
 
+  @NotNull
   public List<CommittedChangeList> readChanges(final ChangeBrowserSettings settings, final int maxCount) throws IOException {
     final List<CommittedChangeList> result = new ArrayList<>();
     final ChangeBrowserSettings.Filter filter = settings.createFilter();

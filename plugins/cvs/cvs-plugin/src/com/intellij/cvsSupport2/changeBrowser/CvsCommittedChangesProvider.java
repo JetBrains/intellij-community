@@ -47,8 +47,9 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(final boolean showDateFilter) {
+  public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
@@ -104,7 +105,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   @Nullable
-  public CvsRepositoryLocation getLocationFor(final FilePath root) {
+  public CvsRepositoryLocation getLocationFor(@NotNull FilePath root) {
     if (!CvsUtil.fileIsUnderCvs(root.getIOFile())) {
       return null;
     }
@@ -114,6 +115,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
+  @NotNull
   @Override
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
@@ -126,7 +128,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Nullable
   @Override
-  public Pair<CvsChangeList, FilePath> getOneList(VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+  public Pair<CvsChangeList, FilePath> getOneList(@NotNull VirtualFile file, VcsRevisionNumber number) throws VcsException {
     final File ioFile = new File(file.getPath());
     final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(ioFile);
     final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(filePath);
@@ -183,20 +185,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return Pair.create(result.get(), filePath);
   }
 
+  @NotNull
   @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
-
-  @Override
-  public boolean supportsIncomingChanges() {
-    return true;
-  }
-
-  @Override
-  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
+  public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, @NotNull RepositoryLocation location, int maxCount)
     throws VcsException {
-    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+    final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
     final String module = cvsLocation.getModuleName();
     final VirtualFile rootFile = cvsLocation.getRootFile();
     return loadCommittedChanges(settings, module, cvsLocation.getEnvironment(), rootFile);
@@ -204,12 +197,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
 
   @Override
   public void loadCommittedChanges(ChangeBrowserSettings settings,
-                                   RepositoryLocation location,
+                                   @NotNull RepositoryLocation location,
                                    int maxCount,
-                                   final AsynchConsumer<? super CommittedChangeList> consumer)
-    throws VcsException {
+                                   @NotNull AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException {
     try {
-      final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
+      final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation)location;
       final String module = cvsLocation.getModuleName();
       final CvsEnvironment connectionSettings = cvsLocation.getEnvironment();
       if (connectionSettings.isOffline()) {
@@ -253,6 +245,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @NotNull
   private List<CvsChangeList> loadCommittedChanges(final ChangeBrowserSettings settings,
                                                    final String module,
                                                    CvsEnvironment connectionSettings,
