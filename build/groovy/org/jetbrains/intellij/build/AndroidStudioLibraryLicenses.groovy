@@ -147,7 +147,7 @@ class AndroidStudioLibraryLicenses {
                        license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Instant run version", libraryName: "libjava_version.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "R8", libraryName: "r8-master.jar", license: "BSD"),
+    new LibraryLicense(name: "R8", libraryName: "r8.jar", license: "BSD"),
   ] as List<LibraryLicense>) + (("true" == System.getProperty("bundle.ui.tests") ? [
     new LibraryLicense(name: "truth", libraryName: "truth", version: "0.28", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "easymock-tools", libraryName: "easymock-tools", version: "3.1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
