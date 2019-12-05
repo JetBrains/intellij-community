@@ -186,9 +186,9 @@
         <keyboard-shortcut first-keystroke="control shift O" keymap="Eclipse" remove="true"/>
         <keyboard-shortcut first-keystroke="control shift O" keymap="NetBeans 6.5" remove="true"/>
         <keyboard-shortcut first-keystroke="control shift O" keymap="Visual Studio" remove="true"/>
-        <keyboard-shortcut first-keystroke="meta shift L" keymap="Mac OS X" replace-all="true"/>
-        <keyboard-shortcut first-keystroke="meta shift L" keymap="Mac OS X 10.5+" replace-all="true" remove="true"/>
-        <keyboard-shortcut first-keystroke="meta shift L" keymap="Eclipse (Mac OS X)" replace-all="true" remove="true"/>
+        <keyboard-shortcut first-keystroke="meta shift I" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta shift I" keymap="Mac OS X 10.5+" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta shift I" keymap="Eclipse (Mac OS X)" replace-all="true" remove="true"/>
       </action>
       <action id="HideProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction"/>
     </group>
