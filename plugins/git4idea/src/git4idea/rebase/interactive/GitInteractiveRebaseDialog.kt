@@ -4,6 +4,7 @@ package git4idea.rebase.interactive
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -365,8 +366,8 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
   }
 
   private class CommitMessageCellEditor(project: Project, private val table: CommitsTable) : AbstractCellEditor(), TableCellEditor {
-    private val closeEditorAction = object : AnAction() {
-      override fun actionPerformed(e: AnActionEvent) {
+    private val closeEditorAction = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
         stopCellEditing()
       }
     }
@@ -376,12 +377,16 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
       }
     }.apply {
       editorField.addSettingsProvider { editor ->
-        closeEditorAction.registerCustomShortcutSet(
-          CustomShortcutSet(KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null)),
-          editor.contentComponent
-        )
+        registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
+        registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
       }
       editorField.setCaretPosition(0)
+    }
+
+    private fun registerCloseEditorShortcut(editor: EditorEx, shortcut: KeyStroke) {
+      val key = "applyEdit$shortcut"
+      editor.contentComponent.inputMap.put(shortcut, key)
+      editor.contentComponent.actionMap.put(key, closeEditorAction)
     }
 
     override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
