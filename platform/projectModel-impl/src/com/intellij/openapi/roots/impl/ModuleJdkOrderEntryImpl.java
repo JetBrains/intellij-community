@@ -101,8 +101,8 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
 
   private void init(final Sdk jdk, final String jdkName, final String jdkType) {
     myJdk = jdk;
-    setJdkName(jdkName);
-    setJdkType(jdkType);
+    myJdkName = jdkName;
+    myJdkType = jdkType;
     myProjectRootManagerImpl.addJdkTableListener(this, this);
     init();
   }
@@ -137,6 +137,17 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
   }
 
   @Override
+  @Nullable
+  public String getJdkTypeName() {
+    if (myJdkType != null) return myJdkType;
+    Sdk jdk = getJdk();
+    if (jdk != null) {
+      return jdk.getSdkType().getName();
+    }
+    return null;
+  }
+
+  @Override
   public boolean isSynthetic() {
     return true;
   }
@@ -162,8 +173,8 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
   public void jdkAdded(@NotNull Sdk jdk) {
     if (myJdk == null && jdk.getName().equals(getJdkName())) {
       myJdk = jdk;
-      setJdkName(null);
-      setJdkType(null);
+      myJdkName = null;
+      myJdkType = null;
       updateFromRootProviderAndSubscribe();
     }
   }
@@ -172,8 +183,8 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
   public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
     if (myJdk == null && jdk.getName().equals(getJdkName())) {
       myJdk = jdk;
-      setJdkName(null);
-      setJdkType(null);
+      myJdkName = null;
+      myJdkType = null;
       updateFromRootProviderAndSubscribe();
     }
   }
@@ -181,8 +192,8 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
   @Override
   public void jdkRemoved(@NotNull Sdk jdk) {
     if (jdk == myJdk) {
-      setJdkName(myJdk.getName());
-      setJdkType(myJdk.getSdkType().getName());
+      myJdkName = myJdk.getName();
+      myJdkType = myJdk.getSdkType().getName();
       myJdk = null;
       updateFromRootProviderAndSubscribe();
     }
@@ -208,13 +219,5 @@ class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Writa
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
     return new ModuleJdkOrderEntryImpl(this, rootModel, ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject()));
-  }
-
-  private void setJdkName(String jdkName) {
-    myJdkName = jdkName;
-  }
-
-  private void setJdkType(String jdkType) {
-    myJdkType = jdkType;
   }
 }

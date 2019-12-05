@@ -85,7 +85,7 @@ sealed class ModuleDependencyItem {
   }
 
   //todo use LibraryProxyId to refer to SDK instead
-  data class SdkDependency(val sdkName: String, val sdkType: String?) : ModuleDependencyItem()
+  data class SdkDependency(val sdkName: String, val sdkType: String) : ModuleDependencyItem()
 
   object InheritedSdkDependency : ModuleDependencyItem()
   object ModuleSourceDependency : ModuleDependencyItem()

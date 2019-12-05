@@ -27,6 +27,7 @@ import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -204,13 +205,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Nullable
   @Override
   public String getProjectSdkName() {
     return myProjectSdkName;
   }
 
+  @Nullable
   @Override
-  public void setProjectSdk(Sdk sdk) {
+  public String getProjectSdkTypeName() {
+    return myProjectSdkType;
+  }
+
+  @Override
+  public void setProjectSdk(@Nullable Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (sdk == null) {
       myProjectSdkName = null;

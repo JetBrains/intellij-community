@@ -484,7 +484,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  public void setInvalidSdk(@NotNull String jdkName, String jdkType) {
+  public void setInvalidSdk(@NotNull String jdkName, @NotNull String jdkType) {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }

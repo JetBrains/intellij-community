@@ -120,9 +120,18 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   /**
    * Returns the name of the SDK selected for the project.
    *
-   * @return the SDK name.
+   * @return the project SDK name.
    */
+  @Nullable
   public abstract String getProjectSdkName();
+
+  /**
+   * Returns the name of the SDK Type for the project SDK
+   * @return the project SDK type name
+   * @see {@link com.intellij.openapi.projectRoots.SdkTypeId}
+   */
+  @Nullable
+  public abstract String getProjectSdkTypeName();
 
   /**
    * Sets the SDK to be used for the project.

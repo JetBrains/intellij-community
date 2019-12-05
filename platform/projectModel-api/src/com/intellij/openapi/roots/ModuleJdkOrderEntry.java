@@ -16,10 +16,13 @@
 package com.intellij.openapi.roots;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
  */
 @ApiStatus.NonExtendable
 public interface ModuleJdkOrderEntry extends JdkOrderEntry {
+  @Nullable
+  String getJdkTypeName();
 }

@@ -273,6 +273,8 @@ class SdkOrderEntryViaTypedEntity(
 
   override fun getJdkName() = sdkDependencyItem.sdkName
 
+  override fun getJdkTypeName() = sdkDependencyItem.sdkType
+
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitJdkOrderEntry(this, initialValue)
 
   override fun cloneEntry(rootModel: RootModelImpl,

@@ -349,7 +349,7 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override fun setInvalidSdk(sdkName: String, sdkType: String?) {
+  override fun setInvalidSdk(sdkName: String, sdkType: String) {
     setSdkItem(ModuleDependencyItem.SdkDependency(sdkName, sdkType))
 
     if (assertChangesApplied && getSdkName() != sdkName) {
