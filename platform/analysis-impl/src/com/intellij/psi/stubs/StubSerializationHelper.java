@@ -41,7 +41,6 @@ class StubSerializationHelper {
   private final RecentStringInterner myStringInterner;
 
   void dropRegisteredSerializers() {
-    LOG.assertTrue(!myUnmodifiable); // todo revise it for unmodifiable serialization helper
     myIdToName.clear();
     myNameToId.clear();
     myNameToLazySerializer.clear();
