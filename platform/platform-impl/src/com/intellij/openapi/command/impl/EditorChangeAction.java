@@ -39,15 +39,15 @@ final class EditorChangeAction extends BasicUndoableAction {
 
   @Override
   public void undo() throws UnexpectedUndoException {
-    doChange(myNewString, myOldString, myNewLength, myOldTimeStamp);
+    doChange(myNewLength, myOldString, myOldLength, myOldTimeStamp);
   }
 
   @Override
   public void redo() throws UnexpectedUndoException {
-    doChange(myOldString, myNewString, myOldLength, myNewTimeStamp);
+    doChange(myOldLength, myNewString, myNewLength, myNewTimeStamp);
   }
 
-  private void doChange(Object from, Object to, int fromLength, long toTimeStamp) throws UnexpectedUndoException {
+  private void doChange(int fromLength, Object to, int toLength, long toTimeStamp) throws UnexpectedUndoException {
     //noinspection ConstantConditions
     DocumentImpl document = (DocumentImpl)getAffectedDocuments()[0].getDocument();
     assert document != null;
@@ -55,9 +55,9 @@ final class EditorChangeAction extends BasicUndoableAction {
 
     DocumentUndoProvider.startDocumentUndo(document);
     try {
-      CharSequence fromString = CompressionUtil.uncompressStringRawBytes(from);
       CharSequence toString = CompressionUtil.uncompressStringRawBytes(to);
-      document.replaceString(myOffset, myOffset + fromString.length(), toString, toTimeStamp, false);
+      int fromStringLength = toString.length() - toLength + fromLength;
+      document.replaceString(myOffset, myOffset + fromStringLength, toString, toTimeStamp, false);
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(document);
