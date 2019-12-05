@@ -46,6 +46,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.UIVcsUtilKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     Disposer.register(parent, this);
 
-    myToolbarWrapper = new Wrapper(getToolbar().getComponent());
+    JComponent toolbarComponent = getToolbar().getComponent();
+    myToolbarWrapper = new Wrapper(toolbarComponent);
+    UIVcsUtilKt.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
 
