@@ -579,7 +579,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         // Process class's static initializers
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
           if (method.isStatic()) {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            RefElementImpl owner = (RefElementImpl)method.getOwner();
+            if (owner != null) {
+              owner.setReachable(true);
+            }
           }
           else {
             addInstantiatedClass(method.getOwnerClass());
