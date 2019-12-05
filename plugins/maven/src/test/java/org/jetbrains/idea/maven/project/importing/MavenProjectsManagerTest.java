@@ -55,7 +55,6 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     initProjectsManager(true);
-    getMavenImporterSettings().setImportAutomatically(true);
   }
 
   public void testShouldReturnNullForUnprocessedFiles() {
@@ -245,14 +244,6 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
   }
 
   public void testAddingAndRemovingManagedFilesAddsAndRemovesModules() {
-    doTestAddingAndRemovingAddsAndRemovesModules(true);
-  }
-
-  public void testAddingAndRemovingManagedFilesAddsAndRemovesModulesInNonAutoImportMode() {
-    doTestAddingAndRemovingAddsAndRemovesModules(false);
-  }
-
-  private void doTestAddingAndRemovingAddsAndRemovesModules(boolean autoImport) {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -266,8 +257,6 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModules("m1");
 
     resolveDependenciesAndImport(); // ensure no pending imports
-
-    getMavenImporterSettings().setImportAutomatically(autoImport);
 
     myProjectsManager.addManagedFiles(Collections.singletonList(m2));
     waitForReadingCompletion();

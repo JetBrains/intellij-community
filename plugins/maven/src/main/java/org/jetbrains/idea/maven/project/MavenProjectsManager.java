@@ -47,6 +47,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -387,15 +388,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void listenForSettingsChanges() {
     getImportingSettings().addListener(new MavenImportingSettings.Listener() {
-      @Override
-      public void autoImportChanged() {
-        if (myProject.isDisposed()) return;
-
-        if (getImportingSettings().isImportAutomatically()) {
-          scheduleImportAndResolve(true);
-        }
-      }
-
       @Override
       public void createModuleGroupsChanged() {
         scheduleImportSettings(true);
@@ -882,15 +874,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    * if project is closed)
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
-    return scheduleImportAndResolve(false);
-  }
-
-  public void terminateImport(int exitCode) {
-    getSyncConsole().terminated(exitCode);
-  }
-
-  public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
-    getSyncConsole().startImport(myProgressListener, fromAutoImport);
+    getSyncConsole().startImport(myProgressListener);
     MavenServerManager.getInstance().showMavenNotifications(getSyncConsole());
     MavenSyncConsole console = getSyncConsole();
     fireImportAndResolveScheduled();
@@ -899,6 +883,19 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       completeMavenSyncOnImportCompletion(console);
     });
     return promise;
+  }
+
+  public void terminateImport(int exitCode) {
+    getSyncConsole().terminated(exitCode);
+  }
+
+  /**
+   * @deprecated see {@link MavenImportingSettings#setImportAutomatically(boolean)} for details
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public Promise<List<Module>> scheduleImportAndResolve(@SuppressWarnings("unused") boolean fromAutoImport) {
+    return scheduleImportAndResolve();
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {

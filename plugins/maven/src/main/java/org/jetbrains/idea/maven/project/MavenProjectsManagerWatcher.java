@@ -143,8 +143,8 @@ public class MavenProjectsManagerWatcher {
         return;
       }
 
-      if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-        myManager.scheduleImportAndResolve(myManager.getImportingSettings().isImportAutomatically()).onSuccess(modules -> promise.setResult(null));
+      if (forceImportAndResolve) {
+        myManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
       }
       else {
         promise.setResult(null);

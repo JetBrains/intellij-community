@@ -168,8 +168,6 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                   "  </dependency>" +
                   "</dependencies>"));
 
-    getMavenImporterSettings().setImportAutomatically(true);
-
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

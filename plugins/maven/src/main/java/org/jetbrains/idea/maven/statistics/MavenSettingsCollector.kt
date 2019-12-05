@@ -57,7 +57,6 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
 
     usages.add(newBooleanMetric("dedicatedModuleDir", importingSettings.dedicatedModuleDir.isNotBlank()))
     usages.add(newBooleanMetric("storeProjectFilesExternally", ExternalStorageConfigurationManager.getInstance(project).isEnabled))
-    usages.add(newBooleanMetric("importAutomatically", importingSettings.isImportAutomatically))
     usages.add(newBooleanMetric("autoDetectCompiler", importingSettings.isAutoDetectCompiler))
     usages.add(newBooleanMetric("createModulesForAggregators", importingSettings.isCreateModulesForAggregators))
     usages.add(newBooleanMetric("createModuleGroups", importingSettings.isCreateModuleGroups))
