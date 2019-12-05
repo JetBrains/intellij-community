@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Alarm;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -32,7 +33,6 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +44,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.commands.GitAuthenticationMode.*;
+import static git4idea.commands.GitAuthenticationMode.NONE;
+import static git4idea.commands.GitAuthenticationMode.SILENT;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
@@ -62,13 +63,14 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull private final Object LOCK = new Object();
   @NotNull private final Set<GitRepository> myDirtyReposPull = new HashSet<>();
   @NotNull private final Set<GitRepository> myDirtyReposPush = new HashSet<>();
-  private boolean myUseForceAuthentication;
+  private boolean myShouldRequestRemoteInfo;
 
   @NotNull private final MergingUpdateQueue myQueue;
 
   //store map from local branch to related cached remote branch hash per repository
-  @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
-  @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
+  @NotNull private final Map<GitRepository, Set<GitLocalBranch>> myLocalBranchesToPull = newConcurrentMap();
+  @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToFetch = newConcurrentMap();
+  @NotNull private final Map<GitRepository, Set<GitLocalBranch>> myLocalBranchesToPush = newConcurrentMap();
   @NotNull private final MultiMap<GitRepository, GitRemote> myErrorMap = MultiMap.createConcurrentSet();
   @NotNull private final Project myProject;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
@@ -111,10 +113,6 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return ServiceManager.getService(project, GitBranchIncomingOutgoingManager.class);
   }
 
-  public boolean hasAuthenticationProblems() {
-    return !myErrorMap.isEmpty();
-  }
-
   public boolean supportsIncomingOutgoing() {
     return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(myProject);
   }
@@ -134,9 +132,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   public void updateIncomingScheduling() {
     if (myPeriodicalUpdater == null && shouldCheckIncoming()) {
-      updateBranchesToPull(false);
+      updateBranchesToPull(true);
       int timeout = Registry.intValue("git.update.incoming.info.time");
-      myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(false), timeout, timeout,
+      myPeriodicalUpdater = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> updateBranchesToPull(true), timeout, timeout,
                                                                                TimeUnit.MINUTES);
     }
     else if (myPeriodicalUpdater != null && !shouldCheckIncoming()) {
@@ -153,9 +151,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @CalledInAny
-  public void forceUpdateBranchesToPull() {
-   updateBranchesToPull(true);
-
+  public void forceUpdateBranches() {
+    updateBranchesToPull(false);
+    updateBranchesToPush();
     new Task.Backgroundable(myProject, "Update Branches Info...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -182,15 +180,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       List<GitRepository> toPull;
       List<GitRepository> toPush;
 
-      boolean useForceAuthentication;
+      boolean shouldRequestRemoteInfo;
       synchronized (LOCK) {
         toPull = new ArrayList<>(myDirtyReposPull);
         toPush = new ArrayList<>(myDirtyReposPush);
-        useForceAuthentication = myUseForceAuthentication;
+        shouldRequestRemoteInfo = myShouldRequestRemoteInfo;
 
         myDirtyReposPull.clear();
         myDirtyReposPush.clear();
-        myUseForceAuthentication = false;
+        myShouldRequestRemoteInfo = false;
       }
 
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
@@ -198,7 +196,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
           myLocalBranchesToPush.put(r, calculateBranchesToPush(r));
         }
         for (GitRepository r : toPull) {
-          myLocalBranchesToPull.put(r, calculateBranchesToPull(r, useForceAuthentication));
+          if (shouldRequestRemoteInfo) {
+            myLocalBranchesToFetch.put(r, calculateBranchesToFetch(r));
+          }
+          myLocalBranchesToPull.put(r, calcBranchesToPull(r));
         }
       });
     }));
@@ -214,10 +215,10 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return getBranches(repository, myLocalBranchesToPush);
   }
 
-  private void updateBranchesToPull(boolean useForceAuthentication) {
+  private void updateBranchesToPull(boolean fromRemote) {
     if (!shouldCheckIncoming()) return;
     synchronized (LOCK) {
-      if (useForceAuthentication) myUseForceAuthentication = true;
+      myShouldRequestRemoteInfo = fromRemote;
       myDirtyReposPull.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
     scheduleUpdate();
@@ -231,19 +232,20 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @NotNull
-  private Map<GitLocalBranch, Hash> calculateBranchesToPull(@NotNull GitRepository repository, boolean useForceAuthentication) {
+  private Map<GitLocalBranch, Hash> calculateBranchesToFetch(@NotNull GitRepository repository) {
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     groupTrackInfoByRemotes(repository).entrySet()
-      .forEach(entry -> result.putAll(calcBranchesToPullForRemote(repository, entry.getKey(), entry.getValue(),
-                                                                  getAuthenticationMode(repository, entry.getKey(), useForceAuthentication))));
+      .forEach(entry -> result.putAll(calcBranchesToFetchForRemote(repository, entry.getKey(), entry.getValue(),
+                                                                   getAuthenticationMode(repository, entry.getKey()
+                                                                   ))));
     return result;
   }
 
   @NotNull
-  private Map<GitLocalBranch, Hash> calcBranchesToPullForRemote(@NotNull GitRepository repository,
-                                                                @NotNull GitRemote gitRemote,
-                                                                @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
-                                                                GitAuthenticationMode mode) {
+  private Map<GitLocalBranch, Hash> calcBranchesToFetchForRemote(@NotNull GitRepository repository,
+                                                                 @NotNull GitRemote gitRemote,
+                                                                 @NotNull Collection<? extends GitBranchTrackInfo> trackInfoList,
+                                                                 GitAuthenticationMode mode) {
     Map<GitLocalBranch, Hash> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     final Map<String, Hash> remoteNameWithHash =
@@ -255,15 +257,11 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       trackInfoList.forEach(info -> {
         GitRemoteBranch remoteBranch = info.getRemoteBranch();
         Hash localHashForRemoteBranch = branchesCollection.getHash(remoteBranch);
-        Hash localHash = branchesCollection.getHash(info.getLocalBranch());
 
         if (localHashForRemoteBranch == null) return;
 
         if (StringUtil.equals(remoteBranchName, addRefsHeadsPrefixIfNeeded(remoteBranch.getNameForRemoteOperations()))) {
           if (!localHashForRemoteBranch.equals(remoteHash)) {
-            result.put(info.getLocalBranch(), localHashForRemoteBranch);
-          }
-          else if (hasCommitsForBranch(repository, info.getLocalBranch(), localHash, localHashForRemoteBranch, true)) {
             result.put(info.getLocalBranch(), localHashForRemoteBranch);
           }
         }
@@ -273,12 +271,33 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   @NotNull
+  private Set<GitLocalBranch> calcBranchesToPull(@NotNull GitRepository repository) {
+
+    Set<GitLocalBranch> result = new HashSet<>();
+    GitBranchesCollection branchesCollection = repository.getBranches();
+    Map<GitLocalBranch, Hash> cachedBranchesToFetch = myLocalBranchesToFetch.get(repository);
+
+    branchesCollection.getLocalBranches().forEach(localBranch -> {
+      GitBranchTrackInfo info = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
+      if (info == null) return;
+      Hash localHashForRemoteBranch = branchesCollection.getHash(info.getRemoteBranch());
+      Hash localHash = branchesCollection.getHash(localBranch);
+      if (localHashForRemoteBranch == null) return;
+
+      if (hasCommitsForBranch(repository, info.getLocalBranch(), localHash, localHashForRemoteBranch, true)) {
+        result.add(info.getLocalBranch());
+      }
+      else if (cachedBranchesToFetch != null && localHashForRemoteBranch.equals(cachedBranchesToFetch.get(localBranch))) {
+        result.add(info.getLocalBranch());
+      }
+    });
+    return result;
+  }
+
+  @NotNull
   private GitAuthenticationMode getAuthenticationMode(@NotNull GitRepository repository,
-                                                      @NotNull GitRemote remote,
-                                                      boolean useForceAuthentication) {
-    if (useForceAuthentication) return FULL;
-    if (myAuthSuccessMap.get(repository).contains(remote)) return SILENT;
-    return NONE;
+                                                      @NotNull GitRemote remote) {
+    return (myAuthSuccessMap.get(repository).contains(remote)) ? SILENT : NONE;
   }
 
   private boolean shouldAvoidUserInteraction(@NotNull GitRemote remote) {
@@ -305,7 +324,8 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
       List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
-      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
+      GitCommandResult lsRemoteResult =
+        Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params, authenticationMode));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
@@ -330,25 +350,16 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     return h;
   }
 
-  private boolean shouldUpdateBranchesToPull(@NotNull GitRepository repository) {
-    if (!shouldCheckIncoming()) return false;
-    Map<GitLocalBranch, Hash> cachedBranchesToPull = myLocalBranchesToPull.get(repository);
-    return cachedBranchesToPull == null ||
-           exists(repository.getBranchTrackInfos(),
-                  info -> !Objects.equals(repository.getBranches().getHash(info.getRemoteBranch()),
-                                          cachedBranchesToPull.get(info.getLocalBranch())));
-  }
-
   @NotNull
-  private Map<GitLocalBranch, Hash> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
-    Map<GitLocalBranch, Hash> branchesToPush = new HashMap<>();
+  private Set<GitLocalBranch> calculateBranchesToPush(@NotNull GitRepository gitRepository) {
+    Set<GitLocalBranch> branchesToPush = new HashSet<>();
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
       Hash localHashForRemoteBranch = pushTarget != null ? branchesCollection.getHash(pushTarget.getBranch()) : null;
       Hash localHash = branchesCollection.getHash(branch);
       if (hasCommitsForBranch(gitRepository, branch, localHash, localHashForRemoteBranch, false)) {
-        branchesToPush.put(branch, localHashForRemoteBranch);
+        branchesToPush.add(branch);
       }
     }
     return branchesToPush;
@@ -383,46 +394,26 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @NotNull
   private static Collection<GitLocalBranch> getBranches(@Nullable GitRepository repository,
-                                                        @NotNull Map<GitRepository, Map<GitLocalBranch, Hash>> branchCollection) {
+                                                        @NotNull Map<GitRepository, Set<GitLocalBranch>> branchCollection) {
     if (repository != null) {
-      Map<GitLocalBranch, Hash> branchHashMap = branchCollection.get(repository);
-      return branchHashMap != null ? branchHashMap.keySet() : Collections.emptySet();
+      return ObjectUtils.chooseNotNull(branchCollection.get(repository), Collections.emptySet());
     }
-    return of(branchCollection.values()).flatMap(StreamEx::ofKeys).collect(toSet());
+    return of(branchCollection.values()).flatMap(Set::stream).collect(toSet());
   }
 
   @Override
   public void repositoryChanged(@NotNull GitRepository repository) {
     synchronized (LOCK) {
       myDirtyReposPush.add(repository);
-      if (shouldUpdateBranchesToPull(repository)) {
-        myDirtyReposPull.add(repository);
-      }
+      myDirtyReposPull.add(repository);
     }
     scheduleUpdate();
   }
 
   @Override
   public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
-    if(!shouldCheckIncoming()) return;
-    Collection<GitRemote> remotes = myErrorMap.get(repository);
+    if (!shouldCheckIncoming()) return;
     myAuthSuccessMap.putValue(repository, remote);
-    if (remotes.contains(remote)) {
-      MultiMap<GitRemote, GitBranchTrackInfo> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
-      if (trackInfoByRemotes.containsKey(remote)) {
-        final Map<GitLocalBranch, Hash> newBranchMap =
-          calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote), SILENT);
-        myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
-          if (branchHashMap == null) {
-            return new HashMap<>(newBranchMap);
-          }
-          else {
-            branchHashMap.putAll(newBranchMap);
-            return branchHashMap;
-          }
-        });
-      }
-    }
   }
 
   @NotNull
