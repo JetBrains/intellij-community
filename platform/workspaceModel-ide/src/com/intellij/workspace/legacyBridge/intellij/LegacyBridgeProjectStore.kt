@@ -56,7 +56,7 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
       val stateStorage = getProjectStateStorage(filePath, store)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(PathUtil.getFileName(filePath), componentName, componentTag)
+        producer.setFileState(PathUtil.getFileName(filePath), componentName, componentTag?.children?.first())
       }
       else {
         producer?.setState(null, componentName, componentTag)
