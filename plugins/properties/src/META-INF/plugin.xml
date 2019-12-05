@@ -123,9 +123,10 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
-
-    <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
+  </projectListeners>
 
   <actions>
     <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">
