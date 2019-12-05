@@ -41,7 +41,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         cc.skip()
       }
       else {
-        cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(component) + indent, true)
+        cc.horizontal.gapBefore = gapToBoundSize(indent + parent.spacing.indentLevel, true)
       }
     }
 
@@ -73,7 +73,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
+    if (title != null) {
+      label(title)
+      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
+    }
     builder.withButtonGroup(buttonGroup, body)
   }
 

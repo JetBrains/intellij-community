@@ -442,8 +442,8 @@ class InnerCell(val cell: Cell) : Cell() {
     }
   }
 
-  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
-    cell.withButtonGroup(buttonGroup, body)
+  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
+    cell.withButtonGroup(title, buttonGroup, body)
   }
 }
 

@@ -10,10 +10,18 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 interface BaseBuilder {
-  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
+  fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
+
+  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+    withButtonGroup(null, buttonGroup, body)
+  }
 
   fun buttonGroup(init: () -> Unit) {
-    withButtonGroup(ButtonGroup(), init)
+    buttonGroup(null, init)
+  }
+
+  fun buttonGroup(title:String? = null, init: () -> Unit) {
+    withButtonGroup(title, ButtonGroup(), init)
   }
 }
 
