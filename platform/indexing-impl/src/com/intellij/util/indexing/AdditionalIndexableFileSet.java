@@ -39,12 +39,9 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   public AdditionalIndexableFileSet(@Nullable Project project) {
     myProject = project;
     myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
-    IndexableSetContributor.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<IndexableSetContributor>() {
-      @Override
-      public void extensionListChanged() {
-        cachedDirectories = null;
-        cachedFiles = null;
-      }
+    IndexableSetContributor.EP_NAME.addExtensionPointListener((e, pd) -> {
+      cachedDirectories = null;
+      cachedFiles = null;
     }, project != null ? project : ApplicationManager.getApplication());
   }
 
