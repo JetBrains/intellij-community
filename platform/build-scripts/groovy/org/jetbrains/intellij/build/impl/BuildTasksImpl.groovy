@@ -327,7 +327,7 @@ idea.fatal.error.notification=disabled
         def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
         def ideModuleNames
         if (mavenArtifacts.forIdeModules) {
-          def bundledPlugins = buildContext.productProperties.productLayout.allBundledPluginsModules
+          def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
           ideModuleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
         } else {
           ideModuleNames = []
@@ -562,10 +562,6 @@ idea.fatal.error.notification=disabled
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
-    for (osFamily in OsFamily.values()) {
-      checkPluginModules(layout.bundledOsPluginModules[osFamily],
-                         "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
-    }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
     if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
@@ -591,7 +587,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    def allBundledPlugins = layout.allBundledPluginsModules
+    def allBundledPlugins = layout.bundledPluginModules as Set<String>
     nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")

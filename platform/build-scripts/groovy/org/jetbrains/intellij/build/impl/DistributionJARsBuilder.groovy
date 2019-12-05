@@ -201,8 +201,7 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.
-      collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -301,7 +300,7 @@ class DistributionJARsBuilder {
 
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
-    productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
+    productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
     CommunityRepositoryModules.PLATFORM_API_MODULES +
     CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
     productLayout.productApiModules +
@@ -628,11 +627,9 @@ class DistributionJARsBuilder {
   private void buildOsSpecificBundledPlugins() {
     def productLayout = buildContext.productProperties.productLayout
     for (OsFamily osFamily in OsFamily.values()) {
-      List<PluginLayout> osSpecificPlugins =
-        getPluginsByModules(buildContext, productLayout.bundledOsPluginModules[osFamily] ?: []) +
-        getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
-          satisfiesBundlingRequirements(it, osFamily)
-        }
+      List<PluginLayout> osSpecificPlugins = getPluginsByModules(buildContext, productLayout.bundledPluginModules).findAll {
+        satisfiesBundlingRequirements(it, osFamily)
+      }
 
       if (!osSpecificPlugins.isEmpty() && buildContext.shouldBuildDistributionForOS(osFamily.osId)) {
         def layoutBuilder = createLayoutBuilder()
