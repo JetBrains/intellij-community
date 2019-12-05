@@ -87,7 +87,7 @@ public class StructuralSearchFullInspection extends LocalInspectionTool {
       };
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (LexicalNodesFilter.getInstance().accepts(element)) return;
         synchronized (LOCK) {
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
