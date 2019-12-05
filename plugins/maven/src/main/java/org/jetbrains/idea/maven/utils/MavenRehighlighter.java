@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -33,55 +32,42 @@ public class MavenRehighlighter {
     queue = new MergingUpdateQueue(getClass().getSimpleName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, project, null, true);
   }
 
-  private static final class MavenRehighlighterPostStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull final Project project) {
-      MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
-      mavenProjectManager.addManagerListener(new MavenProjectsManager.Listener() {
-        @Override
-        public void activated() {
-          rehighlight(project, null);
+  public static void install(@NotNull Project project, @NotNull MavenProjectsManager projectsManager) {
+    projectsManager.addManagerListener(new MavenProjectsManager.Listener() {
+      @Override
+      public void activated() {
+        rehighlight(project, null);
+      }
+    });
+    projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
+      @Override
+      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+        for (Pair<MavenProject, MavenProjectChanges> each : updated) {
+          rehighlight(project, each.first);
         }
+      }
 
-        @Override
-        public void projectsScheduled() {
-        }
+      @Override
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                                  NativeMavenProjectHolder nativeMavenProject) {
+        rehighlight(project, projectWithChanges.first);
+      }
 
-        @Override
-        public void importAndResolveScheduled() {
-        }
-      });
+      @Override
+      public void pluginsResolved(@NotNull MavenProject mavenProject) {
+        rehighlight(project, mavenProject);
+      }
 
-      mavenProjectManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
-        @Override
-        public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-          for (Pair<MavenProject, MavenProjectChanges> each : updated) {
-            rehighlight(project, each.first);
-          }
-        }
+      @Override
+      public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+        rehighlight(project, projectWithChanges.first);
+      }
 
-        @Override
-        public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                    NativeMavenProjectHolder nativeMavenProject) {
-          rehighlight(project, projectWithChanges.first);
-        }
-
-        @Override
-        public void pluginsResolved(@NotNull MavenProject mavenProject) {
-          rehighlight(project, mavenProject);
-        }
-
-        @Override
-        public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-          rehighlight(project, projectWithChanges.first);
-        }
-
-        @Override
-        public void artifactsDownloaded(@NotNull MavenProject mavenProject) {
-          rehighlight(project, mavenProject);
-        }
-      });
-    }
+      @Override
+      public void artifactsDownloaded(@NotNull MavenProject mavenProject) {
+        rehighlight(project, mavenProject);
+      }
+    });
   }
 
   public static void rehighlight(@NotNull Project project) {

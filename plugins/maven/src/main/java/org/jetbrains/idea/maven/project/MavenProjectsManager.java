@@ -132,6 +132,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
+    MavenRehighlighter.install(project, this);
   }
 
   @Override
