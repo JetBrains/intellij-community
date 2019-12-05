@@ -73,20 +73,10 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test remove library in directory-based project`() {
-    val (storage, _) = reload(sampleDirBasedProjectFile) { data ->
-      FileUtil.delete(File(data.projectDir, ".idea/libraries/junit.xml"))
-      JpsConfigurationFilesChange(addedFileUrls = emptyList(),
-                                  removedFileUrls = listOf("${data.projectDirUrl}/.idea/libraries/junit.xml"),
-                                  changedFileUrls = emptyList())
+  fun `test remove library`() {
+    checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, _) ->
+      assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})
     }
-    assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})
-  }
-
-  @Test
-  fun `test remove library in file-based project`() {
-    val (storage, _) = reload(sampleFileBasedProjectFile, "fileBased/removeLibrary")
-    assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})
   }
 
   private fun checkProjectAfterReload(directoryNameForDirectoryBased: String, directoryNameForFileBased: String, checkAction: (ReloadedProjectData) -> Unit) {
@@ -110,16 +100,21 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   private fun reload(originalProjectDir: File, directoryName: String): ReloadedProjectData {
     return reload(originalProjectDir) { projectData ->
       val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/reload/$directoryName")
-      val newUrls = collectFileUrls(changedDir, projectData.projectDirUrl)
-      val oldUrls = collectFileUrls(projectData.projectDir, projectData.projectDirUrl)
+      val newUrls = collectFileUrls(changedDir, projectData.projectDirUrl) { it != "<delete/>"}
+      val urlsToDelete = collectFileUrls(changedDir, projectData.projectDirUrl) { it == "<delete/>"}
+      val oldUrls = collectFileUrls(projectData.projectDir, projectData.projectDirUrl) { true }
       FileUtil.copyDir(changedDir, projectData.projectDir)
-      JpsConfigurationFilesChange(addedFileUrls = newUrls - oldUrls, removedFileUrls = emptyList(),
+      projectData.projectDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
+        FileUtil.delete(it)
+      }
+
+      JpsConfigurationFilesChange(addedFileUrls = newUrls - oldUrls, removedFileUrls = urlsToDelete,
                                   changedFileUrls = newUrls.intersect(oldUrls).toList())
     }
   }
 
-  private fun collectFileUrls(dir: File, baseUrl: String): ArrayList<String> {
-    return dir.walkTopDown().mapTo(ArrayList()) {
+  private fun collectFileUrls(dir: File, baseUrl: String, contentFilter: (String) -> Boolean): ArrayList<String> {
+    return dir.walkTopDown().filter { it.isFile && contentFilter(it.readText().trim()) }.mapTo(ArrayList()) {
       baseUrl + "/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(dir, it)!!)}"
     }
   }

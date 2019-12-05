@@ -44,8 +44,8 @@ class JpsProjectSaveAfterChangesTest {
   }
 
   @Test
-  fun `rename module in directory-based project`() {
-    checkSaveProjectAfterChange(sampleDirBasedProjectFile, "directoryBased/renameModule", listOf("util/util.iml")) { builder, projectDirUrl ->
+  fun `rename module`() {
+    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, projectDirUrl ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       builder.modifyEntity(ModifiableModuleEntity::class.java, utilModule) {
         name = "util2"
@@ -53,15 +53,6 @@ class JpsProjectSaveAfterChangesTest {
     }
   }
 
-  @Test
-  fun `rename module in file-based project`() {
-    checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/renameModule", listOf("util/util.iml")) { builder, projectDirUrl ->
-      val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
-      builder.modifyEntity(ModifiableModuleEntity::class.java, utilModule) {
-        name = "util2"
-      }
-    }
-  }
 
   @Test
   fun `add library`() {
@@ -112,8 +103,8 @@ class JpsProjectSaveAfterChangesTest {
   }
 
   @Test
-  fun `rename library in directory-based project`() {
-    checkSaveProjectAfterChange(sampleDirBasedProjectFile, "directoryBased/renameLibrary", listOf(".idea/libraries/junit.xml")) { builder, projectDirUrl ->
+  fun `rename library`() {
+    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, projectDirUrl ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
         name = "junit2"
@@ -122,26 +113,8 @@ class JpsProjectSaveAfterChangesTest {
   }
 
   @Test
-  fun `rename library in file-based project`() {
-    checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/renameLibrary", emptyList()) { builder, projectDirUrl ->
-      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
-      builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
-        name = "junit2"
-      }
-    }
-  }
-
-  @Test
-  fun `remove library in directory-based project`() {
-    checkSaveProjectAfterChange(sampleDirBasedProjectFile, null, listOf(".idea/libraries/junit.xml")) { builder, _ ->
-      val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
-      builder.removeEntity(junitLibrary)
-    }
-  }
-
-  @Test
-  fun `remove library in file-based project`() {
-    checkSaveProjectAfterChange(sampleFileBasedProjectFile, "fileBased/removeLibrary", emptyList()) { builder, _ ->
+  fun `remove library`() {
+    checkSaveProjectAfterChange("directoryBased/removeLibrary", "fileBased/removeLibrary") { builder, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.removeEntity(junitLibrary)
     }
@@ -150,12 +123,11 @@ class JpsProjectSaveAfterChangesTest {
   private fun checkSaveProjectAfterChange(directoryNameForDirectoryBased: String,
                                           directoryNameForFileBased: String,
                                           change: (TypedEntityStorageBuilder, String) -> Unit) {
-    checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, emptyList(), change)
-    checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, emptyList(), change)
+    checkSaveProjectAfterChange(sampleDirBasedProjectFile, directoryNameForDirectoryBased, change)
+    checkSaveProjectAfterChange(sampleFileBasedProjectFile, directoryNameForFileBased, change)
   }
 
   private fun checkSaveProjectAfterChange(originalProjectFile: File, changedFilesDirectoryName: String?,
-                                          pathsToRemove: List<String>,
                                           change: (TypedEntityStorageBuilder, String) -> Unit) {
     val projectData = copyAndLoadProject(originalProjectFile)
     val builder = TypedEntityStorageBuilder.from(projectData.storage)
@@ -182,8 +154,8 @@ class JpsProjectSaveAfterChangesTest {
       val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/reload/$changedFilesDirectoryName")
       FileUtil.copyDir(changedDir, expectedDir)
     }
-    pathsToRemove.forEach {
-      FileUtil.delete(File(expectedDir, it))
+    expectedDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
+      FileUtil.delete(it)
     }
 
     assertDirectoryMatches(projectData.projectDir, expectedDir,
