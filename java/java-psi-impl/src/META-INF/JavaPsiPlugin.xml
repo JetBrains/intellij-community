@@ -124,6 +124,7 @@
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
+    <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
