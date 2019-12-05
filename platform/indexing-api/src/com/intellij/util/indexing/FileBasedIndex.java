@@ -228,7 +228,7 @@ public abstract class FileBasedIndex {
 
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {
-    return ApplicationManager.getApplication().isInternal() && !ourDisableIndexAccessDuringDumbMode;
+    return !ourDisableIndexAccessDuringDumbMode;
   }
   private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
 }
