@@ -45,6 +45,12 @@ object VirtualFileUrlManager {
     buildUrlById(id, id2parent, id2segment)
   }
 
+  internal fun getParentVirtualUrlById(id: Int): VirtualFileUrl? {
+      val parentId = id2parent[id] ?: return null
+      if (parentId <= 0) return null
+      return VirtualFileUrl(parentId)
+  }
+
   private fun StringBuilder.buildUrlById(id: Int,
                                          hierarchyMap: ConcurrentMap<Int, Int>,
                                          segmentMap: ConcurrentMap<Int, String>): Boolean {
@@ -99,6 +105,9 @@ data class VirtualFileUrl(internal val id: Int)
 {
   val url: String
     get() = VirtualFileUrlManager.getUrlById(id)
+
+  val parent: VirtualFileUrl?
+    get() = VirtualFileUrlManager.getParentVirtualUrlById(id)
 
   val file: File?
     get() = filePath?.let { File(it) }
