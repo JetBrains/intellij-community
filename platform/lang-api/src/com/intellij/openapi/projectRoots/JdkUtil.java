@@ -139,6 +139,7 @@ public class JdkUtil {
     return new File(homePath, "modules/java.base").isDirectory();
   }
 
+  @ApiStatus.Internal
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
     Sdk jdk = javaParameters.getJdk();
     if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));

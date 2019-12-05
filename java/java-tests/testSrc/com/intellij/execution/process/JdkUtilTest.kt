@@ -3,7 +3,6 @@ package com.intellij.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -116,7 +115,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   private fun doTest(vararg expected: String) {
-    val cmd = JdkUtil.setupJVMCommandLine(parameters)
+    val cmd = parameters.toCommandLine()
     filesToDelete = cmd.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION)
 
     val actual = cmd.getCommandLineList("-")
