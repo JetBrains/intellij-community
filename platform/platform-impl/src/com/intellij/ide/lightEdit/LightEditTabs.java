@@ -42,6 +42,7 @@ class LightEditTabs extends JBEditorTabs {
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
     TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getEditor()))
       .setText(editorInfo.getFile().getPresentableName())
+      .setIcon(getFileTypeIcon(editorInfo))
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
     tabInfo.setObject(editorInfo);
@@ -53,6 +54,10 @@ class LightEditTabs extends JBEditorTabs {
     addTabSilently(tabInfo, index);
     select(tabInfo, true);
     myEditorManager.fireEditorSelected(editorInfo);
+  }
+
+  private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {
+    return editorInfo.getFile().getFileType().getIcon();
   }
 
   private void onSelectionChange(@Nullable TabInfo tabInfo) {
