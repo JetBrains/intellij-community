@@ -21,6 +21,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.log.Hash;
@@ -56,6 +57,9 @@ import static one.util.streamex.StreamEx.of;
 public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
 
   private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
+  public static final Topic<GitIncomingOutgoingListener> GIT_INCOMING_OUTGOING_CHANGED =
+    Topic.create("Git incoming outgoing info changed", GitIncomingOutgoingListener.class);
+
   private static final String MAC_DEFAULT_LAUNCH = "com.apple.launchd";
 
   private static final boolean HAS_EXTERNAL_SSH_AGENT = hasExternalSSHAgent();
@@ -201,6 +205,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
           }
           myLocalBranchesToPull.put(r, calcBranchesToPull(r));
         }
+        myProject.getMessageBus().syncPublisher(GIT_INCOMING_OUTGOING_CHANGED).incomingOutgoingInfoChanged();
       });
     }));
   }
@@ -419,5 +424,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @NotNull
   private static MultiMap<GitRemote, GitBranchTrackInfo> groupTrackInfoByRemotes(@NotNull GitRepository repository) {
     return groupBy(repository.getBranchTrackInfos(), GitBranchTrackInfo::getRemote);
+  }
+
+  public interface GitIncomingOutgoingListener {
+    void incomingOutgoingInfoChanged();
   }
 }

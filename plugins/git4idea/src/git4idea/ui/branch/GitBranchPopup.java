@@ -25,6 +25,7 @@ import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitVcs;
 import git4idea.actions.GitFetch;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -121,6 +123,10 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       myPopup.addToolbarAction(createUnsupportedIncomingAction(myProject), false);
     }
     myPopup.addToolbarAction(createFetchAction(myProject), false);
+    MessageBusConnection connection = myProject.getMessageBus().connect(myPopup);
+    connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, () -> {
+      ApplicationManager.getApplication().invokeLater(() -> myPopup.update(), o -> myPopup.isDisposed());
+    });
   }
 
   @NotNull

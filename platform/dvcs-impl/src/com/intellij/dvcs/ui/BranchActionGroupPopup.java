@@ -204,6 +204,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
   }
 
+  public void update() {
+    getContent().revalidate();
+    getContent().repaint();
+  }
+
   @NotNull
   private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actions) {
     LightActionGroup group = new LightActionGroup();
