@@ -492,7 +492,10 @@ public class IncProjectBuilder {
       return null;
     }
     final File[] files = tempDir.listFiles();
-    if (files != null && files.length != 0) {
+    if (files == null) {
+      tempDir.mkdirs(); // ensure the directory exists
+    }
+    else if (files.length > 0) {
       final RunnableFuture<Void> task = new FutureTask<>(() -> {
         for (File tempFile : files) {
           FileUtil.delete(tempFile);
