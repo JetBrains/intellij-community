@@ -109,6 +109,11 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   }
 
   @Override
+  public int getTextOffset() {
+    return getNameIdentifier().getTextOffset();
+  }
+
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiIdentifier identifier = getNameIdentifier();
     return PsiImplUtil.setName(identifier, name);

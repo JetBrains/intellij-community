@@ -34,7 +34,13 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
       LightMethod method = new LightMethod(element.getManager(), factory.createMethod(name, component.getType()), aClass) {
         @Override
         public int getTextOffset() {
-          return aClass.getTextOffset();
+          return component.getTextOffset();
+        }
+
+        @NotNull
+        @Override
+        public PsiElement getNavigationElement() {
+          return component.getNavigationElement();
         }
       };
       //noinspection unchecked
