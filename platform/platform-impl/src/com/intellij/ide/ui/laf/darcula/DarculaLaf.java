@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.JBUIScale;
@@ -99,26 +98,15 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   public UIDefaults getDefaults() {
     try {
-      final UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
-      final UIDefaults defaults = base.getDefaults();
-      if (SystemInfo.isLinux) {
-        if (!Registry.is("darcula.use.native.fonts.on.linux", true)) {
-          Font font = findFont("DejaVu Sans");
-          if (font != null) {
-            for (Object key : defaults.keySet()) {
-              if (key instanceof String && ((String)key).endsWith(".font")) {
-                defaults.put(key, new FontUIResource(font.deriveFont(13f)));
-              }
-            }
-          }
-        }
-        else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
-          for (Object key : defaults.keySet()) {
-            if (key instanceof String && ((String)key).endsWith(".font")) {
-              final Font font = defaults.getFont(key);
-              if (font != null) {
-                defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
-              }
+      UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
+      UIDefaults defaults = base.getDefaults();
+
+      if (SystemInfo.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+        for (Object key : defaults.keySet()) {
+          if (key instanceof String && ((String)key).endsWith(".font")) {
+            Font font = defaults.getFont(key);
+            if (font != null) {
+              defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
             }
           }
         }
