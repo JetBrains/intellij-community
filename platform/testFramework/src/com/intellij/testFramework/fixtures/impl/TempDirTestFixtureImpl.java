@@ -88,7 +88,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   public VirtualFile createFile(@NotNull String name) {
     Path file;
     try {
-      Files.newByteChannel(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE).close();
+      file = createEmptyTempFile(createTempDirectory(), name);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
