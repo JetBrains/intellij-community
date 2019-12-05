@@ -91,6 +91,8 @@ class CompilationOutputsUploader {
       def metadataFile = new File("$agentPersistentStorage/metadata.json")
       Files.copy(sourceStateFile, metadataFile)
       messages.artifactBuilt(metadataFile.absolutePath)
+      // Dirty hack to have fresh state of sources on each build. For now there are a couple of bugs in this area IDEA-228483, IDEA-227783
+      FileUtil.delete(sourceStateFile)
     }
     finally {
       executor.close()
