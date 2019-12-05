@@ -64,6 +64,7 @@ public class EditorEmbeddedComponentManager {
     private static final int BOTTOM = RIGHT * 2;
 
     private static final ResizePolicy ourAny = new ResizePolicy(RIGHT | BOTTOM);
+    private static final ResizePolicy ourNone = new ResizePolicy(0);
 
     private final int myFlags;
 
@@ -77,6 +78,11 @@ public class EditorEmbeddedComponentManager {
 
     public static ResizePolicy any() {
       return ourAny;
+    }
+
+    @NotNull
+    public static ResizePolicy none() {
+      return ourNone;
     }
 
     public boolean isResizableFromRight() {
