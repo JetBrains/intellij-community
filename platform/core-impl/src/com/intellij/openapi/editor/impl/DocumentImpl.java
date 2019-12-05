@@ -601,7 +601,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     replaceString(startOffset, endOffset, s, LocalTimeCounter.currentTime(), false);
   }
 
-  private void replaceString(int startOffset, int endOffset, @NotNull CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s, final long newModificationStamp, boolean wholeTextReplaced) {
     assertBounds(startOffset, endOffset);
 
     assertWriteAccess();
