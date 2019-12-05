@@ -2,16 +2,25 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LightEditUtil {
 
@@ -44,19 +53,17 @@ public class LightEditUtil {
     return ProjectManager.getInstance().getDefaultProject();
   }
 
-  static boolean confirmClose(@NotNull LightEditorInfo editorInfo) {
+  static boolean confirmClose(@NotNull String message,
+                              @NotNull String title,
+                              @NotNull Runnable saveRunnable) {
     final String[] options = {CLOSE_SAVE, CLOSE_DISCARD, CLOSE_CANCEL};
-    int result = Messages.showDialog(
-      getProject(),
-      ApplicationBundle.message("light.edit.close.message"),
-      ApplicationBundle.message("light.edit.close.title"),
-      options, 0, Messages.getWarningIcon());
+    int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
       if (CLOSE_CANCEL.equals(options[result])) {
         return false;
       }
       else if (CLOSE_SAVE.equals(options[result])) {
-        FileDocumentManager.getInstance().saveDocument(editorInfo.getEditor().getDocument());
+        saveRunnable.run();
       }
       return true;
     }
@@ -65,24 +72,26 @@ public class LightEditUtil {
     }
   }
 
-  static boolean confirmCloseAll() {
-    final String[] options = {CLOSE_SAVE, CLOSE_DISCARD, CLOSE_CANCEL};
-    int result = Messages.showDialog(
-      getProject(),
-      ApplicationBundle.message("light.edit.exit.message"),
-      ApplicationBundle.message("light.edit.exit.title"),
-      options, 0, Messages.getWarningIcon());
-    if (result >= 0) {
-      if (CLOSE_CANCEL.equals(options[result])) {
-        return false;
-      }
-      else if (CLOSE_SAVE.equals(options[result])) {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-      return true;
+  @Nullable
+  static VirtualFile chooseTargetFile(@NotNull Component parent, @NotNull LightEditorInfo editorInfo) {
+    FileSaverDialog saver =
+      FileChooserFactory.getInstance()
+        .createSaveFileDialog(new FileSaverDescriptor(
+          "Save as",
+          "Choose a target file",
+          getKnownExtensions()),parent);
+    VirtualFileWrapper fileWrapper = saver.save(VfsUtil.getUserHomeDir(), editorInfo.getFile().getPresentableName());
+    if (fileWrapper != null) {
+      return fileWrapper.getVirtualFile(true);
     }
-    else {
-      return false;
-    }
+    return null;
   }
+
+  private static String[] getKnownExtensions() {
+    return
+      ArrayUtil.toStringArray(
+        Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
+          .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
+  }
+
 }

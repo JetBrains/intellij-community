@@ -4,9 +4,12 @@ package com.intellij.ide.lightEdit;
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.ui.WindowWrapperBuilder;
@@ -79,6 +82,12 @@ public class LightEditService implements Disposable, LightEditorListener {
     }
   }
 
+  public void createNewFile() {
+    showEditorWindow();
+    LightEditorInfo newEditorInfo = myEditorManager.createEditor();
+    getEditPanel().getTabs().addEditorTab(newEditorInfo);
+  }
+
   public boolean closeEditorWindow() {
     if (canClose()) {
       disposeEditorPanel();
@@ -101,7 +110,12 @@ public class LightEditService implements Disposable, LightEditorListener {
   }
 
   private boolean canClose() {
-    return !myEditorManager.containsUnsavedDocuments() || LightEditUtil.confirmCloseAll();
+    return !myEditorManager.containsUnsavedDocuments() ||
+           LightEditUtil.confirmClose(
+             ApplicationBundle.message("light.edit.exit.message"),
+             ApplicationBundle.message("light.edit.exit.title"),
+             () -> FileDocumentManager.getInstance().saveAllDocuments()
+           );
   }
 
   public LightEditPanel getEditPanel() {
@@ -139,5 +153,16 @@ public class LightEditService implements Disposable, LightEditorListener {
   @NotNull
   public LightEditorManager getEditorManager() {
     return myEditorManager;
+  }
+
+  public void saveToAnotherFile(@NotNull Editor editor) {
+    LightEditorInfo editorInfo = myEditorManager.getEditorInfo(editor);
+    if (editorInfo != null) {
+      VirtualFile targetFile = LightEditUtil.chooseTargetFile(myWrapper.getComponent(), editorInfo);
+      if (targetFile != null) {
+        LightEditorInfo newInfo = myEditorManager.saveAs(editorInfo, targetFile);
+        getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
+      }
+    }
   }
 }

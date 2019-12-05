@@ -5,10 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -34,6 +36,10 @@ class LightEditTabs extends JBEditorTabs {
   }
 
   void addEditorTab(@NotNull LightEditorInfo editorInfo) {
+    addEditorTab(editorInfo, -1);
+  }
+
+  private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
     TabInfo tabInfo = new TabInfo(new EditorContainer(editorInfo.getEditor()))
       .setText(editorInfo.getFile().getPresentableName())
       .setTabColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
@@ -44,7 +50,7 @@ class LightEditTabs extends JBEditorTabs {
     tabActions.add(new CloseTabAction(editorInfo));
 
     tabInfo.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
-    addTabSilently(tabInfo, -1);
+    addTabSilently(tabInfo, index);
     select(tabInfo, true);
     myEditorManager.fireEditorSelected(editorInfo);
   }
@@ -92,8 +98,7 @@ class LightEditTabs extends JBEditorTabs {
     }
 
     private Icon getIcon() {
-      return
-        LightEditorManager.isUnsaved(myEditorInfo) ? AllIcons.General.Modified : AllIcons.Actions.Close;
+      return myEditorInfo.isUnsaved() ? AllIcons.General.Modified : AllIcons.Actions.Close;
     }
 
     private void closeCurrentTab() {
@@ -112,9 +117,37 @@ class LightEditTabs extends JBEditorTabs {
     private void closeTab(@NotNull TabInfo tabInfo) {
       Object data = tabInfo.getObject();
       if (data instanceof LightEditorInfo) {
-        if (!LightEditorManager.isUnsaved(myEditorInfo) || LightEditUtil.confirmClose((LightEditorInfo)data)) {
+        final LightEditorInfo editorInfo = (LightEditorInfo)data;
+        if (!myEditorInfo.isUnsaved() ||
+            LightEditUtil.confirmClose(
+              ApplicationBundle.message("light.edit.close.message"),
+              ApplicationBundle.message("light.edit.close.title"),
+              () -> saveDocument(editorInfo))) {
           removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
         }
+      }
+    }
+  }
+
+  private void saveDocument(@NotNull LightEditorInfo editorInfo) {
+    if (editorInfo.isNew()) {
+      VirtualFile targetFile = LightEditUtil.chooseTargetFile(this.getParent(), editorInfo);
+      if (targetFile != null) {
+        myEditorManager.saveAs(editorInfo, targetFile);
+      }
+    }
+    else {
+      FileDocumentManager.getInstance().saveDocument(editorInfo.getEditor().getDocument());
+    }
+  }
+
+  void replaceTab(@NotNull LightEditorInfo oldInfo, @NotNull LightEditorInfo newInfo) {
+    TabInfo oldTabInfo = findInfo(oldInfo);
+    if (oldTabInfo != null) {
+      int oldIndex = getIndexOf(oldTabInfo);
+      if (oldIndex >= 0) {
+        removeTab(oldTabInfo).doWhenDone(()->myEditorManager.closeEditor(oldInfo));
+        addEditorTab(newInfo, oldIndex);
       }
     }
   }

@@ -2,7 +2,9 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class LightEditorInfo {
@@ -24,4 +26,18 @@ public class LightEditorInfo {
   public VirtualFile getFile() {
     return myFile;
   }
+
+  public boolean isUnsaved() {
+    if (isNew()) {
+      return true;
+    }
+    else {
+      return FileDocumentManager.getInstance().isFileModified(myFile);
+    }
+  }
+
+  public boolean isNew() {
+    return myFile instanceof LightVirtualFile;
+  }
+
 }

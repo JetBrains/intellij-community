@@ -2,6 +2,8 @@
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.lightEdit.actions.LightEditExitAction;
+import com.intellij.ide.lightEdit.actions.LightEditNewFileAction;
+import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -21,7 +23,11 @@ public class LightEditMenuBar extends JMenuBar {
   public LightEditMenuBar() {
     myPresentationFactory = new MenuItemPresentationFactory();
     add(createActionMenu("&File",
+                         new LightEditNewFileAction(),
+                         Separator.create(),
                          standardAction("OpenFile"),
+                         Separator.create(),
+                         new LightEditSaveAsAction(),
                          standardAction("SaveAll"),
                          Separator.create(),
                          new LightEditExitAction()
