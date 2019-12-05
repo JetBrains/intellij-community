@@ -373,7 +373,7 @@ public class LocalVariablesUtil {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (element == myElement) {
         myReached = true;
       }

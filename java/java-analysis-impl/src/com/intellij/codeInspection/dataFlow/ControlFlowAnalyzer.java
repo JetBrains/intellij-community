@@ -182,7 +182,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitErrorElement(PsiErrorElement element) {
+  public void visitErrorElement(@NotNull PsiErrorElement element) {
     throw new CannotAnalyzeException();
   }
 

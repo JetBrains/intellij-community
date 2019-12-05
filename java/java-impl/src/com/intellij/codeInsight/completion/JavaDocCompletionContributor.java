@@ -285,7 +285,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     final Set<String> descriptions = new HashSet<>();
     position.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         PsiParameter param1 = getDocTagParam(element);
         if (param1 != null && param1 != param &&
             Comparing.equal(param1.getName(), param.getName()) && Comparing.equal(param1.getType(), param.getType())) {

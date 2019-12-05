@@ -405,7 +405,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     HighlightInfoHolder holder = new HighlightInfoHolder(method.getContainingFile());
     visitor.analyze(method.getContainingFile(), false, holder, () -> method.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (elementsToIgnore.contains(element)) return; // ignore sub-elements too
         visitor.visit(element);
         //System.out.println("element = " + element+"; holder: "+holder.hasErrorResults());

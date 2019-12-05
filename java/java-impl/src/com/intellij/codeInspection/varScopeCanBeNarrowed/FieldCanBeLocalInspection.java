@@ -192,7 +192,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);
       }
 

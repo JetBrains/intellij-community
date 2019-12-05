@@ -317,7 +317,7 @@ public class JavadocHighlightUtil {
   static void checkForBadCharacters(@NotNull PsiDocComment docComment, @NotNull ProblemHolder holder) {
     docComment.accept(new PsiRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         ASTNode node = element.getNode();
         if (node != null && node.getElementType() == JavaDocTokenType.DOC_COMMENT_BAD_CHARACTER) {

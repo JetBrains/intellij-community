@@ -39,7 +39,7 @@ public class StringToUpperWithoutLocale2Inspection extends AbstractBaseUastLocal
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
         if (callExpression != null) {
           handleCallExpression(callExpression, holder);

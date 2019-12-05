@@ -52,7 +52,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     PsiComment other = null;
 
     if (!(myMatchingVisitor.getElement() instanceof PsiComment)) {
@@ -228,7 +228,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     myMatchingVisitor.setResult(myMatchingVisitor.matchText(element, myMatchingVisitor.getElement()));
   }
 

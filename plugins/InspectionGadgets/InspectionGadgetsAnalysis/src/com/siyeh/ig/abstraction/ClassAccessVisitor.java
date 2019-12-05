@@ -37,7 +37,7 @@ class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     ProgressManager.checkCanceled();
     super.visitElement(element);
   }

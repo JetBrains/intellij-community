@@ -692,7 +692,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
 
       @Override
-      public void visitComment(PsiComment comment) {
+      public void visitComment(@NotNull PsiComment comment) {
         addCommentToFold(list, comment, document, processedComments);
         super.visitComment(comment);
       }

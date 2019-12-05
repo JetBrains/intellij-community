@@ -72,7 +72,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(final PsiElement element) {
+      public void visitElement(@NotNull final PsiElement element) {
         if (holder.getResultCount()>1000) return;
 
         final ASTNode node = element.getNode();

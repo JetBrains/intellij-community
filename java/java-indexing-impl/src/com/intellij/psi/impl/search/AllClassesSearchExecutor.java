@@ -91,7 +91,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
     final JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!stopped[0]) {
           super.visitElement(element);
         }
@@ -104,7 +104,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     } : new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!stopped[0]) {
           super.visitElement(element);
         }

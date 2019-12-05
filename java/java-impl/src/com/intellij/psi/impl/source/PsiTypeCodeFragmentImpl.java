@@ -73,7 +73,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     try {
       accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitErrorElement(PsiErrorElement element) {
+        public void visitErrorElement(@NotNull PsiErrorElement element) {
           throw new MyTypeSyntaxException(element);
         }
       });

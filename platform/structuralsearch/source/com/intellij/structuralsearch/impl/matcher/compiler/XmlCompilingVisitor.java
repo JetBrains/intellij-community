@@ -9,6 +9,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.CODE;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.TEXT;
@@ -60,7 +61,7 @@ public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     myCompilingVisitor.handle(element);
     super.visitElement(element);
   }

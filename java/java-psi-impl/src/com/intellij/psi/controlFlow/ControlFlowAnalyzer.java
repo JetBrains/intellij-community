@@ -382,7 +382,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Override
-  public void visitFile(PsiFile file) {
+  public void visitFile(@NotNull PsiFile file) {
     visitChildren(file);
   }
 

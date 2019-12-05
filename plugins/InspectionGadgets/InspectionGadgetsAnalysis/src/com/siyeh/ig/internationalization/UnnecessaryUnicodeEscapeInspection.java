@@ -99,7 +99,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
         return;

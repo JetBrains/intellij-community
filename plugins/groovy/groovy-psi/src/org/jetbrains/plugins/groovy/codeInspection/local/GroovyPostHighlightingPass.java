@@ -101,7 +101,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     final Map<GrParameter, Boolean> usedParams = new HashMap<>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrReferenceExpression && !((GrReferenceElement)element).isQualified()) {
           GroovyResolveResult[] results = ((GrReferenceExpression)element).multiResolve(false);
           if (results.length == 0) {

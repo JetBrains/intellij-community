@@ -33,6 +33,7 @@ import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
 import java.util.*;
@@ -290,7 +291,7 @@ public class CompletionLists {
     for (PsiFile xpathFile : files) {
       xpathFile.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement e) {
+        public void visitElement(@NotNull PsiElement e) {
           if (e instanceof XPathNodeTest) {
             final XPathNodeTest nodeTest = (XPathNodeTest)e;
 

@@ -758,7 +758,7 @@ public class HtmlUtil {
       }
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element.getLanguage() instanceof XMLLanguage) {
           super.visitElement(element);
         }

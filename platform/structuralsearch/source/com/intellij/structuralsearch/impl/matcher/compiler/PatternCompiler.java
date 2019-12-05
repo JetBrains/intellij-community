@@ -138,7 +138,7 @@ public class PatternCompiler {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
@@ -164,7 +164,7 @@ public class PatternCompiler {
       });
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
           super.visitElement(element);
 
@@ -316,7 +316,7 @@ public class PatternCompiler {
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
 
         if (element instanceof LeafElement) {
@@ -356,7 +356,7 @@ public class PatternCompiler {
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitErrorElement(PsiErrorElement element) {
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
         super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();

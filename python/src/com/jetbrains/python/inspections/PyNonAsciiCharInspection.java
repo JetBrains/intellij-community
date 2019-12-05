@@ -63,7 +63,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
     }
 
     @Override
-    public void visitComment(PsiComment node) {
+    public void visitComment(@NotNull PsiComment node) {
       checkString(node, node.getText());
     }
 

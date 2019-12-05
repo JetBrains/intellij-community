@@ -230,7 +230,7 @@ public class GrabDependencies implements IntentionAction {
     final Set<GrAnnotation> resolvers = new THashSet<>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrAnnotation) {
           GrAnnotation anno = (GrAnnotation)element;
           String qname = anno.getQualifiedName();

@@ -142,7 +142,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   static class ValidatingVisitor extends PsiRecursiveElementWalkingVisitor {
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       super.visitErrorElement(element);
       final String errorDescription = element.getErrorDescription();
       final PsiElement parent = element.getParent();

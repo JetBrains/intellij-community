@@ -88,7 +88,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     try {
       getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitFile(final PsiFile file) {
+        public void visitFile(@NotNull final PsiFile file) {
           visit(file, fileIndex, psiManager);
         }
       });

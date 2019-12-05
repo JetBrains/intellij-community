@@ -61,7 +61,7 @@ public class NewGroovyClassNamingConventionInspection extends AbstractNamingConv
     }
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrTypeDefinition) {
           PsiClass aClass = (PsiClass)element;
           final String name = aClass.getName();

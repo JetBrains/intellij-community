@@ -37,7 +37,7 @@ public class JsonSchemaComplianceInspection extends JsonSchemaBasedInspectionBas
 
     return new JsonElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element == root) {
           // perform this only for the root element, because the checker traverses the hierarchy itself
           annotate(element, schema, holder, session, options);

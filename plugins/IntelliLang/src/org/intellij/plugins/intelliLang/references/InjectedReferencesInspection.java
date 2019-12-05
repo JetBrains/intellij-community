@@ -34,7 +34,7 @@ public class InjectedReferencesInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
 
         PsiReference[] injected = InjectedReferencesContributor.getInjectedReferences(element);
         if (injected != null) {

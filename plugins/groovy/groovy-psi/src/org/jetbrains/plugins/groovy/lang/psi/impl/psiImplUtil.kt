@@ -64,7 +64,7 @@ private fun GroovyFileImpl.collectScriptDeclarations(topLevelOnly: Boolean): Arr
 private fun GroovyFileImpl.doCollectScriptDeclarations(topLevelOnly: Boolean): Array<GrVariableDeclaration> {
   val result = mutableListOf<GrVariableDeclaration>()
   accept(object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
       if (element is GrVariableDeclaration && element.modifierList.rawAnnotations.isNotEmpty()) {
         result.add(element)
       }

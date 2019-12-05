@@ -483,7 +483,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (element.getFirstChild() == null) {
           result.append(element.getText());
@@ -649,7 +649,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       super.visitErrorElement(element);
       final PsiElement parent = element.getParent();
       final String errorDescription = element.getErrorDescription();
@@ -729,7 +729,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (scopeElement == null) return;
         scopeElement.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             final String type = element.getText();
             if (StructuralSearchUtil.isTypedVariable(type)) {
               final ParameterInfo typeInfo = builder.findParameterization(element);

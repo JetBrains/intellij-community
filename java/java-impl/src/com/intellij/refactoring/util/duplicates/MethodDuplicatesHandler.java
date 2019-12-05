@@ -152,7 +152,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
     scope.accept(new PsiRecursiveElementVisitor() {
       private int myFileCount;
-      @Override public void visitFile(final PsiFile file) {
+      @Override public void visitFile(@NotNull final PsiFile file) {
         if (progressIndicator != null){
           if (progressIndicator.isCanceled()) return;
           progressIndicator.setFraction(((double)myFileCount++)/fileCount);

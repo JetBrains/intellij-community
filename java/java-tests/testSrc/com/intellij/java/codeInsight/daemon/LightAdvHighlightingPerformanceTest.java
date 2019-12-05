@@ -122,7 +122,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
       getFile().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           for (int i = 0; i < 10; i++) {
             assertSame(myProject, element.getProject());
           }

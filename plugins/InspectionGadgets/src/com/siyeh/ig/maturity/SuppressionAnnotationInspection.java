@@ -154,7 +154,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   private class SuppressionAnnotationVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       super.visitComment(comment);
       final IElementType tokenType = comment.getTokenType();
       if (!tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT)

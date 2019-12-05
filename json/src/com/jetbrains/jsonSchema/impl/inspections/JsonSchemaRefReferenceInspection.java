@@ -33,7 +33,7 @@ public class JsonSchemaRefReferenceInspection extends JsonSchemaBasedInspectionB
     boolean checkRefs = schema != null && service.isSchemaFile(schema);
     return new JsonElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element == root) {
           if (element instanceof JsonObject) {
             final JsonProperty schemaProp = ((JsonObject)element).findProperty("$schema");

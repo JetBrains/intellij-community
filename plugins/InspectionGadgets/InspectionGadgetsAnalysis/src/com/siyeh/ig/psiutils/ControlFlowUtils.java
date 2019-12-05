@@ -1101,7 +1101,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (m_found) {
         return;
       }
@@ -1326,7 +1326,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (containsCallToMethod) {
         return;
       }
@@ -1361,7 +1361,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (found) {
         return;
       }

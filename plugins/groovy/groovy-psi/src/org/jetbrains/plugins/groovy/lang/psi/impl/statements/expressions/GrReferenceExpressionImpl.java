@@ -502,7 +502,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final List<PsiPolyVariantReference> result = new SmartList<>();
       qualifier.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element instanceof GrReferenceExpression) {
             super.visitElement(element);
           }

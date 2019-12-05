@@ -138,7 +138,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
       UCallExpression callExpression = AnalysisUastUtil.getUCallExpression(element);
       if (callExpression == null) return;

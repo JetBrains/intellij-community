@@ -587,7 +587,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     private boolean referenceFound;
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (referenceFound) {
         return;
       }

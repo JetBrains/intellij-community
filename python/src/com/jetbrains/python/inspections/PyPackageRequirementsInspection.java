@@ -99,7 +99,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPlainTextFile(PsiPlainTextFile file) {
+    public void visitPlainTextFile(@NotNull PsiPlainTextFile file) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
         checkPackagesHaveBeenInstalled(file, module);

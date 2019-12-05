@@ -651,7 +651,7 @@ public class ImportHelper{
         // check if that short name referenced in the file
         file.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (foundRef[0]) return;
             super.visitElement(element);
           }

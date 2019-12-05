@@ -508,13 +508,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
         @Override
-        public void visitFile(PsiFile file) {
+        public void visitFile(@NotNull PsiFile file) {
           TimeoutUtil.sleep(1000); // make it run longer that LIP
           super.visitFile(file);
         }
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           visited.add(element);
           super.visitElement(element);
         }
@@ -1407,7 +1407,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final List<PsiElement> visitedElements = Collections.synchronizedList(new ArrayList<>());
     class MyVisitor extends PsiElementVisitor {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         visitedElements.add(element);
       }
     }

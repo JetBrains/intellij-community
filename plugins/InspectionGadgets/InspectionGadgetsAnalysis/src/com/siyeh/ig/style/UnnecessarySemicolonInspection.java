@@ -107,7 +107,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
   private class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       findTopLevelSemicolons(file);
       super.visitFile(file);
     }

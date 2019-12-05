@@ -17,6 +17,7 @@ package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
@@ -78,7 +79,7 @@ public class ElementNeedsThis extends ClassThisReferencesVisitor {
     }
   }
 
-  @Override public void visitElement(PsiElement element) {
+  @Override public void visitElement(@NotNull PsiElement element) {
     if (myResult) return;
     super.visitElement(element);
   }

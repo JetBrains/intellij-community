@@ -17,6 +17,7 @@
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ class BackpointerUsageVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (myCause != null) {
       return;
     }

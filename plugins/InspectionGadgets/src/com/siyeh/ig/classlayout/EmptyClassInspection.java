@@ -161,7 +161,7 @@ public class EmptyClassInspection extends BaseInspection {
 
   private class EmptyClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (!(file instanceof PsiJavaFile)) {
         return;

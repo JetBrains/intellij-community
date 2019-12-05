@@ -125,7 +125,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
       public void run(@NotNull final ProgressIndicator indicator) {
         scope.accept(new PsiElementVisitor() {
           @Override
-          public void visitFile(final PsiFile file) {
+          public void visitFile(@NotNull final PsiFile file) {
             if (indicator.isCanceled()) {
               return;
             }

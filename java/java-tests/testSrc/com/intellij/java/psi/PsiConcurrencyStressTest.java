@@ -152,7 +152,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("h");
         aClass.accept(new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(final PsiElement element) {
+          public void visitElement(@NotNull final PsiElement element) {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);

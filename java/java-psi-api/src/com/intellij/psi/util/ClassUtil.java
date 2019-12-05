@@ -109,7 +109,7 @@ public class ClassUtil {
       private int myCurrentIdx;
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
         }

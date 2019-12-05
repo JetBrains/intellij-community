@@ -215,7 +215,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         final boolean[] parameterUsed = new boolean[] {false};
         qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (parameterUsed[0]) return;
             super.visitElement(element);
           }

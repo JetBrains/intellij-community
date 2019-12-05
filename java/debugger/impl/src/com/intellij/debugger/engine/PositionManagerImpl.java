@@ -619,7 +619,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (myCompiledMethod == null) {
         super.visitElement(element);
       }

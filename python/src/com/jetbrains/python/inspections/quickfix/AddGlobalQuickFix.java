@@ -33,7 +33,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
       final Ref<Boolean> added = new Ref<>(false);
       owner.accept(new PyRecursiveElementVisitor(){
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (!added.get()){
             super.visitElement(element);
           }

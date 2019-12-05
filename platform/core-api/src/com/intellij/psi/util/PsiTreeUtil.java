@@ -882,7 +882,7 @@ public class PsiTreeUtil {
     final boolean[] result = {true};
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         //noinspection unchecked
         if (processor.execute(element)) {
           super.visitElement(element);

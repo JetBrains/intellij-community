@@ -21,7 +21,7 @@ class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = object : PyInspectionVisitor(holder, session) {
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
       if (element is PyFunction) {
         val requiredParameters = element
           .getParametersOfParametrized(myTypeEvalContext)

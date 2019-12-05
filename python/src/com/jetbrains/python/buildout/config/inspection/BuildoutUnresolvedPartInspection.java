@@ -83,7 +83,7 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
     private final List<BuildoutPartReference> unresolvedParts = Lists.newArrayList();
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (element instanceof BuildoutCfgValueLine) {
         PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {

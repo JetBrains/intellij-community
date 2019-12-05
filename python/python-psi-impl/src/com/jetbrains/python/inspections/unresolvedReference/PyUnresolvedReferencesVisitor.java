@@ -105,7 +105,7 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     super.visitComment(comment);
     if (comment instanceof PsiLanguageInjectionHost) {
       processInjection((PsiLanguageInjectionHost)comment);

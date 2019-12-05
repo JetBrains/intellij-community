@@ -112,7 +112,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       throwExpressionInvalid(element);
     }
 

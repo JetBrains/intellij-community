@@ -153,7 +153,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitComment(PsiComment comment) {
+    public void visitComment(@NotNull PsiComment comment) {
       if (!allowComments() && myWarnAboutComments) {
         if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment) &&
             comment.getContainingFile().getLanguage() instanceof JsonLanguage) {

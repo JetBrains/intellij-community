@@ -47,7 +47,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       // must not contain scriptlets or custom tags
       PsiFile root = jspFile.getBaseLanguageRoot();
       root.accept(new PsiRecursiveElementVisitor(){
-        @Override public void visitElement(PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
           TextRange elementRange = element.getTextRange();
           if (elementRange.intersectsStrict(selectedRange)) {
             // in JSPX base language root is a Jspx file itself

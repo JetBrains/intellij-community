@@ -348,7 +348,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     if (comment.getText().startsWith("(?#")) {
       if (!myLanguageHosts.supportsPerl5EmbeddedComments(comment)) {
         myHolder.createErrorAnnotation(comment, "Embedded comments are not supported in this regex dialect");

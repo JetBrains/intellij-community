@@ -313,7 +313,7 @@ public class SwitchUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (m_used) {
         return;
       }

@@ -627,7 +627,7 @@ public class InlineUtil {
         }
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (success) {
             super.visitElement(element);
           }

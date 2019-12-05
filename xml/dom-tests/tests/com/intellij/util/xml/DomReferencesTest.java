@@ -55,7 +55,7 @@ public class DomReferencesTest extends DomHardCoreTestCase {
 
   public void testProcessingInstruction() {
     createElement("<a><?xml version=\"1.0\"?></a>").getXmlTag().accept(new PsiRecursiveElementVisitor() {
-      @Override public void visitElement(PsiElement element) {
+      @Override public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         for (final PsiReference reference : element.getReferences()) {
           assertFalse(reference instanceof GenericDomValueReference);

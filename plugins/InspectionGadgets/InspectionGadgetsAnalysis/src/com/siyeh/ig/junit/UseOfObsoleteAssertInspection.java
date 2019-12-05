@@ -173,7 +173,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
       final boolean[] proceed = new boolean[]{true};
       methodCallExpression.getContainingFile().accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (proceed[0]) {
             super.visitElement(element);
           }

@@ -261,7 +261,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       final List<PsiReference> psiRefs = new ArrayList<>();
       element.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement child) {
+        public void visitElement(@NotNull PsiElement child) {
           if (child instanceof XmlToken && ((XmlToken)child).getTokenType() == XmlTokenType.XML_NAME) {
             psiRefs.add(new ElementReference((XmlElement)element, (XmlElement)child));
           }

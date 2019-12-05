@@ -249,7 +249,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
         for (final GrStatement statement : statements) {
           statement.accept(new PsiRecursiveElementVisitor() {
             @Override
-            public void visitElement(final PsiElement element) {
+            public void visitElement(@NotNull final PsiElement element) {
               super.visitElement(element);
               if (element instanceof GrReferenceExpression) {
                 GrReferenceExpression expr = (GrReferenceExpression) element;

@@ -1031,7 +1031,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static void addMarkedElements(final List<? super PsiReferenceExpression> array, PsiElement scope) {
     scope.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override public void visitElement(PsiElement element) {
+      @Override public void visitElement(@NotNull PsiElement element) {
         if (element.getCopyableUserData(MARK_KEY) != null) {
           array.add((PsiReferenceExpression)element);
           element.putCopyableUserData(MARK_KEY, null);

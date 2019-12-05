@@ -47,7 +47,7 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
     JsonComplianceCheckerOptions options = new JsonComplianceCheckerOptions(myCaseInsensitiveEnum);
     return new YamlPsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!roots.contains(element)) return;
         final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, object);
         if (walker == null) return;

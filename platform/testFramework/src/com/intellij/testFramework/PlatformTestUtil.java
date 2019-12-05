@@ -866,7 +866,7 @@ public class PlatformTestUtil {
     List<WebReference> refs = new ArrayList<>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         for (PsiReference ref : element.getReferences()) {
           if (ref instanceof WebReference) {
             refs.add((WebReference)ref);

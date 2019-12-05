@@ -42,7 +42,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
     }
 
     @Override
-    public void visitElement(final PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (element instanceof ScopeOwner) {
         final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)element);
         final Instruction[] instructions = flow.getInstructions();

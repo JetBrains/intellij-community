@@ -48,7 +48,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (!(propertiesFile instanceof PropertiesFileImpl)) {
           return;

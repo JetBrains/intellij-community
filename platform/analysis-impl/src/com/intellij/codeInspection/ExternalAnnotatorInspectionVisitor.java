@@ -45,7 +45,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   }
 
   @Override
-  public void visitFile(PsiFile file) {
+  public void visitFile(@NotNull PsiFile file) {
     ProblemDescriptor[] descriptors = checkFileWithExternalAnnotator(file, myHolder.getManager(), myIsOnTheFly, myAnnotator);
     addDescriptors(descriptors);
   }

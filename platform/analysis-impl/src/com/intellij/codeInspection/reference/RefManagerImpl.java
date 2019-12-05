@@ -457,7 +457,7 @@ public class RefManagerImpl extends RefManager {
 
   private class ProjectIterator extends PsiElementVisitor {
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       ProgressManager.checkCanceled();
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
@@ -519,7 +519,7 @@ public class RefManagerImpl extends RefManager {
     }
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         String relative = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), myProject, true, false);

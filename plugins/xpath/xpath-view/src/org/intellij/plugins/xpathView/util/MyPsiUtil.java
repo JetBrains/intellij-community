@@ -146,7 +146,7 @@ public class MyPsiUtil {
         final String[] error = new String[1];
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
-            public void visitErrorElement(PsiErrorElement element) {
+            public void visitErrorElement(@NotNull PsiErrorElement element) {
                 error[0] = element.getErrorDescription();
             }
         });
@@ -155,7 +155,7 @@ public class MyPsiUtil {
         final Annotator annotator = LanguageAnnotators.INSTANCE.forLanguage(file.getLanguage());
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
                 AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
                 annotator.annotate(element, holder);
                 for (Annotation annotation : holder) {

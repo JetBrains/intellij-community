@@ -69,7 +69,7 @@ public class YAMLResolveTest extends BasePlatformTestCase {
 
     file.accept(new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         referencesList.addAll(Arrays.asList(element.getReferences()));
         element.acceptChildren(this);
       }

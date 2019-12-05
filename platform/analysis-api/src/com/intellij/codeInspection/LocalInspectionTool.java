@@ -140,7 +140,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 
@@ -203,7 +203,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         element.accept(customVisitor);
         processInjectedFile(element);
 
@@ -217,7 +217,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
             for (Pair<PsiElement, TextRange> pair : files) {
               pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
                 @Override
-                public void visitElement(PsiElement injectedElement) {
+                public void visitElement(@NotNull PsiElement injectedElement) {
                   injectedElement.accept(customVisitor);
                   super.visitElement(injectedElement);
                 }

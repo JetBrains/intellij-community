@@ -175,7 +175,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
   private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (!(file instanceof XmlFile)) {
         return;

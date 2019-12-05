@@ -721,7 +721,7 @@ public class HighlightClassUtil {
     final HighlightInfo[] infos = new HighlightInfo[1];
     extendRef.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (infos[0] != null) return;
         super.visitElement(element);
       }

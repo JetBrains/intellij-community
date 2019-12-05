@@ -347,7 +347,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     }
 
-    @Override public void visitElement(PsiElement element) {
+    @Override public void visitElement(@NotNull PsiElement element) {
       if(conflict != null) return;
       super.visitElement(element);
     }
