@@ -48,6 +48,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
@@ -90,10 +91,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
 
-  @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SocketAttach";
-  @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryAttach";
-  @NonNls public static final String SOCKET_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SocketListen";
-  @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = "com.sun.jdi.SharedMemoryListen";
+  private static final String CONNECTOR_PACKAGE = "com." + (Registry.is("debugger.jb.jdi") ? "jetbrains" : "sun") + ".jdi.";
+  @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SocketAttach";
+  @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SharedMemoryAttach";
+  @NonNls public static final String SOCKET_LISTENING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SocketListen";
+  @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SharedMemoryListen";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
