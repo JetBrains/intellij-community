@@ -14,6 +14,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -372,6 +373,36 @@ class LegacyBridgeModulesTest {
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
       assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl().url)
+    }
+  }
+
+  @Test
+  @RunsInEdt
+  fun `test libraries are loaded from cache`() {
+    val builder = TypedEntityStorageBuilder.create()
+
+    val tempDir = temporaryDirectoryRule.newPath().toFile()
+
+    val jarUrl = File(tempDir, "a.jar").toVirtualFileUrl()
+    builder.addLibraryEntity(
+      name = "my_lib",
+      tableId = LibraryTableId.ProjectLibraryTableId,
+      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)),
+      excludedRoots = emptyList(),
+      source = IdeUiEntitySource
+    )
+
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+      val project = ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
+      ProjectManagerEx.getInstanceEx().openProject(project)
+      disposableRule.disposable.attach { ProjectUtil.closeAndDispose(project) }
+
+      val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+      val library = projectLibraryTable.getLibraryByName("my_lib")
+      assertNotNull(library)
+
+      assertEquals(JpsLibraryTableSerializer.PROJECT_LEVEL, library!!.table.tableLevel)
+      assertSameElements(library.getUrls(OrderRootType.CLASSES), jarUrl.url)
     }
   }
 

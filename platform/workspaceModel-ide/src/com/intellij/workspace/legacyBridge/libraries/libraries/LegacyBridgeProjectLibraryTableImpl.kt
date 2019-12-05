@@ -35,6 +35,8 @@ class LegacyBridgeProjectLibraryTableImpl(
 
   private val entityStore: TypedEntityStore = WorkspaceModel.getInstance(parentProject).entityStore
 
+  private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
+
   @ApiStatus.Internal
   internal fun setNewLibraryInstances(addedInstances: List<LegacyBridgeLibraryImpl>) {
     if (newLibraryInstances.isNotEmpty()) error("setNewLibraryInstances are not empty")
@@ -151,6 +153,25 @@ class LegacyBridgeProjectLibraryTableImpl(
         }
       }
     })
+
+    executeOrQueueOnDispatchThread {
+      entityStore.current
+        .entities(LibraryEntity::class.java)
+        .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
+        .forEach { libraryEntity ->
+          val library = LegacyBridgeLibraryImpl(
+            libraryTable = this@LegacyBridgeProjectLibraryTableImpl,
+            project = project,
+            initialId = libraryEntity.persistentId(),
+            initialEntityStore = entityStore,
+            parent = this@LegacyBridgeProjectLibraryTableImpl
+          )
+
+          addLibraryToMaps(library)
+
+          dispatcher.multicaster.afterLibraryAdded(library)
+        }
+    }
   }
 
   override fun getProject(): Project = parentProject
@@ -198,7 +219,6 @@ class LegacyBridgeProjectLibraryTableImpl(
       originalStorage = entityStore.current
     )
 
-  private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
   override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)
   override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) =
     dispatcher.addListener(listener, parentDisposable)
