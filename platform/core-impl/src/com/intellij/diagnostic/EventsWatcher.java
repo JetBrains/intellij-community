@@ -33,14 +33,21 @@ public final class EventsWatcher implements Disposable {
   );
   @NotNull
   private static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
+
   private static final long ourStartTimestamp = System.currentTimeMillis();
+  private static Boolean ourIsEnabled = null;
 
   @Nullable
   public static EventsWatcher getInstance() {
+    if (ourIsEnabled == null) {
+      ourIsEnabled = Registry.is("events.watcher.enabled");
+    }
+    if (!ourIsEnabled) return null;
+
     Application application = ApplicationManager.getApplication();
-    return application != null && !application.isDisposed() && Registry.is("events.watcher.enabled") ?
-           ServiceManager.getService(EventsWatcher.class) :
-           null;
+    if (application == null || application.isDisposed()) return null;
+
+    return ServiceManager.getService(EventsWatcher.class);
   }
 
   @NotNull
