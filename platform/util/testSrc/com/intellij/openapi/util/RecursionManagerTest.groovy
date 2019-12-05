@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util
 
+import com.intellij.openapi.Disposable
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
@@ -9,7 +10,20 @@ import junit.framework.TestCase
  */
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
-  
+  private final Disposable myDisposable = Disposer.newDisposable()
+
+  @Override
+  protected void setUp() throws Exception {
+    RecursionManager.assertOnMissedCache(myDisposable)
+    super.setUp()
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    Disposer.dispose(myDisposable)
+    super.tearDown()
+  }
+
   def prevent(Object key, boolean memoize = true, Closure c) {
     myGuard.doPreventingRecursion(key, memoize, c as Computable)
   }
@@ -57,6 +71,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testMayCache() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     def doo1 = RecursionManager.markStack()
     assert "doo-return" == prevent("doo") {
       def foo1 = RecursionManager.markStack()
@@ -86,6 +101,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testNoCachingForMemoizedValues() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {
         assert null == prevent("foo") { "foo-return" }
@@ -101,6 +117,7 @@ class RecursionManagerTest extends TestCase {
   }
 
   void testNoCachingForMemoizedValues2() {
+    RecursionManager.disableMissedCacheAssertions(myDisposable)
     assert "1-return" == prevent("1") {
       assert "2-return" == prevent("2") {
         assert "3-return" == prevent("3") {

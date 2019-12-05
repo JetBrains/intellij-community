@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
@@ -60,7 +62,8 @@ import java.util.stream.Stream;
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance(RecursionManager.class);
   private static final ThreadLocal<CalculationStack> ourStack = ThreadLocal.withInitial(CalculationStack::new);
-  private static boolean ourAssertOnPrevention;
+  private static final AtomicBoolean ourAssertOnPrevention = new AtomicBoolean();
+  private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
 
   /**
    * Run the given computation, unless it's already running in this thread.
@@ -86,7 +89,7 @@ public class RecursionManager {
         final CalculationStack stack = ourStack.get();
 
         if (stack.checkReentrancy(realKey)) {
-          if (ourAssertOnPrevention) {
+          if (ourAssertOnPrevention.get()) {
             throw new StackOverflowPreventedException("Endless recursion prevention occurred on " + key);
           }
           return null;
@@ -108,7 +111,7 @@ public class RecursionManager {
         final int sizeBefore = stack.progressMap.size();
         stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
-        Set<MyKey> preventionsBefore = memoize ? new THashSet<>(stack.preventions) : Collections.emptySet();
+        Set<MyKey> preventionsBefore = memoize ? new THashSet<>(stack.preventions.keySet()) : Collections.emptySet();
 
         try {
           T result = computation.compute();
@@ -178,7 +181,12 @@ public class RecursionManager {
     return new RecursionGuard.StackStamp() {
       @Override
       public boolean mayCacheNow() {
-        return stamp == ourStack.get().reentrancyCount;
+        CalculationStack stack = ourStack.get();
+        boolean result = stamp == stack.reentrancyCount;
+        if (!result && ourAssertOnMissedCache.get() && !stack.isCurrentNonCachingStillTolerated()) {
+          throw new CachingPreventedException(stack.preventions);
+        }
+        return result;
       }
     };
   }
@@ -226,7 +234,7 @@ public class RecursionManager {
     private int reentrancyCount;
     private int depth;
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
-    private final Set<MyKey> preventions = ContainerUtil.newIdentityTroveSet();
+    private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
     private final Map<MyKey, List<SoftReference<MemoizedValue>>> intermediateCache = ContainerUtil.createSoftMap();
     private int enters;
     private int exits;
@@ -276,7 +284,7 @@ public class RecursionManager {
 
     void maybeMemoize(MyKey realKey, @Nullable Object result, Set<MyKey> preventionsBefore) {
       if (preventions.size() > preventionsBefore.size()) {
-        List<MyKey> added = ContainerUtil.findAll(preventions, key -> key != realKey && !preventionsBefore.contains(key));
+        List<MyKey> added = ContainerUtil.findAll(preventions.keySet(), key -> key != realKey && !preventionsBefore.contains(key));
         intermediateCache.computeIfAbsent(realKey, __ -> new SmartList<>())
           .add(new SoftReference<>(new MemoizedValue(result, added.toArray(new MyKey[0]))));
       }
@@ -315,7 +323,7 @@ public class RecursionManager {
       List<Map.Entry<MyKey, Integer>> stack = new ArrayList<>(progressMap.entrySet());
       int loopStart = ContainerUtil.indexOf(stack, entry -> entry.getKey().equals(realKey));
       if (loopStart >= 0) {
-        preventions.add(stack.get(loopStart).getKey());
+        preventions.put(stack.get(loopStart).getKey(), ourAssertOnMissedCache.get() ? new StackOverflowPreventedException(null) : null);
         for (int i = loopStart + 1; i < stack.size(); i++) {
           stack.get(i).setValue(reentrancyCount);
         }
@@ -333,7 +341,39 @@ public class RecursionManager {
         throw new AssertionError("_Inconsistent depth " + s + "; depth=" + oldDepth + "; enters=" + enters + "; exits=" + exits + "; map=" + progressMap);
       }
     }
+
+    /**
+     * Rules in this method correspond to bugs that should be fixed but for some reasons thi can't be done immediately.
+     * The ultimate goal is to get rid of all of them.
+     * So, each rule should be accompanied by a reference to a tracker issue.
+     * Don't add rules here without discussing them with someone else.
+     * Don't add rules for situation where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
+     */
+    boolean isCurrentNonCachingStillTolerated() {
+      String trace = ExceptionUtil.getThrowableText(new Throwable());
+
+      if (trace.contains("com.intellij.psi.impl.source.xml.XmlTagImpl.getDescriptor(") ||
+          trace.contains("com.intellij.xml.impl.schema.XmlNSDescriptorImpl.findTypeDescriptor(")) {  // IDEA-212671
+        if (ContainerUtil.exists(progressMap.keySet(), key -> {
+          String s = key.userObject.toString();
+          return s != null &&
+                 (s.contains("XmlTag.getDescriptor(<xs:import " +
+                             "namespace=\"http://www.w3.org/XML/1998/namespace\" " +
+                             "schemaLocation=\"http://www.w3.org/2001/xml.xsd\"") ||
+                  s.startsWith("<XmlTag:xsd:schema") && s.endsWith("http://java.sun.com/xml/ns/javaee>"));
+        })) {
+          return true;
+        }
+      }
+
+      return ContainerUtil.exists(toleratedFrames, trace::contains);
+    }
   }
+
+  private static final String[] toleratedFrames = {
+    "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
+    "org.jetbrains.plugins.grails.references.domain.DomainDescriptor.getDescriptor(", // IDEA-228536
+  };
 
   private static class MemoizedValue {
     final Object value;
@@ -351,27 +391,57 @@ public class RecursionManager {
 
   @TestOnly
   public static void assertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
-    setAssertOnRecursionPrevention(parentDisposable, true);
+    setFlag(parentDisposable, true, ourAssertOnPrevention);
   }
 
-  private static void setAssertOnRecursionPrevention(@NotNull Disposable parentDisposable, boolean toAssert) {
-    boolean prev = ourAssertOnPrevention;
+  private static void setFlag(@NotNull Disposable parentDisposable, boolean toAssert, AtomicBoolean flag) {
+    boolean prev = flag.get();
     if (toAssert == prev) return;
 
-    ourAssertOnPrevention = toAssert;
+    flag.set(toAssert);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        if (ourAssertOnPrevention == toAssert) {
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          ourAssertOnPrevention = prev;
+        if (flag.get() != toAssert) {
+          throw new IllegalStateException("Non-nested assertion flag modifications");
         }
+        flag.set(prev);
       }
     });
   }
 
   @TestOnly
   public static void disableAssertOnRecursionPrevention(@NotNull Disposable parentDisposable) {
-    setAssertOnRecursionPrevention(parentDisposable, false);
+    setFlag(parentDisposable, false, ourAssertOnPrevention);
+  }
+
+  @TestOnly
+  public static void disableMissedCacheAssertions(@NotNull Disposable parentDisposable) {
+    setFlag(parentDisposable, false, ourAssertOnMissedCache);
+  }
+
+  @TestOnly
+  public static void assertOnMissedCache(@NotNull Disposable parentDisposable) {
+    setFlag(parentDisposable, true, ourAssertOnMissedCache);
+  }
+
+  /**
+   * If this exception happened to you, this means that your caching might be suboptimal due to endless recursion, and you'd better fix that.
+   * The exception's cause might help, as it contains a full stack trace of the endless recursion prevention that has led to this caching prohibition.
+   * <p></p>
+   * Try to get rid of the cyclic dependency. Often it's easy: look carefully at the stack trace, put breakpoints, look at the values passed,
+   * and find something that shouldn't be called there. There's almost always such something. Remove it and voila, you've got rid of the cycle,
+   * improved caching and also avoided calling unnecessary code which can speed up the execution even in unrelated circumstances.
+   * <p></p>
+   * There are rare cases when recursion prevention is acceptable. They might involve analyzing incorrect code or
+   * independent plugins calling into each other. This should be an exotic sutiation, not a normal workflow.
+   * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
+   * which check such exotic situations.
+   */
+  private static class CachingPreventedException extends RuntimeException {
+    CachingPreventedException(Map<MyKey, Throwable> preventions) {
+      super("Caching disabled due recursion preventions, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
+            ContainerUtil.getFirstItem(preventions.values()));
+    }
   }
 }

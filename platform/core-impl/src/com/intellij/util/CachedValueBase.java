@@ -259,4 +259,9 @@ public abstract class CachedValueBase<T> {
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" + getValueProvider() + "}";
+  }
 }

@@ -437,9 +437,18 @@ public abstract class XmlTagDelegate {
 
   @Nullable
   XmlElementDescriptor getDescriptor() {
-    return CachedValuesManager.getCachedValue(myTag, () -> {
-      XmlElementDescriptor descriptor = RecursionManager.doPreventingRecursion(myTag, true, this::computeElementDescriptor);
-      return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker(myTag));
+    return CachedValuesManager.getCachedValue(myTag, new CachedValueProvider<XmlElementDescriptor>() {
+      @Override
+      public Result<XmlElementDescriptor> compute() {
+        XmlElementDescriptor descriptor =
+          RecursionManager.doPreventingRecursion(myTag, true, XmlTagDelegate.this::computeElementDescriptor);
+        return Result.create(descriptor, PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker(myTag));
+      }
+
+      @Override
+      public String toString() {
+        return "XmlTag.getDescriptor(" + myTag.getText() + ")";
+      }
     });
   }
 
