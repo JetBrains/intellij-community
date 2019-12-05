@@ -167,7 +167,8 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
     CommitTableModelRow(i, entry)
   }.toMutableList()
 
-  val entries: List<GitRebaseEntryWithEditedMessage> = rows.map { it.entry }
+  val entries: List<GitRebaseEntryWithEditedMessage>
+    get() = rows.map { it.entry }
 
   fun resetEntries() {
     rows.sortBy { it.initialIndex }
