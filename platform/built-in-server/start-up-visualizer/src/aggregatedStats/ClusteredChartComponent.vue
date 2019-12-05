@@ -64,6 +64,9 @@
           data.groupNames = data.groupNames.slice(data.groupNames.length - 4)
         }
 
+        if (this.timeRange === "lastMonth") {
+          chartManager.setChartTitle("Last 4 weeks")
+        }
         chartManager.render(data)
       })
     }

@@ -4,9 +4,6 @@ export type Metrics = { [key: string]: number; }
 export interface InfoResponse {
   readonly productNames: Array<string>
   readonly productToMachine: { [key: string]: Array<MachineGroup>; }
-
-  readonly durationMetricNames: Array<string>
-  readonly instantMetricNames: Array<string>
 }
 
 export interface MachineGroup {

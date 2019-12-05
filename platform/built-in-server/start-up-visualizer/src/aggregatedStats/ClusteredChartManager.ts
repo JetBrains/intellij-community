@@ -42,6 +42,20 @@ export class ClusteredChartManager implements StatChartManager {
     label.tooltipText = "{category}"
   }
 
+  private currentChartTitle: string | null = null
+
+  setChartTitle(value: string) {
+    if (this.currentChartTitle === value) {
+      return
+    }
+
+    this.currentChartTitle = value
+    const chart = this.chart
+    const title = chart.titles.length === 0  ? chart.titles.create() : chart.titles.getIndex(0)!!
+    title.html = `<h3>${value}</h3>`
+    title.paddingBottom = 5
+  }
+
   render(data: GroupedMetricResponse): void {
     const chart = this.chart
 
@@ -63,6 +77,8 @@ export class ClusteredChartManager implements StatChartManager {
       }
     }
 
+    chart.xAxes.getIndex(0)!!.renderer.labels.template.maxWidth = data.groupNames.length > 4 ? 120 : 180
+
     oldSeries.forEach(value => {
       console.log("dispose series", value.name)
       chart.series.removeIndex(chart.series.indexOf(value))
@@ -79,7 +95,7 @@ export class ClusteredChartManager implements StatChartManager {
     series.columns.template.width = am4core.percent(95)
     // series.columns.template.tooltipText = `${groupName}: {valueY} ms`
 
-    let valueLabel = series.bullets.push(new am4charts.LabelBullet())
+    const valueLabel = series.bullets.push(new am4charts.LabelBullet())
     valueLabel.label.text = "{valueY.formatDuration('S')}"
     valueLabel.label.verticalCenter = "bottom"
     valueLabel.label.hideOversized = false

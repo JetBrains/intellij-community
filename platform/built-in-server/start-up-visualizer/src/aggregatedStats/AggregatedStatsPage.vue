@@ -97,7 +97,7 @@
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d", "editorRestoring_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d"]' :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
             </el-row>
@@ -105,12 +105,25 @@
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="5" style="margin-top: 5px;">
+              <el-col :span="12">
+                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
-                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
                 </el-card>
               </el-col>
             </el-row>
@@ -126,7 +139,7 @@
             <small>Events <code>bootstrap</code> and <code>splash</code> are not available for reports <= v5 (May 2019, Idea 2019.2).</small>
           </li>
           <li>
-            <small>Events <code>editorRestoring</code> is reliably reported since 23 November 2019.</small>
+            <small>Events <code>editorRestoring</code> and <code>projectDumbAware_d</code> are reliably reported since 23 November 2019.</small>
           </li>
         </ul>
       </el-col>

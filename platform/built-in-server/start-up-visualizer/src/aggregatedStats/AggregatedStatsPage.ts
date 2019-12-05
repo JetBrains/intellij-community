@@ -34,6 +34,7 @@ export default class AggregatedStatsPage extends Vue {
     loadJson(`${this.chartSettings.serverUrl}/api/v1/info`, null)
       .then((data: InfoResponse | null) => {
         if (data == null) {
+          this.isFetching = false
           return
         }
 
