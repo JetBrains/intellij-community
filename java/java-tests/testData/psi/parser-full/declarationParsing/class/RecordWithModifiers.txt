@@ -5,7 +5,7 @@ PsiJavaFile:RecordWithModifiers.java
     PsiModifierList:private
       PsiKeyword:private('private')
     PsiWhiteSpace(' ')
-    PsiJavaToken:RECORD('record')
+    PsiKeyword:record('record')
     PsiWhiteSpace(' ')
     PsiIdentifier:ClassName('ClassName')
     PsiTypeParameterList

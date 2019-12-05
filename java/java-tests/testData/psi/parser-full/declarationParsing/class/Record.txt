@@ -4,7 +4,7 @@ PsiJavaFile:Record.java
   PsiClass:ClassName
     PsiModifierList:
       <empty list>
-    PsiJavaToken:RECORD('record')
+    PsiKeyword:record('record')
     PsiWhiteSpace(' ')
     PsiIdentifier:ClassName('ClassName')
     PsiTypeParameterList

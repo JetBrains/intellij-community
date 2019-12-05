@@ -1,0 +1,1 @@
+rec<caret> A {}
