@@ -14,7 +14,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -30,11 +29,9 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -901,38 +898,6 @@ public class PlatformTestUtil {
       each.run();
     }
     ourProjectCleanups.clear();
-  }
-
-  /**
-   * Disposes the application (it also stops some application-related threads)
-   * and checks for project leaks.
-   */
-  public static void disposeApplicationAndCheckForProjectLeaks() {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      cleanupAllProjects();
-
-      UIUtil.dispatchAllInvocationEvents();
-
-      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-      if (application != null) {
-        System.out.println(application.writeActionStatistics());
-      }
-      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
-      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
-      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
-
-      try {
-        LeakHunter.checkNonDefaultProjectLeak();
-      }
-      catch (AssertionError | Exception e) {
-        captureMemorySnapshot();
-        ExceptionUtil.rethrow(e);
-      }
-      finally {
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    });
   }
 
   public static void captureMemorySnapshot() {

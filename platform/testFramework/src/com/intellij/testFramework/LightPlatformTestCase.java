@@ -9,8 +9,6 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.idea.IdeaTestApplication;
-import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -74,7 +72,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -91,7 +91,6 @@ import static com.intellij.testFramework.RunAll.runAll;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static IdeaTestApplication ourTestAppManager;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static Project ourProject;
   private static Module ourModule;
@@ -137,21 +136,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @NotNull
-  public static IdeaTestApplication initApplication() {
-    ourTestAppManager = IdeaTestApplication.getInstance();
-    return ourTestAppManager;
+  public static TestApplicationManager initApplication() {
+    return TestApplicationManager.getInstance();
   }
 
-  @TestOnly
-  static void disposeApplication() {
-    if (ourTestAppManager != null) {
-      ourTestAppManager.disposeApp();
-      ourTestAppManager = null;
-    }
-  }
-
-  public static IdeaTestApplication getApplication() {
-    return ourTestAppManager;
+  public static TestApplicationManager getApplication() {
+    return TestApplicationManager.getInstanceIfCreated();
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -244,12 +234,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Timings.getStatistics();
     }
 
-    initApplication();
+    TestApplicationManager testAppManager = initApplication();
 
     EdtTestUtil.runInEdtAndWait(() -> {
       super.setUp();
 
-      ourTestAppManager.setDataProvider(this);
+      testAppManager.setDataProvider(this);
       LightProjectDescriptor descriptor = getProjectDescriptor();
       doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
       InjectedLanguageManagerImpl.pushInjectors(getProject());
@@ -382,8 +372,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         InplaceRefactoring.checkCleared();
       },
       () -> {
-        if (project != null && ourTestAppManager != null) {
-          doTearDown(project, ourTestAppManager);
+        if (project != null) {
+          doTearDown(project, null);
         }
       },
       () -> {
@@ -421,17 +411,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     );
   }
 
-  public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication testAppManager) {
+  public static void doTearDown(@NotNull Project project, @Nullable TestApplicationManager testAppManager) {
     try {
-      IdeaTestApplicationKt.tearDownProjectAndApp(project, testAppManager);
+      TestApplicationManagerKt.tearDownProjectAndApp(project, testAppManager);
     }
     finally {
       ourTestCase = null;
     }
   }
 
-  @ApiStatus.Internal
-  public static void checkAssertions() throws Exception {
+  static void checkAssertions() throws Exception {
     if (!ourAssertionsInTestDetected) {
       if (IdeaLogger.ourErrorsOccurred != null) {
         throw IdeaLogger.ourErrorsOccurred;
@@ -439,8 +428,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  @ApiStatus.Internal
-  public static void tearDownSourceRoot(@NotNull Project project) {
+  static void tearDownSourceRoot(@NotNull Project project) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
       if (ourSourceRoot != null) {
         try {

@@ -3,7 +3,6 @@ package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -51,7 +50,7 @@ open class ApplicationRule : ExternalResource() {
   }
 
   public final override fun before() {
-    IdeaTestApplication.getInstance()
+    TestApplicationManager.getInstance()
     TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
@@ -121,7 +120,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     get() {
       var result = sharedProject
       if (result == null) {
-        synchronized(IdeaTestApplication.getInstance()) {
+        synchronized(TestApplicationManager.getInstance()) {
           result = sharedProject
           if (result == null) {
             result = createLightProject()

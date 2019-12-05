@@ -5,8 +5,6 @@ package com.intellij.testFramework.fixtures.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.idea.IdeaTestApplication;
-import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -59,7 +57,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private Project myProject;
   private volatile Module myModule;
   private final Set<Path> myFilesToDelete = new HashSet<>();
-  private IdeaTestApplication myTestAppManager;
+  private TestApplicationManager myTestAppManager;
   private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
@@ -101,7 +99,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       runAll = runAll
         .append(
           () -> {
-            IdeaTestApplicationKt.tearDownProjectAndApp(myProject, myTestAppManager);
+            TestApplicationManagerKt.tearDownProjectAndApp(myProject, myTestAppManager);
             myProject = null;
           },
           () -> {
@@ -201,7 +199,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void initApplication() {
-    myTestAppManager = IdeaTestApplication.getInstance();
+    myTestAppManager = TestApplicationManager.getInstance();
     myTestAppManager.setDataProvider(new MyDataProvider());
   }
 

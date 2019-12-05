@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.idea
+package com.intellij.testFramework
 
 import com.intellij.ReviseWhenPortedToJDK
 import com.intellij.application.options.CodeStyle
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneratedSourceFileChangeTracker
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
@@ -20,8 +21,10 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
+import com.intellij.idea.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -48,17 +51,16 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
-import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.IconManager
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ui.UIUtil
@@ -80,10 +82,10 @@ import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import javax.swing.Timer
 
-class IdeaTestApplication private constructor() {
+class TestApplicationManager private constructor() {
   companion object {
     @Volatile
-    private var ourInstance: IdeaTestApplication? = null
+    private var ourInstance: TestApplicationManager? = null
     @Volatile
     private var bootstrapError: RuntimeException? = null
     private val isBootstrappingAppNow = AtomicBoolean()
@@ -92,7 +94,7 @@ class IdeaTestApplication private constructor() {
       get() = ApplicationManager.getApplication().getComponent(DataManager::class.java) as HeadlessDataManager
 
     @JvmStatic
-    fun getInstance(): IdeaTestApplication {
+    fun getInstance(): TestApplicationManager {
       var result = ourInstance
       if (result == null) {
         try {
@@ -107,8 +109,11 @@ class IdeaTestApplication private constructor() {
       return result
     }
 
+    @JvmStatic
+    fun getInstanceIfCreated() = ourInstance
+
     @Synchronized
-    private fun createInstance(): IdeaTestApplication {
+    private fun createInstance(): TestApplicationManager {
       var result = ourInstance
       if (result != null) {
         return result
@@ -125,21 +130,9 @@ class IdeaTestApplication private constructor() {
       HeavyPlatformTestCase.doAutodetectPlatformPrefix()
       loadTestApp()
       isBootstrappingAppNow.set(false)
-      result = IdeaTestApplication()
+      result = TestApplicationManager()
       ourInstance = result
       return result
-    }
-
-    @Synchronized
-    @JvmStatic
-    private fun disposeInstance() {
-      if (ourInstance == null) {
-        return
-      }
-      val app = ApplicationManager.getApplication() as ApplicationImpl
-      // `ApplicationManager#ourApplication` will be automatically set to `null`
-      app.disposeContainer()
-      ourInstance = null
     }
   }
 
@@ -153,14 +146,13 @@ class IdeaTestApplication private constructor() {
 
   fun getData(dataId: String) = dataManager.dataContext.getData(dataId)
 
-  fun disposeApp() {
-    ApplicationManager.getApplication().invokeAndWait {
-      disposeInstance()
-    }
-  }
-
   fun dispose() {
-    disposeInstance()
+    val app = ApplicationManager.getApplication() as ApplicationImpl? ?: return
+    runInEdtAndWait {
+      // `ApplicationManager#ourApplication` will be automatically set to `null`
+      app.disposeContainer()
+      ourInstance = null
+    }
   }
 }
 
@@ -172,11 +164,11 @@ private fun loadTestApp() {
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
   val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
-    PluginManagerCore.getLoadedPlugins(IdeaTestApplication::class.java.classLoader)
+    PluginManagerCore.getLoadedPlugins(TestApplicationManager::class.java.classLoader)
   }, AppExecutorUtil.getAppExecutorService())
 
   if (EventQueue.isDispatchThread()) {
-    StartupUtil.replaceSystemEventQueue(logger<IdeaTestApplication>())
+    StartupUtil.replaceSystemEventQueue(logger<TestApplicationManager>())
   }
   else {
     replaceIdeEventQueueSafely()
@@ -244,7 +236,7 @@ private var testCounter = 0
 
 // Kotlin allows to easily debug code and to get clear and short stack traces
 @ApiStatus.Internal
-fun tearDownProjectAndApp(project: Project, appManager: IdeaTestApplication) {
+fun tearDownProjectAndApp(project: Project, appManager: TestApplicationManager? = null) {
   val isLightProject = ProjectManagerImpl.isLight(project)
 
   val l = mutableListOf<Throwable>()
@@ -324,7 +316,7 @@ fun tearDownProjectAndApp(project: Project, appManager: IdeaTestApplication) {
 
   l.run { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, !isLightProject) }
 
-  l.run { appManager.setDataProvider(null) }
+  l.run { (appManager ?: TestApplicationManager.getInstanceIfCreated())?.setDataProvider(null) }
   l.run { UiInterceptors.clear() }
   l.run { CompletionProgressIndicator.cleanupForNextTest() }
   l.run {
@@ -332,6 +324,62 @@ fun tearDownProjectAndApp(project: Project, appManager: IdeaTestApplication) {
       // some tests are written in Groovy, and running all of them may result in some 40M of memory wasted on bean infos
       // so let's clear the cache every now and then to ensure it doesn't grow too large
       GCUtil.clearBeanInfoCache()
+    }
+  }
+
+  CompoundRuntimeException.throwIfNotEmpty(l)
+}
+
+/**
+ * Disposes the application (it also stops some application-related threads)
+ * and checks for project leaks.
+ */
+fun disposeApplicationAndCheckForLeaks() {
+  val l = mutableListOf<Throwable>()
+
+  runInEdtAndWait {
+    l.run { PlatformTestUtil.cleanupAllProjects() }
+    l.run { UIUtil.dispatchAllInvocationEvents() }
+
+    l.run {
+      val app = ApplicationManager.getApplication() as? ApplicationImpl
+      if (app != null) {
+        println(app.writeActionStatistics())
+      }
+      println(ActionUtil.ActionPauses.STAT.statistics())
+      println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
+      println("ProcessIOExecutorService threads created: ${(ProcessIOExecutorService.INSTANCE as ProcessIOExecutorService).threadCounter}")
+    }
+
+    l.run {
+      try {
+        LeakHunter.checkNonDefaultProjectLeak()
+      }
+      catch (e: AssertionError) {
+        PlatformTestUtil.captureMemorySnapshot()
+        throw e
+      }
+      catch (e: Exception) {
+        PlatformTestUtil.captureMemorySnapshot()
+        throw e
+      }
+    }
+
+    l.run { TestApplicationManager.getInstanceIfCreated()?.dispose() }
+    l.run { UIUtil.dispatchAllInvocationEvents() }
+  }
+
+  l.run {
+    try {
+      Disposer.assertIsEmpty(true)
+    }
+    catch (e: AssertionError) {
+      PlatformTestUtil.captureMemorySnapshot()
+      throw e
+    }
+    catch (e: Exception) {
+      PlatformTestUtil.captureMemorySnapshot()
+      throw e
     }
   }
 

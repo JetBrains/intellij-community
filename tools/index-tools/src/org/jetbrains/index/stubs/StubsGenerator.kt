@@ -2,18 +2,14 @@
 package org.jetbrains.index.stubs
 
 import com.google.common.hash.HashCode
-import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
@@ -72,97 +68,84 @@ private fun writeStubsVersionFile(stubsStorageFilePath: String, stubsVersion: St
 }
 
 fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String, projectPath: String, stubsVersion: String) {
-  val app = IdeaTestApplication.getInstance()
-  val project = ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
+  TestApplicationManager.getInstance()
+  ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
-  try {
-    val stubExternalizer = FullStubExternalizer()
+  val stubExternalizer = FullStubExternalizer()
 
-    val storageFile = File(stubsFilePath, "$stubsFileName.input")
-    if (storageFile.exists()) {
-      storageFile.delete()
-    }
-
-    val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile,
-                                                                  HashCodeDescriptor.instance, stubExternalizer)
-
-    val stringEnumeratorFile = File(stubsFilePath, "$stubsFileName.names")
-    if (stringEnumeratorFile.exists()) {
-      stringEnumeratorFile.delete()
-    }
-
-    val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
-
-    val map = HashMap<HashCode, Int>()
-
-    println("Writing results to ${storageFile.absolutePath}")
-
-    for (path in paths) {
-      println("Reading stubs from $path")
-      var count = 0
-      val fromStorageFile = File(path, "$stubsFileName.input")
-      val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile,
-                                                                        HashCodeDescriptor.instance, stubExternalizer)
-
-      val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
-
-      try {
-        fromStorage.processKeysWithExistingMapping { key ->
-          count++
-          val value = fromStorage.get(key)
-
-          // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-          val newStubTree = value.reSerialize(serializationManager, newSerializationManager, STUB_EXTERNALIZER, STUB_EXTERNALIZER)
-
-          if (storage.containsMapping(key)) {
-            if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
-              storage.get(key).getStub(false, newSerializationManager)
-
-              val stub = value.getStub(false, serializationManager)
-              val newStubTree2 = SerializedStubTree(stub, newSerializationManager, STUB_EXTERNALIZER)
-
-              TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
-            }
-            map[key] = map[key]!! + 1
-          }
-          else {
-            storage.put(key, newStubTree)
-            map[key] = 1
-          }
-          true
-        }
-
-      }
-      finally {
-        fromStorage.close()
-        Disposer.dispose(serializationManager)
-      }
-
-      println("Items in ${fromStorageFile.absolutePath}: $count")
-    }
-
-    storage.close()
-    Disposer.dispose(newSerializationManager)
-
-    val total = map.size
-
-    println("Total items in storage: $total")
-
-    writeStubsVersionFile(stringEnumeratorFile.nameWithoutExtension, stubsVersion)
-
-    for (i in 2..paths.size) {
-      val count = map.entries.stream().filter { e -> e.value == i }.count()
-      println("Intersection between $i: ${"%.2f".format(if (total > 0) 100.0 * count / total else 0.0)}%")
-    }
+  val storageFile = File(stubsFilePath, "$stubsFileName.input")
+  if (storageFile.exists()) {
+    storageFile.delete()
   }
-  finally {
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
-      WriteAction.run<Throwable> {
-        app.dispose()
+
+  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile, HashCodeDescriptor.instance, stubExternalizer)
+
+  val stringEnumeratorFile = File(stubsFilePath, "$stubsFileName.names")
+  if (stringEnumeratorFile.exists()) {
+    stringEnumeratorFile.delete()
+  }
+
+  val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
+
+  val map = HashMap<HashCode, Int>()
+
+  println("Writing results to ${storageFile.absolutePath}")
+
+  for (path in paths) {
+    println("Reading stubs from $path")
+    var count = 0
+    val fromStorageFile = File(path, "$stubsFileName.input")
+    val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile, HashCodeDescriptor.instance, stubExternalizer)
+
+    val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
+    try {
+      fromStorage.processKeysWithExistingMapping { key ->
+        count++
+        val value = fromStorage.get(key)
+
+        // re-serialize stub tree to correctly enumerate strings in the new string enumerator
+        val newStubTree = value.reSerialize(serializationManager, newSerializationManager, STUB_EXTERNALIZER, STUB_EXTERNALIZER)
+
+        if (storage.containsMapping(key)) {
+          if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
+            storage.get(key).getStub(false, newSerializationManager)
+
+            val stub = value.getStub(false, serializationManager)
+            val newStubTree2 = SerializedStubTree(stub, newSerializationManager, STUB_EXTERNALIZER)
+
+            TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
+          }
+          map[key] = map[key]!! + 1
+        }
+        else {
+          storage.put(key, newStubTree)
+          map[key] = 1
+        }
+        true
       }
-    }, ModalityState.NON_MODAL)
+
+    }
+    finally {
+      fromStorage.close()
+      Disposer.dispose(serializationManager)
+    }
+
+    println("Items in ${fromStorageFile.absolutePath}: $count")
+  }
+
+  storage.close()
+  Disposer.dispose(newSerializationManager)
+
+  val total = map.size
+
+  println("Total items in storage: $total")
+
+  writeStubsVersionFile(stringEnumeratorFile.nameWithoutExtension, stubsVersion)
+
+  for (i in 2..paths.size) {
+    val count = map.entries.stream().filter { e -> e.value == i }.count()
+    println("Intersection between $i: ${"%.2f".format(if (total > 0) 100.0 * count / total else 0.0)}%")
   }
 
   exitProcess(0)

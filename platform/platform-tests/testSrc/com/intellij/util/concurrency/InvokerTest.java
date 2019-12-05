@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -35,7 +35,7 @@ import static javax.swing.SwingUtilities.isEventDispatchThread;
  */
 public class InvokerTest {
   @SuppressWarnings("unused")
-  private static final IdeaTestApplication application = IdeaTestApplication.getInstance();
+  private static final TestApplicationManager application = TestApplicationManager.getInstance();
   private final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
 

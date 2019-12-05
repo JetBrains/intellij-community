@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestApplicationManagerKt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
@@ -82,7 +82,7 @@ public class _LastInSuiteTest extends TestCase {
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
         String aliveExtensions = StringUtil.join(alive, o -> o.getClass().getName(), "\n");
-        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName, 
+        System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName,
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();
         failed.set(true);
@@ -131,7 +131,7 @@ public class _LastInSuiteTest extends TestCase {
       }
     }
     collectForArea(area, useWhiteList, extensions);
-    
+
     return extensions;
   }
 
@@ -168,15 +168,7 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks();
-
-    try {
-      Disposer.assertIsEmpty(true);
-    }
-    catch (AssertionError | Exception e) {
-      PlatformTestUtil.captureMemorySnapshot();
-      throw e;
-    }
+    TestApplicationManagerKt.disposeApplicationAndCheckForLeaks();
   }
 
   public void testStatistics() {

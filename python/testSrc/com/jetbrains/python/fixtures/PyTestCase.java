@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -151,7 +150,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   private static void initApplication() {
-    IdeaTestApplication.getInstance();
+    TestApplicationManager.getInstance();
   }
 
   /**

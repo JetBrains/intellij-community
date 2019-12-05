@@ -8,8 +8,6 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.idea.IdeaTestApplication;
-import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -105,7 +103,7 @@ import static com.intellij.testFramework.RunAll.runAll;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static IdeaTestApplication ourTestAppManager;
+  private static TestApplicationManager ourTestAppManager;
   private static boolean ourReportedLeakedProjects;
   protected Project myProject;
   protected Module myModule;
@@ -162,7 +160,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void initApplication() throws Exception {
     boolean firstTime = ourTestAppManager == null;
-    ourTestAppManager = IdeaTestApplication.getInstance();
+    ourTestAppManager = TestApplicationManager.getInstance();
     ourTestAppManager.setDataProvider(this);
 
     if (firstTime) {
@@ -539,7 +537,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = myProject;
     if (project != null && !project.isDisposed()) {
-      IdeaTestApplicationKt.waitForProjectLeakingThreads(project);
+      TestApplicationManagerKt.waitForProjectLeakingThreads(project);
     }
 
     // don't use method references here to make stack trace reading easier

@@ -3,8 +3,6 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.idea.IdeaTestApplication;
-import com.intellij.idea.IdeaTestApplicationKt;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -37,7 +35,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
   public void setUp() throws Exception {
     super.setUp();
 
-    IdeaTestApplication application = LightPlatformTestCase.initApplication();
+    TestApplicationManager application = LightPlatformTestCase.initApplication();
     Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     myProject = setup.getFirst();
     myModule = setup.getSecond();
@@ -70,7 +68,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       })
       .append(() -> {
         if (project != null) {
-          IdeaTestApplicationKt.waitForProjectLeakingThreads(project);
+          TestApplicationManagerKt.waitForProjectLeakingThreads(project);
         }
       })
       .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
