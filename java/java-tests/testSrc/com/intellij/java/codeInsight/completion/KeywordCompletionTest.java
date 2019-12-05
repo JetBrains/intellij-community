@@ -155,8 +155,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuggestModifiersAfterUnfinishedMethod() { doTest(1, "public"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testQualifiedNew() { doTest(1, "new"); }
-  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14);  doTest(); }
-  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14);  doTest(1, "record"); }
+  public void testRecord() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(); }
+  public void testRecordInFileScope() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW);  doTest(1, "record"); }
 
   public void testOverwriteCatch() {
     configureByTestName();

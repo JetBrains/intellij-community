@@ -546,7 +546,7 @@ public class JavaKeywordCompletion {
           PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-        if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_14)) {
+        if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_14_PREVIEW)) {
           addKeyword(new OverridableSpace(createKeyword(PsiKeyword.RECORD), TailType.HUMBLE_SPACE_BEFORE_WORD));
         }
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
