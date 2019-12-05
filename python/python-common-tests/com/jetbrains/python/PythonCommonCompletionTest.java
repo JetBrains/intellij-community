@@ -1648,6 +1648,18 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     assertContainsElements(suggestedInAlternativeSyntax, "True", "False");
   }
 
+  // PY-38438
+  public void testPythonCompletionRankingForImportKeyword() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "im<caret>");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    int indImport = suggested.indexOf("import");
+    int ind__import__ = suggested.indexOf("__import__");
+    assertTrue(indImport != -1);
+    assertTrue(ind__import__ != -1);
+    assertTrue(indImport < ind__import__);
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
