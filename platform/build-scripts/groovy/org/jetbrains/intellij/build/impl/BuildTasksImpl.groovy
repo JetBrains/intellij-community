@@ -97,52 +97,37 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     })
   }
-  
-  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = [:]) {
-    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
-    if (!new File(javaRuntimeClasses).exists()) {
-      buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
-    }
 
-    buildContext.ant.mkdir(dir: tempDir)
-    String systemPath = "$tempDir/system"
-    String configPath = "$tempDir/config"
+  static void runApplicationStarter(BuildContext context, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = [:]) {
+    context.ant.mkdir(dir: tempDir)
 
-    def ideClasspath = new LinkedHashSet<String>()
-    buildContext.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
+    Set<String> ideClasspath = new LinkedHashSet<String>()
+    context.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
     for (moduleName in modules) {
-      for (pathElement in buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule(moduleName), false)) {
+      for (pathElement in context.getModuleRuntimeClasspath(context.findRequiredModule(moduleName), false)) {
         if (ideClasspath.add(pathElement)) {
-          buildContext.messages.debug(" $pathElement from $moduleName")
+          context.messages.debug(" $pathElement from $moduleName")
         }
       }
     }
 
-    String classpathFile = "$tempDir/classpath.txt"
-    new File(classpathFile).text = ideClasspath.join("\n")
+    Map<String, ?> ideaProperties = [
+      "java.awt.headless": true,
+      "idea.home.path"   : context.paths.projectHome,
+      "idea.system.path" : "${tempDir}/system",
+      "idea.config.path" : "${tempDir}/config"]
 
-    buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-      jvmarg(line: "-ea -Xmx500m")
-      sysproperty(key: "java.awt.headless", value: true)
-      sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
-      sysproperty(key: "idea.system.path", value: systemPath)
-      sysproperty(key: "idea.config.path", value: configPath)
-
-      systemProperties.each {
-        sysproperty(key: it.key, value: it.value)
-      }
-      
-      if (buildContext.productProperties.platformPrefix != null) {
-        sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
-      }
-      arg(value: "$classpathFile")
-      arg(line: "com.intellij.idea.Main")
-      arguments.each { arg(value: it) }
-
-      classpath() {
-        pathelement(location: "$javaRuntimeClasses")
-      }
+    if (context.productProperties.platformPrefix != null) {
+      ideaProperties += ["idea.platform.prefix": context.productProperties.platformPrefix]
     }
+
+    BuildUtils.runJava(
+      context,
+      ["-ea", "-Xmx512m"],
+      ideaProperties + systemProperties,
+      ideClasspath,
+      "com.intellij.idea.Main",
+      arguments)
   }
 
   File patchIdeaPropertiesFile() {
