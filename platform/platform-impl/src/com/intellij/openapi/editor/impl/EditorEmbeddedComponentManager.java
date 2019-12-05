@@ -227,7 +227,7 @@ public class EditorEmbeddedComponentManager {
     }
 
     private void updateAllInlaysBelow(@NotNull Rectangle bounds) {
-      for (Inlay<? extends MyRenderer> i : getVisibleInlaysBelow(bounds.y)) {
+      for (Inlay<? extends MyRenderer> i : getInlaysBelow(bounds.y)) {
         update(i);
       }
     }
@@ -252,7 +252,7 @@ public class EditorEmbeddedComponentManager {
         @Override
         public void componentResized(ComponentEvent e) {
           int maxY = myEditor.getScrollPane().getViewport().getViewRect().y;
-          for (Inlay<? extends MyRenderer> inlay : getVisibleInlaysBelow(maxY)) {
+          for (Inlay<? extends MyRenderer> inlay : getInlaysBelow(maxY)) {
             updateSize(inlay);
           }
         }
@@ -266,12 +266,10 @@ public class EditorEmbeddedComponentManager {
     }
 
     @NotNull
-    private Collection<Inlay<? extends MyRenderer>> getVisibleInlaysBelow(int y) {
+    private Collection<Inlay<? extends MyRenderer>> getInlaysBelow(int y) {
       return ContainerUtil.filter(myInlays, inlay -> {
         Rectangle bounds = inlay.getRenderer().getBounds();
-        return bounds != null &&
-               bounds.y + bounds.height >= y &&
-               (bounds.width == 0 || bounds.height == 0 || bounds.intersects(myEditor.getScrollPane().getViewport().getViewRect()));
+        return bounds != null && bounds.y + bounds.height >= y;
       });
     }
 
