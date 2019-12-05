@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl.logging
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
-import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.impl.BuildUtils
 

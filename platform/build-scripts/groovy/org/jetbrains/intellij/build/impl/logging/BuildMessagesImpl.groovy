@@ -9,7 +9,6 @@ import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
