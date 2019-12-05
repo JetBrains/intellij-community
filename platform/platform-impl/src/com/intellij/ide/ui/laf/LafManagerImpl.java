@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +42,6 @@ import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.ui.*;
@@ -1110,7 +1110,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private DefaultMenuArrowIcon() {
       super(AllIcons.Icons.Ide.NextStep,
             dark.getAsBoolean() ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep,
-            IconUtil.brighter(AllIcons.Icons.Ide.NextStep, 3));
+            IconLoader.getDisabledIcon(AllIcons.Icons.Ide.NextStep));
     }
   }
 
