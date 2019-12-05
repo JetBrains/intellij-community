@@ -18,9 +18,9 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
     <orderEntry type="module-library" exported="">
       <library name="intellij-markdown" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.39" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.41" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.39/markdown-0.1.39.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.41/markdown-0.1.41.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
