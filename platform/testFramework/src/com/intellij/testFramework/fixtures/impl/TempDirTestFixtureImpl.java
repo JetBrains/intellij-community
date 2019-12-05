@@ -102,7 +102,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @NotNull
   public static Path createEmptyTempFile(@NotNull Path parent, @NotNull String name) throws IOException {
-    Path file = parent.resolve(name);
+    Path file = resolvePath(parent, name);
     if (name.indexOf('/') != -1 || name.indexOf(File.separatorChar) != -1) {
       Files.createDirectories(file.getParent());
     }
@@ -111,9 +111,14 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   }
 
   @NotNull
+  private static Path resolvePath(@NotNull Path parent, @NotNull String name) {
+    return parent.resolve(name.startsWith("/") ? name.substring(1) : name).normalize();
+  }
+
+  @NotNull
   @Override
   public VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
-    String path = createTempDirectory().resolve(name).toString();
+    String path = resolvePath(createTempDirectory(), name).toString();
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), path);
     return VfsUtil.createDirectories(path);
   }
