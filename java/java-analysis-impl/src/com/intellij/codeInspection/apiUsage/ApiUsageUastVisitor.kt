@@ -340,7 +340,8 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //First expression is not super() => the super() is implicit.
       return true
     }
-    return firstExpression.methodName != "super" && firstExpression.methodName != "this"
+    val methodName = firstExpression.methodIdentifier?.name ?: firstExpression.methodName
+    return methodName != "super" && methodName != "this"
   }
 
   private fun checkMethodOverriding(node: UMethod) {
