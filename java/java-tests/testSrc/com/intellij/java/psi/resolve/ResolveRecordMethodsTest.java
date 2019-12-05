@@ -28,6 +28,8 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
 
     PsiClass outerClass = file.getClasses()[0];
     PsiClass record = outerClass.getInnerClasses()[0];
-    assertEquals(target.getTextOffset(), record.getTextOffset());
+    PsiRecordComponent[] components = record.getRecordComponents();
+    assertSize(1, components);
+    assertEquals(target.getTextOffset(), components[0].getTextOffset());
   }
 }
