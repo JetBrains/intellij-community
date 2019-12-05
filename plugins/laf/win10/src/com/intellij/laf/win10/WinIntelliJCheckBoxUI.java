@@ -32,8 +32,8 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   }
 
   @Override
-  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
-    return size;
+  protected Dimension computeOurPreferredSize(JComponent c) {
+    return null;
   }
 
   @Override

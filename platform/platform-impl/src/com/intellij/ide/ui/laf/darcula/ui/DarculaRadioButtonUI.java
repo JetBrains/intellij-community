@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -121,7 +121,8 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    return updatePreferredSize(c, super.getPreferredSize(c));
+    Dimension dimension = computeOurPreferredSize(c);
+    return dimension != null ? dimension : super.getPreferredSize(c);
   }
 
   @Override
@@ -129,11 +130,8 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     return getPreferredSize(c);
   }
 
-  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
-    if (c.getBorder() instanceof DarculaRadioButtonBorder) {
-      JBInsets.removeFrom(size, c.getInsets());
-    }
-    return size;
+  protected Dimension computeOurPreferredSize(JComponent c) {
+    return DarculaCheckBoxUI.computeCheckboxPreferredSize(c, getDefaultIcon());
   }
 
   @Override
