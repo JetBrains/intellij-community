@@ -128,8 +128,10 @@ public class MavenProjectsManagerWatcher {
     return promise;
   }
 
+  /**
+   * All changed documents must be saved before reading
+   */
   private void scheduleReadingTask(@NotNull MavenProjectsProcessorReadingTask readingTask) {
-    FileDocumentManager.getInstance().saveAllDocuments();
     myReadingProcessor.scheduleTask(readingTask);
   }
 

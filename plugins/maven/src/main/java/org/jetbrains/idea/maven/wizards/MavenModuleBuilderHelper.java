@@ -90,11 +90,13 @@ public class MavenModuleBuilderHelper {
         updateProjectPom(project, file);
 
         if (myAggregatorProject != null) {
-          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, myAggregatorProject.getFile());
+          VirtualFile aggregatorProjectFile = myAggregatorProject.getFile();
+          MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile);
           if (model != null) {
             model.getPackaging().setStringValue("pom");
             MavenDomModule module = model.getModules().addModule();
             module.setValue(getPsiFile(project, file));
+            unblockAndSaveDocuments(project, aggregatorProjectFile);
           }
         }
         return file;
@@ -162,14 +164,19 @@ public class MavenModuleBuilderHelper {
         MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
       }
 
-      for (VirtualFile v : pomFiles) {
-        Document doc = FileDocumentManager.getInstance().getDocument(v);
-        if (doc != null) {
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-          FileDocumentManager.getInstance().saveDocument(doc);
-        }
-      }
+      unblockAndSaveDocuments(project, pomFiles.toArray(VirtualFile.EMPTY_ARRAY));
     });
+  }
+
+  private static void unblockAndSaveDocuments(@NotNull Project project, @NotNull VirtualFile... files) {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
+    for (VirtualFile file : files) {
+      Document document = fileDocumentManager.getDocument(file);
+      if (document == null) continue;
+      psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+      fileDocumentManager.saveDocument(document);
+    }
   }
 
   private static PsiFile getPsiFile(Project project, VirtualFile pom) {
