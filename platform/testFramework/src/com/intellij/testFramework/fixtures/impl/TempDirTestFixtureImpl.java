@@ -11,16 +11,21 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 /**
  * @author Dmitry Avdeev
  */
 public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFixture {
-  private File myTempDir;
+  private Path myTempDir;
 
   @NotNull
   @Override
@@ -34,7 +39,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     createTempDirectory();
     return WriteAction.computeAndWait(() -> {
       try {
-        VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.getPath());
+        VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTempDir.toString());
         Assert.assertNotNull(tempDir);
         if (!targetDir.isEmpty()) {
           Assert.assertFalse("nested directories not implemented", targetDir.contains("/"));
@@ -56,21 +61,24 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   @Override
   public String getTempDirPath() {
-    return createTempDirectory().getAbsolutePath();
+    return createTempDirectory().toString();
   }
 
-  public File createTempFile(String fileName) throws IOException {
-    String prefix = StringUtil.getPackageName(fileName);
-    if (prefix.length() < 3) prefix += "___";
-    String suffix = "." + StringUtil.getShortName(fileName);
-    File file = FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true);
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
+  public Path createTempFile(@NotNull String path) throws IOException {
+    String prefix = StringUtil.getPackageName(path);
+    if (prefix.length() < 3) {
+      prefix += "___";
+    }
+
+    String suffix = "." + StringUtil.getShortName(path);
+    Path file = FileUtil.createTempFile(new File(getTempDirPath()), prefix, suffix, true).toPath();
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.toString());
     return file;
   }
 
   @Override
   public VirtualFile getFile(@NotNull String path) {
-    String fullPath = myTempDir.getPath() + '/' + path;
+    String fullPath = myTempDir.toString() + '/' + path;
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), fullPath);
     return WriteAction.computeAndWait(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath));
   }
@@ -78,18 +86,36 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   @Override
   public VirtualFile createFile(@NotNull String name) {
-    File file = new File(createTempDirectory(), name);
-    FileUtil.createIfDoesntExist(file);
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
-    return WriteAction.computeAndWait(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    Path file;
+    try {
+      Files.newByteChannel(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE).close();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.toString());
+    return WriteAction.computeAndWait(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(file.toString()));
+    });
+  }
+
+  @NotNull
+  public static Path createEmptyTempFile(@NotNull Path parent, @NotNull String name) throws IOException {
+    Path file = parent.resolve(name);
+    if (name.indexOf('/') != -1 || name.indexOf(File.separatorChar) != -1) {
+      Files.createDirectories(file.getParent());
+    }
+    Files.newByteChannel(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE).close();
+    return file;
   }
 
   @NotNull
   @Override
   public VirtualFile findOrCreateDir(@NotNull String name) throws IOException {
-    File file = new File(createTempDirectory(), name);
-    VfsRootAccess.allowRootAccess(getTestRootDisposable(), file.getPath());
-    return VfsUtil.createDirectories(file.getPath());
+    String path = createTempDirectory().resolve(name).toString();
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), path);
+    return VfsUtil.createDirectories(path);
   }
 
   @NotNull
@@ -108,16 +134,23 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   public void tearDown() throws Exception {
-    if (myTempDir != null && deleteOnTearDown()) {
-      try {
-        WriteAction.runAndWait(() -> findOrCreateDir("").delete(this));
+    if (myTempDir == null || !deleteOnTearDown()) {
+      return;
+    }
+
+    try {
+      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
+      if (virtualFile != null) {
+        WriteAction.runAndWait(() -> {
+          virtualFile.delete(this);
+        });
       }
-      catch (Throwable e) {
-        addSuppressedException(e);
-      }
-      finally {
-        super.tearDown();
-      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
     }
   }
 
@@ -125,12 +158,13 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     return true;
   }
 
-  protected File getTempHome() {
+  @Nullable
+  protected Path getTempHome() {
     return null;
   }
 
   @NotNull
-  private File createTempDirectory() {
+  private Path createTempDirectory() {
     if (myTempDir == null) {
       myTempDir = doCreateTempDirectory();
     }
@@ -138,12 +172,10 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   }
 
   @NotNull
-  protected File doCreateTempDirectory() {
+  protected Path doCreateTempDirectory() {
     try {
-      File tempHome = getTempHome();
-      return tempHome != null
-             ? FileUtil.createTempDirectory(tempHome, "unitTest", null, false)
-             : FileUtil.createTempDirectory("unitTest", null, false);
+      Path tempHome = getTempHome();
+      return Files.createTempDirectory(tempHome == null ? Paths.get(FileUtil.getTempDirectory()) : tempHome, "unitTest");
     }
     catch (IOException e) {
       throw new RuntimeException("Cannot create temp dir", e);

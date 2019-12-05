@@ -515,7 +515,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         new ExpectedHighlightingData(document, checkWarnings, checkWeakWarnings, checkInfos, false, psiFile, myMessageBundles);
       datum.init();
       return Trinity.create(psiFile, createEditor(file), datum);
-    }).collect(Collectors.toList());
+    })
+      .collect(Collectors.toList());
     long elapsed = 0;
     for (Trinity<PsiFile, Editor, ExpectedHighlightingData> trinity : data) {
       setFileAndEditor(trinity.first.getVirtualFile(), trinity.second);
@@ -1335,8 +1336,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           assertNotNull(fileName + " not found in " + root.getPath(), file);
         }
         else if (myTempDirFixture instanceof TempDirTestFixtureImpl) {
-          final File tempFile = ((TempDirTestFixtureImpl)myTempDirFixture).createTempFile(fileName);
-          file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+          Path tempFile = ((TempDirTestFixtureImpl)myTempDirFixture).createTempFile(fileName);
+          file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(tempFile.toString()));
           assertNotNull(tempFile + " not found", file);
         }
         else {
@@ -1371,7 +1372,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private PsiFile configureByFileInner(@NotNull String filePath) {
     assertInitialized();
-    final VirtualFile file = copyFileToProject(filePath);
+    VirtualFile file = copyFileToProject(filePath);
     return configureByFileInner(file);
   }
 
