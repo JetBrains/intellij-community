@@ -179,9 +179,10 @@ public class IncProjectBuilder {
     }
 
     CompileContextImpl context = null;
+    BuildTargetSourcesState sourcesState = null;
     try {
       context = createContext(scope);
-      BuildTargetSourcesState sourcesState = new BuildTargetSourcesState(context);
+      sourcesState = new BuildTargetSourcesState(context);
       // Clear source state report if force clean or rebuild
       if (forceCleanCaches || context.isProjectRebuild()) sourcesState.clearSourcesState();
       runBuild(context, forceCleanCaches);
@@ -194,6 +195,8 @@ public class IncProjectBuilder {
     catch (StopBuildException e) {
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
+      // If build was canceled for some reasons e.g compilation error we should report built modules
+      if (sourcesState != null) sourcesState.reportSourcesState();
       // some builder decided to stop the build
       // report optional progress message if any
       final String msg = e.getMessage();
