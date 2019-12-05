@@ -258,8 +258,8 @@ public class JpsOutputLoaderManager {
 
   private List<JpsOutputLoader<?>> getLoaders(@NotNull Project project) {
     if (myJpsOutputLoadersLoaders != null) return myJpsOutputLoadersLoaders;
-    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCompilationOutputLoader(myServerClient, project),
-                                              new JpsCacheLoader(myServerClient, project));
+    myJpsOutputLoadersLoaders = Arrays.asList(new JpsCacheLoader(myServerClient, project),
+                                              new JpsCompilationOutputLoader(myServerClient, project));
     return myJpsOutputLoadersLoaders;
   }
 
