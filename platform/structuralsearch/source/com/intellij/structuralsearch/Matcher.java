@@ -453,8 +453,7 @@ public class Matcher {
   void match(@NotNull PsiElement element, Language language) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
-    final Language elementLanguage = element.getLanguage();
-    if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
+    if (strategy.continueMatching(element) && element.getLanguage().isKindOf(language)) {
       visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
@@ -462,7 +461,8 @@ public class Matcher {
       match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageManager.getInstance(project).enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
+      InjectedLanguageManager.getInstance(project).enumerateEx(element, element.getContainingFile(), false,
+                                                               (injectedPsi, places) -> match(injectedPsi, language));
     }
   }
 
