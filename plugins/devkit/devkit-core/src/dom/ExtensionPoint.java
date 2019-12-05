@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
@@ -62,7 +61,6 @@ public interface ExtensionPoint extends DomElement {
 
   @NotNull
   @Attribute("dynamic")
-  @ApiStatus.Experimental
   GenericAttributeValue<Boolean> getDynamic();
 
   @NotNull

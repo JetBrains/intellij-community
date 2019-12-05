@@ -471,10 +471,6 @@ public final class PluginXmlDomInspection extends BasicDomElementsInspection<Ide
     checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
 
-    if (DomUtil.hasXml(extensionPoint.getDynamic())) {
-      highlightExperimental(extensionPoint.getDynamic(), holder);
-    }
-
     if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
       IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
       assert ideaPlugin != null;
