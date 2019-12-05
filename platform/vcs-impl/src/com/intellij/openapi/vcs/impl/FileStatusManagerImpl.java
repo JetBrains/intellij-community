@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -101,17 +100,9 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
     }
   }
 
-  static final class FileStatusManagerDocumentListener implements BulkAwareDocumentListener {
+  static final class FileStatusManagerDocumentListener implements BulkAwareDocumentListener.NonTrivial {
     @Override
-    public void documentChangedNonBulk(@NotNull DocumentEvent event) {
-      if (event.getOldLength() == 0 && event.getNewLength() == 0) {
-        return;
-      }
-      bulkUpdateFinished(event.getDocument());
-    }
-
-    @Override
-    public void bulkUpdateFinished(@NotNull Document document) {
+    public void documentChanged(@NotNull Document document) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file == null) {
         return;

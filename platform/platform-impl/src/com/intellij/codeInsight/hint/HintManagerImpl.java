@@ -129,41 +129,25 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new BulkAwareDocumentListener.Simple() {
-      private boolean mySignificantChange;
-
+    myEditorDocumentListener = new BulkAwareDocumentListener.NonTrivial() {
       @Override
-      public void beforeDocumentChange(@NotNull Document document) {
-        mySignificantChange = false;
-      }
+      public void documentChanged(@NotNull Document document) {
+        LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+        HintInfo[] infos = getHintsStackArray();
+        for (HintInfo info : infos) {
+          if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
+            if (info.hint.isVisible()) {
+              info.hint.hide();
+            }
+            myHintsStack.remove(info);
+          }
+        }
 
-      @Override
-      public void afterDocumentChange(@NotNull Document document) {
-        if (mySignificantChange) onDocumentChange();
-      }
-
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        mySignificantChange |= (event.getOldLength() != 0 || event.getNewLength() != 0);
-        BulkAwareDocumentListener.Simple.super.documentChanged(event);
+        if (myHintsStack.isEmpty()) {
+          updateLastEditor(null);
+        }
       }
     };
-  }
-
-  private void onDocumentChange() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-    HintInfo[] infos = getHintsStackArray();
-    for (HintInfo info : infos) {
-      if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {
-        if (info.hint.isVisible()) {
-          info.hint.hide();
-        }
-        myHintsStack.remove(info);
-      }
-    }
-    if (myHintsStack.isEmpty()) {
-      updateLastEditor(null);
-    }
   }
 
   /**
