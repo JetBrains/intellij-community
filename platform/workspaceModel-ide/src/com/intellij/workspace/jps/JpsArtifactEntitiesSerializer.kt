@@ -5,7 +5,6 @@ import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -13,8 +12,7 @@ import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
 
-internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String,
-                                                      private val storagePlace: JpsProjectStoragePlace.DirectoryBased) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
+internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String
     get() = ARTIFACT_MANAGER_COMPONENT_NAME
   override val entityClass: Class<ArtifactEntity>

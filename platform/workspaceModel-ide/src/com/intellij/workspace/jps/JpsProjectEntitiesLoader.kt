@@ -51,9 +51,10 @@ object JpsProjectEntitiesLoader {
   private fun createDirectoryProjectSerializers(storagePlace: JpsProjectStoragePlace.DirectoryBased): JpsEntitiesSerializerFactories {
     val projectDirUrl = storagePlace.projectDir.url
     return JpsEntitiesSerializerFactories(entityTypeSerializers = emptyList(),
-                                          directorySerializersFactories = listOf(JpsLibrariesDirectorySerializerFactory("$projectDirUrl/.idea/libraries", storagePlace),
-                                                                                 JpsArtifactsDirectorySerializerFactory("$projectDirUrl/.idea/artifacts", storagePlace)),
-                                          fileSerializerFactories = listOf(ModuleSerializersFactory("$projectDirUrl/.idea/modules.xml", storagePlace)),
+                                          directorySerializersFactories = listOf(JpsLibrariesDirectorySerializerFactory("$projectDirUrl/.idea/libraries"),
+                                                                                 JpsArtifactsDirectorySerializerFactory(
+                                                                                   "$projectDirUrl/.idea/artifacts")),
+                                          fileSerializerFactories = listOf(ModuleSerializersFactory("$projectDirUrl/.idea/modules.xml")),
                                           storagePlace = storagePlace)
   }
 
@@ -63,7 +64,7 @@ object JpsProjectEntitiesLoader {
     return JpsEntitiesSerializerFactories(listOf(JpsLibrariesFileSerializer(projectFileUrl, projectFileSource, LibraryTableId.ProjectLibraryTableId),
                                                  JpsArtifactsFileSerializer(projectFileUrl, projectFileSource)),
                                           directorySerializersFactories = emptyList(),
-                                          fileSerializerFactories = listOf(ModuleSerializersFactory(projectFileUrl.url, storagePlace)),
+                                          fileSerializerFactories = listOf(ModuleSerializersFactory(projectFileUrl.url)),
                                           storagePlace = storagePlace)
   }
 }

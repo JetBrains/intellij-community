@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.PathUtil
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.toVirtualFileUrl
@@ -157,7 +158,7 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
   }
 
   serializerToFileFactory.keys.forEach {
-    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)] ?: emptyList<JpsFileEntitiesSerializer<*>>())
+    assertTrue(it in fileSerializersByUrl[getNonNullActualFileUrl(it.entitySource)])
   }
 
   serializerToDirectoryFactory.keys.forEach {
@@ -172,3 +173,18 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
 internal fun File.asStoragePlace(): JpsProjectStoragePlace =
   if (FileUtil.extensionEquals(name, "ipr")) JpsProjectStoragePlace.FileBased(toVirtualFileUrl())
   else JpsProjectStoragePlace.DirectoryBased(toVirtualFileUrl())
+
+internal class JpsFileContentWriterImpl : JpsFileContentWriter {
+  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element>>()
+  val filesToRemove = LinkedHashSet<String>()
+
+  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
+    if (componentTag != null) {
+      urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
+    }
+    else if (PathUtil.getFileName(PathUtil.getParentPath(PathUtil.getParentPath(fileUrl))) == ".idea" || FileUtil.extensionEquals(fileUrl,
+                                                                                                                                  "iml")) {
+      filesToRemove.add(fileUrl)
+    }
+  }
+}

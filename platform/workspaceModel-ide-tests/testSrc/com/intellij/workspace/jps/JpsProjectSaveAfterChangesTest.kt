@@ -45,7 +45,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename module`() {
-    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, projectDirUrl ->
+    checkSaveProjectAfterChange("directoryBased/renameModule", "fileBased/renameModule") { builder, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
       builder.modifyEntity(ModifiableModuleEntity::class.java, utilModule) {
         name = "util2"
@@ -104,7 +104,7 @@ class JpsProjectSaveAfterChangesTest {
 
   @Test
   fun `rename library`() {
-    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, projectDirUrl ->
+    checkSaveProjectAfterChange("directoryBased/renameLibrary", "fileBased/renameLibrary") { builder, _ ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
         name = "junit2"

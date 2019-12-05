@@ -450,17 +450,3 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
 // TODO Add more diagnostics: file path, line etc
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: error("Expected attribute $name under ${this.name} element")
-
-internal class JpsFileContentWriterImpl : JpsFileContentWriter {
-  val urlToComponents = LinkedHashMap<String, LinkedHashMap<String, Element>>()
-  val filesToRemove = LinkedHashSet<String>()
-
-  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
-    if (componentTag != null) {
-      urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
-    }
-    else if (PathUtil.getFileName(PathUtil.getParentPath(PathUtil.getParentPath(fileUrl))) == ".idea" || FileUtil.extensionEquals(fileUrl, "iml")) {
-      filesToRemove.add(fileUrl)
-    }
-  }
-}

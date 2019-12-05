@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jdom.Element
@@ -350,8 +349,7 @@ internal class ModuleImlFileEntitiesSerializer(private val modulePath: ModulePat
 
 private const val MODULE_MANAGER_COMPONENT_NAME = "ProjectModuleManager"
 
-internal class ModuleSerializersFactory(override val fileUrl: String,
-                                        val storagePlace: JpsProjectStoragePlace) : JpsFileSerializerFactory<ModuleEntity> {
+internal class ModuleSerializersFactory(override val fileUrl: String) : JpsFileSerializerFactory<ModuleEntity> {
   override val entityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
 

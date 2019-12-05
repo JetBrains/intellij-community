@@ -3,7 +3,6 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.JpsProjectStoragePlace
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -11,8 +10,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.*
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 
-internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String,
-                                                      private val projectStoragePlace: JpsProjectStoragePlace.DirectoryBased) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
+internal class JpsLibrariesDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<LibraryEntity> {
   override val componentName: String
     get() = LIBRARY_TABLE_COMPONENT_NAME
 
