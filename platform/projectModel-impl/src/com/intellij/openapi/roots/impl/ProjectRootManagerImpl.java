@@ -241,9 +241,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
+  @Deprecated
   public void setProjectSdkName(@NotNull String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
+    myProjectSdkType = null;
+
+    projectJdkChanged();
+  }
+
+  @Override
+  public void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myProjectSdkName = name;
+    myProjectSdkType = null;
 
     projectJdkChanged();
   }

@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -109,26 +110,20 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   public abstract List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns the instance of the JDK selected for the project.
-   *
-   * @return the JDK instance, or null if the name of the selected JDK does not correspond
-   * to any existing JDK instance.
+   * @return the instance of the JDK selected for the project or null
+   * if the name of the selected JDK does not correspond to any existing JDK instance
    */
   @Nullable
   public abstract Sdk getProjectSdk();
 
   /**
-   * Returns the name of the SDK selected for the project.
-   *
-   * @return the project SDK name.
+   * @return the name of the SDK selected for the project
    */
   @Nullable
   public abstract String getProjectSdkName();
 
   /**
-   * Returns the name of the SDK Type for the project SDK
-   * @return the project SDK type name
-   * @see {@link com.intellij.openapi.projectRoots.SdkTypeId}
+   * @return the SDK type name (@link {@link SdkTypeId#getName()} of the current Project SDK
    */
   @Nullable
   public abstract String getProjectSdkTypeName();
@@ -140,11 +135,15 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
    */
   public abstract void setProjectSdk(@Nullable Sdk sdk);
 
+  /**
+   * @deprecated use {@link #setProjectSdk(Sdk)} or {@link #setProjectSdkName(String, String)}
+   */
+  @Deprecated
+  public abstract void setProjectSdkName(@NotNull String name);
 
   /**
-   * Sets the name of the JDK to be used for the project.
-   *
-   * @param name the name of the JDK.
+   * Sets the name of the JDK to be used for the project
+   * @param sdkTypeName the {@link SdkTypeId#getName()} of the SDK type
    */
-  public abstract void setProjectSdkName(@NotNull String name);
+  public abstract void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName);
 }
