@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.LineRange
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
@@ -56,37 +56,32 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
         .addRangeHighlighterAndChangeAttributes(start, end, HighlighterLayer.LAST, null, HighlighterTargetArea.EXACT_RANGE,
                                                 false) { highlighter ->
           highlighter.gutterIconRenderer = GHPRCreateDiffCommentIconRenderer(i, object : DumbAwareAction() {
-            private var inlay: Inlay<*>? = null
+            private var inlay: Pair<JComponent, Disposable>? = null
 
             override fun actionPerformed(e: AnActionEvent) {
-              if (inlay?.let { focusInlay(it) } != null) return
+              if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
 
               val diffLine = diffLineCalculator(i) ?: return
 
               val component =
                 componentFactory.createCommentComponent(diffLine) {
-                  inlay?.let { Disposer.dispose(it) }
+                  inlay?.let { Disposer.dispose(it.second) }
                   inlay = null
                 }
-              val newInlay = inlaysManager.insertAfter(i, component) ?: return
-              component.revalidate()
+              val disposable = inlaysManager.insertAfter(i, component) ?: return
+              val newInlay = component to disposable
               //TODO: replace with focus listeners
               component.registerKeyboardAction({
-                                                 newInlay.let {
+                                                 disposable.let {
                                                    Disposer.dispose(it)
                                                    inlay = null
                                                  }
                                                },
                                                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                                                JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-              focusInlay(newInlay)
+              GithubUIUtil.focusPanel(component)
 
               inlay = newInlay
-            }
-
-            private fun focusInlay(inlay: Inlay<*>) {
-              val component = inlaysManager.findComponent(inlay) ?: return
-              GithubUIUtil.focusPanel(component)
             }
           })
         }

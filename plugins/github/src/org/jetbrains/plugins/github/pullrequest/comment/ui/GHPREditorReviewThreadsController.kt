@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
-import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 
 class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
                                         private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
                                         private val inlaysManager: EditorComponentInlaysManager) {
 
-  private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Inlay<*>>()
+  private val inlayByThread = mutableMapOf<GHPRReviewThreadModel, Disposable>()
 
   init {
     for ((line, threads) in threadMap.modelsByLine) {
@@ -36,7 +36,6 @@ class GHPREditorReviewThreadsController(threadMap: GHPREditorReviewThreadsModel,
   private fun insertThread(line: Int, thread: GHPRReviewThreadModel): Boolean {
     val component = componentFactory.createThreadComponent(thread)
     val inlay = inlaysManager.insertAfter(line, component) ?: return true
-    component.revalidate()
     inlayByThread[thread] = inlay
     return false
   }
