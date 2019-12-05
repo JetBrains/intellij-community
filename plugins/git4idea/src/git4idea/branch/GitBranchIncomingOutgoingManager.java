@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.commands.GitAuthenticationMode.NONE;
@@ -80,6 +81,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   @Nullable private MessageBusConnection myConnection;
   @NotNull private final MultiMap<GitRepository, GitRemote> myAuthSuccessMap = MultiMap.createConcurrentSet();
+  @NotNull private final AtomicBoolean myIsUpdating = new AtomicBoolean();
 
   GitBranchIncomingOutgoingManager(@NotNull Project project) {
     myProject = project;
@@ -156,6 +158,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @CalledInAny
   public void forceUpdateBranches() {
+    if (!myIsUpdating.compareAndSet(false, true)) return;
     updateBranchesToPull(false);
     updateBranchesToPush();
     new Task.Backgroundable(myProject, "Update Branches Info...") {
@@ -176,7 +179,16 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
           throw new ProcessCanceledException(e);
         }
       }
+
+      @Override
+      public void onFinished() {
+        myIsUpdating.set(false);
+      }
     }.queue();
+  }
+
+  public boolean isUpdating() {
+    return myIsUpdating.get();
   }
 
   private void scheduleUpdate() {

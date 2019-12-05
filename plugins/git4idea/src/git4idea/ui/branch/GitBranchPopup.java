@@ -164,7 +164,7 @@ public class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       }
 
       private boolean isBusy(@NotNull Project project) {
-        return GitFetchSupport.fetchSupport(project).isFetchRunning();
+        return GitFetchSupport.fetchSupport(project).isFetchRunning() || GitBranchIncomingOutgoingManager.getInstance(project).isUpdating();
       }
     };
   }
