@@ -313,7 +313,8 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(libraryName: "Jaxen", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
-
+    new LibraryLicense(libraryName: "jb-jdi", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-jdi",
+                       licenseUrl: "https://raw.githubusercontent.com/JetBrains/intellij-deps-jdi/master/LICENSE.txt"),
     new LibraryLicense(name: "JBcrypt", libraryName: "trilead-ssh2", transitiveDependency: true, version: "1.0.0", license: "ISC License",
                        licenseUrl: "https://github.com/jeremyh/jBCrypt/blob/master/LICENSE", url: "https://github.com/jeremyh/jBCrypt"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
