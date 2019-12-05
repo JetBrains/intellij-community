@@ -20,21 +20,6 @@ class ProductModulesLayout {
   String mainJarName
 
   /**
-   * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
-   * @see CommunityRepositoryModules#PLATFORM_API_MODULES
-   * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
-   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.
-   */
-  List<String> platformApiModules = []
-
-  /**
-   * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
-   * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
-   * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
-   * will be packed into platform-impl.jar in the product's 'lib' directory automatically then.   */
-  List<String> platformImplementationModules = []
-
-  /**
    * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
    */
   List<String> productApiModules = []

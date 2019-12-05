@@ -110,17 +110,17 @@ class DistributionJARsBuilder {
           withModule(it, jarName)
         }
       }
-      getPlatformApiModules(productLayout).each {
+      CommunityRepositoryModules.PLATFORM_API_MODULES.each {
         withModule(it, "platform-api.jar")
       }
-      getPlatformImplModules(productLayout).each {
+      CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES.each {
         withModule(it, "platform-impl.jar")
       }
-      getProductApiModules(productLayout).each {
+      productLayout.productApiModules.each {
         withModule(it, "openapi.jar")
       }
 
-      getProductImplModules(productLayout).each {
+      productLayout.productImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
 
@@ -210,8 +210,8 @@ class DistributionJARsBuilder {
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    getPlatformApiModules(modulesLayout) + getPlatformImplModules(modulesLayout) + getProductApiModules(modulesLayout) +
-    getProductImplModules(modulesLayout) + modulesLayout.additionalPlatformJars.values()
+    CommunityRepositoryModules.PLATFORM_API_MODULES + CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
+    modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
   /**
@@ -219,22 +219,6 @@ class DistributionJARsBuilder {
    */
   static List<String> getToolModules() {
     ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater"]
-  }
-
-  static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
-    productLayout.platformApiModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_API_MODULES : []
-  }
-
-  static List<String> getPlatformImplModules(ProductModulesLayout productLayout) {
-    productLayout.platformImplementationModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES : []
-  }
-
-  static List<String> getProductApiModules(ProductModulesLayout productLayout) {
-    productLayout.platformApiModules.isEmpty() ? productLayout.productApiModules : productLayout.platformApiModules
-  }
-
-  static List<String> getProductImplModules(ProductModulesLayout productLayout) {
-    productLayout.platformImplementationModules.isEmpty() ? productLayout.productImplementationModules : productLayout.platformImplementationModules
   }
 
   Collection<String> getIncludedProjectArtifacts() {
@@ -318,10 +302,10 @@ class DistributionJARsBuilder {
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
     productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
-    getPlatformApiModules(productLayout) +
-    getPlatformImplModules(productLayout) +
-    getProductApiModules(productLayout) +
-    getProductImplModules(productLayout) +
+    CommunityRepositoryModules.PLATFORM_API_MODULES +
+    CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
+    productLayout.productApiModules +
+    productLayout.productImplementationModules +
     productLayout.additionalPlatformJars.values() +
     toolModules + buildContext.productProperties.additionalModulesToCompile +
     SVGPreBuilder.getModulesToInclude()

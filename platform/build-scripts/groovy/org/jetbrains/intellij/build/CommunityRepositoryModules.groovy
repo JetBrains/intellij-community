@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.google.common.io.Files
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -15,9 +16,10 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 @CompileStatic
 class CommunityRepositoryModules {
   /**
-   * @deprecated use {@link ProductModulesLayout#productApiModules} instead of {@link ProductModulesLayout#platformApiModules} to avoid
-   * using this property
+   * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs. Build scripts of IDEs aren't supposed to use this
+   * property directly, it's used by the build scripts internally.
    */
+  @ApiStatus.Internal
   static List<String> PLATFORM_API_MODULES = [
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
@@ -48,9 +50,10 @@ class CommunityRepositoryModules {
   ]
 
   /**
-   * @deprecated use {@link ProductModulesLayout#productImplementationModules} instead of {@link ProductModulesLayout#platformImplementationModules}
-   * to avoid using this property
+   * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs. Build scripts of IDEs aren't supposed to use this
+   * property directly, it's used by the build scripts internally.
    */
+  @ApiStatus.Internal
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
