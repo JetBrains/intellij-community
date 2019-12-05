@@ -1022,11 +1022,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return layout
   }
 
-  override fun setLayoutToRestoreLater(layout: DesktopLayout) {
+  override fun setLayoutToRestoreLater(layout: DesktopLayout?) {
     layoutToRestoreLater = layout
   }
 
-  override fun getLayoutToRestoreLater() = layoutToRestoreLater!!
+  override fun getLayoutToRestoreLater() = layoutToRestoreLater
 
   override fun setLayout(layout: DesktopLayout) {
     ApplicationManager.getApplication().assertIsDispatchThread()

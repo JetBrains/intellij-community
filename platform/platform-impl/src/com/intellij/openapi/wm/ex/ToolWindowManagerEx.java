@@ -62,8 +62,9 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   @NotNull
   public abstract DesktopLayout getLayout();
 
-  public abstract void setLayoutToRestoreLater(DesktopLayout layout);
+  public abstract void setLayoutToRestoreLater(@Nullable DesktopLayout layout);
 
+  @Nullable
   public abstract DesktopLayout getLayoutToRestoreLater();
 
   /**
