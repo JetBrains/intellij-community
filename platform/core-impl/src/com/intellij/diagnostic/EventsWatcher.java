@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+@ApiStatus.Experimental
 public final class EventsWatcher implements Disposable {
 
   @NotNull
@@ -100,11 +102,12 @@ public final class EventsWatcher implements Disposable {
   }
 
   public void runnableFinished(long startedAt) {
+    long duration = System.currentTimeMillis() - startedAt;
     String representation = Objects.requireNonNull(myCurrentInstance).getClass().getName();
 
     myDurationsByFqn.compute(
       representation,
-      (ignored, count) -> InvocationInfo.computeNext(count, startedAt)
+      (ignored, count) -> InvocationInfo.computeNext(count, duration)
     );
 
     myRunnables.offer(String.format("%tc,%s%n", startedAt, representation));
@@ -229,17 +232,19 @@ public final class EventsWatcher implements Disposable {
 
     private final int myCount;
     private final long myDuration;
-    private final double myAverage;
 
     private InvocationInfo(int count, long duration) {
       myCount = count;
       myDuration = duration;
-      myAverage = (double)duration / count;
     }
 
     @Override
     public int compareTo(@NotNull InvocationInfo info) {
-      return Double.compare(info.myAverage, myAverage);
+      int result = Integer.compare(info.myCount, myCount);
+
+      return result != 0 ?
+             result :
+             Double.compare(info.myDuration, myDuration);
     }
 
     @Override
@@ -261,22 +266,18 @@ public final class EventsWatcher implements Disposable {
     @Override
     public String toString() {
       return String.format(
-        "[average: %.2f; count: %d; duration: %d]",
-        myAverage,
-        myCount,
-        myDuration
+        "[average: %.2f; count: %d]",
+        (double)myDuration / myCount,
+        myCount
       );
     }
 
     @NotNull
     public static InvocationInfo computeNext(@Nullable InvocationInfo info,
-                                             long startedAt) {
-      int count = info != null ? info.myCount : 0;
-      long duration = info != null ? info.myDuration : 0;
-
+                                             long duration) {
       return new InvocationInfo(
-        1 + count,
-        (System.currentTimeMillis() - startedAt) + duration
+        1 + (info != null ? info.myCount : 0),
+        duration + (info != null ? info.myDuration : 0)
       );
     }
   }
