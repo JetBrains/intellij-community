@@ -30,7 +30,7 @@ class SmokeTest : HeavyPlatformTestCase() {
     }
 
     // dsl exists on start
-    fun ignoreTestBuildModelWhenDslExistsFromBeginning() {
+    fun testBuildModelWhenDslExistsFromBeginning() {
         addSpaceKts()
 
         val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)

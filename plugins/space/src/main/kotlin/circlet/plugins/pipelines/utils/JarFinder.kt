@@ -1,17 +1,17 @@
 package circlet.plugins.pipelines.utils
 
 import com.intellij.ide.plugins.*
-import platform.common.*
+import com.intellij.openapi.extensions.*
 import java.io.*
 
 
 object JarFinder {
     private val spacePluginFiles: List<File> by lazy {
-        getPluginFiles("$ProductName Integration")
+        getPluginFiles("com.jetbrains.space")
     }
 
     private val kotlinPluginFiles: List<File> by lazy {
-        getPluginFiles("Kotlin")
+        getPluginFiles("org.jetbrains.kotlin")
     }
 
     fun find(name: String) : File {
@@ -27,9 +27,8 @@ object JarFinder {
 
     }
 
-    private fun getPluginFiles(pluginName: String) : List<File> {
-        val plugins = PluginManager.getPlugins()
-        val currentPlugin = plugins.firstOrNull { x -> x.name == pluginName } ?: error("Can't find `$pluginName` plugin")
+    private fun getPluginFiles(pluginId: String) : List<File> {
+        val currentPlugin =  PluginManager.getPlugin(PluginId.findId(pluginId))?: error("Can't find `$pluginId` plugin")
         return currentPlugin.path.getFiles()
     }
 
