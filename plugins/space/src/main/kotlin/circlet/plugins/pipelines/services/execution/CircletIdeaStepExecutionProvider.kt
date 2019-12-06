@@ -9,48 +9,48 @@ import runtime.*
 
 data class DummyContainer(val lifetimeSource: LifetimeSource)
 
-class CircletIdeaJobExecutionProvider(
+class CircletIdeaStepExecutionProvider(
     private val lifetime: Lifetime,
     private val logCallback: (String) -> Unit,
     private val notifyProcessTerminated: (Int) -> Unit,
     private val db: CircletIdeaExecutionProviderStorage
-) : JobExecutionProvider, JobExecutionScheduler {
+) : StepExecutionProvider, StepExecutionScheduler {
 
     companion object : KLogging()
 
     private val runningJobs = mutableMapOf<Long, DummyContainer>()
 
-    private lateinit var savedHandler: JobExecutionStatusUpdateHandler
+    private lateinit var savedHandler: StepExecutionStatusUpdateHandler
 
-    override fun scheduleExecution(jobExecs: Iterable<JobExecutionData<*>>) {
-        jobExecs.forEach {
+    override fun scheduleExecution(stepExecs: Iterable<StepExecutionData<*>>) {
+        stepExecs.forEach {
             logger.catch {
                 launch { startExecution(it) }
             }
         }
     }
 
-    override fun scheduleTermination(jobExecs: Iterable<JobExecutionData<*>>) {
-        jobExecs.forEach {
+    override fun scheduleTermination(stepExecs: Iterable<StepExecutionData<*>>) {
+        stepExecs.forEach {
             logger.catch {
                 launch { startTermination(it) }
             }
         }
     }
 
-    override suspend fun startExecution(jobExec: JobExecutionData<*>) = db("start-execution") {
-        val jobEntity = db.findJobExecution(jobExec.id) ?: error("Job execution [$jobExec] is not found")
-        if (jobEntity !is CircletIdeaAJobExecutionEntity) {
+    override suspend fun startExecution(stepExec: StepExecutionData<*>) = db("start-execution") {
+        val jobEntity = db.findJobExecution(stepExec.id) ?: error("Job execution [$stepExec] is not found")
+        if (jobEntity !is CircletIdeaAContainerStepExecutionEntity) {
             error("unknown job $jobEntity")
         }
 
         val image = jobEntity.meta.image
-        logCallback("prepare to run: image=$image, id=$jobExec")
+        logCallback("prepare to run: image=$image, id=$stepExec")
         val jobLifetimeSource = lifetime.nested()
 
         val dummyContainer = DummyContainer(jobLifetimeSource)
-        runningJobs[jobExec.id] = dummyContainer
-        changeState(this, jobEntity, JobState.Running)
+        runningJobs[stepExec.id] = dummyContainer
+        changeState(this, jobEntity, StepState.Running)
 
         var counter = 0
 
@@ -62,9 +62,9 @@ class CircletIdeaJobExecutionProvider(
         }
 
         jobLifetimeSource.add {
-            runningJobs.remove(jobExec.id)
+            runningJobs.remove(stepExec.id)
             timer.cancel()
-            logCallback("stop: image=$image, id=$jobExec")
+            logCallback("stop: image=$image, id=$stepExec")
             lifetime.launch(Ui) {
                 db("start-execution") {
                     changeState(this, jobEntity, generateFinalState(image))
@@ -73,11 +73,11 @@ class CircletIdeaJobExecutionProvider(
         }
     }
 
-    override suspend fun startTermination(jobExec: JobExecutionData<*>) {
+    override suspend fun startTermination(stepExec: StepExecutionData<*>) {
         TODO("startTermination not implemented")
     }
 
-    override fun subscribeIdempotently(handler: JobExecutionStatusUpdateHandler) {
+    override fun subscribeIdempotently(handler: StepExecutionStatusUpdateHandler) {
         this.savedHandler = handler
     }
 
@@ -87,19 +87,19 @@ class CircletIdeaJobExecutionProvider(
         }
     }
 
-    override fun onBeforeJobStatusChanged(tx: AutomationStorageTransaction, events: Iterable<JobStatusChangedEvent>) {
+    override fun onBeforeJobStatusChanged(tx: AutomationStorageTransaction, events: Iterable<StepStatusChangedEvent>) {
         //todo
     }
 
-    private fun changeState(tx: AutomationStorageTransaction, job: AJobExecutionEntity<*>, newStatus: JobState) {
-        savedHandler(tx, setOf(JobExecutionStatusUpdate(job, newStatus)))
+    private fun changeState(tx: AutomationStorageTransaction, step: AStepExecutionEntity<*>, newStatus: StepState) {
+        savedHandler(tx, setOf(StepExecutionStatusUpdate(step, newStatus)))
     }
 
-    private fun generateFinalState(imageName: String) : JobState {
+    private fun generateFinalState(imageName: String) : StepState {
         if (imageName.endsWith("_toFail")) {
-            return JobState.Failed("Should fail because of the image name $imageName")
+            return StepState.Failed("Should fail because of the image name $imageName")
         }
-        return JobState.Finished(0)
+        return StepState.Finished(0)
     }
 
     private fun launch(body: suspend () -> Unit) {

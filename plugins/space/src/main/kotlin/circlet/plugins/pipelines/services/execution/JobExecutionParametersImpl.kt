@@ -30,7 +30,7 @@ class JobExecutionParametersImpl : JobExecutionParameters {
         keys.remove(taskExecutionId)
     }
 
-    override fun initSystemParams(taskExecutionId: Long, taskContext: TaskStartContext) {
+    override fun initSystemParams(taskExecutionId: Long, jobContext: ActionStartContext) {
         logger.info { "initSystemParams. taskExecutionId $taskExecutionId" }
         keys[taskExecutionId] = mutableMapOf<String, String>()
     }

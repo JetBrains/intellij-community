@@ -11,13 +11,13 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
     companion object : KLogging()
 
     private val idStorage = TaskLongIdStorage()
-    private val storedExecutions = mutableMapOf<Long, AJobExecutionEntity<*>>()
+    private val storedExecutions = mutableMapOf<Long, AStepExecutionEntity<*>>()
 
-    override fun findJobExecution(id: Long, forUpdate: Boolean): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
+    override fun findJobExecution(id: Long, forUpdate: Boolean): AStepExecutionEntity<ProjectJob.Process<*, *>>? {
         return storedExecutions[id]
     }
 
-    override fun findJobExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AJobExecutionEntity<ProjectJob.Process<*, *>>> {
+    override fun findJobExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ProjectJob.Process<*, *>>> {
         return storedExecutions.filterKeys { it in ids }.map { it.value }.asSequence()
     }
 
@@ -25,27 +25,27 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findSnapshotForJobExecution(jobExec: AJobExecutionEntity<*>): AVolumeSnapshotEntity? {
+    override fun findSnapshotForJobExecution(stepExec: AStepExecutionEntity<*>): AVolumeSnapshotEntity? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findSnapshotCreationPoint(parentExecutionId: Long): AJobExecutionEntity<ProjectJob.Process<*, *>>? {
+    override fun findSnapshotCreationPoint(graphExecutionId: Long): AStepExecutionEntity<ProjectJob.Process<*, *>>? {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findMetaTask(metaTaskId: Long): AGraphMetaEntity? {
-        logger.debug { "findMetaTask $metaTaskId" }
-        return CircletIdeaAGraphMetaEntity(metaTaskId, task)
+    override fun findGraphMeta(graphMetaId: Long): AGraphMetaEntity? {
+        logger.debug { "findMetaTask $graphMetaId" }
+        return CircletIdeaAGraphMetaEntity(graphMetaId, task)
     }
 
-    override fun findExecution(id: Long): AGraphExecutionEntity? {
+    override fun findGraphExecutionByJobActionExecutionId(id: Long): AGraphExecutionEntity? {
         TODO("findExecution not implemented")
     }
 
-    override fun createTaskExecution(metaTask: AGraphMetaEntity, taskStartContext: TaskStartContext, bootstrapJobFactory: (AGraphExecutionEntity) -> ProjectJob.Process.Container?): AGraphExecutionEntity {
+    override fun createJobExecution(metaTask: AGraphMetaEntity, jobStartContext: ActionStartContext, bootstrapJobFactory: (AGraphExecutionEntity) -> ProjectJob.Process.Container?): AGraphExecutionEntity {
         logger.debug { "createTaskExecution $metaTask" }
         val now = System.currentTimeMillis()
-        val jobs = mutableListOf<AJobExecutionEntity<*>>()
+        val jobs = mutableListOf<AStepExecutionEntity<*>>()
         val graphExecutionEntity = CircletIdeaAGraphExecutionEntity(
             metaTask.id,
             now,
@@ -87,9 +87,9 @@ class CircletIdeaExecutionProviderStorage(private val task: ProjectTask) : Execu
         return result
     }
 
-    private fun createAJobExecutionEntity(bootstrapJob: ProjectJob.Process.Container, graphExecution: AGraphExecutionEntity): AJobExecutionEntity<*> {
+    private fun createAJobExecutionEntity(bootstrapJob: ProjectJob.Process.Container, graphExecution: AGraphExecutionEntity): AStepExecutionEntity<*> {
         val jobExecId = idStorage.getOrCreateId(bootstrapJob.id)
-        val entity = CircletIdeaAJobExecutionEntity(
+        val entity = CircletIdeaAContainerStepExecutionEntity(
             jobExecId,
             System.currentTimeMillis(),
             null,

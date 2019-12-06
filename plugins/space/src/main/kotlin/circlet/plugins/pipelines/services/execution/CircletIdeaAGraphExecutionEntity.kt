@@ -16,10 +16,10 @@ class CircletIdeaAGraphExecutionEntity(
     override val branch: String,
     override val commit: String,
     override val repoId: String,
-    val jobsList: MutableList<AJobExecutionEntity<*>>
+    val jobsList: MutableList<AStepExecutionEntity<*>>
 ) : AGraphExecutionEntity {
 
-    override val jobs: Sequence<AJobExecutionEntity<*>>
+    override val steps: Sequence<AStepExecutionEntity<*>>
         get() = jobsList.asSequence()
 
     override fun equals(other: Any?): Boolean {

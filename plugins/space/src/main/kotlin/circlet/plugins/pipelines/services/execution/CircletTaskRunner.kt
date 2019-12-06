@@ -57,7 +57,7 @@ class CircletTaskRunner(val project: Project) {
 
         val storage = CircletIdeaExecutionProviderStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
-        val provider = CircletIdeaJobExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
+        val provider = CircletIdeaStepExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
         val tracer = CircletIdeaAutomationTracer()
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
             provider,
@@ -83,10 +83,10 @@ class CircletTaskRunner(val project: Project) {
         val branch = "myBranch"
         val commit = "myCommit"
         val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
-        val context = TaskStartContext(repositoryData, branch, commit, commit, 0, trigger)
+        val context = JobStartContext(repositoryData, branch, commit, commit, 0, task, trigger)
 
         async(lifetime, Ui) {
-            automationStarterCommon.startTask(metaTaskId, context)
+            automationStarterCommon.startJob(context)
         }.invokeOnCompletion {
             if (it != null) {
                 processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)
