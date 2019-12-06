@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
@@ -22,9 +21,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class LegacyBridgeProjectLibraryTableImpl(
+internal class LegacyBridgeProjectLibraryTableImpl(
   private val parentProject: Project
-) : ProjectLibraryTable, Disposable {
+) : LegacyBridgeProjectLibraryTable, Disposable {
 
   private val LOG = Logger.getInstance(javaClass)
 
@@ -219,7 +218,7 @@ class LegacyBridgeProjectLibraryTableImpl(
       originalStorage = entityStore.current
     )
 
-  fun getModifiableModel(diff: TypedEntityStorageBuilder): LibraryTable.ModifiableModel =
+  override fun getModifiableModel(diff: TypedEntityStorageBuilder): LibraryTable.ModifiableModel =
     LegacyBridgeProjectModifiableLibraryTableImpl(
       libraryTable = this,
       project = project,

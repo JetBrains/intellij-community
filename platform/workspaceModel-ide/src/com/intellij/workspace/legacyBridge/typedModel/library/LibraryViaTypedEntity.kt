@@ -18,7 +18,7 @@ import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibra
 import org.jdom.Element
 import java.io.StringReader
 
-class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
+internal class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
                             val libraryEntity: LibraryEntity,
                             internal val filePointerProvider: LegacyBridgeFilePointerProvider,
                             val storage: TypedEntityStorage,
@@ -99,7 +99,7 @@ class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
   override fun getExternalSource(): ProjectModelExternalSource? = null
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, TypedEntityStorageBuilder.from(storage))
-  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, builder)
+  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = modifiableModelFactory(this, builder)
   override fun getSource(): Library = libraryImpl
 
   override fun readExternal(element: Element) = throw NotImplementedError()

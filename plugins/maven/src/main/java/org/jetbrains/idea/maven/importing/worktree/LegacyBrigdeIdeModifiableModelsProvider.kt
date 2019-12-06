@@ -11,17 +11,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTable
 import org.jetbrains.idea.maven.utils.MavenLog
 
 class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
@@ -35,12 +35,11 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
     legacyBridgeModuleManagerComponent.getModifiableModel(diff)
   }
 
-  private val projectLibraryTableImpl = ProjectLibraryTable.getInstance(project) as LegacyBridgeProjectLibraryTableImpl
+  private val bridgeProjectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project) as LegacyBridgeProjectLibraryTable
 
   private val librariesModel = lazy {
-    projectLibraryTableImpl.getModifiableModel(diff)
+    bridgeProjectLibraryTable.getModifiableModel(diff)
   }
-
 
   override fun findIdeLibrary(libraryData: LibraryData): Library? {
     return getAllLibraries().filter { it.name == libraryData.internalName }.firstOrNull()
@@ -73,7 +72,7 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
     legacyBridgeModuleManagerComponent.incModificationCount()
     val modifiableModel = legacyBridgeModuleManagerComponent.getModifiableModel(diff)
     val module = modifiableModel.newModule(filePath, moduleTypeId)
-    return module;
+    return module
   }
 
   override fun newModule(moduleData: ModuleData): Module {
@@ -92,8 +91,8 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun getModifiableLibraryModel(library: Library?): Library.ModifiableModel {
-    val bridgeLibraryImpl = library as LegacyBridgeLibraryImpl
-    return bridgeLibraryImpl.getModifiableModel(diff)
+    val bridgeLibrary = library as LegacyBridgeLibrary
+    return bridgeLibrary.getModifiableModel(diff)
   }
 
   override fun getModifiableModuleModel(): ModifiableModuleModel {
@@ -132,11 +131,11 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun createLibrary(name: String?): Library {
-    return projectLibraryTableImpl.createLibrary(name)
+    return bridgeProjectLibraryTable.createLibrary(name)
   }
 
   override fun createLibrary(name: String?, externalSource: ProjectModelExternalSource?): Library {
-    return projectLibraryTableImpl.createLibrary(name)
+    return bridgeProjectLibraryTable.createLibrary(name)
   }
 
   override fun getModules(): Array<Module> {
@@ -152,7 +151,7 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun getAllLibraries(): Array<Library> {
-    return projectLibraryTableImpl.libraries +
+    return bridgeProjectLibraryTable.libraries +
            legacyBridgeModuleManagerComponent.modules.map { LegacyBridgeModuleRootComponent(it) }
              .flatMap { it.legacyBridgeModuleLibraryTable().libraries.asIterable() }
   }
@@ -198,7 +197,7 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun getLibraryByName(name: String): Library? {
-    return projectLibraryTableImpl.getLibraryByName(name)
+    return bridgeProjectLibraryTable.getLibraryByName(name)
   }
 
   override fun <T : Any?> getUserData(key: Key<T>): T? {

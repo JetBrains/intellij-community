@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProvider, Disposable {
+internal class LegacyBridgeFilePointerProviderImpl : LegacyBridgeFilePointerProvider, Disposable {
   private var currentDisposable = nextDisposable()
 
   private val filePointers: ConcurrentMap<VirtualFileUrl, VirtualFilePointer> = ContainerUtil.newConcurrentMap()

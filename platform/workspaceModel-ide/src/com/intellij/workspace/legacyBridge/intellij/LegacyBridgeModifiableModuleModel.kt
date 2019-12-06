@@ -18,7 +18,7 @@ import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.storagePlace
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 
-class LegacyBridgeModifiableModuleModel(
+internal class LegacyBridgeModifiableModuleModel(
   private val project: Project,
   private val moduleManager: LegacyBridgeModuleManagerComponent,
   diff: TypedEntityStorageBuilder

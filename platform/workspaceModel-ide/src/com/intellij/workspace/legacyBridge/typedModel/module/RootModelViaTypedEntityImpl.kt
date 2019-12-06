@@ -22,7 +22,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
 
-class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityId<ModuleEntity>,
+internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: PersistentEntityId<ModuleEntity>,
                                   internal val storage: TypedEntityStorage,
                                   private val module: LegacyBridgeModule,
                                   private val moduleLibraryTable: LibraryTable,

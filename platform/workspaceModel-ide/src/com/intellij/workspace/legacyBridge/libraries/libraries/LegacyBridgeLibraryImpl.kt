@@ -25,10 +25,13 @@ import org.jetbrains.annotations.ApiStatus
 
 interface LegacyBridgeLibrary : LibraryEx {
   val libraryId: LibraryId
+
+  @ApiStatus.Internal
+  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx
 }
 
 @ApiStatus.Internal
-class LegacyBridgeLibraryImpl(
+internal class LegacyBridgeLibraryImpl(
   private val libraryTable: LibraryTable,
   val project: Project,
   initialId: LibraryId,
@@ -161,7 +164,7 @@ class LegacyBridgeLibraryImpl(
   override fun getRootProvider(): RootProvider = this
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx = snapshot.modifiableModel
-  fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = snapshot.getModifiableModel(builder)
+  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = snapshot.getModifiableModel(builder)
   override fun getSource(): Library? = null
   override fun getExternalSource(): ProjectModelExternalSource? = snapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = snapshot.getInvalidRootUrls(type)

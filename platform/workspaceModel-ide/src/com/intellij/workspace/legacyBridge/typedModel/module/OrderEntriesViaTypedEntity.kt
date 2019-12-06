@@ -2,7 +2,6 @@ package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,11 +18,10 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
-import com.intellij.workspace.api.ModuleEntity
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-abstract class OrderEntryViaTypedEntity(
+internal abstract class OrderEntryViaTypedEntity(
   protected val model: RootModelViaTypedEntityImpl,
   private val index: Int,
   val item: ModuleDependencyItem,
@@ -39,7 +37,7 @@ abstract class OrderEntryViaTypedEntity(
   override fun isSynthetic() = false
 }
 
-abstract class ExportableOrderEntryViaTypedEntity(
+internal abstract class ExportableOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   exportableDependencyItem: ModuleDependencyItem.Exportable,
@@ -64,7 +62,7 @@ abstract class ExportableOrderEntryViaTypedEntity(
   }
 }
 
-abstract class ModuleOrderEntryBaseViaTypedEntity(
+internal abstract class ModuleOrderEntryBaseViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   dependencyItem: ModuleDependencyItem.Exportable,
@@ -92,7 +90,7 @@ abstract class ModuleOrderEntryBaseViaTypedEntity(
   }
 }
 
-class ModuleOrderEntryViaTypedEntity(
+internal class ModuleOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   private val moduleDependencyItem: ModuleDependencyItem.Exportable.ModuleDependency,
@@ -119,8 +117,6 @@ class ModuleOrderEntryViaTypedEntity(
   }
 }
 
-private fun ModuleEntity.findModule(project: Project) = ModuleManager.getInstance(project).findModuleByName(name)
-
 private fun ModuleDependencyItem.DependencyScope.toDependencyScope() = when (this) {
   ModuleDependencyItem.DependencyScope.COMPILE -> DependencyScope.COMPILE
   ModuleDependencyItem.DependencyScope.RUNTIME -> DependencyScope.RUNTIME
@@ -135,7 +131,7 @@ private fun DependencyScope.toEntityDependencyScope(): ModuleDependencyItem.Depe
   DependencyScope.TEST -> ModuleDependencyItem.DependencyScope.TEST
 }
 
-abstract class SdkOrderEntryBaseViaTypedEntity(
+internal abstract class SdkOrderEntryBaseViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   item: ModuleDependencyItem,
@@ -153,7 +149,7 @@ abstract class SdkOrderEntryBaseViaTypedEntity(
   override fun getUrls(rootType: OrderRootType) = getRootUrls(rootType)
 }
 
-abstract class LibraryOrderEntryBaseViaTypedEntity(
+internal abstract class LibraryOrderEntryBaseViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   item: ModuleDependencyItem.Exportable,
@@ -173,7 +169,7 @@ abstract class LibraryOrderEntryBaseViaTypedEntity(
   override fun isValid(): Boolean = library != null
 }
 
-class LibraryOrderEntryViaTypedEntity(
+internal class LibraryOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   private val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
@@ -249,7 +245,7 @@ class LibraryOrderEntryViaTypedEntity(
   override fun isSynthetic(): Boolean = isModuleLevel
 }
 
-class SdkOrderEntryViaTypedEntity(
+internal class SdkOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   private val sdkDependencyItem: ModuleDependencyItem.SdkDependency
@@ -264,10 +260,7 @@ class SdkOrderEntryViaTypedEntity(
     val jdkTable = ProjectJdkTable.getInstance()
 
     val sdkType = sdkDependencyItem.sdkType
-    val sdk = when {
-      sdkType != null -> jdkTable.findJdk(sdkDependencyItem.sdkName, sdkType)
-      else -> jdkTable.findJdk(sdkDependencyItem.sdkName)
-    }
+    val sdk = jdkTable.findJdk(sdkDependencyItem.sdkName, sdkType)
     return model.accessor.getSdk(sdk, sdkDependencyItem.sdkName)
   }
 
@@ -286,7 +279,7 @@ class SdkOrderEntryViaTypedEntity(
   override fun isSynthetic(): Boolean = true
 }
 
-class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
+internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.InheritedSdkDependency)
   : SdkOrderEntryBaseViaTypedEntity(model, index, item, null), InheritedJdkOrderEntry, ClonableOrderEntry {
 
   override val rootProvider: RootProvider?
@@ -306,7 +299,7 @@ class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, i
   }
 }
 
-class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
+internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
   : OrderEntryViaTypedEntity(model, index, item, null), ModuleSourceOrderEntry, ClonableOrderEntry {
   override fun getFiles(type: OrderRootType): Array<out VirtualFile> = if (type == OrderRootType.SOURCES) rootModel.sourceRoots else VirtualFile.EMPTY_ARRAY
 

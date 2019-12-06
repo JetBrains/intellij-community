@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.SOURCE_ROOT_TYPE_ATTRIBUTE
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer.URL_ATTRIBUTE
 
-abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
+internal abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getFile(): VirtualFile? = entry.model.filePointerProvider.getAndCacheFilePointer(contentFolderUrl).file
   override fun getContentEntry(): ContentEntryViaTypedEntity = entry
   override fun getUrl(): String = contentFolderUrl.url
@@ -28,7 +28,7 @@ abstract class ContentFolderViaTypedEntity(private val entry: ContentEntryViaTyp
   override fun hashCode(): Int = contentFolderUrl.hashCode()
 }
 
-class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, val sourceRootEntity: SourceRootEntity)
+internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, val sourceRootEntity: SourceRootEntity)
   : ContentFolderViaTypedEntity(entry, sourceRootEntity.url), SourceFolder {
 
   private var packagePrefixVar: String? = null
@@ -150,5 +150,5 @@ class SourceFolderViaTypedEntity(private val entry: ContentEntryViaTypedEntity, 
   }
 }
 
-class ExcludeFolderViaTypedEntity(entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
+internal class ExcludeFolderViaTypedEntity(entry: ContentEntryViaTypedEntity, val excludeFolderUrl: VirtualFileUrl)
   : ContentFolderViaTypedEntity(entry, excludeFolderUrl), ExcludeFolder

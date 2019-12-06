@@ -20,7 +20,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 
-class LegacyBridgeLibraryModifiableModelImpl(
+internal class LegacyBridgeLibraryModifiableModelImpl(
   private val originalLibrary: LegacyBridgeLibraryImpl,
   private val originalLibrarySnapshot: LibraryViaTypedEntity,
   diff: TypedEntityStorageBuilder,

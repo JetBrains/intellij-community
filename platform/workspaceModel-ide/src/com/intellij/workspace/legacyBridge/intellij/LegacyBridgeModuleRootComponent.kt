@@ -87,7 +87,7 @@ class LegacyBridgeModuleRootComponent(
     parent = this
   )
 
-  val model
+  internal val model
     get() = modelValue.value
 
   override fun dispose() = Unit

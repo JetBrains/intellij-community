@@ -14,7 +14,7 @@ import com.intellij.workspace.api.TypedEntityStorageDiffBuilder
 import com.intellij.workspace.api.TypedEntityStore
 import java.io.File
 
-class LegacyBridgeModuleImpl(
+internal class LegacyBridgeModuleImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,

@@ -11,7 +11,7 @@ import com.intellij.workspace.api.SourceRootEntity
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
-class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedEntityImpl,
+internal class ContentEntryViaTypedEntity(internal val model: RootModelViaTypedEntityImpl,
                                  val sourceRootEntities: List<SourceRootEntity>,
                                  val entity: ContentRootEntity) : ContentEntry {
   private val excludeFolders by lazy {

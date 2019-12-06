@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
-class LegacyBridgeModifiableContentEntryImpl(
+internal class LegacyBridgeModifiableContentEntryImpl(
   private val diff: TypedEntityStorageDiffBuilder,
   private val modifiableRootModel: LegacyBridgeModifiableRootModel,
   val contentEntryUrl: VirtualFileUrl

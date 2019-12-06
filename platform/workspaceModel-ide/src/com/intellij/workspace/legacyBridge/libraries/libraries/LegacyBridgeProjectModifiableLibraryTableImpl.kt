@@ -13,7 +13,7 @@ import com.intellij.workspace.ide.IdeUiEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 
-class LegacyBridgeProjectModifiableLibraryTableImpl(
+internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   originalStorage: TypedEntityStorage,
   private val libraryTable: LegacyBridgeProjectLibraryTableImpl,
   private val project: Project,

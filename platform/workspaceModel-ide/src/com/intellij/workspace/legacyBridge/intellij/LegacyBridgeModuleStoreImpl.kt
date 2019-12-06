@@ -5,7 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 
-class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMacroManager, module: Module) : ModuleStoreBase() {
+internal class LegacyBridgeModuleStoreImpl(private val pathMacroManager: PathMacroManager, module: Module) : ModuleStoreBase() {
   private val enabled: Boolean
 
   init {
