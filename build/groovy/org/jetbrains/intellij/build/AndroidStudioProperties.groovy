@@ -101,6 +101,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "url-assistant",
                                          ]
     productLayout.mainModules = ["intellij.idea.community.main"]
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(false),
       androidPluginInStudio([:]),
