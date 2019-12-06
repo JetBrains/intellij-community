@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -204,6 +205,13 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
 
   public synchronized DependencySearchService getDependencySearchService() {
     return myDependencySearchService;
+  }
+
+  @ApiStatus.Experimental
+  public boolean hasNonScannedRemotes() {
+    return myProjectIndices.stream()
+      .filter(i -> i.getKind() == MavenSearchIndex.Kind.REMOTE)
+      .anyMatch(i -> !"central".equals(i.getRepositoryId()));
   }
 
   /**
