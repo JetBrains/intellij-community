@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtmlPanel {
 
-  private final JBCefJSQuery myJSQuerySetScrollY = JBCefJSQuery.create("setMyScrollY", this);
-  private final JBCefJSQuery myJSQueryOpenInBrowser = JBCefJSQuery.create("openInExternalBrowser", this);
+  private final JBCefJSQuery myJSQuerySetScrollY = JBCefJSQuery.create(this);
+  private final JBCefJSQuery myJSQueryOpenInBrowser = JBCefJSQuery.create(this);
 
   private static final NotNullLazyValue<String> MY_SCRIPTING_LINES = new NotNullLazyValue<String>() {
     @NotNull

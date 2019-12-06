@@ -48,11 +48,10 @@ public class JBCefJSQuery implements Disposable {
   /**
    * Creates a unique JS query
    *
-   * @param queryName an arbitrary query name (mostly serves debugging purposes)
    * @param browser the associated cef browser
    */
-  public static JBCefJSQuery create(@NotNull String queryName, @NotNull JBCefBrowser browser) {
-    return new JBCefJSQuery(browser, "cefQuery_" + queryName + "_" + UNIQUE_ID_COUNTER.incrementAndGet());
+  public static JBCefJSQuery create(@NotNull JBCefBrowser browser) {
+    return new JBCefJSQuery(browser, "cefQuery_" + browser.hashCode() + "_" + UNIQUE_ID_COUNTER.incrementAndGet());
   }
 
   /**
