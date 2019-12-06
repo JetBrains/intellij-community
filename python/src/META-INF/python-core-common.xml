@@ -703,6 +703,10 @@
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.inspections.PyFunctionTypeAnnotationVisitorFilter"/>
 
+    <!-- PyExpressionCodeFragment -->
+    <visitorFilter language="Python"
+                   implementationClass="com.jetbrains.python.inspections.PyExpressionCodeFragmentVisitorFilter"/>
+
     <!-- Pipenv -->
     <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
