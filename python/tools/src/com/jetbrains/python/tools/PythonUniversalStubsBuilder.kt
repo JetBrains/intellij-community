@@ -34,7 +34,7 @@ fun main(args: Array<String>) {
   }
 }
 
-object PythonUniversalStubsBuilder : PyGeneratorBase() {
+private object PythonUniversalStubsBuilder : PyGeneratorBase() {
   fun generateStubs(root: String, outputPath: String) {
     try {
       app

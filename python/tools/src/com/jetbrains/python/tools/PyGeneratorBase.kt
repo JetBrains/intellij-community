@@ -7,52 +7,54 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.ZipUtil
-import java.io.File
+import com.intellij.util.io.Decompressor
+import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
  * @author Aleksey.Rostovskiy
  */
 open class PyGeneratorBase {
+  @Suppress("SpellCheckingInspection")
+  private val tempDir = Files.createTempDirectory("pystubs").toAbsolutePath()
+
   protected val app by lazy {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.PYCHARM_CE_PREFIX)
-    System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, FileUtil.createTempDirectory("pystubs", "plugins").absolutePath)
-    System.setProperty(PathManager.PROPERTY_SYSTEM_PATH, FileUtil.createTempDirectory("pystubs", "system").absolutePath)
-    System.setProperty(PathManager.PROPERTY_CONFIG_PATH, FileUtil.createTempDirectory("pystubs", "config").absolutePath)
-    //Thread.currentThread().contextClassLoader = BootstrapClassLoaderUtil.initClassLoader()
+
+    val dir = FileUtil.toSystemIndependentName(tempDir.toString())
+    System.setProperty(PathManager.PROPERTY_PLUGINS_PATH, "$dir/plugins")
+    System.setProperty(PathManager.PROPERTY_SYSTEM_PATH, "$dir/system")
+    System.setProperty(PathManager.PROPERTY_CONFIG_PATH, "$dir/config")
     TestApplicationManager.getInstance()
   }
 
-  protected fun rootFiles(root: String): ArrayList<VirtualFile>{
-    val dir = File(root)
-    if (!dir.exists() || !dir.isDirectory) {
-      throw IllegalStateException("$root doesn't exist or isn't a directory")
+  protected fun rootFiles(root: String): List<VirtualFile> {
+    val dir = Paths.get(root)
+    return Files.newDirectoryStream(dir).use { children ->
+      children.map {
+        LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(it.toString()))!!
+      }
     }
-
-    return ArrayList(dir.listFiles().map { it->
-      LocalFileSystem.getInstance().findFileByIoFile(it)!!
-    })
   }
 
-  protected fun unzipArchivesToRoots(root: String): ArrayList<VirtualFile> {
-    val dir = File(root)
-    if (!dir.exists() || !dir.isDirectory) {
-      throw IllegalStateException("$root doesn't exist or isn't a directory")
+  protected fun unzipArchivesToRoots(root: String): List<VirtualFile> {
+    val rootDir = Paths.get(root)
+    return Files.newDirectoryStream(rootDir).use { children ->
+      children.mapNotNull { path ->
+        val fileName = path.fileName.toString()
+        if (!fileName.endsWith(".zip")) {
+          return@mapNotNull null
+        }
+
+        val unzipRoot = rootDir.resolve(FileUtil.getNameWithoutExtension(fileName))
+        println("Extracting $path")
+        Decompressor.Zip(path.toFile()).extract(unzipRoot.toFile())
+        LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(unzipRoot.toString()))!!
+      }
     }
-    val files = dir.listFiles { _, name -> name.endsWith(".zip") }.map { zip ->
-      val unzipRoot = File(root, zip.nameWithoutExtension)
-      println("Extracting $zip")
-      ZipUtil.extract(zip, unzipRoot, null)
-      unzipRoot
-    }
-    return ArrayList(files.map { it ->
-      LocalFileSystem.getInstance().findFileByIoFile(it)!!
-    })
   }
 
   protected fun tearDown() {
-    app.dispose()
-    FileUtil.delete(File(System.getProperty(PathManager.PROPERTY_PLUGINS_PATH)))
-    FileUtil.delete(File(System.getProperty(PathManager.PROPERTY_SYSTEM_PATH)))
+    FileUtil.delete(tempDir)
   }
 }

@@ -131,7 +131,7 @@ public class ZipUtil {
   }
 
   private static class FileFilterAdapter implements Condition<String> {
-    private static FileFilterAdapter wrap(File outputDir, FilenameFilter filter) {
+    private static FileFilterAdapter wrap(File outputDir, @Nullable FilenameFilter filter) {
       return filter == null ? null : new FileFilterAdapter(outputDir, filter);
     }
 
