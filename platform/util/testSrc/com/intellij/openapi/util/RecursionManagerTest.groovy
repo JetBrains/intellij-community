@@ -2,6 +2,7 @@
 package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.testFramework.UsefulTestCase
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
@@ -34,6 +35,15 @@ class RecursionManagerTest extends TestCase {
         assert null == prevent(["foo"]) { "foo-return" }
         return "bar-return"
       }
+      return "foo-return"
+    }
+  }
+
+  void testAssertOnMissedCache() {
+    assert "foo-return" == prevent("foo") {
+      def stamp = RecursionManager.markStack()
+      assert null == prevent("foo") { fail() }
+      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException) {stamp.mayCacheNow() }
       return "foo-return"
     }
   }

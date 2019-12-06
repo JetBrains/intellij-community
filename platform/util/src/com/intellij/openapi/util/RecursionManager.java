@@ -343,7 +343,7 @@ public class RecursionManager {
     }
 
     /**
-     * Rules in this method correspond to bugs that should be fixed but for some reasons thi can't be done immediately.
+     * Rules in this method correspond to bugs that should be fixed but for some reasons that can't be done immediately.
      * The ultimate goal is to get rid of all of them.
      * So, each rule should be accompanied by a reference to a tracker issue.
      * Don't add rules here without discussing them with someone else.
@@ -415,11 +415,21 @@ public class RecursionManager {
     setFlag(parentDisposable, false, ourAssertOnPrevention);
   }
 
+  /**
+   * Disables the effect of {@link #assertOnMissedCache}. Should be used as rarely as possible, ideally only in tests that check
+   * that stack isn't overflown on invalid code.
+   */
   @TestOnly
   public static void disableMissedCacheAssertions(@NotNull Disposable parentDisposable) {
     setFlag(parentDisposable, false, ourAssertOnMissedCache);
   }
 
+  /**
+   * Enable the mode when a {@link CachingPreventedException} is thrown whenever
+   * {@link RecursionGuard.StackStamp#mayCacheNow()} returns false,
+   * either due to recursion prevention or explicit {@link RecursionGuard#prohibitResultCaching} call.
+   * Restore previous mode when parentDisposable is disposed.
+   */
   @TestOnly
   public static void assertOnMissedCache(@NotNull Disposable parentDisposable) {
     setFlag(parentDisposable, true, ourAssertOnMissedCache);
@@ -438,7 +448,7 @@ public class RecursionManager {
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
-  private static class CachingPreventedException extends RuntimeException {
+  static class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
       super("Caching disabled due recursion preventions, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
             ContainerUtil.getFirstItem(preventions.values()));
