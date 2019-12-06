@@ -277,7 +277,6 @@ public class GitBranchPopupActions {
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CheckoutWithRebaseAction(myProject, myRepositories, myBranchName),
-        new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
@@ -285,6 +284,7 @@ public class GitBranchPopupActions {
         new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new Separator(),
+        new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
         new PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
         new Separator(),
         new RenameBranchAction(myProject, myRepositories, myBranchName),
@@ -771,18 +771,23 @@ public class GitBranchPopupActions {
     }
   }
 
-  private static class UpdateSelectedBranchAction extends DumbAwareAction {
+  private static class UpdateSelectedBranchAction extends DumbAwareAction implements CustomIconProvider  {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
     private final List<String> myBranchNameList;
+    private final boolean myHasIncoming;
 
-    UpdateSelectedBranchAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-      super("Update", null, AllIcons.Actions.CheckOut);
+    UpdateSelectedBranchAction(@NotNull Project project,
+                               @NotNull List<? extends GitRepository> repositories,
+                               @NotNull String branchName,
+                               boolean hasIncoming) {
+      super("Update");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
       myBranchNameList = Collections.singletonList(branchName);
+      myHasIncoming = hasIncoming;
     }
 
     @Override
@@ -803,6 +808,12 @@ public class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       updateBranches(myProject, myRepositories, myBranchNameList);
+    }
+
+    @Nullable
+    @Override
+    public Icon getRightIcon() {
+      return myHasIncoming ? DvcsImplIcons.Incoming : null;
     }
   }
 
