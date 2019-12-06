@@ -19,8 +19,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
 
-public interface FileTypeRegistrator {
-  ExtensionPointName<FileTypeRegistrator> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeRegistrator");
+public interface FileTypeRegistrar {
+  ExtensionPointName<FileTypeRegistrar> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeRegistrator");
 
   void initFileType(@NotNull FileType fileType);
 }
