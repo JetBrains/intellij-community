@@ -144,6 +144,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     return file.viewProvider.document!!
   }
 
+  @ExperimentalCoroutinesApi
   fun `test withDocumentsCommitted`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
       .inWriteAction()
@@ -180,7 +181,12 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       launch(transactionExecutor.coroutineDispatchingContext() + job) {
         while (true) {
           pdm.commitAllDocuments()
-          commitChannel.send(Unit)
+          if (!commitChannel.isClosedForSend) {
+            commitChannel.send(Unit)
+          }
+          else {
+            return@launch
+          }
         }
       }.join()
       coroutineContext.cancelChildren()
