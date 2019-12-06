@@ -6,7 +6,7 @@ import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAutomationBootstrapper : AutomationBootstrapper {
-    override fun createBootstrapJob(execution: AGraphExecutionEntity, repository: RepositoryData, orgUrl: String): ProjectJob.Process.Container {
+    override fun createBootstrapJob(execution: AGraphExecutionEntity, projectId: Long, repository: RepositoryData, orgUrl: String): ProjectJob.Process.Container {
         val container = ProjectJob.Process.Container(
             "imageForBootstrapJob",
             ProjectJob.ProcessData(

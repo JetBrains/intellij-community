@@ -83,7 +83,7 @@ class CircletTaskRunner(val project: Project) {
         val branch = "myBranch"
         val commit = "myCommit"
         val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
-        val context = JobStartContext(repositoryData, branch, commit, commit, 0, task, trigger)
+        val context = JobStartContext(0L, repositoryData, branch, commit, commit, 0, task, trigger)
 
         async(lifetime, Ui) {
             automationStarterCommon.startJob(context)
