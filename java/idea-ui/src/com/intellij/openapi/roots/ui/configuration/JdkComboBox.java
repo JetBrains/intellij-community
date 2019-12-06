@@ -42,12 +42,13 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
+import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.*;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
+public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
   private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
@@ -119,7 +120,8 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     mySdkModel = sdkModel;
     mySdkTypeFilter = matchAllIfNull(sdkTypeFilter);
     mySdkFilter = sdk -> sdk != null && mySdkTypeFilter.value(sdk.getSdkType()) && (sdkFilter == null || sdkFilter.value(sdk));
-    myCreationFilter = notSimpleJavaSdkType(creationFilter);
+    Condition<SdkTypeId> newTypeFiler = notSimpleJavaSdkType(creationFilter);
+    myCreationFilter = type -> type != null && mySdkTypeFilter.value(type) && newTypeFiler.value(type);
     myOnNewSdkAdded = emptyIfNull(onNewSdkAdded);
 
     UIUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
@@ -636,25 +638,20 @@ public class JdkComboBox extends ComboBox<JdkComboBox.JdkComboBoxItem> {
     }
   }
 
-  @Nullable
-  private ListModel<JdkComboBoxItem> onChosen(JdkComboBoxItem selectedValue) {
-    if (!(selectedValue instanceof ActionGroupJdkItem)) {
-      return null;
-    }
-
-    List<? extends JdkComboBoxItem> items = ((ActionGroupJdkItem)selectedValue).mySubItems;
-    JdkComboBoxModel newModel = new JdkComboBoxModel();
-    items.forEach(newModel::addElement);
-    return newModel;
-  }
-
-  private class JdkComboBoxModel extends DefaultComboBoxModel<JdkComboBoxItem>
-                                 implements ComboBoxPopupState<JdkComboBoxItem> {
+  private static class JdkComboBoxModel extends DefaultComboBoxModel<JdkComboBoxItem>
+                                        implements ComboBoxPopupState<JdkComboBoxItem> {
 
     @Nullable
     @Override
     public ListModel<JdkComboBoxItem> onChosen(JdkComboBoxItem selectedValue) {
-      return JdkComboBox.this.onChosen(selectedValue);
+      if (!(selectedValue instanceof ActionGroupJdkItem)) {
+        return null;
+      }
+
+      List<? extends JdkComboBoxItem> items = ((ActionGroupJdkItem)selectedValue).mySubItems;
+      JdkComboBoxModel newModel = new JdkComboBoxModel();
+      items.forEach(newModel::addElement);
+      return newModel;
     }
 
     @Override
