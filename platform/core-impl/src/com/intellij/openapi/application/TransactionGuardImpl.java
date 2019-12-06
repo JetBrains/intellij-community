@@ -2,9 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,17 +10,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.InvocationEvent;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import static com.intellij.util.ReflectionUtil.getField;
 
 /**
  * @author peter
@@ -243,28 +235,5 @@ public class TransactionGuardImpl extends TransactionGuard {
     public int hashCode() {
       return Objects.hash(myModality);
     }
-  }
-
-  @Experimental
-  public static void logTimeMillis(long startedAt, @NotNull Object processId) {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return; // do not measure a time of a background task
-    int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", 0);
-    if (threshold <= 10) return; // do not measure a time if a threshold is too small
-    long time = System.currentTimeMillis() - startedAt;
-    if (time <= threshold) return; // processed fast enough
-    if (processId instanceof InvocationEvent) {
-      Runnable runnable = getField(InvocationEvent.class, processId, Runnable.class, "runnable");
-      if (runnable != null) {
-        // joined sub-tasks are measured and logged in the LaterInvocator separately
-        if (runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue")) return;
-        processId = runnable;
-      }
-    }
-    if (processId instanceof Runnable) {
-      ClassLoader loader = processId.getClass().getClassLoader();
-      String pluginId = loader instanceof PluginClassLoader ? ((PluginClassLoader) loader).getPluginIdString() : PluginManagerCore.CORE_PLUGIN_ID;
-      StartUpMeasurer.addPluginCost(pluginId, "invokeLater", TimeUnit.MILLISECONDS.toNanos(time));
-    }
-    LOG.warn(time + "ms to process " + processId);
   }
 }

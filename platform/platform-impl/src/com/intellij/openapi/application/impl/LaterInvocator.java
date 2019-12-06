@@ -456,9 +456,8 @@ public class LaterInvocator {
         finally {
           if (!DEBUG) myLastInfo = null;
           if (watcher != null) {
-            watcher.runnableFinished(startedAt);
+            watcher.runnableFinished(runnable, startedAt);
           }
-          TransactionGuardImpl.logTimeMillis(startedAt, runnable);
         }
       }
       return lastInfo != null;

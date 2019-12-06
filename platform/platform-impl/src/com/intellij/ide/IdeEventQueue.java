@@ -451,7 +451,9 @@ public final class IdeEventQueue extends EventQueue {
         if (e instanceof KeyEvent) {
           maybeReady();
         }
-        TransactionGuardImpl.logTimeMillis(startedAt, e);
+        if (eventsWatcher != null) {
+          eventsWatcher.logTimeMillis(e, startedAt);
+        }
       }
 
       if (isFocusEvent(e)) {
@@ -1460,7 +1462,11 @@ public final class IdeEventQueue extends EventQueue {
     if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
-    TransactionGuardImpl.logTimeMillis(startedAt, "IdeEventQueue#flushDelayedKeyEvents");
+
+    EventsWatcher watcher = obtainEventsWatcher();
+    if (watcher == null) return;
+
+    watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
   }
 
   private static boolean isActionPopupShown() {

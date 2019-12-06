@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.InvocationEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -30,6 +34,8 @@ import java.util.stream.Collectors;
 public final class EventsWatcher implements Disposable {
 
   @NotNull
+  private static final Logger LOG = Logger.getInstance(EventsWatcher.class);
+  @NotNull
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
   );
@@ -37,17 +43,22 @@ public final class EventsWatcher implements Disposable {
   private static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
 
   private static final long ourStartTimestamp = System.currentTimeMillis();
-  private static Boolean ourIsEnabled = null;
+  private static Integer ourThreshold = null;
 
   @Nullable
   public static EventsWatcher getInstance() {
-    if (ourIsEnabled == null) {
-      ourIsEnabled = Registry.is("events.watcher.enabled");
+    if (ourThreshold == null) {
+      ourThreshold = Registry.intValue("ide.event.queue.dispatch.threshold", 0);
     }
-    if (!ourIsEnabled) return null;
+    // do not measure a time if a threshold is too small
+    if (ourThreshold <= 10) return null;
 
     Application application = ApplicationManager.getApplication();
-    if (application == null || application.isDisposed()) return null;
+    if (application == null ||
+        application.isDisposed() ||
+        !application.isDispatchThread()) { // do not measure a time of a background task
+      return null;
+    }
 
     return ServiceManager.getService(EventsWatcher.class);
   }
@@ -82,6 +93,24 @@ public final class EventsWatcher implements Disposable {
   @Nullable
   private Object myCurrentInstance = null;
 
+  public void logTimeMillis(@NotNull String processId, long startedAt) {
+    Duration duration = new Duration(startedAt);
+    if (!duration.shouldLog()) return;
+
+    duration.log(processId);
+  }
+
+  public void logTimeMillis(@NotNull AWTEvent event, long startedAt) {
+    Duration duration = new Duration(startedAt);
+    if (!duration.shouldLog()) return;
+
+    Runnable runnable = event instanceof InvocationEvent ?
+                        getRunnable((InvocationEvent)event) :
+                        null;
+
+    duration.log(runnable != null ? runnable : event);
+  }
+
   public void runnableStarted(@NotNull Runnable runnable) {
     Object current = runnable;
 
@@ -101,8 +130,9 @@ public final class EventsWatcher implements Disposable {
     myCurrentInstance = current != null ? current : runnable;
   }
 
-  public void runnableFinished(long startedAt) {
-    long duration = System.currentTimeMillis() - startedAt;
+  public void runnableFinished(@NotNull Runnable runnable,
+                               long startedAt) {
+    Duration duration = new Duration(startedAt);
     String representation = Objects.requireNonNull(myCurrentInstance).getClass().getName();
 
     myDurationsByFqn.compute(
@@ -111,6 +141,9 @@ public final class EventsWatcher implements Disposable {
     );
 
     myRunnables.offer(String.format("%tc,%s%n", startedAt, representation));
+
+    if (!duration.shouldLog()) return;
+    duration.log(runnable);
   }
 
   public void edtEventFinished(@NotNull AWTEvent event,
@@ -200,6 +233,25 @@ public final class EventsWatcher implements Disposable {
     }
   }
 
+  @Nullable
+  private static Runnable getRunnable(@NotNull InvocationEvent event) {
+    try {
+      Runnable runnable = (Runnable)getValue(
+        event,
+        InvocationEvent.class.getDeclaredField("runnable")
+      );
+
+      // joined sub-tasks are measured and logged in the LaterInvocator separately
+      return runnable == null ||
+             !runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue") ?
+             runnable :
+             null;
+    }
+    catch (NoSuchFieldException ignored) {
+      return null;
+    }
+  }
+
   @NotNull
   private static <T extends Comparable<T>> String joinSorted(@NotNull Map<String, T> map) {
     return map
@@ -226,6 +278,43 @@ public final class EventsWatcher implements Disposable {
       builder.append(queue.poll());
     }
     return builder.toString();
+  }
+
+  private static final class Duration {
+
+    private final long myDuration;
+
+    private Duration(long startedAt) {
+      myDuration = System.currentTimeMillis() - startedAt;
+    }
+
+    public long getDuration() {
+      return myDuration;
+    }
+
+    public boolean shouldLog() {
+      return myDuration > ourThreshold;
+    }
+
+    public void log(@NotNull Object process) {
+      LOG.warn(String.format("%dms to process %s", myDuration, process));
+
+      if (!(process instanceof Runnable)) return;
+      addPluginCost((Runnable)process);
+    }
+
+    private void addPluginCost(@NotNull Runnable runnable) {
+      ClassLoader loader = runnable.getClass().getClassLoader();
+      String pluginId = loader instanceof PluginClassLoader ?
+                        ((PluginClassLoader)loader).getPluginIdString() :
+                        PluginManagerCore.CORE_PLUGIN_ID;
+
+      StartUpMeasurer.addPluginCost(
+        pluginId,
+        "invokeLater",
+        TimeUnit.MILLISECONDS.toNanos(myDuration)
+      );
+    }
   }
 
   private static final class InvocationInfo implements Comparable<InvocationInfo> {
@@ -274,10 +363,10 @@ public final class EventsWatcher implements Disposable {
 
     @NotNull
     public static InvocationInfo computeNext(@Nullable InvocationInfo info,
-                                             long duration) {
+                                             @NotNull Duration duration) {
       return new InvocationInfo(
         1 + (info != null ? info.myCount : 0),
-        duration + (info != null ? info.myDuration : 0)
+        duration.getDuration() + (info != null ? info.myDuration : 0)
       );
     }
   }
