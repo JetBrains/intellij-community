@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,17 +26,16 @@ public class LightEditStatusBar extends LightEditStatusBarBase implements Dispos
 
   public LightEditStatusBar(LightEditorManager editorManager) {
     myEditorManager = editorManager;
-    setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+    setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-    add(Box.createHorizontalGlue());
     myRightPanel = createRightPanel();
-    add(myRightPanel);
+    add(myRightPanel, BorderLayout.EAST);
     createWidgets();
   }
 
   private static JPanel createRightPanel() {
     JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+    panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
     JLabel label = new JLabel("|");
     panel.add(Box.createRigidArea(label.getPreferredSize()));
     return panel;
@@ -43,12 +43,14 @@ public class LightEditStatusBar extends LightEditStatusBarBase implements Dispos
 
   private void createWidgets() {
     addWidgetImpl(new LightEditPositionWidget());
+    myWidgets.keySet().forEach(id -> updateWidget(id));
   }
 
   private void addWidgetImpl(@NotNull StatusBarWidget widget) {
     widget.install(this);
     JComponent wrapper = IdeStatusBarImpl.wrap(widget);
     myRightPanel.add(wrapper);
+    myRightPanel.add(Box.createRigidArea(JBUI.size(10, 1)));
     myWidgets.put(widget.ID(), new WidgetData(widget, wrapper));
   }
 
