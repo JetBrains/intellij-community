@@ -230,7 +230,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser.getViewer().addSelectionListener(() -> {
       if (myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myChangesBrowser.getSelectedChanges().isEmpty()) {
-        openPreviewInEditor(project);
+        openPreviewInEditor(project, myDiffPreviewProvider);
       }
     }, this);
   }
@@ -459,7 +459,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
           FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
         }
         else {
-          openPreviewInEditor(myLogData.getProject());
+          openPreviewInEditor(myLogData.getProject(), myDiffPreviewProvider);
         }
       }
 
@@ -469,14 +469,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
   }
 
-  private void openPreviewInEditor(Project project) {
+  private void openPreviewInEditor(@NotNull Project project, @NotNull DiffPreviewProvider provider) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myDiffPreviewProvider == null) {
-      return;
-    }
-
-    PreviewDiffVirtualFile previewDiffVirtualFile = new PreviewDiffVirtualFile(myDiffPreviewProvider);
+    PreviewDiffVirtualFile previewDiffVirtualFile = new PreviewDiffVirtualFile(provider);
     boolean wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewDiffVirtualFile);
 
     FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(previewDiffVirtualFile, false, true);
