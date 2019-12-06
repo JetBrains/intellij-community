@@ -11,8 +11,6 @@ import com.intellij.psi.impl.java.stubs.PsiRecordComponentStub;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -146,22 +144,6 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   @Override
   public boolean hasInitializer() {
     return false;
-  }
-
-  @Override
-  public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
-  }
-
-  @Nullable
-  @Override
-  public PsiDocComment getDocComment() {
-    return null;
   }
 
   @Override
