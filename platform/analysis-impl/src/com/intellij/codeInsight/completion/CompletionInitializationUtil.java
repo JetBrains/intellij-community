@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
@@ -9,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -22,9 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,11 +41,10 @@ public class CompletionInitializationUtil {
                                                                                int invocationCount,
                                                                                CompletionType completionType) {
     return WriteAction.compute(() -> {
-      EditorUtil.fillVirtualSpaceUntilCaret(editor);
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CompletionAssertions.checkEditorValid(editor);
 
-      final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
+      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
       psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
       CompletionAssertions.assertCommitSuccessful(editor, psiFile);
@@ -99,14 +97,15 @@ public class CompletionInitializationUtil {
   }
 
 
-  static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProgressIndicator indicator) {
+  static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
       return topLevelOffsets;
     }
 
-    Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
+    Editor editor = initContext.getEditor();
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
     PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
@@ -140,7 +139,11 @@ public class CompletionInitializationUtil {
           InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
-      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);
+      VirtualFile virtualFile = injected.getVirtualFile();
+      DocumentWindow documentWindow = null;
+      if (virtualFile instanceof VirtualFileWindow) {
+        documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
+      }
       CompletionAssertions.assertInjectedOffsets(hostStartOffset, injected, documentWindow);
 
       if (injected.getTextRange().contains(translatedOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET))) {
