@@ -59,7 +59,7 @@ public class LightEditorManager implements Disposable {
   LightEditorInfo createEditor(@NotNull VirtualFile file) {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      document.putUserData(NO_IMPLICIT_SAVE, false);
+      document.putUserData(NO_IMPLICIT_SAVE, true);
       LightEditorInfo editorInfo = createEditor(document, file);
       Editor editor = editorInfo.getEditor();
       if (editor instanceof EditorEx) ((EditorEx)editor).setHighlighter(getHighlighter(file, editor));
@@ -110,7 +110,7 @@ public class LightEditorManager implements Disposable {
   }
 
   boolean isImplicitSaveAllowed(@NotNull Document document) {
-    return ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), true);
+    return !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
   }
 
   boolean containsUnsavedDocuments() {
