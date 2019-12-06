@@ -205,6 +205,8 @@ open class DirectoryBasedStorage(private val dir: Path,
 
         if (dir == null || !dir.exists()) {
           dir = storage.virtualFile
+          // The virtual file should be a directory, delete it otherwise so it will be properly re-created below.
+          dir?.takeUnless { it.isDirectory }?.delete(this)
           if (dir == null || !dir.exists()) {
             dir = createDir(storage.dir, this)
             storage.cachedVirtualFile = dir
