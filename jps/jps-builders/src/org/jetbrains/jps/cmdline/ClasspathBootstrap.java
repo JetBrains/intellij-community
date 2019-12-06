@@ -40,8 +40,7 @@ import java.util.*;
 public class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 
-  private ClasspathBootstrap() {
-  }
+  private ClasspathBootstrap() { }
 
   private static final Class<?>[] COMMON_REQUIRED_CLASSES = {
     Message.class, // protobuf
@@ -74,7 +73,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(JavaProjectBuilder.class));  // qdox lightweight java parser
+    cp.add(getResourcePath(JavaProjectBuilder.class));  // QDox lightweight java parser
     cp.add(getResourcePath(Gson.class));  // gson
 
     cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
@@ -86,8 +85,7 @@ public class ClasspathBootstrap {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
 
     return new ArrayList<>(cp);
   }
@@ -131,7 +129,7 @@ public class ClasspathBootstrap {
       else {
         // last resort
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-        Class compilerClass;
+        Class<?> compilerClass;
         if (systemCompiler != null) {
           compilerClass = systemCompiler.getClass();
         }
@@ -164,11 +162,11 @@ public class ClasspathBootstrap {
     return new ArrayList<>(cp);
   }
 
-  public static String getResourcePath(Class aClass) {
+  public static String getResourcePath(Class<?> aClass) {
     return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
   }
 
-  public static File getResourceFile(Class aClass) {
+  public static File getResourceFile(Class<?> aClass) {
     return new File(getResourcePath(aClass));
   }
 
