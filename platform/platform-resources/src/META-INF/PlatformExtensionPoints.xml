@@ -123,10 +123,10 @@
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="applicationInitializedListener" interface="com.intellij.ide.ApplicationInitializedListener" dynamic="false"/>
 
-    <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider"/>
-    <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider"/>
-    <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper"/>
-    <extensionPoint name="editorFileAssociateFinder" interface="com.intellij.openapi.fileEditor.impl.FileEditorAssociateFinder"/>
+    <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
+    <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
+    <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper" dynamic="true"/>
+    <extensionPoint name="editorFileAssociateFinder" interface="com.intellij.openapi.fileEditor.impl.FileEditorAssociateFinder" dynamic="true"/>
 
     <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder"/>
     <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider"/>
