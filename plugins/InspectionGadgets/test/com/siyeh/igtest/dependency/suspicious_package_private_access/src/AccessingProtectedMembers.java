@@ -96,3 +96,14 @@ class AccessingProtectedConstructorFromSubclass extends ProtectedConstructors {
     super(1);
   }
 }
+
+//KT-35296: Must not produce false positive warnings for package-private empty constructor.
+class AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate extends PackagePrivateEmptyConstructor {
+  AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate(int i) {
+    super(i);
+  }
+
+  AccessProtectedSuperConstructorInsteadOfEmptyPackagePrivate(int i, int i2) {
+    this(i + i2);
+  }
+}
