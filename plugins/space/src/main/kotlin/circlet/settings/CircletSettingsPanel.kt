@@ -6,9 +6,11 @@ import circlet.platform.api.oauth.*
 import circlet.ui.*
 import com.intellij.openapi.*
 import com.intellij.openapi.options.*
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.*
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
@@ -19,44 +21,52 @@ import java.awt.*
 import java.util.concurrent.*
 import javax.swing.*
 
-val log = logger<CircletConfigurable>()
+val log = logger<CircletSettingsPanel>()
 
-class CircletConfigurable : ConfigurableBase<CircletSettingUi, CircletServerSettings>("settings.space",
-                                                                                      ProductName,
-                                                                                      null) {
-    override fun getSettings() = CircletServerSettingsComponent.getInstance().settings.value
+class CircletSettingsPanel :
+    BoundConfigurable(ProductName, null),
+    SearchableConfigurable,
+    Disposable {
 
-    override fun createUi() = CircletSettingUi()
-}
-
-class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
     private val uiLifetime = LifetimeSource()
-    private var state = mutableProperty(initialState())
-
-    private val panel = JPanel(BorderLayout())
-
+    private var loginState = mutableProperty(initialState())
     private fun initialState(): CircletLoginState {
         val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
         return CircletLoginState.Connected(workspace.client.server, workspace)
     }
 
+    private val settings = CircletSettings.getInstance()
+
+    private val accountPanel = JPanel(BorderLayout())
+
     init {
-        val settings = CircletServerSettingsComponent.getInstance().settings
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
-                state.value = CircletLoginState.Disconnected(settings.value.server)
+                loginState.value = CircletLoginState.Disconnected(settings.serverSettings.server)
             }
             else {
-                state.value = CircletLoginState.Connected(ws.client.server, ws)
+                loginState.value = CircletLoginState.Connected(ws.client.server, ws)
             }
         }
 
-        state.forEach(uiLifetime) { st ->
-            panel.removeAll()
-            panel.add(createView(st), BorderLayout.NORTH)
-            panel.revalidate()
-            panel.repaint()
+        loginState.forEach(uiLifetime) { st ->
+            accountPanel.removeAll()
+            accountPanel.add(createView(st), BorderLayout.NORTH)
+            accountPanel.revalidate()
+            accountPanel.repaint()
         }
+    }
+
+    override fun getId(): String = "settings.space"
+
+    override fun createPanel(): DialogPanel = panel {
+        row {
+            cell(isFullWidth = true) { accountPanel(pushX, growX) }
+        }
+    }
+
+    override fun dispose() {
+        uiLifetime.terminate()
     }
 
     private fun createView(st: CircletLoginState): JComponent {
@@ -67,7 +77,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
 
             is CircletLoginState.Connecting -> return buildConnectingPanel(st) {
                 st.lt.terminate()
-                state.value = CircletLoginState.Disconnected(st.server)
+                loginState.value = CircletLoginState.Disconnected(st.server)
             }
 
             is CircletLoginState.Connected -> {
@@ -77,7 +87,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                 val logoutButton = JButton("Log Out").apply {
                     addActionListener {
                         circletWorkspace.signOut()
-                        state.value = CircletLoginState.Disconnected(st.server)
+                        loginState.value = CircletLoginState.Disconnected(st.server)
                     }
                 }
 
@@ -106,32 +116,22 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
         launch(uiLifetime, Ui) {
             uiLifetime.usingSource { connectLt ->
                 try {
-                    state.value = CircletLoginState.Connecting(serverName, connectLt)
+                    loginState.value = CircletLoginState.Connecting(serverName, connectLt)
                     when (val response = circletWorkspace.signIn(connectLt, serverName)) {
                         is OAuthTokenResponse.Error -> {
-                            state.value = CircletLoginState.Disconnected(serverName, response.description)
+                            loginState.value = CircletLoginState.Disconnected(serverName, response.description)
                         }
                     }
                 } catch (th: CancellationException) {
                     throw th
                 } catch (th: Throwable) {
                     log.error(th)
-                    state.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+                    loginState.value = CircletLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
                 }
-                val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, panel)
+                val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, accountPanel)
                 AppIcon.getInstance().requestFocus(frame as IdeFrame?)
             }
         }
     }
-
-    override fun isModified(settings: CircletServerSettings) = false
-
-    override fun apply(settings: CircletServerSettings) {}
-
-    override fun reset(settings: CircletServerSettings) {}
-
-    override fun getComponent() = panel
-
-    override fun dispose() = uiLifetime.terminate()
 }
 

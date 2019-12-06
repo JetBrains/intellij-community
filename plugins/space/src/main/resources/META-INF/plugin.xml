@@ -26,15 +26,14 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <registryKey key="space.automation.enabled" defaultValue="false" restartRequired="true" description="Enable Space Automation"/>
-        <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
+        <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
         <applicationConfigurable
             groupId="tools"
             groupWeight="239"
             displayName="Space"
-            instance="circlet.settings.CircletConfigurable"
-        />
+            instance="circlet.settings.CircletSettingsPanel"/>
 
         <toolWindow id="Space"
                     icon="CircletIcons.mainToolWindowIcon"

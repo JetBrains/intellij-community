@@ -1,28 +1,25 @@
 package circlet.settings
 
 import com.intellij.openapi.components.*
-import runtime.reactive.*
 
 @State(
     name = "SpaceServerConfigurable",
     storages = [Storage(value = "SpaceServer.xml", roamingType = RoamingType.DEFAULT)]
 )
-class CircletServerSettingsComponent : PersistentStateComponent<CircletServerSettings> {
-
-    val settings = mutableProperty(CircletServerSettings())
-
-    override fun getState() = settings.value
-
-    override fun loadState(state: CircletServerSettings) {
-        settings.value = state
-    }
-
-    fun applySettings(state: CircletServerSettings) {
-        settings.value = state
-    }
+class CircletSettings : SimplePersistentStateComponent<CircletSettingsState>(CircletSettingsState()) {
+    var serverSettings: CircletServerSettings
+        get() = state.serverSettings
+        set(value) {
+            state.serverSettings = value
+        }
 
     companion object {
-        fun getInstance(): CircletServerSettingsComponent = ServiceManager.getService(CircletServerSettingsComponent::class.java)
+        fun getInstance(): CircletSettings = ServiceManager.getService(CircletSettings::class.java)
     }
+}
 
+class CircletSettingsState : BaseState() {
+    var serverSettings: CircletServerSettings by this.property(CircletServerSettings()) {
+        it.enabled.not() && it.server.isBlank()
+    }
 }

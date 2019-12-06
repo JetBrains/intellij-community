@@ -64,8 +64,8 @@ internal class CircletCloneComponent(val project: Project,
 
         circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
             if (workspace == null) {
-                val settings = CircletServerSettingsComponent.getInstance().settings
-                loginState.value = CircletLoginState.Disconnected(settings.value.server)
+                val settings = CircletSettings.getInstance()
+                loginState.value = CircletLoginState.Disconnected(settings.serverSettings.server)
             }
             else {
                 loginState.value = CircletLoginState.Connected(workspace.client.server, workspace)

@@ -35,7 +35,7 @@ import java.util.concurrent.*
 import javax.swing.*
 
 class CircletMainToolBarAction : DumbAwareAction() {
-
+    private val settings = CircletSettings.getInstance()
 
     override fun update(e: AnActionEvent) {
         val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
@@ -54,7 +54,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
                 .showUnderneathOf(component)
         }
         else {
-            val disconnected = CircletLoginState.Disconnected(CircletServerSettingsComponent.getInstance().settings.value.server)
+            val disconnected = CircletLoginState.Disconnected(settings.serverSettings.server)
 
             val loginState: MutableProperty<CircletLoginState> = mutableProperty(disconnected)
 
@@ -124,7 +124,7 @@ class CircletMainToolBarAction : DumbAwareAction() {
     }
 
     private fun buildMenu(workspace: Workspace, icon: Icon, project: Project): AccountsMenuListPopup {
-        val url = CircletServerSettingsComponent.getInstance().settings.value.server
+        val url = settings.serverSettings.server
         val serverUrl = cleanupUrl(url)
         val menuItems: MutableList<AccountMenuItem> = mutableListOf()
         menuItems += AccountMenuItem.Account(
