@@ -1,19 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.MapSerializerUtil;
-import org.junit.runner.Description;
-
-public interface JUnitTestTreeNodeManager {
-  String JUNIT_TEST_TREE_NODE_MANAGER_ARGUMENT = "nodeNamesHandler";
+public interface JUnitNodeNamesManager {
+  String JUNIT_NODE_NAMES_MANAGER_ARGUMENT = "nodeNamesHandler";
+  String TEXT_NODE_NAMES_MANAGER_NAME = "AsText";
 
   TestNodePresentation getRootNodePresentation(String fullName);
 
   String getNodeName(String fqName, boolean splitBySlash);
 
-  String getTestLocation(Description description, String className, String methodName);
-
-  JUnitTestTreeNodeManager JAVA_NODE_NAMES_MANAGER = new JUnitTestTreeNodeManager() {
+  JUnitNodeNamesManager JAVA_NODE_NAMES_MANAGER = new JUnitNodeNamesManager() {
     public TestNodePresentation getRootNodePresentation(String fullName) {
       if (fullName == null) {
         return new TestNodePresentation(null, null);
@@ -44,11 +40,15 @@ public interface JUnitTestTreeNodeManager {
       int dotInClassFQNIdx = fqNameWithoutParams.lastIndexOf('.');
       return dotInClassFQNIdx > -1 ? fqName.substring(dotInClassFQNIdx + 1) : fqName;
     }
+  };
 
-    public String getTestLocation(Description description, String className, String methodName) {
-      return "locationHint='java:test://" +
-             MapSerializerUtil.escapeStr(className + "/" + getNodeName(methodName, true), MapSerializerUtil.STD_ESCAPER) +
-             "'";
+  JUnitNodeNamesManager SIMPLE_NODE_NAMES_MANAGER = new JUnitNodeNamesManager() {
+    public JUnitNodeNamesManager.TestNodePresentation getRootNodePresentation(String fullName) {
+      return new JUnitNodeNamesManager.TestNodePresentation(fullName, null);
+    }
+
+    public String getNodeName(String fqName, boolean splitBySlash) {
+      return fqName;
     }
   };
 
