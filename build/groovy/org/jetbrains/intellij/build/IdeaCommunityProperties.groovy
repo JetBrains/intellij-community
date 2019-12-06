@@ -28,7 +28,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.buildAllCompatiblePlugins = false
     productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-      JavaPluginLayout.javaPlugin(false),
+      JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
