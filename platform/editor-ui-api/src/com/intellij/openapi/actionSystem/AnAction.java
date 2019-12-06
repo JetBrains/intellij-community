@@ -9,6 +9,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -66,7 +67,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
-
+  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -326,6 +327,17 @@ public abstract class AnAction implements PossiblyDumbAware {
   @Deprecated
   public boolean startInTransaction() {
     return false;
+  }
+
+  public void addTextOverride(@NotNull String place, @NotNull String text) {
+    myActionTextOverrides = myActionTextOverrides.plus(place, text);
+  }
+
+  public void applyTextOverride(AnActionEvent e) {
+    String override = myActionTextOverrides.get(e.getPlace());
+    if (override != null) {
+      e.getPresentation().setText(override);
+    }
   }
 
   public interface TransparentUpdate {

@@ -47,6 +47,9 @@ public interface Action extends ActionOrGroup {
 
   AddToGroup addAddToGroup();
 
+  @NotNull
+  List<OverrideText> getOverrideTexts();
+  OverrideText addOverrideText();
 
   @NotNull
   @Convert(KeymapConverter.class)

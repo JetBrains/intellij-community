@@ -507,7 +507,11 @@
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction"
             use-shortcut-of="EditorScrollToCenter"/>
 
-    <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+    <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction">
+      <override-text place="EditorPopup"/>
+      <override-text place="EditorTabPopup"/>
+    </action>
+
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime" text="Log icons load time"/>

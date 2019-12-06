@@ -5,8 +5,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartFMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 /**
@@ -25,6 +30,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final String myId;
   private final IdeaPluginDescriptor myPlugin;
   private final String myIconPath;
+  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -39,6 +45,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     LOG.assertTrue(!id.isEmpty());
     myId = id;
     myIconPath = iconPath;
+  }
+
+  public void addActionTextOverride(@NotNull String place, @NotNull String text) {
+    myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
   @NotNull
@@ -86,9 +96,19 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   /**
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
-  public final void initAction(@NotNull AnAction targetAction) {
+  @ApiStatus.Internal
+  public final void initAction(@NotNull AnAction targetAction, @Nullable ResourceBundle resourceBundle) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
+    for (Map.Entry<String, String> override : myActionTextOverrides.entrySet()) {
+      String place = override.getKey();
+      String overrideText = override.getValue();
+      if (overrideText.isEmpty()) {
+        if (resourceBundle == null) return;
+        overrideText = resourceBundle.getString("action." + getId() + "." + place + ".text");
+      }
+      targetAction.addTextOverride(place, overrideText);
+    }
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {

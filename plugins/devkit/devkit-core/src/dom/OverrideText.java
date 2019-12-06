@@ -1,0 +1,23 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.devkit.dom;
+
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
+import com.intellij.util.xml.Stubbed;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author yole
+ */
+public interface OverrideText extends DomElement {
+  @NotNull
+  @Stubbed
+  @Required
+  GenericAttributeValue<String> getPlace();
+
+  @NotNull
+  @Stubbed
+  @Required(value = false)
+  GenericAttributeValue<String> getText();
+}

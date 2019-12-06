@@ -110,6 +110,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
   private static final String PROJECT_TYPE = "project-type";
   private static final String UNREGISTER_ELEMENT_NAME = "unregister";
+  private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
+  private static final String PLACE_ATTR_NAME = "place";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -156,8 +158,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return null;
     }
 
-    stub.initAction(anAction);
+    stub.initAction(anAction, getActionsResourceBundle(stub.getPlugin()));
     updateIconFromStub(stub, anAction);
+
     return anAction;
   }
 
@@ -227,10 +230,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    String resBundleName = plugin != null && PluginManagerCore.CORE_ID != plugin.getPluginId()
+  private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin) {
+    String resBundleName = PluginManagerCore.CORE_ID != plugin.getPluginId()
                            ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
-    return resBundleName == null ? null : AbstractBundle.getResourceBundle(resBundleName, loader);
+    return resBundleName == null ? null : AbstractBundle.getResourceBundle(resBundleName, plugin.getPluginClassLoader());
   }
 
   private static boolean isSecondary(Element element) {
@@ -608,7 +611,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String descriptionValue = element.getAttributeValue(DESCRIPTION);
 
     ActionStub stub = new ActionStub(className, id, plugin, iconPath, projectType, () -> {
-      ResourceBundle bundle = getActionsResourceBundle(plugin.getPluginClassLoader(), plugin);
+      ResourceBundle bundle = getActionsResourceBundle(plugin);
       String text = computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text == null) {
         reportActionError(plugin.getPluginId(), "'text' attribute is mandatory (action ID=" +
@@ -637,6 +640,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       else if (ABBREVIATION_ELEMENT_NAME.equals(e.getName())) {
         processAbbreviationNode(e, id);
+      }
+      else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(e.getName())) {
+        processOverrideTextNode(stub, e, plugin.getPluginId());
       }
       else {
         reportActionError(plugin.getPluginId(), "unexpected name of element \"" + e.getName() + "\"");
@@ -681,7 +687,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private AnAction processGroupElement(@NotNull Element element, @NotNull IdeaPluginDescriptorImpl plugin) {
-    ResourceBundle bundle = getActionsResourceBundle(plugin.getPluginClassLoader(), plugin);
+    ResourceBundle bundle = getActionsResourceBundle(plugin);
 
     if (!GROUP_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(plugin.getPluginId(), "unexpected name of element \"" + element.getName() + "\"");
@@ -893,6 +899,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return null;
     }
     return parentGroup;
+  }
+
+  private static void processOverrideTextNode(ActionStub stub, Element element, PluginId pluginId) {
+    if (!OVERRIDE_TEXT_ELEMENT_NAME.equals(element.getName())) {
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
+      return;
+    }
+    String place = element.getAttributeValue(PLACE_ATTR_NAME);
+    if (place == null) {
+      reportActionError(pluginId, stub.getId() + ": override-text specified without place");
+      return;
+    }
+    String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
+    stub.addActionTextOverride(place, text);
   }
 
   /**

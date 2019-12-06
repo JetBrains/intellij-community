@@ -159,6 +159,9 @@ public class ActionUtil {
     if (edt && insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
+
+    action.applyTextOverride(e);
+
     try {
       if (beforeActionPerformed) {
         action.beforeActionPerformedUpdate(e);
