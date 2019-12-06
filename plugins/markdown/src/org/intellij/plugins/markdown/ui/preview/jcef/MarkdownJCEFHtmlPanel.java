@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.ui.preview.jcef;
 
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.jcef.JBCefUtils;
+import com.intellij.ui.jcef.JBCefJSQuery;
 import com.intellij.ui.jcef.JCEFHtmlPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtmlPanel {
 
-  private static final String JS_REQ_SET_SCROLL_Y = JBCefUtils.makeUniqueJSRequestID(MarkdownJCEFHtmlPanel.class, "setMyScrollY");
-  private static final String JS_REQ_OPEN_IN_BROWSER = JBCefUtils.makeUniqueJSRequestID(MarkdownJCEFHtmlPanel.class, "openInExternalBrowser");
+  private static final JBCefJSQuery JSQ_SET_SCROLL_Y = JBCefJSQuery.create("setMyScrollY");
+  private static final JBCefJSQuery JSQ_OPEN_IN_BROWSER = JBCefJSQuery.create("openInExternalBrowser");
 
   private static final NotNullLazyValue<String> MY_SCRIPTING_LINES = new NotNullLazyValue<String>() {
     @NotNull
@@ -49,19 +49,15 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   public MarkdownJCEFHtmlPanel() {
     super();
 
-    JBCefUtils.addJSHandler(getJBCefClient(), JS_REQ_SET_SCROLL_Y,
-                            (value) -> {
+    JSQ_SET_SCROLL_Y.addHandler(getJBCefClient(), (scrollY) -> {
         try {
-          myScrollPreservingListener.myScrollY = Integer.parseInt(value);
+          myScrollPreservingListener.myScrollY = Integer.parseInt(scrollY);
         } catch (NumberFormatException ignored) {}
-        return true;
       });
 
     if (Registry.is("markdown.open.link.in.external.browser")) {
-      JBCefUtils.addJSHandler(getJBCefClient(), JS_REQ_OPEN_IN_BROWSER,
-        (link) -> {
+      JSQ_OPEN_IN_BROWSER.addHandler(getJBCefClient(), (link) -> {
           MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
-          return true;
         });
     }
 
@@ -116,16 +112,16 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
 
     getCefBrowser().executeJavaScript(
       "var value = document.documentElement.scrollTop || (document.body && document.body.scrollTop);" +
-      JBCefUtils.makeJSRequestCode(JS_REQ_SET_SCROLL_Y, "value"),
-      null, 0);
+      JSQ_SET_SCROLL_Y.inject( "value"),
+      getCefBrowser().getURL(), 0);
   }
 
   @Override
   public void dispose() {
     super.dispose();
     getJBCefClient().removeLoadHandler(myCefLoadHandler, getCefBrowser());
-    JBCefUtils.removeJSHandler(getJBCefClient(), JS_REQ_SET_SCROLL_Y);
-    JBCefUtils.removeJSHandler(getJBCefClient(), JS_REQ_OPEN_IN_BROWSER);
+    JSQ_SET_SCROLL_Y.removeHandler(getJBCefClient());
+    JSQ_SET_SCROLL_Y.removeHandler(getJBCefClient());
   }
 
   @NotNull
@@ -140,7 +136,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
         getCefBrowser().executeJavaScript(
           "window.JavaPanelBridge = {" +
             "openInExternalBrowser : function(link) {" +
-              JBCefUtils.makeJSRequestCode(JS_REQ_OPEN_IN_BROWSER, "link") +
+              JSQ_OPEN_IN_BROWSER.inject( "link") +
             "}" +
           "};",
           getCefBrowser().getURL(), 0);
@@ -156,7 +152,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
       if (isLoading) {
         getCefBrowser().executeJavaScript(
           "var value = document.documentElement.scrollTop || document.body.scrollTop;" +
-          JBCefUtils.makeJSRequestCode(JS_REQ_SET_SCROLL_Y, "value"),
+          JSQ_SET_SCROLL_Y.inject("value"),
           getCefBrowser().getURL(), 0);
       }
       else {
