@@ -18,7 +18,7 @@ package org.jetbrains.idea.devkit.references.extensions;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationMarkup;
-import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -45,7 +45,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ExtensionPointDocumentationProvider extends DocumentationProviderEx {
+public class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

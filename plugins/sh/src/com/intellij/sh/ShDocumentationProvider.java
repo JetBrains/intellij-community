@@ -5,7 +5,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
-public class ShDocumentationProvider extends AbstractDocumentationProvider {
+public class ShDocumentationProvider implements DocumentationProvider {
   private static final int TIMEOUT_IN_MILLISECONDS = 3 * 1000;
   private final static Logger LOG = Logger.getInstance(ShDocumentationProvider.class);
   private static final String FEATURE_ACTION_ID = "DocumentationProviderUsed";

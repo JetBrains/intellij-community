@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +43,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Provides quick docs for classes, methods, and functions.
  * Generates documentation stub
  */
-public class PythonDocumentationProvider extends AbstractDocumentationProvider {
+public class PythonDocumentationProvider implements DocumentationProvider {
   public static final String DOCUMENTATION_CONFIGURABLE_ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
@@ -560,7 +560,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
         if (docstringOwner != null) return docstringOwner;
       }
     }
-    return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
+    return null;
   }
 
   private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, @NotNull String... tags) {

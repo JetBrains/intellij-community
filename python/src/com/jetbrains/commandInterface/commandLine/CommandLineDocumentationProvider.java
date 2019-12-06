@@ -15,7 +15,7 @@
  */
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,7 +41,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineDocumentationProvider extends DocumentationProviderEx {
+public final class CommandLineDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
