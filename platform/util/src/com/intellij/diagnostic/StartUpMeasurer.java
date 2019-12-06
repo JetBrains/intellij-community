@@ -5,6 +5,7 @@ import com.intellij.util.containers.ObjectLongHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -57,6 +58,11 @@ public final class StartUpMeasurer {
 
   public static boolean isEnabled() {
     return isEnabled;
+  }
+
+  @TestOnly
+  public static void disable() {
+    isEnabled = false;
   }
 
   @ApiStatus.Internal

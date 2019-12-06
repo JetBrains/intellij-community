@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.doLoadApp
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.DataManager
@@ -118,6 +119,8 @@ class TestApplicationManager private constructor() {
       bootstrapError?.let {
         throw it
       }
+
+      StartUpMeasurer.disable()
 
       if (!isBootstrappingAppNow.compareAndSet(false, true)) {
         throw IllegalStateException("App bootstrap is already in process")
