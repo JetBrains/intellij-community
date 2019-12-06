@@ -48,7 +48,7 @@
       <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Prev"
               icon="AllIcons.Actions.PreviousOccurence"/>
 
-      <add-to-group group-id="GoToMenu" anchor="last"/>
+      <add-to-group group-id="NavigateInFileGroup" anchor="last"/>
     </group>
     <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Current"/>
 
