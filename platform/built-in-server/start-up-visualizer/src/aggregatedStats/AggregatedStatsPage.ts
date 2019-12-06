@@ -95,13 +95,15 @@ export default class AggregatedStatsPage extends Vue {
       this.machines = info.productToMachine[product] || []
       const projects = info.productToProjects[product] || []
       projects.sort((a, b) => {
-        if (a.startsWith("simple ") && !b.startsWith("simple ")) {
+        const t1 = projectNameToTitle.get(a)!!
+        const t2 = projectNameToTitle.get(b)!!
+        if (t1.startsWith("simple ") && !t2.startsWith("simple ")) {
           return -1
         }
-        if (b.startsWith("simple ") && !a.startsWith("simple ")) {
+        if (t2.startsWith("simple ") && !t1.startsWith("simple ")) {
           return 1
         }
-        return projectNameToTitle.get(a)!!.localeCompare(projectNameToTitle.get(b)!!)
+        return t1.localeCompare(t2)
       })
       this.projects = projects
     }
