@@ -43,13 +43,12 @@ public class WSLDistributionWithRoot extends WSLDistribution {
   public WSLDistributionWithRoot(@NotNull WSLDistribution wslDistribution) {
     super(wslDistribution);
     final File uncRoot = getUNCRoot();
-    String wslRootInHost = uncRoot.exists() ? FileUtil.toSystemDependentName(uncRoot.getPath()) :
-                           DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
-
-    if (wslRootInHost == null) {
-      LOG.warn("WSL (" + wslDistribution.getPresentableName() +") rootfs is null");
+    String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
+    final boolean isDirectory = wslRootInHost != null && new File(wslRootInHost).isDirectory();
+    if (!isDirectory) {
+      wslRootInHost = FileUtil.toSystemDependentName(uncRoot.getPath());
     }
-    else if (!FileUtil.exists(wslRootInHost)) {
+    if (!FileUtil.exists(wslRootInHost)) {
       LOG.warn("WSL rootfs doesn't exist: " + wslRootInHost);
       wslRootInHost = null;
     }
