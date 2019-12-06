@@ -14,7 +14,10 @@ import kotlin.system.exitProcess
  */
 fun main(args: Array<String>) {
   try {
-    if (args.size != 2) {
+    if (args.size == 2) {
+      PythonUniversalStubsBuilder.generateStubs(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+    }
+    else {
       val zipsDirectory = System.getProperty("intellij.build.pycharm.zips.directory")
       val prebuiltStubsArchive = PyCharmBuildOptions.getPrebuiltStubsArchive()
       if (zipsDirectory.isNullOrBlank() || prebuiltStubsArchive.isNullOrBlank()) {
@@ -22,9 +25,6 @@ fun main(args: Array<String>) {
           "Usage: PythonUniversalStubsBuilderKt <input folder with files> <output folder to store universal stubs>")
       }
       PythonUniversalStubsBuilder.generateArchive(zipsDirectory, prebuiltStubsArchive)
-    }
-    else {
-      PythonUniversalStubsBuilder.generateStubs(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
     }
     exitProcess(0)
   }
@@ -36,37 +36,23 @@ fun main(args: Array<String>) {
 
 private object PythonUniversalStubsBuilder : PyGeneratorBase() {
   fun generateStubs(root: String, outputPath: String) {
-    try {
-      app
-
+    use {
       val files = rootFiles(root)
       PyStubsGenerator("$outputPath/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
         .buildStubsForRoots(files)
     }
-    finally {
-      tearDown()
-    }
   }
 
   fun generateArchive(zipsDirectory: String, prebuiltStubsArchive: String) {
-    val tmpFolder = FileUtil.createTempDirectory("stubs", null)
-    tmpFolder.delete()
-    tmpFolder.mkdirs()
-
-    try {
-      app
-
+    val stubDir = tempDir.resolve("stubs")
+    use {
       val unzippedFiles = unzipArchivesToRoots(zipsDirectory)
-      PyStubsGenerator("${tmpFolder.absolutePath}/${PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME}")
+      PyStubsGenerator(FileUtil.toSystemIndependentName(stubDir.resolve(PrebuiltStubsProviderBase.SDK_STUBS_STORAGE_NAME).toString()))
         .buildStubsForRoots(unzippedFiles)
 
       println("Generate archive $prebuiltStubsArchive")
       val archive = File(prebuiltStubsArchive)
-      Compressor.Zip(archive).use { it.addDirectory(PyPrebuiltStubsProvider.NAME, tmpFolder) }
-    }
-    finally {
-      FileUtil.delete(tmpFolder)
-      tearDown()
+      Compressor.Zip(archive).use { it.addDirectory(PyPrebuiltStubsProvider.NAME, stubDir.toFile()) }
     }
   }
 }

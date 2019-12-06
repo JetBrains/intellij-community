@@ -8,20 +8,17 @@ import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-import com.intellij.diagnostic.ThreadDumper
+import com.intellij.doLoadApp
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneratedSourceFileChangeTracker
 import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.HeadlessDataManager
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl
-import com.intellij.idea.*
+import com.intellij.idea.StartupUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -56,7 +53,6 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
-import com.intellij.ui.IconManager
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -76,9 +72,9 @@ import sun.awt.AWTAutoShutdown
 import java.awt.EventQueue
 import java.awt.Toolkit
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.DelayQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import javax.swing.Timer
 
@@ -128,7 +124,14 @@ class TestApplicationManager private constructor() {
       }
 
       HeavyPlatformTestCase.doAutodetectPlatformPrefix()
-      loadTestApp()
+      doLoadApp {
+        if (EventQueue.isDispatchThread()) {
+          StartupUtil.replaceSystemEventQueue(logger<TestApplicationManager>())
+        }
+        else {
+          replaceIdeEventQueueSafely()
+        }
+      }
       isBootstrappingAppNow.set(false)
       result = TestApplicationManager()
       ourInstance = result
@@ -153,50 +156,6 @@ class TestApplicationManager private constructor() {
       app.disposeContainer()
       ourInstance = null
     }
-  }
-}
-
-private fun loadTestApp() {
-  Main.setFlags(arrayOf("inspect", "", "", ""))
-  assert(Main.isHeadless())
-  assert(Main.isCommandLine())
-  PluginManagerCore.isUnitTestMode = true
-  IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
-
-  val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
-    PluginManagerCore.getLoadedPlugins(TestApplicationManager::class.java.classLoader)
-  }, AppExecutorUtil.getAppExecutorService())
-
-  if (EventQueue.isDispatchThread()) {
-    StartupUtil.replaceSystemEventQueue(logger<TestApplicationManager>())
-  }
-  else {
-    replaceIdeEventQueueSafely()
-  }
-
-  val app = ApplicationImpl(true, true, true, true)
-  IconManager.activate()
-  val plugins: List<IdeaPluginDescriptorImpl>
-  try {
-    plugins = registerRegistryAndInitStore(registerAppComponents(loadedPluginFuture, app), app)
-      .get(20, TimeUnit.SECONDS)
-
-    val boundedExecutor = createExecutorToPreloadServices()
-    val preloadServiceFuture = preloadServices(plugins, app, boundedExecutor, "")
-    app.loadComponents(null)
-
-    preloadServiceFuture
-      .thenCompose { callAppInitialized(app, boundedExecutor) }
-      .get(20, TimeUnit.SECONDS)
-  }
-  catch (e: TimeoutException) {
-    throw RuntimeException("Cannot preload services in 20 seconds: ${ThreadDumper.dumpThreadsToString()}", e)
-  }
-  catch (e: ExecutionException) {
-    throw e.cause ?: e
-  }
-  catch (e: InterruptedException) {
-    throw e.cause ?: e
   }
 }
 

@@ -11,11 +11,12 @@ import kotlin.system.exitProcess
  */
 fun main(args: Array<String>) {
   try {
-    require(args.size == 2) {
-      "Usage: IndicesBuilderKt <input folder with files> <output folder to store indices>"
+    if (args.size != 2) {
+      println("Usage: IndicesBuilderKt <input folder with files> <output folder to store indices>")
+      exitProcess(1)
     }
+
     IndicesBuilder.build(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
-    exitProcess(0)
   }
   catch (e: Throwable) {
     e.printStackTrace()
@@ -23,20 +24,12 @@ fun main(args: Array<String>) {
   }
 }
 
-private object IndicesBuilder: PyGeneratorBase() {
+private object IndicesBuilder : PyGeneratorBase() {
   fun build(root: String, outputPath: String) {
-    try {
-      app
-
+    use {
       val files = rootFiles(root)
-      IdIndexGenerator("$outputPath/${PrebuiltIndexAwareIdIndexer.ID_INDEX_FILE_NAME}")
-        .buildIdIndexForRoots(files)
-    }
-    catch (e: Throwable) {
-      e.printStackTrace()
-    }
-    finally {
-      tearDown()
+      IdIndexGenerator("$outputPath/${PrebuiltIndexAwareIdIndexer.ID_INDEX_FILE_NAME}").buildIdIndexForRoots(files)
+      exitProcess(0)
     }
   }
 }
