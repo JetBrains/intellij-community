@@ -116,7 +116,7 @@ private fun authCheckFailedNotification(lifetime: Lifetime) {
 }
 
 private fun configure() {
-    ShowSettingsUtil.getInstance().showSettingsDialog(null, CircletSettingsPanel::class.java)
+    CircletSettingsPanel.openSettings(null)
 }
 
 fun ideaConfig(server: String): WorkspaceConfiguration {

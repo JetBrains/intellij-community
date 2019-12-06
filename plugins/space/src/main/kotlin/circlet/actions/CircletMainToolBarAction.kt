@@ -34,7 +34,7 @@ import java.awt.*
 import java.util.concurrent.*
 import javax.swing.*
 
-class CircletMainToolBarAction : DumbAwareAction() {
+class CircletMainToolBarAction : DumbAwareAction()  {
     private val settings = CircletSettings.getInstance()
 
     override fun update(e: AnActionEvent) {
@@ -185,9 +185,10 @@ class CircletMainToolBarAction : DumbAwareAction() {
                                                     AllIcons.Ide.External_link_arrow)
             }
         }
-        menuItems += AccountMenuItem.Action("Log Out...",
-                                            { circletWorkspace.signOut() },
+        menuItems += AccountMenuItem.Action("Settings...",
+                                            { CircletSettingsPanel.openSettings(project) },
                                             showSeparatorAbove = true)
+        menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
 
         return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
     }

@@ -168,6 +168,7 @@ private class CloneView(
     private val dialogStateListener: VcsCloneDialogComponentStateListener,
     private val st: CircletLoginState.Connected
 ) {
+    val settings = CircletSettings.getInstance()
 
     val selectedUrl = mutableProperty<String?>(null)
 
@@ -216,7 +217,7 @@ private class CloneView(
             if (it.valueIsAdjusting)
                 return@addListSelectionListener
             // selection change is triggered when repo details update, so we can use value here.
-            selectedUrl.value = selectedValue?.repoDetails?.value?.urls?.sshUrl
+            updateSelectedUrl()
         }
     }
 
@@ -279,7 +280,13 @@ private class CloneView(
                                                     { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
                                                     AllIcons.Ide.External_link_arrow,
                                                     showSeparatorAbove = true)
-                menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() }, showSeparatorAbove = true)
+                menuItems += AccountMenuItem.Action("Settings...",
+                                                    {
+                                                        CircletSettingsPanel.openSettings(project)
+                                                        updateSelectedUrl()
+                                                    },
+                                                    showSeparatorAbove = true)
+                menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
 
                 AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
                     .showUnderneathOf(accountLabel)
@@ -357,6 +364,14 @@ private class CloneView(
         scrollableList.verticalScrollBar.addAdjustmentListener(listener)
         lifetime.add {
             scrollableList.verticalScrollBar.removeAdjustmentListener(listener)
+        }
+    }
+
+    fun updateSelectedUrl() {
+        val repositoryUrls = list.selectedValue?.repoDetails?.value?.urls
+        selectedUrl.value = when (settings.cloneType) {
+            CloneType.SSH -> repositoryUrls?.sshUrl
+            CloneType.HTTP -> repositoryUrls?.httpUrl
         }
     }
 

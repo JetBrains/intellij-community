@@ -4,11 +4,15 @@ import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
 import circlet.ui.*
+import com.intellij.icons.*
+import com.intellij.ide.*
 import com.intellij.openapi.*
 import com.intellij.openapi.options.*
+import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.wm.*
 import com.intellij.ui.*
+import com.intellij.ui.components.labels.*
 import com.intellij.ui.components.panels.*
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.*
@@ -39,6 +43,11 @@ class CircletSettingsPanel :
 
     private val accountPanel = JPanel(BorderLayout())
 
+    private val linkLabel: LinkLabel<Any> = LinkLabel<Any>("Configure Git SSH Keys & HTTP Password", AllIcons.Ide.External_link_arrow, null).apply {
+        iconTextGap = 0
+        setHorizontalTextPosition(SwingConstants.LEFT)
+    }
+
     init {
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
@@ -52,6 +61,7 @@ class CircletSettingsPanel :
         loginState.forEach(uiLifetime) { st ->
             accountPanel.removeAll()
             accountPanel.add(createView(st), BorderLayout.NORTH)
+            updateUi(st)
             accountPanel.revalidate()
             accountPanel.repaint()
         }
@@ -62,8 +72,17 @@ class CircletSettingsPanel :
     override fun createPanel(): DialogPanel = panel {
         row {
             cell(isFullWidth = true) { accountPanel(pushX, growX) }
+            largeGapAfter()
+        }
+        row {
+            cell(isFullWidth = true) {
+                label("Clone repositories with:")
+                comboBox(EnumComboBoxModel(CloneType::class.java), settings::cloneType)
+                linkLabel()
+            }
         }
     }
+
 
     override fun dispose() {
         uiLifetime.terminate()
@@ -112,6 +131,21 @@ class CircletSettingsPanel :
         }
     }
 
+    private fun updateUi(st: CircletLoginState) {
+        when (st) {
+            is CircletLoginState.Connected -> {
+                linkLabel.isVisible = true
+                val profile = circletWorkspace.workspace.value?.me?.value ?: return
+                val gitConfigPage = Navigator.m.member(profile.username).git.absoluteHref(st.server)
+                linkLabel.setListener({ _, _ -> BrowserUtil.browse(gitConfigPage) }, null)
+            }
+            else -> {
+                linkLabel.isVisible = false
+                linkLabel.setListener(null, null)
+            }
+        }
+    }
+
     private fun signIn(serverName: String) {
         launch(uiLifetime, Ui) {
             uiLifetime.usingSource { connectLt ->
@@ -131,6 +165,12 @@ class CircletSettingsPanel :
                 val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, accountPanel)
                 AppIcon.getInstance().requestFocus(frame as IdeFrame?)
             }
+        }
+    }
+
+    companion object {
+        fun openSettings(project: Project?) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, CircletSettingsPanel::class.java)
         }
     }
 }

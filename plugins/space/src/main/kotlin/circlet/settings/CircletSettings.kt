@@ -13,6 +13,12 @@ class CircletSettings : SimplePersistentStateComponent<CircletSettingsState>(Cir
             state.serverSettings = value
         }
 
+    var cloneType: CloneType
+        get() = state.cloneType
+        set(value) {
+            state.cloneType = value
+        }
+
     companion object {
         fun getInstance(): CircletSettings = ServiceManager.getService(CircletSettings::class.java)
     }
@@ -22,4 +28,11 @@ class CircletSettingsState : BaseState() {
     var serverSettings: CircletServerSettings by this.property(CircletServerSettings()) {
         it.enabled.not() && it.server.isBlank()
     }
+
+    var cloneType: CloneType by enum(CloneType.SSH)
+}
+
+enum class CloneType {
+    SSH,
+    HTTP
 }

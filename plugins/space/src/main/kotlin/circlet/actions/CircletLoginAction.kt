@@ -13,6 +13,6 @@ class CircletLoginAction : DumbAwareAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, CircletSettingsPanel::class.java)
+        CircletSettingsPanel.openSettings(e.project)
     }
 }
