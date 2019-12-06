@@ -32,6 +32,11 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
+    public void sdkAdded(@NotNull Sdk sdk) {
+      addJdkNode(sdk, true);
+    }
+
+    @Override
     public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateName();
     }

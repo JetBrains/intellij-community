@@ -11,10 +11,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.ui.ComboBox;
@@ -44,7 +42,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
-import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.*;
+import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBoxItem;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
@@ -203,10 +201,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
             final String str = value.toString();
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
-          else if (value instanceof LoadingJdkComboBoxItem) {
-            setIcon(AnimatedIcon.Default.INSTANCE);
-            append(ProjectBundle.message("jdk.combo.box.search.of.sdks") );
-          }
           else if (value instanceof ProjectJdkComboBoxItem) {
             final Sdk jdk = sdkModel.getProjectSdk();
             if (jdk != null) {
@@ -330,24 +324,20 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
     mySetUpButton.setVisible(false);
   }
 
-  private void collectNewSdkActions() {
-    Consumer<Sdk> updateTree = jdk -> {
-      if (myProject != null) {
-        final JdkListConfigurable configurable = JdkListConfigurable.getInstance(myProject);
-        configurable.addJdkNode(jdk, false);
-      }
-      reloadModel();
-      setSelectedJdk(jdk);
-      myOnNewSdkAdded.consume(jdk);
-    };
+  private void onNewSdkAdded(@NotNull Sdk sdk) {
+    setSelectedJdk(sdk);
+    myOnNewSdkAdded.consume(sdk);
+  }
 
+  private void collectNewSdkActions() {
+    Sdk sdk = getSelectedJdk();
     myModel.setActions(
-      mySdkModel.createDownloadActions(this, getSelectedJdk(), updateTree, myCreationFilter),
-      mySdkModel.createAddActions(this, getSelectedJdk(), updateTree, myCreationFilter)
+      mySdkModel.createDownloadActions(this, sdk, this::onNewSdkAdded, myCreationFilter),
+      mySdkModel.createAddActions(this, sdk, this::onNewSdkAdded, myCreationFilter)
     );
   }
 
-  private void executeNewSdkAction(@NotNull AnAction action){
+  private void executeNewSdkAction(@NotNull AnAction action) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(this);
     final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
     action.actionPerformed(event);
@@ -356,17 +346,7 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
   private void attachNewDetectedSdk(@NotNull SuggestedJdkItem item) {
     String path = item.getPath();
     SdkType type = item.getSdkType();
-
-    Sdk[] newSdk = new Sdk[1];
-    mySdkModel.addSdk(type, path, sdk -> {
-      reloadModel();
-      newSdk[0] = sdk;
-    });
-
-    Sdk sdk = newSdk[0];
-    if (sdk == null) return;
-    setSelectedItem(sdk);
-    myOnNewSdkAdded.consume(sdk);
+    mySdkModel.addSdk(type, path, this::onNewSdkAdded);
   }
 
   public void setEditButton(JButton editButton, Project project, @NotNull Supplier<? extends Sdk> retrieveJDK){
@@ -495,8 +475,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
       return;
     }
 
-    if (anObject instanceof LoadingJdkComboBoxItem) return;
-
     if (anObject instanceof ActionJdkItem) {
       AnAction action = ((ActionJdkItem)anObject).myAction;
       executeNewSdkAction(action);
@@ -546,9 +524,7 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
     private boolean isApplicableSuggestedItem(@NotNull SuggestedJdkItem item) {
       if (!mySdkTypeFilter.value(item.getSdkType())) return false;
       for (Sdk sdk : mySdkModel.getSdks()) {
-        String sdkPath = sdk.getHomePath();
-        if (sdkPath == null) continue;
-        if (FileUtil.filesEqual(new File(sdkPath), new File(item.getPath()))) return false;
+        if (FileUtil.pathsEqual(sdk.getHomePath(), item.getPath())) return false;
       }
       return true;
     }
@@ -683,16 +659,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
       return -1;
     }
 
-    int lastIndexOf(@NotNull Predicate<JdkComboBoxItem> predicate) {
-      for (int i = getSize() - 1; i >= 0; i--) {
-        JdkComboBoxItem item = getElementAt(i);
-        if (item != null && predicate.apply(item)) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
     @Nullable
     String getSeparatorTextAbove(@Nullable JdkComboBoxItem value) {
       int valueIndex = firstIndexOf(it -> it == value);
@@ -702,15 +668,8 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
         return "";
       }
 
-      int loadingItemIndex = lastIndexOf(LoadingJdkComboBoxItem.class::isInstance);
-      if (loadingItemIndex >= 0) {
-        if (value == getElementAt(loadingItemIndex)) {
-          return ProjectBundle.message("jdk.combo.box.autodetected");
-        }
-      } else {
-        if (value instanceof SuggestedJdkItem && valueIndex > 0 && !(getElementAt(valueIndex-1) instanceof SuggestedJdkItem)) {
-          return ProjectBundle.message("jdk.combo.box.autodetected");
-        }
+      if (valueIndex == firstIndexOf(SuggestedJdkItem.class::isInstance)) {
+        return ProjectBundle.message("jdk.combo.box.autodetected");
       }
 
       return null;
@@ -760,10 +719,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
     public String getSdkName() {
       return null;
     }
-  }
-
-  public static class LoadingJdkComboBoxItem extends JdkComboBoxItem {
-
   }
 
   public static class ActualJdkComboBoxItem extends JdkComboBoxItem {
