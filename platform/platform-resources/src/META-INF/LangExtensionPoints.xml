@@ -426,7 +426,7 @@
     </extensionPoint>
 
     <!--suppress PluginXmlValidity -->
-§    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
+    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
 
     <extensionPoint name="moduleType" beanClass="com.intellij.openapi.module.ModuleTypeEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.module.ModuleType"/>
