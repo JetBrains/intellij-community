@@ -32,4 +32,17 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertSize(1, components);
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
   }
+
+  public void testRecordField() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiField);
+    assertEquals(PsiType.INT, ((PsiField)target).getType());
+
+    PsiJavaFile file = (PsiJavaFile)getFile();
+
+    PsiClass record = file.getClasses()[0];
+    PsiRecordComponent[] components = record.getRecordComponents();
+    assertSize(1, components);
+    assertEquals(target.getTextOffset(), components[0].getTextOffset());
+  }
 }
