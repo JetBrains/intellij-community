@@ -30,6 +30,7 @@ import java.util.*;
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
+  public static final String PROP_CHILDREN_MODIFICATION_COUNT = "DefaultActionGroup.childrenModificationCount";
   private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
   private static final String CANT_ADD_ACTION_TWICE = "Cannot add an action twice: ";
   /**
@@ -40,6 +41,8 @@ public class DefaultActionGroup extends ActionGroup {
    * Contains instances of Pair
    */
   private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  private int myChildrenModificationCounter = 0;
 
   public DefaultActionGroup() {
     this(null, false);
@@ -72,6 +75,11 @@ public class DefaultActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
+  private void fireChildrenModified() {
+    int oldCount = myChildrenModificationCounter++;
+    firePropertyChange(PROP_CHILDREN_MODIFICATION_COUNT, oldCount, myChildrenModificationCounter);
+  }
+
   private void addActions(@NotNull List<? extends AnAction> actions) {
     Set<Object> actionSet = new HashSet<>();
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
@@ -84,6 +92,7 @@ public class DefaultActionGroup extends ActionGroup {
       uniqueActions.add(action);
     }
     mySortedChildren.addAll(uniqueActions);
+    fireChildrenModified();
   }
 
   /**
@@ -160,6 +169,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
     addAllToSortedList(actionManager);
 
+    fireChildrenModified();
     return new ActionInGroup(this, action);
   }
 
@@ -238,6 +248,7 @@ public class DefaultActionGroup extends ActionGroup {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (pair.first.equals(action) || (pair.first instanceof ActionStub && ((ActionStub)pair.first).getId().equals(id))) {
           myPairs.remove(i);
+          fireChildrenModified();
           break;
         }
       }
@@ -250,6 +261,7 @@ public class DefaultActionGroup extends ActionGroup {
   public final void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
+    fireChildrenModified();
   }
 
   /**
@@ -259,6 +271,7 @@ public class DefaultActionGroup extends ActionGroup {
     int index = mySortedChildren.indexOf(oldAction);
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
+      fireChildrenModified();
       return true;
     }
     else {
@@ -266,6 +279,7 @@ public class DefaultActionGroup extends ActionGroup {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (pair.first.equals(newAction)) {
           myPairs.set(i, Pair.create(newAction, pair.second));
+          fireChildrenModified();
           return true;
         }
       }
@@ -286,6 +300,8 @@ public class DefaultActionGroup extends ActionGroup {
 
     myPairs.clear();
     myPairs.addAll(other.myPairs);
+
+    fireChildrenModified();
   }
 
   @NotNull

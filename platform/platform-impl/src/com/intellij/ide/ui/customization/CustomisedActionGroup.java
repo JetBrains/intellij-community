@@ -3,6 +3,8 @@ package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.util.ArrayUtil;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +16,7 @@ public class CustomisedActionGroup extends ActionGroup {
   private final String myRootGroupName;
 
   private int mySchemeModificationStamp = -1;
+  private boolean myNeedsChildrenRefresh = false;
 
   public CustomisedActionGroup(String shortName,
                                final ActionGroup group,
@@ -28,16 +31,23 @@ public class CustomisedActionGroup extends ActionGroup {
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
     myRootGroupName = name;
+    myGroup.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        myNeedsChildrenRefresh |= DefaultActionGroup.PROP_CHILDREN_MODIFICATION_COUNT.equals(evt.getPropertyName());
+      }
+    });
   }
 
   @Override
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     int currentStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    if (mySchemeModificationStamp < currentStamp || ArrayUtil.isEmpty(myChildren) ||
+    if (mySchemeModificationStamp < currentStamp || myNeedsChildrenRefresh || ArrayUtil.isEmpty(myChildren) ||
         myGroup instanceof DynamicActionGroup || !(myGroup instanceof DefaultActionGroup)) {
       myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
       mySchemeModificationStamp = currentStamp;
+      myNeedsChildrenRefresh = false;
     }
     return myChildren;
   }
