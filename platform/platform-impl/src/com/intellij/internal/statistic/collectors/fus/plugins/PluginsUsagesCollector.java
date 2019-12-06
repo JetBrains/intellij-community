@@ -23,28 +23,26 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   }
 
   @Override
+  public int getVersion() {
+    return 2;
+  }
+
+  @Override
   @NotNull
   public Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new THashSet<>();
     for (PluginId id : PluginManagerCore.disabledPlugins()) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
-      if (plugin == null) {
-        continue;
-      }
-
-      PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(plugin);
+      PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
       FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
       result.add(MetricEventFactoryKt.newMetric("disabled.plugin", data));
     }
 
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getLoadedPlugins()) {
-      if (!descriptor.isBundled()) {
-        continue;
+      if (descriptor.isEnabled() && !descriptor.isBundled()) {
+        PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor);
+        FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
+        result.add(MetricEventFactoryKt.newMetric("enabled.not.bundled.plugin", data));
       }
-
-      PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor);
-      FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
-      result.add(MetricEventFactoryKt.newMetric("enabled.not.bundled.plugin", data));
     }
     return result;
   }
