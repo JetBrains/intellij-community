@@ -72,16 +72,6 @@ import javax.swing.event.HyperlinkListener
 
 private val LOG = Logger.getInstance(ToolWindowManagerImpl::class.java)
 
-private const val EDITOR_ELEMENT = "editor"
-private const val ACTIVE_ATTR_VALUE = "active"
-private const val FRAME_ELEMENT = "frame"
-private const val X_ATTR = "x"
-private const val Y_ATTR = "y"
-private const val WIDTH_ATTR = "width"
-private const val HEIGHT_ATTR = "height"
-private const val EXTENDED_STATE_ATTR = "extended-state"
-private const val LAYOUT_TO_RESTORE = "layout-to-restore"
-
 @State(name = "ToolWindowManager",
        defaultStateAsResource = true,
        storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)]
@@ -196,10 +186,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       })
 
-      Windows.ToolWindowFilter
-        .filterBySignal(Windows.Signal(Predicate { event ->
-          (event.id == FocusEvent.FOCUS_LOST) || (event.id == FocusEvent.FOCUS_GAINED) || (event.id == MouseEvent.MOUSE_PRESSED) || (event.id == KeyEvent.KEY_PRESSED)
-        }))
+      Windows.ToolWindowProvider(Windows.Signal(Predicate { event ->
+        event.id == FocusEvent.FOCUS_LOST || event.id == FocusEvent.FOCUS_GAINED || event.id == MouseEvent.MOUSE_PRESSED || event.id == KeyEvent.KEY_PRESSED
+      }))
         .withEscAction()
         .handleFocusLostOnPinned { toolWindowId ->
           processOpenedProjects { project ->
@@ -2140,3 +2129,13 @@ private fun getRootBounds(frame: JFrame): Rectangle {
   bounds.setLocation(frame.x + rootPane.x, frame.y + rootPane.y)
   return bounds
 }
+
+private const val EDITOR_ELEMENT = "editor"
+private const val ACTIVE_ATTR_VALUE = "active"
+private const val FRAME_ELEMENT = "frame"
+private const val X_ATTR = "x"
+private const val Y_ATTR = "y"
+private const val WIDTH_ATTR = "width"
+private const val HEIGHT_ATTR = "height"
+private const val EXTENDED_STATE_ATTR = "extended-state"
+private const val LAYOUT_TO_RESTORE = "layout-to-restore"

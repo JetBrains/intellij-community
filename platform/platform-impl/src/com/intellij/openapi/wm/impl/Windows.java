@@ -2,14 +2,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,13 +18,14 @@ import java.awt.event.FocusEvent;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class Windows {
-  final static class ToolWindowProvider {
+  public final static class ToolWindowProvider {
     private final Signal mySignal;
 
     private Consumer<? super String> pinnedWindowFocusLostHandler;
 
-    private ToolWindowProvider(Signal signal) {
+    public ToolWindowProvider(@NotNull Signal signal) {
       mySignal = signal;
     }
 
@@ -37,36 +38,20 @@ public final class Windows {
       return this;
     }
 
-    public static boolean isInActiveToolWindow(Object component) {
-      JComponent source = (component instanceof JComponent ? ((JComponent)component) : null);
-
+    public static boolean isInActiveToolWindow(@Nullable Object component) {
       ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
-      if (activeToolWindow != null) {
-        JComponent activeToolWindowComponent = activeToolWindow.getComponent();
-        if (activeToolWindowComponent != null) {
-          while (source != null && source != activeToolWindowComponent) {
-            source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
-          }
-        }
-        return source != null;
+      if (activeToolWindow == null) {
+        return false;
       }
 
-      return false;
-    }
-
-    public static boolean isInToolWindow(Component component) {
-      Container c = component.getParent();
-      while (c != null) {
-        if (c instanceof ToolWindow) {
-          return true;
+      JComponent source = component instanceof JComponent ? (JComponent)component : null;
+      JComponent activeToolWindowComponent = activeToolWindow.getComponent();
+      if (activeToolWindowComponent != null) {
+        while (source != null && source != activeToolWindowComponent) {
+          source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
         }
-        c = c.getParent();
       }
-      return false;
-    }
-
-    public Shortcut[] findShortcuts(String actionId) {
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+      return source != null;
     }
 
     public void bind(@NotNull Disposable parentDisposable) {
@@ -117,24 +102,6 @@ public final class Windows {
     }
   }
 
-  private static final String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
-
-  private static boolean isHeavyWeightPopup(AWTEvent event) {
-    Object source = event.getSource();
-    if (source != null) {
-      if (event.getSource().getClass().getName().contains(HEAVYWEIGHT_WINDOW_CLASS_NAME)) {
-        return true;
-      }
-      Window ancestor = SwingUtilities.getWindowAncestor((Component)source);
-      if (ancestor != null) {
-        if (ancestor.getClass().getName().contains(HEAVYWEIGHT_WINDOW_CLASS_NAME)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   static final class Signal {
     private final Predicate<? super AWTEvent> isAppropriatePredicate;
 
@@ -145,20 +112,5 @@ public final class Windows {
     public boolean appropriate(AWTEvent event) {
       return isAppropriatePredicate.test(event);
     }
-  }
-
-  static final class ToolWindowFilter {
-    static ToolWindowFilter INSTANCE = new ToolWindowFilter();
-
-    private ToolWindowFilter() {}
-
-    static ToolWindowProvider filterBySignal(Signal signal) {
-      return new ToolWindowProvider(signal);
-    }
-  }
-
-  static ToolWindowFilter toolWindows() {
-    // Might be we should store and create algorithms specific to toolwindows here
-    return ToolWindowFilter.INSTANCE;
   }
 }
