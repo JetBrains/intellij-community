@@ -70,6 +70,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.jetbrains.jdi.VirtualMachineManagerImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -612,12 +613,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NotNull
   public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
-    try {
-      virtualMachineManager = Bootstrap.virtualMachineManager();
+    if (Registry.is("debugger.jb.jdi")) {
+      virtualMachineManager = VirtualMachineManagerImpl.virtualMachineManager();
     }
-    catch (Error e) {
-      throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
-                                                          e.getClass().getName() + " : " + e.getLocalizedMessage()));
+    else {
+      try {
+        virtualMachineManager = Bootstrap.virtualMachineManager();
+      }
+      catch (Error e) {
+        throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
+                                                            e.getClass().getName() + " : " + e.getLocalizedMessage()));
+      }
     }
     return StreamEx.of(virtualMachineManager.allConnectors())
       .findFirst(c -> connectorName.equals(c.name()))
