@@ -113,23 +113,25 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class UpdateSelectedBranchAction : BranchesActionBase("Update Selected",
-                                                        "Update remote branch with the corresponding local",
-                                                        AllIcons.Actions.CheckOut) {
+  class UpdateSelectedBranchAction : BranchesActionBase(text = "Update Selected", icon = AllIcons.Actions.CheckOut) {
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      val presentation = e.presentation
       if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
-        e.presentation.isEnabled = false
-        e.presentation.description = "Update is already running"
+        presentation.isEnabled = false
+        presentation.description = "Update is already running"
         return
       }
       if (branches.any(BranchInfo::isCurrent)) {
-        e.presentation.isEnabled = false
-        e.presentation.description = "Select non current branches only"
+        presentation.isEnabled = false
+        presentation.description = "Select non current branches only"
         return
       }
       val repositories = branches.flatMap(BranchInfo::repositories).distinct()
       val branchNames = branches.map(BranchInfo::branchName)
-      e.presentation.isEnabled = isTrackingInfosExist(branchNames, repositories)
+      val pluralizedBranchName = StringUtil.pluralize("branch", branchNames.size)
+      presentation.description =
+        "Fetch remote tracking $pluralizedBranchName and fast-forward selected local $pluralizedBranchName (like `git fetch branch:branch`)"
+      presentation.isEnabled = isTrackingInfosExist(branchNames, repositories)
     }
 
     override fun actionPerformed(e: AnActionEvent) {
