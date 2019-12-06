@@ -255,6 +255,9 @@
     <registryKey key="packagesearch.timeout.max" defaultValue="86400000"
                  description="maximum backoff timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
+    <intentionAction>
+      <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
