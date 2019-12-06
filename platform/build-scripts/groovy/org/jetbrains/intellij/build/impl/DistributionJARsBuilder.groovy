@@ -88,7 +88,7 @@ class DistributionJARsBuilder {
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
-            } && !plugin.projectLibrariesToUnpack.values().any {it == library.name }
+            } && !plugin.projectLibrariesToUnpack.values().contains(library.name)
           }
         if (!libraries.isEmpty()) {
           buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect { "'$it.name'" }.join(",")}")
@@ -790,6 +790,9 @@ class DistributionJARsBuilder {
       buildByLayout(layoutBuilder, plugin, targetDir, actualModuleJars, generatedResources)
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
         buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
+      }
+      else if (!plugin.pathsToScramble.isEmpty()){
+        buildContext.messages.warning("Scrambling plugin $plugin.directoryName skipped: 'scrambleTool' isn't defined, but plugin defines paths to be scrambled")
       }
     }
   }

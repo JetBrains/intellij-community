@@ -208,11 +208,23 @@ class PluginLayout extends BaseLayout {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
     }
 
+    /**
+     * Specifies a relative path to a plugin jar that should be scrambled.
+     * Scrambling is performed by the {@link org.jetbrains.intellij.build.ProprietaryBuildTools#scrambleTool}
+     * If scramble tool is not defined, scrambling will not be performed
+     * Multiple invications of this method will add corresponding paths to a list of paths to be scrambled
+     *
+     * @param relativePath - a path to a jar file relative to plugin root directory
+     */
     void scramble(String relativePath) {
       layout.pathsToScramble.add(relativePath)
     }
 
-    void filterClasspath(BiFunction<BuildContext, File, Boolean> filter) {
+    /**
+     * Allows control over classpath entries that will be used by the scrambler to resolve references from jars being scrambled.
+     * By default all platform jars are added to the 'scramble classpath'
+     */
+    void filterScrambleClasspath(BiFunction<BuildContext, File, Boolean> filter) {
       layout.scrambleClasspathFilter = filter
     }
   }
