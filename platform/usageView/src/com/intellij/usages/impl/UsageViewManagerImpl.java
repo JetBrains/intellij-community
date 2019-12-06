@@ -75,8 +75,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
     }
     usageView.setSearchInProgress(false);
-
-
     return usageView;
   }
 

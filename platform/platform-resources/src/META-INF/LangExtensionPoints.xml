@@ -385,8 +385,8 @@
     <extensionPoint name="usageTypeProvider" interface="com.intellij.usages.impl.rules.UsageTypeProvider" dynamic="true"/>
     <extensionPoint name="fileStructureGroupRuleProvider" interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
     <extensionPoint name="usageContextPanelProvider" interface="com.intellij.usages.UsageContextPanel$Provider" area="IDEA_PROJECT"/>
-    <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory"/>
-    <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener"/>
+    <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory" dynamic="true"/>
+    <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener" dynamic="true"/>
 
     <extensionPoint name="treeStructureProvider" interface="com.intellij.ide.projectView.TreeStructureProvider" area="IDEA_PROJECT"/>
 
