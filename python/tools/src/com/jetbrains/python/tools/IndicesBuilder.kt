@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
     exitProcess(0)
   }
   catch (e: Throwable) {
+    e.printStackTrace()
     exitProcess(1)
   }
 }
