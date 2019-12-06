@@ -88,7 +88,7 @@ class DistributionJARsBuilder {
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
-            }
+            } && !plugin.projectLibrariesToUnpack.values().any {it == library.name }
           }
         if (!libraries.isEmpty()) {
           buildContext.messages.debug(" plugin '$plugin.mainModule', module '$it': ${libraries.collect { "'$it.name'" }.join(",")}")
@@ -784,7 +784,13 @@ class DistributionJARsBuilder {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
       }
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}", actualModuleJars, generatedResources)
+
+      final String targetDir = "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}"
+
+      buildByLayout(layoutBuilder, plugin, targetDir, actualModuleJars, generatedResources)
+      if (buildContext.proprietaryBuildTools.scrambleTool != null) {
+        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, plugin, targetDir)
+      }
     }
   }
 

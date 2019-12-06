@@ -3,8 +3,11 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.ResourcesGenerator
+
+import java.util.function.BiFunction
 
 /**
  * Describes layout of a plugin in the product distribution
@@ -18,6 +21,8 @@ class PluginLayout extends BaseLayout {
   private boolean doNotCreateSeparateJarForLocalizableResources
   boolean directoryNameSetExplicitly
   PluginBundlingRestrictions bundlingRestrictions
+  Collection<String> pathsToScramble = []
+  BiFunction<BuildContext, File, Boolean> scrambleClasspathFilter = { context, file -> return true} as BiFunction<BuildContext, File>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -201,6 +206,14 @@ class PluginLayout extends BaseLayout {
      */
     void doNotCopyModuleLibrariesAutomatically(List<String> moduleNames) {
       layout.modulesWithExcludedModuleLibraries.addAll(moduleNames)
+    }
+
+    void scramble(String relativePath) {
+      layout.pathsToScramble.add(relativePath)
+    }
+
+    void filterClasspath(BiFunction<BuildContext, File, Boolean> filter) {
+      layout.scrambleClasspathFilter = filter
     }
   }
 }
