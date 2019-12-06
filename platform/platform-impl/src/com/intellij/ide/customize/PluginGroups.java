@@ -114,15 +114,6 @@ public class PluginGroups {
       "ZKM"
     )));
     tree.put("Java Frameworks", Pair.create(PlatformImplIcons.JavaFrameworks, Arrays.asList(
-      "com.intellij.appengine",
-      "org.intellij.grails",
-      "com.intellij.gwt",
-      "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
-      "JBoss jBPM:JBPM",
-      "Struts:com.intellij.struts2",
-      "com.intellij.hibernate",
-      "com.intellij.java.sql",
-
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
       "com.intellij.spring.integration," +
@@ -131,10 +122,6 @@ public class PluginGroups {
       "com.intellij.spring," +
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
-
-      "com.intellij.micronaut",
-      "com.intellij.quarkus",
-      "com.intellij.helidon",
 
       "Java EE:com.intellij.javaee.batch," +
       "com.intellij.beanValidation," +
@@ -147,10 +134,28 @@ public class PluginGroups {
       "com.intellij.javaee.webSocket," +
       "com.intellij.jsp," +
       "com.intellij.persistence",
-      "com.intellij.freemarker",
+
+      "com.intellij.hibernate",
+      "com.intellij.frameworks.reactor",
+      "com.intellij.frameworks.java.sql",
+      // preview ends
+
+      "org.intellij.grails",
+
+      "com.intellij.micronaut",
+      "com.intellij.quarkus",
+      "com.intellij.helidon",
+
+      "com.intellij.appengine",
+      "com.intellij.gwt",
+      "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
+      "JBoss jBPM:JBPM",
+      "Struts:com.intellij.struts2",
       "com.intellij.tapestry",
+      "com.intellij.guice",
+
+      "com.intellij.freemarker",
       "com.intellij.velocity",
-      "Guice",
       "com.intellij.aspectj",
       "Osmorc"
     )));
