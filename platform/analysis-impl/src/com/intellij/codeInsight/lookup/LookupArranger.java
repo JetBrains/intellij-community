@@ -2,10 +2,9 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.LookupElementListPresenter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +164,7 @@ public abstract class LookupArranger implements WeighingContext {
   /**
    * Called when the prefix has been truncated farther than the additional prefix typed while the lookup was visible.
    */
-  public void prefixTruncated(@NotNull LookupImpl lookup, int hideOffset) {
+  public void prefixTruncated(@NotNull LookupEx lookup, int hideOffset) {
     lookup.hideLookup(false);
   }
 
@@ -182,7 +181,7 @@ public abstract class LookupArranger implements WeighingContext {
 
       List<LookupElement> items = getMatchingItems();
       for (LookupElement item : items) {
-        if (CompletionServiceImpl.isStartMatch(item, this)) {
+        if (CompletionService.isStartMatch(item, this)) {
           result.add(item);
         }
       }
