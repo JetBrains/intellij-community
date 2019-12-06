@@ -9,7 +9,6 @@ import circlet.platform.workspaces.*
 import circlet.settings.*
 import circlet.utils.*
 import circlet.workspaces.*
-import com.intellij.openapi.options.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*

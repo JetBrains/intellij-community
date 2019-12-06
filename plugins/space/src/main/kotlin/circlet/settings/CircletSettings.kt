@@ -29,10 +29,10 @@ class CircletSettingsState : BaseState() {
         it.enabled.not() && it.server.isBlank()
     }
 
-    var cloneType: CloneType by enum(CloneType.SSH)
+    var cloneType: CloneType by enum(CloneType.HTTP)
 }
 
 enum class CloneType {
-    SSH,
-    HTTP
+    HTTP,
+    SSH
 }

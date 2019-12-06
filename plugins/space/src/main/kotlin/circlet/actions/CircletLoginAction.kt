@@ -3,7 +3,6 @@ package circlet.actions
 import circlet.components.*
 import circlet.settings.*
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 
 class CircletLoginAction : DumbAwareAction() {
