@@ -317,7 +317,7 @@
     <extensionPoint name="webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider"/>
 
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
-    <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
+    <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider" dynamic="true"/>
 
     <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
 
@@ -346,8 +346,8 @@
 
     <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
 
-    <extensionPoint name="editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener"/>
-    <extensionPoint name="editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener"/>
+    <extensionPoint name="editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener" dynamic="true"/>
+    <extensionPoint name="editorFactoryMouseMotionListener" interface="com.intellij.openapi.editor.event.EditorMouseMotionListener" dynamic="true"/>
 
     <extensionPoint name="projectCloseHandler" interface="com.intellij.openapi.project.ProjectCloseHandler"/>
     <extensionPoint name="projectServiceContainerCustomizer" interface="com.intellij.openapi.project.ProjectServiceContainerCustomizer"/>
