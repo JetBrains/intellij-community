@@ -145,7 +145,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     changesLoadingPane.add(myChangesBrowser);
 
-    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
+    myPreviewDiff = createDiffPreview(logData.getProject(), false, this);
 
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
@@ -196,6 +196,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     initPreviewInEditor(project);
   }
 
+  @NotNull
+  private VcsLogChangeProcessor createDiffPreview(@NotNull Project project, boolean isInEditor, @NotNull Disposable owner) {
+    return new VcsLogChangeProcessor(project, myChangesBrowser, isInEditor, owner);
+  }
+
   private void initPreviewInEditor(Project project) {
     if (!Registry.is("show.diff.preview.as.editor.tab")) {
       return;
@@ -205,8 +210,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       @NotNull
       @Override
       public DiffRequestProcessor createDiffRequestProcessor() {
-        VcsLogChangeProcessor preview = new VcsLogChangeProcessor(project, myChangesBrowser, true,
-                                                                  myChangesBrowser);
+        VcsLogChangeProcessor preview = createDiffPreview(project, true, MainFrame.this);
         preview.updatePreview(true);
         return preview;
       }
