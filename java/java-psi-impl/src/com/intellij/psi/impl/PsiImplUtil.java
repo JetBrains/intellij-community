@@ -16,6 +16,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.impl.light.LightParameter;
+import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -38,7 +40,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +98,32 @@ public class PsiImplUtil {
       return typeParameterList.getTypeParameters();
     }
     return PsiTypeParameter.EMPTY_ARRAY;
+  }
+
+  public static PsiParameterList getRecordHeaderBasedParameterList(@NotNull PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    if (!aClass.isRecord()) return null;
+    PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
+
+    LightParameterListBuilder builder = new LightParameterListBuilder(method.getManager(), method.getLanguage());
+    for (PsiRecordComponent component : recordComponents) {
+      String name = component.getName();
+      if (name == null) continue;
+      builder.addParameter(new LightParameter(name, component.getType(), method) {
+        @Override
+        public int getTextOffset() {
+          return component.getTextOffset();
+        }
+
+        @NotNull
+        @Override
+        public PsiElement getNavigationElement() {
+          return component;
+        }
+      });
+    }
+    return builder;
   }
 
   @NotNull
