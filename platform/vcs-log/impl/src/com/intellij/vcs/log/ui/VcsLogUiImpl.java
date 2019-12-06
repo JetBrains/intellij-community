@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.Consumer;
@@ -20,6 +21,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
+import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
@@ -52,8 +54,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                       @Nullable VcsLogFilterCollection initialFilters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
-    myMainFrame = new MainFrame(logData, this, uiProperties,
-                                createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this));
+    VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
+    
+    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
+    myMainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
+    if (isDiffPreviewAsEditor) {
+      new VcsLogEditorDiffPreview(myProject, myUiProperties, myMainFrame);
+    }
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -194,9 +201,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         myMainFrame.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
-      }
-      else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
-        myMainFrame.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
       }
       else if (MainVcsLogUiProperties.SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();

@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.diff.editor.VCSContentVirtualFile;
-import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -16,22 +15,15 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreviewProvider;
-import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -101,22 +93,19 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
 
-  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
-  @NotNull private final Splitter myPreviewDiffSplitter;
-
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
   @NotNull private final AbstractVcsLogUi myLogUi;
 
-  @Nullable DiffPreviewProvider myDiffPreviewProvider;
   @Nullable private VCSContentVirtualFile myGraphViewFile;
   @NotNull private final JComponent myToolbarsAndTable;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VcsLogFilterUiEx filterUi) {
+                   @NotNull VcsLogFilterUiEx filterUi,
+                   boolean withDiffPreview) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
@@ -148,8 +137,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
-    myPreviewDiff = createDiffPreview(logData.getProject(), false, this);
-
     MyCommitSelectionListenerForDiff listenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
     myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
     Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(listenerForDiff));
@@ -178,17 +165,19 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     installGraphView();
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
-    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
-    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
-    myPreviewDiffSplitter.setFirstComponent(myChangesBrowserSplitter);
-    if (Registry.is("show.diff.preview.as.editor.tab")) {
-      initPreviewInEditor(myLogData.getProject());
-    } else {
-      showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-    }
-
     setLayout(new BorderLayout());
-    add(myPreviewDiffSplitter);
+    if (withDiffPreview) {
+      add(new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
+                                                      myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION) {
+        @Override
+        public void updatePreview(boolean state) {
+          getPreviewDiff().updatePreview(state);
+        }
+      }.getMainComponent());
+    }
+    else {
+      add(myChangesBrowserSplitter);
+    }
 
     Disposer.register(logUi, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
@@ -197,39 +186,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   @NotNull
-  private VcsLogChangeProcessor createDiffPreview(@NotNull Project project, boolean isInEditor, @NotNull Disposable owner) {
-    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(project, myChangesBrowser, isInEditor, owner);
-    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
+  public VcsLogChangeProcessor createDiffPreview(boolean isInEditor, @NotNull Disposable parent) {
+    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, isInEditor, parent);
+    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
     return processor;
-  }
-
-  private void initPreviewInEditor(Project project) {
-    myDiffPreviewProvider = new DiffPreviewProvider() {
-      @NotNull
-      @Override
-      public DiffRequestProcessor createDiffRequestProcessor() {
-        VcsLogChangeProcessor preview = createDiffPreview(project, true, MainFrame.this);
-        preview.updatePreview(true);
-        return preview;
-      }
-
-      @NotNull
-      @Override
-      public Object getOwner() {
-        return MainFrame.this;
-      }
-
-      @Override
-      public String getEditorTabName() {
-        return "Repository Diff";
-      }
-    };
-
-    myChangesBrowser.getViewer().addSelectionListener(() -> {
-      if (myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myChangesBrowser.getSelectedChanges().isEmpty()) {
-        openPreviewInEditor(project, myDiffPreviewProvider);
-      }
-    }, this);
   }
 
   private void installGraphView() {
@@ -443,53 +403,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myToolbar;
   }
 
+  @NotNull
+  public VcsLogChangesBrowser getChangesBrowser() {
+    return myChangesBrowser;
+  }
+
   public void showDetails(boolean state) {
     myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
-  }
-
-  public void showDiffPreview(boolean state) {
-    if (myDiffPreviewProvider != null) {
-      if (!state) {
-        //'equals' for such files is overridden and means the equality of its owner
-        FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
-      }
-      else {
-        openPreviewInEditor(myLogData.getProject(), myDiffPreviewProvider);
-      }
-    }
-    else {
-      myPreviewDiff.updatePreview(state);
-      myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
-    }
-  }
-
-  private void openPreviewInEditor(@NotNull Project project, @NotNull DiffPreviewProvider provider) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    PreviewDiffVirtualFile previewDiffVirtualFile = new PreviewDiffVirtualFile(provider);
-    boolean wasOpen = FileEditorManager.getInstance(project).isFileOpen(previewDiffVirtualFile);
-
-    FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(previewDiffVirtualFile, false, true);
-
-    if (!wasOpen) {
-      DumbAwareAction action = new DumbAwareAction() {
-        {
-          setShortcutSet(CommonShortcuts.ESCAPE);
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(() -> {
-            IdeFocusManager.getInstance(project).requestFocus(myChangesBrowser.getPreferredFocusedComponent(), true);
-          }, false);
-        }
-      };
-      action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
-
-      Disposer.register(fileEditors[0], () -> {
-        action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
-      });
-    }
   }
 
   @Override
@@ -559,7 +479,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected List<Component> getOrderedComponents() {
       return Arrays.asList(myGraphTable,
                            myChangesBrowser.getPreferredFocusedComponent(),
-                           myPreviewDiff.getPreferredFocusedComponent(),
                            myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
