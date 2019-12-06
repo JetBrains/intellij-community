@@ -38,15 +38,15 @@ public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
   public boolean equals(Object object) {
     if(!(object instanceof ArgValueData)) return false;
 
-    return myVariable.getSlot() == ((ArgValueData)object).myVariable.getSlot();
+    return myVariable.slot() == ((ArgValueData)object).myVariable.slot();
   }
 
   public int hashCode() {
-    return myVariable.getSlot();
+    return myVariable.slot();
   }
 
   @Override
   public DisplayKey<ArgumentValueDescriptorImpl> getDisplayKey() {
-    return new SimpleDisplayKey<>(myVariable.getSlot());
+    return new SimpleDisplayKey<>(myVariable.slot());
   }
 }

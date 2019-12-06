@@ -160,7 +160,7 @@ class LocalVariableEvaluator implements Evaluator {
               frameProxy.setValue(myEvaluatedVariable, value);
             }
             else { // no debug info
-              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable, value);
             }
           }
           catch (EvaluateException e) {

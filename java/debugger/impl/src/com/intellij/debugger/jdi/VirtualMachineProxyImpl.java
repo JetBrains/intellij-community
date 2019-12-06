@@ -95,36 +95,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine;
   }
 
-  static final class JNITypeParserReflect {
-    static final Method typeNameToSignatureMethod;
-
-    static {
-      Method method = null;
-      try {
-        method = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.JNITypeParser"), "typeNameToSignature", String.class);
-      }
-      catch (ClassNotFoundException e) {
-        LOG.warn(e);
-      }
-      typeNameToSignatureMethod = method;
-      if (typeNameToSignatureMethod == null) {
-        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
-      }
-    }
-
-    @Nullable
-    static String typeNameToSignature(@NotNull String name) {
-      if (typeNameToSignatureMethod != null) {
-        try {
-          return (String)typeNameToSignatureMethod.invoke(null, name);
-        }
-        catch (Exception ignored) {
-        }
-      }
-      return null;
-    }
-  }
-
   public ClassesByNameProvider getClassesByNameProvider() {
     return this::classesByName;
   }
