@@ -155,10 +155,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private final Object PENDING_INIT_LOCK = new Object();
 
-  private MultiValuesMap<FileType, FileTypeDetector> myFileTypeDetectorMap;
-  private final List<FileTypeDetector> myUntypedFileTypeDetectors = new ArrayList<>();
-  private final Object FILE_TYPE_DETECTOR_MAP_LOCK = new Object();
-
   public FileTypeManagerImpl() {
     int fileTypeChangedCounter = PropertiesComponent.getInstance().getInt("fileTypeChangedCounter", 0);
     fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
@@ -266,13 +262,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
-
-    FileTypeDetector.EP_NAME.addExtensionPointListener(
-      (e, pd) -> {
-        synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-          myFileTypeDetectorMap = null;
-        }
-      }, this);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeBean>() {
       @Override
@@ -1103,33 +1092,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
              ", file.exists=" + file.exists() + ", file.content='" + FileUtil.loadFile(file) + "')";
     }
     return stream;
-  }
-
-  @Nullable
-  private Collection<FileTypeDetector> getDetectorsForType(@NotNull FileType fileType) {
-    synchronized (FILE_TYPE_DETECTOR_MAP_LOCK) {
-      if (myFileTypeDetectorMap == null) {
-        myFileTypeDetectorMap = new MultiValuesMap<>();
-        for (FileTypeDetector detector : FileTypeDetector.EP_NAME.getExtensionList()) {
-          Collection<? extends FileType> detectedFileTypes = detector.getDetectedFileTypes();
-          if (detectedFileTypes != null) {
-            for (FileType type : detectedFileTypes) {
-              myFileTypeDetectorMap.put(type, detector);
-            }
-          }
-          else {
-            myUntypedFileTypeDetectors.add(detector);
-            if (ApplicationManager.getApplication().isInternal()) {
-              LOG.error(PluginException.createByClass(
-                "File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.",
-                null, detector.getClass()));
-            }
-          }
-        }
-      }
-
-      return myFileTypeDetectorMap.get(fileType);
-    }
   }
 
   @Override
