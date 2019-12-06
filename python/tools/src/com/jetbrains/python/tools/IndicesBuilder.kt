@@ -4,16 +4,23 @@ package com.jetbrains.python.tools
 import com.intellij.index.PrebuiltIndexAwareIdIndexer
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
 import org.jetbrains.index.id.IdIndexGenerator
+import kotlin.system.exitProcess
 
 
 /**
  * @author Aleksey.Rostovskiy
  */
 fun main(args: Array<String>) {
-  require(args.size == 2) {
-    "Usage: IndicesBuilderKt <input folder with files> <output folder to store indices>"
+  try {
+    require(args.size == 2) {
+      "Usage: IndicesBuilderKt <input folder with files> <output folder to store indices>"
+    }
+    IndicesBuilder.build(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+    exitProcess(0)
   }
-  IndicesBuilder.build(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+  catch (e: Throwable) {
+    exitProcess(1)
+  }
 }
 
 object IndicesBuilder: PyGeneratorBase() {

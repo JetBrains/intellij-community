@@ -7,22 +7,29 @@ import com.intellij.util.io.Compressor
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
 import org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions
 import java.io.File
+import kotlin.system.exitProcess
 
 /**
  * @author Aleksey.Rostovskiy
  */
 fun main(args: Array<String>) {
-  if (args.size != 2) {
-    val zipsDirectory = System.getProperty("intellij.build.pycharm.zips.directory")
-    val prebuiltStubsArchive = PyCharmBuildOptions.getPrebuiltStubsArchive()
-    if (zipsDirectory.isNullOrBlank() || prebuiltStubsArchive.isNullOrBlank()) {
-      throw IllegalArgumentException(
-        "Usage: PythonUniversalStubsBuilderKt <input folder with files> <output folder to store universal stubs>")
+  try {
+    if (args.size != 2) {
+      val zipsDirectory = System.getProperty("intellij.build.pycharm.zips.directory")
+      val prebuiltStubsArchive = PyCharmBuildOptions.getPrebuiltStubsArchive()
+      if (zipsDirectory.isNullOrBlank() || prebuiltStubsArchive.isNullOrBlank()) {
+        throw IllegalArgumentException(
+          "Usage: PythonUniversalStubsBuilderKt <input folder with files> <output folder to store universal stubs>")
+      }
+      PythonUniversalStubsBuilder.generateArchive(zipsDirectory, prebuiltStubsArchive)
     }
-    PythonUniversalStubsBuilder.generateArchive(zipsDirectory, prebuiltStubsArchive)
+    else {
+      PythonUniversalStubsBuilder.generateStubs(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+    }
+    exitProcess(0)
   }
-  else {
-    PythonUniversalStubsBuilder.generateStubs(args[0], "${args[1]}/${PyPrebuiltStubsProvider.NAME}")
+  catch (e: Throwable) {
+    exitProcess(1)
   }
 }
 
