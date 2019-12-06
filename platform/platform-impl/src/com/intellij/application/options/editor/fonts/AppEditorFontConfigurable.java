@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor.fonts;
 
-import com.intellij.application.options.editor.EditorOptionsPanel;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -49,7 +49,7 @@ public final class AppEditorFontConfigurable implements SearchableConfigurable, 
     fontPreferences.copyTo(getStoredPreferences());
     EditorFontCache.getInstance().reset();
     ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
-    EditorOptionsPanel.reinitAllEditors();
+    EditorFactory.getInstance().refreshAllEditors();
   }
 
   @NotNull
