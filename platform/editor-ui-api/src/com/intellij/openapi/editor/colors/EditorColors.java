@@ -78,4 +78,6 @@ public interface EditorColors {
   TextAttributesKey CODE_LENS_BORDER_COLOR = TextAttributesKey.createTextAttributesKey("CODE_LENS_BORDER_COLOR");
 
   ColorKey VISUAL_INDENT_GUIDE_COLOR = ColorKey.createColorKey("VISUAL_INDENT_GUIDE");
+
+  ColorKey DOCUMENTATION_COLOR = ColorKey.createColorKey("DOCUMENTATION_COLOR", new JBColor(new Color(0xf7f7f7), new Color(0x46484a)));
 }
