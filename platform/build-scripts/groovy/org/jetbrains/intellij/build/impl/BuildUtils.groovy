@@ -149,12 +149,12 @@ class BuildUtils {
    * Executes a Java class in a forked JVM using classpath shortening (@argfile on Java 9+, 'CommandLineWrapper' otherwise).
    */
   @CompileDynamic
-  static void runJava(BuildContext context,
-                      Iterable<String> vmOptions = [],
-                      Map<String, Object> sysProperties = [:],
-                      Iterable<String> classPath,
-                      String mainClass,
-                      Iterable<String> args = []) {
+  static boolean runJava(BuildContext context,
+                         Iterable<String> vmOptions = [],
+                         Map<String, Object> sysProperties = [:],
+                         Iterable<String> classPath,
+                         String mainClass,
+                         Iterable<String> args = []) {
     boolean argFile = JavaVersion.current().feature >= 9
     File classpathFile = new File(context.paths.temp, "classpath.txt")
 
@@ -184,5 +184,7 @@ class BuildUtils {
 
       args.each { arg(value: it) }
     }
+
+    true
   }
 }
