@@ -121,6 +121,7 @@ public class PluginGroups {
       "JBoss jBPM:JBPM",
       "Struts:com.intellij.struts2",
       "com.intellij.hibernate",
+      "com.intellij.java.sql",
 
       "Spring:com.intellij.spring.batch," +
       "com.intellij.spring.data," +
