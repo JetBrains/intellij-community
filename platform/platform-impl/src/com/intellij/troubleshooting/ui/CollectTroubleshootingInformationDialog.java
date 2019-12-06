@@ -38,14 +38,13 @@ public class CollectTroubleshootingInformationDialog extends DialogWrapper {
   private JPanel centerPanel;
   private ComboBox<TroubleInfoCollector> troubleTypeBox;
 
-  @SuppressWarnings("deprecation")
   public CollectTroubleshootingInformationDialog(@NotNull Project project) {
     super(project);
     setTitle("Collect Troubleshooting Information");
     CompositeGeneralTroubleInfoCollector generalInfoCollector = new CompositeGeneralTroubleInfoCollector();
     troubleTypeBox.addItem(generalInfoCollector);
     TroubleInfoCollector[] extensions = TroubleInfoCollector.EP_SETTINGS.getExtensions();
-    for(TroubleInfoCollector troubleInfoCollector : extensions){
+    for (TroubleInfoCollector troubleInfoCollector : extensions){
       troubleTypeBox.addItem(troubleInfoCollector);
     }
     troubleTypeBox.addItemListener(new ItemListener() {

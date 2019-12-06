@@ -102,7 +102,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     return zippedLogsFile;
   }
 
-  @SuppressWarnings("deprecation")
   @Nullable
   private static StringBuilder collectInfoFromExtensions(@Nullable Project project) {
     StringBuilder settings = null;
