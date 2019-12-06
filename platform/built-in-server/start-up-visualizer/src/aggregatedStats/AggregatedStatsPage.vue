@@ -13,14 +13,16 @@
 
           <el-form-item label="Product">
             <el-select v-model="chartSettings.selectedProduct" filterable>
-              <el-option
-                    v-for="productId in products"
-                    :key="productId"
-                    :label="productId"
-                    :value="productId">
-                  </el-option>
+              <el-option v-for="productId in products" :key="productId" :label="productId" :value="productId"/>
             </el-select>
           </el-form-item>
+
+          <el-form-item label="Project">
+            <el-select v-model="chartSettings.selectedProject" filterable>
+              <el-option v-for="project in projects" :key="project" :label="projectNameToTitle.get(project)" :value="project"/>
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="Machine">
             <el-cascader
                 v-model="chartSettings.selectedMachine"

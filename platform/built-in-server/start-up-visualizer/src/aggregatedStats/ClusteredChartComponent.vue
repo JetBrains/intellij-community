@@ -46,6 +46,7 @@
         timeDimensionFormat: this.timeRange === "lastMonth" ? "02 Jan" : "Jan",
         filters: [
           {field: "product", value: request.product},
+          {field: "project", value: request.project},
           {
             field: "machine",
             value: expandMachineAsFilterValue(request)

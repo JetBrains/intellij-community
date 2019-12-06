@@ -8,6 +8,13 @@ import {debounce} from "debounce"
 import LineChartComponent from "@/aggregatedStats/LineChartComponent.vue"
 import ClusteredChartComponent from "@/aggregatedStats/ClusteredChartComponent.vue"
 
+export const projectNameToTitle = new Map<string, string>()
+projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
+projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
+projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
+projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
+Object.seal(projectNameToTitle)
+
 @Component({
   components: {LineChartComponent, ClusteredChartComponent}
 })
@@ -19,9 +26,12 @@ export default class AggregatedStatsPage extends Vue {
   chartSettings = this.dataModule.chartSettings
 
   products: Array<string> = []
+  projects: Array<string> = []
   machines: Array<MachineGroup> = []
 
   isFetching: boolean = false
+
+  projectNameToTitle = projectNameToTitle
 
   private loadDataAfterDelay = debounce(() => {
     this.loadData()
@@ -40,6 +50,7 @@ export default class AggregatedStatsPage extends Vue {
 
         this.lastInfoResponse = data
         this.products = data.productNames
+
         let selectedProduct = this.chartSettings.selectedProduct
         if (this.products.length === 0) {
           selectedProduct = ""
@@ -78,13 +89,35 @@ export default class AggregatedStatsPage extends Vue {
     this.dataModule.updateChartSettings(this.chartSettings)
   }
 
-  private applyChangedProduct(product: string | null, infoResponse: InfoResponse) {
+  private applyChangedProduct(product: string | null, info: InfoResponse) {
     if (product != null && product.length > 0) {
       // later maybe will be more info for machine, so, do not use string instead of Machine
-      this.machines = infoResponse.productToMachine[product] || []
+      this.machines = info.productToMachine[product] || []
+      const projects = info.productToProjects[product] || []
+      projects.sort((a, b) => {
+        if (a.startsWith("simple ") && !b.startsWith("simple ")) {
+          return -1
+        }
+        if (b.startsWith("simple ") && !a.startsWith("simple ")) {
+          return 1
+        }
+        return projectNameToTitle.get(a)!!.localeCompare(projectNameToTitle.get(b)!!)
+      })
+      this.projects = projects
     }
     else {
       this.machines = []
+      this.projects = []
+    }
+
+    let selectedProject = this.chartSettings.selectedProject
+    const projects = this.projects
+    if (projects.length === 0) {
+      selectedProject = ""
+      this.chartSettings.selectedProject = selectedProject
+    }
+    else if (selectedProject == null || selectedProject.length === 0 || !projects.includes(selectedProject)) {
+      selectedProject = projects[0]
     }
 
     let selectedMachine = this.chartSettings.selectedMachine || []
@@ -97,10 +130,20 @@ export default class AggregatedStatsPage extends Vue {
       selectedMachine = [machines[0].name]
     }
 
+    if (this.chartSettings.selectedProject === selectedProject) {
+      // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
+      if (product != null && selectedProject != null && selectedProject.length > 0) {
+        this.requestDataReloading(product, selectedMachine, selectedProject)
+      }
+    }
+    else {
+      this.chartSettings.selectedProject = selectedProject
+    }
+
     if (isArrayContentTheSame(this.chartSettings.selectedMachine, selectedMachine)) {
       // data will be reloaded on machine change, but if product changed but machine remain the same, data reloading must be triggered here
-      if (product != null && selectedMachine != null && selectedMachine.length > 0) {
-        this.requestDataReloading(product, selectedMachine)
+      if (product != null && selectedMachine != null && selectedMachine.length > 0 && this.chartSettings.selectedProject !== selectedProject) {
+        this.requestDataReloading(product, selectedMachine, selectedProject)
       }
     }
     else {
@@ -108,8 +151,8 @@ export default class AggregatedStatsPage extends Vue {
     }
   }
 
-  private requestDataReloading(product: string, machine: Array<string>) {
-    this.dataRequest = Object.seal({product, machine, infoResponse: this.lastInfoResponse!!})
+  private requestDataReloading(product: string, machine: Array<string>, project: string) {
+    this.dataRequest = Object.seal({product, machine, project, infoResponse: this.lastInfoResponse!!})
   }
 
   @Watch("chartSettings.selectedMachine")
@@ -125,11 +168,28 @@ export default class AggregatedStatsPage extends Vue {
     }
 
     const product = this.chartSettings.selectedProduct
-    if (product == null || product.length === 0) {
+    const project = this.chartSettings.selectedProject
+    if (product == null || product.length === 0 || project == null || project.length === 0) {
       return
     }
 
-    this.requestDataReloading(product, machine)
+    this.requestDataReloading(product, machine, project)
+  }
+
+  @Watch("chartSettings.selectedProject")
+  selectedProjectChanged(project: string, _oldV: Array<string>): void {
+    console.log("project changed", project, _oldV)
+    if (project == null) {
+      return
+    }
+
+    const product = this.chartSettings.selectedProduct
+    const machine = this.chartSettings.selectedMachine
+    if (product == null || product.length === 0 || machine == null || machine.length === 0) {
+      return
+    }
+
+    this.requestDataReloading(product, machine, this.chartSettings.selectedProject)
   }
 
   @Watch("chartSettings.serverUrl")

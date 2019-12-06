@@ -76,10 +76,6 @@
 
     reportLink: string | null = null
 
-    // openReport() {
-    //   window.open(this.reportLink!!, "_blank")
-    // }
-
     @Watch("chartSettings.granularity")
     granularityChanged() {
       this.loadDataAfterDelay()
@@ -90,6 +86,7 @@
         fields: this.metrics,
         filters: [
           {field: "product", value: request.product},
+          {field: "project", value: request.project},
           {field: "machine", value: expandMachineAsFilterValue(request)},
         ],
       }
