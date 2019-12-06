@@ -1377,5 +1377,8 @@
                 icon="AllIcons.Nodes.Toolbox"/>
       </group>
     </group>
+
+
+    <action id="OpenMouseWheelSmoothScrollSettings" class="com.intellij.ui.mouse.MouseWheelSmoothScrollOptionsAction"/>
   </actions>
 </idea-plugin>

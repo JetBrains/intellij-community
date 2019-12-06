@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
@@ -201,7 +201,7 @@ public class JBScrollPane extends JScrollPane {
         boolean isAdjustedDeltaZero = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) == 0.0;
 
         if (isWheelScrollEnabled && isBarVisible && !isAdjustedDeltaZero) {
-          if (Registry.is("idea.inertial.smooth.scrolling.enabled")) {
+          if (UISettings.getShadowInstance().getAnimatedScrolling()) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
                 return ScrollSettings.isEligibleFor(pane);

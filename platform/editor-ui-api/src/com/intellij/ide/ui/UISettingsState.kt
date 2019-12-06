@@ -174,6 +174,23 @@ class UISettingsState : BaseState() {
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
 
+  var animatedScrolling by property(true)
+  var animatedScrollingDuration by property(
+    when {
+      SystemInfo.isWindows -> 200
+      SystemInfo.isMac -> 100
+      else -> 150
+    }
+  )
+  var animatedScrollingUnitIncrement by property(-1)
+  var animatedScrollingCurvePoints by property(
+    when {
+      SystemInfo.isWindows -> 1684366536
+      SystemInfo.isMac -> 13107400
+      else -> 729434056
+    }
+  )
+
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
   var sortLookupElementsLexicographically by property(false)
   @get:OptionTag("MERGE_EQUAL_STACKTRACES")

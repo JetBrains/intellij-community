@@ -126,6 +126,18 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val smoothScrolling: Boolean
     get() = state.smoothScrolling
 
+  val animatedScrolling: Boolean
+    get() = state.animatedScrolling
+
+  val animatedScrollingDuration: Int
+    get() = state.animatedScrollingDuration
+
+  val animatedScrollingUnitIncrement: Int
+    get() = state.animatedScrollingUnitIncrement
+
+  val animatedScrollingCurvePoints: Int
+    get() = state.animatedScrollingCurvePoints
+
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
