@@ -46,8 +46,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 /**
@@ -239,12 +237,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     TextRange range = owner.getTextRange();
     if (range == null) return null;
     Document document = editor.getDocument();
-    if (Registry.is("editor.keep.completion.hints.even.longer")) {
-      int startY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset())).y;
-      int endY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getEndOffset())).y;
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      return startY > visibleArea.getMaxY() || endY < visibleArea.getMinY() ? null : new TextRange(0, document.getTextLength());
-    }
     if (!Registry.is("editor.keep.completion.hints.longer")) return range;
     return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document),
                          DocumentUtil.getLineEndOffset(range.getEndOffset(), document));

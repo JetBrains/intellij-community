@@ -979,45 +979,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  public void testKeepHintsEvenLonger() {
-    disableVirtualComma();
-
-    RegistryValue setting = Registry.get("editor.keep.completion.hints.even.longer");
-    boolean oldValue = setting.asBoolean();
-    try {
-      setting.setValue(true);
-      configureJava("class C {\n\n\n\n\n\n" +
-                    "  void m() { System.setPro<caret> }\n" +
-                    "}");
-      EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 3);
-      complete("setProperty");
-      checkResultWithInlays("class C {\n\n\n\n\n\n" +
-                            "  void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) }\n" +
-                            "}");
-      type("\"a");
-      next();
-      type("\"b");
-      home();
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C {\n\n\n\n\n\n" +
-                            "  <caret>void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
-                            "}");
-      up();
-      waitForAllAsyncStuff();
-      checkResultWithInlays("class C {\n\n\n\n\n<caret>\n" +
-                            "  void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
-                            "}");
-      textStart();
-      waitForAllAsyncStuff();
-      checkResultWithInlays("<caret>class C {\n\n\n\n\n\n" +
-                            "  void m() { System.setProperty(\"a\", \"b\") }\n" +
-                            "}");
-    }
-    finally {
-      setting.setValue(oldValue);
-    }
-  }
-
   public void testOverloadWithNoParameters() {
     disableVirtualComma();
 
