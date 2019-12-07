@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -784,8 +785,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
-    final Exception[] e = new Exception[1];
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    Ref<Exception> e = new Ref<>();
     Runnable runnable1 = () -> {
       try {
         if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
@@ -796,7 +797,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         }
       }
       catch (Exception e1) {
-        e[0] = e1;
+        e.set(e1);
       }
     };
 
@@ -807,8 +808,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       runnable1.run();
     }
 
-    if (e[0] != null) {
-      throw e[0];
+    if (!e.isNull()) {
+      throw e.get();
     }
   }
 

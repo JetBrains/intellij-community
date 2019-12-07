@@ -61,7 +61,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   };
 
-  static class State {
+  static final class State {
     @NotNull
     private Charset myDefaultEncoding = StandardCharsets.UTF_8;
 

@@ -680,11 +680,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
-  public void contentsChanged(VFileContentChangeEvent event) {
+  public void contentsChanged(@NotNull VFileContentChangeEvent event) {
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
-    if (event.isFromSave()) return;
+    if (event.isFromSave()) {
+      return;
+    }
 
     if (document == null || isBinaryWithDecompiler(virtualFile)) {
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl

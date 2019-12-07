@@ -289,6 +289,11 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   final override fun <T : Any> getComponent(interfaceClass: Class<T>): T? {
     val picoContainer = picoContainer
     val adapter = picoContainer.getComponentAdapter(interfaceClass) ?: return null
+
+    if (adapter is ServiceComponentAdapter) {
+      LOG.error("$interfaceClass it is service, use getService instead of getComponent")
+    }
+
     @Suppress("UNCHECKED_CAST")
     return when (adapter) {
       is BaseComponentAdapter -> {

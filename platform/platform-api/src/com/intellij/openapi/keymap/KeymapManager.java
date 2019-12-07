@@ -25,14 +25,14 @@ public abstract class KeymapManager {
   private static volatile KeymapManager INSTANCE;
 
   public static KeymapManager getInstance() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null || !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       return null;
     }
 
     KeymapManager instance = INSTANCE;
     if (instance == null) {
-      instance = application.getComponent(KeymapManager.class);
+      instance = app.getService(KeymapManager.class);
       INSTANCE = instance;
     }
     return instance;

@@ -105,11 +105,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
-    StartupManager.getInstance(project).registerPreStartupActivity {
-      if (isDisposed) return@registerPreStartupActivity
-
+    StartupManager.getInstance(project).registerStartupActivity {
       ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
-
       FileStatusManager.getInstance(project).addFileStatusListener(MyFileStatusListener(), this)
 
       val editorFactory = EditorFactory.getInstance()

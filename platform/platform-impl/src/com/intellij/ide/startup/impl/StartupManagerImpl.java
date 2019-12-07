@@ -45,21 +45,18 @@ import java.util.concurrent.atomic.AtomicReference;
 @ApiStatus.Internal
 public class StartupManagerImpl extends StartupManagerEx {
   private static final ExtensionPointName<StartupActivity> STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.startupActivity");
-  private static final ExtensionPointName<StartupActivity> PRE_STARTUP_ACTIVITY = new ExtensionPointName<>("com.intellij.preStartupActivity");
 
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
   private static final long EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100);
 
   private final Object myLock = new Object();
 
-  private final Deque<Runnable> myPreStartupActivities = new ArrayDeque<>();
   private final Deque<Runnable> myStartupActivities = new ArrayDeque<>();
 
   private final Deque<Runnable> myDumbAwarePostStartupActivities = new ArrayDeque<>();
   private final Deque<Runnable> myNotDumbAwarePostStartupActivities = new ArrayDeque<>();
   private volatile boolean postStartupActivitiesPassed;
 
-  private volatile boolean myPreStartupActivitiesPassed;
   private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
@@ -70,15 +67,6 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private void checkNonDefaultProject() {
     LOG.assertTrue(!myProject.isDefault(), "Please don't register startup activities for the default project: they won't ever be run");
-  }
-
-  @Override
-  public void registerPreStartupActivity(@NotNull Runnable runnable) {
-    checkNonDefaultProject();
-    LOG.assertTrue(!myPreStartupActivitiesPassed, "Registering pre startup activity that will never be run");
-    synchronized (myLock) {
-      myPreStartupActivities.add(runnable);
-    }
   }
 
   @Override
@@ -136,16 +124,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       indicator.setText("Running Startup Activities...");
     }
 
-    Activity activity = StartUpMeasurer.startMainActivity(Activities.PROJECT_PRE_STARTUP);
-    runActivities(myPreStartupActivities, indicator, null);
-    executeActivitiesFromExtensionPoint(indicator, PRE_STARTUP_ACTIVITY);
-    myPreStartupActivitiesPassed = true;
-
-    activity = activity.endAndStart(Activities.PROJECT_STARTUP);
-    runActivities(myStartupActivities, indicator, null);
-    executeActivitiesFromExtensionPoint(indicator, STARTUP_ACTIVITY);
-    myStartupActivitiesPassed = true;
-    activity.end();
+    doRunStartUpActivities(indicator);
 
     // If called in EDT - client expect that work will be done after call, executing in a pooled thread maybe not expected.
     // In test mode project opened not under progress, so, execute directly in current thread.
@@ -170,7 +149,18 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private void executeActivitiesFromExtensionPoint(@Nullable ProgressIndicator indicator, @NotNull ExtensionPointName<StartupActivity> extensionPoint) {
+  private void doRunStartUpActivities(@Nullable ProgressIndicator indicator) {
+    LOG.assertTrue(!myStartupActivitiesPassed);
+
+    Activity activity = StartUpMeasurer.startMainActivity(Activities.PROJECT_STARTUP);
+    runActivities(myStartupActivities, indicator, null);
+    executeActivitiesFromExtensionPoint(indicator, STARTUP_ACTIVITY);
+    myStartupActivitiesPassed = true;
+    activity.end();
+  }
+
+  private void executeActivitiesFromExtensionPoint(@Nullable ProgressIndicator indicator,
+                                                   @SuppressWarnings("SameParameterValue") @NotNull ExtensionPointName<StartupActivity> extensionPoint) {
     extensionPoint.processWithPluginDescriptor((extension, pluginDescriptor) -> {
       if (myProject.isDisposed()) {
         return;
@@ -191,11 +181,9 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @TestOnly
   public void runStartupActivities() {
-    runActivities(myPreStartupActivities, null, null);
-    myPreStartupActivitiesPassed = true;
-
-    runActivities(myStartupActivities, null, null);
-    myStartupActivitiesPassed = true;
+    if (!myStartupActivitiesPassed) {
+      doRunStartUpActivities(null);
+    }
   }
 
   // Must be executed in a pooled thread outside of project loading modal task. The only exclusion - test mode.
@@ -312,7 +300,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @TestOnly
   public final void runPostStartupActivitiesRegisteredDynamically() {
-    if (postStartupActivityPassed()) {
+    if (postStartupActivitiesPassed) {
       return;
     }
 
@@ -510,7 +498,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   @TestOnly
   public synchronized void prepareForNextTest() {
     synchronized (myLock) {
-      myPreStartupActivities.clear();
       myStartupActivities.clear();
       myDumbAwarePostStartupActivities.clear();
       myNotDumbAwarePostStartupActivities.clear();
@@ -524,7 +511,6 @@ public class StartupManagerImpl extends StartupManagerEx {
         assert myStartupActivities.isEmpty() : "Activities: " + myStartupActivities;
         assert myDumbAwarePostStartupActivities.isEmpty() : "DumbAware Post Activities: " + myDumbAwarePostStartupActivities;
         assert myNotDumbAwarePostStartupActivities.isEmpty() : "Post Activities: " + myNotDumbAwarePostStartupActivities;
-        assert myPreStartupActivities.isEmpty() : "Pre Activities: " + myPreStartupActivities;
       }
     }
     finally {

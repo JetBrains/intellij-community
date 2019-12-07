@@ -90,7 +90,7 @@ public final class ModifierKeyDoubleClickHandler {
   }
 
   public static ModifierKeyDoubleClickHandler getInstance() {
-    return ApplicationManager.getApplication().getComponent(ModifierKeyDoubleClickHandler.class);
+    return ApplicationManager.getApplication().getService(ModifierKeyDoubleClickHandler.class);
   }
 
   public static int getMultiCaretActionModifier() {

@@ -3,6 +3,7 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.testDiscovery.indices.DiscoveredTestDataHolder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -31,24 +32,27 @@ public final class TestDiscoveryIndex implements Disposable {
   private final Object myLock = new Object();
   private final Path basePath;
 
-
   public static TestDiscoveryIndex getInstance(@NotNull Project project) {
     return project.getService(TestDiscoveryIndex.class);
   }
 
   @SuppressWarnings("unused")
   TestDiscoveryIndex(@NotNull Project project) {
-    this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
+    this(TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
   @NonInjectable
-  public TestDiscoveryIndex(@NotNull Project project, @NotNull Path basePath) {
+  public TestDiscoveryIndex(@NotNull Path basePath) {
     this.basePath = basePath;
   }
 
   final static class MyPostStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
       NonUrgentExecutor.getInstance().execute(() -> {
         TestDiscoveryIndex service = getInstance(project);
         if (!Files.exists(service.basePath)) {

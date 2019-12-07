@@ -78,7 +78,7 @@ class TestApplicationManager private constructor() {
     private val isBootstrappingAppNow = AtomicBoolean()
 
     private val dataManager: HeadlessDataManager
-      get() = ApplicationManager.getApplication().getComponent(DataManager::class.java) as HeadlessDataManager
+      get() = DataManager.getInstance() as HeadlessDataManager
 
     @JvmStatic
     fun getInstance(): TestApplicationManager {

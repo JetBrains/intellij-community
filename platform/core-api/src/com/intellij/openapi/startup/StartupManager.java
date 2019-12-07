@@ -22,7 +22,13 @@ public abstract class StartupManager {
     return ServiceManager.getService(project, StartupManager.class);
   }
 
-  public abstract void registerPreStartupActivity(@NotNull Runnable runnable);
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    registerStartupActivity(runnable);
+  }
 
   /**
    * Registers an activity that is performed during project load while the "Loading Project"

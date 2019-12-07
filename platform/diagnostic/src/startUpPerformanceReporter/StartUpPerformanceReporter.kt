@@ -102,6 +102,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
+      StartUpMeasurer.stopPluginCostMeasurement()
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
         logStats(projectName)

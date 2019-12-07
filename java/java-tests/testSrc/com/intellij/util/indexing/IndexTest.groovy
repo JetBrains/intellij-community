@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
-import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -46,7 +45,6 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
-import com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
@@ -63,7 +61,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
-import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
@@ -258,7 +255,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertEquals(stamp, ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, getProject()))
 
-    FileContentUtilCore.reparseFiles(vFile)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(vFile))
 
     def provider = PsiManager.getInstance(project).findViewProvider(vFile)
     def stubTree = ((PsiFileImpl)provider.getPsi(provider.getBaseLanguage())).getGreenStubTree()
@@ -417,13 +414,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     CodeStyleManager.getInstance(getProject()).reformat(vp.getPsi(vp.baseLanguage))
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-    FileContentUtilCore.reparseFiles(file)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(file))
 
     vp = PsiManager.getInstance(project).findViewProvider(file)
     ((PsiFileImpl)vp.getPsi(vp.baseLanguage)).greenStubTree
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
-    FileContentUtilCore.reparseFiles(file)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(file))
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, level)
@@ -867,7 +864,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertEquals("file: $fileName\n" +
                  "operation: UPDATE-REMOVE UPDATE ADD", listener.indexingOperation(testFile))
 
-    FileContentUtil.reparseFiles(testFile)
+    FileContentUtilCore.reparseFiles(Collections.singletonList(testFile))
 
     assertEquals("file: $fileName\n" +
                  "operation: REMOVE ADD", listener.indexingOperation(testFile))

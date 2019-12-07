@@ -2,8 +2,6 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -198,8 +196,7 @@ public class KeymapUtil {
 
   @NotNull
   public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
-    Application application = ApplicationManager.getApplication();
-    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
@@ -208,14 +205,19 @@ public class KeymapUtil {
 
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
-    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
-    return shortcut == null? "" : getShortcutText(shortcut);
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        return getShortcutText(shortcut);
+      }
+    }
+    return "";
   }
 
   public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
-    for (KeyboardShortcut shortcut : ContainerUtil.findAll(getActiveKeymapShortcuts(actionId).getShortcuts(), KeyboardShortcut.class)) {
-      if (AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == shortcut.getFirstKeyStroke()) return true;
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {
+        return true;
+      }
     }
     return false;
   }
