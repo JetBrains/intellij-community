@@ -28,11 +28,11 @@ class ScriptWindowViewModel(private val lifetime: Lifetime, private val project:
 class ScriptViewModel internal constructor(
     val id: String,
     val lifetime: Lifetime,
-    val config: ProjectConfig) {
+    val config: ScriptConfig) {
 }
 
 object ScriptViewModelFactory {
-    fun create(lifetime: Lifetime, config: ProjectConfig) = ScriptViewModel(UUID.randomUUID().toString(), lifetime, config)
+    fun create(lifetime: Lifetime, config: ScriptConfig) = ScriptViewModel(UUID.randomUUID().toString(), lifetime, config)
 
 }
 
@@ -45,7 +45,7 @@ class LogData(val dummy: String) {
 
 
 fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {
-    return ScriptViewModelFactory.create(lifetime, ProjectConfig(emptyList(), emptyList(), emptyList()))
+    return ScriptViewModelFactory.create(lifetime, ScriptConfig(emptyList(), emptyList(), emptyList()))
 
 }
 

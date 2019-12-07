@@ -213,7 +213,7 @@ class CircletScriptsViewFactory : KLogging() {
                     }
 
                     val jobsNode = CircletModelTreeNode("jobs")
-                    it.jobs.forEach {
+                    it.steps.forEach {
                         jobsNode.add(it.traverseJobs())
                     }
                     taskNode.add(jobsNode)
@@ -288,9 +288,9 @@ class CircletScriptsViewFactory : KLogging() {
     }
 }
 
-fun ProjectJob.traverseJobs() : CircletModelTreeNode {
+fun ScriptStep.traverseJobs() : CircletModelTreeNode {
     when (val job = this) {
-        is ProjectJob.CompositeJob -> {
+        is ScriptStep.CompositeStep -> {
             val res = CircletModelTreeNode(job::class.java.simpleName)
             job.children.forEach {
                 val child = it.traverseJobs()
@@ -299,26 +299,26 @@ fun ProjectJob.traverseJobs() : CircletModelTreeNode {
             return res
         }
 
-        is ProjectJob.Process.Container -> {
+        is ScriptStep.Process.Container -> {
             val res = CircletModelTreeNode("container: ${job.image}")
             val execPrefix = "exec: "
             val execNode = DefaultMutableTreeNode("exec:")
             val exec = job.data.exec
             when (exec) {
-                is ProjectJob.ProcessExecutable.ContainerExecutable.DefaultCommand -> {
+                is ScriptStep.ProcessExecutable.ContainerExecutable.DefaultCommand -> {
                     execNode.userObject = execPrefix + "defaultCommand${exec.args.presentArgs()}"
                 }
-                is ProjectJob.ProcessExecutable.ContainerExecutable.OverrideEntryPoint -> {
+                is ScriptStep.ProcessExecutable.ContainerExecutable.OverrideEntryPoint -> {
                     execNode.userObject = execPrefix + "overrideEntryPoint: ${exec.entryPoint}${exec.args.presentArgs()}"
                 }
-                is ProjectJob.ProcessExecutable.KotlinScript -> {
+                is ScriptStep.ProcessExecutable.KotlinScript -> {
                     execNode.userObject = execPrefix + "kts script"
                 }
             }
             res.add(execNode)
             return res
         }
-        is ProjectJob.Process.VM -> {
+        is ScriptStep.Process.VM -> {
             return CircletModelTreeNode("vm: ${job.image}. VM is not implemented in UI yet")
         }
     }

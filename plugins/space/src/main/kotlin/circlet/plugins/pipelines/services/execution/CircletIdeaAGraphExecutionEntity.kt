@@ -12,7 +12,7 @@ class CircletIdeaAGraphExecutionEntity(
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override val graphMeta: AGraphMetaEntity,
-    override var executionMeta: ProjectAction,
+    override var executionMeta: ScriptAction,
     override val branch: String,
     override val commit: String,
     override val repoId: String,

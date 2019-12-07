@@ -11,7 +11,7 @@ class CircletIdeaAContainerStepExecutionEntity(
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
-    override val meta: ProjectJob.Process.Container,
+    override val meta: ScriptStep.Process.Container,
     override val baseVolumeName: String?,
     override val isSnapshotPoint: Boolean,
     override val volumeSize: Int?,

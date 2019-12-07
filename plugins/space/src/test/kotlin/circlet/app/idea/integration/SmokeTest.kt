@@ -81,7 +81,7 @@ class SmokeTest : HeavyPlatformTestCase() {
         return config.pipelines.isEmpty() && config.targets.isEmpty() && config.tasks.isEmpty()
     }
 
-    private fun createGoldModel(): ProjectConfig {
+    private fun createGoldModel(): ScriptConfig {
         val projectElementListener = ProjectConfigBuilder()
         val executor = TestProjectExecutor(projectElementListener)
 
