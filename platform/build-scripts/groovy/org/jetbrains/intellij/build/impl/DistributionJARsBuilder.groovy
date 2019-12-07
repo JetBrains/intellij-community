@@ -712,8 +712,10 @@ class DistributionJARsBuilder {
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+/* Android Studio: This attempts to read a non-existent file.
       def whiteList = new File("$buildContext.paths.projectHome/build/plugins-autoupload-whitelist.txt").readLines()
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
+Android Studio: This attempts to read a non-existent file. */
 
       pluginsToPublish.each { pluginAndPublishing ->
         def plugin = pluginAndPublishing.key
