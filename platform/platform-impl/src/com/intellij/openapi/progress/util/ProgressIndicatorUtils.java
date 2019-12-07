@@ -319,8 +319,13 @@ public class ProgressIndicatorUtils {
       catch (TimeoutException ignore) {
       }
       catch (Throwable e) {
-        ExceptionUtil.rethrowUnchecked(e);
-        throw new RuntimeException(e);
+        Throwable cause = e.getCause();
+        if (cause instanceof CancellationException) {
+            throw new ProcessCanceledException(cause);
+        } else {
+          ExceptionUtil.rethrowUnchecked(e);
+          throw new RuntimeException(e);
+        }
       }
     }
   }
