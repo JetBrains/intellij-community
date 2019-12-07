@@ -475,7 +475,7 @@
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor" dynamic="true"/>
 
-    <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
+    <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
     <extensionPoint name="lang.documentationFixer" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.documentation.DocCommentFixer"/>
