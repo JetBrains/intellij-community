@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +154,8 @@ public abstract class FileTypeRegistry {
      * Returns the file type that this detector is capable of detecting, or null if it can detect
      * multiple file types.
      */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     @Nullable
     default Collection<? extends FileType> getDetectedFileTypes() {
       return null;

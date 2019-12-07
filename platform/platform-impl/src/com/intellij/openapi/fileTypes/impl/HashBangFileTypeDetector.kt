@@ -31,8 +31,4 @@ open class HashBangFileTypeDetector @JvmOverloads constructor(
   }
 
   override fun getVersion() = _version
-
-  override fun getDetectedFileTypes(): Collection<FileType> {
-    return listOf(fileType)
-  }
 }

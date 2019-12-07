@@ -24,7 +24,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.psi.PsiBinaryFile;
@@ -825,12 +828,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
           return ArchiveFileType.INSTANCE;
         }
         return null;
-      }
-
-      @Nullable
-      @Override
-      public Collection<? extends FileType> getDetectedFileTypes() {
-        return Collections.singleton(ArchiveFileType.INSTANCE);
       }
 
       @Override
