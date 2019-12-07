@@ -110,7 +110,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   public List<OutputLoadResult> downloadCompiledModules(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager,
                                                         @NotNull List<AffectedModule> affectedModules) {
     File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesPluginUtil.PLUGIN_NAME);
-    if (!targetDir.exists()) targetDir.mkdirs();
+    if (targetDir.exists()) FileUtil.delete(targetDir);
+    targetDir.mkdirs();
 
     Map<String, AffectedModule> urlToModuleNameMap = affectedModules.stream().collect(Collectors.toMap(
                             module -> stringThree + REPOSITORY_NAME + "/" + module.getType() + "/" + module.getName() + "/" + module.getHash(),
