@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ class ProgressSlidePainter {
     if (!hasSlides) {
       return;
     }
-    new Thread(() -> {
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
       for (int i = 0; i < myProgressSlides.size(); i++) {
         ProgressSlide slide = myProgressSlides.get(i);
         try {
@@ -63,7 +64,7 @@ class ProgressSlidePainter {
           return;
         }
       }
-    }, "Progress slide loader").start();
+    });
   }
 
   public void paintSlides(@NotNull Graphics g, double currentProgress) {
