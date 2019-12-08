@@ -2690,7 +2690,7 @@ public final class UIUtil {
   }
 
   public static class TextPainter {
-    private final List<Pair<String, LineInfo>> myLines = new ArrayList<>();
+    private final List<String> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
@@ -2698,7 +2698,7 @@ public final class UIUtil {
     private Color myColor;
 
     public TextPainter() {
-      myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ StartupUiUtil.isUnderDarcula();
+      myDrawShadow = StartupUiUtil.isUnderDarcula();
       myShadowColor = StartupUiUtil.isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
@@ -2731,41 +2731,7 @@ public final class UIUtil {
     @NotNull
     public TextPainter appendLine(String text) {
       if (text == null || text.isEmpty()) return this;
-      myLines.add(Pair.create(text, new LineInfo()));
-      return this;
-    }
-
-    @NotNull
-    public TextPainter underlined(@Nullable Color color) {
-      if (!myLines.isEmpty()) {
-        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
-        info.underlined = true;
-        info.underlineColor = color;
-      }
-
-      return this;
-    }
-
-    @NotNull
-    public TextPainter underlined() {
-      return underlined(null);
-    }
-
-    @NotNull
-    public TextPainter smaller() {
-      if (!myLines.isEmpty()) {
-        myLines.get(myLines.size() - 1).getSecond().smaller = true;
-      }
-
-      return this;
-    }
-
-    @NotNull
-    public TextPainter center() {
-      if (!myLines.isEmpty()) {
-        myLines.get(myLines.size() - 1).getSecond().center = true;
-      }
-
+      myLines.add(text);
       return this;
     }
 
@@ -2787,22 +2753,10 @@ public final class UIUtil {
       try {
         final int[] maxWidth = {0};
         final int[] height = {0};
-        ContainerUtil.process(myLines, pair -> {
-          final LineInfo info = pair.getSecond();
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
+        ContainerUtil.process(myLines, text -> {
           FontMetrics fm = g.getFontMetrics();
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "")), maxWidth[0]);
+          maxWidth[0] = Math.max(fm.stringWidth(text.replace("<shortcut>", "").replace("</shortcut>", "")), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
           return true;
         });
 
@@ -2810,28 +2764,16 @@ public final class UIUtil {
         assert position != null;
 
         final int[] yOffset = {position.getSecond()};
-        ContainerUtil.process(myLines, pair -> {
-          final LineInfo info = pair.getSecond();
-          String text = pair.first;
+        ContainerUtil.process(myLines, text -> {
           String shortcut = "";
-          if (pair.first.contains("<shortcut>")) {
+          if (text.contains("<shortcut>")) {
             shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
             text = text.substring(0, text.indexOf("<shortcut>"));
           }
 
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
+          int x = position.getFirst() + 10;
 
-          final int x = position.getFirst() + 10;
-
-          final FontMetrics fm = g.getFontMetrics();
-          int xOffset = x;
-          if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
-          }
+          FontMetrics fm = g.getFontMetrics();
 
           if (myDrawShadow) {
             int xOff = StartupUiUtil.isUnderDarcula() ? 1 : 0;
@@ -2840,44 +2782,19 @@ public final class UIUtil {
 
             int yOff = 1;
 
-            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+            g.drawString(text, x + xOff, yOffset[0] + yOff);
             g.setColor(oldColor1);
           }
 
-          g.drawString(text, xOffset, yOffset[0]);
+          g.drawString(text, x, yOffset[0]);
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
             g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
-            g.drawString(shortcut, xOffset + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor1);
           }
 
-          if (info.underlined) {
-            Color c = null;
-            if (info.underlineColor != null) {
-              c = g.getColor();
-              g.setColor(info.underlineColor);
-            }
-
-            LinePainter2D.paint((Graphics2D)g, x - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-            if (c != null) {
-              g.setColor(c);
-            }
-
-            if (myDrawShadow) {
-              c = g.getColor();
-              g.setColor(myShadowColor);
-              LinePainter2D.paint((Graphics2D)g, x - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                                  yOffset[0] + fm.getDescent() + 1);
-              g.setColor(c);
-            }
-          }
-
           yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
 
           return true;
         });
@@ -2886,13 +2803,6 @@ public final class UIUtil {
         if (oldFont != null) g.setFont(oldFont);
         if (oldColor != null) g.setColor(oldColor);
       }
-    }
-
-    private static class LineInfo {
-      private boolean underlined;
-      private Color underlineColor;
-      private boolean smaller;
-      private boolean center;
     }
   }
 
