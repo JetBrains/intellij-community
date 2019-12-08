@@ -45,7 +45,7 @@ final class OpenFilesActivity implements StartupActivity {
           Registry.is("ide.open.readme.md.on.startup")) {
         RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
       }
-    });
+    }, project.getDisposed());
   }
 
   private static void findAndOpenReadme(@NotNull Project project, @NotNull FileEditorManagerImpl manager) {

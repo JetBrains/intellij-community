@@ -784,7 +784,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private abstract static class ConfigTreeReader<T> {
     @Nullable
-    public T process(@NotNull Element element, @Nullable T context) {
+    public final T process(@NotNull Element element, @Nullable T context) {
       Element splitterElement = element.getChild("splitter");
       if (splitterElement != null) {
         Element first = splitterElement.getChild("split-first");
@@ -798,24 +798,29 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
 
       List<Element> fileElements = leaf.getChildren("file");
-      List<Element> children = new ArrayList<>(fileElements.size());
-
-      // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      int toRemove = fileElements.size() - UISettings.getInstance().getEditorTabLimit();
-      for (Element fileElement : fileElements) {
-        if (toRemove <= 0 || Boolean.parseBoolean(fileElement.getAttributeValue(PINNED))) {
-          children.add(fileElement);
-        }
-        else {
-          toRemove--;
+      List<Element> children;
+      if (fileElements.isEmpty()) {
+        children = Collections.emptyList();
+      }
+      else {
+        children = new ArrayList<>(fileElements.size());
+        // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
+        int toRemove = fileElements.size() - UISettings.getInstance().getEditorTabLimit();
+        for (Element fileElement : fileElements) {
+          if (toRemove <= 0 || Boolean.parseBoolean(fileElement.getAttributeValue(PINNED))) {
+            children.add(fileElement);
+          }
+          else {
+            toRemove--;
+          }
         }
       }
 
-      return processFiles(children, leaf, context);
+      return processFiles(children, StringUtil.parseInt(leaf.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString()), -1), context);
     }
 
     @Nullable
-    abstract T processFiles(@NotNull List<? extends Element> fileElements, Element parent, @Nullable T context);
+    abstract T processFiles(@NotNull List<? extends Element> fileElements, int tabSizeLimit, @Nullable T context);
 
     @Nullable
     abstract T processSplitter(@NotNull Element element, @Nullable Element firstChild, @Nullable Element secondChild, @Nullable T context);
@@ -823,13 +828,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class UIBuilder extends ConfigTreeReader<JPanel> {
     @Override
-    protected JPanel processFiles(@NotNull List<? extends Element> fileElements, Element parent, final JPanel context) {
+    protected JPanel processFiles(@NotNull List<? extends Element> fileElements, int tabSizeLimit, JPanel context) {
       Ref<EditorWindow> windowRef = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         EditorWindow editorWindow = context == null ? createEditorWindow() : findWindowWith(context);
         windowRef.set(editorWindow);
         if (editorWindow != null) {
-          int tabSizeLimit = StringUtil.parseInt(parent.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString()), -1);
           if (tabSizeLimit != 1) {
             UIUtil.putClientProperty(editorWindow.getTabbedPane().getComponent(), JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit);
           }
@@ -914,7 +918,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     @Override
-    protected JPanel processSplitter(@NotNull Element splitterElement, Element firstChild, Element secondChild, final JPanel context) {
+    protected JPanel processSplitter(@NotNull Element splitterElement, Element firstChild, Element secondChild, JPanel context) {
       if (context == null) {
         boolean orientation = "vertical".equals(splitterElement.getAttributeValue("split-orientation"));
         float proportion = Float.parseFloat(splitterElement.getAttributeValue("split-proportion"));
