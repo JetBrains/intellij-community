@@ -40,11 +40,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun openCommittedChangesTab(vcs: AbstractVcs?, root: VirtualFile?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>?, location: RepositoryLocation?, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
+  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
     throw UnsupportedOperationException()
   }
 

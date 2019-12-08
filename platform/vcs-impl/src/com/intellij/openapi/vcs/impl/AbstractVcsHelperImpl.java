@@ -35,7 +35,10 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.committed.ChangesBrowserDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.FileHistoryRefresher;
 import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
@@ -472,28 +475,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void openCommittedChangesTab(final AbstractVcs vcs,
-                                      final VirtualFile root,
-                                      final ChangeBrowserSettings settings,
-                                      final int maxCount,
-                                      String title) {
-    RepositoryLocationCache cache = CommittedChangesCache.getInstance(myProject).getLocationCache();
-    RepositoryLocation location = cache.getLocation(vcs, VcsUtil.getFilePath(root), false);
-    openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
-  }
-
-  @Override
-  public void openCommittedChangesTab(final CommittedChangesProvider provider,
-                                      final RepositoryLocation location,
-                                      final ChangeBrowserSettings settings,
-                                      final int maxCount,
+  public void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                      @NotNull RepositoryLocation location,
+                                      ChangeBrowserSettings settings,
+                                      int maxCount,
                                       String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
     CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings, location, extraActions);
     panel.setMaxCount(maxCount);
     panel.refreshChanges(false);
     final ContentFactory factory = ContentFactory.SERVICE.getInstance();
-    if (title == null && location != null) {
+    if (title == null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());
     }
     final Content content = factory.createContent(panel, title, false);

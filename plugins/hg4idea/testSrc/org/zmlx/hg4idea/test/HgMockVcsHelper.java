@@ -78,12 +78,8 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void openCommittedChangesTab(AbstractVcs vcs, VirtualFile root, ChangeBrowserSettings settings, int maxCount, String title) {
-  }
-
-  @Override
-  public void openCommittedChangesTab(CommittedChangesProvider provider,
-                                      RepositoryLocation location,
+  public void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                      @NotNull RepositoryLocation location,
                                       ChangeBrowserSettings settings,
                                       int maxCount,
                                       String title) {

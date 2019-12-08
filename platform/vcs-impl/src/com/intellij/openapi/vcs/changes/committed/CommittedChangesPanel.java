@@ -48,8 +48,11 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
   private volatile boolean myInLoad;
   private final Consumer<String> myIfNotCachedReloader;
 
-  public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
-                               @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
+  public CommittedChangesPanel(@NotNull Project project,
+                               @NotNull CommittedChangesProvider provider,
+                               ChangeBrowserSettings settings,
+                               @Nullable RepositoryLocation location,
+                               @Nullable ActionGroup extraActions) {
     super(new BorderLayout());
     mySettings = settings;
     myProject = project;

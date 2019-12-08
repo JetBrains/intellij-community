@@ -69,17 +69,11 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
 
-  public abstract void openCommittedChangesTab(AbstractVcs vcs,
-                                               VirtualFile root,
+  public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
+                                               @NotNull RepositoryLocation location,
                                                ChangeBrowserSettings settings,
                                                int maxCount,
-                                               final String title);
-
-  public abstract void openCommittedChangesTab(CommittedChangesProvider provider,
-                                               RepositoryLocation location,
-                                               ChangeBrowserSettings settings,
-                                               int maxCount,
-                                               final String title);
+                                               String title);
 
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.

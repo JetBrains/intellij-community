@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -8,13 +8,18 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate;
+import com.intellij.openapi.vcs.changes.committed.RepositoryLocationCache;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
@@ -22,6 +27,7 @@ import static com.intellij.openapi.ui.Messages.*;
 import static com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class BrowseChangesAction extends AnAction implements DumbAware {
@@ -35,7 +41,7 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
     CommittedChangesFilterDialog dialog = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
 
     if (dialog.showAndGet()) {
-      showChanges(vcs, file, settings);
+      showChanges(vcs, provider, file, settings);
     }
   }
 
@@ -69,12 +75,21 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
     return vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(project, file);
   }
 
-  private static void showChanges(@NotNull AbstractVcs vcs, @NotNull VirtualFile file, @NotNull ChangeBrowserSettings settings) {
+  private static void showChanges(@NotNull AbstractVcs vcs,
+                                  @NotNull CommittedChangesProvider<?, ?> provider,
+                                  @NotNull VirtualFile file,
+                                  @NotNull ChangeBrowserSettings settings) {
     int maxCount = !settings.isAnyFilterSpecified() ? askMaxCount(vcs.getProject()) : 0;
+    if (maxCount < 0) return;
 
-    if (maxCount >= 0) {
-      AbstractVcsHelper.getInstance(vcs.getProject()).openCommittedChangesTab(vcs, file, settings, maxCount, null);
+    RepositoryLocationCache cache = CommittedChangesCache.getInstance(vcs.getProject()).getLocationCache();
+    RepositoryLocation location = cache.getLocation(vcs, VcsUtil.getFilePath(file), false);
+    if (location == null) {
+      showOverVersionControlView(vcs.getProject(), "Repository location not found for " + file.getPresentableUrl(), MessageType.ERROR);
+      return;
     }
+
+    AbstractVcsHelper.getInstance(vcs.getProject()).openCommittedChangesTab(provider, location, settings, maxCount, null);
   }
 
   private static int askMaxCount(@NotNull Project project) {
