@@ -21,7 +21,7 @@ public abstract class ToolWindowManager {
   public abstract boolean canShowNotification(@NotNull String toolWindowId);
 
   public static ToolWindowManager getInstance(@NotNull Project project){
-    return project.getComponent(ToolWindowManager.class);
+    return project.getService(ToolWindowManager.class);
   }
 
   /**

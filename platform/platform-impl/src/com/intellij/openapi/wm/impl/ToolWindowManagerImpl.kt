@@ -95,6 +95,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var currentState = KeyState.WAITING
   private val waiterForSecondPress: Alarm?
 
+  private val pendingSetLayoutTask = AtomicReference<Runnable?>()
+
   private val secondPressRunnable = Runnable {
     if (currentState != KeyState.HOLD) {
       resetHoldState()
@@ -389,6 +391,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // must be executed in EDT
     ApplicationManager.getApplication().invokeLater(Runnable {
+      pendingSetLayoutTask.getAndSet(null)?.run()
+
       runActivity("toolwindow creating") {
         init()
 
@@ -1569,15 +1573,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return element
   }
 
-  private val pendingSetLayoutTask = AtomicReference<Runnable?>()
-
   override fun loadState(state: Element) {
     for (e: Element in state.children) {
       if (DesktopLayout.TAG == e.name) {
         val layout = DesktopLayout()
         layout.readExternal(e)
         val task = Runnable {
-          layout.copyNotRegisteredFrom(layout)
+          layout.copyNotRegisteredFrom(this.layout)
           setLayout(layout)
         }
         val app = ApplicationManager.getApplication()
@@ -1592,7 +1594,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }, project.disposed)
         }
       }
-      else if ((LAYOUT_TO_RESTORE == e.name)) {
+      else if (LAYOUT_TO_RESTORE == e.name) {
         layoutToRestoreLater = DesktopLayout()
         layoutToRestoreLater!!.readExternal(e)
       }
