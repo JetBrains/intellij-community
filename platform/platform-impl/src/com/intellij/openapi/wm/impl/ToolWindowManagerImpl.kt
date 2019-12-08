@@ -393,19 +393,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ApplicationManager.getApplication().invokeLater(Runnable {
       pendingSetLayoutTask.getAndSet(null)?.run()
 
-      runActivity("toolwindow creating") {
-        init()
+      init()
 
-        appendUpdateRootPane(list)
-        val editorComponent = FileEditorManagerEx.getInstanceEx(project).component
-        editorComponent.isFocusable = false
-        appendSetEditorComponent(editorComponent, list)
+      ApplicationManager.getApplication().invokeLater(Runnable {
+        runActivity("toolwindow creating") {
+          appendUpdateRootPane(list)
+          val editorComponent = FileEditorManagerEx.getInstanceEx(project).component
+          editorComponent.isFocusable = false
+          appendSetEditorComponent(editorComponent, list)
 
-        execute(list)
-        commandProcessor.flush()
-      }
+          execute(list)
+          commandProcessor.flush()
+        }
 
-      service<ToolWindowManagerAppLevelHelper>()
+        service<ToolWindowManagerAppLevelHelper>()
+      }, project.disposed)
 
       ToolWindowEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ToolWindowEP> {
         override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
