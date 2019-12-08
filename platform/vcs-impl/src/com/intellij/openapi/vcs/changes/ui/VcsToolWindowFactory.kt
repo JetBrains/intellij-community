@@ -12,7 +12,6 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 
 private val ToolWindow.project: Project? get() = (this as? ToolWindowImpl)?.toolWindowManager?.project
-private val Project.vcsManager: ProjectLevelVcsManager get() = ProjectLevelVcsManager.getInstance(this)
 
 abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun init(window: ToolWindow) {
@@ -45,5 +44,9 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     toolWindow.setAvailable(available, null)
+  }
+
+  companion object {
+    internal val Project.vcsManager: ProjectLevelVcsManager get() = ProjectLevelVcsManager.getInstance(this)
   }
 }
