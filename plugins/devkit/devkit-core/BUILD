@@ -68,6 +68,7 @@ iml_module(
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module]",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi[module]",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer[module]",
+        "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
     ],
 )
 

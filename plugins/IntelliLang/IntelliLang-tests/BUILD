@@ -28,7 +28,6 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
@@ -47,6 +46,7 @@ iml_module(
         "//tools/idea/plugins/IntelliLang:intellij.platform.langInjection[module]",
         "//tools/idea/plugins/IntelliLang:intellij.xml.langInjection[module]",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
+        "//tools/idea/plugins/yaml:intellij.yaml[module]",
         "//tools/idea/plugins/IntelliLang:intellij.java.langInjection[module]",
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
