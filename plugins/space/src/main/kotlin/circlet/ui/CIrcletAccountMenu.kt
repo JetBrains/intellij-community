@@ -1,6 +1,7 @@
 package circlet.ui
 
 import com.intellij.icons.*
+import com.intellij.ide.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.*
@@ -221,4 +222,8 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
             return this
         }
     }
+}
+
+fun browseAction(text: String, link: String, showSeparatorAbove: Boolean = false): AccountMenuItem.Action {
+    return AccountMenuItem.Action(text, { BrowserUtil.browse(link) }, AllIcons.Ide.External_link_arrow, showSeparatorAbove)
 }

@@ -1,8 +1,5 @@
 package circlet.ui.clone
 
-import circlet.ui.AccountMenuItem
-import circlet.ui.AccountMenuPopupStep
-import circlet.ui.AccountsMenuListPopup
 import circlet.client.*
 import circlet.client.api.*
 import circlet.components.*
@@ -10,11 +7,12 @@ import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.ui.*
+import circlet.ui.AccountMenuItem
+import circlet.ui.AccountMenuPopupStep
+import circlet.ui.AccountsMenuListPopup
 import com.intellij.dvcs.*
 import com.intellij.dvcs.repo.*
 import com.intellij.dvcs.ui.*
-import com.intellij.icons.*
-import com.intellij.ide.*
 import com.intellij.openapi.*
 import com.intellij.openapi.fileChooser.*
 import com.intellij.openapi.project.*
@@ -247,7 +245,7 @@ private class CloneView(
 
         cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
             launch(lifetime, Ui) {
-                val allRepos =  allProjectsWithReposAndDetails.filterNotNull()
+                val allRepos = allProjectsWithReposAndDetails.filterNotNull()
                 val toAdd = allRepos.drop(listModel.items.count())
                 val selection = circletProjectListWithSearch.list.selectedIndex
                 listModel.addAll(listModel.items.count(), toAdd)
@@ -267,25 +265,21 @@ private class CloneView(
             }
 
             private fun showPopupMenu() {
+                val host = st.server
                 val serverUrl = cleanupUrl(st.server)
                 val menuItems: MutableList<AccountMenuItem> = mutableListOf()
                 menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
-                                                                                   serverUrl,
-                                                                                   resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
+                                                     serverUrl,
+                                                     resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
                                                                 VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-                                                                                   listOf(AccountMenuItem.Action("Open $serverUrl",
-                                                                                                                                               { BrowserUtil.browse(st.server) },
-                                                                                                                                               AllIcons.Ide.External_link_arrow)))
-                menuItems += AccountMenuItem.Action("Projects",
-                                                                                  { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
-                                                                                  AllIcons.Ide.External_link_arrow,
-                                                                                  showSeparatorAbove = true)
+                                                     listOf(browseAction("Open $serverUrl", host)))
+                menuItems += browseAction("Projects", Navigator.p.absoluteHref(host), true)
                 menuItems += AccountMenuItem.Action("Settings...",
-                                                                                  {
+                                                    {
                                                         CircletSettingsPanel.openSettings(project)
                                                         updateSelectedUrl()
                                                     },
-                                                                                  showSeparatorAbove = true)
+                                                    showSeparatorAbove = true)
                 menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
 
                 AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))

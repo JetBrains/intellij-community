@@ -12,7 +12,6 @@ import circlet.ui.AccountsMenuListPopup
 import circlet.vcs.*
 import circlet.vcs.clone.*
 import circlet.workspaces.*
-import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
@@ -39,7 +38,9 @@ class CircletMainToolBarAction : DumbAwareAction()  {
         if (!isOnNavBar) return
         val avatars = CircletUserAvatarProvider.getInstance().avatars.value
         val isConnected = circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
-        e.presentation.icon = if (isConnected) avatars.online else avatars.offline
+        e.presentation.icon = if (isConnected) avatars.online
+            else avatars.offline
+
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -120,17 +121,14 @@ class CircletMainToolBarAction : DumbAwareAction()  {
     }
 
     private fun buildMenu(workspace: Workspace, icon: Icon, project: Project): AccountsMenuListPopup {
-        val url = settings.serverSettings.server
-        val serverUrl = cleanupUrl(url)
+        val host = settings.serverSettings.server
+        val serverUrl = cleanupUrl(host)
         val menuItems: MutableList<AccountMenuItem> = mutableListOf()
         menuItems += AccountMenuItem.Account(
             workspace.me.value.englishFullName(),
             serverUrl,
             resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-            listOf(AccountMenuItem.Action("Open $serverUrl",
-                                          { BrowserUtil.browse(url) },
-                                          AllIcons.Ide.External_link_arrow,
-                                          showSeparatorAbove = true)))
+            listOf(browseAction("Open $serverUrl", host, true)))
         menuItems += AccountMenuItem.Action("Clone Repository...",
                                             { CircletCloneAction.runClone(project) },
                                             showSeparatorAbove = true)
@@ -138,47 +136,29 @@ class CircletMainToolBarAction : DumbAwareAction()  {
         val projectInfos = projectContext.projectDescriptions
 
         if (projectInfos != null) {
-            val keys = projectInfos.second
-            if (keys.size > 1) {
-                val reviewActions = keys.map {
-                    val key = it.projectKey.key
-                    val projectName = it.project.name
-                    AccountMenuItem.Action("Open for $projectName project",
-                                           { BrowserUtil.browse("${url}/p/${key}/review") },
-                                           AllIcons.Ide.External_link_arrow)
-                }.toList()
-                menuItems += AccountMenuItem.Group("Code Reviews", reviewActions)
+            val descriptions = projectInfos.second
+            if (descriptions.size > 1) {
+                menuItems += AccountMenuItem.Group("Code Reviews", descriptions.map {
+                    val reviewsUrl = Navigator.p.project(it.projectKey).reviews.absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project",reviewsUrl)
+                }.toList())
 
-                val planningActions = keys.map {
-                    val key = it.projectKey.key
-                    val projectName = it.project.name
-                    AccountMenuItem.Action("Open for $projectName project",
-                                           { BrowserUtil.browse("${url}/p/$key/checklists") },
-                                           AllIcons.Ide.External_link_arrow)
-                }.toList()
-                menuItems += AccountMenuItem.Group("Checklists", planningActions)
+                menuItems += AccountMenuItem.Group("Checklists", descriptions.map {
+                    val checklistsUrl = Navigator.p.project(it.projectKey).checklists().absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project",checklistsUrl)
+                }.toList())
 
-                val issuesActions = keys.map {
-                    val key = it.projectKey.key
-                    val projectName = it.project.name
-                    AccountMenuItem.Action("Open for $projectName project",
-                                           { BrowserUtil.browse("${url}/p/$key/issues") },
-                                           AllIcons.Ide.External_link_arrow)
-                }.toList()
-                menuItems += AccountMenuItem.Group("Issues", issuesActions)
+                menuItems += AccountMenuItem.Group("Issues", descriptions.map {
+                    val issuesUrl = Navigator.p.project(it.projectKey).issues().absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project",issuesUrl)
+                }.toList())
             }
             else {
-                val key = keys.first().projectKey.key
+                val p = Navigator.p.project(descriptions.first().projectKey)
 
-                menuItems += AccountMenuItem.Action("Code Reviews",
-                                                    { BrowserUtil.browse("${url}/p/$key/review") },
-                                                    AllIcons.Ide.External_link_arrow)
-                menuItems += AccountMenuItem.Action("Checklists",
-                                                    { BrowserUtil.browse("${url}/p/$key/checklists") },
-                                                    AllIcons.Ide.External_link_arrow)
-                menuItems += AccountMenuItem.Action("Issues",
-                                                    { BrowserUtil.browse("${url}/p/$key/issues") },
-                                                    AllIcons.Ide.External_link_arrow)
+                menuItems += browseAction("Code Reviews",p.reviews.absoluteHref(host))
+                menuItems += browseAction("Checklists", p.checklists().absoluteHref(host))
+                menuItems += browseAction("Issues", p.issues().absoluteHref(host))
             }
         }
         menuItems += AccountMenuItem.Action("Settings...",
@@ -189,4 +169,3 @@ class CircletMainToolBarAction : DumbAwareAction()  {
         return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
     }
 }
-
