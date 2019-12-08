@@ -57,6 +57,15 @@ import static com.intellij.openapi.util.Pair.pair;
 public final class SocketLock {
   public enum ActivationStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
+  /**
+   * Name of an environment variable that will be set by the Windows launcher and will contain the working directory the
+   * IDE was started with.
+   *
+   * This is necessary on Windows because the launcher needs to change the current directory for the JVM to load
+   * properly; see the details in WindowsLauncher.cpp.
+   */
+  public static final String LAUNCHER_INITIAL_DIRECTORY_ENV_VAR = "IDEA_INITIAL_DIRECTORY";
+
   private static final String PORT_FILE = "port";
   private static final String PORT_LOCK_FILE = "port.lock";
   private static final String TOKEN_FILE = "token";
@@ -274,7 +283,13 @@ public final class SocketLock {
         try {
           String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(".").getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
+
+          String currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
+          log(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR + ": " + currentDirectory);
+          if (currentDirectory == null)
+            currentDirectory = ".";
+
+          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(currentDirectory).getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
           out.flush();
 
           socket.setSoTimeout(0);

@@ -148,6 +148,15 @@ public class PyTypeChecker {
       }
     }
 
+    // remove after making PyNoneType inheriting PyClassType
+    if (expected instanceof PyNoneType) {
+      return Optional.of(actual instanceof PyNoneType);
+    }
+
+    if (expected instanceof PyModuleType) {
+      return Optional.of(actual instanceof PyModuleType && ((PyModuleType)expected).getModule() == ((PyModuleType)actual).getModule());
+    }
+
     return Optional.of(matchNumericTypes(expected, actual));
   }
 
@@ -266,6 +275,10 @@ public class PyTypeChecker {
 
     if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
       return match((PyTupleType)expected, (PyTupleType)actual, context);
+    }
+
+    if (expected instanceof PyLiteralType) {
+      return Optional.of(actual instanceof PyLiteralType && PyLiteralType.Companion.match((PyLiteralType)expected, (PyLiteralType)actual));
     }
 
     final PyClass superClass = expected.getPyClass();
@@ -527,21 +540,23 @@ public class PyTypeChecker {
   }
 
   private static boolean matchNumericTypes(PyType expected, PyType actual) {
-    final String superName = expected.getName();
-    final String subName = actual.getName();
-    final boolean subIsBool = "bool".equals(subName);
-    final boolean subIsInt = PyNames.TYPE_INT.equals(subName);
-    final boolean subIsLong = PyNames.TYPE_LONG.equals(subName);
-    final boolean subIsFloat = "float".equals(subName);
-    final boolean subIsComplex = "complex".equals(subName);
-    if (superName == null || subName == null ||
-        superName.equals(subName) ||
-        (PyNames.TYPE_INT.equals(superName) && subIsBool) ||
-        ((PyNames.TYPE_LONG.equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
-        (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
-        (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
-        (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
-      return true;
+    if (expected instanceof PyClassType && actual instanceof PyClassType) {
+      final String superName = ((PyClassType)expected).getPyClass().getName();
+      final String subName = ((PyClassType)actual).getPyClass().getName();
+      final boolean subIsBool = "bool".equals(subName);
+      final boolean subIsInt = PyNames.TYPE_INT.equals(subName);
+      final boolean subIsLong = PyNames.TYPE_LONG.equals(subName);
+      final boolean subIsFloat = "float".equals(subName);
+      final boolean subIsComplex = "complex".equals(subName);
+      if (superName == null || subName == null ||
+          superName.equals(subName) ||
+          (PyNames.TYPE_INT.equals(superName) && subIsBool) ||
+          ((PyNames.TYPE_LONG.equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
+          (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
+          (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
+          (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
+        return true;
+      }
     }
     return false;
   }
@@ -717,7 +732,8 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyCallableParameter paramWrapper = entry.getValue();
-      PyType actualType = context.getType(entry.getKey());
+      final PyType expectedType = paramWrapper.getArgumentType(context);
+      PyType actualType = PyLiteralType.Companion.promoteToLiteral(entry.getKey(), expectedType, context);
       if (paramWrapper.isSelf()) {
         // TODO find out a better way to pass the corresponding function inside
         final PyParameter param = paramWrapper.getParameter();
@@ -738,7 +754,6 @@ public class PyTypeChecker {
             .orElse(actualType);
         }
       }
-      final PyType expectedType = paramWrapper.getArgumentType(context);
       if (!match(expectedType, actualType, context, substitutions)) {
         return null;
       }
@@ -996,7 +1011,7 @@ public class PyTypeChecker {
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
     MatchContext(@NotNull TypeEvalContext context,
-                        @NotNull Map<PyGenericType, PyType> substitutions) {
+                 @NotNull Map<PyGenericType, PyType> substitutions) {
       this(context, substitutions, true, new HashSet<>());
     }
 

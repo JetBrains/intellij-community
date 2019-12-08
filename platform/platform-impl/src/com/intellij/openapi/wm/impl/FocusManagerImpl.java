@@ -105,9 +105,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
+      logFocusRequest(c, project, false);
       c.requestFocus();
     }
     else {
+      logFocusRequest(c, project, true);
       c.requestFocusInWindow();
     }
     return ActionCallback.DONE;
@@ -116,6 +118,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
+    logFocusRequest(c, null, false);
     c.requestFocus();
     return ActionCallback.DONE;
   }
@@ -402,13 +405,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
 
     if (toFocus != null) {
-      if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
-        toFocus.requestFocus();
-      }
-      else {
-        toFocus.requestFocusInWindow();
-      }
-      return ActionCallback.DONE;
+      return requestFocusInProject(toFocus, null);
     }
 
 
@@ -426,6 +423,12 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private static void assertDispatchThread() {
     if (Registry.is("actionSystem.assertFocusAccessFromEdt")) {
       ApplicationManager.getApplication().assertIsDispatchThread();
+    }
+  }
+
+  private static void logFocusRequest(@NotNull Component c, @Nullable Project project, boolean inWindow) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("inWindow = %s, project = %s, component = %s", inWindow, project, c), new Throwable());
     }
   }
 }

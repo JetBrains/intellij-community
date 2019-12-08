@@ -65,12 +65,12 @@ public final class FileManagerImpl implements FileManager {
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
 
       @Override
       public void exitDumbMode() {
-        processFileTypesChanged();
+        processFileTypesChanged(false);
       }
     });
   }
@@ -263,7 +263,7 @@ public final class FileManagerImpl implements FileManager {
 
   private boolean myProcessingFileTypesChange;
 
-  void processFileTypesChanged() {
+  void processFileTypesChanged(boolean fileTypeRemoved) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -274,6 +274,9 @@ public final class FileManagerImpl implements FileManager {
           myManager.beforePropertyChange(event);
 
           possiblyInvalidatePhysicalPsi();
+          if (fileTypeRemoved) {
+            clearViewProviders();
+          }
 
           myManager.propertyChanged(event);
         });

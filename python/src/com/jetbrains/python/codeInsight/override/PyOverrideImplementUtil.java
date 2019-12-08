@@ -183,9 +183,10 @@ public class PyOverrideImplementUtil {
   private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass,
                                                            PyFunction baseFunction,
                                                            boolean implement) {
-    final boolean overridingNew = PyNames.NEW.equals(baseFunction.getName());
-    assert baseFunction.getName() != null;
-    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName(), baseFunction);
+    final String functionName = baseFunction.getName();
+    final boolean overridingNew = PyNames.NEW.equals(functionName);
+    assert functionName != null;
+    PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(functionName, baseFunction);
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     boolean baseMethodIsStatic = false;
     if (decorators != null) {
@@ -271,7 +272,7 @@ public class PyOverrideImplementUtil {
       statementBody.append(PyNames.PASS);
     }
     else {
-      if (!PyNames.INIT.equals(baseFunction.getName()) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
+      if (!PyNames.INIT.equals(functionName) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
         statementBody.append("return ");
       }
       if (baseFunction.isAsync()) {
@@ -296,14 +297,14 @@ public class PyOverrideImplementUtil {
           StringUtil.join(nameResult, ".", statementBody);
           statementBody.append(", ").append(firstName);
         }
-        statementBody.append(").").append(baseFunction.getName()).append("(");
+        statementBody.append(").").append(functionName).append("(");
         // type.__new__ is explicitly decorated as @staticmethod in our stubs, but not in real Python code
         if (parameters.size() > 0 && !(baseMethodIsStatic || overridingNew)) {
           parameters.remove(0);
         }
       }
       else {
-        statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(baseFunction.getName()).append("(");
+        statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(functionName).append("(");
       }
       StringUtil.join(parameters, ", ", statementBody);
       statementBody.append(")");

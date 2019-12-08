@@ -33,7 +33,10 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
-    if (parent != null) {
+    else if (useNativeWinChooser(descriptor)) {
+      return new WinPathChooserDialog(descriptor, parent, project);
+    }
+    else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
     else {
@@ -79,6 +82,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
 
   private static boolean useNativeMacChooser(FileChooserDescriptor descriptor) {
     return SystemInfo.isMac &&
+           !SystemInfo.isMacOSCatalina && // temp solution (wait for OS stabilization), see IDEA-222937 Disable native file chooser for macOS Catalina
            SystemInfo.isJetBrainsJvm &&
            !descriptor.isForcedToUseIdeaFileChooser() &&
            Registry.is("ide.mac.file.chooser.native");

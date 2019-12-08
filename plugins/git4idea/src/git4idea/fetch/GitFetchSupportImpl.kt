@@ -17,6 +17,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
+import com.intellij.internal.statistic.IdeActivity
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -99,6 +100,8 @@ internal class GitFetchSupportImpl(git: Git,
 
   private fun fetch(remotes: List<Pair<GitRepository, GitRemote>>): GitFetchResult {
     return withIndicator {
+      val activity = IdeActivity.started(project, "vcs", "fetch")
+
       val tasks = fetchInParallel(remotes)
       val results = waitForFetchTasks(tasks)
 
@@ -107,6 +110,7 @@ internal class GitFetchSupportImpl(git: Git,
         val res = mergedResults[result.repository]
         mergedResults[result.repository] = mergeRepoResults(res, result)
       }
+      activity.finished()
       FetchResultImpl(project, vcsNotifier, mergedResults)
     }
   }

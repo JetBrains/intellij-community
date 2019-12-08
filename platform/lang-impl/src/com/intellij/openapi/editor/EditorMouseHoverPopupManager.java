@@ -8,13 +8,17 @@ import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
-import com.intellij.ui.WidthBasedLayout;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
@@ -77,7 +81,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
   private boolean mySkipNextMovement;
 
   public EditorMouseHoverPopupManager() {
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addCaretListener(new CaretListener() {
       @Override
@@ -95,7 +99,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
         return;
       }
 
-      cancelCurrentProcessing();
+      cancelProcessingAndCloseHint();
     }, this);
 
     EditorMouseHoverPopupControl.getInstance().addListener(() -> {
@@ -109,13 +113,12 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       }
     });
 
-    IdeEventQueue.getInstance().addActivityListener(this::onActivity, ApplicationManager.getApplication());
+    IdeEventQueue.getInstance().addActivityListener(this::onActivity, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyActionListener());
   }
 
   @Override
-  public void dispose() {
-
-  }
+  public void dispose() {}
 
   private void handleMouseMoved(@NotNull EditorMouseEvent e) {
     cancelCurrentProcessing();
@@ -167,14 +170,21 @@ public final class EditorMouseHoverPopupManager implements Disposable {
                                   boolean requestFocus) {
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     myCurrentProgress = progress;
-    myAlarm.addRequest(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      Info info = context.calcInfo(editor);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (progress != myCurrentProgress) return;
-        myCurrentProgress = null;
-        if (info != null &&
-            editor.getContentComponent().isShowing() &&
-            (forceShowing || !isPopupDisabled(editor))) {
+    myAlarm.addRequest(() -> {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        Info info = context.calcInfo(editor);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (progress != myCurrentProgress) {
+            return;
+          }
+
+          myCurrentProgress = null;
+          if (info == null ||
+              !editor.getContentComponent().isShowing() ||
+              (!forceShowing && isPopupDisabled(editor))) {
+            return;
+          }
+
           PopupBridge popupBridge = new PopupBridge();
           JComponent component = info.createComponent(editor, popupBridge, requestFocus);
           if (component == null) {
@@ -192,9 +202,9 @@ public final class EditorMouseHoverPopupManager implements Disposable {
             }
             myContext = context;
           }
-        }
-      });
-    }, progress), context.getShowingDelay());
+        });
+      }, progress);
+    }, context.getShowingDelay());
   }
 
   private void onActivity() {
@@ -320,6 +330,11 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     return info == null && elementForQuickDoc == null ? null : new Context(offset, info, elementForQuickDoc);
   }
 
+  private void cancelProcessingAndCloseHint() {
+    cancelCurrentProcessing();
+    closeHint();
+  }
+
   private void closeHint() {
     AbstractPopup hint = getCurrentHint();
     if (hint != null) {
@@ -356,8 +371,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
                               int offset,
                               boolean requestFocus,
                               boolean showImmediately) {
-    cancelCurrentProcessing();
-    closeHint();
+    cancelProcessingAndCloseHint();
     Context context = new Context(offset, info, null) {
       @Override
       long getShowingDelay() {
@@ -422,7 +436,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }
 
     @Nullable
-    private Info calcInfo(Editor editor) {
+    private Info calcInfo(@NotNull Editor editor) {
       HighlightInfo info = getHighlightInfo();
       if (info != null && (info.getDescription() == null || info.getToolTip() == null)) {
         info = null;
@@ -433,7 +447,12 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       if (elementForQuickDoc != null) {
         PsiElement element = getElementForQuickDoc();
         try {
-          DocumentationManager documentationManager = DocumentationManager.getInstance(editor.getProject());
+          Project project = editor.getProject();
+          if (project == null || project.isDisposedOrDisposeInProgress()) {
+            return null;
+          }
+
+          DocumentationManager documentationManager = DocumentationManager.getInstance(project);
           QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
             if (element.isValid()) {
               targetElementRef.set(documentationManager.findTargetElement(editor, targetOffset, element.getContainingFile(), element));
@@ -780,6 +799,25 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       }
 
       getInstance().cancelCurrentProcessing();
+    }
+  }
+
+  private static class MyActionListener implements AnActionListener {
+    @Override
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      if (!Registry.is("editor.new.mouse.hover.popups")) {
+        return;
+      }
+      if (action instanceof HintManagerImpl.ActionToIgnore) return;
+      getInstance().cancelProcessingAndCloseHint();
+    }
+
+    @Override
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
+      if (!Registry.is("editor.new.mouse.hover.popups")) {
+        return;
+      }
+      getInstance().cancelProcessingAndCloseHint();
     }
   }
 }

@@ -621,8 +621,13 @@ class DistributionJARsBuilder {
   private void buildBundledPlugins() {
     def layoutBuilder = createLayoutBuilder()
     def allPlugins = getPluginsByModules(buildContext, buildContext.productProperties.productLayout.bundledPluginModules)
+    def pluginDirectoriesToSkip = buildContext.options.bundledPluginDirectoriesToSkip as Set<String>
+    buildContext.messages.debug("Plugin directories to skip: " + pluginDirectoriesToSkip)
     buildContext.messages.block("Build bundled plugins") {
-      buildPlugins(layoutBuilder, allPlugins.findAll { satisfiesBundlingRequirements(it, null) }, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
+      def pluginsToBundle = allPlugins.findAll {
+        satisfiesBundlingRequirements(it, null) && !pluginDirectoriesToSkip.contains(it.directoryName)
+      }
+      buildPlugins(layoutBuilder, pluginsToBundle, "$buildContext.paths.distAll$PLUGINS_DIRECTORY" )
     }
     usedModules.addAll(layoutBuilder.usedModules)
   }
@@ -657,6 +662,8 @@ class DistributionJARsBuilder {
   }
 
   void buildNonBundledPlugins() {
+    if (pluginsToPublish.isEmpty()) return
+
     def productLayout = buildContext.productProperties.productLayout
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
@@ -713,7 +720,7 @@ class DistributionJARsBuilder {
 
       def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
 /* Android Studio: This attempts to read a non-existent file.
-      def whiteList = new File("$buildContext.paths.projectHome/build/plugins-autoupload-whitelist.txt").readLines()
+      def whiteList = new File("$buildContext.paths.communityHome/../build/plugins-autoupload-whitelist.txt").readLines()
         .stream().map { it.trim() }.filter { !it.isEmpty() && !it.startsWith("//") }.collect(Collectors.toSet())
 Android Studio: This attempts to read a non-existent file. */
 

@@ -30,45 +30,50 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  * @author Konstantin Bulenkov
  */
 public class ToolWindowCollector {
+  private static final ToolWindowInfo UNKNOWN = new ToolWindowInfo("unknown", getUnknownPlugin());
 
   public static ToolWindowCollector getInstance() {
     return ServiceManager.getService(ToolWindowCollector.class);
   }
 
-  public static final Map<String, PluginInfo> ourToolwindowWhitelist = new HashMap<>();
+  public static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
-    ourToolwindowWhitelist.put(COMMANDER, getPlatformPlugin());
-    ourToolwindowWhitelist.put(MESSAGES_WINDOW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(PROJECT_VIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(STRUCTURE_VIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(FAVORITES_VIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(ANT_BUILD, getPlatformPlugin());
-    ourToolwindowWhitelist.put(DEBUG, getPlatformPlugin());
-    ourToolwindowWhitelist.put(RUN, getPlatformPlugin());
-    ourToolwindowWhitelist.put(BUILD, getPlatformPlugin());
-    ourToolwindowWhitelist.put(FIND, getPlatformPlugin());
-    ourToolwindowWhitelist.put(CVS, getPlatformPlugin());
-    ourToolwindowWhitelist.put(HIERARCHY, getPlatformPlugin());
-    ourToolwindowWhitelist.put(INSPECTION, getPlatformPlugin());
-    ourToolwindowWhitelist.put(TODO_VIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(DEPENDENCIES, getPlatformPlugin());
-    ourToolwindowWhitelist.put(VCS, getPlatformPlugin());
-    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, getPlatformPlugin());
-    ourToolwindowWhitelist.put(DUPLICATES, getPlatformPlugin());
-    ourToolwindowWhitelist.put(EXTRACT_METHOD, getPlatformPlugin());
-    ourToolwindowWhitelist.put(DOCUMENTATION, getPlatformPlugin());
-    ourToolwindowWhitelist.put(TASKS, getPlatformPlugin());
-    ourToolwindowWhitelist.put(DATABASE_VIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(PREVIEW, getPlatformPlugin());
-    ourToolwindowWhitelist.put(RUN_DASHBOARD, getPlatformPlugin());
-    ourToolwindowWhitelist.put(SERVICES, getPlatformPlugin());
+    // Constants from ToolWindowId can be changed by localization plugins, therefore
+    // we need to remember a link to a bundled message (which can be changed by localization)
+    // and a constant id for recording.
+    ourToolwindowWhitelist.put(COMMANDER, new ToolWindowInfo("Commander"));
+    ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo("Messages"));
+    ourToolwindowWhitelist.put(PROJECT_VIEW, new ToolWindowInfo("Project"));
+    ourToolwindowWhitelist.put(STRUCTURE_VIEW, new ToolWindowInfo("Structure"));
+    ourToolwindowWhitelist.put(FAVORITES_VIEW, new ToolWindowInfo("Favorites"));
+    ourToolwindowWhitelist.put(ANT_BUILD, new ToolWindowInfo("Ant"));
+    ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
+    ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
+    ourToolwindowWhitelist.put(BUILD, new ToolWindowInfo("Build"));
+    ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
+    ourToolwindowWhitelist.put(CVS, new ToolWindowInfo("CVS"));
+    ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));
+    ourToolwindowWhitelist.put(INSPECTION, new ToolWindowInfo("Inspection_Results"));
+    ourToolwindowWhitelist.put(TODO_VIEW, new ToolWindowInfo("TODO"));
+    ourToolwindowWhitelist.put(DEPENDENCIES, new ToolWindowInfo("Dependency_Viewer"));
+    ourToolwindowWhitelist.put(VCS, new ToolWindowInfo("Version_Control"));
+    ourToolwindowWhitelist.put(MODULES_DEPENDENCIES, new ToolWindowInfo("Module_Dependencies"));
+    ourToolwindowWhitelist.put(DUPLICATES, new ToolWindowInfo("Duplicates"));
+    ourToolwindowWhitelist.put(EXTRACT_METHOD, new ToolWindowInfo("Extract_Method"));
+    ourToolwindowWhitelist.put(DOCUMENTATION, new ToolWindowInfo("Documentation"));
+    ourToolwindowWhitelist.put(TASKS, new ToolWindowInfo("Time_Tracking"));
+    ourToolwindowWhitelist.put(DATABASE_VIEW, new ToolWindowInfo("Database"));
+    ourToolwindowWhitelist.put(PREVIEW, new ToolWindowInfo("Preview"));
+    ourToolwindowWhitelist.put(RUN_DASHBOARD, new ToolWindowInfo("Run_Dashboard"));
+    ourToolwindowWhitelist.put(SERVICES, new ToolWindowInfo("Services"));
+    ourToolwindowWhitelist.put("Statistics Event Log", new ToolWindowInfo("Statistics_Event_Log"));
   }
 
   public ToolWindowCollector() {
     for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensions()) {
       final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(extension.getPluginId());
       if (info.isDevelopedByJetBrains()) {
-        ourToolwindowWhitelist.put(extension.id, info);
+        ourToolwindowWhitelist.put(extension.id, new ToolWindowInfo(extension.id, info));
       }
     }
   }
@@ -84,32 +89,35 @@ public class ToolWindowCollector {
 
   private void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
     if (StringUtil.isNotEmpty(toolWindowId)) {
-      final FeatureUsageData data = new FeatureUsageData().addData("id", toolWindowId);
+      final ToolWindowInfo info = getToolWindowInfo(toolWindowId);
+      final FeatureUsageData data = new FeatureUsageData().
+        addData("id", info.myRecordedId).
+        addPluginInfo(info.myPluginInfo);
       FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
     }
   }
 
   @NotNull
-  private static PluginInfo getPluginInfo(@NotNull String toolWindowId) {
+  private static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId) {
     if (ourToolwindowWhitelist.containsKey(toolWindowId)) {
       return ourToolwindowWhitelist.get(toolWindowId);
     }
 
-    PluginInfo info = getPluginInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
+    ToolWindowInfo info = getToolWindowInfo(toolWindowId, ToolWindowEP.EP_NAME.getExtensions());
     if (info == null) {
-      info = getPluginInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+      info = getToolWindowInfo(toolWindowId, LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
     }
     if (info == null) {
-      info = getPluginInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
+      info = getToolWindowInfo(toolWindowId, FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensions());
     }
-    return info != null ? info : getUnknownPlugin();
+    return info != null ? info : UNKNOWN;
   }
 
   @Nullable
-  public static PluginInfo getPluginInfo(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
+  public static ToolWindowInfo getToolWindowInfo(@NotNull String toolWindowId, @NotNull ToolWindowEP[] toolWindows) {
     for (ToolWindowEP ep : toolWindows) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
-        return PluginInfoDetectorKt.getPluginInfoById(ep.getPluginId());
+        return new ToolWindowInfo(ep.id, PluginInfoDetectorKt.getPluginInfoById(ep.getPluginId()));
       }
     }
     return null;
@@ -130,10 +138,21 @@ public class ToolWindowCollector {
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if ("unknown".equals(data)) return ValidationResultType.ACCEPTED;
+      return acceptWhenReportedByJetbrainsPlugin(context);
+    }
+  }
 
-      final PluginInfo info = getPluginInfo(data);
-      context.setPluginInfo(info);
-      return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+  private static class ToolWindowInfo {
+    private final String myRecordedId;
+    private final PluginInfo myPluginInfo;
+
+    private ToolWindowInfo(@NotNull String recordedId) {
+      this(recordedId, getPlatformPlugin());
+    }
+
+    private ToolWindowInfo(@NotNull String recordedId, @NotNull PluginInfo info) {
+      myRecordedId = recordedId;
+      myPluginInfo = info;
     }
   }
 }

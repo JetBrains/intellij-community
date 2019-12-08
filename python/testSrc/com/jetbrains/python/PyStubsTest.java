@@ -440,6 +440,11 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTupleArguments();
   }
 
+  // PY-29983
+  public void testNamedTupleNameKeyword() {
+    doTestNamedTupleArguments();
+  }
+
   public void testNamedTupleFieldsReference() {
     doTestNamedTupleArguments();
   }
@@ -490,6 +495,11 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testTypingNamedTupleNameReference() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  // PY-34134
+  public void testTypingNamedTupleNameKeyword() {
     doTestTypingNamedTupleArguments();
   }
 

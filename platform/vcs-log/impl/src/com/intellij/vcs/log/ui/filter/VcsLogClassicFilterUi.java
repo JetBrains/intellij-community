@@ -96,9 +96,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         myBranchFilterModel.onStructureFilterChanged(myStructureFilterModel.getRootFilter(), myStructureFilterModel.getStructureFilter());
       });
     }
-    ApplicationManager.getApplication().invokeLater(() -> {
-      filterConsumer.consume(getFilters());
-    });
   }
 
   @Override

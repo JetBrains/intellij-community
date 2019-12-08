@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
     }
-    String namesString = CreateMissingSwitchBranchesFix.formatMissingBranches(names);
+    String namesString = CreateSwitchBranchesUtil.formatMissingBranches(names);
     return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.problem.descriptor", enumName, namesString);
   }
 

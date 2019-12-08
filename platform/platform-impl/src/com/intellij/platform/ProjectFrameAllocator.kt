@@ -68,14 +68,14 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
               return@invokeLater
             }
 
-            runActivity("init frame") {
+            runActivity("project frame initialization") {
               initNewFrame(frame)
             }
           }
         }
 
         task.run()
-      }, "Loading Project '" + projectFile.fileName + "'...", true, null, frame.rootPane)
+      }, "Loading ${projectFile.fileName} Project", true, null, frame.rootPane)
     }
     return completed
   }
@@ -224,8 +224,7 @@ fun createNewProjectFrame(): IdeFrameImpl {
   frame.size = size
   frame.setLocationRelativeTo(null)
 
-  if (UIUtil.SUPPRESS_FOCUS_STEALING &&
-      Registry.`is`("suppress.focus.stealing.auto.request.focus") &&
+  if (UIUtil.DISABLE_AUTO_REQUEST_FOCUS &&
       !ApplicationManager.getApplication().isActive) {
     frame.isAutoRequestFocus = false
   }

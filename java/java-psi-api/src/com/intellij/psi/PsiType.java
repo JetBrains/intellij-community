@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -73,10 +73,10 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
     return new PsiArrayType(this);
   }
 
-  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} */
   @Deprecated
   @NotNull
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }

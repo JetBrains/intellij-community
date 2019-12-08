@@ -40,4 +40,6 @@ abstract class CallFrameBase(override val functionName: String?, override val li
   override val asyncFunctionName: String? = null
 
   override val isFromAsyncStack: Boolean = false
+
+  override val returnValue: Variable? = null
 }

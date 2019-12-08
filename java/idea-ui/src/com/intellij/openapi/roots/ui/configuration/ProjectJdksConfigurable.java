@@ -87,6 +87,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     myRoot.removeAllChildren();
     final Map<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
+      if (!(sdk instanceof ProjectJdkImpl)) continue;
+
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);
     }

@@ -16,21 +16,22 @@ class ActionGroupStub(
   val classLoader: ClassLoader,
   override val pluginId: PluginId
 ) : DefaultActionGroup(), ActionStubBase {
-
   var popupDefinedInXml = false
 
   override var iconPath: String? = null
 
-  fun initGroup(target: ActionGroup) {
+  fun initGroup(target: ActionGroup, actionManager: ActionManager) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
     target.shortcutSet = shortcutSet
-    val children = getChildren(null)
+    val children = getChildren(null, actionManager)
     if (children.isNotEmpty()) {
-      val defaultActionGroup = target as? DefaultActionGroup
-                               ?: throw PluginException(
-                                 "Action group class must extend DefaultActionGroup for the group to accept children: $actionClass",
-                                 pluginId)
-      defaultActionGroup.addAll(children.toList())
+      target as? DefaultActionGroup
+      ?: throw PluginException(
+        "Action group class must extend DefaultActionGroup for the group to accept children: $actionClass",
+        pluginId)
+      for (action in children) {
+        target.addAction(action, Constraints.LAST, actionManager)
+      }
     }
     if (popupDefinedInXml) {
       target.isPopup = isPopup

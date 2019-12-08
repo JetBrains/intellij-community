@@ -41,7 +41,7 @@ import java.awt.*;
 import java.util.*;
 
 public final class FormSourceCodeGenerator {
-  private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.make.FormSourceCodeGenerator");
+  private static final Logger LOG = Logger.getInstance(FormSourceCodeGenerator.class);
 
   @NonNls private StringBuffer myBuffer;
   private Stack<Boolean> myIsFirstParameterStack;

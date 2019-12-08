@@ -3,7 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
@@ -138,7 +138,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
-    if (!LoadingPhase.COMPONENT_LOADED.isComplete()) {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
       return;
     }

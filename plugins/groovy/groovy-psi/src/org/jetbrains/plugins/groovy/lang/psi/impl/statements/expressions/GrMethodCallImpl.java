@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +20,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
 import org.jetbrains.plugins.groovy.util.SafePublicationClearableLazyValue;
 
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.LOG;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.isImplicitCall;
 
 /**
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
+  private static final Logger LOG = Logger.getInstance(GrMethodCallImpl.class);
 
   private final SafePublicationClearableLazyValue<GroovyMethodCallReference> myImplicitCallReference =
     new SafePublicationClearableLazyValue<>(() -> isImplicitCall(this) ? new GrImplicitCallReference(this) : null);

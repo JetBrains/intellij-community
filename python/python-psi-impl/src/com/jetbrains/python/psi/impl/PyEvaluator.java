@@ -215,6 +215,12 @@ public class PyEvaluator {
         return !value;
       }
     }
+    else if (expression.getOperator() == PyTokenTypes.MINUS) {
+      final Number number = PyUtil.as(evaluate(expression.getOperand()), Number.class);
+      if (number != null) {
+        return fromBigInteger(toBigInteger(number).negate());
+      }
+    }
 
     return null;
   }

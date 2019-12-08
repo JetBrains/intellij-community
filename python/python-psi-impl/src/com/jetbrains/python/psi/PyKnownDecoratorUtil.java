@@ -4,7 +4,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -17,6 +17,7 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*;
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.PyUtil.turnConstructorIntoClass;
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change
@@ -150,9 +151,7 @@ public class PyKnownDecoratorUtil {
 
     if (context.maySwitchToAST(decorator)) {
       PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
-      if (resolved instanceof PyFunction && ArrayUtil.contains(resolved.getName(), PyNames.INIT, PyNames.NEW)) {
-        resolved = ((PyFunction)resolved).getContainingClass();
-      }
+      resolved = ObjectUtils.chooseNotNull(turnConstructorIntoClass(as(resolved, PyFunction.class)), resolved);
 
       if (resolved != null && resolved.getQualifiedName() != null) {
         final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());

@@ -433,7 +433,7 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testImportInTryExcept() {  // PY-2197
-    assertResolvesTo(PyFile.class, "sys.py");
+    assertResolvesTo(PyFile.class, "sys.pyi");
   }
 
   public void testModuleToBuiltins() {

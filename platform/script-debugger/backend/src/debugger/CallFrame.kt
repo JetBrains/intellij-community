@@ -40,6 +40,9 @@ interface CallFrame {
    */
   val functionName: String?
 
+  val returnValue: Variable?
+    get() = null
+
   /**
    * @return context for evaluating expressions in scope of this frame
    */

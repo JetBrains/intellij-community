@@ -266,17 +266,9 @@ public class CacheUpdateRunner {
       }
     }
 
-    @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
     private static void handleIndexingException(@NotNull VirtualFile file, @NotNull Throwable e) {
-      String message = "Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted";
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        System.err.println(message);
-        e.printStackTrace();
-      }
-      else {
-        LOG.error(message, e);
-      }
       file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);
+      LOG.error("Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted", e);
     }
   }
 }

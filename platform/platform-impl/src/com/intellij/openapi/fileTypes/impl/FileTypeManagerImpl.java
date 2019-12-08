@@ -4,8 +4,8 @@ package com.intellij.openapi.fileTypes.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -31,6 +31,7 @@ import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -175,7 +176,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         AbstractFileType type = (AbstractFileType)loadFileType(element, false);
         if (!duringLoad) {
-          fireFileTypesChanged();
+          fireFileTypesChanged(type, null);
         }
         return type;
       }
@@ -220,7 +221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           Application app = ApplicationManager.getApplication();
           app.runWriteAction(() -> fireBeforeFileTypesChanged());
           myPatternsTable.removeAllAssociations(scheme);
-          app.runWriteAction(() -> fireFileTypesChanged());
+          app.runWriteAction(() -> fireFileTypesChanged(null, scheme));
         }, ModalityState.NON_MODAL);
       }
     });
@@ -289,8 +290,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
         initializeMatchers(extension);
-        instantiateFileTypeBean(extension);
-        fireFileTypesChanged();
+        FileType fileType = instantiateFileTypeBean(extension);
+        fireFileTypesChanged(fileType, null);
       }
 
       @Override
@@ -356,14 +357,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     };
 
-    for (FileTypeFactory factory : FileTypeFactory.FILE_TYPE_FACTORY_EP.getExtensionList()) {
+    //noinspection deprecation
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.processWithPluginDescriptor((factory, pluginDescriptor) -> {
       try {
         factory.createFileTypes(consumer);
       }
-      catch (Throwable e) {
-        PluginManager.handleComponentError(e, factory.getClass().getName(), null);
+      catch (ProcessCanceledException e) {
+        throw e;
       }
-    }
+      catch (StartupAbortedException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw new StartupAbortedException("Cannot create file types", new PluginException(e, pluginDescriptor.getPluginId()));
+      }
+    });
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
@@ -464,17 +472,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileType instantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
     FileType fileType;
     try {
+      @SuppressWarnings("unchecked")
+      Class<FileType> beanClass = (Class<FileType>)Class.forName(fileTypeBean.implementationClass, true, fileTypeBean.getPluginDescriptor().getPluginClassLoader());
       if (fileTypeBean.fieldName != null) {
-        final Class<Object> fileTypeBeanClass = fileTypeBean.findExtensionClass(fileTypeBean.implementationClass);
-        final Field field = fileTypeBeanClass.getDeclaredField(fileTypeBean.fieldName);
-        fileType = (FileType) field.get(null);
+        Field field = beanClass.getDeclaredField(fileTypeBean.fieldName);
+        field.setAccessible(true);
+        fileType = (FileType)field.get(null);
       }
       else {
-        fileType = fileTypeBean.instantiateClass(fileTypeBean.implementationClass, ApplicationManager.getApplication().getPicoContainer());
+        // uncached - cached by FileTypeManagerImpl and not by bean
+        fileType = ReflectionUtil.newInstance(beanClass, false);
       }
     }
-    catch (NoSuchFieldException | IllegalAccessException e) {
-      LOG.error(new PluginException(e, fileTypeBean.getPluginId()));
+    catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+      LOG.error(new PluginException(e, fileTypeBean.getPluginDescriptor().getPluginId()));
       return null;
     }
 
@@ -1210,7 +1221,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
       registerFileTypeWithoutNotification(type, defaultAssociations, true);
-      fireFileTypesChanged();
+      fireFileTypesChanged(type, null);
     });
   }
 
@@ -1220,7 +1231,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       fireBeforeFileTypesChanged();
       unregisterFileTypeWithoutNotification(fileType);
       myStandardFileTypes.remove(fileType.getName());
-      fireFileTypesChanged();
+      fireFileTypesChanged(null, fileType);
     });
   }
 
@@ -1318,16 +1329,21 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void fireBeforeFileTypesChanged() {
-    FileTypeEvent event = new FileTypeEvent(this);
+    FileTypeEvent event = new FileTypeEvent(this, null, null);
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
   private final AtomicInteger fileTypeChangedCount;
+
   @Override
   public void fireFileTypesChanged() {
+    fireFileTypesChanged(null, null);
+  }
+
+  public void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     clearCaches();
     clearPersistentAttributes();
-    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
+    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<>();

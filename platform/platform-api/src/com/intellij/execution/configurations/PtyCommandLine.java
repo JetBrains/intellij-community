@@ -138,24 +138,35 @@ public class PtyCommandLine extends GeneralCommandLine {
       return startProcessWithPty(commands);
     }
     catch (Throwable t) {
-      File logFile = getPtyLogFile();
-      if (logFile != null && logFile.exists()) {
-        String logContent;
-        try {
-          logContent = FileUtil.loadFile(logFile);
+      String message = "Couldn't run process with PTY";
+      if (LOG.isDebugEnabled()) {
+        String logFileContent = loadLogFile();
+        if (logFileContent != null) {
+          LOG.debug(message, t, logFileContent);
         }
-        catch (Exception e) {
-          logContent = "Unable to retrieve log: " + e.getMessage();
+        else {
+          LOG.warn(message, t);
         }
-
-        LOG.debug("Couldn't run process with PTY", t, logContent);
       }
       else {
-        LOG.debug("Couldn't run process with PTY", t);
+        LOG.warn(message, t);
       }
     }
-
     return super.startProcess(commands);
+  }
+
+  @Nullable
+  private static String loadLogFile() {
+    File logFile = getPtyLogFile();
+    if (logFile != null && logFile.exists()) {
+      try {
+        return FileUtil.loadFile(logFile);
+      }
+      catch (Exception e) {
+        return "Unable to retrieve pty log: " + e.getMessage();
+      }
+    }
+    return null;
   }
 
   private static File getPtyLogFile() {

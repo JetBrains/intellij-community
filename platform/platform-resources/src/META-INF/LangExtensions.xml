@@ -18,6 +18,11 @@
 
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+
+    <!-- required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload -->
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros" preload="true"/>
+
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="true"/>
 
@@ -92,7 +97,7 @@
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
     <projectService serviceInterface="com.intellij.psi.PsiDocumentManager"
-                    serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="true"/>
+                    serviceImplementation="com.intellij.psi.impl.PsiDocumentManagerImpl" preload="await"/>
 
     <projectService serviceInterface="com.intellij.util.indexing.FileBasedIndexScanRunnableCollector"
                     serviceImplementation="com.intellij.util.indexing.FileBasedIndexScanRunnableCollectorImpl"/>
@@ -202,9 +207,6 @@
 
     <applicationService serviceInterface="com.intellij.psi.util.PsiEditorUtil"
                         serviceImplementation="com.intellij.psi.util.PsiUtilBase"/>
-
-    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
-                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
 
     <applicationService serviceImplementation="com.intellij.lang.IdeLanguageCustomization"/>
 

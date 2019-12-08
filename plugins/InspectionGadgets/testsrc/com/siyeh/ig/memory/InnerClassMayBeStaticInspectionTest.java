@@ -1,3 +1,4 @@
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -5,6 +6,13 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 public class InnerClassMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    addEnvironmentClass("package org.junit.jupiter.api;" +
+                        "public @interface Nested {}");
+  }
 
   public void testInnerClassMayBeStatic() { doTest(); }
 

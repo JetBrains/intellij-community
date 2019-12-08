@@ -3,7 +3,6 @@ package org.jetbrains.io
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.Base64
 import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
@@ -48,18 +47,15 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       prevHandlerAttribute.set(null)
     }
 
-    for (handler in HttpRequestHandler.EP_NAME.iterable) {
-      try {
+    return HttpRequestHandler.EP_NAME.findFirstSafe { handler ->
         if (handler.checkAndProcess(updatedUrlDecoder)) {
-          prevHandlerAttribute.set(handler)
-          return true
-        }
+        prevHandlerAttribute.set(handler)
+        true
       }
-      catch (e: Throwable) {
-        logger<BuiltInServer>().error(e)
+      else {
+        false
       }
-    }
-    return false
+    } != null
   }
 
   /**

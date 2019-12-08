@@ -240,10 +240,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       myOldSdks = new SdkLeakTracker();
     }
 
+    setUpProject();
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
-
-    setUpProject();
 
     boolean isTrackCodeStyleChanges = !(isStressTest() ||
                                         ApplicationManager.getApplication() == null ||

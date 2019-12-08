@@ -29,7 +29,7 @@ interface MessageProcessor {
   fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
 }
 
-class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
+class MessageManager<REQUEST: Request<*>, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
   private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
 
   interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS> {
@@ -51,6 +51,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
 
   fun send(message: REQUEST, callback: RequestCallback<SUCCESS>) {
     if (rejectIfClosed(callback)) {
+      message.buffer.release()
       return
     }
 

@@ -33,7 +33,7 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
  * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
-  static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
+  public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
 

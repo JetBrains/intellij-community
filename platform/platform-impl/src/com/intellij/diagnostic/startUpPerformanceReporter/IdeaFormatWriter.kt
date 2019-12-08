@@ -8,6 +8,7 @@ import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.array
@@ -25,8 +26,6 @@ private class ExposingCharArrayWriter : CharArrayWriter(8192) {
   }
 }
 
-private const val VERSION = "11"
-
 internal class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
                                 private val pluginCostMap: MutableMap<String, ObjectLongHashMap<String>>,
                                 private val threadNameManager: ThreadNameManager) {
@@ -34,22 +33,26 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 
   private val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
+  fun write(timeOffset: Long, items: List<ActivityImpl>, services: List<ActivityImpl>, instantEvents: List<ActivityImpl>, end: Long) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
     writer.prettyPrinter = MyJsonPrettyPrinter()
     writer.use {
       writer.obj {
-        writer.writeStringField("version", VERSION)
+        writer.writeStringField("version", StartUpPerformanceReporter.VERSION)
         writer.writeStringField("build", ApplicationInfo.getInstance().build.asStringWithoutProductCode())
         writer.writeStringField("productCode", ApplicationInfo.getInstance().build.productCode)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
+        writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
+        writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
         writeServiceStats(writer)
         writeIcons(writer)
 
         writer.array("traceEvents") {
-          TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
+          val traceEventFormatWriter = TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager)
+          traceEventFormatWriter.writeInstantEvents(writer)
+          traceEventFormatWriter.writeServiceEvents(writer, services, pluginCostMap)
         }
 
         var totalDuration = 0L
@@ -91,21 +94,13 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
   }
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
-    val ownDurations = ObjectLongHashMap<ActivityImpl>()
-
     // sorted to get predictable JSON
     for (name in activities.keys.sorted()) {
-      ownDurations.clear()
-
       val list = activities.getValue(name)
       StartUpPerformanceReporter.sortItems(list)
 
-      if (name.endsWith("Service") || name.endsWith("Component")) {
-        computeOwnTime(list, ownDurations)
-      }
-
       val measureThreshold = if (name == ActivityCategory.APP_INIT.jsonName || name == ActivityCategory.REOPENING_EDITOR.jsonName) -1 else StartUpMeasurer.MEASURE_THRESHOLD
-      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ownDurations, measureThreshold = measureThreshold)
+      writeActivities(list, startTime, writer, activityNameToJsonFieldName(name), ObjectLongHashMap(), measureThreshold = measureThreshold)
     }
   }
 
@@ -162,8 +157,7 @@ internal class IdeaFormatWriter(private val activities: Map<String, MutableList<
 }
 
 private fun activityNameToJsonFieldName(name: String): String {
-  val last = name.last()
-  return when (last) {
+  return when (name.last()) {
     'y' -> name.substring(0, name.length - 1) + "ies"
     's' -> name
     else -> name.substring(0) + 's'

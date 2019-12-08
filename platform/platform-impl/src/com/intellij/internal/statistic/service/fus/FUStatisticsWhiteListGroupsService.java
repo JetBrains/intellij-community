@@ -42,8 +42,7 @@ import static java.util.Collections.emptyList;
  * </ol>
  */
 public class FUStatisticsWhiteListGroupsService {
-  private static final Logger LOG =
-    Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");
+  private static final Logger LOG = Logger.getInstance(FUStatisticsWhiteListGroupsService.class);
 
   /**
    * @return null if error happened during groups fetching

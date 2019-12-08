@@ -57,14 +57,14 @@ public class VcsLogUiUtil {
     logData.getProgress().addProgressIndicatorListener(new VcsLogProgress.ProgressListener() {
       @Override
       public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-        if (matches(keys)) {
+        if (isProgressVisible(keys, logId)) {
           progressStripe.startLoading();
         }
       }
 
       @Override
       public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-        if (matches(keys)) {
+        if (isProgressVisible(keys, logId)) {
           progressStripe.startLoading();
         }
         else {
@@ -76,16 +76,17 @@ public class VcsLogUiUtil {
       public void progressStopped() {
         progressStripe.stopLoading();
       }
-
-      private boolean matches(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-        if (keys.contains(VcsLogData.DATA_PACK_REFRESH)) {
-          return true;
-        }
-        return ContainerUtil.find(keys, key -> VisiblePackRefresherImpl.isVisibleKeyFor(key, logId)) != null;
-      }
     }, disposableParent);
 
     return progressStripe;
+  }
+
+  public static boolean isProgressVisible(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys,
+                                          @NotNull String logId) {
+    if (keys.contains(VcsLogData.DATA_PACK_REFRESH)) {
+      return true;
+    }
+    return ContainerUtil.find(keys, key -> VisiblePackRefresherImpl.isVisibleKeyFor(key, logId)) != null;
   }
 
   @NotNull

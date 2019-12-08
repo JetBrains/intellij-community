@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LeafElement extends TreeElement {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.tree.LeafElement");
+  private static final Logger LOG = Logger.getInstance(LeafElement.class);
   private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
   private static final int TEXT_MATCHES_THRESHOLD = 5;

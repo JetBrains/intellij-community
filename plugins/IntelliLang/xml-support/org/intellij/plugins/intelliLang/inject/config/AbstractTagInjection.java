@@ -47,7 +47,7 @@ import java.util.TreeSet;
  */
 public abstract class AbstractTagInjection extends BaseInjection {
 
-  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection");
+  private static final Logger LOG = Logger.getInstance(AbstractTagInjection.class);
 
   @NotNull @NonNls
   private StringMatcher myTagName = StringMatcher.ANY;

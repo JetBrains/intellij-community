@@ -557,7 +557,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {
     @Override
-    public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
+    public final Component getDefaultComponent(final Container focusCycleRoot) {
       if (myCurrentWindow != null) {
         final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {

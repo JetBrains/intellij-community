@@ -17,8 +17,6 @@ class DebugLogManager {
 
   data class Category(val category: String, val level: DebugLogLevel)
 
-  private val properties = PropertiesComponent.getInstance()
-
   companion object {
     @JvmStatic
     fun getInstance() = service<DebugLogManager>()
@@ -34,6 +32,7 @@ class DebugLogManager {
   }
 
   fun getSavedCategories(): List<Category> {
+    val properties = PropertiesComponent.getInstance()
     return ContainerUtil.concat(fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG),
                                 fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE))
   }
@@ -60,6 +59,7 @@ class DebugLogManager {
   }
 
   fun saveCategories(categories: List<Category>) {
+    val properties = PropertiesComponent.getInstance()
     properties.setValue(LOG_DEBUG_CATEGORIES, toString(categories, DebugLogLevel.DEBUG), null)
     properties.setValue(LOG_TRACE_CATEGORIES, toString(categories, DebugLogLevel.TRACE), null)
   }

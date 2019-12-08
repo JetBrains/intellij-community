@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -254,9 +255,15 @@ public class ProjectUtil {
     return path.contains("://") || path.contains("\\\\");
   }
 
+  @NotNull
+  public static Project[] getOpenProjects() {
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+    return projectManager == null ? new Project[0] : projectManager.getOpenProjects();
+  }
+
   @Nullable
   public static Project findAndFocusExistingProjectForPath(@NotNull Path file) {
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    Project[] openProjects = getOpenProjects();
     if (openProjects.length == 0) {
       return null;
     }
@@ -353,9 +360,12 @@ public class ProjectUtil {
       if (executeIfAppInactive) {
         AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
         f.toFront();
+        if (!SystemInfo.isMac && !f.isAutoRequestFocus()) {
+          IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+        }
       }
       else {
-        IdeFocusManager.getInstance(p).requestFocus(f.getMostRecentFocusOwner(), true);
+        IdeFocusManager.getInstance(p).requestFocusInProject(f.getMostRecentFocusOwner(), p);
       }
     }
   }

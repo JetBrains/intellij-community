@@ -73,7 +73,8 @@ public class RepositoryHelper {
         }
       }
       catch (IOException e) {
-        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host), e);
+        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host) + ": " + e);
+        LOG.debug(e);
       }
     }
     return result;

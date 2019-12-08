@@ -79,6 +79,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";
+  private static final String ORDERED_DICT = "typing.OrderedDict";
   private static final String SET = "typing.Set";
   private static final String FROZEN_SET = "typing.FrozenSet";
   private static final String COUNTER = "typing.Counter";
@@ -92,6 +93,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NO_RETURN = "typing.NoReturn";
   public static final String FINAL = "typing.Final";
   public static final String FINAL_EXT = "typing_extensions.Final";
+  public static final String LITERAL = "typing.Literal";
+  public static final String LITERAL_EXT = "typing_extensions.Literal";
 
   private static final String PY2_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
@@ -110,6 +113,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   private static final ImmutableMap<String, String> COLLECTIONS_CLASSES = ImmutableMap.<String, String>builder()
     .put(DEFAULT_DICT, "collections.defaultdict")
+    .put(ORDERED_DICT, "collections.OrderedDict")
     .put(COUNTER, "collections.Counter")
     .put(DEQUE, "collections.deque")
     .put(CHAIN_MAP, "collections.ChainMap")
@@ -124,10 +128,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
     // special forms
-    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL)
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR, FINAL, LITERAL)
     // type aliases
-    .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
-    .add(PROTOCOL_EXT, FINAL_EXT)
+    .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, ORDERED_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
+    .add(PROTOCOL_EXT, FINAL_EXT, LITERAL_EXT)
     .build();
 
   /**
@@ -149,6 +153,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(LIST)
     .add(DICT)
     .add(DEFAULT_DICT)
+    .add(ORDERED_DICT)
     .add(SET)
     .add(FROZEN_SET)
     .add(PROTOCOL, PROTOCOL_EXT)
@@ -158,6 +163,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(CHAIN_MAP)
     .add(NO_RETURN)
     .add(FINAL, FINAL_EXT)
+    .add(LITERAL, LITERAL_EXT)
     .build();
 
   @Nullable
@@ -460,7 +466,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNewTypeForCallExpression(@NotNull PyCallExpression callExpression, @NotNull TypeEvalContext context) {
     if (PyTypingNewType.Companion.isTypingNewType(callExpression)) {
-      final String className = PyResolveUtil.resolveFirstStrArgument(callExpression);
+      final String className = PyResolveUtil.resolveStrArgument(callExpression, 0, "name");
       if (className != null) {
         PyExpression secondArg = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
         if (secondArg != null) {
@@ -815,6 +821,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (finalType != null) {
         return finalType;
       }
+      final Ref<PyType> literalType = getLiteralType(resolved, context);
+      if (literalType != null) {
+        return literalType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -835,7 +845,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (anyType != null) {
         return anyType;
       }
-      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in 
+      // We perform chained resolve only for actual aliases as tryResolvingWithAliases() returns the passed-in
       // expression both when it's not a reference expression and when it's failed to resolve it, hence we might
       // hit SOE for mere unresolved references in the latter case.
       if (alias != null) {
@@ -953,6 +963,24 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create();
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getLiteralType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)resolved;
+
+      final Collection<String> operandNames = resolveToQualifiedNames(subscriptionExpr.getOperand(), context.getTypeContext());
+      if (ContainerUtil.exists(operandNames, name -> name.equals(LITERAL) || name.equals(LITERAL_EXT))) {
+        return Optional
+          .ofNullable(subscriptionExpr.getIndexExpression())
+          .map(index -> PyLiteralType.Companion.fromLiteralParameter(index, context.getTypeContext()))
+          .map(Ref::create)
+          .orElse(null);
+      }
+    }
+
     return null;
   }
 
@@ -1363,15 +1391,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         results = tryResolvingOnStubs((PyReferenceExpression)expression, context);
       }
       for (PsiElement element : results) {
-        if (element instanceof PyFunction) {
-          final PyFunction function = (PyFunction)element;
-          if (PyUtil.isInit(function)) {
-            final PyClass cls = function.getContainingClass();
-            if (cls != null) {
-              elements.add(Pair.create(null, cls));
-              continue;
-            }
-          }
+        final PyClass cls = PyUtil.turnConstructorIntoClass(as(element, PyFunction.class));
+        if (cls != null) {
+          elements.add(Pair.create(null, cls));
+          continue;
         }
         final String name = element != null ? getQualifiedName(element) : null;
         if (name != null && OPAQUE_NAMES.contains(name)) {

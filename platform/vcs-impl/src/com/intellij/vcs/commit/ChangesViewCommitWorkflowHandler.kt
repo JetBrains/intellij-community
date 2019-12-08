@@ -62,19 +62,25 @@ class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !isCommitEmpty()
+  private fun isDefaultCommitEnabled() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !isCommitEmpty()
 
   override fun vcsesChanged() {
-    updateDefaultCommitAction()
-
     initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses))
 
+    updateDefaultCommitActionEnabled()
+    ui.defaultCommitActionName = getCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
   }
 
-  private fun updateDefaultCommitAction() {
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+  override fun executionStarted() = updateDefaultCommitActionEnabled()
+  override fun executionEnded() {
+    // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
+    // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
+    // state without blinking.
+  }
+
+  private fun updateDefaultCommitActionEnabled() {
     ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
   }
 
@@ -133,7 +139,7 @@ class ChangesViewCommitWorkflowHandler(
   fun activate(): Boolean = ui.activate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
-    ui.showCommitOptions(ensureCommitOptions(), isFromToolbar, dataContext)
+    ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
 
   override fun inclusionChanged() {
     val inclusion = inclusionModel.getInclusion()
@@ -145,7 +151,7 @@ class ChangesViewCommitWorkflowHandler(
       knownActiveChanges = activeChanges
     }
 
-    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+    updateDefaultCommitActionEnabled()
     super.inclusionChanged()
   }
 
@@ -173,6 +179,8 @@ class ChangesViewCommitWorkflowHandler(
 
       workflow.clearCommitContext()
       initCommitHandlers()
+
+      ui.defaultCommitActionName = getCommitActionName() // to remove "Amend" prefix if any
     }
   }
 }

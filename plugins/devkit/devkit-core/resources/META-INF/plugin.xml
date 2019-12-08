@@ -295,6 +295,8 @@
               implementationClass="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileType" fieldName="INSTANCE"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.cachedValueProfiler.CVPFileEditorProvider"/>
 
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+
     <!-- themes -->
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.themes.ThemeJsonCompletionContributor" language="JSON"/>
     <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
@@ -389,6 +391,11 @@
             text="Analyze Unloadable Plugins">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
+
+    <action id="UpdateIdeFromSources" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesAction">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+    <action id="UpdateIdeFromSourcesSettings" class="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
 
     <!-- Theme Toolbar -->
     <group id="DevKit.ThemeEditorToolbar">

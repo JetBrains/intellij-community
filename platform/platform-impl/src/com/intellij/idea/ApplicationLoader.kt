@@ -13,6 +13,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.idea.SocketLock.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -33,14 +34,13 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
-import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.AppUIUtil
@@ -50,6 +50,7 @@ import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.exists
 import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
@@ -67,10 +68,10 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
+import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.BiConsumer
-import javax.swing.JFrame
+import java.util.function.Function
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
@@ -139,18 +140,20 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
-  // preload services only after icon activation
-  registerRegistryAndInitStoreFuture
-    .thenAccept {
-      val preloadServiceActivity = StartUpMeasurer.startActivity("preload services")
-      app.preloadServices(it)
-        .whenComplete(BiConsumer { _, error ->
-          preloadServiceActivity.end()
-          if (error != null) {
-            LOG.warn(error)
-          }
-        })
+  val nonEdtExecutor = Executor {
+    when {
+      app.isDispatchThread -> AppExecutorUtil.getAppExecutorService().execute(it)
+      else -> it.run()
     }
+  }
+
+  val boundedExecutor = createExecutorToPreloadServices()
+
+  // preload services only after icon activation
+  val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
+    .thenComposeAsync<Void?>(Function {
+      preloadServices(it, app, boundedExecutor, activityPrefix = "")
+    }, nonEdtExecutor)
 
   if (!headless) {
     if (SystemInfo.isMac) {
@@ -160,7 +163,7 @@ private fun startApp(app: ApplicationImpl,
 
       // ensure that TouchBarsManager is loaded before WelcomeFrame/project
       // do not wait completion - it is thread safe and not required for application start
-      AppExecutorUtil.getAppExecutorService().execute {
+      NonUrgentExecutor.getInstance().execute {
         runActivity("mac touchbar") {
           Foundation.init()
           TouchBarsManager.isTouchBarAvailable()
@@ -175,65 +178,99 @@ private fun startApp(app: ApplicationImpl,
       PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
     }
 
-    scheduleIconPreloading()
+    NonUrgentExecutor.getInstance().execute {
+      runActivity("icons preloading") {
+        AsyncProcessIcon("")
+        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+        AnimatedIcon.FS()
+      }
+    }
   }
 
+  val edtExecutor = Executor { EventQueue.invokeLater(it) }
+
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
-    .thenRunOrHandleError {
+    .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Phases.PLACE_ON_EVENT_QUEUE)
 
-      val task = {
+      val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-
         app.loadComponents(SplashManager.getProgressIndicator())
-      }
+      }, edtExecutor)
 
-      if (EventQueue.isDispatchThread()) {
-        task()
-      }
-      else {
-        EventQueue.invokeAndWait(task)
-      }
-
-      val activity = initAppActivity.startChild(Phases.APP_INITIALIZED_CALLBACK)
-      callAppInitialized(app)
-      activity.end()
-
-      // execute in parallel to loading components - this functionality should be used only by plugin functionality,
-      // that used after start-up
-      runActivity("init system properties") {
-        SystemPropertyBean.initSystemProperties()
-      }
-
-      if (!headless) {
-        addActivateAndWindowsCliListeners(app)
-      }
-
-      initAppActivity.end()
-
-      EventQueue.invokeLater {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          starter.main(ArrayUtilRt.toStringArray(args))
+      boundedExecutor.execute {
+        // execute in parallel to loading components - this functionality should be used only by plugin functionality,
+        // that used after start-up
+        runActivity("system properties setting") {
+          SystemPropertyBean.initSystemProperties()
         }
+      }
 
-        if (PluginManagerCore.isRunningFromSources()) {
-          AppExecutorUtil.getAppExecutorService().execute {
-            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
+    }
+    .thenComposeAsync<Void?>(Function {
+      val activity = initAppActivity.startChild("app initialized callback")
+      val future = callAppInitialized(app, boundedExecutor)
+
+      // should be after scheduling all app initialized listeners (because this activity is not important)
+      boundedExecutor.execute {
+        runActivity("project converter provider preloading") {
+          app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+        }
+      }
+
+      future
+        .thenRun {
+          activity.end()
+          if (!headless) {
+            addActivateAndWindowsCliListeners()
           }
+
+          initAppActivity.end()
+        }
+    }, nonEdtExecutor /* if loadComponentInEdtFuture will be completed after preloadSyncServiceFuture, then this task will be executed in EDT — it is not good, so, force execution not in EDT */)
+    .thenRunAsync(Runnable {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(ArrayUtilRt.toStringArray(args))
+      }
+
+      if (PluginManagerCore.isRunningFromSources()) {
+        NonUrgentExecutor.getInstance().execute {
+          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
         }
       }
+    }, edtExecutor)
+    .exceptionally {
+      StartupAbortedException.processException(it)
+      null
     }
 }
 
-private fun scheduleIconPreloading() {
-  AppExecutorUtil.getAppExecutorService().execute {
-    runActivity("preload icons") {
-      AsyncProcessIcon("")
-      AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-      AnimatedIcon.FS()
-    }
+@ApiStatus.Internal
+fun createExecutorToPreloadServices(): Executor {
+  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), /* changeThreadName = */ false)
+}
+
+@ApiStatus.Internal
+fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, container: PlatformComponentManagerImpl, executor: Executor = createExecutorToPreloadServices(), activityPrefix: String): CompletableFuture<Void?> {
+  val syncActivity = StartUpMeasurer.startActivity("${activityPrefix}service sync preloading")
+  val asyncActivity = StartUpMeasurer.startActivity(" ${activityPrefix}service async preloading")
+
+  val result = container.preloadServices(plugins, executor)
+
+  fun endActivityAndLogError(future: CompletableFuture<Void?>, activity: Activity): CompletableFuture<Void?> {
+    return future
+      .whenComplete { _, error ->
+        activity.end()
+        if (error != null && error !is ProcessCanceledException) {
+          StartupAbortedException.processException(error)
+        }
+      }
   }
+
+  endActivityAndLogError(result.asyncPreloadedServices, asyncActivity)
+  return endActivityAndLogError(result.syncPreloadedServices, syncActivity)
 }
 
 @ApiStatus.Internal
@@ -258,25 +295,23 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
     }
 }
 
-private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
+private fun addActivateAndWindowsCliListeners() {
   StartupUtil.addExternalInstanceListener { args ->
     val ref = AtomicReference<Future<CliResult>>()
-    app.invokeAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       LOG.info("ApplicationImpl.externalInstanceListener invocation")
       val realArgs = if (args.isEmpty()) args else args.subList(1, args.size)
       val projectAndFuture = CommandLineProcessor.processExternalCommandLine(realArgs, args.firstOrNull())
       ref.set(projectAndFuture.getSecond())
-      val frame = when (val project = projectAndFuture.getFirst()) {
-        null -> WindowManager.getInstance().findVisibleFrame()
-        else -> WindowManager.getInstance().getIdeFrame(project) as JFrame
+      val project = projectAndFuture.getFirst()
+      if (project == null) {
+        val frame = WindowManager.getInstance().findVisibleFrame()
+        frame.toFront()
+        DialogEarthquakeShaker.shake(frame)
       }
-      if (frame != null) {
-        if (frame is IdeFrame) {
-          AppIcon.getInstance().requestFocus(frame as IdeFrame)
-        }
-        else {
-          frame.toFront()
-          DialogEarthquakeShaker.shake(frame)
+      else {
+        WindowManager.getInstance().getFrame(project)?.let {
+          AppIcon.getInstance().requestFocus()
         }
       }
     }
@@ -285,6 +320,7 @@ private fun addActivateAndWindowsCliListeners(app: ApplicationImpl) {
   }
 
   MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
+    val app = ApplicationManager.getApplication()
     val argsList = args.toList()
     LOG.info("Received external Windows command line: current directory $currentDirectory, command line $argsList")
     if (argsList.isEmpty()) return@WindowsCommandLineListener 0
@@ -313,7 +349,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
       }
 
       if (!Main.isHeadless()) {
-        runActivity("load system fonts") {
+        runActivity("system fonts loading") {
           // editor and other UI components need the list of system fonts to implement font fallback
           // this list is pre-loaded here, in parallel to other activities, to speed up project opening
           // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
@@ -321,7 +357,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
         }
 
         // pre-load cursors used by drag'n'drop AWT subsystem
-        invokeLaterWithAnyModality("setup DnD") {
+        invokeLaterWithAnyModality("DnD setup") {
           DragSource.getDefaultDragSource()
         }
       }
@@ -388,7 +424,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
 
   // we set it after beforeApplicationLoaded call, because app store can depend on stream provider state
   app.stateStore.setPath(effectiveConfigPath)
-  LoadingPhase.setCurrentPhase(LoadingPhase.CONFIGURATION_STORE_INITIALIZED)
+  StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   activity.end()
 }
 
@@ -427,8 +463,8 @@ open class IdeStarter : ApplicationStarter {
     var project: Project? = null
     if (commandLineArgs.firstOrNull() != null) {
       LOG.info("ApplicationLoader.loadProject")
-      val currentDirectory: String? = System.getenv("IDEA_INITIAL_DIRECTORY")
-      LOG.info("IDEA_INITIAL_DIRECTORY: $currentDirectory")
+      val currentDirectory: String? = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+      LOG.info("$LAUNCHER_INITIAL_DIRECTORY_ENV_VAR: $currentDirectory")
       project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst()
     }
     return project
@@ -441,13 +477,13 @@ open class IdeStarter : ApplicationStarter {
     // Event queue should not be changed during initialization of application components.
     // It also cannot be changed before initialization of application components because IdeEventQueue uses other
     // application components. So it is proper to perform replacement only here.
-    frameInitActivity.runChild("set window manager") {
-      IdeEventQueue.getInstance().setWindowManager(WindowManager.getInstance() as WindowManagerImpl)
+    frameInitActivity.runChild("IdeEventQueue informing about WindowManager") {
+      IdeEventQueue.getInstance().setWindowManager(WindowManagerEx.getInstanceEx())
     }
 
     val commandLineArgs = args.toList()
 
-    val appFrameCreatedActivity = frameInitActivity.startChild("call appFrameCreated")
+    val appFrameCreatedActivity = frameInitActivity.startChild("app frame created callback")
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     lifecyclePublisher.appFrameCreated(commandLineArgs)
     appFrameCreatedActivity.end()
@@ -473,7 +509,7 @@ open class IdeStarter : ApplicationStarter {
 
     frameInitActivity.end()
 
-    AppExecutorUtil.getAppExecutorService().run {
+    NonUrgentExecutor.getInstance().execute {
       LifecycleUsageTriggerCollector.onIdeStart()
     }
 
@@ -517,7 +553,7 @@ open class IdeStarter : ApplicationStarter {
 
   private fun postOpenUiTasks(app: Application) {
     if (SystemInfo.isMac) {
-      AppExecutorUtil.getAppExecutorService().execute {
+      NonUrgentExecutor.getInstance().execute {
         runActivity("mac touchbar on app init") {
           TouchBarsManager.onApplicationInitialized()
           if (TouchBarsManager.isTouchBarAvailable()) {
@@ -526,8 +562,13 @@ open class IdeStarter : ApplicationStarter {
 
           val keymap = KeymapManager.getInstance().activeKeymap
           SystemShortcuts().checkConflictsAndNotify(keymap)
-
-          StartupUtil.disableInputMethodsIfPossible()
+        }
+      }
+    }
+    else if (SystemInfo.isXWindow && SystemInfo.isJetBrainsJvm) {
+      NonUrgentExecutor.getInstance().execute {
+        runActivity("input method disabling on Linux") {
+          disableInputMethodsIfPossible()
         }
       }
     }
@@ -639,18 +680,22 @@ private fun createLocatorFile() {
   }
 }
 
-fun callAppInitialized(app: ApplicationImpl) {
-  AppExecutorUtil.getAppExecutorService().execute {
+fun callAppInitialized(app: ApplicationImpl, executor: Executor): CompletableFuture<Void?> {
+  NonUrgentExecutor.getInstance().execute {
     createLocatorFile()
   }
 
+  val result = mutableListOf<CompletableFuture<Void>>()
   for (listener in app.extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")) {
     if (listener == null) {
       break
     }
 
-    LOG.runAndLogException {
-      listener.componentsInitialized()
-    }
+    CompletableFuture.runAsync(Runnable {
+      LOG.runAndLogException {
+        listener.componentsInitialized()
+      }
+    }, executor)
   }
+  return CompletableFuture.allOf(*result.toTypedArray())
 }

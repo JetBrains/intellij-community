@@ -10,7 +10,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter
-import com.intellij.vcs.log.ui.table.LogTableColumn
+import com.intellij.vcs.log.ui.table.VcsLogColumn
 
 open class CustomStringsWhiteListRule(private val id: String, private val values: Collection<String>) : CustomWhiteListRule() {
   final override fun acceptRuleId(ruleId: String?): Boolean = id == ruleId
@@ -35,4 +35,4 @@ class VcsLogHighlighterIdValidator :
                                                              CurrentBranchHighlighter.Factory.ID))
 
 class VcsLogColumnNameValidator :
-  CustomStringsWhiteListRule("vcs_log_column_name", LogTableColumn.DYNAMIC_COLUMNS.map { it.stableName }.toSet())
+  CustomStringsWhiteListRule("vcs_log_column_name", VcsLogColumn.DYNAMIC_COLUMNS.map { it.stableName }.toSet())

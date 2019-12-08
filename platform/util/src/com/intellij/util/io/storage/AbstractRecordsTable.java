@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 public abstract class AbstractRecordsTable implements Disposable, Forceable {
-  private static final Logger LOG = Logger.getInstance("com.intellij.util.io.storage.AbstractRecordsTable");
+  private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;

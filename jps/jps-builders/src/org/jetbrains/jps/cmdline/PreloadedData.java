@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class PreloadedData {
+public class PreloadedData extends UserDataHolderBase {
   @Nullable 
   private BuildRunner runner;
   @Nullable

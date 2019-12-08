@@ -35,7 +35,8 @@ import java.util.function.Function;
  * @author ven
  */
 public class GroovyPsiManager {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
+  private static final Logger LOG = Logger.getInstance(GroovyPsiManager.class);
+
   private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
                                                                                 GroovyCommonClassNames.GROOVY_OBJECT,
                                                                                 GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT,

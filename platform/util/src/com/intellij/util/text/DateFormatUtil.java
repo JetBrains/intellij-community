@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class DateFormatUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.util.text.DateFormatUtil");
+  private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
   public static final long SECOND = 1000;
   public static final long MINUTE = SECOND * 60;

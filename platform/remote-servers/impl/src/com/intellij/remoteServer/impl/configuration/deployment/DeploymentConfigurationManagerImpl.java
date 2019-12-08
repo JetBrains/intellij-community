@@ -36,16 +36,9 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
   }
 
   @Override
-  @Deprecated
-  public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
-                                        @Nullable RemoteServer<?> remoteServer) {
-    createAndRunConfiguration(serverType, remoteServer, null);
-  }
-
-  @Override
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
                                         @Nullable RemoteServer<?> remoteServer,
-                                        @Nullable DeploymentSourceType sourceType) {
+                                        @Nullable DeploymentSourceType<?> sourceType) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
     RunManager runManager = RunManager.getInstance(myProject);
     ConfigurationFactory factory = configurationType.getFactoryForType(sourceType);

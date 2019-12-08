@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -455,6 +456,26 @@ public class KeymapUtil {
       return null;
     }
     return shortcut.getFirstKeyStroke();
+  }
+
+  @NotNull
+  public static Collection<KeyStroke> getKeyStrokes(@NotNull ShortcutSet shortcutSet) {
+    Shortcut[] shortcuts = shortcutSet.getShortcuts();
+    if (shortcuts.length == 0) {
+      return Collections.emptySet();
+    }
+    Set<KeyStroke> result = new SmartHashSet<>();
+    for (Shortcut shortcut : shortcuts) {
+      if (!(shortcut instanceof KeyboardShortcut)) {
+        continue;
+      }
+      KeyboardShortcut kbShortcut = (KeyboardShortcut)shortcut;
+      if (kbShortcut.getSecondKeyStroke() != null) {
+        continue;
+      }
+      result.add(kbShortcut.getFirstKeyStroke());
+    }
+    return result.isEmpty() ? Collections.emptySet() : result;
   }
 
   @NotNull

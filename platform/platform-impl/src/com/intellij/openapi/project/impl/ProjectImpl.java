@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.idea.ApplicationLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -48,8 +48,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.project.impl.ProjectImpl");
@@ -65,10 +66,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private final boolean myLight;
   static boolean ourClassesAreLoaded;
   private final String creationTrace;
+  private ProjectStoreFactory myProjectStoreFactory;
 
   private final AtomicNotNullLazyValue<IComponentStore> myComponentStore = AtomicNotNullLazyValue.createValue(() -> {
-    //noinspection CodeBlock2Expr
-    return ServiceManager.getService(ProjectStoreFactory.class).createStore(this);
+    ProjectStoreFactory factory = myProjectStoreFactory != null ? myProjectStoreFactory : ServiceManager.getService(ProjectStoreFactory.class);
+    return factory.createStore(this);
   });
 
   protected ProjectImpl(@NotNull Path filePath, @Nullable String projectName) {
@@ -129,6 +131,15 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return temporarilyDisposed;
   }
 
+  /**
+   * This method is temporary introduced to allow overriding project store class for a specific project. Overriding ProjectStoreFactory
+   * service won't work because a service may be overridden in a single plugin only.
+   */
+  @ApiStatus.Internal
+  public void setProjectStoreFactory(ProjectStoreFactory projectStoreFactory) {
+    myProjectStoreFactory = projectStoreFactory;
+  }
+
   @Override
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
@@ -160,12 +171,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public boolean isOpen() {
-    return ProjectManagerEx.getInstanceEx().isProjectOpened(this);
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+    return projectManager != null && projectManager.isProjectOpened(this);
   }
 
   @Override
   public boolean isInitialized() {
-    return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
+    return getComponentCreated() && !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
   @NotNull
@@ -267,28 +279,22 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Application application = ApplicationManager.getApplication();
 
     // before components
+    CompletableFuture<?> servicePreloadingFuture;
     //noinspection TestOnlyProblems
-    if (!isDefault() && !isLight()) {
-      Activity activity = StartUpMeasurer.startActivity("project services preloading");
-      CompletableFuture<?> future = preloadServices(PluginManagerCore.getLoadedPlugins())
-        .whenComplete((o, throwable) -> {
-          if (throwable != null) {
-            LOG.error(throwable);
-          }
-          activity.end();
-        });
-
-      if (SystemInfo.isWindows && System.getenv("TEAMCITY_VERSION") != null) {
-        try {
-          future.get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-      }
+    if (isLight()) {
+      servicePreloadingFuture = CompletableFuture.completedFuture(null);
+    }
+    else {
+      //noinspection rawtypes
+      List plugins = PluginManagerCore.getLoadedPlugins();
+      Executor executor = ApplicationLoader.createExecutorToPreloadServices();
+      //noinspection unchecked
+      servicePreloadingFuture = ApplicationLoader.preloadServices(plugins, this, executor, /* activityPrefix = */ "project ");
     }
 
     createComponents(indicator);
+
+    servicePreloadingFuture.join();
 
     if (indicator != null && !application.isHeadlessEnvironment()) {
       distributeProgress(indicator);

@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
@@ -48,10 +47,11 @@ public class BinopInstruction extends BranchingInstruction implements Expression
    */
   public static final IElementType STRING_EQUALITY_BY_CONTENT = EQ;
 
-  private IElementType myOperationSign;
+  private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;
   private final boolean myUnrolledLoop;
+  private boolean myWidened;
 
   public BinopInstruction(IElementType opSign, @Nullable PsiExpression psiAnchor, @Nullable PsiType resultType) {
     this(opSign, psiAnchor, resultType, -1);
@@ -86,9 +86,9 @@ public class BinopInstruction extends BranchingInstruction implements Expression
    */
   public void widenOperationInLoop() {
     // these operations usually produce non-converging states
-    if (!myUnrolledLoop && (myOperationSign == PLUS || myOperationSign == MINUS || myOperationSign == ASTERISK) &&
+    if (!myUnrolledLoop && !myWidened && (myOperationSign == PLUS || myOperationSign == MINUS || myOperationSign == ASTERISK) &&
         mayProduceDivergedState()) {
-      myOperationSign = TypeUtils.isJavaLangString(myResultType) ? STRING_CONCAT_IN_LOOP : null;
+      myWidened = true;
     }
   }
 
@@ -148,5 +148,12 @@ public class BinopInstruction extends BranchingInstruction implements Expression
 
   public IElementType getOperationSign() {
     return myOperationSign;
+  }
+
+  /**
+   * @return true if the operation must be executed with widening, otherwise it may produce a diverged state.
+   */
+  public boolean isWidened() {
+    return myWidened;
   }
 }

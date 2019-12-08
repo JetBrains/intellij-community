@@ -597,7 +597,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
           return QualifiedName.fromDottedString(importQName.toString() + "." + owner.getName() + "." + name);
         }
       }
-      else if (owner instanceof PyFunction && PyNames.INIT.equals(owner.getName()) && ((PyFunction)owner).getContainingClass() != null) {
+      else if (PyUtil.isInitOrNewMethod(owner)) {
         final QualifiedName importQName = QualifiedNameFinder.findCanonicalImportPath(owner, element);
         if (importQName != null) {
           return QualifiedName
@@ -636,11 +636,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
   @Nullable
   public static PsiNamedElement getNamedElement(@Nullable PsiElement element) {
     PsiNamedElement namedElement = (element instanceof PsiNamedElement) ? (PsiNamedElement)element : null;
-    if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
-      final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
-      if (containingClass != null) {
-        namedElement = containingClass;
-      }
+    final PyClass containingClass = PyUtil.turnConstructorIntoClass(as(namedElement, PyFunction.class));
+    if (containingClass != null) {
+      namedElement = containingClass;
     }
     else {
       namedElement = (PsiNamedElement)PyUtil.turnInitIntoDir(namedElement);

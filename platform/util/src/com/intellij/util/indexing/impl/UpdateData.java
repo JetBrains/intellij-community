@@ -28,7 +28,7 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public class UpdateData<Key, Value> {
-  private int myInputId;
+  private final int myInputId;
   private final Map<Key, Value> myNewData;
   private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;

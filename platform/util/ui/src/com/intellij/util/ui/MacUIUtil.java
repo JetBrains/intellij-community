@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.MacUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +27,9 @@ public class MacUIUtil {
 
   public static void hideCursor() {
     if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
-      Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
+      Foundation.executeOnMainThread(false, false, () -> {
+        Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
+      });
     }
   }
 

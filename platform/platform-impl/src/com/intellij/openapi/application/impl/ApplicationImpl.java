@@ -53,10 +53,7 @@ import sun.awt.AWTAutoShutdown;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
@@ -125,7 +122,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
-    Activity activity = StartUpMeasurer.startMainActivity("AppDelayQueue instantiation");
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     Ref<Thread> result = new Ref<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
@@ -320,9 +317,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     List<IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
-    preloadServices(plugins);
+    Executor executor = ApplicationLoader.createExecutorToPreloadServices();
+    preloadServices(plugins, executor).getSyncPreloadedServices().join();
     loadComponents(null);
-    ApplicationLoader.callAppInitialized(this);
+    ApplicationLoader.callAppInitialized(this, executor).join();
   }
 
   @ApiStatus.Internal
@@ -336,7 +334,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       else {
         ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
       }
-      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_LOADED);
+      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
     }
     finally {
       token.finish();
@@ -1313,7 +1311,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (topic == ProjectManager.TOPIC) {
       long start = StartUpMeasurer.getCurrentTime() - duration;
-      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, null);
+      StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, null, StartUpMeasurer.MEASURE_THRESHOLD);
     }
     else if (topic == VirtualFileManager.VFS_CHANGES) {
       if (TimeUnit.NANOSECONDS.toMillis(duration) > 50) {

@@ -1480,6 +1480,16 @@ public class PyTypingTest extends PyTestCase {
            "expr = Sub().m()\n");
   }
 
+  // PY-35235
+  public void testNoStringLiteralInjectionForTypingLiteral() {
+    doTestNoInjectedText("from typing import Literal\n" +
+                         "a: Literal[\"f<caret>oo\"]\n");
+
+    doTestNoInjectedText("from typing import Literal\n" +
+                         "MyType = Literal[42, \"f<caret>oo\", True]\n" +
+                         "a: MyType\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

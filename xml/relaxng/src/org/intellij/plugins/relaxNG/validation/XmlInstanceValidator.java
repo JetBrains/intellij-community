@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 public class XmlInstanceValidator {
-  private static final Logger LOG = Logger.getInstance("org.intellij.plugins.relaxNG.validation.XmlInstanceValidator");
+  private static final Logger LOG = Logger.getInstance(XmlInstanceValidator.class);
 
   private XmlInstanceValidator() {
   }

@@ -33,7 +33,9 @@ open class JavaUMethod(
 
   override val uastAnchor: UIdentifier?
     get() {
-      val psiElement = (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: sourcePsi.nameIdentifier
+      val psiElement = (sourcePsi as? PsiNameIdentifierOwner)?.nameIdentifier // return elements of library sources, do not switch to binary
+                       ?: (sourcePsi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier
+                       ?: sourcePsi.nameIdentifier
       if (psiElement?.isPhysical != true) return null // hah there is a Lombok and we have fake PsiElements even in Java (IDEA-216248)
       return UIdentifier(psiElement, this)
     }

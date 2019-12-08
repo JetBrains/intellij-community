@@ -630,18 +630,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   public static void confirmDisablePlugins(@Nullable Project project, @NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
-    boolean hasDependents = false;
-    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
-    main: for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (!plugin.isEnabled()) continue;
-      if (pluginsToDisable.contains(plugin)) continue;
-      for (IdeaPluginDescriptor toDisable : pluginsToDisable) {
-        if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(toDisable.getPluginId())) {
-          hasDependents = true;
-          break main;
-        }
-      }
-    }
+    boolean hasDependents = morePluginsAffected(pluginsToDisable);
 
     boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
 
@@ -686,6 +675,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         ApplicationManager.getApplication().restart();
       }
     }
+  }
+
+  private static boolean morePluginsAffected(@NotNull Set<IdeaPluginDescriptor> pluginsToDisable) {
+    JBTreeTraverser<PluginId> traverser = PluginManagerCore.pluginIdTraverser();
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (!plugin.isEnabled()) continue;
+      if (pluginsToDisable.contains(plugin)) continue;
+      for (IdeaPluginDescriptor toDisable : pluginsToDisable) {
+        if (traverser.withRoot(plugin.getPluginId()).unique().traverse().contains(toDisable.getPluginId())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected void updateOnSubmit() {

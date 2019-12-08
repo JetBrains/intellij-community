@@ -1,4 +1,4 @@
-// "Replace loop with 'Arrays.fill()' method call" "true"
+// "Delete element" "true"
 
 public class Test {
 
@@ -9,7 +9,6 @@ public class Test {
       for (<caret>int j = 0; j < data.length; j++) {
         data[j] = 0;
       }
-      if (i < 2) data[n - 1] = 6;
       i++;
     }
     return data;

@@ -85,7 +85,11 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
     return null;
   }
 
+  @Override
   public boolean reuseCollapsedTokens() {
     return false;
   }
+
+  // Please, add no more public methods here. Add them to `ILazyParseableElementTypeBase` instead.
+  // If you are not sure about the API stability, use `ApiStatus.Experimental` annotation
 }

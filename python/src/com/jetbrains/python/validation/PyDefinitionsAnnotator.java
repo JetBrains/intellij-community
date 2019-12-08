@@ -46,7 +46,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
       LanguageLevel languageLevel = LanguageLevel.forElement(node);
       if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
         PyClass cls = node.getContainingClass();
-        if (PyNames.NEW.equals(name)) {
+        if (PyUtil.isNewMethod(node)) {
           boolean new_style_class = false;
           try {
             if (cls != null) new_style_class = cls.isNewStyleClass(null);

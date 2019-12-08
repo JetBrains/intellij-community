@@ -476,8 +476,9 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     return false;
   }
 
+  @NotNull
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return new TestNGConsoleProperties(this, executor);
   }
 

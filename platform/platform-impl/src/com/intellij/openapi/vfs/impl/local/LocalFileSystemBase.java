@@ -64,12 +64,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @NotNull
   private static File convertToIOFile(@NotNull VirtualFile file) {
+    return convertToPath(file).toFile();
+  }
+
+  @NotNull
+  static Path convertToPath(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
       path += "/"; // Make 'c:' resolve to a root directory for drive c:, not the current directory on that drive
     }
 
-    return new File(path);
+    return Paths.get(path);
   }
 
   @NotNull
@@ -717,7 +722,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       // behaviour of this code.
       return canonicalFileName;
     }
-    catch (IOException e) {
+    catch (IOException | InvalidPathException e) {
       return originalFileName;
     }
     finally {

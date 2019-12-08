@@ -155,7 +155,7 @@ public class ContainingBranchesGetter {
   }
 
   private static boolean canUseGraphForComputation(@NotNull VcsLogProvider logProvider) {
-    return VcsLogProperties.get(logProvider, VcsLogProperties.LIGHTWEIGHT_BRANCHES);
+    return VcsLogProperties.LIGHTWEIGHT_BRANCHES.getOrDefault(logProvider);
   }
 
   private static class Task {

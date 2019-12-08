@@ -150,6 +150,10 @@ public class PathsList  {
     add(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
+  public void addFirst(File file) {
+    addFirst(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
+  }
+
   public void addVirtualFiles(Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       add(file);

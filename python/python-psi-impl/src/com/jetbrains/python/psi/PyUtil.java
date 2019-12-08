@@ -850,7 +850,7 @@ public class PyUtil {
 
   @Nullable
   public static PyType getReturnTypeToAnalyzeAsCallType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    if (isInit(function)) {
+    if (isInitMethod(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
         for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
@@ -1504,7 +1504,7 @@ public class PyUtil {
   private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     final PyFunction method = callable.asMethod();
     if (method != null) {
-      return PyNames.NEW.equals(method.getName()) || method.getModifier() != STATICMETHOD;
+      return isNewMethod(method) || method.getModifier() != STATICMETHOD;
     }
     else {
       final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
@@ -1512,8 +1512,55 @@ public class PyUtil {
     }
   }
 
-  public static boolean isInit(@NotNull final PyFunction function) {
-    return PyNames.INIT.equals(function.getName());
+  /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__}.
+   * @see PyUtil#isNewMethod(PsiElement)
+   * @see PyUtil#isInitOrNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isInitMethod(@Nullable PsiElement element) {
+    final PyFunction function = as(element, PyFunction.class);
+    return function != null && PyNames.INIT.equals(function.getName()) && function.getContainingClass() != null;
+  }
+
+  /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isInitOrNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isNewMethod(@Nullable PsiElement element) {
+    final PyFunction function = as(element, PyFunction.class);
+    return function != null && PyNames.NEW.equals(function.getName()) && function.getContainingClass() != null;
+  }
+
+  /**
+   * @return true if passed {@code element} is a method (this means a function inside a class) named {@code __init__} or {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isNewMethod(PsiElement)
+   * @see PyUtil#turnConstructorIntoClass(PyFunction)
+   */
+  @Contract("null -> false")
+  public static boolean isInitOrNewMethod(@Nullable PsiElement element) {
+    final PyFunction function = as(element, PyFunction.class);
+    if (function == null) return false;
+
+    final String name = function.getName();
+    return (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) && function.getContainingClass() != null;
+  }
+
+  /**
+   * @return containing class for a method named {@code __init__} or {@code __new__}.
+   * @see PyUtil#isInitMethod(PsiElement)
+   * @see PyUtil#isNewMethod(PsiElement)
+   * @see PyUtil#isInitOrNewMethod(PsiElement)
+   */
+  @Nullable
+  @Contract("null -> null")
+  public static PyClass turnConstructorIntoClass(@Nullable PyFunction function) {
+    return isInitOrNewMethod(function) ? function.getContainingClass() : null;
   }
 
   public static boolean isStarImportableFrom(@NotNull String name, @NotNull PyFile file) {

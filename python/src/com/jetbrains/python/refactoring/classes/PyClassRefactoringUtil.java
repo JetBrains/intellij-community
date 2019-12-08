@@ -187,7 +187,7 @@ public final class PyClassRefactoringUtil {
   private static PyFunction insertMethodInProperPlace(
     @NotNull final PyStatementList destStatementList,
     @NotNull final PyFunction method) {
-    boolean methodIsInit = PyUtil.isInit(method);
+    boolean methodIsInit = PyNames.INIT.equals(method.getName());
     if (!methodIsInit) {
       //Not init method could be inserted in the bottom
       return (PyFunction)destStatementList.add(method);

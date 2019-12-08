@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -48,8 +48,8 @@ public final class Registry  {
   }
 
   public static boolean is(@NotNull String key, boolean defaultValue) {
-    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
-      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+      LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
 
@@ -66,8 +66,8 @@ public final class Registry  {
   }
 
   public static int intValue(@NotNull String key, int defaultValue) {
-    if (!LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
-      LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+      LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
 
@@ -122,7 +122,7 @@ public final class Registry  {
 
   @NotNull
   public static Registry getInstance() {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast();
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     return ourInstance;
   }
 

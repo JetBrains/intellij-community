@@ -14,16 +14,19 @@ import java.nio.file.Paths
 interface StatisticsEventLogWriter {
   fun log(logEvent: LogEvent)
 
-  fun getActiveFile(): File?
+  fun getActiveFile(): EventLogFile?
 
-  fun getFiles(): List<File>
+  fun getFiles(): List<EventLogFile>
 
   fun cleanup()
 
   fun rollOver()
 }
 
-class StatisticsEventLogFileWriter(private val recorderId: String, private val maxFileSize: String) : StatisticsEventLogWriter {
+class StatisticsEventLogFileWriter(private val recorderId: String,
+                                   private val maxFileSize: String,
+                                   isEap: Boolean,
+                                   prefix: String) : StatisticsEventLogWriter {
   private var fileAppender: StatisticsEventLogFileAppender? = null
 
   private val eventLogger: Logger = Logger.getLogger("event.logger.$recorderId")
@@ -35,7 +38,7 @@ class StatisticsEventLogFileWriter(private val recorderId: String, private val m
     val pattern = PatternLayout("%m\n")
     try {
       val dir = getEventLogDir()
-      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir)
+      fileAppender = StatisticsEventLogFileAppender.create(pattern, dir, prefix, isEap)
       fileAppender?.let { appender ->
         appender.setMaxFileSize(maxFileSize)
         eventLogger.addAppender(appender)
@@ -60,15 +63,15 @@ class StatisticsEventLogFileWriter(private val recorderId: String, private val m
     eventLogger.info(LogEventSerializer.toString(logEvent))
   }
 
-  override fun getActiveFile(): File? {
+  override fun getActiveFile(): EventLogFile? {
     val activeLog = fileAppender?.activeLogName ?: return null
-    return File(File(getEventLogDir().toUri()), activeLog)
+    return EventLogFile(File(File(getEventLogDir().toUri()), activeLog))
   }
 
-  override fun getFiles(): List<File> {
+  override fun getFiles(): List<EventLogFile> {
     val activeLog = fileAppender?.activeLogName
     val files = File(getEventLogDir().toUri()).listFiles { f: File -> !StringUtil.equals(f.name, activeLog) }
-    return files?.toList() ?: emptyList()
+    return files?.map { EventLogFile(it) }?.toList() ?: emptyList()
   }
 
   override fun cleanup() {

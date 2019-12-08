@@ -2,6 +2,8 @@
 package com.intellij.platform;
 
 import com.intellij.conversion.CannotConvertException;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -14,6 +16,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -193,8 +197,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                             @NotNull Path baseDir,
                                             @NotNull OpenProjectTask options,
                                             @Nullable String dummyProjectName) {
+    Activity activity = StartUpMeasurer.startMainActivity("project opening preparation");
     if (!options.forceOpenInNewFrame) {
-      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+      Project[] openProjects = ProjectUtil.getOpenProjects();
       if (openProjects.length > 0) {
         Project projectToClose = options.projectToClose;
         if (projectToClose == null) {
@@ -220,6 +225,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       Pair<Project, Module> result;
       CannotConvertException cannotConvertException = null;
       try {
+        activity.end();
         result = prepareProject(file, options, baseDir, dummyProjectName);
       }
       catch (ProcessCanceledException e) {
@@ -277,15 +283,21 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
                                                       @NotNull OpenProjectTask options,
                                                       @NotNull Path baseDir,
                                                       @Nullable String dummyProjectName) throws CannotConvertException {
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     Project project;
     boolean isNewProject = options.isNewProject;
     if (isNewProject) {
       String projectName = dummyProjectName == null ? baseDir.getFileName().toString() : dummyProjectName;
-      project = projectManager.newProject(baseDir, projectName, options);
+      project = ((ProjectManagerImpl)ProjectManager.getInstance()).newProject(baseDir, projectName, options);
     }
     else {
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText("Checking project configuration...");
+      }
       project = ProjectManagerImpl.convertAndLoadProject(baseDir);
+      if (indicator != null) {
+        indicator.setText("");
+      }
     }
 
     if (project == null) {
@@ -374,24 +386,14 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     final Ref<Module> moduleRef = new Ref<>();
     VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
     LOG.assertTrue(virtualFile != null);
-    for (DirectoryProjectConfigurator configurator: DirectoryProjectConfigurator.EP_NAME.getIterable()) {
-      try {
-        configurator.configureProject(project, virtualFile, moduleRef);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe(configurator -> {
+      configurator.configureProject(project, virtualFile, moduleRef);
+    });
     return moduleRef.get();
   }
 
   public static boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
-    for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getIterable()) {
-      if (processor.attachToProject(project, projectDir, callback)) {
-        return true;
-      }
-    }
-    return false;
+    return ProjectAttachProcessor.EP_NAME.findFirstSafe(processor -> processor.attachToProject(project, projectDir, callback)) != null;
   }
 
   private static void openFileFromCommandLine(@NotNull Project project, @NotNull Path file, int line) {

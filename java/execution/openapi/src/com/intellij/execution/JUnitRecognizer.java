@@ -11,11 +11,6 @@ public abstract class JUnitRecognizer {
   public abstract boolean isTestAnnotated(@NotNull PsiMethod method);
 
   public static boolean willBeAnnotatedAfterCompilation(@NotNull PsiMethod method) {
-    for (JUnitRecognizer jUnitRecognizer : EP_NAME.getIterable(null)) {
-      if (jUnitRecognizer.isTestAnnotated(method)) {
-        return true;
-      }
-    }
-    return false;
+    return EP_NAME.findFirstSafe(recognizer -> recognizer.isTestAnnotated(method)) != null;
   }
 }

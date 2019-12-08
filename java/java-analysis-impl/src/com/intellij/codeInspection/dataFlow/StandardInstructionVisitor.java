@@ -725,15 +725,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiType type = instruction.getResultType();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      if (instruction.isWidened()) {
+        LongRangeSet leftRange = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+        LongRangeSet rightRange = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+        if (leftRange != null && rightRange != null) {
+          LongRangeSet range = leftRange.wideBinOpFromToken(opSign, rightRange, isLong);
+          if (range != null) {
+            result = runner.getFactory().getFactValue(DfaFactType.RANGE, range);
+          }
+        }
+      }
+      else {
+        result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      }
     }
-    if (result == DfaUnknownValue.getInstance() && TypeUtils.isJavaLangString(type)) {
-      if (JavaTokenType.PLUS == opSign) {
-        result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
-      }
-      if (BinopInstruction.STRING_CONCAT_IN_LOOP == opSign) {
-        result = runner.getFactory().createTypeValue(type, Nullability.NOT_NULL);
-      }
+    if (result == DfaUnknownValue.getInstance() && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
+      result = instruction.isWidened()
+               ? runner.getFactory().createTypeValue(type, Nullability.NOT_NULL)
+               : concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());
     }
     pushExpressionResult(result, instruction, memState);
 

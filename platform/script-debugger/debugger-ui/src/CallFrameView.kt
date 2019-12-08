@@ -7,6 +7,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.frame.XValueChildrenList
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.*
 
@@ -16,7 +17,8 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
                                               val script: Script? = null,
                                               sourceInfo: SourceInfo? = null,
                                               isInLibraryContent: Boolean? = null,
-                                              override val vm: Vm? = null) : XStackFrame(), VariableContext {
+                                              override val vm: Vm? = null,
+                                              val methodReturnValue: Variable? = null) : XStackFrame(), VariableContext {
   private val sourceInfo = sourceInfo ?: viewSupport.getSourceInfo(script, callFrame)
   private val isInLibraryContent: Boolean = isInLibraryContent ?: (this.sourceInfo != null && viewSupport.isInLibraryContent(this.sourceInfo, script))
 
@@ -26,6 +28,11 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
 
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)
+    methodReturnValue?.let {
+      val list = XValueChildrenList.singleton(VariableView(methodReturnValue, this))
+      node.addChildren(list, false)
+    }
+
     createAndAddScopeList(node, callFrame.variableScopes, this, callFrame)
   }
 

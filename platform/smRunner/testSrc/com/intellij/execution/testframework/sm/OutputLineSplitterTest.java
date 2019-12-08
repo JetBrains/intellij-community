@@ -221,6 +221,15 @@ public class OutputLineSplitterTest extends LightPlatformTestCase {
     }
   }
 
+  public void testSeveralServiceMessagesInOneLine() {
+    mySplitter.process("##teamcity[name1]##teamcity[name2]##teamcity[name3]##teamcit", ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]"),
+                        myOutput.get(ProcessOutputTypes.STDOUT).toList());
+    mySplitter.process("y[name4]\n", ProcessOutputTypes.STDOUT);
+    Assert.assertEquals(ContainerUtil.newArrayList("##teamcity[name1]", "##teamcity[name2]", "##teamcity[name3]", "##teamcity[name4]\n"),
+                        myOutput.get(ProcessOutputTypes.STDOUT).toList());
+  }
+
   public void testEmittingServiceMessagesPromptly() {
     mySplitter.process("Foo ##teamcity[name1]\n##team", ProcessOutputTypes.STDOUT);
     Assert.assertEquals(ContainerUtil.newArrayList("Foo ", "##teamcity[name1]\n"),

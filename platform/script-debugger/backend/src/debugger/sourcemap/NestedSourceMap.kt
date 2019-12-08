@@ -55,6 +55,12 @@ class NestedSourceMap(private val childMap: SourceMap, private val parentMap: So
       // todo not clear - should we resolve next child entry by current child index or by provided parent nextEntry?
     }
   }
+
+  override fun getRawSource(entry: MappingEntry): String? = parentMap.getRawSource(entry)
+
+  override fun getSourceContent(entry: MappingEntry): String? = parentMap.getSourceContent(entry)
+
+  override fun getSourceContent(sourceIndex: Int): String? = parentMap.getSourceContent(sourceIndex)
 }
 
 private class NestedMappings(private val child: Mappings, private val parent: Mappings, private val isSourceMappings: Boolean) : Mappings {

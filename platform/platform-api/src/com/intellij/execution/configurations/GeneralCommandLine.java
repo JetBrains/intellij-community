@@ -393,7 +393,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     String exePath = myExePath;
-    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
+    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.separatorChar) == -1) {
       String systemPath = System.getenv("PATH"), shellPath = EnvironmentUtil.getValue("PATH");
       if (!Objects.equals(systemPath, shellPath)) {
         File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);

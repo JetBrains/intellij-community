@@ -38,6 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public final class PerformanceWatcher implements Disposable {
@@ -61,13 +62,13 @@ public final class PerformanceWatcher implements Disposable {
   private long myLastEdtAlive = System.currentTimeMillis();
 
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
-  private Future<?> myCurrentEDTEventChecker;
+  private FreezeCheckerTask myCurrentEDTEventChecker;
 
   private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
 
   @NotNull
   public static PerformanceWatcher getInstance() {
-    LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast();
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
     return ServiceManager.getService(PerformanceWatcher.class);
   }
 
@@ -228,25 +229,10 @@ public final class PerformanceWatcher implements Disposable {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
         myFreezeStart = myLastEdtAlive;
-        myFreezeDuringStartup = !LoadingPhase.isStartupComplete();
+        myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
         getPublisher().uiFreezeStarted();
       }
       dumpThreads();
-    }
-  }
-
-  private void edtFrozenPrecise(long start) {
-    myFreezeStart = start;
-    getPublisher().uiFreezeStarted();
-    stopDumping();
-    myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
-      @Override
-      protected void dumpedThreads(ThreadInfo[] infos) {
-        dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos);
-      }
-    };
-    if (Thread.interrupted()) { // already finished
-      edtResponds(System.currentTimeMillis());
     }
   }
 
@@ -293,24 +279,14 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventStarted(long start) {
     if (PRECISE_MODE) {
       edtEventFinished(); // finish previous event if any, this way we handle nested event dispatchers
-      myCurrentEDTEventChecker = myExecutor
-        .schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
+      myCurrentEDTEventChecker = new FreezeCheckerTask(start);
     }
   }
 
   public void edtEventFinished() {
-    Future<?> currentChecker = myCurrentEDTEventChecker;
+    FreezeCheckerTask currentChecker = myCurrentEDTEventChecker;
     if (currentChecker != null) {
-      if (!currentChecker.cancel(true)) {
-        long end = System.currentTimeMillis();
-        stopDumping(); // stop sampling as early as possible
-        try {
-          myExecutor.submit(() -> edtResponds(end)).get();
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      }
+      currentChecker.stop();
       myCurrentEDTEventChecker = null;
     }
   }
@@ -325,7 +301,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private void dumpThreads() {
     if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
-      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, ThreadDumper.getThreadInfos(), true);
     }
     else {
       stopDumping();
@@ -334,11 +310,11 @@ public final class PerformanceWatcher implements Disposable {
 
   @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
-    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos());
+    return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), false);
   }
 
   @Nullable
-  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos) {
+  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, boolean notify) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -362,17 +338,19 @@ public final class PerformanceWatcher implements Disposable {
     ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(threadInfos);
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
-      StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
-      if (edtStack != null) {
-        if (myStacktraceCommonPart == null) {
-          myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+      if (notify) {
+        StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
+        if (edtStack != null) {
+          if (myStacktraceCommonPart == null) {
+            myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
+          }
+          else {
+            myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
+          }
         }
-        else {
-          myStacktraceCommonPart = getStacktraceCommonPart(myStacktraceCommonPart, edtStack);
-        }
-      }
 
-      getPublisher().dumpedThreads(file, threadDump);
+        getPublisher().dumpedThreads(file, threadDump);
+      }
     }
     catch (IOException e) {
       LOG.info("failed to write thread dump file: " + e.getMessage());
@@ -461,5 +439,46 @@ public final class PerformanceWatcher implements Disposable {
 
   ScheduledExecutorService getExecutor() {
     return myExecutor;
+  }
+
+  private enum CheckerState {
+    CHECKING, FREEZE, FINISHED
+  }
+
+  private class FreezeCheckerTask {
+    private final AtomicReference<CheckerState> myState = new AtomicReference<>(CheckerState.CHECKING);
+    private final Future<?> myFuture;
+
+    FreezeCheckerTask(long start) {
+      myFuture = myExecutor.schedule(() -> edtFrozenPrecise(start), getUnresponsiveInterval(), TimeUnit.MILLISECONDS);
+    }
+
+    void stop() {
+      myFuture.cancel(false);
+      if (myState.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
+        long end = System.currentTimeMillis();
+        stopDumping(); // stop sampling as early as possible
+        try {
+          myExecutor.submit(() -> edtResponds(end)).get();
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
+    }
+
+    private void edtFrozenPrecise(long start) {
+      if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
+        myFreezeStart = start;
+        getPublisher().uiFreezeStarted();
+        stopDumping();
+        myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
+          @Override
+          protected void dumpedThreads(ThreadInfo[] infos) {
+            dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos, true);
+          }
+        };
+      }
+    }
   }
 }

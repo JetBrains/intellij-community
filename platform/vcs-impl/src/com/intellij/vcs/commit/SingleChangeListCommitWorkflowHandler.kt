@@ -53,7 +53,7 @@ class SingleChangeListCommitWorkflowHandler(
     initCommitHandlers()
 
     ui.addInclusionListener(this, this)
-    ui.defaultCommitActionName = getDefaultCommitActionName(workflow.vcses)
+    ui.defaultCommitActionName = getCommitActionName()
     initCommitMessage()
     initCommitOptions()
 

@@ -13,7 +13,7 @@ import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.table.LogTableColumn;
+import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +73,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
         Set<Integer> currentColumns = new HashSet<>(properties.get(COLUMN_ORDER));
         Set<Integer> defaultColumns = new HashSet<>(defaultProperties.get(COLUMN_ORDER));
-        for (LogTableColumn column : LogTableColumn.DYNAMIC_COLUMNS) {
+        for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
           String columnName = column.getStableName();
           addBoolIfDiffers(metricEvents, currentColumns, defaultColumns, p -> p.contains(column.ordinal()),
                            "column", new FeatureUsageData().addData("name", columnName));

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -111,21 +112,26 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
     epName.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
       @Override
       public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey());
+        checkUpdateHighlighters(extension.getKey(), false);
       }
 
       @Override
       public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-        checkUpdateHighlighters(extension.getKey());
+        checkUpdateHighlighters(extension.getKey(), true);
       }
     }, this);
   }
 
-  private void checkUpdateHighlighters(String key) {
+  private void checkUpdateHighlighters(String key, boolean updateSynchronously) {
     FileType fileType = myFile.getFileType();
     if (fileType.getName().equals(key) ||
         (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getID().equals(key))) {
-      updateHighlightersSynchronously();
+      if (ApplicationManager.getApplication().isDispatchThread() && updateSynchronously) {
+        updateHighlightersSynchronously();
+      }
+      else {
+        updateHighlighters();
+      }
     }
   }
 
@@ -343,7 +349,14 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider, Dispos
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       updateValidProperty();
-      updateHighlightersSynchronously();
+      FileType type = event.getRemovedFileType();
+      if (type != null && !(type instanceof AbstractFileType)) {
+        // Plugin is being unloaded, so we need to release plugin classes immediately
+        updateHighlightersSynchronously();
+      }
+      else {
+        updateHighlighters();
+      }
     }
   }
 

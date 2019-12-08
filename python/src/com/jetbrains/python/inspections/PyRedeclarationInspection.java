@@ -44,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.*;
+import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.isTypeDeclarationTarget;
 
 /**
  * Annotates declarations that unconditionally override others without these being used.
@@ -200,8 +200,7 @@ public class PyRedeclarationInspection extends PyInspection {
         return false;
       }
       // Renaming an __init__ method results in renaming its class
-      else if (element instanceof PyFunction && PyNames.INIT.equals(element.getName()) &&
-               ((PyFunction)element).getContainingClass() != null) {
+      else if (PyUtil.isInitMethod(element)) {
         return false;
       }
       return true;

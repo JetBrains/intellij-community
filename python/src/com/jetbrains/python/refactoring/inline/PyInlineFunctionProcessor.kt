@@ -5,7 +5,10 @@ import com.intellij.history.LocalHistory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -15,7 +18,6 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyDunderAllReference
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -177,7 +179,7 @@ class PyInlineFunctionProcessor(project: Project,
             val name = node.name!!
             if (name in namesInOuterScope && name !in mappedArguments) {
               val resolved = node.reference.resolve()
-              val target = if (resolved is PyFunction && resolved.containingClass != null && resolved.name == PyNames.INIT) resolved.containingClass else resolved
+              val target = PyUtil.turnConstructorIntoClass(resolved as? PyFunction) ?: resolved
               if (!builtinCache.isBuiltin(target)) {
                 val resolvedLocally = PyResolveUtil.resolveLocally(refScopeOwner, name)
                 val localImports = resolvedLocally.asSequence()

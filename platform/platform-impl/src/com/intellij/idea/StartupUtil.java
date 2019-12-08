@@ -4,7 +4,7 @@ package com.intellij.idea;
 import com.intellij.Patches;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
@@ -14,7 +14,6 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
@@ -31,19 +30,16 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
@@ -57,10 +53,8 @@ import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -76,13 +70,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.diagnostic.LoadingPhase.LAF_INITIALIZED;
-import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
-/**
- * @author yole
- */
 public final class StartupUtil {
   public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
@@ -93,8 +83,6 @@ public final class StartupUtil {
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
-
-  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> StartupAbortedException.processException(e);
 
   /* called by the app after startup */
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
@@ -114,10 +102,6 @@ public final class StartupUtil {
   public static synchronized CompletableFuture<BuiltInServer> getServerFuture() {
     CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
-  }
-
-  public static void installExceptionHandler() {
-    Thread.currentThread().setUncaughtExceptionHandler(HANDLER);
   }
 
   public interface AppStarter {
@@ -142,7 +126,7 @@ public final class StartupUtil {
     }
   }
 
-  private static void runPreAppClass(Logger log) {
+  private static void runPreAppClass(@NotNull Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       try {
@@ -157,13 +141,12 @@ public final class StartupUtil {
   }
 
   public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
-    Activity fjp = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
+    LoadingState.setStrictMode();
+
+    Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
-    fjp.end();
 
-    LoadingPhase.setStrictMode();
-
-    Activity activity = StartUpMeasurer.startMainActivity("main class loading scheduling");
+    activity = activity.endAndStart("main class loading scheduling");
     ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
     Future<Class<AppStarter>> mainStartFuture = executorService.submit(() -> {
@@ -174,10 +157,9 @@ public final class StartupUtil {
       return aClass;
     });
 
+    activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    activity = activity.endAndStart("main class loading waiting");
-    Class<AppStarter> aClass = mainStartFuture.get();
     activity = activity.endAndStart("LaF init scheduling");
     CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
     activity.end();
@@ -186,10 +168,14 @@ public final class StartupUtil {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
-    // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(PathManager.getConfigPath()));
+    activity = StartUpMeasurer.startMainActivity("config path computing");
+    String configPath = PathManager.getConfigPath();
+    activity = activity.endAndStart("config path existence check");
 
-    activity = StartUpMeasurer.startMainActivity("system dirs checking");
+    // this check must be performed before system directories are locked
+    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(configPath));
+
+    activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
     if (!checkSystemDirs()) {
       System.exit(Main.DIR_CHECK_FAILED);
@@ -200,35 +186,30 @@ public final class StartupUtil {
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
-    
-    executorService.execute(() -> {
+
+    NonUrgentExecutor.getInstance().execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
       Activity subActivity = StartUpMeasurer.startActivity("essential IDE info logging");
       logEssentialInfoAboutIde(log, appInfo);
       subActivity.end();
     });
 
-    List<Future<?>> futures = new ArrayList<>();
-    futures.add(executorService.submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
-      setupSystemLibraries();
-      subActivity = subActivity.endAndStart("process env fixing");
-      fixProcessEnvironment(log);
-      subActivity.end();
-    }));
+    Future<?> extraTaskFuture = executorService.submit(StartupUtil::setupSystemLibraries);
+
+    fixProcessEnvironment();
 
     if (!configImportNeeded) {
       installPluginUpdates();
       runPreAppClass(log);
     }
 
-    executorService.execute(() -> loadSystemLibraries(log));
+    NonUrgentExecutor.getInstance().execute(() -> loadSystemLibraries(log));
 
     activity = StartUpMeasurer.startMainActivity("tasks waiting");
-    for (Future<?> future : futures) {
-      future.get();
-    }
-    futures.clear();
+    extraTaskFuture.get();
+
+    activity = activity.endAndStart("main class loading waiting");
+    Class<AppStarter> aClass = mainStartFuture.get();
     activity.end();
 
     startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
@@ -295,7 +276,7 @@ public final class StartupUtil {
           }
 
           future.complete(null);
-          LoadingPhase.setCurrentPhase(LAF_INITIALIZED);
+          StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
             return;
@@ -513,9 +494,10 @@ public final class StartupUtil {
     }
   }
 
+  @NotNull
   private static Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
-    Logger log = Logger.getInstance(Main.class);
+    Logger log = Logger.getInstance("#com.intellij.idea.Main");
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
@@ -523,18 +505,21 @@ public final class StartupUtil {
     return log;
   }
 
-  private static void fixProcessEnvironment(Logger log) {
+  private static void fixProcessEnvironment() {
+    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
+
     if (!Main.isCommandLine()) {
       System.setProperty("__idea.mac.env.lock", "unlocked");
     }
-    boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
-    if (!envReady) {
-      log.info("initializing environment");
-    }
+
+    EnvironmentUtil.loadEnv()
+      .thenRun(() -> subActivity.end());
   }
 
   @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
+    Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
+
     String ideTempPath = PathManager.getTempPath();
 
     if (System.getProperty("jna.tmpdir") == null) {
@@ -552,8 +537,9 @@ public final class StartupUtil {
       System.setProperty("pty4j.tmpdir", ideTempPath);
     }
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
-      System.setProperty("pty4j.preferred.native.folder", new File(PathManager.getLibPath(), "pty4j-native").getAbsolutePath());
+      System.setProperty("pty4j.preferred.native.folder", Paths.get(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString());
     }
+    subActivity.end();
   }
 
   private static void loadSystemLibraries(Logger log) {
@@ -726,124 +712,6 @@ public final class StartupUtil {
     }
     catch (InterruptedException | InvocationTargetException | ExecutionException e) {
       log.warn(e);
-    }
-  }
-
-  static void disableInputMethodsIfPossible() {
-    if (!Registry.is("auto.disable.input.methods"))
-      return;
-
-    if (!canDisableInputMethod())
-      return;
-
-    EventQueue.invokeLater(() -> {
-      try {
-        for (ProjectFrameHelper frameHelper : WindowManagerEx.getInstanceEx().getProjectFrameHelpers()) {
-          disableIMRecursively(SwingUtilities.getRoot(frameHelper.getFrame()));
-        }
-
-        Class<?> componentClass = ReflectionUtil.forName("java.awt.Component");
-        Method method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport");
-        if (method == null) {
-          return;
-        }
-
-        method.invoke(componentClass);
-        Logger.getInstance(Main.class).info("InputMethods was disabled");
-      }
-      catch (Throwable e) {
-        Logger.getInstance(Main.class).warn(e);
-      }
-    });
-  }
-
-  private static void disableIMRecursively(Component c) {
-    c.enableInputMethods(false);
-    if (c instanceof Container) {
-      for (Component k: ((Container)c).getComponents())
-        disableIMRecursively(k);
-    }
-  }
-
-  private static boolean canDisableInputMethod() {
-    if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm)
-      return false;
-
-    final String gdmSession = notNull(System.getenv("GDMSESSION"), "");
-    final String xdgDesktop = StringUtil.toLowerCase(notNull(System.getenv("XDG_CURRENT_DESKTOP"), ""));
-    final boolean isGTKDesktop = gdmSession.startsWith("gnome")
-                                || gdmSession.startsWith("ubuntu")
-                                || xdgDesktop.startsWith("unity")
-                                || xdgDesktop.startsWith("ubuntu")
-                                || xdgDesktop.startsWith("gnome");
-    if (!isGTKDesktop)
-      return false;
-
-    final long startMs = System.currentTimeMillis();
-    Map<String, String> layoutId2type = new HashMap<>();
-
-    String line = "";
-    try {
-      final String cmd = "gsettings get org.gnome.desktop.input-sources sources";
-      final Runtime run = Runtime.getRuntime();
-      final Process pr = run.exec(cmd);
-      pr.waitFor();
-
-      BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-      while ((line=buf.readLine())!=null) {
-        //[('xkb', 'us'), ('xkb', 'ru'), ('ibus', 'bopomofo')]
-        OutputParser parser = new OutputParser(line);
-        boolean first = true;
-        while (true) {
-          final String type = parser.extractString(first ? "('" : "'", "'");
-          if (type == null) {
-            if (first) { // error (or empty output)
-              Logger.getInstance(Main.class).warn("can't parse gsettings line: " + line);
-              return false;
-            }
-            break;
-          }
-          first = false;
-          final String layoutId = parser.extractString("'", "'");
-          if (layoutId == null) { // error (must be presented)
-            Logger.getInstance(Main.class).warn("can't parse gsettings line: " + line);
-            return false;
-          }
-          layoutId2type.put(layoutId, type);
-        }
-      }
-    } catch (Throwable e) {
-      Logger.getInstance(Main.class).warn("error during parsing gsettings line: " + String.valueOf(line), e);
-    }
-
-    final long endMs = System.currentTimeMillis();
-    final boolean canDisable = !layoutId2type.isEmpty() && !layoutId2type.values().contains("ibus");
-    String logInfo = "canDisableInputMethod spent " + (endMs - startMs) + " ms, found keyboard layouts: [";
-    for (Map.Entry<String, String> e: layoutId2type.entrySet())
-      logInfo += "(" + e.getKey() + ", " + e.getValue() + "), ";
-    logInfo += "], result==" + canDisable;
-    Logger.getInstance(Main.class).info(logInfo);
-
-    return canDisable;
-  }
-
-  private static class OutputParser {
-    private int myPos = 0;
-    private final String myString;
-
-    OutputParser(String myString) { this.myString = myString; }
-
-    String extractString(String beginMarker, String endMarker) {
-      int beginPos = myString.indexOf(beginMarker, myPos);
-      if (beginPos == -1)
-        return null;
-      beginPos += beginMarker.length();
-      int endPos = myString.indexOf(endMarker, beginPos + 1);
-      if (endPos == -1)
-        return null;
-
-      myPos = endPos + endMarker.length();
-      return myString.substring(beginPos, endPos);
     }
   }
 }

@@ -546,7 +546,6 @@ public class Switcher extends AnAction implements DumbAware {
         .setCancelOnOtherWindowOpen(true)
         .setCancelOnClickOutside(true)
         .setMovable(pinned)
-        .setKeyEventHandler(this::keyEvent)
         .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
         .setDimensionServiceKey(pinned ? project : null, pinned ? "SwitcherDM" : null , false)
         .setCancelKeyEnabled(false)
@@ -592,6 +591,13 @@ public class Switcher extends AnAction implements DumbAware {
 
       fromListToList(toolWindows, files);
       fromListToList(files, toolWindows);
+
+      IdeEventQueue.getInstance().addPostprocessor(event -> {
+        if (event instanceof KeyEvent) {
+          return keyEvent((KeyEvent)event);
+        }
+        return false;
+      }, myPopup);
     }
 
     @NotNull
@@ -711,7 +717,9 @@ public class Switcher extends AnAction implements DumbAware {
         boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned && selectedFiles.contains(filesForInit.get(i))) {
+          if (pinned
+              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
+              && selectedFiles.contains(filesForInit.get(i)) ) {
             continue;
           }
 
@@ -729,9 +737,7 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               selectionIndex = filesData.size() - 1;
-              if (selectionIndex != 0 || UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE || !pinned || selectedFiles.isEmpty()) {
-                firstRecentMarked = true;
-              }
+              firstRecentMarked = true;
             }
           }
         }

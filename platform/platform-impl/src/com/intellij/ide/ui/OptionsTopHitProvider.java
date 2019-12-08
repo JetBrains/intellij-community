@@ -57,7 +57,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                                                 @Nullable PluginDescriptor pluginDescriptor) {
     ComponentManager manager =
       project == null || provider instanceof ApplicationLevelProvider ? ApplicationManager.getApplication() : project;
-    if (manager == null || manager.isDisposed()) {
+    if (manager == null || manager.isDisposedOrDisposeInProgress()) {
       return Collections.emptyList();
     }
 
@@ -250,8 +250,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       String name = project == null ? "application" : "project";
       com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
-        if (provider instanceof OptionsSearchTopHitProvider) {
-          if (project != null && provider instanceof ApplicationLevelProvider) return;
+        if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
           cache((OptionsSearchTopHitProvider)provider, indicator, project, pluginDescriptor);
         }
       });
@@ -272,7 +271,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                               @Nullable Project project,
                               @Nullable PluginDescriptor pluginDescriptor) {
       if (indicator != null && indicator.isCanceled()) return;  // if application is closed
-      if (project != null && project.isDisposed()) return; // if project is closed
+      if (project != null && project.isDisposedOrDisposeInProgress()) return; // if project is closed
       getCachedOptions(provider, project, pluginDescriptor);
     }
   }

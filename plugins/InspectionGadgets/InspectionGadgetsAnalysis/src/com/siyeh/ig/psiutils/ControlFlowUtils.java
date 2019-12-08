@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
@@ -773,16 +774,18 @@ public class ControlFlowUtils {
    * Back-edges are also considered, so the actual place where it referenced might be outside of
    * (start, loop entry) interval.
    *
-   * @param flow ControlFlow to analyze
-   * @param start start point
+   * @param flow      ControlFlow to analyze
+   * @param start     start point
    * @param statement loop to check
-   * @param variable variable to analyze
+   * @param variable  variable to analyze
+   * @param excluded  instructions to exclude
    * @return true if variable can be referenced between start point and statement entry
    */
-  private static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
-                                                                  final int start,
-                                                                  final PsiStatement statement,
-                                                                  @NotNull PsiVariable variable) {
+  public static boolean isVariableReferencedBeforeStatementEntry(@NotNull ControlFlow flow,
+                                                                 final int start,
+                                                                 final PsiStatement statement,
+                                                                 @NotNull PsiVariable variable,
+                                                                 @NotNull Set<Integer> excluded) {
     final int statementStart = flow.getStartOffset(statement);
     final int statementEnd = flow.getEndOffset(statement);
 
@@ -800,19 +803,19 @@ public class ControlFlowUtils {
         int to = edge.myTo;
         if(referenced.get(from)) {
           // jump to the loop start from within the loop is not considered as loop entry
-          if(to == statementStart && (from < statementStart || from >= statementEnd)) {
+          if (to == statementStart && (from < statementStart || from >= statementEnd)) {
             return true;
           }
-          if(!referenced.get(to)) {
+          if (!referenced.get(to)) {
             referenced.set(to);
             changed = true;
           }
           continue;
         }
-        if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
+        if (ControlFlowUtil.isVariableAccess(flow, from, variable) && !excluded.contains(from)) {
           referenced.set(from);
           referenced.set(to);
-          if(to == statementStart) return true;
+          if (to == statementStart) return true;
           changed = true;
         }
       }
@@ -845,7 +848,7 @@ public class ControlFlowUtils {
     }
     int start = controlFlow.getEndOffset(var.getInitializer())+1;
     int stop = controlFlow.getStartOffset(statement);
-    if(isVariableReferencedBeforeStatementEntry(controlFlow, start, statement, var)) return UNKNOWN;
+    if (isVariableReferencedBeforeStatementEntry(controlFlow, start, statement, var, Collections.emptySet())) return UNKNOWN;
     if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }

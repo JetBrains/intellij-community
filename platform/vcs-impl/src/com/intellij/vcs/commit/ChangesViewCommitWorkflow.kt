@@ -31,7 +31,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     if (result == CheckinHandler.ReturnResult.COMMIT) doCommit()
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession) =
+  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
     executeCustom(executor, session, commitState.changes, commitState.commitMessage)
 
   override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CheckinHandler.ReturnResult) {
@@ -44,7 +44,9 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
-    with(LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext)) {
+    with(object : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
+      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
+    }) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(ShowNotificationCommitResultHandler(this))
@@ -57,6 +59,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
     with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitCustomEventDispatcher())
+      addResultHandler(getEndExecutionHandler())
 
       runCommit(executor.actionText)
     }

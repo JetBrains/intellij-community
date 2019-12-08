@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class FUCounterUsageLogger {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger");
+  private static final Logger LOG = Logger.getInstance(FUCounterUsageLogger.class);
 
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;

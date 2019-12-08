@@ -64,7 +64,7 @@ public class Utils{
     final boolean checked = group instanceof CheckedActionGroup;
 
     ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
-    List<AnAction> list = updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+    List<AnAction> list = updater.expandActionGroupFull(group, group instanceof CompactActionGroup);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();

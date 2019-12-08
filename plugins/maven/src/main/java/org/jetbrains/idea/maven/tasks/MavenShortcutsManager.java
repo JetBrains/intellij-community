@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MavenShortcutsManager implements Disposable {
+public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
   private static final String ACTION_ID_PREFIX = "Maven_";
@@ -90,6 +90,7 @@ public class MavenShortcutsManager implements Disposable {
     MavenKeymapExtension.clearActions(myProject);
   }
 
+  @NotNull
   public String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
@@ -119,7 +120,6 @@ public class MavenShortcutsManager implements Disposable {
   @NotNull
   private Shortcut[] getShortcuts(MavenProject project, String goal) {
     String actionId = getActionId(project.getPath(), goal);
-    if (actionId == null) return Shortcut.EMPTY_ARRAY;
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);
   }
@@ -189,7 +189,8 @@ public class MavenShortcutsManager implements Disposable {
             projectToDelete = selectScheduledProjects(false);
             mySheduledProjects.clear();
           }
-          if (!myProject.isDisposed()) {
+
+          if (!myProject.isDisposedOrDisposeInProgress()) {
             MavenKeymapExtension.clearActions(myProject, projectToDelete);
             MavenKeymapExtension.updateActions(myProject, projectToUpdate);
           }

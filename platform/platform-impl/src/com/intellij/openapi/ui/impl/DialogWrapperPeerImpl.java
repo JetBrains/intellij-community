@@ -27,7 +27,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -421,7 +420,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus(!UIUtil.SUPPRESS_FOCUS_STEALING);
+    myDialog.getWindow().setAutoRequestFocus(!UIUtil.DISABLE_AUTO_REQUEST_FOCUS);
 
     if (SystemInfo.isMac) {
       final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
@@ -531,9 +530,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 
-      setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
-        protected boolean accept(Component aComponent) {
+        public boolean accept(Component aComponent) {
           if (UIUtil.isFocusProxy(aComponent)) return false;
           return super.accept(aComponent);
         }
@@ -546,7 +545,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, !UIUtil.SUPPRESS_FOCUS_STEALING);
+      UIUtil.setAutoRequestFocus(this, !UIUtil.DISABLE_AUTO_REQUEST_FOCUS);
     }
 
     /**
@@ -662,9 +661,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         if (myDimensionServiceKey != null) {
           final Project projectGuess = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
           location = getWindowStateService(projectGuess).getLocation(myDimensionServiceKey);
-          //if (location == null) location = DimensionService.getInstance().getLocation(myDimensionServiceKey, projectGuess);
           Dimension size = getWindowStateService(projectGuess).getSize(myDimensionServiceKey);
-          //if (size == null) size = DimensionService.getInstance().getSize(myDimensionServiceKey, projectGuess);
           if (size != null) {
             myInitialSize = new Dimension(size);
             _setSizeForLocation(myInitialSize.width, myInitialSize.height, location);
@@ -810,12 +807,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           // Save location
           Point location = getLocation();
           getWindowStateService(projectGuess).putLocation(myDimensionServiceKey, location);
-          DimensionService.getInstance().setLocation(myDimensionServiceKey, location, projectGuess);
           // Save size
           Dimension size = getSize();
           if (!myInitialSize.equals(size)) {
             getWindowStateService(projectGuess).putSize(myDimensionServiceKey, size);
-            DimensionService.getInstance().setSize(myDimensionServiceKey, size, projectGuess);
           }
           myOpened = false;
         }

@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
-import com.intellij.openapi.util.text.StringUtilRt;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +20,6 @@ public class SslKeyStore extends DelegateKeyStore {
   }
 
   public static void setDefault() {
-    System.setProperty("javax.net.ssl.keyStore", StringUtilRt.notNullize(System.getProperty(SslSocketFactory.SSL_CLIENT_CERT_PATH), "NONE"));
     System.setProperty("javax.net.ssl.keyStoreType", NAME);
   }
 

@@ -55,7 +55,6 @@ public class RemoteSdkCredentialsBuilder {
     copyTo.setHelpersPath(data.getHelpersPath());
 
     copyTo.setHelpersVersionChecked(data.isHelpersVersionChecked());
-    copyTo.setRemoteRoots(data.getRemoteRoots());
   }
 
   public static void copyCredentials(@NotNull RemoteCredentials data, @NotNull MutableRemoteCredentials copyTo) {

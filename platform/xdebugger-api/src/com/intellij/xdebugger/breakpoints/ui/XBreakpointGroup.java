@@ -32,6 +32,10 @@ public abstract class XBreakpointGroup implements Comparable<XBreakpointGroup> {
   @NotNull
   public abstract String getName();
 
+  public boolean expandedByDefault() {
+    return true;
+  }
+
   @Override
   public String toString() {
     return getName();

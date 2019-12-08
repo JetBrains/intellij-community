@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 class ExtractedClassBuilder {
-  private static final Logger LOGGER = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractedClassBuilder");
+  private static final Logger LOGGER = Logger.getInstance(ExtractedClassBuilder.class);
 
   private String className;
   private String packageName;

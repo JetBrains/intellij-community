@@ -24,9 +24,9 @@ fun newLogEvent(session: String,
                 groupId: String,
                 groupVersion: String,
                 recorderVersion: String,
-                type: String,
+                eventId: String,
                 isState: Boolean = false): LogEvent {
-  val event = LogEventAction(StatisticsEventEscaper.escape(type), isState, 1)
+  val event = LogEventAction(StatisticsEventEscaper.escape(eventId), isState, 1)
   return LogEvent(session, build, bucket, time, groupId, groupVersion, recorderVersion, event)
 }
 
@@ -37,14 +37,14 @@ open class LogEvent(session: String,
                     groupId: String,
                     groupVersion: String,
                     recorderVersion: String,
-                    action: LogEventAction) {
+                    eventAction: LogEventAction) {
   val recorderVersion: String = StatisticsEventEscaper.escape(recorderVersion)
   val session: String = StatisticsEventEscaper.escape(session)
   val build: String = StatisticsEventEscaper.escape(build)
   val bucket: String = StatisticsEventEscaper.escape(bucket)
   val time: Long = eventTime
   val group: LogEventGroup = LogEventGroup(StatisticsEventEscaper.escape(groupId), StatisticsEventEscaper.escape(groupVersion))
-  val event: LogEventAction = action
+  val event: LogEventAction = eventAction
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false

@@ -43,7 +43,7 @@ public abstract class BaseKeyedLazyInstance<T> implements PluginAware {
   }
 
   @NotNull
-  protected T createInstance(@NotNull ComponentManager componentManager) {
+  public T createInstance(@NotNull ComponentManager componentManager) {
     return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(getImplementationClassName(), pluginDescriptor);
   }
 

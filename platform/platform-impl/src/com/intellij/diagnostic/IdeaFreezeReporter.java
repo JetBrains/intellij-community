@@ -27,26 +27,22 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
 
+  @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
+
   private SamplingTask myDumpTask;
   final List<ThreadDump> myCurrentDumps = new ArrayList<>();
   List<StackTraceElement> myStacktraceCommonPart = null;
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isEAP() || PluginManagerCore.isRunningFromSources()) {
+    if (!DEBUG && (!app.isEAP() || PluginManagerCore.isRunningFromSources())) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
   }
 
-  private static StreamEx<ThreadInfo> edts(List<ThreadInfo[]> threadInfos) {
-    return StreamEx.of(threadInfos)
-      .flatMap(Arrays::stream)
-      .filter(ThreadDumper::isEDT);
-  }
-
   @Override
   public void uiFreezeStarted() {
-    if (!DebugAttachDetector.isAttached()) {
+    if (DEBUG || !DebugAttachDetector.isAttached()) {
       if (myDumpTask != null) {
         myDumpTask.stop();
       }
@@ -114,6 +110,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   private static ThreadInfo getCauseThread(ThreadInfo[] threadInfos) {
+    ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
     ThreadInfo edt = ContainerUtil.find(threadInfos, ThreadDumper::isEDT);
     if (edt != null && edt.getThreadState() != Thread.State.RUNNABLE) {
       long id = edt.getLockOwnerId();
@@ -142,7 +139,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         }
       }
     }
-    return null;
+    return edt;
   }
 
   private static boolean isWithReadLock(ThreadInfo thread) {
@@ -169,45 +166,21 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
       time = PerformanceWatcher.getDumpInterval();
     }
-    boolean allInEdt = edts(infos)
-      .map(ThreadInfo::getThreadState)
-      .allMatch(Thread.State.RUNNABLE::equals);
-    List<StackTraceElement[]> reasonStacks;
-    boolean nonEdt = false;
-    if (allInEdt) {
-      reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList();
-    }
-    else {
-      reasonStacks = new ArrayList<>();
-      long causeThreadId = -1;
-      for (ThreadInfo[] threadInfos : infos) {
-        ThreadDumper.sort(threadInfos); // ensure sorted for better read action matching
-        if (causeThreadId == -1) {
-          // find probable cause thread
-          ThreadInfo thread = getCauseThread(threadInfos);
-          if (thread != null) {
-            nonEdt = true;
-            causeThreadId = thread.getThreadId();
-            reasonStacks.add(thread.getStackTrace());
-          }
-        }
-        else {
-          for (ThreadInfo info : threadInfos) {
-            if (info.getThreadId() == causeThreadId) {
-              reasonStacks.add(info.getStackTrace());
-            }
-          }
-        }
-      }
-    }
-    if (reasonStacks.isEmpty()) {
-      reasonStacks = edts(infos).map(ThreadInfo::getStackTrace).toList(); // fallback EDT threads
-      nonEdt = false;
-    }
-    CallTreeNode root = CallTreeNode.buildTree(reasonStacks, time);
-    List<StackTraceElement> commonStack = root.findDominantCommonStack(reasonStacks.size() * time / 2);
+
+    List<ThreadInfo> causeThreads = StreamEx.of(infos).map(IdeaFreezeReporter::getCauseThread).nonNull().toList();
+    boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
+
+    CallTreeNode root = CallTreeNode.buildTree(causeThreads, time);
+    int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
+    CallTreeNode commonStackNode = root.findDominantCommonStack(causeThreads.size() * time / 2);
+    List<StackTraceElement> commonStack = commonStackNode != null ? commonStackNode.getStack() : null;
+
+    boolean nonEdtCause = false;
     if (ContainerUtil.isEmpty(commonStack)) {
       commonStack = myStacktraceCommonPart; // fallback to simple EDT common
+    }
+    else {
+      nonEdtCause = !ThreadDumper.isEDT(commonStackNode.myThreadInfo);
     }
 
     String text = root.dump();
@@ -229,17 +202,25 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
                        "Sampled time: " + sampled + "ms, sampling rate: " + dumpTask.getDumpInterval() + "ms";
       if (sampled > 0) {
-        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%)";
+        message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / sampled + "%), Class loading: " + classLoadingRatio + "%";
       }
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
       }
-      if (nonEdt) {
+      if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
       }
       return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
     }
     return null;
+  }
+
+  private static int countClassLoading(List<ThreadInfo> causeThreads) {
+    return (int)causeThreads.stream().filter(t -> Arrays.stream(t.getStackTrace()).anyMatch(IdeaFreezeReporter::isClassLoading)).count();
+  }
+
+  private static boolean isClassLoading(StackTraceElement stackTraceElement) {
+    return "loadClass".equals(stackTraceElement.getMethodName()) && "java.lang.ClassLoader".equals(stackTraceElement.getClassName());
   }
 
   private static final class CallTreeNode {
@@ -248,36 +229,39 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     private final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
     private final int myDepth;
     private long myTime;
+    private final ThreadInfo myThreadInfo;
 
     static final Comparator<CallTreeNode> TIME_COMPARATOR = Comparator.<CallTreeNode>comparingLong(n -> n.myTime).reversed();
 
-    private CallTreeNode(StackTraceElement element, CallTreeNode parent, long time) {
+    private CallTreeNode(StackTraceElement element, CallTreeNode parent, long time, ThreadInfo info) {
       myStackTraceElement = element;
       myParent = parent;
       myDepth = parent != null ? parent.myDepth + 1 : 0;
       myTime = time;
+      myThreadInfo = info;
     }
 
     @NotNull
-    public static CallTreeNode buildTree(List<StackTraceElement[]> stacks, long time) {
-      CallTreeNode root = new CallTreeNode(null, null, 0);
-      for (StackTraceElement[] stack : stacks) {
+    public static CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
+      CallTreeNode root = new CallTreeNode(null, null, 0, null);
+      for (ThreadInfo thread : threadInfos) {
         CallTreeNode node = root;
+        StackTraceElement[] stack = thread.getStackTrace();
         for (int i = stack.length - 1; i >= 0; i--) {
-          node = node.addCallee(stack[i], time);
+          node = node.addCallee(stack[i], time, thread);
         }
       }
       return root;
     }
 
-    CallTreeNode addCallee(StackTraceElement e, long time) {
+    CallTreeNode addCallee(StackTraceElement e, long time, ThreadInfo threadInfo) {
       for (CallTreeNode child : myChildren) {
         if (PerformanceWatcher.compareStackTraceElements(child.myStackTraceElement, e)) {
           child.myTime += time;
           return child;
         }
       }
-      CallTreeNode child = new CallTreeNode(e, this, time);
+      CallTreeNode child = new CallTreeNode(e, this, time, threadInfo);
       myChildren.add(child);
       return child;
     }
@@ -315,8 +299,18 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return sb.toString();
     }
 
+    private List<StackTraceElement> getStack() {
+      List<StackTraceElement> res = new ArrayList<>();
+      CallTreeNode node = this;
+      while (node != null && node.myStackTraceElement != null) {
+        res.add(node.myStackTraceElement);
+        node = node.myParent;
+      }
+      return res;
+    }
+
     @Nullable
-    private List<StackTraceElement> findDominantCommonStack(long threshold) {
+    private CallTreeNode findDominantCommonStack(long threshold) {
       // find dominant
       CallTreeNode node = getMostHitChild();
       if (node == null) {
@@ -331,13 +325,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           break;
         }
       }
-      // build stack
-      List<StackTraceElement> res = new ArrayList<>();
-      while (node != null && node.myStackTraceElement != null) {
-        res.add(node.myStackTraceElement);
-        node = node.myParent;
-      }
-      return res;
+      return node;
     }
   }
 }

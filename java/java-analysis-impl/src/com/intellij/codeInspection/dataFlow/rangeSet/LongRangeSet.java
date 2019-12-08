@@ -209,6 +209,48 @@ public abstract class LongRangeSet {
     return null;
   }
 
+  @Nullable
+  public LongRangeSet wideBinOpFromToken(@NotNull IElementType token, @NotNull LongRangeSet other, boolean isLong) {
+    if (token.equals(JavaTokenType.PLUS) || token.equals(JavaTokenType.MINUS)) {
+      return plusWiden(token.equals(JavaTokenType.MINUS) ? other.negate(isLong) : other, isLong);
+    }
+    return null;
+  }
+
+  private LongRangeSet plusWiden(LongRangeSet other, boolean isLong) {
+    if (this instanceof Point && other instanceof Point) {
+      long val1 = ((Point)this).myValue;
+      long val2 = ((Point)other).myValue;
+      int tzb1 = val1 == 0 ? 0 : Long.numberOfTrailingZeros(val1);
+      int tzb2 = val2 == 0 ? 0 : Long.numberOfTrailingZeros(val2);
+      LongRangeSet constVal;
+      int mod;
+      if (tzb1 > tzb2) {
+        constVal = other;
+        mod = 1 << (Math.min(6, tzb1));
+      } else {
+        constVal = this;
+        mod = 1 << (Math.min(6, tzb2));
+      }
+      if (mod < 2) return null;
+      return modRange(minValue(isLong), maxValue(isLong), mod, 1).plus(constVal, isLong);
+    }
+    if (this instanceof Point && other instanceof ModRange) {
+      if (((Point)this).myValue % ((ModRange)other).myMod == 0) {
+        return other;
+      }
+      else if (((ModRange)other).myBits == 1) {
+        return this.plus(other, isLong);
+      }
+    }
+    if (other instanceof Point && this instanceof ModRange) {
+      return other.plusWiden(this, isLong);
+    }
+    return null;
+  }
+
+  public abstract boolean isCardinalityBigger(long cutoff);
+
   public abstract LongRangeSet castTo(PsiPrimitiveType type);
 
   /**
@@ -781,7 +823,8 @@ public abstract class LongRangeSet {
   @NotNull
   public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
-    return StreamEx.ofNullable(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE))
+    return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
+                   .nonNull()
                    .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
                    .map(LongRangeSet::fromAnnotation).foldLeft(all(), LongRangeSet::intersect);
   }
@@ -904,6 +947,11 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      return cutoff < 0;
+    }
+
+    @Override
     public LongRangeSet castTo(PsiPrimitiveType type) {
       if (TypeConversionUtil.isIntegralNumberType(type)) {
         return this;
@@ -976,6 +1024,11 @@ public abstract class LongRangeSet {
     @Override
     public String getPresentationText(PsiType type) {
       return formatNumber(myValue);
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      return cutoff < 1;
     }
 
     @Override
@@ -1262,6 +1315,12 @@ public abstract class LongRangeSet {
         return myFrom + " or " + myTo;
       }
       return "in " + toString();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long diff = myTo - myFrom;
+      return diff < 0 || diff >= cutoff;
     }
 
     @Override
@@ -1611,6 +1670,25 @@ public abstract class LongRangeSet {
         }
       }
       return "in " + super.toString() + "; " + getSuffix();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long bottom = myFrom - 1 - remainder(myFrom - 1, myMod) + myMod;
+      long top = myTo - remainder(myTo, myMod);
+      if (bottom >= myFrom && top > bottom && myTo >= top) {
+        int count = Long.bitCount(myBits);
+        long wholeCount = (top / myMod - bottom / myMod) * count;
+        if (wholeCount < 0 || wholeCount > cutoff) return true;
+        for (long i = myFrom; i < bottom; i++) {
+          if (isSet(myBits, remainder(i, myMod))) wholeCount++;
+        }
+        for (long i = top; i <= myTo; i++) {
+          if (isSet(myBits, remainder(i, myMod))) wholeCount++;
+        }
+        return wholeCount < 0 || wholeCount > cutoff;
+      }
+      return stream().limit(Math.max(0, cutoff + 1)).count() > cutoff;
     }
 
     @Override
@@ -2013,6 +2091,18 @@ public abstract class LongRangeSet {
         return myRanges[0] + " or " + myRanges[2];
       }
       return "in " + toString();
+    }
+
+    @Override
+    public boolean isCardinalityBigger(long cutoff) {
+      long totalDiff = 0;
+      for (int i = 0; i < myRanges.length; i += 2) {
+        long diff = myRanges[i + 1] - myRanges[i];
+        if (diff < 0) return true;
+        totalDiff += diff + 1;
+        if (totalDiff < 0 || totalDiff > cutoff) return true;
+      }
+      return false;
     }
 
     @Override

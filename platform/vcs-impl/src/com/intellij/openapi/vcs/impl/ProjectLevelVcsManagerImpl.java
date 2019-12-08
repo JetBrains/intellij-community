@@ -67,7 +67,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
+public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -111,16 +111,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
     else {
       myInitialization = new VcsInitialization(myProject);
-      Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-      ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
+      // wait for the thread spawned in VcsInitialization to terminate
+      Disposer.register(this, myInitialization);
+
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          Disposer.dispose(myInitialization);
+          if (project == myProject) {
+            Disposer.dispose(myInitialization);
+          }
         }
       });
     }
 
     myMappings = new NewMappings(myProject, this);
+    Disposer.register(this, myMappings);
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {
@@ -165,7 +170,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public void dispose() {
     releaseConsole();
-    Disposer.dispose(myMappings);
   }
 
   @NotNull
@@ -469,7 +473,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Element getState() {
     Element element = new Element("state");

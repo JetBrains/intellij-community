@@ -76,7 +76,7 @@ class PyAsyncCallInspection : PyInspection() {
     private fun getCalledCoroutineName(callExpression: PyCallExpression, resolveContext: PyResolveContext): String? {
       val callee = callExpression.callee as? PyReferenceExpression ?: return null
       val function = callExpression.multiResolveCalleeFunction(resolveContext).firstOrNull() as? PyFunction ?: return null
-      return if (function.name == PyNames.INIT) callee.name else function.name
+      return if (PyUtil.isInitMethod(function)) callee.name else function.name
     }
 
     fun isOuterFunctionAsync(node: PyExpression): Boolean {

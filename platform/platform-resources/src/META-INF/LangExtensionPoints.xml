@@ -245,7 +245,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.unwrap.UnwrapDescriptor"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ParserDefinition"/>
     </extensionPoint>
 
@@ -1033,6 +1033,8 @@
 
     <extensionPoint name="implementationViewSessionFactory" interface="com.intellij.codeInsight.hint.ImplementationViewSessionFactory"/>
     <extensionPoint name="implementationViewDocumentFactory" interface="com.intellij.codeInsight.hint.ImplementationViewDocumentFactory"/>
+
+    <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.codeInspection.CommandLineInspectionProjectConfigurator"/>
   </extensionPoints>
 </idea-plugin>
 

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.indexing;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,7 +111,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
 
   public static class MyInputFilter extends DefaultFileTypeSpecificInputFilter {
     public MyInputFilter() {
-      super(StdFileTypes.XML);
+      super(XmlFileType.INSTANCE);
     }
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {

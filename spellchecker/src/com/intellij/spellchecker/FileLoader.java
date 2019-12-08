@@ -50,7 +50,7 @@ public class FileLoader implements Loader {
   @Override
   public void load(@NotNull Consumer<String> consumer) {
     final VirtualFile file = findFileByIoFile(new File(url), true);
-    if (file == null) {
+    if (file == null || file.isDirectory()) {
       return;
     }
     final Charset charset = file.getCharset();

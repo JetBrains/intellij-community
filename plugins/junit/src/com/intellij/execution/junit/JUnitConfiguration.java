@@ -591,8 +591,9 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myData.REPEAT_MODE = repeatMode;
   }
 
+  @NotNull
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return new JUnitConsoleProperties(this, executor);
   }
 

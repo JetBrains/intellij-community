@@ -69,9 +69,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
+  void copyFilesForOsDistribution(String macDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {
@@ -93,7 +92,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
     }
-    return macDistPath
   }
 
   @Override
@@ -259,10 +257,20 @@ Android Studio: removed by Change I22bfabed */
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
+  @Override
+  List<String> generateExecutableFilesPatterns(boolean includeJre) {
+    [
+      "bin/*.sh",
+      "bin/*.py",
+      "bin/fsnotifier",
+      "bin/restarter",
+      "MacOS/*"
+    ] + customizer.extraExecutables
+  }
+
   // Android Studio: modified by Change Idc07b110 / commit f20681e
   private String buildMacZip(String jdkDirectoryPath, String macDistPath) {
     return buildContext.messages.block("Build .zip archive for macOS") {
-      def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       def zipRoot = getZipRoot(buildContext, customizer)
       def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
@@ -276,15 +284,11 @@ Android Studio: removed by Change I22bfabed */
       allPaths += productJsonDir
 TODO(b/118034991): generate product-info.json files (or not) */
 
+      def executableFilePatterns = generateExecutableFilesPatterns(false)
       buildContext.ant.zip(zipfile: tmpTargetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
-            exclude(name: "bin/*.sh")
-            exclude(name: "bin/*.py")
-            exclude(name: "bin/fsnotifier")
-            exclude(name: "bin/restarter")
-            exclude(name: "MacOS/*")
-            extraBins.each {
+            executableFilePatterns.each {
               exclude(name: it)
             }
             exclude(name: "*.txt")
@@ -293,12 +297,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
 
         allPaths.each {
           zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
-            include(name: "bin/*.sh")
-            include(name: "bin/*.py")
-            include(name: "bin/fsnotifier")
-            include(name: "bin/restarter")
-            include(name: "MacOS/*")
-            extraBins.each {
+            executableFilePatterns.each {
               include(name: it)
             }
           }

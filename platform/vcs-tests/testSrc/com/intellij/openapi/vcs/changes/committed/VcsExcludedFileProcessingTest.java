@@ -27,6 +27,7 @@ public class VcsExcludedFileProcessingTest extends HeavyPlatformTestCase {
     myVcs = new MockAbstractVcs(myProject);
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     myVcsManager.registerVcs(myVcs);
+    myVcsManager.waitForInitialized();
   }
 
   public void testFileUnderExcludedRoot() throws IOException {

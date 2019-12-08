@@ -297,8 +297,10 @@ public class IndexDataGetter {
             changesMap.put(commit, ContainerUtil.getFirstItem(changes));
           }
           else {
-            LOG.assertTrue(parents.size() == changes.size(),
-                           "Commit " + commit + " has " + parents.size() + " parents, but " + changes.size() + " changes.");
+            if (parents.size() != changes.size()) {
+              throw new CorruptedDataException("Commit " + commit + " has " + parents.size() +
+                                               " parents, but " + changes.size() + " changes.");
+            }
             for (Pair<Integer, VcsLogPathsIndex.ChangeKind> parentAndChanges : ContainerUtil.zip(parents, changes)) {
               changesMap.put(parentAndChanges.first, parentAndChanges.second);
             }

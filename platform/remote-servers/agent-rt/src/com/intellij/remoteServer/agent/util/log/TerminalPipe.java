@@ -40,6 +40,11 @@ public abstract class TerminalPipe extends LogPipeBase {
       myTerminalListener = TerminalListener.NULL;
     }
     myTerminalListener.setTtyResizeHandler(getTtyResizeHandler());
+    hookTerminal(myTerminalListener);
+  }
+
+  protected void hookTerminal(TerminalListener terminal) {
+    //
   }
 
   protected TerminalListener.TtyResizeHandler getTtyResizeHandler() {

@@ -372,7 +372,6 @@ public class HighlightInfo implements Segment {
     this.group = group;
   }
 
-  @SuppressWarnings("unused")
   public interface Builder {
     // only one 'range' call allowed
     @NotNull Builder range(@NotNull TextRange textRange);

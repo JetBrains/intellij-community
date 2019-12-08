@@ -24,7 +24,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author max
  */
 public class QuickFixWrapper implements IntentionAction, PriorityAction {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ex.QuickFixWrapper");
+  private static final Logger LOG = Logger.getInstance(QuickFixWrapper.class);
 
   private final ProblemDescriptor myDescriptor;
   private final LocalQuickFix myFix;

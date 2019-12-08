@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +61,9 @@ public interface VariableDescriptor {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
     PsiType type = getType(null);
-    return factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
+    LongRangeSet range = LongRangeSet.fromPsiElement(getPsiElement());
+    return factory.withFact(factory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, getPsiElement())),
+                            DfaFactType.RANGE, range);
   }
 
   /**

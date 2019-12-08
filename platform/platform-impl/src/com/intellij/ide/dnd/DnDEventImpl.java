@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDEventImpl");
+  private static final Logger LOG = Logger.getInstance(DnDEventImpl.class);
 
   public static final DataFlavor ourDataFlavor = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
 

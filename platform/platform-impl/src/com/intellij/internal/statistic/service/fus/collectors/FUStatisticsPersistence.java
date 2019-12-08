@@ -11,8 +11,7 @@ import java.io.File;
 import java.nio.file.Paths;
 
 public class FUStatisticsPersistence {
-  private static final Logger
-    LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence");
+  private static final Logger LOG = Logger.getInstance(FUStatisticsPersistence.class);
 
   private static final String LEGACY_PERSISTENCE_STATE_FILE = "fus-previous-state.data";
   private static final String PERSISTENCE_STATE_FILE = "fus-state.data";

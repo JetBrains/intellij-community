@@ -228,7 +228,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
     }
 
     String pluginId = pluginDescriptor.getPluginId().getIdString();
-    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId);
+    long duration = StartUpMeasurer.addCompletedActivity(startTime, extension.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
       reportUiFreeze(uiFreezeWarned);
     }
@@ -402,7 +402,7 @@ public class StartupManagerImpl extends StartupManagerEx implements Disposable {
 
       runActivity(runnable);
 
-      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId);
+      StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     }
 
     activity.end();

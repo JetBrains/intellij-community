@@ -52,7 +52,7 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
     if (secondComponent != null) {
       secondComponent.setMinimumSize(emptySize());
     }
-    revalidate();
+    validate();
     repaint();
   }
 

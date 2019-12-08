@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -22,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.SmartList
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.messages.*
@@ -36,6 +36,7 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.Executor
 
 internal val LOG = logger<PlatformComponentManagerImpl>()
 
@@ -136,7 +137,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    val notifyListeners = LoadingPhase.PROJECT_OPENED.isComplete
+    val notifyListeners = LoadingState.PROJECT_OPENED.isOccurred
     for (descriptor in plugins) {
       descriptor.registerExtensions(extensionArea, this, notifyListeners)
     }
@@ -147,8 +148,8 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingPhase.PROJECT_OPENED.isComplete /* loading plugin on the fly */) {
-      LoadingPhase.setCurrentPhase(LoadingPhase.COMPONENT_REGISTERED)
+    if (picoContainer.parent == null && !LoadingState.PROJECT_OPENED.isOccurred /* loading plugin on the fly */) {
+      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
     // todo support lazy listeners for dynamically loaded plugins
@@ -166,8 +167,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
       indicator.isIndeterminate = false
     }
 
-    val activityNamePrefix = activityNamePrefix()
-    val activity = when (activityNamePrefix) {
+    val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
       else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Phases.CREATE_COMPONENTS_SUFFIX}")
     }
@@ -254,7 +254,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   fun initializeComponent(component: Any, serviceDescriptor: ServiceDescriptor?) {
     if (serviceDescriptor == null || !(component is PathMacroManager || component is IComponentStore || component is MessageBusFactory)) {
-      LoadingPhase.CONFIGURATION_STORE_INITIALIZED.assertAtLeast()
+      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred()
       componentStore.initComponent(component, serviceDescriptor)
     }
   }
@@ -332,7 +332,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>, cache: ConcurrentMap<Class<*>, Any>): T {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
 
     @Suppress("UNCHECKED_CAST")
     var result = cache.get(serviceClass) as T?
@@ -590,26 +590,43 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   @Internal
   open fun activityNamePrefix(): String? = null
 
+  data class ServicePreloadingResult(val asyncPreloadedServices: CompletableFuture<Void?>, val syncPreloadedServices: CompletableFuture<Void?>)
+
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptor>): CompletableFuture<*> {
+  fun preloadServices(plugins: List<IdeaPluginDescriptor>, executor: Executor): ServicePreloadingResult {
     @Suppress("UNCHECKED_CAST")
     plugins as List<IdeaPluginDescriptorImpl>
 
-    val futures = mutableListOf<CompletableFuture<Void>>()
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
+    val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
+    val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
     for (plugin in plugins) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (service.preload) {
-          futures.add(CompletableFuture.runAsync(Runnable {
-            if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
-              (myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter?)?.getInstance<Any>(this)
+        if (service.preload == PreloadMode.FALSE) {
+          continue
+        }
+
+        val future = CompletableFuture.runAsync(Runnable {
+          if (!isServicePreloadingCancelled && !isContainerDisposedOrDisposeInProgress()) {
+            val adapter = myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
+            try {
+              adapter.getInstance<Any>(this)
             }
-          }, executor))
+            catch (e: StartupAbortedException) {
+              isServicePreloadingCancelled = true
+              throw e
+            }
+          }
+        }, executor)
+
+        @Suppress("NON_EXHAUSTIVE_WHEN")
+        when (service.preload) {
+          PreloadMode.TRUE -> asyncPreloadedServices.add(future)
+          PreloadMode.AWAIT -> syncPreloadedServices.add(future)
         }
       }
     }
-    executor.shutdown()
-    return CompletableFuture.allOf(*futures.toTypedArray())
+    return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),
+                                   syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
   }
 
   // this method is required because of ProjectImpl.temporarilyDisposed (a lot of failed tests if check temporarilyDisposed)

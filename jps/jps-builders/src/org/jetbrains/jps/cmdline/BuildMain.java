@@ -33,12 +33,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
@@ -168,6 +170,8 @@ public class BuildMain {
             //noinspection ResultOfMethodCallIgnored
             BuilderRegistry.getInstance();
 
+            JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.preloadData(data));
+
             LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
           }
           catch (Throwable e) {
@@ -280,6 +284,9 @@ public class BuildMain {
               if (pd != null) {
                 pd.release();
               }
+
+              JpsServiceManager.getInstance().getExtensions(PreloadedDataExtension.class).forEach(ext-> ext.discardPreloadedData(preloaded));
+
               System.exit(0);
             }
             return;

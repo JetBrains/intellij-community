@@ -24,9 +24,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.ITemplateDataElementType;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IReparseableElementType;
-import com.intellij.psi.tree.IReparseableLeafElementType;
+import com.intellij.psi.tree.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
@@ -127,7 +125,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     while (node != null && !(node instanceof FileElement)) {
       IElementType elementType = node.getElementType();
-      if (elementType instanceof IReparseableElementType || elementType instanceof IReparseableLeafElementType) {
+      if (elementType instanceof IReparseableElementTypeBase || elementType instanceof IReparseableLeafElementType) {
         final TextRange textRange = node.getTextRange();
 
         if (textRange.getLength() + lengthShift > 0 &&
@@ -142,8 +140,8 @@ public class BlockSupportImpl extends BlockSupport {
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
           ASTNode newNode;
-          if (elementType instanceof IReparseableElementType) {
-            newNode = tryReparseNode((IReparseableElementType)elementType, node, newTextStr, file.getManager(), baseLanguage, charTable);
+          if (elementType instanceof IReparseableElementTypeBase) {
+            newNode = tryReparseNode((IReparseableElementTypeBase)elementType, node, newTextStr, file.getManager(), baseLanguage, charTable);
           }
           else {
             newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, node, newTextStr);
@@ -167,12 +165,21 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @Nullable
-  protected static ASTNode tryReparseNode(@NotNull IReparseableElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
+  protected static ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
                                           @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
     if (!reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, manager.getProject())) {
       return null;
     }
-    ASTNode chameleon = reparseable.createNode(newTextStr);
+    ASTNode chameleon;
+    if (reparseable instanceof ICustomParsingType) {
+      chameleon = ((ICustomParsingType)reparseable).parse(newTextStr, SharedImplUtil.findCharTableByTree(node));
+    }
+    else if (reparseable instanceof ILazyParseableElementType) {
+      chameleon = ((ILazyParseableElementType)reparseable).createNode(newTextStr);
+    }
+    else {
+      throw new AssertionError(reparseable.getClass() + " must either implement ICustomParsingType or extend ILazyParseableElementType");
+    }
     if (chameleon == null) {
       return null;
     }

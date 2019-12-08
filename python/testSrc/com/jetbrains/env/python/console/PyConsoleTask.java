@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author traff
  */
 public class PyConsoleTask extends PyExecutionFixtureTestTask {
-  private static final Logger LOG = Logger.getInstance("com.jetbrains.env.python.console.PyConsoleTask");
+  private static final Logger LOG = Logger.getInstance(PyConsoleTask.class);
 
   private boolean myProcessCanTerminate;
 

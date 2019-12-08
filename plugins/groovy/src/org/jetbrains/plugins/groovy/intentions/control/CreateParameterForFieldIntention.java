@@ -52,7 +52,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class CreateParameterForFieldIntention extends Intention {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention");
+  private static final Logger LOG = Logger.getInstance(CreateParameterForFieldIntention.class);
   private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 
   @Override

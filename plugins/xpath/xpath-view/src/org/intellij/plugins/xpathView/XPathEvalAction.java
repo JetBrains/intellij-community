@@ -119,7 +119,7 @@ import java.util.List;
  */
 public class XPathEvalAction extends XPathAction {
 
-    private static final Logger LOG = Logger.getInstance("org.intellij.plugins.xpathView.XPathEvalAction");
+    private static final Logger LOG = Logger.getInstance(XPathEvalAction.class);
 
   @Override
     protected void updateToolbar(AnActionEvent event) {

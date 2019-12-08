@@ -21,7 +21,7 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
+  private static final Logger LOG = Logger.getInstance(IdePopupManager.class);
 
   private final List<IdePopupEventDispatcher> myDispatchStack = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIgnoreNextKeyTypedEvent;

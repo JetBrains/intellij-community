@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public class CompletionInitializationContext {
 
   public CompletionInitializationContext(final Editor editor,
                                          final @NotNull Caret caret,
-                                         @NotNull Language language,
+                                         Language language,
                                          final PsiFile file,
                                          final CompletionType completionType,
                                          int invocationCount) {
@@ -74,7 +75,7 @@ public class CompletionInitializationContext {
 
   @NotNull
   public Language getPositionLanguage() {
-    return myPositionLanguage;
+    return ObjectUtils.assertNotNull(myPositionLanguage);
   }
 
   public String getDummyIdentifier() {

@@ -2,7 +2,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.LoadingPhase
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Disposer
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.PicoContainer
@@ -69,17 +69,27 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, indicator ?: ProgressManager.getGlobalProgressIndicator())
+    return getInstanceUncached(componentManager, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
   private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
-    LoadingPhase.COMPONENT_REGISTERED.assertAtLeast()
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
     checkContainerIsActive(componentManager, indicator)
+
+    val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
+    val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
 
     synchronized(this) {
       @Suppress("UNCHECKED_CAST")
       var instance = initializedInstance as T?
       if (instance != null) {
+        if (activityCategory != null) {
+          val end = StartUpMeasurer.getCurrentTime()
+          if ((end - beforeLockTime) > 100) {
+            // do not report plugin id - not clear who calls us and how we should interpret this delay - total duration vs own duration is enough for plugin cost measurement
+            StartUpMeasurer.addCompletedActivity(beforeLockTime, end, implementationClassName, ActivityCategory.SERVICE_WAITING, /* pluginId = */ null)
+          }
+        }
         return instance
       }
 
@@ -98,8 +108,11 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
         checkContainerIsActive(componentManager, indicator)
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
-        getActivityCategory(componentManager)?.let { category ->
-          StartUpMeasurer.addCompletedActivity(startTime, implementationClass, category, pluginId.idString)
+        activityCategory?.let { category ->
+          val end = StartUpMeasurer.getCurrentTime()
+          if (activityCategory != ActivityCategory.MODULE_SERVICE || (end - startTime) > StartUpMeasurer.MEASURE_THRESHOLD) {
+            StartUpMeasurer.addCompletedActivity(startTime, end, implementationClassName, category, pluginId.idString)
+          }
         }
 
         initializedInstance = instance

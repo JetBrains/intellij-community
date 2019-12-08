@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 language: python
 python: 3.7
 
@@ -9,20 +9,17 @@ matrix:
       env:
         - TEST_CMD="./tests/pytype_test.py"
         - INSTALL="test"
-    - name: "mypy"
+    - name: "mypy (typed-ast)"
       env:
         - TEST_CMD="./tests/mypy_test.py"
         - INSTALL="mypy"
-    - name: "mypy new analyzer"
+    - name: "mypy (ast)"
+      python: 3.8-dev
       env:
-        - TEST_CMD="./tests/mypy_test.py -a"
+        - TEST_CMD="./tests/mypy_test.py"
         - INSTALL="mypy"
     - name: "mypy self test"
       env: TEST_CMD="./tests/mypy_selftest.py"
-    - name: "mypy self test (new analyzer)"
-      env:
-        - NEWSEMANAL=1
-        - TEST_CMD="./tests/mypy_selftest.py"
     - name: "check file consistency"
       env: TEST_CMD="./tests/check_consistent.py"
     - name: "flake8"

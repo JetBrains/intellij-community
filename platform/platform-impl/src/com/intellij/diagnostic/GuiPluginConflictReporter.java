@@ -3,11 +3,14 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.errordialog.PluginConflictDialog;
 import com.intellij.ide.plugins.PluginConflictReporter;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,6 +42,21 @@ final class GuiPluginConflictReporter implements PluginConflictReporter {
       return;
     }
 
-    new PluginConflictDialog(new ArrayList<>(foundPlugins), hasConflictWithPlatform).show();
+    boolean finalHasConflictWithPlatform = hasConflictWithPlatform;
+    Runnable task = () -> {
+      new PluginConflictDialog(new ArrayList<>(foundPlugins), finalHasConflictWithPlatform).show();
+    };
+
+    if (EventQueue.isDispatchThread()) {
+      task.run();
+    }
+    else {
+      try {
+        EventQueue.invokeAndWait(task);
+      }
+      catch (InterruptedException | InvocationTargetException e) {
+        PluginManagerCore.getLogger().error(e);
+      }
+    }
   }
 }

@@ -52,11 +52,12 @@ public class JsonSchemaCatalogManager {
 
   @Nullable
   public VirtualFile getSchemaFileForFile(@NotNull VirtualFile file) {
-    if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isCatalogEnabled()) return null;
-    for (JsonSchemaCatalogExclusion exclusion : JsonSchemaCatalogExclusion.EP_NAME.getIterable(null)) {
-      if (exclusion.isExcluded(file)) {
-        return null;
-      }
+    if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isCatalogEnabled()) {
+      return null;
+    }
+
+    if (JsonSchemaCatalogExclusion.EP_NAME.findFirstSafe(exclusion -> exclusion.isExcluded(file)) != null) {
+      return null;
     }
 
     String name = file.getName();

@@ -57,12 +57,9 @@ public abstract class ProjectOpenProcessor {
    */
   @Nullable
   public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
-    for (ProjectOpenProcessor provider : EXTENSION_POINT_NAME.getIterable()) {
-      if (provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file))) {
-        return provider;
-      }
-    }
-    return null;
+    return EXTENSION_POINT_NAME.findFirstSafe(provider -> {
+      return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
+    });
   }
 
   /**

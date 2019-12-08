@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.EventDispatcher
 
 private val AMEND_DATA_KEY = Key.create<AmendData>("Vcs.Commit.AmendData")
@@ -33,6 +34,10 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
 
   var initialMessage: String? = null
 
+  init {
+    workflow.addCommitListener(AmendPrefixCleaner(), workflowHandler)
+  }
+
   override var isAmendCommitMode: Boolean
     get() = commitContext.isAmendCommitMode
     set(value) {
@@ -42,6 +47,8 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
       if (oldValue != value) {
         amendCommitEventDispatcher.multicaster.amendCommitModeToggled()
         if (value) setAmendMessage() else restoreBeforeAmendMessage()
+
+        setAmendPrefix(value)
       }
     }
 
@@ -53,6 +60,11 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
 
   override fun addAmendCommitModeListener(listener: AmendCommitModeListener, parent: Disposable) =
     amendCommitEventDispatcher.addListener(listener, parent)
+
+  private fun setAmendPrefix(isAmend: Boolean) {
+    val amendPrefix = if (isAmend) "Amend " else ""
+    workflowHandler.ui.defaultCommitActionName = amendPrefix + workflowHandler.getCommitActionName()
+  }
 
   private fun setAmendMessage() {
     val beforeAmendMessage = workflowHandler.getCommitMessage()
@@ -110,5 +122,11 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
       val amendAware = vcsRoot.vcs?.checkinEnvironment as? AmendCommitAware ?: return@mapNotNull null
       amendAware.getLastCommitMessage(vcsRoot.path)
     }
+  }
+
+  private inner class AmendPrefixCleaner : CommitResultHandler {
+    override fun onSuccess(commitMessage: String) = setAmendPrefix(false)
+    override fun onCancel() = Unit
+    override fun onFailure() = setAmendPrefix(false)
   }
 }

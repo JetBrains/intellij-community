@@ -2,6 +2,8 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -76,10 +78,15 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         clearInjectorCache();
       }
     }, this);
-  }
 
-  PsiDocumentManager getDocManager() {
-    return myDocManager;
+    project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        // When a language plugin is unloaded, make sure we don't have references to any injection host PSI from this language
+        // in the injector cache
+        clearInjectorCache();
+      }
+    });
   }
 
   @Override

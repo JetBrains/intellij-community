@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -46,10 +45,8 @@ public class PyMethodOverridingInspection extends PyInspection {
     public void visitPyFunction(final PyFunction function) {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
-      final String name = function.getName();
 
-      if (PyNames.INIT.equals(name) ||
-          PyNames.NEW.equals(name) ||
+      if (PyUtil.isInitOrNewMethod(function) ||
           PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
           ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensions(), e -> e.ignoreMethodParameters(function, myTypeEvalContext))) {
         return;
@@ -61,7 +58,7 @@ public class PyMethodOverridingInspection extends PyInspection {
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final PyClass baseClass = baseMethod.getContainingClass();
             final String msg = PyBundle.message("INSP.signature.mismatch",
-                                                cls.getName() + "." + name + "()",
+                                                cls.getName() + "." + function.getName() + "()",
                                                 baseClass != null ? baseClass.getName() : "");
             registerProblem(function.getParameterList(), msg, PyChangeSignatureQuickFix.forMismatchingMethods(function, baseMethod));
           }

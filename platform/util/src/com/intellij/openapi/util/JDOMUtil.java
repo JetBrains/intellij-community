@@ -402,6 +402,13 @@ public final class JDOMUtil {
     }
   }
 
+  public static void write(@NotNull Element element, @NotNull Path file) throws IOException {
+    Files.createDirectories(file.getParent());
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      writeElement(element, writer, createOutputter("\n"));
+    }
+  }
+
   public static void write(@NotNull Parent element, @NotNull File file) throws IOException {
     write(element, file, "\n");
   }

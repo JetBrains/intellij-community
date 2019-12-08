@@ -283,13 +283,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
       ((EditorMarkupModelImpl)editor.getMarkupModel())
-        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument(), file));
+        .setErrorStripeRenderer(new ConditionalTrafficLightRenderer(myProject, editor.getDocument()));
     }
   }
 
   private static class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
-    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document, @Nullable PsiFile file) {
-      super(project, document, file);
+    ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
+      super(project, document);
     }
 
     @Override

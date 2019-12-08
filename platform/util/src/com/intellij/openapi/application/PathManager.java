@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,8 +63,8 @@ public class PathManager {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
   }
 
-  private static String ourHomePath;
-  private static String[] ourBinDirectories;
+  private volatile static String ourHomePath;
+  private volatile static String[] ourBinDirectories;
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
@@ -81,30 +83,53 @@ public class PathManager {
    */
   @Contract("true -> !null")
   public static String getHomePath(boolean insideIde) {
-    if (ourHomePath != null) return ourHomePath;
+    String result = ourHomePath;
+    if (result != null) {
+      return result;
+    }
 
-    String fromProperty = System.getProperty(PROPERTY_HOME_PATH, System.getProperty(PROPERTY_HOME));
-    if (fromProperty != null) {
-      ourHomePath = getAbsolutePath(fromProperty);
-      if (!new File(ourHomePath).isDirectory()) {
-        throw new RuntimeException("Invalid home path '" + ourHomePath + "'");
+    //noinspection SynchronizeOnThis
+    synchronized (PathManager.class) {
+      result = ourHomePath;
+      if (result != null) {
+        return result;
       }
-    }
-    else if (insideIde) {
-      ourHomePath = getHomePathFor(PathManager.class);
-      if (ourHomePath == null) {
-        String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
-        throw new RuntimeException("Could not find installation home path. Please " + advice);
+
+      String fromProperty = System.getProperty(PROPERTY_HOME_PATH, System.getProperty(PROPERTY_HOME));
+      if (fromProperty != null) {
+        result = getAbsolutePath(fromProperty);
+        if (!Files.isDirectory(Paths.get(result))) {
+          ourHomePath = result;
+          throw new RuntimeException("Invalid home path '" + result + "'");
+        }
       }
+      else if (insideIde) {
+        result = getHomePathFor(PathManager.class);
+        if (result == null) {
+          String advice =
+            SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+          throw new RuntimeException("Could not find installation home path. Please " + advice);
+        }
+      }
+
+      if (result != null && SystemInfo.isWindows) {
+        result = canonicalPath(result);
+      }
+
+      // set before ourHomePath because getBinDirectories() rely on fact that if getHomePath(true) returns something, then ourBinDirectories is already computed
+      ourBinDirectories = result == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : getBinDirectories(new File(result));
+      ourHomePath = result;
     }
+    return result;
+  }
 
-    if (ourHomePath != null && SystemInfo.isWindows) {
-      ourHomePath = canonicalPath(ourHomePath);
+  private static String[] getBinDirectories() {
+    String[] result = ourBinDirectories;
+    if (result == null) {
+      getHomePath(true);
+      return ourBinDirectories;
     }
-
-    ourBinDirectories = ourHomePath != null ? getBinDirectories(new File(ourHomePath)) : ArrayUtilRt.EMPTY_STRING_ARRAY;
-
-    return ourHomePath;
+    return result;
   }
 
   public static boolean isUnderHomeDirectory(@NotNull String path) {
@@ -167,8 +192,7 @@ public class PathManager {
    */
   @Nullable
   public static File findBinFile(@NotNull String fileName) {
-    getHomePath();
-    for (String binDir : ourBinDirectories) {
+    for (String binDir : getBinDirectories()) {
       File file = new File(binDir, fileName);
       if (file.isFile()) return file;
     }
@@ -186,7 +210,7 @@ public class PathManager {
   public static File findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
     File file = findBinFile(fileName);
     if (file != null) return file;
-    String paths = StringUtil.join(ourBinDirectories, "\n");
+    String paths = StringUtil.join(getBinDirectories(), "\n");
     throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, paths));
   }
 
@@ -413,13 +437,11 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-    getHomePath();
-
     Set<String> paths = new LinkedHashSet<>();
     paths.add(System.getProperty(PROPERTIES_FILE));
     paths.add(getCustomPropertiesFile());
     paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
-    for (String binDir : ourBinDirectories) {
+    for (String binDir : getBinDirectories()) {
       paths.add(binDir + '/' + PROPERTIES_FILE_NAME);
     }
 

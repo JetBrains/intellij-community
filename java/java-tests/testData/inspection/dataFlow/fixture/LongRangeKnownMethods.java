@@ -352,7 +352,15 @@ public class LongRangeKnownMethods {
       if (<warning descr="Condition 's.length() > 7' is always 'false'">s.length() > 7</warning>) {}
     }
   }
-  
+
+  void testChainCall() {
+    if (<warning descr="Condition 'getByte(0).intValue() == 256' is always 'false'">getByte(0).intValue() == 256</warning>) {
+
+    }
+  }
+
+  native Byte getByte(int x);
+
   void testNumberToStringExact(boolean b) {
     int i = b ? 123 : 456;
     String s = Integer.toString(i);

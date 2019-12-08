@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public interface EditorSettings {
   boolean isRightMarginShown();
@@ -176,4 +177,6 @@ public interface EditorSettings {
    * @see #isWrapWhenTypingReachesRightMargin(Project)
    */
   void setLanguage(@Nullable Language language);
+
+  void setLanguageSupplier(@Nullable Supplier<Language> languageSupplier);
 }

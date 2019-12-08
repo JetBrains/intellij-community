@@ -21,7 +21,7 @@ FIRST_EXCEPTION: str
 FIRST_COMPLETED: str
 ALL_COMPLETED: str
 
-def as_completed(fs: Sequence[_FutureT[_T]], *, loop: Optional[AbstractEventLoop] = ...,
+def as_completed(fs: Iterable[_FutureT[_T]], *, loop: Optional[AbstractEventLoop] = ...,
                  timeout: Optional[float] = ...) -> Iterator[Future[_T]]: ...
 def ensure_future(coro_or_future: _FutureT[_T],
                   *, loop: Optional[AbstractEventLoop] = ...) -> Future[_T]: ...

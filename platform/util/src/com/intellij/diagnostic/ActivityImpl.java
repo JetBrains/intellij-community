@@ -69,7 +69,9 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, System.nanoTime(), this, pluginId);
+    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId);
+    activity.category = category;
+    return activity;
   }
 
   @NotNull
@@ -101,13 +103,15 @@ public final class ActivityImpl implements Activity {
   }
 
   @Override
-  public void end(@Nullable String description) {
-    if (description != null) {
-      this.description = description;
-    }
+  public void end() {
     assert end == 0 : "not started or already ended";
     end = StartUpMeasurer.getCurrentTime();
-    StartUpMeasurer.add(this);
+    StartUpMeasurer.addActivity(this);
+  }
+
+  @Override
+  public void setDescription(@NotNull String value) {
+    description = value;
   }
 
   @Override
@@ -121,6 +125,16 @@ public final class ActivityImpl implements Activity {
 
   @Override
   public String toString() {
-    return "ActivityImpl(name=" + name + ", start=" + TimeUnit.NANOSECONDS.toMillis(start) + ", end=" + TimeUnit.NANOSECONDS.toMillis(end) + ")";
+    StringBuilder builder = new StringBuilder();
+    builder.append("ActivityImpl(name=").append(name).append(", start=");
+    nanoToString(start, builder);
+    builder.append(", end=");
+    nanoToString(end, builder);
+    builder.append(", category=").append(category).append(")");
+    return builder.toString();
+  }
+
+  private static void nanoToString(long start, @NotNull StringBuilder builder) {
+    builder.append(TimeUnit.NANOSECONDS.toMillis(start - StartUpMeasurer.getStartTime())).append("ms (").append(TimeUnit.NANOSECONDS.toMicros(start - StartUpMeasurer.getStartTime())).append("μs)");
   }
 }

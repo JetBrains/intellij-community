@@ -434,7 +434,7 @@ public class PyDocumentationBuilder {
     if (methodName == null) {
       return null;
     }
-    final boolean isConstructor = PyNames.INIT.equals(methodName);
+    final boolean isConstructor = PyUtil.isInitOrNewMethod(pyFunction);
     Iterable<PyClass> classes = pyClass.getAncestorClasses(myContext);
     if (isConstructor) {
       // look at our own class again and maybe inherit class's doc

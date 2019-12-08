@@ -109,7 +109,7 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
   public void testExcludePatternSerialization() throws Exception {
     PsiTestUtil.addContentRoot(myModule, dir);
     ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
-    StoreUtil.saveSettings(myModule, false);
+    StoreUtil.saveDocumentsAndProjectSettings(myProject);
 
     Element root = JDOMUtil.load(new File(myModule.getModuleFilePath()));
     String elementText = "<content url=\"file://$MODULE_DIR$/idea_test_\">\n" +

@@ -418,7 +418,20 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     descriptor.serviceImplementation = StringUtil.nullize(element.getAttributeValue("serviceImplementation"));
     descriptor.testServiceImplementation = StringUtil.nullize(element.getAttributeValue("testServiceImplementation"));
     descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
-    descriptor.preload = Boolean.parseBoolean(element.getAttributeValue("preload"));
+
+    String preload = element.getAttributeValue("preload");
+    if (preload != null) {
+      if (preload.equals("true")) {
+        descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+      }
+      else if (preload.equals("await")) {
+        descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+      }
+      else {
+        LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+      }
+    }
+
     descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
     return descriptor;
   }

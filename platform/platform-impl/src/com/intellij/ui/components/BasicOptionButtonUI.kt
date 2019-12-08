@@ -20,7 +20,6 @@ import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
@@ -276,7 +275,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
     val (actionGroup, mapping) = createActionMapping()
     val dataContext = createActionDataContext()
-    val actionItems = getActionItems(actionGroup, dataContext, false, false, true, true, ActionPlaces.UNKNOWN)
+    val actionItems = ActionPopupStep.createActionItems(actionGroup, dataContext, false, false, true, true, ActionPlaces.UNKNOWN, null)
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
 
     return OptionButtonPopup(OptionButtonPopupStep(actionItems, defaultSelection), dataContext, toSelect != null || ensureSelection)
@@ -364,7 +363,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, private val defaultSelection: Condition<AnAction>?)
     : ActionPopupStep(actions, null,
                       Supplier<DataContext> { DataManager.getInstance().getDataContext(optionButton) },
-                      null, true, defaultSelection, false, true) {
+                      null, true, defaultSelection, false, true, null) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex(): Int = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

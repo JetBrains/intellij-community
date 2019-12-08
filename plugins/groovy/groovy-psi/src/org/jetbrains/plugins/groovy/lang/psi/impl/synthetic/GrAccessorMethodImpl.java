@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -37,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
  * @author ven
  */
 public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccessorMethod {
-  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl");
   @NotNull private final GrField myProperty;
 
   private final boolean myIsSetter;

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -26,11 +27,12 @@ public final class LifecycleUsageTriggerCollector {
   private static final EventsIdentityThrottle ourErrorsIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
 
   public static void onIdeStart() {
-    final FeatureUsageData data = new FeatureUsageData().addData("eap", ApplicationManager.getApplication().isEAP());
+    Application app = ApplicationManager.getApplication();
+    FeatureUsageData data = new FeatureUsageData().addData("eap", app.isEAP());
     addIfTrue(data, "test", StatisticsUploadAssistant.isTestStatisticsEnabled());
-    addIfTrue(data, "command_line", ApplicationManager.getApplication().isCommandLine());
-    addIfTrue(data, "internal", ApplicationManager.getApplication().isInternal());
-    addIfTrue(data, "headless", ApplicationManager.getApplication().isHeadlessEnvironment());
+    addIfTrue(data, "command_line", app.isCommandLine());
+    addIfTrue(data, "internal", app.isInternal());
+    addIfTrue(data, "headless", app.isHeadlessEnvironment());
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start", data);
   }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.Platform;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,16 +57,17 @@ public class RunnerMediator {
    * Returns appropriate process handle, which in case of Unix is able to terminate whole process tree by sending sig_kill
    *
    */
-  public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcess(commandLine, false);
-  }
-
-  public ProcessHandler createProcess(@NotNull final GeneralCommandLine commandLine, final boolean useSoftKill) throws ExecutionException {
-    if (SystemInfo.isWindows) {
-      injectRunnerCommand(commandLine, false);
-    }
-
-    return new CustomDestroyProcessHandler(commandLine, useSoftKill);
+  @NotNull
+  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    return new KillableColoredProcessHandler(commandLine, true) {
+      @Override
+      protected boolean destroyProcessGracefully() {
+        if (SystemInfo.isWindows) {
+          return RunnerMediator.destroyProcess(myProcess, false);
+        }
+        return super.destroyProcessGracefully();
+      }
+    };
   }
 
   @Nullable
@@ -141,34 +141,6 @@ public class RunnerMediator {
     catch (Exception e) {
       LOG.error("Couldn't terminate the process", e);
       return false;
-    }
-  }
-
-  public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
-    private final boolean mySoftKill;
-
-    /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine) (to remove in IDEA 16) */
-    @ApiStatus.ScheduledForRemoval(inVersion = "2016")
-    @Deprecated
-    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
-      super(process, commandLine.getCommandLineString());
-      mySoftKill = false;
-    }
-
-    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine, final boolean softKill) throws ExecutionException {
-      super(commandLine);
-      mySoftKill = softKill;
-    }
-
-    @Override
-    protected boolean shouldDestroyProcessRecursively(){
-      return true;
-    }
-    @Override
-    protected void destroyProcessImpl() {
-      if (!RunnerMediator.destroyProcess(getProcess(), mySoftKill)) {
-        super.destroyProcessImpl();
-      }
     }
   }
 }

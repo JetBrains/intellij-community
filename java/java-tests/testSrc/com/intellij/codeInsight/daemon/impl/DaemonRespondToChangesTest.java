@@ -165,6 +165,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     ProjectManagerEx.getInstanceEx().openProject(getProject());
     super.runStartupActivities();
     UIUtil.dispatchAllInvocationEvents(); // startup activities
+    EditorMouseHoverPopupManager.getInstance(); // treat listeners added there as not leaks
   }
 
   @Override

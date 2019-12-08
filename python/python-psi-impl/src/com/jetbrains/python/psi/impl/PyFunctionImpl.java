@@ -415,7 +415,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     final PyStatementList statements = getStatementList();
     statements.accept(visitor);
     if ((isGeneratedStub() || PyKnownDecoratorUtil.hasAbstractDecorator(this, context)) && !visitor.myHasReturns) {
-      if (PyNames.INIT.equals(getName())) {
+      if (PyUtil.isInitMethod(this)) {
         return PyNoneType.INSTANCE;
       }
       return null;

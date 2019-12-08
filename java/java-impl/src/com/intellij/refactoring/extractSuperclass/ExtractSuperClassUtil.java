@@ -35,7 +35,8 @@ import java.util.*;
  * @author dsl
  */
 public class ExtractSuperClassUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil");
+  private static final Logger LOG = Logger.getInstance(ExtractSuperClassUtil.class);
+
   public static final String REFACTORING_EXTRACT_SUPER_ID = "refactoring.extractSuper";
 
   private ExtractSuperClassUtil() {}

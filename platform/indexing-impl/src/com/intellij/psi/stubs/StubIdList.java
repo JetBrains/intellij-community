@@ -16,9 +16,11 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 
 // List of non-negative ints, monotonically increasing, optimized for one int case (90% of our lists are one-element)
+@Debug.Renderer(text = "myArray == null ? \"[\" + myData + \"]\" : java.util.Arrays.toString(myArray)")
 public final class StubIdList {
   private final int myData;
   private final int[] myArray;

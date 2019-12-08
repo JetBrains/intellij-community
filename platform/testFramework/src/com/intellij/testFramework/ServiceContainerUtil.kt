@@ -41,7 +41,7 @@ fun ComponentManager.registerComponentImplementation(componentInterface: Class<*
 }
 
 @TestOnly
-fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName, instance: T, parentDisposable: Disposable) {
+fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName<*>, instance: T, parentDisposable: Disposable) {
   extensionArea.getExtensionPoint<T>(name.name).registerExtension(instance, parentDisposable)
 }
 

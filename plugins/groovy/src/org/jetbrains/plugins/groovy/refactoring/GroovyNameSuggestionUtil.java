@@ -2,7 +2,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -28,8 +27,6 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyNameSuggestionUtil {
-
-  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil");
 
   private GroovyNameSuggestionUtil() {
   }

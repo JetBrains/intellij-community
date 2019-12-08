@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
@@ -29,6 +30,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -144,6 +146,9 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
       final PsiClass[] innerClasses = aClass.getInnerClasses();
       for (final PsiClass innerClass : innerClasses) {
         if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        if (AnnotationUtil.isAnnotated(innerClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED,0)) {
           continue;
         }
         final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(innerClass);

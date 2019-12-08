@@ -178,3 +178,9 @@ class Scratch
 
   }
 }
+class JUnit5Test {
+  @org.junit.jupiter.api.Nested
+  class Inner {
+
+  }
+}

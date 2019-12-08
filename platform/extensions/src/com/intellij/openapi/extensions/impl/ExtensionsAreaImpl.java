@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -276,7 +277,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     // TeamCity plugin wants DefaultDebugExecutor in constructor
     if (aClass.getName().equals("com.intellij.execution.executors.DefaultDebugExecutor")) {
       //noinspection unchecked
-      return ((ExtensionPointImpl<T>)myExtensionPoints.get("com.intellij.executor")).findExtension(aClass, false, true);
+      return ((ExtensionPointImpl<T>)myExtensionPoints.get("com.intellij.executor")).findExtension(aClass, false, ThreeState.YES);
     }
 
     for (ExtensionPointImpl<?> point : myExtensionPoints.values()) {
@@ -291,7 +292,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
         }
 
         //noinspection unchecked
-        T extension = ((ExtensionPointImpl<T>)point).findExtension(aClass, false, true);
+        T extension = ((ExtensionPointImpl<T>)point).findExtension(aClass, false, ThreeState.YES);
         if (extension != null) {
           return extension;
         }

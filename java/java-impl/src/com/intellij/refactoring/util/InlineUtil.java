@@ -32,7 +32,7 @@ import java.util.*;
  * @author ven
  */
 public class InlineUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.util.InlineUtil");
+  private static final Logger LOG = Logger.getInstance(InlineUtil.class);
 
   private InlineUtil() {}
 

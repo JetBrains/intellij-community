@@ -131,7 +131,7 @@ public class PySdkUtil {
       if (SwingUtilities.isEventDispatchThread()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
-        assert application.isUnitTestMode() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
+        assert application.isUnitTestMode() || application.isHeadlessEnvironment() || !application.isWriteAccessAllowed() : "Background task can't be run under write action";
         return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout), "Wait...", false, null);
       }
       else {

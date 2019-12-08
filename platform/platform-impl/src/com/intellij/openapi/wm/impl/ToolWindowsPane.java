@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
@@ -145,7 +144,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(myRightStripe, JLayeredPane.POPUP_LAYER);
     add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
 
-    setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt());
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
 
   private void updateInnerMinSize(@NotNull RegistryValue value) {

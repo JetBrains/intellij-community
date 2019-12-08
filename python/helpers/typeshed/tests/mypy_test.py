@@ -21,7 +21,6 @@ parser = argparse.ArgumentParser(description="Test runner for typeshed. "
                                              "Patterns are unanchored regexps on the full path.")
 parser.add_argument('-v', '--verbose', action='count', default=0, help="More output")
 parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually run mypy")
-parser.add_argument('-a', '--new-analyzer', action='store_true', help="Use new mypy semantic analyzer")
 parser.add_argument('-x', '--exclude', type=str, nargs='*', help="Exclude pattern")
 parser.add_argument('-p', '--python-version', type=str, nargs='*',
                     help="These versions only (major[.minor])")
@@ -89,7 +88,7 @@ def main():
         print("Cannot import mypy. Did you install it?")
         sys.exit(1)
 
-    versions = [(3, 7), (3, 6), (3, 5), (3, 4), (2, 7)]
+    versions = [(3, 8), (3, 7), (3, 6), (3, 5), (2, 7)]
     if args.python_version:
         versions = [v for v in versions
                     if any(('%d.%d' % v).startswith(av) for av in args.python_version)]
@@ -133,8 +132,6 @@ def main():
             flags.append('--no-site-packages')
             flags.append('--show-traceback')
             flags.append('--no-implicit-optional')
-            if args.new_analyzer:
-                flags.append('--new-semantic-analyzer')
             if args.warn_unused_ignores:
                 flags.append('--warn-unused-ignores')
             sys.argv = ['mypy'] + flags + files

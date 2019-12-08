@@ -49,6 +49,12 @@ import java.nio.file.Paths
  * @author vlan
  */
 
+fun findAllPythonSdks(): List<Sdk> {
+  val context: UserDataHolder = UserDataHolderBase()
+  val existing = PythonSdkUtil.getAllSdks()
+  return detectCondaEnvs(null, existing, context) + detectVirtualEnvs(null, existing, context) + findBaseSdks(existing, null, context)
+}
+
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
   val existing = existingSdks.filter { it.sdkType is PythonSdkUtil && it.isSystemWide }
   val detected = detectSystemWideSdks(module, existingSdks, context)

@@ -9,6 +9,8 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author peter
  */
@@ -28,34 +30,34 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
   }
 
   public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
-    for (TooltipLinkHandlerEP handlerEP : EP_NAME.getIterable()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.getInstance().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
+    return EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().handleLink(refSuffix.replaceAll("<br/>", "\n"), editor);
       }
-    }
-    return false;
+      return null;
+    }) == Boolean.TRUE;
   }
 
   @Nullable
   public static String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
-    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getIterable()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.getInstance().getDescription(refSuffix, editor);
+    return EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().getDescription(refSuffix, editor);
       }
-    }
-    return null;
+      return null;
+    });
   }
 
   @NotNull
   public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
-    for (final TooltipLinkHandlerEP handlerEP : EP_NAME.getIterable()) {
-      if (ref.startsWith(handlerEP.prefix)) {
-        final String refSuffix = ref.substring(handlerEP.prefix.length());
-        return handlerEP.getInstance().getDescriptionTitle(refSuffix, editor);
+    return Objects.requireNonNull(EP_NAME.computeSafeIfAny(ep -> {
+      if (ref.startsWith(ep.prefix)) {
+        String refSuffix = ref.substring(ep.prefix.length());
+        return ep.getInstance().getDescriptionTitle(refSuffix, editor);
       }
-    }
-    return TooltipLinkHandler.INSPECTION_INFO;
+      return TooltipLinkHandler.INSPECTION_INFO;
+    }));
   }
 }

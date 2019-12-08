@@ -6,6 +6,11 @@
         <TimelineChart/>
       </keep-alive>
     </el-tab-pane>
+    <el-tab-pane label="Service Timeline" name="serviceTimeline" lazy>
+      <keep-alive>
+        <ServiceTimelineChart/>
+      </keep-alive>
+    </el-tab-pane>
     <!--  use v-once because `charts` is not going to be changed  -->
     <el-tab-pane v-once v-for="item in charts" :key="item.name" :label="item.label" :name="item.id" lazy>
       <keep-alive>
@@ -24,13 +29,14 @@
   import {Component, Vue, Watch} from "vue-property-decorator"
   import {Location} from "vue-router"
   import TimelineChart from "@/timeline/TimelineChart.vue"
+  import ServiceTimelineChart from "@/timeline/ServiceTimelineChart.vue"
   import StatsChart from "@/views/StatsChart.vue"
   import ActivityChart from "@/views/ActivityChart.vue"
   import {chartDescriptors} from "@/charts/ActivityChartDescriptor"
 
   const DEFAULT_ACTIVE_TAB = "timeline"
 
-  @Component({components: {TimelineChart, ActivityChart, StatsChart}})
+  @Component({components: {TimelineChart, ServiceTimelineChart, ActivityChart, StatsChart}})
   export default class TabbedInfoCharts extends Vue {
     activeName: string = DEFAULT_ACTIVE_TAB
 

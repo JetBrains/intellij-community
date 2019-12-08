@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.ide.util.DelegatingProgressIndicator
+import com.intellij.internal.statistic.IdeActivity
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -76,12 +77,14 @@ abstract class AbstractCommitter(
     val task = object : Task.Backgroundable(project, taskName, true, configuration.commitOption) {
       override fun run(indicator: ProgressIndicator) {
         val vcsManager = ProjectLevelVcsManager.getInstance(myProject)
+        val activity = IdeActivity.started(myProject, "vcs", "commit")
         vcsManager.startBackgroundVcsOperation()
         try {
           delegateCommitToVcsThread()
         }
         finally {
           vcsManager.stopBackgroundVcsOperation()
+          activity.finished()
         }
       }
 

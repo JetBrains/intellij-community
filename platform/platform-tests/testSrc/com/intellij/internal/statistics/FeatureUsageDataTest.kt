@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -18,21 +19,21 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put string data`() {
+  fun `test add string data`() {
     val build = FeatureUsageData().addData("key", "my-value").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build["key"] == "my-value")
   }
 
   @Test
-  fun `test put int data`() {
+  fun `test add int data`() {
     val build = FeatureUsageData().addData("key", 99).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build["key"] == 99)
   }
 
   @Test
-  fun `test put long data`() {
+  fun `test add long data`() {
     val value: Long = 99
     val build = FeatureUsageData().addData("key", value).build()
     Assert.assertTrue(build.size == 1)
@@ -40,34 +41,34 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put boolean data`() {
+  fun `test add boolean data`() {
     val build = FeatureUsageData().addData("key", true).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build["key"] == true)
   }
 
   @Test
-  fun `test put int array data`() {
+  fun `test add int array data`() {
     val build = FeatureUsageData().addData("key", listOf("1", "2", "3")).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertEquals(build["key"], listOf("1", "2", "3"))
   }
 
   @Test
-  fun `test put os data`() {
+  fun `test add os data`() {
     val build = FeatureUsageData().addOS().build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("os"))
   }
 
   @Test
-  fun `test put add null place`() {
+  fun `test add null place`() {
     val build = FeatureUsageData().addPlace(null).build()
     Assert.assertTrue(build.isEmpty())
   }
 
   @Test
-  fun `test put add empty place`() {
+  fun `test add empty place`() {
     val build = FeatureUsageData().addPlace("").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
@@ -75,7 +76,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put add common place`() {
+  fun `test add common place`() {
     val build = FeatureUsageData().addPlace("TestTreeViewToolbar").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
@@ -83,7 +84,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put add common popup place`() {
+  fun `test add common popup place`() {
     val build = FeatureUsageData().addPlace("FavoritesPopup").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
@@ -91,7 +92,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put add custom popup place`() {
+  fun `test add custom popup place`() {
     val build = FeatureUsageData().addPlace("popup@my-custom-popup").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
@@ -99,7 +100,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put add custom place`() {
+  fun `test add custom place`() {
     val build = FeatureUsageData().addPlace("my-custom-popup").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("place"))
@@ -107,7 +108,27 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put null obj version`() {
+  fun `test add anonymized path`() {
+    val path = "/my/path/to/smth"
+    val build = FeatureUsageData().addAnonymizedPath(path).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("file_path"))
+    Assert.assertTrue(build["file_path"] != path)
+    Assert.assertTrue(build["file_path"] == EventLogConfiguration.anonymize(path))
+  }
+
+  @Test
+  fun `test add anonymized id`() {
+    val id = "item-id"
+    val build = FeatureUsageData().addAnonymizedId(id).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("anonymous_id"))
+    Assert.assertTrue(build["anonymous_id"] != id)
+    Assert.assertTrue(build["anonymous_id"] == EventLogConfiguration.anonymize(id))
+  }
+
+  @Test
+  fun `test add null obj version`() {
     val build = FeatureUsageData().addVersion(null).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -115,7 +136,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put null version`() {
+  fun `test add null version`() {
     val build = FeatureUsageData().addVersionByString(null).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -123,7 +144,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put obj version`() {
+  fun `test add obj version`() {
     val build = FeatureUsageData().addVersion(Version(3, 5, 0)).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -131,7 +152,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put version`() {
+  fun `test add version`() {
     val build = FeatureUsageData().addVersionByString("5.11.0").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -139,7 +160,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put obj version with bugfix`() {
+  fun `test add obj version with bugfix`() {
     val build = FeatureUsageData().addVersion(Version(3, 5, 9)).build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -147,7 +168,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put version with bugfix`() {
+  fun `test add version with bugfix`() {
     val build = FeatureUsageData().addVersionByString("5.11.98").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -155,7 +176,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put invalid version`() {
+  fun `test add invalid version`() {
     val build = FeatureUsageData().addVersionByString("2018-11").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -163,7 +184,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put empty version`() {
+  fun `test add empty version`() {
     val build = FeatureUsageData().addVersionByString("").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -171,7 +192,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put version with snapshot`() {
+  fun `test add version with snapshot`() {
     val build = FeatureUsageData().addVersionByString("1.4-SNAPSHOT").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -179,7 +200,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put version with suffix`() {
+  fun `test add version with suffix`() {
     val build = FeatureUsageData().addVersionByString("2.5.0.BUILD-2017091412345").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))
@@ -187,7 +208,7 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
-  fun `test put version with letters`() {
+  fun `test add version with letters`() {
     val build = FeatureUsageData().addVersionByString("abcd").build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build.containsKey("version"))

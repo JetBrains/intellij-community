@@ -672,7 +672,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (method.isConstructor()) {
         HighlightInfo info = HighlightMethodUtil.checkConstructorName(method);
         if (info != null) {
-          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightUtil::determineReturnType);
+          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
           if (expectedType != null) HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
         }
         myHolder.add(info);
@@ -914,7 +914,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(myFile.getProject(), expression));
     if (!myHolder.hasErrorResults()) {
       try {
-        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(myHolder.getProject()), myLanguageLevel, myJavaSdkVersion, myFile));
+        HighlightMethodUtil.checkMethodCall(expression, getResolveHelper(myHolder.getProject()), myLanguageLevel, myJavaSdkVersion, myFile, myHolder);
       }
       catch (IndexNotReadyException ignored) { }
     }
@@ -1596,11 +1596,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) {
       try {
-        PsiElement parent = HighlightUtil.getReturnStatementParent(statement);
+        PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiFile.class, PsiClassInitializer.class,
+                                                        PsiLambdaExpression.class, PsiMethod.class);
         HighlightInfo info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
         if (info != null && parent instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)parent;
-          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightUtil::determineReturnType);
+          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
           if (expectedType != null && !PsiType.VOID.equals(expectedType)) HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
         }
         myHolder.add(info);

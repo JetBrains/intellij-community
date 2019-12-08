@@ -11,11 +11,11 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
+public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy");
 
   @Override
-  protected Component getDefaultComponentImpl(Container focusCycleRoot) {
+  public Component getDefaultComponent(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
       return super.getDefaultComponent(focusCycleRoot);
     }
@@ -43,13 +43,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
         return component;
       }
 
-      Component defaultComponent;
-      if (focusTraversalPolicy instanceof LayoutFocusTraversalPolicyExt) {
-        final LayoutFocusTraversalPolicyExt extPolicy = (LayoutFocusTraversalPolicyExt)focusTraversalPolicy;
-        defaultComponent = extPolicy.queryImpl(() -> extPolicy.getDefaultComponent(component));
-      } else {
-        defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
-      }
+      Component defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
 
       if (defaultComponent instanceof JComponent) {
         return (JComponent)defaultComponent;

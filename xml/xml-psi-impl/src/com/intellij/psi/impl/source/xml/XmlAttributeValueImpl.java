@@ -112,7 +112,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Override
   public boolean isValidHost() {
-    return getParent() instanceof XmlAttributeImpl;
+    return getParent() instanceof XmlAttribute;
   }
 
   @Override

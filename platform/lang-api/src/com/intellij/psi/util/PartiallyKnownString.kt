@@ -14,8 +14,14 @@ sealed class StringEntry {
   abstract val sourcePsi: PsiElement? // maybe it should be PsiLanguageInjectionHost and only for `Known` values
   abstract val range: TextRange
 
-  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
-  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry()
+  class Known(val value: String, override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
+  }
+
+  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+    override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
+  }
+
 
   val rangeAlignedToHost: Pair<PsiLanguageInjectionHost, TextRange>?
     get() {
@@ -88,15 +94,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
           else {
             val leftPart = segment.value.substring(0, splitAt - accumulated)
             val rightPart = segment.value.substring(splitAt - accumulated)
-            left.add(StringEntry.Known(leftPart, segment.sourcePsi,  /* TODO: should also be splitted */
-                                       segment.range))
+            left.add(StringEntry.Known(leftPart, segment.sourcePsi, TextRange.from(segment.range.startOffset, leftPart.length)))
 
             return PartiallyKnownString(left) to PartiallyKnownString(
               ArrayList<StringEntry>(segments.lastIndex - i + 1).apply {
                 if (rightPart.isNotEmpty())
-                  add(StringEntry.Known(rightPart, segment.sourcePsi, /* TODO: should also be splitted */
-                                        segment.range))
-                addAll(segments.subList(i, segments.size))
+                  add(StringEntry.Known(rightPart, segment.sourcePsi,
+                                        TextRange.from(segment.range.startOffset + leftPart.length, rightPart.length)))
+                addAll(segments.subList(i + 1, segments.size))
               }
             )
           }
@@ -116,8 +121,7 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                              segments: List<StringEntry>): MutableList<PartiallyKnownString> {
 
       val (head, tail) = segments.toHeadAndTail() ?: return result.apply {
-        add(
-          PartiallyKnownString(pending))
+        add(PartiallyKnownString(pending))
       }
 
       when (head) {
@@ -135,14 +139,14 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
                 add(PartiallyKnownString(
                   pending.apply {
                     add(StringEntry.Known(stringPaths.first().substring(value), head.sourcePsi,
-                                          stringPaths.first()))
+                                          stringPaths.first().shiftRight(head.range.startOffset)))
                   }))
                 addAll(stringPaths.subList(1, stringPaths.size - 1).map {
-                  PartiallyKnownString(it.substring(value), head.sourcePsi, it)
+                  PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
                 })
               },
               mutableListOf(StringEntry.Known(stringPaths.last().substring(value), head.sourcePsi,
-                                              stringPaths.last())),
+                                              stringPaths.last().shiftRight(head.range.startOffset))),
               tail
             )
           }
@@ -154,6 +158,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 
     return collectPaths(SmartList(), mutableListOf(), segments)
 
+  }
+
+  fun getRangeInHost(originalHost: PsiElement): TextRange? {
+    val ranges = segments.asSequence().mapNotNull { it.rangeAlignedToHost?.takeIf { it.first == originalHost } }.map { it.second }.toList()
+    if (ranges.isEmpty()) return null
+    return ranges.reduce(TextRange::union)
   }
 
   companion object {

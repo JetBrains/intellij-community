@@ -132,24 +132,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull final ActionGroup actionGroup,
-                           boolean horizontal,
-                           @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, false, keymapManager, false);
+                           boolean horizontal) {
+    this(place, actionGroup, horizontal, false, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
-                           boolean decorateButtons,
-                           @NotNull KeymapManagerEx keymapManager) {
-    this(place, actionGroup, horizontal, decorateButtons, keymapManager, false);
+                           boolean decorateButtons) {
+    this(place, actionGroup, horizontal, decorateButtons, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            final boolean horizontal,
                            final boolean decorateButtons,
-                           @NotNull KeymapManagerEx keymapManager,
                            boolean updateActionsNow) {
     super(null);
     myActionManager = ActionManagerEx.getInstanceEx();
@@ -158,7 +155,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myVisibleActions = new ArrayList<>();
     myDataManager = DataManager.getInstance();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(keymapManager, this) {
+    myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
         if (!ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
@@ -1205,7 +1202,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       group = outside;
     }
 
-    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, myUpdater.getKeymapManager(), this) {
+    PopupToolbar popupToolbar = new PopupToolbar(myPlace, group, true, this) {
       @Override
       protected void onOtherActionPerformed() {
         hidePopup();
@@ -1316,9 +1313,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     PopupToolbar(@NotNull String place,
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
-                 @NotNull KeymapManagerEx keymapManager,
                  @NotNull JComponent parent) {
-      super(place, actionGroup, horizontal, false, keymapManager, true);
+      super(place, actionGroup, horizontal, false, true);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());

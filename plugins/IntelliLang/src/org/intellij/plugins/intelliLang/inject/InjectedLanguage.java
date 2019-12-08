@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public final class InjectedLanguage {
   }
 
   private static void initLanguageCache() {
-    ourLanguageCache = new HashMap<>();
+    ourLanguageCache = ContainerUtil.createWeakValueMap();
 
     Collection<Language> registeredLanguages;
     do {

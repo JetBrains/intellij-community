@@ -180,6 +180,15 @@ public class ObjectUtils {
     return obj;
   }
 
+  @Nullable
+  @Contract("null, _ -> null")
+  public static <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
+    if (obj == defaultValue) {
+      return null;
+    }
+    return obj;
+  }
+
   /**
    * Performs binary search on the range [fromIndex, toIndex)
    * @param indexComparator a comparator which receives a middle index and returns the result of comparision of the value at this index and the goal value

@@ -19,6 +19,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,5 +56,20 @@ public abstract class ProjectTaskRunner {
                                                          @NotNull ExecuteRunConfigurationTask task,
                                                          @Nullable Executor executor) {
     return null;
+  }
+
+  /**
+   * The flag indicates if the {@link ProjectTaskRunner} supports reporting an information about generated files during execution or not.
+   * The fine-grained events per generated files allow greatly improve IDE performance for some activities like fast hotswap reload after incremental compilation.
+   * <p/>
+   * The support means responsibility to send {@link ProjectTaskContext#fileGenerated} events per each generated file
+   * or at least supply effective output roots containing generated files using the {@link ProjectTaskContext#addDirtyOutputPathsProvider} method
+   * if per-file events are not possible.
+   *
+   * @return true if the {@link ProjectTaskRunner} supports reporting an information about generated files during this runner tasks execution, false otherwise
+   */
+  @ApiStatus.Experimental
+  public boolean isFileGeneratedEventsSupported() {
+    return false;
   }
 }

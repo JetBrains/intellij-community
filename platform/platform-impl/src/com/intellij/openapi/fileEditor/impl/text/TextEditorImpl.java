@@ -69,9 +69,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
     EditorEx editor = (EditorEx)getEditor();
     highlighter.setText(editor.getDocument().getImmutableCharSequence());
-    Language language = getDocumentLanguage(editor);
     return () -> {
-      editor.getSettings().setLanguage(language);
+      editor.getSettings().setLanguageSupplier(() -> getDocumentLanguage(editor));
       editor.setHighlighter(highlighter);
     };
   }

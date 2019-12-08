@@ -16,4 +16,6 @@
 package org.jetbrains.debugger
 
 abstract class SuspendContextBase<F : CallFrame> : SuspendContext<F> {
+
+  override var methodReturnValue: Variable? = null
 }

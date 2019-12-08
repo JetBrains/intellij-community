@@ -16,7 +16,6 @@ import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
-    Point point = getProjectLocation(key, project);
+    Point point = project == null ? null : WindowStateService.getInstance(project).getLocation(key);
     if (point != null) return point;
 
     Pair<String, Float> pair = keyPair(key, project);
@@ -98,11 +97,8 @@ public class DimensionService extends SimpleModificationTracker implements Persi
   }
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
+    getWindowStateService(project).putLocation(key, point);
     Pair<String, Float> pair = keyPair(key, project);
-    if (project != null) {
-      WindowStateService.getInstance(project).putLocation(key, point);
-      return;
-    }
     if (point != null) {
       point = (Point)point.clone();
       float scale = pair.second;
@@ -128,7 +124,7 @@ public class DimensionService extends SimpleModificationTracker implements Persi
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
-    Dimension size = getProjectSize(key, project);
+    Dimension size = project == null ? null : WindowStateService.getInstance(project).getSize(key);
     if (size != null) return size;
 
     Pair<String, Float> pair = keyPair(key, project);
@@ -139,16 +135,6 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       size.setSize(size.width / scale, size.height / scale);
     }
     return size;
-  }
-
-  @Nullable
-  private static Dimension getProjectSize(@NonNls @NotNull String key, @Nullable Project project) {
-    return project != null ? WindowStateService.getInstance(project).getSize(key) : null;
-  }
-
-  @Nullable
-  private static Point getProjectLocation(@NonNls @NotNull String key, @Nullable Project project) {
-    return project != null ? WindowStateService.getInstance(project).getLocation(key) : null;
   }
 
   /**
@@ -164,10 +150,8 @@ public class DimensionService extends SimpleModificationTracker implements Persi
   }
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
+    getWindowStateService(project).putSize(key, size);
     Pair<String, Float> pair = keyPair(key, project);
-    if (project != null) {
-      WindowStateService.getInstance(project).putSize(key, size);
-    }
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;
@@ -249,11 +233,6 @@ public class DimensionService extends SimpleModificationTracker implements Persi
     }
   }
 
-  @ApiStatus.Internal
-  public boolean getDefaultMaximizedFor(@NotNull String key) {
-    return Frame.MAXIMIZED_BOTH == myKey2ExtendedState.get(key);
-  }
-
   @Nullable
   private static Project guessProject() {
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -313,5 +292,10 @@ public class DimensionService extends SimpleModificationTracker implements Persi
       realKey += "@" + dpi + "dpi";
     }
     return new Pair<>(realKey, scale);
+  }
+
+  @NotNull
+  private static WindowStateService getWindowStateService(@Nullable Project project) {
+    return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }

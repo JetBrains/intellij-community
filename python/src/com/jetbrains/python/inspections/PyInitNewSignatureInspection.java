@@ -48,10 +48,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(PyFunction node) {
-      final String functionName = node.getName();
-      if (!PyNames.NEW.equals(functionName) && !PyNames.INIT.equals(functionName)) return;
-
-      final PyClass cls = node.getContainingClass();
+      final PyClass cls = PyUtil.turnConstructorIntoClass(node);
       if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
 
       final List<PyFunction> complementaryMethods = findComplementaryMethods(cls, node);
@@ -73,7 +70,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
 
     @NotNull
     private List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
-      final String complementaryName = PyNames.NEW.equals(original.getName()) ? PyNames.INIT : PyNames.NEW;
+      final String complementaryName = PyUtil.isNewMethod(original) ? PyNames.INIT : PyNames.NEW;
       final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
 
       for (PyFunction complementaryMethod : complementaryMethods) {
@@ -92,8 +89,8 @@ public class PyInitNewSignatureInspection extends PyInspection {
 
     private void registerIncompatibilityProblem(@NotNull PyFunction function, @Nullable LocalQuickFix quickFix) {
       final PyParameterList parameterList = function.getParameterList();
-      final String message = PyBundle.message(PyNames.NEW.equals(function.getName()) ? "INSP.new.incompatible.to.init"
-                                                                                        : "INSP.init.incompatible.to.new");
+      final String message = PyBundle.message(PyUtil.isNewMethod(function) ? "INSP.new.incompatible.to.init"
+                                                                           : "INSP.init.incompatible.to.new");
       if (quickFix != null) {
         registerProblem(parameterList, message, quickFix);
       }

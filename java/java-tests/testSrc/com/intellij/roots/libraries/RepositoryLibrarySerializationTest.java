@@ -2,13 +2,15 @@
 package com.intellij.roots.libraries;
 
 import com.intellij.jarRepository.RepositoryLibraryType;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.roots.ModuleRootManagerTestCase;
 import org.jdom.JDOMException;
@@ -52,9 +54,12 @@ public class RepositoryLibrarySerializationTest extends ModuleRootManagerTestCas
   private RepositoryLibraryProperties loadLibrary(String name) throws JDOMException, IOException {
     String libraryPath = "jps/model-serialization/testData/repositoryLibraries/.idea/libraries/" + name + ".xml";
     File librarySource = PathManagerEx.findFileUnderCommunityHome(libraryPath);
-    File libraryFile = new File(myProject.getBasePath(), ".idea/libraries/" + name + ".xml");
-    FileUtil.copy(librarySource, libraryFile);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryFile);
+
+    WriteAction.runAndWait(() -> {
+      VirtualFile librariesVirtualFile = VfsUtil.createDirectoryIfMissing(myProject.getBaseDir(), ".idea/libraries");
+      VfsUtil.copy(this, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(librarySource), librariesVirtualFile);
+    });
+
     LibraryTable projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     LibraryEx library = (LibraryEx)projectLibraryTable.getLibraryByName(name);
     assertNotNull(library);

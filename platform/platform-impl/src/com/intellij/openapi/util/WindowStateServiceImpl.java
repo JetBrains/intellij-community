@@ -31,22 +31,19 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
+  private final Map<String, Runnable> myRunnableMap = new TreeMap<>();
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
   protected WindowStateServiceImpl(@Nullable Project project) {
     super(project);
   }
 
-  abstract Point getDefaultLocationFor(@NotNull String key);
-
-  abstract Dimension getDefaultSizeFor(@NotNull String key);
-
-  abstract Rectangle getDefaultBoundsFor(@NotNull String key);
-
-  abstract boolean getDefaultMaximizedFor(Object object, @NotNull String key);
-
   @Override
   public final Element getState() {
+    synchronized (myRunnableMap) {
+      myRunnableMap.values().forEach(Runnable::run);
+      myRunnableMap.clear();
+    }
     Element element = new Element(STATE);
     synchronized (myStateMap) {
       for (Map.Entry<String, WindowState> entry : myStateMap.entrySet()) {
@@ -110,39 +107,39 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component) {
-    Point location = null;
-    Dimension size = null;
-    boolean maximized = false;
-    WindowState state = getFor(object, key, WindowState.class);
-    if (state != null) {
-      location = state.myLocation;
-      size = state.mySize;
-      maximized = state.myMaximized;
-    }
-    if (location == null && size == null) {
-      location = getDefaultLocationFor(key);
-      size = getDefaultSizeFor(key);
-      if (!isVisible(location, size)) {
-        return false;
+    synchronized (myRunnableMap) {
+      ComponentState state = ComponentState.getState(component);
+      Runnable runnable = myRunnableMap.put(key, () -> {
+        state.uninstall(component);
+        Rectangle bounds = state.getBounds();
+        putFor(object, key,
+               apply(Rectangle::getLocation, bounds), bounds != null,
+               apply(Rectangle::getSize, bounds), bounds != null,
+               Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
+               state.isFullScreen(), true);
+      });
+      if (runnable != null) {
+        runnable.run();
       }
-      maximized = getDefaultMaximizedFor(object, key);
     }
+    WindowState state = getFor(object, key, WindowState.class);
+    if (state == null) return false;
     Frame frame = component instanceof Frame ? (Frame)component : null;
     if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
       frame.setExtendedState(Frame.NORMAL);
     }
     Rectangle bounds = component.getBounds();
-    if (location != null) {
-      bounds.setLocation(location);
+    if (state.myLocation != null) {
+      bounds.setLocation(state.myLocation);
     }
-    if (size != null) {
-      bounds.setSize(size);
+    if (state.mySize != null) {
+      bounds.setSize(state.mySize);
     }
     if (bounds.isEmpty()) {
       bounds.setSize(component.getPreferredSize());
     }
     component.setBounds(bounds);
-    if (maximized && frame != null) {
+    if (frame != null && state.myMaximized) {
       frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     }
     return true;
@@ -156,8 +153,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Point getLocationFor(Object object, @NotNull String key) {
-    Point location = getFor(object, key, Point.class);
-    return location != null ? location : getDefaultLocationFor(key);
+    return getFor(object, key, Point.class);
   }
 
   @Override
@@ -167,8 +163,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Dimension getSizeFor(Object object, @NotNull String key) {
-    Dimension size = getFor(object, key, Dimension.class);
-    return size != null ? size : getDefaultSizeFor(key);
+    return getFor(object, key, Dimension.class);
   }
 
   @Override
@@ -178,8 +173,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   @Override
   public Rectangle getBoundsFor(Object object, @NotNull String key) {
-    Rectangle bounds = getFor(object, key, Rectangle.class);
-    return bounds != null ? bounds : getDefaultBoundsFor(key);
+    return getFor(object, key, Rectangle.class);
   }
 
   @Override

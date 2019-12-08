@@ -204,10 +204,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @Override
   protected void configureRTClasspath(JavaParameters javaParameters) throws CantRunException {
     final String path = System.getProperty(DEBUG_RT_PATH);
-    javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+    javaParameters.getClassPath().addFirst(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
-    javaParameters.getClassPath().add(getJUnit5RtFile());
+    javaParameters.getClassPath().addFirst(getJUnit5RtFile());
 
     String preferredRunner = getRunner();
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
@@ -265,7 +265,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException {
-    final PathsList classPath = javaParameters.getClassPath();
+
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
       () -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
@@ -276,19 +276,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       return;
     }
 
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
-      downloadDependenciesWhenRequired(project, classPath,
-                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
-    }
-    //for modularized junit ensure launcher is included in the module graph
-    else if (JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
-             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0) {
+    boolean isModularized = JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
+                            VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
+
+    if (isModularized) { //for modularized junit ensure launcher is included in the module graph
       ParametersList vmParametersList = javaParameters.getVMParametersList();
       String launcherModuleName = "org.junit.platform.launcher";
       if (!vmParametersList.hasParameter(launcherModuleName)) {
         vmParametersList.add("--add-modules");
         vmParametersList.add(launcherModuleName);
       }
+    }
+
+    final PathsList pathsList = isModularized ? javaParameters.getModulePath() : javaParameters.getClassPath();
+    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
+      downloadDependenciesWhenRequired(project, pathsList,
+                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
     }
 
     //add standard engines only if no engine api is present
@@ -298,16 +301,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
       if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        downloadDependenciesWhenRequired(project, classPath,
+        downloadDependenciesWhenRequired(project, pathsList,
                                          new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
       }
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0
-                         ? "4.12." + StringUtil.getShortName(launcherVersion)
-                         : jupiterVersion;
-        downloadDependenciesWhenRequired(project, classPath,
+        String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
+                         ? jupiterVersion
+                         : "4.12." + StringUtil.getShortName(launcherVersion);
+        downloadDependenciesWhenRequired(project, pathsList,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
     }

@@ -60,7 +60,7 @@ import java.util.Set;
  * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.ModuleBuildTarget");
+  private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
   
   public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
     System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")

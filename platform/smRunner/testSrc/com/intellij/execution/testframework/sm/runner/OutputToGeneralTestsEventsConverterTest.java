@@ -24,7 +24,7 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
                                                                                  testFrameworkName,
                                                                                  DefaultRunExecutor.getRunExecutorInstance()) {
       @Override
-      public boolean tcMessageHasNewLinePrefix() {
+      public boolean serviceMessageHasNewLinePrefix() {
         return true;
       }
     };

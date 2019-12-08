@@ -505,7 +505,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     final PyClass cls = function.getContainingClass();
     final PyParameter[] parameters = function.getParameterList().getParameters();
     if (cls != null && parameters.length > 0 && parameters[0] == this) {
-      if (PyNames.NEW.equals(function.getName())) {
+      if (PyUtil.isNewMethod(function)) {
         return true;
       }
       final PyFunction.Modifier modifier = function.getModifier();

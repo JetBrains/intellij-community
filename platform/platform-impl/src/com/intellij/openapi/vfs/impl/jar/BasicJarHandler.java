@@ -40,7 +40,8 @@ import java.util.zip.ZipFile;
 // JarHandler that keeps limited LRU number of ZipFile references opened for a while after they were used
 // Once the inactivity time passed the ZipFile is closed.
 public class BasicJarHandler extends ZipHandlerBase {
-  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.vfs.impl.jar.BasicJarHandler");
+  private static final Logger LOG = Logger.getInstance(BasicJarHandler.class);
+
   private static final boolean doTracing = LOG.isTraceEnabled();
   private final ZipResourceHandle myHandle;
   private final JarFileSystemImpl myFileSystem;

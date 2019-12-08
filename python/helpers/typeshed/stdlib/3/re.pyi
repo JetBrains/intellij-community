@@ -7,31 +7,31 @@
 
 import sys
 from typing import (
-    List, Iterator, overload, Callable, Tuple, Sequence, Dict,
-    Generic, AnyStr, Match, Pattern, Any, Optional, Union
+    List, Iterator, overload, Callable, Tuple,
+    AnyStr, Match, Pattern, Any, Optional, Union
 )
 
 # ----- re variables and constants -----
 if sys.version_info >= (3, 6):
     import enum
     class RegexFlag(enum.IntFlag):
-        A = 0
-        ASCII = 0
-        DEBUG = 0
-        I = 0
-        IGNORECASE = 0
-        L = 0
-        LOCALE = 0
-        M = 0
-        MULTILINE = 0
-        S = 0
-        DOTALL = 0
-        X = 0
-        VERBOSE = 0
-        U = 0
-        UNICODE = 0
-        T = 0
-        TEMPLATE = 0
+        A: int
+        ASCII: int
+        DEBUG: int
+        I: int
+        IGNORECASE: int
+        L: int
+        LOCALE: int
+        M: int
+        MULTILINE: int
+        S: int
+        DOTALL: int
+        X: int
+        VERBOSE: int
+        U: int
+        UNICODE: int
+        T: int
+        TEMPLATE: int
 
     A = RegexFlag.A
     ASCII = RegexFlag.ASCII
@@ -52,23 +52,23 @@ if sys.version_info >= (3, 6):
     TEMPLATE = RegexFlag.TEMPLATE
     _FlagsType = Union[int, RegexFlag]
 else:
-    A = 0
-    ASCII = 0
-    DEBUG = 0
-    I = 0
-    IGNORECASE = 0
-    L = 0
-    LOCALE = 0
-    M = 0
-    MULTILINE = 0
-    S = 0
-    DOTALL = 0
-    X = 0
-    VERBOSE = 0
-    U = 0
-    UNICODE = 0
-    T = 0
-    TEMPLATE = 0
+    A: int
+    ASCII: int
+    DEBUG: int
+    I: int
+    IGNORECASE: int
+    L: int
+    LOCALE: int
+    M: int
+    MULTILINE: int
+    S: int
+    DOTALL: int
+    X: int
+    VERBOSE: int
+    U: int
+    UNICODE: int
+    T: int
+    TEMPLATE: int
     _FlagsType = int
 
 if sys.version_info < (3, 7):

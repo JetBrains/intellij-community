@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
@@ -23,7 +23,7 @@ import java.util.Set;
 public final class InstalledPluginsState {
   @Nullable
   public static InstalledPluginsState getInstanceIfLoaded() {
-    return LoadingPhase.COMPONENT_LOADED.isComplete() ? getInstance() : null;
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? getInstance() : null;
   }
 
   public static InstalledPluginsState getInstance() {

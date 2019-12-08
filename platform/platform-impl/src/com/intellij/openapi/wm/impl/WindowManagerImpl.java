@@ -99,7 +99,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
     private void update(@NotNull ComponentEvent e) {
       IdeFrameImpl frame = (IdeFrameImpl)e.getComponent();
-
+      if (UIUtil.isClientPropertyTrue(frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY)
+          || UIUtil.isClientPropertyTrue(frame.getRootPane(), IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS)) {
+        return;
+      }
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
       JRootPane rootPane = frame.getRootPane();
@@ -145,8 +148,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   @Override
   @NotNull
   public ProjectFrameHelper[] getAllProjectFrames() {
-    final Collection<ProjectFrameHelper> ideFrames = myProjectToFrame.values();
-    return ideFrames.toArray(new ProjectFrameHelper[0]);
+    return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
   }
 
   @NotNull
@@ -157,8 +159,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public JFrame findVisibleFrame() {
-    List<ProjectFrameHelper> frames = WindowManagerEx.getInstanceEx().getProjectFrameHelpers();
-    return frames.isEmpty() ? (JFrame)WelcomeFrame.getInstance() : frames.get(0).getFrame();
+    ProjectFrameHelper firstFrameHelper = ContainerUtil.getFirstItem(myProjectToFrame.values());
+    return firstFrameHelper == null ? (JFrame)WelcomeFrame.getInstance() : firstFrameHelper.getFrame();
   }
 
   @Override
@@ -168,12 +170,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public void addListener(final WindowManagerListener listener) {
+  public void addListener(@NotNull WindowManagerListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
   @Override
-  public void removeListener(final WindowManagerListener listener) {
+  public void removeListener(@NotNull WindowManagerListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 

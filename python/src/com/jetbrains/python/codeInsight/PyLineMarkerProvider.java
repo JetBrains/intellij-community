@@ -14,7 +14,6 @@ import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -177,7 +176,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   @Nullable
   private static LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
-    if (PyNames.INIT.equals(function.getName())) {
+    if (PyUtil.isInitMethod(function)) {
       return null;
     }
     final TypeEvalContext context = TypeEvalContext.codeAnalysis(identifier.getProject(), function.getContainingFile());

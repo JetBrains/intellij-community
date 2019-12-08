@@ -17,7 +17,7 @@ import org.jetbrains.annotations.CalledInAwt
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String)
 
-class SingleChangeListCommitter(
+open class SingleChangeListCommitter(
   project: Project,
   private val commitState: ChangeListCommitState,
   commitContext: CommitContext,

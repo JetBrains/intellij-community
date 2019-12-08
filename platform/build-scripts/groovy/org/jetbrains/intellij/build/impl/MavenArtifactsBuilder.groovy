@@ -204,12 +204,12 @@ class MavenArtifactsBuilder {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
     if (!module.name.startsWith("intellij.")) {
-      buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
+      buildContext.messages.warning("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
       return null
     }
     def scrambleTool = buildContext.proprietaryBuildTools.scrambleTool
     if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
-      buildContext.messages.debug("  module '$module.name' must be scrambled so it cannot be published")
+      buildContext.messages.warning("  module '$module.name' must be scrambled so it cannot be published")
       return null
     }
 
@@ -226,12 +226,12 @@ class MavenArtifactsBuilder {
            It's convenient to have such dependencies to allow running tests in classpath of their modules, so we can just ignore them while
            generating pom.xml files.
           */
-          buildContext.messages.debug(" module '$module.name': skip recursive dependency on '$depModule.name'")
+          buildContext.messages.warning(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
         else {
           def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
           if (depArtifact == null) {
-            buildContext.messages.debug(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
+            buildContext.messages.warning(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
             mavenizable = false
             return
           }
@@ -247,7 +247,7 @@ class MavenArtifactsBuilder {
         else if (!isOptionalDependency(library)) {
           List<String> names = LibraryLicensesListGenerator.getLibraryNames(library)
           for (n in names) {
-            buildContext.messages.debug(" module '$module.name' depends on non-maven library $n")
+            buildContext.messages.warning(" module '$module.name' depends on non-maven library $n")
           }
           mavenizable = false
         }

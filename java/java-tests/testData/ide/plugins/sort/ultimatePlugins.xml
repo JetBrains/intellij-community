@@ -1369,12 +1369,6 @@
     <depends>com.intellij.modules.vcs</depends>
     <depends optional="true" config-file="intellij.java.remoteServers.git">com.intellij.java</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javaee.appServers.geronimo/META-INF/plugin.xml">
-    <id>Geronimo</id>
-    <name>Geronimo Integration</name>
-    <depends>com.intellij.javaee</depends>
-    <depends>Tomcat</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.errorProne/META-INF/plugin.xml">
     <id>Error-prone plugin</id>
     <name>Error Prone Compiler</name>

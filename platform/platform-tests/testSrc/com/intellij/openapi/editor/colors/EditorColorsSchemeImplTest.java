@@ -55,11 +55,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  /**
-   * TODO<rv> FIX PROPERLY
-   * This is a hack: since font name is taken from default scheme (why?) where it is explicitly defined as "Dejavu Sans", font names
-   * do not match because default font name on linux in headless environment falls back to FALLBACK_FONT_FAMILY
-   */
   private static String substLinuxFontName(@NotNull String fontName) {
     return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName) ?
            FontPreferences.FALLBACK_FONT_FAMILY :

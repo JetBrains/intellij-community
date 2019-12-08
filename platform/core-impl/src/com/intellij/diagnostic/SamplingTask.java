@@ -65,7 +65,7 @@ public class SamplingTask {
   }
 
   public long getSampledTime() {
-    return myCurrentTime - myStartTime;
+    return myCurrentTime - myStartTime + myDumpInterval;
   }
 
   public long getGcTime() {

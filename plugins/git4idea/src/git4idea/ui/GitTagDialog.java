@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -37,6 +36,7 @@ import java.util.Set;
 public class GitTagDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitTagDialog.class);
+  private static final String CANT_CREATE_TAG = "Couldn't Create Tag";
 
   private JPanel myPanel;
   private JComboBox myGitRootComboBox;
@@ -111,8 +111,7 @@ public class GitTagDialog extends DialogWrapper {
         }
       }
       catch (IOException ex) {
-        Messages.showErrorDialog(myProject, GitBundle.message("tag.error.creating.message.file.message", ex.toString()),
-                                 GitBundle.getString("tag.error.creating.message.file.title"));
+        myNotifier.notifyError(CANT_CREATE_TAG, GitBundle.message("tag.error.creating.message.file.message", ex.toString()));
         return;
       }
     }
@@ -143,7 +142,7 @@ public class GitTagDialog extends DialogWrapper {
                                  "Created tag " + myTagNameTextField.getText() + " successfully.");
       }
       else {
-        myNotifier.notifyError("Couldn't Create Tag", result.getErrorOutputAsHtmlString());
+        myNotifier.notifyError(CANT_CREATE_TAG, result.getErrorOutputAsHtmlString());
       }
 
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());

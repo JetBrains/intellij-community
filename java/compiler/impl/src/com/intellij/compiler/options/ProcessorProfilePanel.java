@@ -138,7 +138,12 @@ public class ProcessorProfilePanel extends JPanel {
     add(myProcessorPathField,
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 5, 0, 0), 0, 0));
     add(myCbProcessorModulePath,
-        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 5, 0, 0), 0, 0));
+        new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2, 5, 0, 0), 0, 0));
+
+    add(ContextHelpLabel.create(
+      "Assume specified path is a 'module path': a path of JARs or directories containing packaged java modules." +
+      "\nIn order to be discovered and run from the module path an annotation processor should be packaged as a java module and registered with the ServiceLoader in the module declaration."
+    ), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 2, 0, 0), 0, 0));
 
     myStoreGenSourcesLabel = new JLabel("Store generated sources relative to: ");
     add(myStoreGenSourcesLabel,

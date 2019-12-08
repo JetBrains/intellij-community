@@ -19,4 +19,8 @@ public class SuspiciousPackagePrivateAccessInspectionTest extends SuspiciousPack
   public void testAccessingPackagePrivateInSignatures() {
     doTestWithDependency();
   }
+
+  public void testOverridePackagePrivateMethod() {
+    doTestWithDependency();
+  }
 }

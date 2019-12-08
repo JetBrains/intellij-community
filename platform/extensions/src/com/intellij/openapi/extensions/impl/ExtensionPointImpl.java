@@ -13,6 +13,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
 import org.jdom.Element;
@@ -25,18 +26,19 @@ import org.picocontainer.PicoContainer;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-@SuppressWarnings({"SynchronizeOnThis", "NonPrivateFieldAccessedInSynchronizedContext"})
+@SuppressWarnings({"SynchronizeOnThis"})
 public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterable<T> {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
+  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.impl.ExtensionPointImpl");
 
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
   private static volatile Predicate<? super Class<?>> TYPE_CHECKER;
+
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   private final String myName;
   private final String myClassName;
@@ -278,22 +280,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return array.length == 0 ? array : array.clone();
   }
 
-  @Override
-  public void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer) {
-    for (T t : this) {
-      if (t == null) break;
-      try {
-        extensionConsumer.accept(t);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-  }
-
   /**
    * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
    * events will be fired during iteration and probably it will be not expected.
@@ -311,7 +297,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     return result == null ? createIterator() : result.iterator();
   }
 
-  public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
+  public final void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
       for (T extension : myExtensionsCache) {
         consumer.accept(extension, myDescriptor /* doesn't matter for tests */);
@@ -448,7 +434,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
     ActivityCategory category = getActivityCategory(myComponentManager.getPicoContainer());
-    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null);
+    StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
     return result;
   }
 
@@ -558,6 +544,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     List<T> oldList = myExtensionsCache;
     T[] oldArray = myExtensionsCacheAsArray;
     // any read access will use supplied list, any write access can lead to unpredictable results - asserted in clearCache
+    //noinspection unchecked
     myExtensionsCache = (List<T>)list;
     myExtensionsCacheAsArray = list.toArray(ArrayUtil.newArray(getExtensionClass(), 0));
     POINTS_IN_READONLY_MODE.add(this);
@@ -710,8 +697,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener));
     }
   }
-
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   @NotNull
   private static <T> ArrayFactory<ExtensionPointListener<T>> listenerArrayFactory() {
@@ -920,19 +905,26 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Nullable
-  public final T findExtension(@NotNull Class<? extends T> aClass, boolean isRequired, boolean strictMatch) {
+  public final <V extends T> V findExtension(@NotNull Class<V> aClass, boolean isRequired, @NotNull ThreeState strictMatch) {
+    if (strictMatch != ThreeState.NO) {
+      @SuppressWarnings("unchecked")
+      V result = (V)findExtensionByExactClass(aClass);
+      if (result != null) {
+        return result;
+      }
+      else if (strictMatch == ThreeState.YES) {
+        return null;
+      }
+    }
+
     List<? extends T> extensionsCache = myExtensionsCache;
     if (extensionsCache == null) {
-      // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
       for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
-        if (strictMatch && adapter.myImplementationClassOrName instanceof String && adapter.myImplementationClassOrName.equals(aClass.getName())) {
-          return processAdapter(adapter);
-        }
-
+        // findExtension is called for a lot of extension point - do not fail if listeners were added (e.g. FacetTypeRegistryImpl)
         try {
-          Class<?> implClass = adapter.getImplementationClass();
-          if (strictMatch ? aClass == implClass : aClass.isAssignableFrom(implClass)) {
-            return processAdapter(adapter);
+          if (aClass.isAssignableFrom(adapter.getImplementationClass())) {
+            //noinspection unchecked
+            return (V)processAdapter(adapter);
           }
         }
         catch (ClassNotFoundException e) {
@@ -943,7 +935,8 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     else {
       for (T extension : extensionsCache) {
         if (aClass.isInstance(extension)) {
-          return extension;
+          //noinspection unchecked
+          return (V)extension;
         }
       }
     }
@@ -955,6 +948,28 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
       throw new IllegalArgumentException(message);
     }
+    return null;
+  }
+
+  @Nullable
+  private T findExtensionByExactClass(@NotNull Class<? extends T> aClass) {
+    List<? extends T> extensionsCache = myExtensionsCache;
+    if (extensionsCache == null) {
+      for (ExtensionComponentAdapter adapter : getThreadSafeAdapterList(false)) {
+        Object classOrName = adapter.myImplementationClassOrName;
+        if (classOrName instanceof String ? classOrName.equals(aClass.getName()) : classOrName == aClass) {
+          return processAdapter(adapter);
+        }
+      }
+    }
+    else {
+      for (T extension : extensionsCache) {
+        if (aClass == extension.getClass()) {
+          return extension;
+        }
+      }
+    }
+
     return null;
   }
 

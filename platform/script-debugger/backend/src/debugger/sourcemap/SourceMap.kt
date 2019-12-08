@@ -3,6 +3,7 @@ package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
+import com.intellij.util.containers.isNullOrEmpty
 
 // sources - is not originally specified, but canonicalized/normalized
 // lines and columns are zero-based according to specification
@@ -45,14 +46,26 @@ interface SourceMap {
     val sourceIndex = findSourceIndex(sourceUrl, sourceFile, resolver, localFileUrlOnly)
     return if (sourceIndex >= 0) getSourceMappingsInLine(sourceIndex, sourceLine) else emptyList()
   }
+
+  fun getRawSource(entry: MappingEntry): String?
+
+  fun getSourceContent(entry: MappingEntry): String?
+
+  fun getSourceContent(sourceIndex: Int): String?
 }
 
 
-class OneLevelSourceMap(override val outFile: String?,
-                        override val generatedMappings: Mappings,
+class OneLevelSourceMap(private val sourceMapData: SourceMapData,
                         private val sourceIndexToMappings: Array<MappingList?>,
-                        override val sourceResolver: SourceResolver,
-                        override val hasNameMappings: Boolean) : SourceMap {
+                        override val sourceResolver: SourceResolver) : SourceMap {
+  override val outFile: String?
+    get() = sourceMapData.file
+
+  override val hasNameMappings: Boolean
+    get() = sourceMapData.hasNameMappings
+
+  override val generatedMappings: Mappings = GeneratedMappingList(sourceMapData.mappings)
+
   override val sources: Array<Url>
     get() = sourceResolver.canonicalizedUrls
 
@@ -75,5 +88,28 @@ class OneLevelSourceMap(override val outFile: String?,
 
   override fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean {
     return findSourceMappings(sourceIndex).processMappingsInLine(sourceLine, mappingProcessor)
+  }
+
+  override fun getRawSource(entry: MappingEntry): String? {
+    val index = entry.source
+    return if (index < 0) null else sourceMapData.sources[index]
+  }
+
+  override fun getSourceContent(entry: MappingEntry): String? {
+    val sourcesContent = sourceMapData.sourcesContent
+    if (sourcesContent.isNullOrEmpty()) {
+      return null
+    }
+
+    val index = entry.source
+    return if (index < 0 || index >= sourcesContent!!.size) null else sourcesContent[index]
+  }
+
+  override fun getSourceContent(sourceIndex: Int): String? {
+    val sourcesContent = sourceMapData.sourcesContent
+    if (sourcesContent.isNullOrEmpty()) {
+      return null
+    }
+    return if (sourceIndex < 0 || sourceIndex >= sourcesContent!!.size) null else sourcesContent[sourceIndex]
   }
 }

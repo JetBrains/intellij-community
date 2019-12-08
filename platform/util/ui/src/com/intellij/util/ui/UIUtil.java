@@ -2,7 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,14 +80,15 @@ import java.util.regex.Pattern;
 public final class UIUtil extends StartupUiUtil {
 
   static {
-    LoadingPhase.LAF_INITIALIZED.assertAtLeast();
+    LoadingState.LAF_INITIALIZED.checkOccurred();
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
 
-  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.linux", false) && Registry.is("suppress.focus.stealing", true);
+  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.active.window.checks", false);
+  public static final boolean DISABLE_AUTO_REQUEST_FOCUS = Registry.is("suppress.focus.stealing.disable.auto.request.focus", false);
 
   @NotNull
   // cannot be static because logging maybe not configured yet

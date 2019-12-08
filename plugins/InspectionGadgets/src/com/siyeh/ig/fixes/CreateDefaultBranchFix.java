@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -70,7 +71,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
   private static void adjustEditor(@NotNull PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
-    Editor editor = prepareForTemplateAndObtainEditor(block);
+    Editor editor = CreateSwitchBranchesUtil.prepareForTemplateAndObtainEditor(block);
     if (editor == null) return;
     PsiStatement lastStatement = ArrayUtil.getLastElement(body.getStatements());
     if (lastStatement instanceof PsiSwitchLabeledRuleStatement) {

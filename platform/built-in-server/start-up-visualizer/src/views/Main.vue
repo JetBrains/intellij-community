@@ -59,6 +59,6 @@
 .timeLineChart {
   width: 100%;
   /* in any case time line chart will adjust height according to items */
-  height: 380px;
+  height: 500px;
 }
 </style>

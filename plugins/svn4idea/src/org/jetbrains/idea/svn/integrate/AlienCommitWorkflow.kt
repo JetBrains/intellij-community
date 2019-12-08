@@ -23,6 +23,7 @@ class AlienCommitWorkflow(val vcs: AbstractVcs, changeListName: String, changes:
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(ShowNotificationCommitResultHandler(this))
+      addResultHandler(getEndExecutionHandler())
 
       runCommit(DIALOG_TITLE, false)
     }

@@ -19,7 +19,6 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
-
 /**
  * @author nik
  */
@@ -34,7 +33,9 @@ abstract class OsSpecificDistributionBuilder {
   @NotNull
   abstract OsFamily getTargetOs();
 
-  abstract String copyFilesForOsDistribution()
+  abstract void copyFilesForOsDistribution(String targetPath)
 
   abstract void buildArtifacts(String osSpecificDistPath)
+
+  List<String> generateExecutableFilesPatterns(boolean includeJre) { [] }
 }

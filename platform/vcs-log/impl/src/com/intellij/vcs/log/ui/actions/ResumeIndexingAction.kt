@@ -24,7 +24,7 @@ class ResumeIndexingAction : DumbAwareAction() {
     val bigRepositories = getBigRepositories(data)
     e.presentation.isEnabledAndVisible = VcsLogPersistentIndex.getRootsForIndexing(data.logProviders).isNotEmpty() &&
                                          bigRepositories.isNotEmpty()
-    e.presentation.description = "Indexing ${getText(bigRepositories)} was paused as it took longer than expected. Resume."
+    e.presentation.description = "Indexing ${getText(bigRepositories)} was paused. Resume."
   }
 
   private fun getText(bigRepositories: List<VirtualFile>): String {

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * {@link #isParsable(ASTNode, CharSequence, Language, Project)} is invoked, and if it's successful,
  * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
  */
-public class IReparseableElementType extends ILazyParseableElementType {
+public class IReparseableElementType extends ILazyParseableElementType implements IReparseableElementTypeBase {
   public IReparseableElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
@@ -83,6 +83,7 @@ public class IReparseableElementType extends ILazyParseableElementType {
    * @param project the project containing the content.
    * @return true if the content is valid, false if not
    */
+  @Override
   public boolean isParsable(@Nullable ASTNode parent,
                             @NotNull CharSequence buffer,
                             @NotNull Language fileLanguage,
@@ -90,7 +91,11 @@ public class IReparseableElementType extends ILazyParseableElementType {
     return isParsable(buffer, fileLanguage, project);
   }
 
+  @Override
   public boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     return true;
   }
+
+  // Please, add no more public methods here. Add them to `IReparseableElementTypeBase` instead.
+  // If you are not sure about the API stability, use `ApiStatus.Experimental` annotation
 }

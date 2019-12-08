@@ -28,8 +28,6 @@ final class SearchableOptionPreloader extends PreloadingActivity {
       }
     };
 
-    for (SearchableOptionContributor contributor : SearchableOptionContributor.EP_NAME.getIterable()) {
-      contributor.processOptions(processor);
-    }
+    SearchableOptionContributor.EP_NAME.forEachExtensionSafe(contributor -> contributor.processOptions(processor));
   }
 }

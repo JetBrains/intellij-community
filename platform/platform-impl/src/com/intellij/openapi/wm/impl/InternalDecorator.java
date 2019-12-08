@@ -8,8 +8,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -35,8 +35,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -73,6 +75,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private ToolWindowHeader myHeader;
   private final ActionGroup myToggleToolbarGroup;
+
+  private final AnAction myFocusEditorAction = ActionManager.getInstance().getAction("FocusEditor");
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
     super(new BorderLayout());
@@ -250,9 +254,18 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
+  }
 
-    ShortcutSet ss = ActionManager.getInstance().getAction("FocusEditor").getShortcutSet();
-    DumbAwareAction.create(__ -> ToolWindowManager.getInstance(myProject).activateEditorComponent()).registerCustomShortcutSet(ss, this);
+  @Override
+  protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+    if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
+      Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(myFocusEditorAction.getShortcutSet());
+      if (keyStrokes.contains(ks)) {
+        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        return true;
+      }
+    }
+    return super.processKeyBinding(ks, e, condition, pressed);
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {

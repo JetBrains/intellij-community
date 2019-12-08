@@ -26,8 +26,6 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import com.jetbrains.python.sdk.PySdkUtil
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
@@ -50,7 +48,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     val error = when {
       element.isAsync -> "refactoring.inline.function.async"
       element.isGenerator -> "refactoring.inline.function.generator"
-      PyNames.INIT == element.name -> "refactoring.inline.function.constructor"
+      PyUtil.isInitOrNewMethod(element) -> "refactoring.inline.function.constructor"
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
       isSpecialMethod(element) -> "refactoring.inline.function.special.method"
       isUnderSkeletonDir(element) -> "refactoring.inline.function.skeleton.only"
@@ -144,15 +142,16 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     .any { it is PyReferenceExpression && it.reference.isReferenceTo(function) }
 
   private fun isUnderSkeletonDir(function: PyFunction): Boolean {
-    val sdk = PythonSdkUtil.findPythonSdk(function.containingFile) ?: return false
+    val containingFile = PyiUtil.getOriginalElementOrLeaveAsIs(function, PyElement::class.java).containingFile
+    val sdk = PythonSdkUtil.findPythonSdk(containingFile) ?: return false
     val skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk) ?: return false
-    return VfsUtil.isAncestor(skeletonsDir, function.containingFile.virtualFile, true)
+    return VfsUtil.isAncestor(skeletonsDir, containingFile.virtualFile, true)
   }
 
   companion object {
     @JvmStatic
     fun getInstance(): PyInlineFunctionHandler {
-      return InlineActionHandler.EP_NAME.findExtensionOrFail(PyInlineFunctionHandler::class.java)
+      return EP_NAME.findExtensionOrFail(PyInlineFunctionHandler::class.java)
     }
 
     @JvmStatic

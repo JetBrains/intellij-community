@@ -19,22 +19,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +44,7 @@ import java.util.Set;
 public class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";
-  
+
   private final List<DocstringParam> myAddedParams = Lists.newArrayList();
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
@@ -87,11 +82,11 @@ public class PyDocstringGenerator {
     final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
     return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormatOrPlain(owner), indentation, owner);
   }
-  
+
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
-   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
-   *                       generate properly formatted docstring. 
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result,
+   *                       generate properly formatted docstring.
    */
   @NotNull
   public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
@@ -101,16 +96,16 @@ public class PyDocstringGenerator {
   @NotNull
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
-                                    docString.getText(), 
+                                    docString.getText(),
                                     DocStringUtil.getConfiguredDocStringFormatOrPlain(docString),
-                                    PyIndentUtil.getElementIndent(docString), 
+                                    PyIndentUtil.getElementIndent(docString),
                                     docString);
   }
 
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
-   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
-   *                       generate properly formatted docstring. 
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result,
+   *                       generate properly formatted docstring.
    */
   @NotNull
   public static PyDocstringGenerator update(@NotNull DocStringFormat format,
@@ -200,17 +195,12 @@ public class PyDocstringGenerator {
       final RaiseVisitor visitor = new RaiseVisitor();
       final PyStatementList statementList = ((PyFunction)myDocStringOwner).getStatementList();
       statementList.accept(visitor);
-      if (!isConstructor((PyFunction)myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
+      if (!PyUtil.isInitOrNewMethod(myDocStringOwner) && (visitor.myHasReturn || addReturn)) {
         // will add :return: placeholder in Sphinx/Epydoc docstrings
         withReturnValue(null);
       }
     }
     return this;
-  }
-
-  private static boolean isConstructor(@NotNull PyFunction function) {
-    final String funcName = function.getName();
-    return PyNames.INIT.equals(funcName) && function.getContainingClass() != null;
   }
 
   @NotNull

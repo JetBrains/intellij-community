@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.diagnostic.LoadingPhase;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
@@ -25,6 +25,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";
+  //When this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
+  public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
 
   @Nullable
   private FrameHelper myFrameHelper;
@@ -100,7 +102,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   @Override
   public void setExtendedState(int state) {
     // do not load FrameInfoHelper class
-    if (LoadingPhase.COMPONENT_REGISTERED.isComplete() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred() && getExtendedState() == Frame.NORMAL && FrameInfoHelper.isMaximized(state)) {
       getRootPane().putClientProperty(NORMAL_STATE_BOUNDS, getBounds());
     }
     super.setExtendedState(state);
@@ -108,7 +110,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   @Override
   public void paint(@NotNull Graphics g) {
-    if (LoadingPhase.COMPONENT_REGISTERED.isComplete()) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       UISettings.setupAntialiasing(g);
     }
 

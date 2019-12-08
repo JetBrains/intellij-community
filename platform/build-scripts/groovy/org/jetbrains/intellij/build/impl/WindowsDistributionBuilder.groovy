@@ -33,9 +33,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @Override
-  String copyFilesForOsDistribution() {
+  void copyFilesForOsDistribution(String winDistPath) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    String winDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     buildContext.ant.copy(todir: "$winDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/win") {
         if (!buildContext.includeBreakGenLibraries()) {
@@ -66,7 +65,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.signExeFile(it.absolutePath)
       }
     }
-    return winDistPath
   }
 
   @Override

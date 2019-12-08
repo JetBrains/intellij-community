@@ -18,13 +18,15 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
                              @NotNull InputStream terminalOutput,
-                             @NotNull OutputStream terminalInput) {
+                             @NotNull OutputStream terminalInput,
+                             boolean deferTerminalSessionUntilFirstShown) {
     super(presentableName);
 
     final CloudTerminalProcess process = new CloudTerminalProcess(terminalInput, terminalOutput);
 
     TtyResizeHandler handlerBoundLater = (w, h) -> getResizeHandler().onTtyResizeRequest(w, h); //right now handler is null
-    CloudTerminalRunner terminalRunner = new CloudTerminalRunner(project, presentableName, process, handlerBoundLater);
+    CloudTerminalRunner terminalRunner =
+      new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
     myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
   }

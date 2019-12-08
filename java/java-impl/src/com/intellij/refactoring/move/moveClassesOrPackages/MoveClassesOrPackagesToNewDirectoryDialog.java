@@ -38,7 +38,7 @@ import java.util.Set;
  * @author ven
  */
 public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
-  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesToNewDirectoryDialog.class);
 
   private final PsiDirectory myDirectory;
   private final PsiElement[] myElementsToMove;

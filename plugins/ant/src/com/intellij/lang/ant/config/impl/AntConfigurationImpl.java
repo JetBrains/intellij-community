@@ -25,10 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -91,14 +92,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @NonNls private static final String TARGET_ELEMENT = "target";
 
   private final PsiManager myPsiManager;
-  private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap =
-    new HashMap<>();
-
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
   private volatile List<Pair<Element, String>> myBuildFilesConfiguration = Collections.emptyList();
 
-  private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
-  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new HashMap<>();
+  private final Map<ExecutionEvent, Pair<AntBuildFile, String>> myEventToTargetMap = Collections.synchronizedMap(new HashMap<>());
+  private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = Collections.synchronizedMap(new HashMap<>());
+  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = Collections.synchronizedMap(new HashMap<>());
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final StartupManager myStartupManager;
 
@@ -131,23 +130,35 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         GuiUtils.invokeLaterIfNeeded(() -> DaemonCodeAnalyzer.getInstance(project).restart(), ModalityState.any());
       }
     });
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+
+    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
+      private final ChangeApplier NO_OP = new ChangeApplier() {};
+
+      @Nullable
       @Override
-      public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-        final VirtualFile vFile = event.getFile();
-        // cleanup
-        for (AntBuildFile file : getBuildFiles()) {
-          if (vFile.equals(file.getVirtualFile())) {
-            removeBuildFile(file);
-            break;
+      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+        Set<VirtualFile> toDelete = null;
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent) {
+            if (toDelete == null) {
+              toDelete = new HashSet<>();
+            }
+            toDelete.add(event.getFile());
           }
         }
-        for (Iterator<Map.Entry<VirtualFile,VirtualFile>> it = myAntFileToContextFileMap.entrySet().iterator(); it.hasNext();) {
-          final Map.Entry<VirtualFile, VirtualFile> entry = it.next();
-          if (vFile.equals(entry.getKey()) || vFile.equals(entry.getValue())) {
-            it.remove();
+        if (toDelete == null) {
+          return NO_OP;
+        }
+        Set<AntBuildFileBase> antFiles = null;
+        for (AntBuildFileBase file : myBuildFiles) {
+          if (toDelete.contains(file.getVirtualFile())) {
+            if (antFiles == null) {
+              antFiles = new HashSet<>();
+            }
+            antFiles.add(file);
           }
         }
+        return antFiles == null? NO_OP : new FileDeletionChangeApplier(toDelete, antFiles);
       }
     }, project);
   }
@@ -167,14 +178,19 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         state.addContent(element);
       }
 
-      final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
+      final List<VirtualFile> files;
+      synchronized (myAntFileToContextFileMap) {
+        files = new ArrayList<>(myAntFileToContextFileMap.keySet());
+      }
       // sort in order to minimize changes
       Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
       for (VirtualFile file : files) {
         final Element element = new Element(CONTEXT_MAPPING);
-        final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
         element.setAttribute(URL, file.getUrl());
-        element.setAttribute(CONTEXT, contextFile.getUrl());
+        final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
+        if (contextFile != null) {
+          element.setAttribute(CONTEXT, contextFile.getUrl());
+        }
         state.addContent(element);
       }
     });
@@ -387,7 +403,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
           incModificationCount();
           boolean added = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
             try {
-              for (AntBuildFile buildFile : getBuildFiles()) {
+              for (AntBuildFile buildFile : getBuildFileList()) {
                 final VirtualFile vFile = buildFile.getVirtualFile();
                 if (vFile != null && vFile.equals(file)) {
                   result.set(buildFile);
@@ -420,9 +436,15 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public void removeBuildFile(@NotNull AntBuildFile file) {
-    incModificationCount();
-    removeBuildFileImpl(file);
-    myBuildFiles.remove(((AntBuildFileBase)file));
+    removeBuildFiles(Collections.singleton((AntBuildFileBase)file));
+  }
+
+  private void removeBuildFiles(Collection<AntBuildFileBase> files) {
+    for (AntBuildFileBase file : files) {
+      incModificationCount();
+      removeBuildFileImpl(file);
+    }
+    myBuildFiles.removeAll(files);
     updateRegisteredActions();
   }
 
@@ -473,10 +495,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Override
   @Nullable
   public AntBuildTarget getTargetForEvent(final ExecutionEvent event) {
-    final Pair<AntBuildFile, String> pair;
-    synchronized (myEventToTargetMap) {
-      pair = myEventToTargetMap.get(event);
-    }
+    final Pair<AntBuildFile, String> pair = myEventToTargetMap.get(event);
     if (pair == null) {
       return null;
     }
@@ -506,16 +525,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event) {
-    synchronized (myEventToTargetMap) {
-      myEventToTargetMap.put(event, Pair.create(buildFile, targetName));
-    }
+    myEventToTargetMap.put(event, Pair.create(buildFile, targetName));
   }
 
   @Override
   public void clearTargetForEvent(final ExecutionEvent event) {
-    synchronized (myEventToTargetMap) {
-      myEventToTargetMap.remove(event);
-    }
+    myEventToTargetMap.remove(event);
   }
 
   @Override
@@ -591,8 +606,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   public AntBuildModelBase getModel(@NotNull AntBuildFile buildFile) {
     AntBuildModelBase model = myModelToBuildFileMap.get(buildFile);
     if (model == null) {
-      model = new AntBuildModelImpl(buildFile);
-      myModelToBuildFileMap.put(buildFile, model);
+      synchronized (myModelToBuildFileMap) {
+        model = new AntBuildModelImpl(buildFile);
+        final AntBuildModelBase prev = myModelToBuildFileMap.put(buildFile, model);
+        if (prev != null) {
+          model = prev;
+          myModelToBuildFileMap.put(buildFile, prev);
+        }
+      }
     }
     return model;
   }
@@ -630,8 +651,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       return;
     }
     final List<Pair<String, AnAction>> actionList = new ArrayList<>();
-    for (final AntBuildFile buildFile : myBuildFiles) {
-      final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
+    for (final AntBuildFileBase buildFile : myBuildFiles) {
+      final AntBuildModelBase model = buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
         final TargetAction action = new TargetAction(
@@ -849,6 +870,34 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         }
       }
       return 0;
+    }
+  }
+
+  private class FileDeletionChangeApplier implements AsyncFileListener.ChangeApplier {
+    private final Set<VirtualFile> myDeleted;
+    private final Set<AntBuildFileBase> myAntFiles;
+
+    FileDeletionChangeApplier(Set<VirtualFile> deleted, Set<AntBuildFileBase> antFiles) {
+      myDeleted = deleted;
+      myAntFiles = antFiles;
+    }
+
+    @Override
+    public void beforeVfsChange() {
+      synchronized (myAntFileToContextFileMap) {
+        for (Iterator<Map.Entry<VirtualFile,VirtualFile>> it = myAntFileToContextFileMap.entrySet().iterator(); it.hasNext();) {
+          final Map.Entry<VirtualFile, VirtualFile> entry = it.next();
+          if (myDeleted.contains(entry.getKey()) || myDeleted.contains(entry.getValue())) {
+            it.remove();
+          }
+        }
+      }
+    }
+
+    @Override
+    public void afterVfsChange() {
+      final Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(() -> app.runReadAction(()-> removeBuildFiles(myAntFiles)));
     }
   }
 }

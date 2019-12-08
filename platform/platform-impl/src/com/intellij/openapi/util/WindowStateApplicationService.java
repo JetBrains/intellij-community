@@ -4,9 +4,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
@@ -15,36 +12,5 @@ import java.awt.*;
 final class WindowStateApplicationService extends WindowStateServiceImpl {
   WindowStateApplicationService() {
     super(null);
-  }
-
-  @Override
-  Point getDefaultLocationFor(@NotNull String key) {
-    //  backward compatibility when this service is used instead of DimensionService
-    return null;//DimensionService.getInstance().getLocation(key);
-  }
-
-  @Override
-  Dimension getDefaultSizeFor(@NotNull String key) {
-    //  backward compatibility when this service is used instead of DimensionService
-    return null;//DimensionService.getInstance().getSize(key);
-  }
-
-  @Override
-  Rectangle getDefaultBoundsFor(@NotNull String key) {
-    Point location = getDefaultLocationFor(key);
-    if (location == null) {
-      return null;
-    }
-    Dimension size = getDefaultSizeFor(key);
-    if (size == null) {
-      return null;
-    }
-    return new Rectangle(location, size);
-  }
-
-  @Override
-  boolean getDefaultMaximizedFor(Object object, @NotNull String key) {
-    // todo move this data from DimensionService to this service
-    return DimensionService.getInstance().getDefaultMaximizedFor(key);
   }
 }

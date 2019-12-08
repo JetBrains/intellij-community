@@ -1086,7 +1086,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("Union[float, int]", "expr = round(1, 1)");
 
     doTest("int", "expr = round(1.1)");
-    doTest("Union[float, int]", "expr = round(1.1, 1)");
+    doTest("float", "expr = round(1.1, 1)");
 
     doTest("int", "expr = round(True)");
     doTest("Union[float, int]", "expr = round(True, 1)");
