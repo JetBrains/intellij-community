@@ -1,4 +1,4 @@
-package circlet.ui.clone
+package circlet.vcs.clone
 
 import circlet.components.*
 import circlet.ui.*
