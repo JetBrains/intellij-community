@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.diagnostic.Activity;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -241,10 +240,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     myEditor.paint(gg);
     if (origTx != null) gg.setTransform(origTx);
 
-    Activity activity = ApplicationManager.getApplication().getUserData(EditorsSplitters.OPEN_FILES_ACTIVITY);
-    if (activity != null) {
-      activity.end();
-      ApplicationManager.getApplication().putUserData(EditorsSplitters.OPEN_FILES_ACTIVITY, null);
+    Project project = myEditor.getProject();
+    if (project != null) {
+      EditorsSplitters.stopOpenFilesActivity(project);
     }
   }
 

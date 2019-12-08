@@ -65,7 +65,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
-  public static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
+  private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   private static final String PINNED = "pinned";
   private static final String CURRENT_IN_TAB = "current-in-tab";
@@ -244,7 +244,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return null;
     }
 
-    ApplicationManager.getApplication().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT));
+    myManager.getProject().putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(Activities.EDITOR_RESTORING_TILL_PAINT));
     Activity restoringEditors = StartUpMeasurer.startMainActivity(Activities.EDITOR_RESTORING);
     JPanel component = myUIBuilder.process(element, getTopPanel());
     if (component != null) {
@@ -252,6 +252,14 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     restoringEditors.end();
     return new Ref<>(component);
+  }
+
+  public static void stopOpenFilesActivity(@NotNull Project project) {
+    Activity activity = project.getUserData(OPEN_FILES_ACTIVITY);
+    if (activity != null) {
+      activity.end();
+      project.putUserData(OPEN_FILES_ACTIVITY, null);
+    }
   }
 
   public void openFiles() {

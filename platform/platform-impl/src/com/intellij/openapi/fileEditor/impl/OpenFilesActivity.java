@@ -40,10 +40,12 @@ final class OpenFilesActivity implements StartupActivity {
     ApplicationManager.getApplication().invokeLater(() -> {
       editorSplitters.doOpenFiles(panelRef.get());
       manager.initDockableContentFactory();
-      if (!manager.hasOpenFiles() &&
-          !ApplicationManager.getApplication().isHeadlessEnvironment() &&
-          Registry.is("ide.open.readme.md.on.startup")) {
-        RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
+      if (!manager.hasOpenFiles()) {
+        EditorsSplitters.stopOpenFilesActivity(project);
+        if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+            Registry.is("ide.open.readme.md.on.startup")) {
+          RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
+        }
       }
     }, project.getDisposed());
   }
