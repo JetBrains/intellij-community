@@ -2739,7 +2739,6 @@ public final class UIUtil {
      * _position(block width, block height) => (x, y) of the block
      */
     public void draw(@NotNull final Graphics g, @NotNull PairFunction<? super Integer, ? super Integer, ? extends Couple<Integer>> _position) {
-      GraphicsUtil.setupAntialiasing(g, true, true);
       Font oldFont = null;
       if (myFont != null) {
         oldFont = g.getFont();
