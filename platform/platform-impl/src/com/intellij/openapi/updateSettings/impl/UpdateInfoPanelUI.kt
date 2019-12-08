@@ -160,7 +160,9 @@ object UpdateInfoPanelUI {
       message = IdeBundle.message("updates.new.version.available", appNames.fullProductName, downloadUrl(newBuildInfo, updateChannel))
     }
 
-    return "$message<br><br>" + newBuildInfo.buttons.filter { !it.isDownload }
+    return "$message<br><br>" + newBuildInfo.buttons
+      .filter { !it.isDownload }
+      .filter { it.name != "More Information"}
       .joinToString("<br><br>") { "<a href=\"${it.url}\">${it.name}</href>" }
   }
 
