@@ -53,7 +53,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     myProject = project;
     myWorkingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(this, null);
 
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     ((JBTerminalPanel)getTerminalPanel()).addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
