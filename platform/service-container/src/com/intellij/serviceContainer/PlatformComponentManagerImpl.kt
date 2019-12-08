@@ -196,7 +196,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
 
     for (componentAdapter in myPicoContainer.componentAdapters) {
       if (componentAdapter is MyComponentAdapter) {
-        componentAdapter.getInstance<Any>(this, indicator = indicator)
+        componentAdapter.getInstance<Any>(this, keyClass = null, indicator = indicator)
       }
     }
 
@@ -300,7 +300,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
         if (parent != null && adapter.componentManager !== this) {
           LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
         }
-        adapter.getInstance(adapter.componentManager)
+        adapter.getInstance(adapter.componentManager, interfaceClass)
       }
       else -> adapter.getComponentInstance(picoContainer) as T
     }
@@ -319,7 +319,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val key = serviceClass.name
     val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     if (adapter != null) {
-      return adapter.getInstance(this, createIfNeeded)
+      return adapter.getInstance(this, serviceClass, createIfNeeded)
     }
 
     checkCanceledIfNotInClassInit()
@@ -626,7 +626,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     val unloadedInstances = ArrayList<Any>()
     for (service in containerDescriptor.services) {
       val adapter = myPicoContainer.unregisterComponent(service.getInterface()) as? ServiceComponentAdapter ?: continue
-      val instance = adapter.getInstance<Any>(this, createIfNeeded = false) ?: continue
+      val instance = adapter.getInstance<Any>(this, null, createIfNeeded = false) ?: continue
       if (instance is Disposable) {
         Disposer.dispose(instance)
       }
@@ -676,7 +676,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
           if (!isServicePreloadingCancelled && !isDisposed) {
             val adapter = myPicoContainer.getServiceAdapter(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
             try {
-              adapter.getInstance<Any>(this)
+              adapter.getInstance<Any>(this, null)
             }
             catch (e: StartupAbortedException) {
               isServicePreloadingCancelled = true

@@ -17,6 +17,8 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
+  override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
+
   override fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory? {
     if (componentManager.activityNamePrefix() == null) {
       return null

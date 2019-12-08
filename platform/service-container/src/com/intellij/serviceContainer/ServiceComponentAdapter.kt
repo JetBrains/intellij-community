@@ -20,6 +20,8 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override val implementationClassName: String
     get() = descriptor.implementation!!
 
+  override fun isImplementationEqualsToInterface() = descriptor.serviceInterface == null || descriptor.serviceInterface == descriptor.implementation
+
   override fun getComponentKey(): String = descriptor.getInterface()
 
   override fun getActivityCategory(componentManager: PlatformComponentManagerImpl) = getServiceActivityCategory(componentManager)

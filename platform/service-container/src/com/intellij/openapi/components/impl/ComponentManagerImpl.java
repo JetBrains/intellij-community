@@ -46,7 +46,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     for (ComponentAdapter componentAdapter : getPicoContainer().getComponentAdapters()) {
       if (componentAdapter instanceof MyComponentAdapter &&
           ReflectionUtil.isAssignable(baseClass, componentAdapter.getComponentImplementation())) {
-        T instance = ((MyComponentAdapter)componentAdapter).getInstance((PlatformComponentManagerImpl)this, createIfNeeded, null);
+        T instance = ((MyComponentAdapter)componentAdapter).getInstance((PlatformComponentManagerImpl)this, null, createIfNeeded, null);
         if (instance != null) {
           if (result == null) {
             result = new ArrayList<>();
