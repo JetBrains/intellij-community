@@ -7,7 +7,7 @@
     <extensionPoint name="virtualFileManagerListener" interface="com.intellij.openapi.vfs.VirtualFileManagerListener"/>
     <extensionPoint name="vfs.asyncListener" interface="com.intellij.openapi.vfs.AsyncFileListener" />
 
-    <!-- only bundled plugin can define preStartupActivity or startupActivity -->
+    <!-- only bundled plugin can define startupActivity -->
     <extensionPoint name="startupActivity" interface="com.intellij.openapi.startup.StartupActivity"/>
     <extensionPoint name="postStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>
     <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.StartupActivity" dynamic="true"/>

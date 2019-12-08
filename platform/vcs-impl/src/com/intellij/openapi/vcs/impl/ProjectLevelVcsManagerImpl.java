@@ -746,7 +746,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 
-  public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
+  public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myInitialization != null) {
       myInitialization.add(vcsInitObject, runnable);
     }

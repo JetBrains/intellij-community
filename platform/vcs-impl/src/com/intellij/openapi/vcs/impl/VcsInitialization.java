@@ -39,7 +39,7 @@ public final class VcsInitialization implements Disposable {
   private volatile Future<?> myFuture;
   private final ProgressIndicator myIndicator = new StandardProgressIndicatorBase();
 
-  VcsInitialization(@NotNull final Project project) {
+  VcsInitialization(@NotNull Project project) {
     myProject = project;
     LOG.assertTrue(!project.isDefault());
 
@@ -58,7 +58,7 @@ public final class VcsInitialization implements Disposable {
     });
   }
 
-  public void add(@NotNull final VcsInitObject vcsInitObject, @NotNull final Runnable runnable) {
+  public void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     synchronized (myLock) {
       if (myStatus != Status.IDLE) {
         if (!vcsInitObject.isCanBeLast()) {

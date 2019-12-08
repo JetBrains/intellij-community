@@ -57,9 +57,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
-  private final MessageBus myBus;
   private final ProgressManagerQueue myTaskQueue;
-  private final MessageBusConnection myConnection;
   private boolean myRefreshingIncomingChanges = false;
   private int myPendingUpdateCount = 0;
   private ScheduledFuture myFuture;
@@ -80,12 +78,10 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return project.getComponent(CommittedChangesCache.class);
   }
 
-  public CommittedChangesCache(final Project project, final MessageBus bus) {
+  public CommittedChangesCache(@NotNull Project project) {
     super(new CommittedChangesCacheState());
     myProject = project;
-    myBus = bus;
-    myConnection = myBus.connect();
-    final VcsListener vcsListener = new VcsListener() {
+    VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
         myLocationCache.reset();
@@ -104,26 +100,31 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
     ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    vcsManager.addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE,
-                                        () -> ApplicationManager.getApplication().runReadAction(() -> {
-                                          if (myProject.isDisposed()) return;
-                                          myTaskQueue.start();
-                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-                                        }));
     myVcsManager = vcsManager;
+    vcsManager.addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) {
+          return;
+        }
+
+        myTaskQueue.start();
+
+        MessageBusConnection connection = project.getMessageBus().connect();
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+      });
+    });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         cancelRefreshTimer();
-        myConnection.disconnect();
       }
     });
     myExternallyLoadedChangeLists = ContainerUtil.newConcurrentMap();
   }
 
   public MessageBus getMessageBus() {
-    return myBus;
+    return myProject.getMessageBus();
   }
 
   @Override

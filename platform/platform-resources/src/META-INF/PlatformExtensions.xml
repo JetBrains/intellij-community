@@ -591,9 +591,10 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.OptionsTopHitProvider$ProjectLevelProvidersAdapter"/>
 
     <startupActivity implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
+    <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
+
     <postStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
-    <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
