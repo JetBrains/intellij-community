@@ -1,8 +1,8 @@
 package circlet.ui.clone
 
-import circlet.actions.AccountMenuItem
-import circlet.actions.AccountMenuPopupStep
-import circlet.actions.AccountsMenuListPopup
+import circlet.ui.AccountMenuItem
+import circlet.ui.AccountMenuPopupStep
+import circlet.ui.AccountsMenuListPopup
 import circlet.client.*
 import circlet.client.api.*
 import circlet.components.*
@@ -270,22 +270,22 @@ private class CloneView(
                 val serverUrl = cleanupUrl(st.server)
                 val menuItems: MutableList<AccountMenuItem> = mutableListOf()
                 menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
-                                                     serverUrl,
-                                                     resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
+                                                                                   serverUrl,
+                                                                                   resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
                                                                 VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-                                                     listOf(AccountMenuItem.Action("Open $serverUrl",
-                                                                                   { BrowserUtil.browse(st.server) },
-                                                                                   AllIcons.Ide.External_link_arrow)))
+                                                                                   listOf(AccountMenuItem.Action("Open $serverUrl",
+                                                                                                                                               { BrowserUtil.browse(st.server) },
+                                                                                                                                               AllIcons.Ide.External_link_arrow)))
                 menuItems += AccountMenuItem.Action("Projects",
-                                                    { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
-                                                    AllIcons.Ide.External_link_arrow,
-                                                    showSeparatorAbove = true)
+                                                                                  { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
+                                                                                  AllIcons.Ide.External_link_arrow,
+                                                                                  showSeparatorAbove = true)
                 menuItems += AccountMenuItem.Action("Settings...",
-                                                    {
+                                                                                  {
                                                         CircletSettingsPanel.openSettings(project)
                                                         updateSelectedUrl()
                                                     },
-                                                    showSeparatorAbove = true)
+                                                                                  showSeparatorAbove = true)
                 menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
 
                 AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
