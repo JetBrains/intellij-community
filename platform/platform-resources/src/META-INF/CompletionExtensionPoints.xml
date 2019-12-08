@@ -9,7 +9,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider"/>
+    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider" dynamic="true"/>
 
     <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
