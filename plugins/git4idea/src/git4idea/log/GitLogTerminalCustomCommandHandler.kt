@@ -105,8 +105,9 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
     }
 
     val userNames = userRegexps.map { regexp ->
+      val regex = ".*$regexp.*".toRegex()
       project.service<VcsUserRegistry>().users.filter { user ->
-        ".*$regexp.*".toRegex().matches(user.name.toLowerCase())
+        regex.matches(user.name.toLowerCase())
       }
     }
       .flatten()
