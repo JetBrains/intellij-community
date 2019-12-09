@@ -38,7 +38,11 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
       tooltip = element == null ? null
                                 : provider.getElementTooltip(element);
       provider = null; // do not try recalculate tooltip
-      UIEventLogger.logUIEvent(UIEventId.BreadcrumbShowTooltip);
+      FeatureUsageData data = new FeatureUsageData();
+      if (element != null) {
+        data.addLanguage(element.getLanguage());
+      }
+      UIEventLogger.logUIEvent(UIEventId.BreadcrumbShowTooltip, data);
     }
     return tooltip;
   }
@@ -69,6 +73,10 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
     }
 
     FeatureUsageData data = new FeatureUsageData();
+    PsiElement element = getElement(this);
+    if (element != null) {
+      data.addLanguage(element.getLanguage());
+    }
     if (withSelection) {
       data.addData("with_selection", true);
       final TextRange range = getHighlightRange();
