@@ -128,7 +128,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
 
     String name = names.getFullProductNameWithEdition();
-    String comment = names.getMotto();
+    String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
     Map<String, String> vars = newHashMap(pair("$NAME$", name),
                                           pair("$SCRIPT$", execPath),
