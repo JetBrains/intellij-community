@@ -16,10 +16,12 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManagerKt;
+import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
@@ -68,6 +70,12 @@ public class _LastInSuiteTest extends TestCase {
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
+    ProjectManager pm = ProjectManager.getInstanceIfCreated();
+    if (pm != null) {
+      for (Project project : pm.getOpenProjects()) {
+        ((CachedValuesManagerImpl) CachedValuesManager.getManager(project)).clearCachedValues();
+      }
+    }
 
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
