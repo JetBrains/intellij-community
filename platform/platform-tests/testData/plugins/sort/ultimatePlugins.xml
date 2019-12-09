@@ -1337,7 +1337,7 @@
     <id>-com-intellij-clion-embedded-</id>
     <name>Embedded Development Support</name>
     <depends>com.intellij.modules.clion</depends>
-    <depends>com.intellij.modules.clion.cmake</depends>
+    <depends optional="true">com.intellij.modules.clion.cmake</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.cidr.clangFormat/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-clangFormat-</id>
