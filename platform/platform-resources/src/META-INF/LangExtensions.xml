@@ -1226,6 +1226,7 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HectorComponentFactory"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HectorComponentFactoryImpl"/>
+    <editorFactoryListener implementation="com.intellij.internal.statistic.fileTypes.UpdateComponentEditorListener"/>
   </extensions>
 </idea-plugin>
 
