@@ -129,7 +129,7 @@ object JdkInstaller {
       throw IOException("Failed to create home directory: $home")
     }
 
-    val markerFile = File(home, "intellij-downloader-info.json")
+    val markerFile = File(home, "intellij-downloader-info.txt")
     markerFile.writeText("Download started on ${Date()}\n$jdkItem")
 
     return JdkInstallRequest(jdkItem, home)
