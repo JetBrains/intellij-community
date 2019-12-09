@@ -943,17 +943,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val toolWindow = getToolWindow(id) as ToolWindowEx
     // remove decorator and tool button from the screen
-    val commandsList = mutableListOf<FinalizableCommand>()
-    appendRemoveDecoratorCommand(info, false, commandsList)
+    val commands = mutableListOf<FinalizableCommand>()
+    appendRemoveDecoratorCommand(info, false, commands)
     // Save recent appearance of tool window
     layout.unregister(id)
     activeStack.remove(id, true)
     if (isStackEnabled) {
       sideStack.remove(id)
     }
-    appendRemoveButtonCmd(id, info, commandsList)
-    appendApplyWindowInfoCmd(info, commandsList)
-    execute(commandsList, false)
+    appendRemoveButtonCmd(id, info, commands)
+    appendApplyWindowInfoCmd(info, commands)
+    execute(commands, false)
 
     if (!project.isDisposed) {
       project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowUnregistered(id, (toolWindow))
@@ -967,17 +967,17 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     entry.watcher.deinstall()
   }
 
-  private fun appendRemoveDecoratorCommand(info: WindowInfoImpl, dirtyMode: Boolean, commandsList: MutableList<FinalizableCommand>) {
+  private fun appendRemoveDecoratorCommand(info: WindowInfoImpl, dirtyMode: Boolean, commands: MutableList<FinalizableCommand>) {
     if (!info.isVisible) {
       return
     }
 
     info.isVisible = false
     when {
-      info.isFloating -> commandsList.add(RemoveFloatingDecoratorCmd(info))
-      info.isWindowed -> commandsList.add(RemoveWindowedDecoratorCmd(info))
+      info.isFloating -> commands.add(RemoveFloatingDecoratorCmd(info))
+      info.isWindowed -> commands.add(RemoveWindowedDecoratorCmd(info))
       // docked and sliding windows
-      else -> appendRemoveDecoratorCmd(info.id!!, dirtyMode, commandsList)
+      else -> appendRemoveDecoratorCmd(info.id!!, dirtyMode, commands)
     }
   }
 
