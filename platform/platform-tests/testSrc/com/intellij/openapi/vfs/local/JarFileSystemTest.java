@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -31,6 +32,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -38,6 +40,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
@@ -46,6 +49,7 @@ import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
+  private static final Logger LOG = Logger.getInstance(JarFileSystemTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
@@ -253,6 +257,13 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     else {
       assertNull(JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
       VirtualFile dir = jarRoot.findChild(crazyDir);
+      LOG.debug(jarRoot + " children: " + Arrays.toString(jarRoot.getChildren()));
+      try (ZipFile file = new ZipFile(jarPath)) {
+        LOG.debug("Entries: " + ContainerUtil.toList(file.entries()));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       assertNotNull(dir);
       assertNotNull(dir.findChild(crazyEntry));
     }
