@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -234,6 +235,30 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testCrazyBackSlashesInZipEntriesMustBeTreatedAsRegularDirectorySeparators() {
+    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/log4sql.jar";
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
+    assertNotNull(vFile);
+    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
+    assertNotNull(manifest);
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
+    assertNotNull(jarRoot);
+    String crazyDir = "src\\core\\log";
+    String crazyEntry = "/log4sql_conf.jsp";
+    if (SystemInfo.isWindows) {
+      assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
+      assertNull(jarRoot.findChild(crazyDir));
+    }
+    else {
+      assertNull(JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
+      VirtualFile dir = jarRoot.findChild(crazyDir);
+      assertNotNull(dir);
+      assertNotNull(dir.findChild(crazyEntry));
+    }
+  }
+
+  @Test
   public void testJarRootForLocalFile() {
     String jarPath = PathManager.getJarPathForClass(Test.class);
 
@@ -278,6 +303,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
+  @NotNull
   private static VirtualFile findByPath(String path) {
     VirtualFile file = JarFileSystem.getInstance().findFileByPath(path);
     assertNotNull(file);
