@@ -24,7 +24,7 @@ import java.util.*;
  */
 public class ComplementaryFontsRegistry {
   private static final Logger LOG = Logger.getInstance(ComplementaryFontsRegistry.class);
-  
+  private static final String DEFAULT_FALLBACK_FONT = Font.MONOSPACED;
   private static final Object lock = new Object();
   @SuppressWarnings("unchecked")
   private static final List<String>[] ourFontNames = new List[4]; // per font style
@@ -191,7 +191,7 @@ public class ComplementaryFontsRegistry {
   private static FontInfo getFontAbleToDisplay(int codePoint, @NotNull char[] remainingText, int start, int end, 
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
-    boolean tryDefaultFont = true;
+    boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = !Patches.TEXT_LAYOUT_IS_SLOW && preferences.useLigatures();
     FontInfo result;
@@ -202,14 +202,14 @@ public class ComplementaryFontsRegistry {
       if (result != null && result.getFont().canDisplayUpTo(remainingText, start, end) == -1) {
         return result;
       }
-      tryDefaultFont &= !FontPreferences.DEFAULT_FONT_NAME.equals(fontFamily);
+      tryDefaultFallback &= !DEFAULT_FALLBACK_FONT.equals(fontFamily);
     }
     int size = FontPreferences.DEFAULT_FONT_SIZE;
     if (!fontFamilies.isEmpty()) {
       size = preferences.getSize(fontFamilies.get(0));
     }
-    if (tryDefaultFont) {
-      result = doGetFontAbleToDisplay(codePoint, size, style, FontPreferences.DEFAULT_FONT_NAME, useLigatures, context, false);
+    if (tryDefaultFallback) {
+      result = doGetFontAbleToDisplay(codePoint, size, style, DEFAULT_FALLBACK_FONT, useLigatures, context, false);
       if (result != null && result.getFont().canDisplayUpTo(remainingText, start, end) == -1) {
         return result;
       }
@@ -228,7 +228,7 @@ public class ComplementaryFontsRegistry {
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
-    boolean tryDefaultFont = true;
+    boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = !Patches.TEXT_LAYOUT_IS_SLOW && preferences.useLigatures();
     FontInfo result;
@@ -239,14 +239,14 @@ public class ComplementaryFontsRegistry {
       if (result != null) {
         return result;
       }
-      tryDefaultFont &= !FontPreferences.DEFAULT_FONT_NAME.equals(fontFamily);
+      tryDefaultFallback &= !DEFAULT_FALLBACK_FONT.equals(fontFamily);
     }
     int size = FontPreferences.DEFAULT_FONT_SIZE;
     if (!fontFamilies.isEmpty()) {
       size = preferences.getSize(fontFamilies.get(0));
     }
-    if (tryDefaultFont) {
-      result = doGetFontAbleToDisplay(codePoint, size, style, FontPreferences.DEFAULT_FONT_NAME, useLigatures, context, false);
+    if (tryDefaultFallback) {
+      result = doGetFontAbleToDisplay(codePoint, size, style, DEFAULT_FALLBACK_FONT, useLigatures, context, false);
       if (result != null) {
         return result;
       }
@@ -278,6 +278,12 @@ public class ComplementaryFontsRegistry {
     FontInfo result = doGetFontAbleToDisplay(codePoint, size, style, defaultFontFamily, false, context, false);
     if (result != null) {
       return result;
+    }
+    if (!DEFAULT_FALLBACK_FONT.equals(defaultFontFamily)) {
+      result = doGetFontAbleToDisplay(codePoint, size, style, DEFAULT_FALLBACK_FONT, false, context, false);
+      if (result != null) {
+        return result;
+      }
     }
     return doGetFontAbleToDisplay(codePoint, null, 0, 0, size, style, false, context);
   }
