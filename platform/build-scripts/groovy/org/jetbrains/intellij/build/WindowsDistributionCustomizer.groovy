@@ -82,7 +82,7 @@ abstract class WindowsDistributionCustomizer {
    * Name of the root product windows installation directory and Desktop ShortCut
    */
   String getNameForInstallDirAndDesktopShortcut(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    "${applicationInfo.productName} ${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
+    "${getFullNameIncludingEdition(applicationInfo)} ${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
   }
 
   /**
