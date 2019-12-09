@@ -8,6 +8,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpMeasurer.Activities;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.startup.ProjectLoadListener;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.Application;
@@ -144,6 +145,8 @@ public class StartupManagerImpl extends StartupManagerEx {
 
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
           runPostStartupActivities();
+
+          ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLoadListener.TOPIC).postStartUpActivitiesPassed();
         });
       });
     }
@@ -198,6 +201,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     AtomicReference<Activity> edtActivity = new AtomicReference<>();
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
+    AtomicBoolean eventAboutDumbUnawareActivities = new AtomicBoolean();
 
     AtomicInteger counter = new AtomicInteger();
     DumbService dumbService = DumbService.getInstance(myProject);
@@ -218,21 +222,11 @@ public class StartupManagerImpl extends StartupManagerEx {
       counter.incrementAndGet();
       runDumbUnawareActivity(dumbService, () -> {
         runActivity(uiFreezeWarned, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
-        if (counter.decrementAndGet() == 0) {
-          Activity activity = edtActivity.getAndSet(null);
-          if (activity != null) {
-            activity.end();
-          }
-        }
+        dumbUnawarePostActivitiesPassed(edtActivity, eventAboutDumbUnawareActivities, counter.decrementAndGet());
       });
     });
 
-    if (counter.get() == 0) {
-      Activity activity = edtActivity.getAndSet(null);
-      if (activity != null) {
-        activity.end();
-      }
-    }
+    dumbUnawarePostActivitiesPassed(edtActivity, eventAboutDumbUnawareActivities, counter.get());
 
     if (myProject.isDisposed()) {
       return;
@@ -257,6 +251,24 @@ public class StartupManagerImpl extends StartupManagerEx {
     snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
 
     runDumbUnawarePostStartupActivitiesRegisteredDynamically();
+  }
+
+  private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<Activity> edtActivity,
+                                                      @NotNull AtomicBoolean eventAboutDumbUnawareActivities,
+                                                      int count) {
+    if (count != 0) {
+      return;
+    }
+
+    Activity activity = edtActivity.getAndSet(null);
+    if (activity != null) {
+      activity.end();
+    }
+
+    if (eventAboutDumbUnawareActivities.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLoadListener.TOPIC)
+        .dumbUnawarePostStartUpActivitiesPassed();
+    }
   }
 
   private void runActivity(@Nullable AtomicBoolean uiFreezeWarned, @NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor, @Nullable ProgressIndicator indicator) {
