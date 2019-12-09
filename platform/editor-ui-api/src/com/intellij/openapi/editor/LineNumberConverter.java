@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines a mapping between document line number and the numbers displayed in gutter.
@@ -15,12 +16,14 @@ public interface LineNumberConverter {
    * @param lineNumber one-based line number
    * @return number to be displayed in gutter, {@code null} means no number is displayed
    */
+  @Nullable
   Integer convert(@NotNull Editor editor, int lineNumber);
 
   /**
    * Number which should be used to calculate width of line number area in gutter. This should be the largest number which will be
    * displayed. {@code null} means no width will be allocated to the line number area.
    */
+  @Nullable
   Integer getMaxLineNumber(@NotNull Editor editor);
 
   LineNumberConverter DEFAULT = new LineNumberConverter() {
