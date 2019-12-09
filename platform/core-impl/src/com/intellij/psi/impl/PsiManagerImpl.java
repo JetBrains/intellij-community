@@ -462,8 +462,8 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void finishBatchFilesProcessingMode() {
-    myBatchFilesProcessingModeCount.decrementAndGet();
-    LOG.assertTrue(myBatchFilesProcessingModeCount.get() >= 0);
+    int after = myBatchFilesProcessingModeCount.decrementAndGet();
+    LOG.assertTrue(after >= 0);
   }
 
   @Override
