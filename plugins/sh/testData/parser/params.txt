@@ -576,7 +576,7 @@ SHELL_SCRIPT
           PsiElement(=)('=')
           STRING
             PsiElement(OPEN_QUOTE)('"')
-            PsiElement(STRING_CONTENT)('http://repo.labs.intellij.net/cache/')
+            PsiElement(STRING_CONTENT)('https://repo.labs.intellij.net/cache/')
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
@@ -743,7 +743,7 @@ SHELL_SCRIPT
                 PsiElement($)('$')
                 SHELL_PARAMETER_EXPANSION
                   PsiElement({)('{')
-                  PsiElement(parameter_expansion_body)('3:-http://repo.labs.intellij.net/download/oracle/$FILE')
+                  PsiElement(parameter_expansion_body)('3:-https://repo.labs.intellij.net/download/oracle/$FILE')
                   PsiElement(})('}')
                 PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
@@ -784,7 +784,7 @@ SHELL_SCRIPT
                     PsiWhiteSpace(' ')
                     STRING
                       PsiElement(OPEN_QUOTE)('"')
-                      PsiElement(STRING_CONTENT)('http://repo.labs.intellij.net/download/oracle/')
+                      PsiElement(STRING_CONTENT)('https://repo.labs.intellij.net/download/oracle/')
                       PsiElement($)('$')
                       SHELL_PARAMETER_EXPANSION
                         PsiElement({)('{')
