@@ -435,10 +435,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val visible = before != null && before.isVisible
     val label = createInitializingLabel()
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
-    val window = registerToolWindow(id = bean.id, component = label, anchor = toolWindowAnchor, sideTool = false,
-                                    canCloseContent = bean.canCloseContents,
-                                    canWorkInDumbMode = DumbService.isDumbAware(factory),
-                                    shouldBeAvailable = factory.shouldBeAvailable(project))
+    val window = registerToolWindow(
+      RegisterToolWindowTask(id = bean.id, component = label, anchor = toolWindowAnchor,
+                                                                        sideTool = false,
+                                                                        canCloseContent = bean.canCloseContents,
+                                                                        canWorkInDumbMode = DumbService.isDumbAware(factory),
+                                                                        shouldBeAvailable = factory.shouldBeAvailable(project)))
     window.setContentFactory(factory)
     if (bean.icon != null && window.icon == null) {
       var icon = IconLoader.findIcon(bean.icon, factory.javaClass)
@@ -878,17 +880,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     checkInvariants("Id: $id; dirtyMode: $dirtyMode")
   }
 
-  override fun registerToolWindow(id: String,
-                                  component: JComponent,
-                                  anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false)
+  override fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
+                                                     canCloseContent = false, canWorkInDumbMode = false))
   }
 
   override fun registerToolWindow(id: String,
                                   component: JComponent,
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable): ToolWindow {
-    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false))
   }
 
   override fun registerToolWindow(id: String,
@@ -896,7 +897,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(id = id, component = component, anchor = anchor, canWorkInDumbMode = canWorkInDumbMode)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canWorkInDumbMode = canWorkInDumbMode))
   }
 
   override fun registerToolWindow(id: String,
@@ -905,20 +906,23 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   canCloseContents: Boolean): ToolWindow {
-    return registerToolWindow(id = id, component = component, anchor = anchor, canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
+                                                     canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode))
   }
 
   override fun registerToolWindow(id: String,
                                   canCloseContent: Boolean,
                                   anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(id = id, component = null, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
   override fun registerToolWindow(id: String,
                                   canCloseContent: Boolean,
                                   anchor: ToolWindowAnchor,
                                   secondary: Boolean): ToolWindow {
-    return registerToolWindow(id = id, component = null, anchor = anchor, sideTool = secondary, canCloseContent = canCloseContent, canWorkInDumbMode = false)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
   override fun registerToolWindow(id: String,
@@ -926,7 +930,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   anchor: ToolWindowAnchor,
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(id = id, canCloseContent = canCloseContent, anchor = anchor, parentDisposable = parentDisposable, canWorkInDumbMode = canWorkInDumbMode, secondary = false)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = false,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
   }
 
   override fun registerToolWindow(id: String,
@@ -935,42 +940,38 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                   parentDisposable: Disposable,
                                   canWorkInDumbMode: Boolean,
                                   secondary: Boolean): ToolWindow {
-    return registerToolWindow(id = id, component = null, anchor = anchor, sideTool = secondary, canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode)
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
   }
 
-  private fun registerToolWindow(id: String,
-                                 component: JComponent?,
-                                 anchor: ToolWindowAnchor,
-                                 sideTool: Boolean = false,
-                                 canCloseContent: Boolean = true,
-                                 canWorkInDumbMode: Boolean = true,
-                                 shouldBeAvailable: Boolean = true): ToolWindowImpl {
+  override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
     init()
+
     if (LOG.isDebugEnabled) {
-      LOG.debug("enter: installToolWindow($id,$component,$anchor\")")
+      LOG.debug("enter: installToolWindow($task)")
     }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val existingInfo = layout.getInfo(id, false)
+    val existingInfo = layout.getInfo(task.id, false)
     if (existingInfo != null && existingInfo.isRegistered) {
-      throw IllegalArgumentException("window with id=\"$id\" is already registered")
+      throw IllegalArgumentException("window with id=\"${task.id}\" is already registered")
     }
 
-    val info = layout.register(id, anchor, sideTool)
+    val info = layout.register(task)
     val wasActive = info.isActive
     val wasVisible = info.isVisible
     info.isActive = false
     info.isVisible = false
 
-    val disposable = Disposer.newDisposable(id)
+    val disposable = Disposer.newDisposable(task.id)
     Disposer.register(project, disposable)
 
-    val toolWindow = ToolWindowImpl(this, id, canCloseContent, component, disposable)
-    toolWindow.setAvailable(shouldBeAvailable, null)
+    val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.component, disposable)
+    toolWindow.setAvailable(task.shouldBeAvailable, null)
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
 
     // create decorator
-    val decorator = InternalDecorator(project, info.copy(), toolWindow, canWorkInDumbMode, disposable)
+    val decorator = InternalDecorator(project, info.copy(), toolWindow, task.canWorkInDumbMode, disposable)
     decorator.addInternalDecoratorListener(internalDecoratorListener)
     toolWindow.addPropertyChangeListener(toolWindowPropertyChangeListener)
 
@@ -979,7 +980,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val commandsList = mutableListOf<FinalizableCommand>()
     appendAddButtonCmd(button, info, commandsList)
 
-    idToEntry.put(id, ToolWindowEntry(button, decorator, ToolWindowFocusWatcher(toolWindow), disposable))
+    idToEntry.put(task.id, ToolWindowEntry(button, decorator, ToolWindowFocusWatcher(toolWindow), disposable))
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
@@ -994,7 +995,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
     execute(commandsList)
-    fireToolWindowRegistered(id)
+    fireToolWindowRegistered(task.id)
     return toolWindow
   }
 

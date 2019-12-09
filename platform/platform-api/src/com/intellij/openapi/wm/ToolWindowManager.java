@@ -17,7 +17,6 @@ import javax.swing.event.HyperlinkListener;
  * registration methods which have 'canWorkInDumbMode' parameter.
  */
 public abstract class ToolWindowManager {
-
   public abstract boolean canShowNotification(@NotNull String toolWindowId);
 
   public static ToolWindowManager getInstance(@NotNull Project project){
@@ -99,12 +98,15 @@ public abstract class ToolWindowManager {
                                                 boolean secondary);
 
   @NotNull
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent,
-                                       @NotNull final ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable) {
+  public final ToolWindow registerToolWindow(@NotNull String id,
+                                             boolean canCloseContent,
+                                             @NotNull ToolWindowAnchor anchor,
+                                             @NotNull Disposable parentDisposable) {
     return registerToolWindow(id, canCloseContent, anchor, parentDisposable, false);
   }
+
+  @NotNull
+  protected abstract ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task);
 
   /**
    * does nothing if tool window with specified isn't registered.

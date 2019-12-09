@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import gnu.trove.THashMap;
@@ -128,14 +129,14 @@ public final class DesktopLayout {
    * @param id     {@code id} of tool window to be registered.
    * @param anchor the default tool window anchor.
    */
-  final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
-    WindowInfoImpl info = myIdToInfo.get(id);
+  final WindowInfoImpl register(@NotNull RegisterToolWindowTask task) {
+    WindowInfoImpl info = myIdToInfo.get(task.getId());
     if (info == null) {
       info = new WindowInfoImpl();
-      info.setId(id);
-      info.setAnchor(anchor);
-      info.setSplit(splitMode);
-      myIdToInfo.put(id, info);
+      info.setId(task.getId());
+      info.setAnchor(task.getAnchor());
+      info.setSplit(task.getSideTool());
+      myIdToInfo.put(task.getId(), info);
     }
     if (!info.isRegistered()) {
       info.setRegistered(true);
