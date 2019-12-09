@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -258,6 +259,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       assertNull(JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
       VirtualFile dir = jarRoot.findChild(crazyDir);
       LOG.debug(jarRoot + " children: " + Arrays.toString(jarRoot.getChildren()));
+      LOG.debug(" exist child: " + ContainerUtil.exists(jarRoot.getChildren(), c->c.getName().equals(crazyDir)));
+      LOG.debug(" persist children: " + Arrays.toString(PersistentFS.getInstance().listAll(jarRoot)));
+
       try (ZipFile file = new ZipFile(jarPath)) {
         LOG.debug("Entries: " + ContainerUtil.toList(file.entries()));
       }
