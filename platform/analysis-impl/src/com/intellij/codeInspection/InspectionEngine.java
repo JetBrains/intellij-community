@@ -299,11 +299,16 @@ public class InspectionEngine {
     Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
     result.add(language.getID());
     if (applyToDialects) {
-      for (Language dialect : dialects) {
-        result.add(dialect.getID());
-      }
+      addDialects(language, result);
     }
     return result;
+  }
+
+  private static void addDialects(@NotNull Language language, @NotNull Set<String> result) {
+    for (Language dialect : language.getDialects()) {
+      result.add(dialect.getID());
+      addDialects(dialect, result);
+    }
   }
 
   @NotNull
@@ -329,10 +334,17 @@ public class InspectionEngine {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
       outDialectIds.add(language.getID());
-      if (outProcessedLanguages.add(language)) {
-        for (Language dialect : language.getDialects()) {
-          outDialectIds.add(dialect.getID());
-        }
+      addDialects(language, outProcessedLanguages, outDialectIds);
+    }
+  }
+
+  private static void addDialects(@NotNull Language language,
+                                  @NotNull Set<? super Language> outProcessedLanguages,
+                                  @NotNull Set<? super String> outDialectIds) {
+    if (outProcessedLanguages.add(language)) {
+      for (Language dialect : language.getDialects()) {
+        outDialectIds.add(dialect.getID());
+        addDialects(dialect, outProcessedLanguages, outDialectIds);
       }
     }
   }
