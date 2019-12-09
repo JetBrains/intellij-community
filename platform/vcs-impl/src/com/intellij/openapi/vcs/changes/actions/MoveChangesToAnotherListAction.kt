@@ -14,6 +14,8 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.ex.LocalRange
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -80,19 +82,61 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       return false
     }
 
-    @JvmStatic
-    fun guessPreferredList(lists: List<LocalChangeList>): ChangeList? =
-      lists.find { it.isDefault } ?: lists.find { it.changes.isEmpty() } ?: lists.firstOrNull()
+    private fun guessPreferredList(lists: Collection<LocalChangeList>): ChangeList? {
+      val comparator = compareBy<LocalChangeList> { if (it.isDefault) -1 else 0 }
+        .thenBy { if (it.changes.isEmpty()) -1 else 0 }
+        .then(ChangesUtil.CHANGELIST_COMPARATOR)
+      return lists.minWith(comparator)
+    }
 
     private fun askTargetList(project: Project, changes: Collection<Change>): LocalChangeList? {
       val changeListManager = ChangeListManager.getInstance(project)
-      val currentList = changes.asSequence().mapNotNull { changeListManager.getChangeList(it) }.distinct().singleOrNull()
-      val suggestedLists = changeListManager.changeLists
-      suggestedLists.remove(currentList)
-      val defaultSelection = guessPreferredList(suggestedLists)
 
-      val chooser = ChangeListChooser(project, suggestedLists.ifEmpty { listOf(changeListManager.defaultChangeList) },
-                                      defaultSelection, ActionsBundle.message("action.ChangesView.Move.text"), null)
+      val affectedLists = changes.flatMapTo(mutableSetOf()) { changeListManager.getChangeLists(it) }
+
+      val sameFileChangeLists = changes.flatMapTo(mutableSetOf()) {
+        val fileChange = if (it is ChangeListChange) it.change else it
+        changeListManager.getChangeLists(fileChange)
+      }
+
+      return askTargetChangelist(project, affectedLists, sameFileChangeLists,
+                                 ActionsBundle.message("action.ChangesView.Move.text"))
+    }
+
+    @JvmStatic
+    fun askTargetChangelist(project: Project,
+                            selectedRanges: List<LocalRange>,
+                            tracker: PartialLocalLineStatusTracker): LocalChangeList? {
+      val changeListManager = ChangeListManager.getInstance(project)
+      val allChangelists = changeListManager.changeListsCopy
+
+      val affectedListIds = selectedRanges.map { range -> range.changelistId }.toSet()
+      val affectedLists = allChangelists.filter { list -> affectedListIds.contains(list.id) }.toSet()
+
+      val sameFileChangeListsIds = tracker.getAffectedChangeListsIds().toSet()
+      val sameFileChangeLists = allChangelists.filter { list -> sameFileChangeListsIds.contains(list.id) }.toSet()
+
+      return askTargetChangelist(project, affectedLists, sameFileChangeLists,
+                                 ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"))
+    }
+
+    private fun askTargetChangelist(project: Project,
+                                    affectedLists: Set<LocalChangeList>,
+                                    sameFileChangeLists: Set<LocalChangeList>,
+                                    title: String): LocalChangeList? {
+      val changeListManager = ChangeListManager.getInstance(project)
+      val allChangelists = changeListManager.changeListsCopy
+
+      val nonAffectedLists = if (affectedLists.size == 1) allChangelists - affectedLists else allChangelists
+
+      val suggestedLists = nonAffectedLists.ifEmpty { listOf(changeListManager.defaultChangeList) }
+
+      val preferredList = (sameFileChangeLists - affectedLists)
+        .ifEmpty { allChangelists.toSet() - affectedLists }
+        .ifEmpty { nonAffectedLists }
+      val defaultSelection = guessPreferredList(preferredList)
+
+      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, title, null)
       chooser.show()
       return chooser.selectedList
     }

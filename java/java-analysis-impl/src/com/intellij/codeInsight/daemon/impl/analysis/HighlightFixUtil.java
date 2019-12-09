@@ -382,4 +382,19 @@ public class HighlightFixUtil {
     }
     return null;
   }
+
+  static void registerMakeNotFinalAction(@NotNull PsiVariable var, @Nullable HighlightInfo highlightInfo) {
+    if (var instanceof PsiField) {
+      QuickFixAction.registerQuickFixActions(
+        highlightInfo, null,
+        JvmElementActionFactories.createModifierActions((PsiField)var, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
+      );
+    }
+    else {
+      QuickFixAction.registerQuickFixAction(
+        highlightInfo,
+        QUICK_FIX_FACTORY.createModifierListFix(var, PsiModifier.FINAL, false, false)
+      );
+    }
+  }
 }

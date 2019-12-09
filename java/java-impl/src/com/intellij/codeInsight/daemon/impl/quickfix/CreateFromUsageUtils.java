@@ -62,6 +62,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.statistics.JavaStatisticsManager;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -859,12 +860,13 @@ public class CreateFromUsageUtils {
 
   private static int compareMembers(PsiMember m1, PsiMember m2, PsiExpression context) {
     ProgressManager.checkCanceled();
-    int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
+    final StatisticsManager m = StatisticsManager.getInstance();
+    int result = m.getUseCount(JavaStatisticsManager.createInfo(null, m2)) - m.getUseCount(JavaStatisticsManager.createInfo(null, m1));
     if (result != 0) return result;
     final PsiClass aClass = m1.getContainingClass();
     final PsiClass bClass = m2.getContainingClass();
     if (aClass != null && bClass != null) {
-      result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+      result = m.getUseCount(JavaStatisticsManager.createInfo(null, bClass)) - m.getUseCount(JavaStatisticsManager.createInfo(null, aClass));
       if (result != 0) return result;
     }
 

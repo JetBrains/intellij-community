@@ -102,6 +102,9 @@ public class Alarm implements Disposable {
     this(ThreadToUse.SWING_THREAD);
   }
 
+  /**
+   * Creates alarm that works in Swing thread
+   */
   public Alarm(@NotNull Disposable parentDisposable) {
     this(ThreadToUse.SWING_THREAD, parentDisposable);
   }

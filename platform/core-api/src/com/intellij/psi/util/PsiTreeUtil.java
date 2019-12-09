@@ -51,8 +51,8 @@ public class PsiTreeUtil {
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
     // fast path to avoid loading tree
-    if (ancestor instanceof StubBasedPsiElement && ((StubBasedPsiElement)ancestor).getStub() != null ||
-        element instanceof StubBasedPsiElement && ((StubBasedPsiElement)element).getStub() != null) {
+    if (ancestor instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)ancestor).getStub() != null ||
+        element instanceof StubBasedPsiElement && ((StubBasedPsiElement<?>)element).getStub() != null) {
       if (ancestor.getContainingFile() != element.getContainingFile()) return false;
     }
 
@@ -68,7 +68,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Checks whether one element in the psi tree is under another in {@link PsiElement#getContext()}  hierarchy.
+   * Checks whether one element in the psi tree is under another in a {@link PsiElement#getContext()} hierarchy.
    *
    * @param ancestor parent candidate. {@code false} will be returned if ancestor is null.
    * @param element  child candidate
@@ -336,7 +336,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Non-recursive search for element of type T amongst given {@code element} children.
+   * Non-recursive search for an element of type T amongst given {@code element} children.
    *
    * @param element a PSI element to start search from.
    * @param aClass  element type to search for.
@@ -461,11 +461,11 @@ public class PsiTreeUtil {
   @Nullable
   public static <T extends PsiElement> T getStubChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
-    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getStub() : null;
     if (stub == null) {
       return getChildOfType(element, aClass);
     }
-    for (StubElement childStub : stub.getChildrenStubs()) {
+    for (StubElement<?> childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
         return aClass.cast(child);
@@ -477,13 +477,13 @@ public class PsiTreeUtil {
   @NotNull
   public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
-    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
+    StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement<?>)element).getStub() : null;
     if (stub == null) {
       return getChildrenOfTypeAsList(element, aClass);
     }
 
     List<T> result = new SmartList<>();
-    for (StubElement childStub : stub.getChildrenStubs()) {
+    for (StubElement<?> childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
         result.add(aClass.cast(child));
@@ -502,7 +502,7 @@ public class PsiTreeUtil {
   }
 
   /**
-   * Returns a direct child of the specified element which has any of the specified classes.
+   * Returns a direct child of the specified element having any of the specified classes.
    *
    * @param element the element to get the child for.
    * @param classes the array of classes.
@@ -572,9 +572,9 @@ public class PsiTreeUtil {
   @Contract("null -> null")
   public static PsiElement getStubOrPsiParent(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement) {
-      StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
+      StubElement<?> stub = ((StubBasedPsiElement<?>)element).getStub();
       if (stub != null) {
-        final StubElement parentStub = stub.getParentStub();
+        StubElement<?> parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
       }
     }
@@ -1225,11 +1225,9 @@ public class PsiTreeUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /**
-   * @deprecated use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019)
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link SyntaxTraverser#psiTraverser()} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     return SyntaxTraverser.psiTraverser().children(element).filter(aClass).iterator();
   }

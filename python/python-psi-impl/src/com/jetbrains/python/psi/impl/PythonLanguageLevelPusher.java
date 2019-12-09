@@ -4,15 +4,11 @@ package com.jetbrains.python.psi.impl;
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
@@ -29,15 +25,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
-import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
@@ -247,7 +242,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         if (project.isDisposed()) {
           return;
         }
-        FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
+        PythonCodeStyleService.getInstance().reparseOpenEditorFiles(project);
       });
     }
   }
@@ -264,15 +259,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   private static boolean isPythonModule(@NotNull final Module module) {
-    final ModuleType moduleType = ModuleType.get(module);
-    if (PyNames.PYTHON_MODULE_ID.equals(moduleType.getId())) return true;
-    final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet facet : allFacets) {
-      if (facet.getConfiguration() instanceof PythonFacetSettings) {
-        return true;
-      }
-    }
-    return false;
+    return PyModuleService.getInstance().isPythonModule(module);
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
@@ -335,14 +322,14 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     public void run() {
       if (myProject.isDisposed() || !ReadAction.compute(() -> myRoot.isValid())) return;
 
-      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+
       final PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(myProject);
 
       VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return ReadAction.compute(() -> {
-            if (fileTypeManager.isFileIgnored(file)) {
+            if (PyModuleService.getInstance().isFileIgnored(file)) {
               return false;
             }
             if (file.isDirectory()) {

@@ -7,6 +7,11 @@ class IgnoreWidening {
   void f() {
     double d = 3.14;
     int i = 42;
-    i += <warning descr="Implicit numeric conversion of 'd' from 'double' to 'int'">d</warning>;
+    <warning descr="Implicit numeric conversion of result value from 'double' to 'int'">i</warning> += d;
+    d += 2;
+    d += i;
+    byte a = 1;
+    byte b = 2;
+    <warning descr="Implicit numeric conversion of result value from 'int' to 'byte'"><caret>a</warning> += b;
   }
 }

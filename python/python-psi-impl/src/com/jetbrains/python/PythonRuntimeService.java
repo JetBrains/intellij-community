@@ -53,6 +53,10 @@ public class PythonRuntimeService {
     return localRoot;
   }
 
+  public boolean isInScratchFile(@NotNull PsiElement element) {
+    return false;
+  }
+
   public static PythonRuntimeService getInstance() {
     return ServiceManager.getService(PythonRuntimeService.class);
   }

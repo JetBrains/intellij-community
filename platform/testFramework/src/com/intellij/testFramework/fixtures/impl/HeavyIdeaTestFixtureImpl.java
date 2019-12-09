@@ -61,11 +61,13 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
+  private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker myOldSdks;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name, boolean isDirectoryBasedProject) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject) {
     myName = name;
+    myProjectPath = projectPath;
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
@@ -154,9 +156,11 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   }
 
   private void setUpProject() {
-    Path tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
+    Path tempDirectory = myProjectPath != null ? myProjectPath : TemporaryDirectory.generateTemporaryPath(myName);
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    myFilesToDelete.add(tempDirectory);
+    if (myProjectPath == null) {
+      myFilesToDelete.add(tempDirectory);
+    }
     myProject = HeavyPlatformTestCase.createProject(generateProjectPath(tempDirectory));
 
     EdtTestUtil.runInEdtAndWait(() -> {

@@ -49,11 +49,11 @@ public abstract class JavaStatisticsManager {
   }
 
   public static int getVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
-    return createVariableUseInfo(name, variableKind, propertyName, type).getUseCount();
+    return StatisticsManager.getInstance().getUseCount(createVariableUseInfo(name, variableKind, propertyName, type));
   }
 
   public static void incVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
-    createVariableUseInfo(name, variableKind, propertyName, type).incUseCount();
+    StatisticsManager.getInstance().incUseCount(createVariableUseInfo(name, variableKind, propertyName, type));
   }
 
   @Nullable

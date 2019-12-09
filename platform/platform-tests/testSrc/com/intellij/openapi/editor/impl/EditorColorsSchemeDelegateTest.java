@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -26,6 +29,8 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
 
@@ -103,4 +108,25 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     return sb.toString();
   }
 
+  public void testSettingLineSpacingAffectsOnlyCurrentEditor() {
+    Document document = EditorFactory.getInstance().createDocument("");
+    doInEditor(document, e1 -> doInEditor(document, e2 -> {
+      float initialSpacing = e1.getColorsScheme().getLineSpacing();
+      assertEquals(initialSpacing, e2.getColorsScheme().getLineSpacing());
+      e1.getColorsScheme().setLineSpacing(initialSpacing + 0.1f);
+      assertFalse(initialSpacing == e1.getColorsScheme().getLineSpacing());
+      assertEquals(initialSpacing, e2.getColorsScheme().getLineSpacing());
+    }));
+  }
+
+  private static void doInEditor(@NotNull Document document, Consumer<Editor> task) {
+    EditorFactory factory = EditorFactory.getInstance();
+    Editor editor = factory.createEditor(document);
+    try {
+      task.accept(editor);
+    }
+    finally {
+      factory.releaseEditor(editor);
+    }
+  }
 }

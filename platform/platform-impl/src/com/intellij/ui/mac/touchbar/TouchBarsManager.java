@@ -365,7 +365,7 @@ public final class TouchBarsManager {
           }
 
           if (actions != null) {
-            editorData.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
+            editorData.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, BuildUtils.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
             ourStack.showContainer(editorData.containerSearch);
           }
         }
@@ -398,7 +398,7 @@ public final class TouchBarsManager {
       return null;
     }
 
-    final ModalityState ms = Utils.getCurrentModalityState();
+    final ModalityState ms = BuildUtils.getCurrentModalityState();
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
     BarContainer bc;
     TouchBar tb;
@@ -418,7 +418,7 @@ public final class TouchBarsManager {
       replaceEsc = groupDesc == null || groupDesc.isReplaceEsc();
       emulateEsc = true;
     }
-    tb = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc);
+    tb = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc, null, null);
     BuildUtils.addDialogButtons(tb, jbuttons, actions);
     bc = new BarContainer(btype, tb, null, contentPane);
 

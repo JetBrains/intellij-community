@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -10,6 +10,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +25,18 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
 
   public PyExpressionCodeFragmentImpl(Project project, @NonNls String name, CharSequence text, boolean isPhysical) {
     super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
-            new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
+            new LightVirtualFile(name, getFileTypeByFileName(name), text), isPhysical)
     );
     myPhysical = isPhysical;
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
+  }
+
+  private static FileType getFileTypeByFileName(String name) {
+    if (name.endsWith(".py")) {
+      return PythonFileType.INSTANCE;
+    } else {
+      throw new IllegalArgumentException("unexpected file type");
+    }
   }
 
   @Override

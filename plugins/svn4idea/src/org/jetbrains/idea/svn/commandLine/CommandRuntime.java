@@ -183,6 +183,7 @@ public class CommandRuntime {
       authCases.add(new CertificateCallbackCase(myAuthenticationService, url));
       authCases.add(new ProxyCallback(myAuthenticationService, url));
       authCases.add(new TwoWaySslCallback(myAuthenticationService, url));
+      authCases.add(new ServerUnavailableCallback(myAuthenticationService, url));
       authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));
     }
 

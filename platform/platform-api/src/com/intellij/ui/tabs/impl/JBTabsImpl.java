@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -166,6 +166,7 @@ public class JBTabsImpl extends JComponent
   private boolean mySupportsCompression;
   private String myEmptyText;
   private boolean myMouseInsideTabsArea;
+  private boolean myRemoveNotifyInProgress;
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -278,8 +279,10 @@ public class JBTabsImpl extends JComponent
           afterScroll.cancelAllRequests();
           if (!inside) {
             afterScroll.addRequest(() -> {
+              // here is no any "isEDT"-checks <== this task should be called in EDT <==
+              // <== Alarm instance executes tasks in EDT <== used constructor of Alarm uses EDT for tasks by default
               if (!myMouseInsideTabsArea) {
-                doLayoutTwice();
+                relayout(false, false);
               }
             }, 500);
           }
@@ -350,18 +353,14 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
-    updateTabLabelLayout();
+    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
+      entry.getKey().revalidate();
+      entry.getValue().updateActionLabelPosition();
+    }
     boolean oldHideTabsIfNeeded = mySingleRowLayout instanceof ScrollableSingleRowLayout;
     boolean newHideTabsIfNeeded = UISettings.getInstance().getHideTabsIfNeeded();
     if (oldHideTabsIfNeeded != newHideTabsIfNeeded) {
       updateRowLayout();
-    }
-  }
-
-  private void updateTabLabelLayout() {
-    for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
-      entry.getKey().revalidate();
-      entry.getValue().handleUISettingsChange();
     }
   }
 
@@ -519,12 +518,29 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
+  public void remove(int index) {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
+    super.remove(index);
+  }
+
+  @Override
+  public void removeAll() {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
+    super.removeAll();
+  }
+
+  @Override
   public void removeNotify() {
     try {
+      myRemoveNotifyInProgress = true;
       super.removeNotify();
     }
-    catch (Exception e) {
-      GuiUtils.printDebugInfo(this);
+    finally {
+      myRemoveNotifyInProgress = false;
     }
 
     setFocused(false);
@@ -837,14 +853,6 @@ public class JBTabsImpl extends JComponent
     return info;
   }
 
-  // Looks hacky but makes selected tab scrolled to visible area precisely
-  private void doLayoutTwice() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      doLayout();
-      ApplicationManager.getApplication().invokeLater(() -> doLayout());
-    });
-  }
-
   protected TabLabel createTabLabel(TabInfo info) {
     return new TabLabel(this, info);
   }
@@ -1110,7 +1118,6 @@ public class JBTabsImpl extends JComponent
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
-      doLayoutTwice();
     }
     else if (TabInfo.TAB_COLOR.equals(evt.getPropertyName())) {
       revalidateAndRepaint();
@@ -1206,7 +1213,7 @@ public class JBTabsImpl extends JComponent
     revalidateAndRepaint(true);
   }
 
-  void revalidateAndRepaint(final boolean layoutNow) {
+  protected void revalidateAndRepaint(final boolean layoutNow) {
     if (myVisibleInfos.isEmpty()) {
       setOpaque(false);
       Component nonOpaque = UIUtil.findUltimateParent(this);
@@ -1479,9 +1486,6 @@ public class JBTabsImpl extends JComponent
       }
 
       if (isSingleRow()) {
-        mySingleRowLayout.scrollSelectionInView();
-        myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
-        // This second layout is a workaround for tricky problem of partially hidden selected tab
         mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
         myTableLayout.myLastTableLayout = null;
@@ -1830,6 +1834,9 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myRemoveNotifyInProgress) {
+      Logger.getInstance(JBTabsImpl.class).warn(new IllegalStateException("removeNotify in progress"));
+    }
     if (myPopupInfo == info) myPopupInfo = null;
 
     if (!isDropTarget) {
@@ -2535,7 +2542,6 @@ public class JBTabsImpl extends JComponent
     } else if (divider.getParent() == this){
       remove(divider);
     }
-    updateTabLabelLayout();
     relayout(true, false);
     return this;
   }

@@ -290,17 +290,25 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       return true;
     }
     List<StripTrailingSpacesFilter> filters = new ArrayList<>();
+    StripTrailingSpacesFilter specialFilter = null;
     for (StripTrailingSpacesFilterFactory filterFactory : StripTrailingSpacesFilterFactory.EXTENSION_POINT.getExtensions()) {
       StripTrailingSpacesFilter filter = filterFactory.createFilter(project, this);
-      if (filter == StripTrailingSpacesFilter.NOT_ALLOWED) {
-        return true;
+      if (specialFilter == null &&
+          (filter == StripTrailingSpacesFilter.NOT_ALLOWED || filter == StripTrailingSpacesFilter.POSTPONED)) {
+        specialFilter = filter;
       }
-      else if (filter == StripTrailingSpacesFilter.POSTPONED) {
-        return false;
+      else if (filter == StripTrailingSpacesFilter.ENFORCED_REMOVAL) {
+        specialFilter = null;
+        filters.clear();
+        break;
       }
       else {
         filters.add(filter);
       }
+    }
+
+    if (specialFilter != null) {
+      return specialFilter == StripTrailingSpacesFilter.NOT_ALLOWED;
     }
 
     TIntIntHashMap caretPositions = null;

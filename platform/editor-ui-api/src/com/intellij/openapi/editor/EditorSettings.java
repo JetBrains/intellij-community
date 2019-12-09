@@ -142,6 +142,9 @@ public interface EditorSettings {
   boolean isIndentGuidesShown();
   void setIndentGuidesShown(boolean val);
 
+  boolean isStringContentIndentGuideShown();
+  void setStringContentIndentGuideShown(boolean val);
+
   boolean isUseSoftWraps();
   void setUseSoftWraps(boolean use);
   boolean isAllSoftWrapsShown();

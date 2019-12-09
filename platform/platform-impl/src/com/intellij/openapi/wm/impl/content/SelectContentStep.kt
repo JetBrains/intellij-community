@@ -21,7 +21,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.TabbedContent
 import javax.swing.Icon
 
-class SelectContentStep : BaseListPopupStep<Content> {
+open class SelectContentStep : BaseListPopupStep<Content> {
 
   constructor(contents: Array<Content>) : super(null, *contents)
   constructor(contents: List<Content>) : super(null, contents)

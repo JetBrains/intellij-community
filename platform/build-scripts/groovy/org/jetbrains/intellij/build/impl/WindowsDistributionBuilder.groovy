@@ -95,7 +95,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    def jreDirectoryPath = buildContext.bundledJreManager.extractJre("windows")
+    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
       // Android Studio: we build separate artifacts for win32 and win64.
       buildWinZip(buildContext.bundledJreManager.extractJre("win64"), ".win", winDistPath, [])

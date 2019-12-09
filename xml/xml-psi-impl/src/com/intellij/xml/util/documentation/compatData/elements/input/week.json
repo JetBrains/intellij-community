@@ -33,7 +33,8 @@
                 "version_added": true
               },
               "safari": {
-                "version_added": false
+                "version_added": false,
+                "notes": "See <a href='https://webkit.org/b/200416'>bug 200416</a>."
               },
               "safari_ios": {
                 "version_added": true

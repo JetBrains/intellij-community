@@ -19,10 +19,14 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyUserInitiatedResolvableReference;
+import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +59,12 @@ public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
       referenceOwner = (PyReferenceOwner)parent; //Reference expression may be parent of IDENTIFIER
     }
     if (referenceOwner != null) {
-      return referenceOwner.getReference(context).resolve();
+      final PsiElement resolved = referenceOwner.getReference(context).resolve();
+      if (resolved instanceof PyiFile) {
+        final PsiElement original = PyiUtil.getOriginalElement(((PyElement)resolved));
+        return ObjectUtils.chooseNotNull(original, resolved);
+      }
+      return resolved;
     }
     // If element is not ref owner, it still may have provided references, lets find some
     final PsiElement element = findProvidedReferenceAndResolve(sourceElement);

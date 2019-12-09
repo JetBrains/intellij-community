@@ -108,7 +108,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   public void tearDown() throws Exception {
-    if (myTempDir != null) {
+    if (myTempDir != null && deleteOnTearDown()) {
       try {
         WriteAction.runAndWait(() -> findOrCreateDir("").delete(this));
       }
@@ -121,6 +121,10 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     }
   }
 
+  protected boolean deleteOnTearDown() {
+    return true;
+  }
+
   protected File getTempHome() {
     return null;
   }
@@ -128,16 +132,21 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   private File createTempDirectory() {
     if (myTempDir == null) {
-      try {
-        File tempHome = getTempHome();
-        myTempDir = tempHome != null
-                    ? FileUtil.createTempDirectory(tempHome, "unitTest", null, false)
-                    : FileUtil.createTempDirectory("unitTest", null, false);
-      }
-      catch (IOException e) {
-        throw new RuntimeException("Cannot create temp dir", e);
-      }
+      myTempDir = doCreateTempDirectory();
     }
     return myTempDir;
+  }
+
+  @NotNull
+  protected File doCreateTempDirectory() {
+    try {
+      File tempHome = getTempHome();
+      return tempHome != null
+             ? FileUtil.createTempDirectory(tempHome, "unitTest", null, false)
+             : FileUtil.createTempDirectory("unitTest", null, false);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot create temp dir", e);
+    }
   }
 }

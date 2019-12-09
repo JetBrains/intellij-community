@@ -11,6 +11,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
@@ -30,10 +31,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -832,25 +830,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testPointerToRootFromUrlMustNotBeMangled() {
-    VirtualFile root = ManagingFS.getInstance().getLocalRoots()[0];
-    String rootPath = root.getPath();
-    String rootUrl = root.getUrl();
-
-    VirtualFilePointer rootPointer = myVirtualFilePointerManager.create(rootUrl, disposable, null);
-    assertThat(rootPointer.getUrl()).as("root pointer url before getting file").isEqualTo(rootUrl);
-    assertThat(rootPointer.getFile()).as("root pointer file").isEqualTo(root);
-    assertThat(rootPointer.getUrl()).as("root pointer url after getting file").isEqualTo(rootUrl);
-
-    assertThat(Arrays.asList(
-      createPointerByFile(new File(rootPath + "//"), null),
-      createPointerByFile(new File(rootPath + "/."), null),
-      createPointerByFile(new File(rootPath + "/.//"), null),
-      createPointerByFile(new File(rootPath + "/.//."), null)
-    )).containsOnly(rootPointer);
-  }
-
-  @Test
   public void testDifferentFileSystemsLocalFSAndJarFSWithSimilarUrlsMustReturnDifferentInstances() throws IOException {
     VirtualFile vDir = getVirtualTempRoot();
     WriteAction.runAndWait(() -> {
@@ -887,5 +866,19 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("file://", p.getUrl());
     p = myVirtualFilePointerManager.create("file:////", disposable, null);
     assertEquals("file://", p.getUrl());
+  }
+
+  @Test
+  public void testCleanupPathWithWindowsUNC() {
+    Assume.assumeTrue(SystemInfo.isWindows);
+    final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
+    assertEquals("//wsl$/Ubuntu", path.getPresentableUrl());
+  }
+
+  @Test
+  public void testNonNormalizedPath() {
+    final String pathName = FileUtil.toSystemDependentName("//main///dir1/././/dir2/././file");
+    final VirtualFilePointer path = createPointerByFile(new File(pathName), null);
+    assertEquals("/main/dir1/dir2/file", path.getPresentableUrl());
   }
 }

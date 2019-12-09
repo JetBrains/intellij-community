@@ -39,15 +39,24 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
   @NotNull
   @Override
   protected ChangeIterable createChangeIterable() {
-    return new SubiterableChangeIterable();
+    return new SubiterableChangeIterable(myIterable, myStart1, myEnd1, myStart2, myEnd2);
   }
 
-  private class SubiterableChangeIterable implements ChangeIterable {
+  private static class SubiterableChangeIterable implements ChangeIterable {
     private final Iterator<Range> myIterator;
+    private final int myStart1;
+    private final int myEnd1;
+    private final int myStart2;
+    private final int myEnd2;
+
     private Range myLast;
 
-    SubiterableChangeIterable() {
-      myIterator = myIterable.changes();
+    SubiterableChangeIterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
+      myIterator = iterable.changes();
+      myStart1 = start1;
+      myEnd1 = end1;
+      myStart2 = start2;
+      myEnd2 = end2;
 
       next();
     }
@@ -66,10 +75,12 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
         if (range.end1 < myStart1 || range.end2 < myStart2) continue;
         if (range.start1 > myEnd1 || range.start2 > myEnd2) break;
 
-        myLast = new Range(Math.max(myStart1, range.start1) - myStart1, Math.min(myEnd1, range.end1) - myStart1,
-                           Math.max(myStart2, range.start2) - myStart2, Math.min(myEnd2, range.end2) - myStart2);
-        if (!myLast.isEmpty()) break;
-        myLast = null;
+        Range newRange = new Range(Math.max(myStart1, range.start1) - myStart1, Math.min(myEnd1, range.end1) - myStart1,
+                                   Math.max(myStart2, range.start2) - myStart2, Math.min(myEnd2, range.end2) - myStart2);
+        if (newRange.isEmpty()) continue;
+
+        myLast = newRange;
+        break;
       }
     }
 

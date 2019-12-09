@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,8 +86,8 @@ public class Notification {
    */
   public Notification(@NotNull String groupDisplayId,
                       @Nullable Icon icon,
-                      @Nullable String title,
-                      @Nullable String subtitle,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String subtitle,
                       @Nullable String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
@@ -103,7 +104,7 @@ public class Notification {
     id = calculateId(this);
   }
 
-  public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
+  public Notification(@NotNull String groupDisplayId, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title, @NotNull String content, @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);
   }
 
@@ -116,7 +117,7 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull String groupDisplayId,
-                      @NotNull String title,
+                      @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String title,
                       @NotNull String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
@@ -163,13 +164,13 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable String title) {
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable String title, @Nullable String subtitle) {
+  public Notification setTitle(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String title, @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 

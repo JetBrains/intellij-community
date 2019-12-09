@@ -70,7 +70,7 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
                                              entry.addSourceFolder(getTestContentRoot() + "/src", false);
                                              entry.addSourceFolder(getTestContentRoot() + "/test", true);
                                            });
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", myJUnitVersion), getRepoManager());
   }
 
   @Before

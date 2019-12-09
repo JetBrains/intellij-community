@@ -47,7 +47,7 @@ public class FinalUtils {
     if (scope == null) return false;
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
-    PsiElementProcessor elementDoesNotViolateFinality = e -> {
+    PsiElementProcessor<PsiElement> elementDoesNotViolateFinality = e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       if (!ref.isReferenceTo(variable)) return true;

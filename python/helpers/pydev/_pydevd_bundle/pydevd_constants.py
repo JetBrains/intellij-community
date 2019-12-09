@@ -76,6 +76,8 @@ IS_MACOS = sys.platform == 'darwin'
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 
+NUMPY_NUMERIC_TYPES = "biufc"
+
 try:
     import platform
     python_implementation = platform.python_implementation()

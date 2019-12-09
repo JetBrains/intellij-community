@@ -14,8 +14,10 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
@@ -73,5 +75,27 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       .submit(AppExecutorUtil.getAppExecutorService());
     outerIndicator.cancel();
     waitForPromise(promise);
+  }
+
+  public void testDoNotSpawnZillionThreadsForManyCoalescedSubmissions() {
+    int count = 1000;
+
+    AtomicInteger executionCount = new AtomicInteger();
+    Executor countingExecutor = r -> AppExecutorUtil.getAppExecutorService().execute(() -> {
+      executionCount.incrementAndGet();
+      r.run();
+    });
+
+    List<CancellablePromise<?>> submissions = new ArrayList<>();
+    WriteAction.run(() -> {
+      for (int i = 0; i < count; i++) {
+        submissions.add(ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(countingExecutor));
+      }
+    });
+    for (CancellablePromise<?> submission : submissions) {
+      waitForPromise(submission);
+    }
+
+    assertTrue(executionCount.toString(), executionCount.get() <= 2);
   }
 }

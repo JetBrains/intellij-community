@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -216,14 +217,22 @@ public final class GitVcs extends AbstractVcs {
     ServiceManager.getService(myProject, VcsUserRegistry.class); // make sure to read the registry before opening commit dialog
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myBranchWidget = new GitBranchWidget(myProject);
-      myBranchWidget.activate();
+      installWidget();
     }
     if (myRepositoryForAnnotationsListener == null) {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
+  }
+
+  private void installWidget() {
+    Boolean newWidgetStyle = Registry.is("vcs.new.widget");
+
+    if (!newWidgetStyle) {
+      myBranchWidget = new GitBranchWidget(myProject);
+      myBranchWidget.activate();
+    }
   }
 
   @Override

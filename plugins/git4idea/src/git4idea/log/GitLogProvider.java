@@ -638,6 +638,9 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     else if (property == VcsLogProperties.SUPPORTS_LOG_DIRECTORY_HISTORY) {
       return (T)Boolean.TRUE;
     }
+    else if (property == VcsLogProperties.HAS_COMMITTER) {
+      return (T)Boolean.TRUE;
+    }
     return null;
   }
 

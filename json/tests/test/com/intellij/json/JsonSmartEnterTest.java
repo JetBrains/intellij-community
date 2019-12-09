@@ -38,4 +38,8 @@ public class JsonSmartEnterTest extends JsonTestCase {
   public void testColonInsertedAfterPropertyKey() {
     doTest();
   }
+
+  public void testPropertyKeyQuotedAndCommaInserted() {
+    doTest();
+  }
 }

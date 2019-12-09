@@ -49,6 +49,7 @@ public class QuickFixIntention implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (editor == null) return;
     class Replacement {
       final String replacement;
       final int startOffset;

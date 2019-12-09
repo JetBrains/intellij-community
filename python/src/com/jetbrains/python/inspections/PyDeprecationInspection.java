@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class PyDeprecationInspection extends PyInspection {
         final PyExpression exceptClass = exceptPart.getExceptClass();
         if (exceptClass != null && "ImportError".equals(exceptClass.getText())) return;
       }
-      final PsiElement resolveResult = node.getReference(getResolveContext()).resolve();
+      final PsiElement resolveResult = resolve(node);
       final PyFromImportStatement importStatement = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
       if (importStatement != null) {
         final PsiElement element = importStatement.resolveImportSource();
@@ -67,7 +68,7 @@ public class PyDeprecationInspection extends PyInspection {
       }
       String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {
-        deprecationMessage = ((PyFunction) resolveResult).getDeprecationMessage();
+        deprecationMessage = ((PyFunction)resolveResult).getDeprecationMessage();
       }
       else if (resolveResult instanceof PyFile) {
         deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage();
@@ -113,6 +114,12 @@ public class PyDeprecationInspection extends PyInspection {
           }
         }
       }
+    }
+
+    @Nullable
+    private PyElement resolve(@NotNull PyReferenceExpression node) {
+      final PyElement resolve = PyUtil.as(node.getReference(getResolveContext()).resolve(), PyElement.class);
+      return resolve == null ? null : PyiUtil.getOriginalElementOrLeaveAsIs(resolve, PyElement.class);
     }
   }
 }

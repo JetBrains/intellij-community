@@ -4,7 +4,6 @@ package com.intellij.openapi.compiler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -36,8 +35,8 @@ public abstract class CompilerManager {
    * @param project the project for which the manager is requested.
    * @return the manager instance.
    */
-  public static CompilerManager getInstance(Project project) {
-    return ServiceManager.getService(project, CompilerManager.class);
+  public static CompilerManager getInstance(@NotNull Project project) {
+    return project.getService(CompilerManager.class);
   }
 
   public abstract boolean isCompilationActive();
@@ -112,9 +111,10 @@ public abstract class CompilerManager {
   public abstract void addBeforeTask(@NotNull CompileTask task);
 
   /**
-   * Registers a compiler task  that will be executed after the compilation. Consider using {@code compiler.task} extension point instead
-   * (see {@link CompileTask} for details), this way you won't need to call this method during project's initialization.
+   * Registers a compiler task  that will be executed after the compilation.
+   * @deprecated Use {@code compiler.task} extension point instead (see {@link CompileTask} for details).
    */
+  @Deprecated
   public abstract void addAfterTask(@NotNull CompileTask task);
 
   /**
@@ -274,7 +274,7 @@ public abstract class CompilerManager {
   @NotNull
   public abstract CompileScope createProjectCompileScope(@NotNull Project project);
 
-  public abstract void setValidationEnabled(ModuleType moduleType, boolean enabled);
+  public abstract void setValidationEnabled(ModuleType<?> moduleType, boolean enabled);
 
   public abstract boolean isValidationEnabled(Module moduleType);
 

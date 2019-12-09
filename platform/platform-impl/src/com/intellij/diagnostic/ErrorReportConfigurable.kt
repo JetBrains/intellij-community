@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -10,10 +10,11 @@ import com.intellij.util.io.decodeBase64
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
-@State(name = "ErrorReportConfigurable", storages = [Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED), Storage(value = "errorReporting.xml")])
+@State(
+  name = "ErrorReportConfigurable",
+  storages = [Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED), Storage(value = "errorReporting.xml")])
 internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
   companion object {
-
     @JvmStatic
     val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
@@ -33,9 +34,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
       myState = value?.let { State(it.developers.toList(), it.timestamp) }
     }
 
-  override fun getState(): Element? {
-    return myState?.let { XmlSerializer.serialize(it) }
-  }
+  override fun getState(): Element? = myState?.let { XmlSerializer.serialize(it) }
 
   override fun loadState(element: Element) {
     loadOldState(element)
@@ -46,13 +45,14 @@ internal class ErrorReportConfigurable : PersistentStateComponent<Element> {
     val state = XmlSerializer.deserialize(element, OldState::class.java)
 
     if (!state.ITN_LOGIN.isNullOrEmpty() || !state.ITN_PASSWORD_CRYPT.isNullOrEmpty()) {
-      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
+      PasswordSafe.instance.set(
+        CredentialAttributes(SERVICE_NAME, state.ITN_LOGIN), Credentials(state.ITN_LOGIN, state.ITN_PASSWORD_CRYPT!!.decodeBase64()))
     }
   }
 
   private data class State(var developers: List<Developer>, var timestamp: Long) {
     @Suppress("unused")
-    private constructor(): this(emptyList(), 0) // need for xml serialization
+    private constructor(): this(emptyList(), 0)  // needed for XML serialization
   }
 
   @Suppress("PropertyName")
@@ -67,7 +67,5 @@ internal data class Developers(val developers: List<Developer>, val timestamp: L
     private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000 // 24 hours
   }
 
-  fun isUpToDateAt(timestamp: Long): Boolean {
-    return (timestamp - this.timestamp < UPDATE_INTERVAL) && developers.isNotEmpty()
-  }
+  fun isUpToDateAt(timestamp: Long): Boolean = developers.isEmpty() || (timestamp - this.timestamp < UPDATE_INTERVAL)
 }

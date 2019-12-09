@@ -167,7 +167,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
     return patchedVmParameters;
   }
 
-  private static class MyExecRunConfiguration extends MavenRunConfiguration {
+  public static class MyExecRunConfiguration extends MavenRunConfiguration {
 
     private final ApplicationConfiguration myApplicationConfiguration;
 

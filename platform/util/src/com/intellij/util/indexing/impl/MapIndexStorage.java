@@ -191,7 +191,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       myMap.close();
     }
     catch (IOException | RuntimeException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     try {
       IOUtil.deleteAllFilesStartingWith(getStorageFile());

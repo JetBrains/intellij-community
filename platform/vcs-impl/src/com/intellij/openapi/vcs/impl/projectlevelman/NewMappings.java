@@ -272,8 +272,7 @@ public class NewMappings implements Disposable {
 
   @Nullable
   private AbstractVcs getMappingsVcs(@NotNull VcsDirectoryMapping mapping) {
-    String vcsName = mapping.getVcs();
-    return vcsName != null ? AllVcses.getInstance(myProject).getByName(vcsName) : null;
+    return AllVcses.getInstance(myProject).getByName(mapping.getVcs());
   }
 
   private boolean checkMappedRoot(@Nullable AbstractVcs vcs, @NotNull VirtualFile vcsRoot) {

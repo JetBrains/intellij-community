@@ -15,6 +15,7 @@ public class CommonUiProperties {
   public static final Map<VcsLogColumn, VcsLogUiProperty<Integer>> COLUMN_WIDTH = new HashMap<>();
   public static final VcsLogUiProperty<List<Integer>> COLUMN_ORDER = new VcsLogUiProperty<>("Table.ColumnOrder");
   public static final VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");
+  public static final VcsLogUiProperty<Boolean> PREFER_COMMIT_DATE = new VcsLogUiProperty<>("Table.PreferCommitDate");
 
   static {
     for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {

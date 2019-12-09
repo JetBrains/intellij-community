@@ -3,7 +3,6 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.addPluginInfoTo
 import com.intellij.internal.statistic.utils.getPluginType
@@ -46,13 +45,6 @@ class FeatureUsageData {
     val platformDataKeys: MutableList<String> = Arrays.asList(
       "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "file_path", "anonymous_id"
     )
-  }
-
-  fun addFeatureContext(context: FUSUsageContext?): FeatureUsageData {
-    if (context != null) {
-      data.putAll(context.data)
-    }
-    return this
   }
 
   /**
@@ -322,10 +314,4 @@ class FeatureUsageData {
   override fun toString(): String {
     return data.toString()
   }
-}
-
-fun newData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
-  if (project == null && context == null) return Collections.emptyMap()
-
-  return FeatureUsageData().addProject(project).addFeatureContext(context).build()
 }

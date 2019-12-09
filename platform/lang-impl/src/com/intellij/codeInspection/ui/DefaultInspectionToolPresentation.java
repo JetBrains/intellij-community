@@ -237,6 +237,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Override
   public void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, @NotNull final CommonProblemDescriptor... descriptors) {
     if (refElement == null || descriptors.length == 0) return;
+    ReportedProblemFilter filter = myContext.getReportedProblemFilter();
+    if (filter != null && !filter.shouldReportProblem(refElement, descriptors)) return;
+
     checkFromSameFile(refElement, descriptors);
     if (filterSuppressed) {
       if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
@@ -450,8 +453,11 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   protected void registerContentEntry(RefEntity element, String packageName) {
-    Set<RefEntity> content = myContents.computeIfAbsent(packageName, k -> new HashSet<>());
-    content.add(element);
+    GlobalReportedProblemFilter globalReportedProblemFilter = myContext.getGlobalReportedProblemFilter();
+    if (globalReportedProblemFilter == null || globalReportedProblemFilter.shouldReportProblem(element, getToolWrapper().getShortName())) {
+      Set<RefEntity> content = myContents.computeIfAbsent(packageName, k -> new HashSet<>());
+      content.add(element);
+    }
   }
 
   @NotNull

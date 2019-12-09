@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
@@ -45,7 +44,6 @@ public abstract class ModuleInsight {
   private List<LibraryDescriptor> myLibraries;
   private final Set<String> myExistingModuleNames;
   private final Set<String> myExistingProjectLibraryNames;
-  private static final Set<String> ourModuleUndesirableNames = ImmutableSet.of("src");
 
   public ModuleInsight(@Nullable final ProgressIndicator progress, Set<String> existingModuleNames, Set<String> existingProjectLibraryNames) {
     myExistingModuleNames = existingModuleNames;
@@ -113,7 +111,7 @@ public abstract class ModuleInsight {
       Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
-        final File moduleContentRoot = suggestModuleRoot(srcRoot);
+        final File moduleContentRoot = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
         rootToModule.computeIfAbsent(moduleContentRoot, file -> new ModuleCandidate(moduleContentRoot)).myRoots.add(sourceRoot);
       }
       maximizeModuleFolders(rootToModule.values());
@@ -150,41 +148,26 @@ public abstract class ModuleInsight {
         if (!dirToChildRootCount.adjustValue(file, 1)) {
           dirToChildRootCount.put(file, 1);
         }
-      }, true);
+      });
     }
     for (ModuleCandidate module : modules) {
       File moduleRoot = module.myFolder;
       Ref<File> adjustedRootRef = new Ref<>(module.myFolder);
-      walkParents(moduleRoot,
-                  file -> isEntryPointRoot(file) || dirToChildRootCount.get(file) != 1,
-                  file -> adjustedRootRef.set(file),
-                  false
-      );
+      File current = moduleRoot;
+      while (dirToChildRootCount.get(current) == 1) {
+        adjustedRootRef.set(current);
+        if (isEntryPointRoot(current)) break;
+        current = current.getParentFile();
+      }
       module.myFolder = adjustedRootRef.get();
     }
   }
 
-  private static void walkParents(@NotNull File file, Predicate<File> stopCondition, @NotNull Consumer<File> fileConsumer, boolean includeStop) {
+  private static void walkParents(@NotNull File file, Predicate<File> stopCondition, @NotNull Consumer<File> fileConsumer) {
     File current = file;
     while (true) {
-      if (!includeStop) {
-        if (stopCondition.test(current)) break;
-        fileConsumer.consume(current);
-      } else {
-        fileConsumer.consume(current);
-        if (stopCondition.test(current)) break;
-      }
-      current = current.getParentFile();
-    }
-  }
-  
-  @NotNull
-  private File suggestModuleRoot(@NotNull File srcRoot) {
-    File current = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
-    while (true) {
-      if (isEntryPointRoot(current) || !ourModuleUndesirableNames.contains(current.getName())) {
-        return current;
-      }
+      fileConsumer.consume(current);
+      if (stopCondition.test(current)) break;
       current = current.getParentFile();
     }
   }

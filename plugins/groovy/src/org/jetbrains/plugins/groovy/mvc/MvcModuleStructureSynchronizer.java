@@ -3,16 +3,12 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -30,8 +26,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.GuiUtils;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +35,8 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.mvc.projectView.MvcToolWindowDescriptor;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 public class MvcModuleStructureSynchronizer {
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("MvcModuleStructureSynchronizer Pool");
   private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
   private final Project myProject;
 
@@ -51,7 +44,7 @@ public class MvcModuleStructureSynchronizer {
 
   private boolean myOutOfModuleDirectoryCreatedActionAdded;
 
-  public static boolean ourGrailsTestFlag;
+  @SuppressWarnings("StaticNonFinalField") public static boolean ourGrailsTestFlag;
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
@@ -230,55 +223,26 @@ public class MvcModuleStructureSynchronizer {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
-    boolean shouldSchedule;
     synchronized (myOrders) {
-      shouldSchedule = myOrders.isEmpty();
       myOrders.add(Pair.create(on, action));
     }
-    if (shouldSchedule) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> scheduleRunActions());
-    }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> scheduleRunActions());
   }
 
   private void scheduleRunActions() {
-    if (myProject.isDisposed()) return;
-
-    final Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (ourGrailsTestFlag && !myProject.isInitialized()) {
         runActions(computeRawActions(takeOrderSnapshot()));
       }
       return;
     }
 
-    final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
-    ReadTask task = new ReadTask() {
-
-      @NotNull
-      @Override
-      public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
-        final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
-                                                                                    : Collections.emptySet();
-        return new Continuation(() -> {
-          if (isUpToDate()) {
-            runActions(actions);
-          }
-          else if (!indicator.isCanceled()) {
-            scheduleRunActions();
-          }
-        }, ModalityState.NON_MODAL);
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        scheduleRunActions();
-      }
-
-      private boolean isUpToDate() {
-        return !myProject.isDisposed() && orderSnapshot.equals(takeOrderSnapshot());
-      }
-    };
-    GuiUtils.invokeLaterIfNeeded(() -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task), ModalityState.NON_MODAL);
+    ReadAction
+      .nonBlocking(() -> computeRawActions(takeOrderSnapshot()))
+      .expireWith(myProject)
+      .coalesceBy(this)
+      .finishOnUiThread(ModalityState.NON_MODAL, this::runActions)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {

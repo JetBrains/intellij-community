@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -15,10 +16,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,16 +30,20 @@ public class DirectoryAccessChecker {
 
   private static final Path HOME_DIR = Paths.get(System.getProperty("user.home"));
   private static final Path HOME_ROOT = HOME_DIR.getParent();
+  private static final boolean homeRootNotSystemRoot = HOME_ROOT.getParent() != null;
 
   private DirectoryAccessChecker() {}
 
   private static class InstanceHolder {
     private final static FilterChain chainInstance =
-      SystemInfo.isLinux ? new LinuxFilterChain().add(new NFS()).add(new CIFS()).refresh() : ACCEPTING_FILTER;
+      Registry.is("directory.access.checker.enabled") && SystemInfo.isLinux ?
+        new LinuxFilterChain().add(new NFS()).add(new CIFS()).refresh() : ACCEPTING_FILTER;
   }
 
   public static void refresh() {
-    InstanceHolder.chainInstance.refresh();
+    if (Registry.is("directory.access.checker.enabled")) {
+      InstanceHolder.chainInstance.refresh();
+    }
   }
 
   @NotNull
@@ -75,6 +77,7 @@ public class DirectoryAccessChecker {
   private static class LinuxFilterChain implements FilterChain {
     private final List<FSFilter> checkers = new ArrayList<>();
     private Set<Path> notAccessiblePaths;
+    private boolean isUserHomeMounted;
 
     private LinuxFilterChain add(FSFilter checker) {
       checkers.add(checker);
@@ -84,7 +87,7 @@ public class DirectoryAccessChecker {
     @Override
     public FilterChain refresh() {
       notAccessiblePaths = getMountedDirectories().
-        stream().
+        stream().peek(p -> isUserHomeMounted = isUserHomeMounted || HOME_DIR.equals(p.path)).
         filter(p -> !p.isAccessible()).
         map(p -> p.getPath()).
         collect(Collectors.toSet());
@@ -109,8 +112,9 @@ public class DirectoryAccessChecker {
 
     @Override
     public boolean accept(Path path) {
+      Path parentPath = path.getParent();
       return path.startsWith(HOME_DIR) || // allow user home directory anyways
-             !(path.getParent().equals(HOME_ROOT) && !path.equals(HOME_DIR)) && // don't allow any other directory in the home root
+             !(homeRootNotSystemRoot && isUserHomeMounted && Objects.equals(parentPath, HOME_ROOT)) && // don't allow any other directory in the home root
              !notAccessiblePaths.contains(path); // Make sure all checkers allow access to the directory
     }
   }
@@ -142,13 +146,13 @@ public class DirectoryAccessChecker {
    ***********************************************************************************/
   private static class NFS implements FSFilter {
     private static final String RPCINFO = "rpcinfo"; // command
-    private static final Pattern NFS_ENTRY = Pattern.compile("(.+?):(.+?) (.+?) nfs(\\d)");
+    private static final Pattern NFS_ENTRY = Pattern.compile("(.+?):(.+?) (.+?) nfs(\\d).*");
     private static final Pattern RPC_ENTRY = Pattern.compile("\\s+(\\d+)\\s+(\\d)\\s+(tcp|udp)\\s+(\\d+)\\s+nfs");
 
     @Override
     public boolean parse(@NotNull String line, @NotNull Collection<FSInfo> accumulator) {
       Matcher m = NFS_ENTRY.matcher(line);
-      return m.find() && accumulator.add(new NFSInfo(Paths.get(m.group(3)), m.group(1), Integer.parseInt(m.group(4))));
+      return m.matches() && accumulator.add(new NFSInfo(Paths.get(m.group(3)), m.group(1), Integer.parseInt(m.group(4))));
     }
 
     private static class NFSInfo extends FSInfo {
@@ -257,8 +261,13 @@ public class DirectoryAccessChecker {
         ProcessBuilder pb = new ProcessBuilder(options.args);
         Process p = pb.start();
         boolean inTime = p.waitFor(EXEC_DELAY, TimeUnit.MILLISECONDS);
-        int exitValue = p.exitValue();
-        return (inTime && (exitValue == 0 || exitValue == 127));
+        if (inTime) {
+          int exitValue = p.exitValue();
+          return exitValue == 0 || exitValue == 127;
+        }
+        else {
+          return false;
+        }
       }
     }
 

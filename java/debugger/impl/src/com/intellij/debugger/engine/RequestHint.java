@@ -9,20 +9,16 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Range;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.StepRequest;
-import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,7 +200,9 @@ public class RequestHint {
         if (isProxyMethod(location.method())) { // step into bridge and proxy methods
           return StepRequest.STEP_INTO;
         }
-        if (myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
+        boolean proxyMatch =
+          (myMethodFilter instanceof BasicStepMethodFilter && ((BasicStepMethodFilter)myMethodFilter).proxyCheck(location, context, this));
+        if (proxyMatch || myMethodFilter.locationMatches(context.getDebugProcess(), location, context.getFrameProxy())) {
           if (myMethodFilter.getSkipCount() <= myFilterMatchedCount++) {
             myTargetMethodMatched = true;
             return myMethodFilter.onReached(context, this);

@@ -113,11 +113,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     }
   }
 
-  /**
-   * @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)}
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       Project projectToClose,
                                       boolean forceOpenInNewFrame,
@@ -127,11 +125,9 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     return doOpenProject(Paths.get(virtualFile.getPath()), new OpenProjectTask(forceOpenInNewFrame, projectToClose), line);
   }
 
-  /**
-   * @deprecated Use Path instead of VirtualFile.
-   */
-  @Nullable
+  /** @deprecated Use {@link #doOpenProject(Path, OpenProjectTask, int)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       @Nullable Project projectToClose,
                                       int line,

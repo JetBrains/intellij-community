@@ -60,7 +60,7 @@ grammar {
     ## 
     ##       a language code, as per [RFC3066]
     ##     
-    LanguageCode.datatype = xsd:language
+    LanguageCode.datatype = ( xsd:language | string "" )
     
     ## 
     ##       comma-separated list of language codes, as per [RFC3066]

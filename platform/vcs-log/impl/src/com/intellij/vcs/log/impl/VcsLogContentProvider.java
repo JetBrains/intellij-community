@@ -4,13 +4,20 @@ package com.intellij.vcs.log.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
@@ -59,6 +66,25 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (manager != null) {
       addMainUi(manager);
     }
+
+    if (Registry.is("show.log.as.editor.tab")) {
+      ChangesViewContentI changesViewManager = ChangesViewContentManager.getInstance(project);
+      if (changesViewManager instanceof ChangesViewContentManager) {
+        ((ChangesViewContentManager) changesViewManager).adviseSelectionChanged(new ContentManagerAdapter(){
+          @Override
+          public void selectionChanged(@NotNull ContentManagerEvent event) {
+            if (myUi != null) {
+              if (event.getContent().getDisplayName().equals("Repository") && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+                VirtualFile graphFile = myProjectLog.getLogManager().getDataManager().tryGetGraphViewFile();
+                if (graphFile != null) {
+                  FileEditorManager.getInstance(project).openFile(graphFile, true);
+                }
+              }
+            }
+          }
+        });
+      }
+    }
   }
 
   @Nullable
@@ -71,13 +97,18 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, true);
-      VcsLogPanel panel = new VcsLogPanel(logManager, myUi);
+      VcsLogPanel panel = createPanel(logManager);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;
     }
+  }
+
+  @NotNull
+  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager) {
+    return new VcsLogPanel(logManager, myUi);
   }
 
   @CalledInAwt

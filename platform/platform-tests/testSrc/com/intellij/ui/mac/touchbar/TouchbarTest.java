@@ -3,10 +3,10 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.Foundation;
-import java.util.HashSet;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Random;
 
 public class TouchbarTest {
@@ -33,12 +33,12 @@ public class TouchbarTest {
   private static TouchBar _createTestButtonsTouchbar() {
     final int configPopoverWidth = 143;
     final TouchBar testTB = new TouchBar("test", false);
-    testTB.addButton().setText("test1").setThreadSafeAction(createPrintTextCallback("pressed test1 button"));
-    testTB.addButton().setText("test2").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
-    testTB.addButton().setText("test3 with suff").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
-    testTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed image button"));
-    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very-very-very-very long suffix").setWidth(configPopoverWidth).setThreadSafeAction(createPrintTextCallback("pressed image-text button"));
-    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very long suffix").setWidth(configPopoverWidth + 69).setThreadSafeAction(createPrintTextCallback("pressed image-text 2 button")).setToggle(true);
+    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false, null);
+    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false, null);
+    testTB.addButton().setText("test3 with suff").setAction(createPrintTextCallback("pressed test2 button"), false, null);
+    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false, null);
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very-very-very-very long suffix").setWidth(configPopoverWidth).setAction(createPrintTextCallback("pressed image-text button"), false, null);
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very long suffix").setWidth(configPopoverWidth + 69).setAction(createPrintTextCallback("pressed image-text 2 button"), false, null).setToggle(true);
     return testTB;
   }
 
@@ -109,29 +109,10 @@ public class TouchbarTest {
   private static TouchBar _createTestAllTouchbar() {
     final TouchBar testTB = new TouchBar("test", false);
     testTB.addSpacing(true);
-    testTB.addButton().setText("test1").setThreadSafeAction(createPrintTextCallback("pressed test1 button"));
-    testTB.addButton().setText("test2").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
+    testTB.addButton().setText("test1").setAction(createPrintTextCallback("pressed test1 button"), false, null);
+    testTB.addButton().setText("test2").setAction(createPrintTextCallback("pressed test2 button"), false, null);
     testTB.addSpacing(false);
-    testTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed image button"));
-
-    final TouchBar tapHoldTB = new TouchBar("test_popover_tap_and_hold", false);
-    final TouchBar expandTB = new TouchBar("test_configs_popover_expand", false);
-    final int configPopoverWidth = 143;
-    testTB.addPopover(ourTestIcon, "test-popover", configPopoverWidth, expandTB, tapHoldTB);
-
-    expandTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed popover-image button"));
-    final TBItemScrubber scrubber = expandTB.addScrubber();
-    for (int c = 0; c < 15; ++c) {
-      String txt;
-      if (c == 7)           txt = "very very long configuration name (debugging type)";
-      else                  txt = String.format("r%1.2f", Math.random());
-      int finalC = c;
-      scrubber.addItem(ourTestIcon, txt, () -> System.out.println("JAVA: performed action of scrubber item at index " + finalC + " [thread:" + Thread.currentThread() + "]"));
-    }
-    expandTB.selectVisibleItemsToShow();
-
-    tapHoldTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed tap-hold-image button"));
-    tapHoldTB.selectVisibleItemsToShow();
+    testTB.addButton().setIcon(ourTestIcon).setAction(createPrintTextCallback("pressed image button"), false, null);
 
     return testTB;
   }

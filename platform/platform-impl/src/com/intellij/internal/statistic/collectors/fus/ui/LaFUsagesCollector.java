@@ -2,8 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +15,9 @@ import static com.intellij.internal.statistic.service.fus.collectors.UsageDescri
 public class LaFUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages() {
+  public Set<MetricEvent> getMetrics() {
     UIManager.LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
-    return laf != null ? Collections.singleton(new UsageDescriptor(ensureProperKey(laf.getName()), 1, new FeatureUsageData().addOS()))
+    return laf != null ? Collections.singleton(new MetricEvent(ensureProperKey(laf.getName())))
                        : Collections.emptySet();
   }
 

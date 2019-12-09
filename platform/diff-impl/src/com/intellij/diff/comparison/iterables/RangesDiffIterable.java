@@ -18,12 +18,13 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.util.Range;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 
 class RangesDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final List<? extends Range> myRanges;
+  @NotNull private final Collection<? extends Range> myRanges;
 
-  RangesDiffIterable(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  RangesDiffIterable(@NotNull Collection<? extends Range> ranges, int length1, int length2) {
     super(length1, length2);
     myRanges = ranges;
   }
@@ -31,40 +32,47 @@ class RangesDiffIterable extends ChangeDiffIterableBase {
   @NotNull
   @Override
   protected ChangeIterable createChangeIterable() {
-    return new RangesChangeIterable();
+    return new RangesChangeIterable(myRanges);
   }
 
-  private class RangesChangeIterable implements ChangeIterable {
-    private int myIndex = 0;
+  private static class RangesChangeIterable implements ChangeIterable {
+    private final Iterator<? extends Range> myIterator;
+    private Range myLast;
+
+    private RangesChangeIterable(@NotNull Collection<? extends Range> ranges) {
+      myIterator = ranges.iterator();
+
+      next();
+    }
 
     @Override
     public boolean valid() {
-      return myIndex != myRanges.size();
+      return myLast != null;
     }
 
     @Override
     public void next() {
-      myIndex++;
+      myLast = myIterator.hasNext() ? myIterator.next() : null;
     }
 
     @Override
     public int getStart1() {
-      return myRanges.get(myIndex).start1;
+      return myLast.start1;
     }
 
     @Override
     public int getStart2() {
-      return myRanges.get(myIndex).start2;
+      return myLast.start2;
     }
 
     @Override
     public int getEnd1() {
-      return myRanges.get(myIndex).end1;
+      return myLast.end1;
     }
 
     @Override
     public int getEnd2() {
-      return myRanges.get(myIndex).end2;
+      return myLast.end2;
     }
   }
 }

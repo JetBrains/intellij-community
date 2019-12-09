@@ -63,7 +63,6 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     this.title = title
     setOKButtonText(okText)
     init()
-    pack()
     accountsList.selectedIndex = 0
   }
 

@@ -73,6 +73,8 @@
     <!-- Code-insight IDE bridge -->
     <applicationService
         serviceImplementation="com.jetbrains.python.PythonRuntimeService"/>
+
+    <applicationService serviceImplementation="com.jetbrains.python.PythonCodeStyleService"/>
   </extensions>
 
   <extensionPoints>

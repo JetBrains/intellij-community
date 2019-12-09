@@ -16,8 +16,16 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildView;
+import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.DefaultDebugEnvironment;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -26,8 +34,14 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.ui.EditorOptionsTopHitProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +52,8 @@ import java.net.ServerSocket;
  */
 public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   static final Logger LOG = Logger.getInstance(ExternalSystemTaskDebugRunner.class);
+
+  private static final String ATTACH_VM_FAILED = "ATTACH_VM_FAILED";
 
   @NotNull
   @Override
@@ -54,11 +70,11 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   @Override
   protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
-    if (state instanceof ExternalSystemRunConfiguration.MyRunnableState) {
-      ExternalSystemRunConfiguration.MyRunnableState myRunnableState = (ExternalSystemRunConfiguration.MyRunnableState)state;
+    if (state instanceof ExternalSystemRunnableState) {
+      ExternalSystemRunnableState myRunnableState = (ExternalSystemRunnableState)state;
       int port = myRunnableState.getDebugPort();
       if (port > 0) {
-        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(myRunnableState, environment, port);
+        RunContentDescriptor runContentDescriptor = doGetRunContentDescriptor(myRunnableState, environment);
         if (runContentDescriptor == null) return null;
 
         ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
@@ -76,18 +92,16 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
       LOG.warn(String.format(
         "Can't attach debugger to external system task execution. Reason: invalid run profile state is provided"
         + "- expected '%s' but got '%s'",
-        ExternalSystemRunConfiguration.MyRunnableState.class.getName(), state.getClass().getName()
+        ExternalSystemRunnableState.class.getName(), state.getClass().getName()
       ));
     }
     return null;
   }
 
   @Nullable
-  private RunContentDescriptor doGetRunContentDescriptor(@NotNull ExternalSystemRunConfiguration.MyRunnableState state,
-                                                         @NotNull ExecutionEnvironment environment,
-                                                         int port) throws ExecutionException {
-    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(port), true);
-    RunContentDescriptor runContentDescriptor = attachVirtualMachine(state, environment, connection, true);
+  private RunContentDescriptor doGetRunContentDescriptor(@NotNull ExternalSystemRunnableState state,
+                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    RunContentDescriptor runContentDescriptor = createProcessToDebug(state, environment);
     if (runContentDescriptor == null) return null;
 
     state.setContentDescriptor(runContentDescriptor);
@@ -108,5 +122,56 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
       };
     descriptor.setRunnerLayoutUi(runContentDescriptor.getRunnerLayoutUi());
     return descriptor;
+  }
+
+  @NotNull
+  private XDebugProcess jvmProcessToDebug(@NotNull XDebugSession session,
+                                          ExternalSystemRunnableState state,
+                                          @NotNull ExecutionEnvironment env) throws ExecutionException {
+    RemoteConnection connection = new RemoteConnection(true, "127.0.0.1", String.valueOf(state.getDebugPort()), true);
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, DebugEnvironment.LOCAL_START_TIMEOUT);
+
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
+
+    if (debuggerSession == null) {
+      throw new ExecutionException(ATTACH_VM_FAILED);
+    }
+
+    final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+
+
+    XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
+    ExecutionResult executionResult = debugProcess.getExecutionResult();
+    sessionImpl.addExtraActions(executionResult.getActions());
+    if (executionResult instanceof DefaultExecutionResult) {
+      sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
+    }
+    return JavaDebugProcess.create(session, debuggerSession);
+  }
+
+  @Nullable
+  private RunContentDescriptor createProcessToDebug(ExternalSystemRunnableState state,
+                                                    @NotNull ExecutionEnvironment env) throws ExecutionException {
+
+    RunContentDescriptor result;
+
+    try {
+      result = XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
+        @Override
+        @NotNull
+        public XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
+          XDebugProcess nonJvmDebugProcess = state.startDebugProcess(session, env);
+          return nonJvmDebugProcess != null ? nonJvmDebugProcess : jvmProcessToDebug(session, state, env);
+        }
+      }).getRunContentDescriptor();
+    }
+    catch (ExecutionException e) {
+      if (!e.getMessage().equals(ATTACH_VM_FAILED)) {
+        throw e;
+      }
+      result = null;
+    }
+
+    return result;
   }
 }

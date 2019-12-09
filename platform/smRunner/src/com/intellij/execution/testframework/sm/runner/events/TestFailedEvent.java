@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.URLUtil;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,10 +59,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     myExpectedFilePath = expectedFilePath;
     String expected = testFailed.getExpected();
     if (expected == null && expectedFilePath != null) {
-      try {
-        expected = FileUtil.loadFile(new File(expectedFilePath));
-      }
-      catch (IOException ignore) {}
+      expected = loadExpectedText(expectedFilePath);
     }
     myComparisonFailureExpectedText = expected;
 
@@ -171,10 +169,7 @@ public class TestFailedEvent extends TreeNodeEvent {
     myTestError = testError;
     myExpectedFilePath = expectedFilePath;
     if (comparisonFailureExpectedText == null && expectedFilePath != null) {
-      try {
-        comparisonFailureExpectedText = FileUtil.loadFile(new File(expectedFilePath));
-      }
-      catch (IOException ignore) {}
+      comparisonFailureExpectedText = loadExpectedText(expectedFilePath);
     }
     myComparisonFailureActualText = comparisonFailureActualText;
     myPrintExpectedAndActualValues = printExpectedAndActualValues;
@@ -184,6 +179,22 @@ public class TestFailedEvent extends TreeNodeEvent {
     myDurationMillis = durationMillis;
     myExpectedFileTemp = expectedFileTemp;
     myActualFileTemp = actualFileTemp;
+  }
+
+  private static String loadExpectedText(@NotNull String expectedFilePath) {
+    try {
+      int jarSep = expectedFilePath.indexOf(URLUtil.JAR_SEPARATOR);
+      if (jarSep == -1) {
+        return FileUtil.loadFile(new File(expectedFilePath));
+      }
+      else {
+        String localPath = expectedFilePath.substring(0, jarSep);
+        String jarPath = expectedFilePath.substring(jarSep + URLUtil.JAR_SEPARATOR.length());
+        return FileUtil.loadTextAndClose(URLUtil.getJarEntryURL(new File(localPath), jarPath).openStream());
+      }
+    }
+    catch (IOException ignore) {}
+    return null;
   }
 
   @NotNull

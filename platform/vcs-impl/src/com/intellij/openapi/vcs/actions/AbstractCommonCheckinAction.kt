@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.application.ModalityState
@@ -10,10 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.containers.ContainerUtil.concat
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import com.intellij.vcs.commit.CommitWorkflowHandler
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -22,8 +26,11 @@ private fun getChangesIn(project: Project, roots: Array<FilePath>): Set<Change> 
   return roots.flatMap { manager.getChangesIn(it) }.toSet()
 }
 
-internal fun Project.getNonModalCommitWorkflowHandler() =
-  ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
+internal fun Project.getNonModalCommitWorkflowHandler() = ChangesViewManager.getInstanceEx(this).commitWorkflowHandler
+
+internal fun AnActionEvent.isProjectUsesNonModalCommit() = getProjectCommitWorkflowHandler() != null
+internal fun AnActionEvent.getProjectCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler? = project?.getNonModalCommitWorkflowHandler()
+internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackground {
   override fun update(vcsContext: VcsContext, presentation: Presentation) {

@@ -5,7 +5,9 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 public final class FileTypeExtensionPoint<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
   // these must be public for scrambling compatibility
@@ -16,6 +18,18 @@ public final class FileTypeExtensionPoint<T> extends BaseKeyedLazyInstance<T> im
   @Attribute("implementationClass")
   @RequiredElement
   public String implementationClass;
+
+  @SuppressWarnings("unused")
+  FileTypeExtensionPoint() {
+  }
+
+  @TestOnly
+  public FileTypeExtensionPoint(@NotNull String filetype, @NotNull T instance) {
+    super(instance);
+
+    this.filetype = filetype;
+    implementationClass = instance.getClass().getName();
+  }
 
   @Nullable
   @Override

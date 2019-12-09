@@ -34,6 +34,7 @@
       <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
+      <option name="STRING_CONTENT_INDENT_GUIDE" value="afd5b5"/>
 
       <option name="FILESTATUS_ADDED" value="0a7700"/>
       <option name="FILESTATUS_COPIED" value="0a7700"/>
@@ -1240,6 +1241,7 @@
       <option name="TEARLINE_COLOR" value="555555" />
       <option name="WHITESPACES" value="505050" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
+      <option name="STRING_CONTENT_INDENT_GUIDE" value="4a5f3e"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
       <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
       <option name="RECENT_LOCATIONS_SELECTION" value="383838"/>

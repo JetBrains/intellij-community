@@ -5,8 +5,8 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class InspectionProfileLoadUtil {
   public static InspectionProfileImpl load(@NotNull Path file,
                                            @NotNull InspectionToolRegistrar registrar,
                                            @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    Element element = JdomKt.loadElement(file);
+    Element element = JDOMUtil.load(file);
     String profileName = getProfileName(file, element);
     return load(element, profileName, registrar, profileManager);
   }

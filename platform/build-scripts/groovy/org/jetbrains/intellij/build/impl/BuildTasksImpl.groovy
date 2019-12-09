@@ -825,6 +825,10 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory)
+      def jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
+      buildContext.ant.move(todir: targetDirectory) {
+        fileset(dir: jbrTargetDir)
+      }
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
         fileset(dir: targetDirectory) {

@@ -188,6 +188,8 @@ public class JavaRegExpHost implements RegExpLanguageHost {
     switch (boundary.getType()) {
       case UNICODE_EXTENDED_GRAPHEME:
         return hasAtLeastJdkVersion(boundary, JavaSdkVersion.JDK_1_9);
+      case RESET_MATCH:
+        return false;
       case LINE_START:
       case LINE_END:
       case WORD:

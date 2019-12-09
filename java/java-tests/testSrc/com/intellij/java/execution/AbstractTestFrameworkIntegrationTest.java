@@ -46,7 +46,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
       settings = new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), configuration, false);
     ExecutionEnvironment
       environment = new ExecutionEnvironment(executor, ProgramRunnerUtil.getRunner(DefaultRunExecutor.EXECUTOR_ID, settings), settings, project);
-    JavaTestFrameworkRunnableState state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
+    JavaTestFrameworkRunnableState<?> state = ((JavaTestConfigurationBase)configuration).getState(executor, environment);
     state.appendForkInfo(executor);
     state.appendRepeatMode();
 
@@ -110,9 +110,15 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     return processOutput;
   }
 
-  protected void addLibs(Module module,
-                         JpsMavenRepositoryLibraryDescriptor descriptor,
-                         ArtifactRepositoryManager repoManager) throws Exception {
+
+  protected static void addMavenLibs(Module module,
+                                     JpsMavenRepositoryLibraryDescriptor descriptor) throws Exception {
+    addMavenLibs(module, descriptor, getRepoManager());
+  }
+
+  protected static void addMavenLibs(Module module,
+                                     JpsMavenRepositoryLibraryDescriptor descriptor,
+                                     ArtifactRepositoryManager repoManager) throws Exception {
     
     Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
                                                            descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
@@ -125,7 +131,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     }
   }
 
-  protected ArtifactRepositoryManager getRepoManager() {
+  protected static ArtifactRepositoryManager getRepoManager() {
     final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,

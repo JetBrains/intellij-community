@@ -53,6 +53,8 @@ public class RegExpBoundaryImpl extends RegExpElementImpl implements RegExpBound
                 return Type.END;
             } else if (s.equals("\\G")) {
                 return Type.PREVIOUS_MATCH;
+            } else if (s.equals("\\K")) {
+                return Type.RESET_MATCH;
             }
         }
         assert false;

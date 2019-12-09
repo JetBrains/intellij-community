@@ -101,6 +101,7 @@ checkboxes
 checkstyle
 checksum
 chmod
+cifs
 clangd
 classloader
 classloading
@@ -584,9 +585,11 @@ pctversion
 perf
 permalink
 petersburg
+pgrep
 pipelined
 pipenv
 pipfile
+pkill
 plaintext
 playlist
 playlists

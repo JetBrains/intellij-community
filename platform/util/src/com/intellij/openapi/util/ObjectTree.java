@@ -17,23 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 final class ObjectTree {
   private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<>();
-  private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
-    @Override
-    public void execute(@NotNull Disposable each) {
-      //noinspection SSBasedInspection
-      each.dispose();
-    }
-
-    @Override
-    public void beforeTreeExecution(@NotNull Disposable parent) {
-      if (parent instanceof Disposable.Parent) {
-        ((Disposable.Parent)parent).beforeTreeDispose();
-      }
-    }
-  };
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<Disposable> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
@@ -143,7 +130,7 @@ final class ObjectTree {
       else {
         ObjectNode parent = node.getParent();
         List<Throwable> exceptions = new SmartList<>();
-        node.execute(ourDisposeAction, exceptions);
+        node.execute(exceptions);
         if (parent != null) {
           synchronized (treeLock) {
             parent.removeChild(node);
@@ -185,9 +172,7 @@ final class ObjectTree {
     return false;
   }
 
-  static <T> void executeActionWithRecursiveGuard(@NotNull T object,
-                                                  @NotNull List<T> recursiveGuard,
-                                                  @NotNull final ObjectTreeAction<? super T> action) {
+  static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull List<T> recursiveGuard, @NotNull Consumer<? super T> action) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (recursiveGuard) {
       if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.identityStrategy()) != -1) return;
@@ -195,7 +180,7 @@ final class ObjectTree {
     }
 
     try {
-      action.execute(object);
+      action.accept(object);
     }
     finally {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -208,7 +193,7 @@ final class ObjectTree {
   }
 
   private void executeUnregistered(@NotNull Disposable disposable) {
-    executeActionWithRecursiveGuard(disposable, myExecutedUnregisteredObjects, ourDisposeAction);
+    executeActionWithRecursiveGuard(disposable, myExecutedUnregisteredObjects, Disposable::dispose);
   }
 
   @TestOnly

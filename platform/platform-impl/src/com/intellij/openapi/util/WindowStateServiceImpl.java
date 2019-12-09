@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -185,6 +186,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
 
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return null;
+    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       WindowState state = myStateMap.get(getAbsoluteKey(configuration, key));
@@ -201,6 +203,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       boolean maximized, boolean maximizedSet,
                       boolean fullScreen, boolean fullScreenSet) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) return;
+    if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);

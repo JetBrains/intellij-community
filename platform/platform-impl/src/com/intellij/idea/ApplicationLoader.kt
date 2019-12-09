@@ -24,8 +24,6 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.keymap.impl.SystemShortcuts
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
@@ -173,9 +171,11 @@ private fun startApp(app: ApplicationImpl,
 
     WeakFocusStackManager.getInstance()
 
-    invokeLaterWithAnyModality("migLayout") {
-      //IDEA-170295
-      PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+    NonUrgentExecutor.getInstance().execute {
+      runActivity("migLayout") {
+        //IDEA-170295
+        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+      }
     }
 
     NonUrgentExecutor.getInstance().execute {
@@ -357,7 +357,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
         }
 
         // pre-load cursors used by drag'n'drop AWT subsystem
-        invokeLaterWithAnyModality("DnD setup") {
+        runActivity("DnD setup") {
           DragSource.getDefaultDragSource()
         }
       }
@@ -522,7 +522,7 @@ open class IdeStarter : ApplicationStarter {
 
       app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
 
-      if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+      if (project == null && RecentProjectsManager.getInstance().willReopenProjectOnStart() && !JetBrainsProtocolHandler.appStartedWithCommand()) {
         RecentProjectsManager.getInstance().reopenLastProjectsOnStart()
       }
 
@@ -559,9 +559,6 @@ open class IdeStarter : ApplicationStarter {
           if (TouchBarsManager.isTouchBarAvailable()) {
             CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, "Touch Bar")
           }
-
-          val keymap = KeymapManager.getInstance().activeKeymap
-          SystemShortcuts().checkConflictsAndNotify(keymap)
         }
       }
     }
@@ -583,6 +580,9 @@ open class IdeStarter : ApplicationStarter {
       })
       ScreenReader.setActive(generalSettings.isSupportScreenReaders)
     }
+
+    if (SystemInfo.isMac && SystemInfo.isJetBrainsJvm)
+      IdeEventQueue.getInstance().keyEventDispatcher.enableSystemShortcutsChecker()
   }
 }
 

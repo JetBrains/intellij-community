@@ -43,7 +43,7 @@ public class JavacMain {
                                 Collection<? extends File> modulePath,
                                 Collection<? extends File> upgradeModulePath,
                                 Collection<? extends File> sourcePath,
-                                Map<File, Set<File>> outputDirToRoots,
+                                final Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
                                 CanceledStatus canceledStatus, @NotNull JavaCompilingTool compilingTool) {
@@ -142,7 +142,12 @@ public class JavacMain {
             getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
             fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
-            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", modulePath);
+            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", JpsJavacFileManager.filter(modulePath, new BooleanFunction<File>() {
+              @Override
+              public boolean fun(File file) {
+                return !outputDirToRoots.containsKey(file);
+              }
+            }));
           }
         }
         catch (IOException e) {

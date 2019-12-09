@@ -65,7 +65,11 @@ public class SamplingTask {
   }
 
   public long getSampledTime() {
-    return myCurrentTime - myStartTime + myDumpInterval;
+    return (long)myThreadInfos.size() * myDumpInterval;
+  }
+
+  public long getTotalTime() {
+    return myCurrentTime - myStartTime;
   }
 
   public long getGcTime() {

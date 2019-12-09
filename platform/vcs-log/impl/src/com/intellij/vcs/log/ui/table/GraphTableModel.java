@@ -16,6 +16,8 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -24,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -46,15 +47,20 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<? super Runnable> myRequestMore;
+  @NotNull private final VcsLogUiProperties myProperties;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<? super Runnable> requestMore) {
+  public GraphTableModel(@NotNull VisiblePack dataPack,
+                         @NotNull VcsLogData logData,
+                         @NotNull Consumer<? super Runnable> requestMore,
+                         @NotNull VcsLogUiProperties properties) {
     myLogData = logData;
     myDataPack = dataPack;
     myRequestMore = requestMore;
+    myProperties = properties;
   }
 
   @Override
@@ -167,9 +173,13 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private static String getDateSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> data.getAuthorTime() < 0 ? "" :
-                                       JBDateFormat.getFormatter("vcs.log").formatDateTime(data.getAuthorTime()), "");
+  private String getDateSafely(@NotNull VcsShortCommitDetails data) {
+    return getOrLogAndReturnStub(() -> {
+      long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
+                       Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
+                       data.getCommitTime() : data.getAuthorTime();
+      return timeStamp < 0 ? "" : JBDateFormat.getFormatter("vcs.log").formatDateTime(timeStamp);
+    }, "");
   }
 
   @NotNull
@@ -227,12 +237,11 @@ public class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   public VcsCommitMetadata getCommitMetadata(int row) {
-    Iterable<Integer> iterable = createRowsIterable(row, UP_PRELOAD_COUNT, DOWN_PRELOAD_COUNT, getRowCount());
-    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), iterable);
+    return myLogData.getMiniDetailsGetter().getCommitData(getIdAtRow(row), getCommitsToPreload(row));
   }
 
   @NotNull
-  public Collection<VcsRef> getRefsAtRow(int row) {
+  public List<VcsRef> getRefsAtRow(int row) {
     return ((RefsModel)myDataPack.getRefs()).refsToCommit(getIdAtRow(row));
   }
 
@@ -242,13 +251,14 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  private Iterable<Integer> createRowsIterable(final int row, final int above, final int below, final int maxRows) {
+  private Iterable<Integer> getCommitsToPreload(int row) {
+    int maxRows = getRowCount();
     return () -> new Iterator<Integer>() {
-      private int myRowIndex = Math.max(0, row - above);
+      private int myRowIndex = Math.max(0, row - UP_PRELOAD_COUNT);
 
       @Override
       public boolean hasNext() {
-        return myRowIndex < row + below && myRowIndex < maxRows;
+        return myRowIndex < row + DOWN_PRELOAD_COUNT && myRowIndex < maxRows;
       }
 
       @Override

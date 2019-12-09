@@ -1,11 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -19,27 +15,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
+  private static final String NAME = "Show Columns";
+
   public ToggleLogColumnsActionGroup() {
-    super("Show Columns", true);
+    super(NAME, "Select columns to see in the table", null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
+    setPopup(isPopup(e));
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
-    e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.Actions.Show : null);
   }
 
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
+    if (e != null && !isPopup(e)) {
+      actions.add(Separator.create(NAME));
+    }
     for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
       actions.add(new ToggleColumnAction(column));
     }
 
     return actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  private static boolean isPopup(@NotNull AnActionEvent e) {
+    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) == null;
   }
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {

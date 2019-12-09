@@ -214,6 +214,20 @@ public abstract class LongRangeSet {
     if (token.equals(JavaTokenType.PLUS) || token.equals(JavaTokenType.MINUS)) {
       return plusWiden(token.equals(JavaTokenType.MINUS) ? other.negate(isLong) : other, isLong);
     }
+    if (token.equals(JavaTokenType.ASTERISK)) {
+      return mulWiden(other, isLong);
+    }
+    return null;
+  }
+
+  private LongRangeSet mulWiden(LongRangeSet other, boolean isLong) {
+    if (Point.ZERO.equals(this)) return this;
+    if (Point.ZERO.equals(other)) return other;
+    if (Point.ONE.equals(this)) return other;
+    if (Point.ONE.equals(other)) return this;
+    if (Point.ZERO.equals(this.mod(point(2))) || Point.ZERO.equals(other.mod(point(2)))) {
+      return modRange(minValue(isLong), maxValue(isLong), 2, 1);
+    }
     return null;
   }
 
@@ -378,7 +392,7 @@ public abstract class LongRangeSet {
    */
   @NotNull
   public LongRangeSet div(LongRangeSet divisor, boolean isLong) {
-    if (divisor.isEmpty() || divisor.equals(new Point(0))) return empty();
+    if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
     long[] left = splitAtZero(asRanges());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
@@ -520,7 +534,7 @@ public abstract class LongRangeSet {
     if (isEmpty()) return empty();
     int maxShift = (isLong ? Long.SIZE : Integer.SIZE) - 1;
     if (max == maxShift) {
-      return min == max ? point(0) : point(0).unite(div(range(1L << min, 1L << (max - 1)), isLong));
+      return min == max ? Point.ZERO : Point.ZERO.unite(div(range(1L << min, 1L << (max - 1)), isLong));
     }
     return div(range(1L << min, 1L << max), isLong);
   }
@@ -666,7 +680,7 @@ public abstract class LongRangeSet {
    * @return a new set
    */
   public static LongRangeSet point(long value) {
-    return new Point(value);
+    return value == 0 ? Point.ZERO : value == 1 ? Point.ONE : new Point(value);
   }
 
   /**
@@ -708,7 +722,7 @@ public abstract class LongRangeSet {
    * @return a new LongRangeSet
    */
   public static LongRangeSet range(long from, long to) {
-    return from == to ? new Point(from) : new Range(from, to);
+    return from == to ? point(from) : new Range(from, to);
   }
 
   /**
@@ -1015,6 +1029,9 @@ public abstract class LongRangeSet {
   }
 
   static final class Point extends LongRangeSet {
+    static final Point ZERO = new Point(0);
+    static final Point ONE = new Point(1);
+
     final long myValue;
 
     Point(long value) {
@@ -1225,7 +1242,7 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
-      if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
+      if (divisor.isEmpty() || divisor.equals(ZERO)) return empty();
       if (myValue == 0) return this;
       if (divisor instanceof Point) {
         return LongRangeSet.point(myValue % ((Point)divisor).myValue);
@@ -1589,9 +1606,9 @@ public abstract class LongRangeSet {
     @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
-      if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
+      if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
       if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) {
-        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).unite(point(0)) : this;
+        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).unite(Point.ZERO) : this;
       }
       if (divisor.contains(Long.MIN_VALUE)) {
         return possibleMod();

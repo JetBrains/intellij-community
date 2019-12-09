@@ -48,11 +48,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 			w:string "formnovalidate" | w:string ""
 		}
 
-	shared-form.attrs.autofocus = 
-		attribute autofocus {
-			w:string "autofocus" | w:string ""
-		}
-	
 	shared-form.attrs.pattern = 
 		attribute pattern {
 			form.data.pattern
@@ -78,11 +73,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 			form.data.nonemptystring
 		}
 
-	shared-form.attrs.inputmode =
-		attribute inputmode {
-			string
-		}
-
 	shared-form.attrs.minlength =
 		attribute minlength {
 			common.data.integer.non-negative
@@ -90,9 +80,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 ## Shared attributes for <input>
 		
-	shared-input.attrs =
+	shared-input-no-size.attrs =
 		(	input.attrs.autocomplete?
-		&	shared-form.attrs.autofocus?
 		&	input.attrs.list?
 		&	shared-form.attrs.maxlength?
 		&	shared-form.attrs.minlength?
@@ -100,6 +89,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.readonly?
 		&	shared-form.attrs.required?
+		)
+
+	shared-input.attrs =
+		(	shared-input-no-size.attrs
 		&	shared-form.attrs.size?
 		)
 
@@ -146,13 +139,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	input.text.attrs &=
 		(	input.attrs.autocomplete?
-		&	shared-form.attrs.autofocus?
 		&	shared-form.attrs.dirname?
 		&	input.attrs.list?
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.required?
 		&	shared-form.attrs.placeholder?
-		&	shared-form.attrs.inputmode?
 		&	shared-form.attrs.minlength?
 		)
 
@@ -160,7 +151,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	input.password.attrs &=
 		(	input.attrs.autocomplete?
-		&	shared-form.attrs.autofocus?
 		&	input.attrs.list?
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.placeholder?
@@ -419,7 +409,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.number.attrs = 
 		(	common.attrs
 		&	common-form.attrs
-		&	shared-input.attrs
+		&	shared-input-no-size.attrs
 		&	input.number.attrs.type
 		&	input.number.attrs.min?
 		&	input.number.attrs.max?
@@ -455,7 +445,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.range.attrs = 
 		(	common.attrs
 		&	common-form.attrs
-		&	shared-input.attrs
+		&	shared-input-no-size.attrs
 		&	input.range.attrs.type
 		&	input.range.attrs.min?
 		&	input.range.attrs.max?
@@ -653,7 +643,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	textarea.attrs &=
 		(	shared-form.attrs.maxlength?
 		&	shared-form.attrs.minlength?
-		&	shared-form.attrs.autofocus? 
 		&	shared-form.attrs.required? 
 		&	textarea.attrs.placeholder?
 		&	shared-form.attrs.dirname?
@@ -665,7 +654,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 				&	textarea.attrs.cols?
 				)
 			)
-		&	shared-form.attrs.inputmode?
 		&	input.attrs.autocomplete.any?
 		)
 		textarea.attrs.wrap.hard =
@@ -702,22 +690,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	button.submit.attrs &=
 		(	shared-form.attrs.formaction? 
-		&	shared-form.attrs.autofocus? 
 		&	shared-form.attrs.formenctype? 
 		&	shared-form.attrs.formmethod? 
 		&	shared-form.attrs.formtarget? 
 		&	shared-form.attrs.formnovalidate? 
 		)
 	
-## Complex Reset Button: <button type='reset'>, extensions
-
-	button.reset.attrs &=
-		( shared-form.attrs.autofocus? )
-	
-## Complex Push Button: <button type='button'>, extensions
-
-	button.button.attrs &=
-		( shared-form.attrs.autofocus? )
 
 ## Form: <form>, extensions
 	form.attrs &= 
@@ -749,7 +727,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Selection Menu: <select>, Extensions
 
 	select.attrs &=
-		(	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.required? 
+		(	shared-form.attrs.required? 
 		&	input.attrs.autocomplete.any?
 		)

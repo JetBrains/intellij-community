@@ -7,6 +7,7 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffChange;
 import com.intellij.diff.tools.fragmented.UnifiedDiffChangeUi;
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer;
 import com.intellij.diff.tools.fragmented.UnifiedFragmentBuilder;
+import com.intellij.diff.util.DiffGutterOperation;
 import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
@@ -15,9 +16,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
@@ -238,17 +239,17 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
 
     @Override
     protected void doInstallActionHighlighters() {
-      if (getViewer().myAllowExcludeChangesFromCommit && getChange().isFromActiveChangelist()) {
-        myOperations.add(new ExcludeGutterOperation());
+      if (getViewer().myAllowExcludeChangesFromCommit) {
+        ContainerUtil.addIfNotNull(myOperations, createExcludeOperation());
       }
       super.doInstallActionHighlighters();
     }
 
-    private class ExcludeGutterOperation extends MyGutterOperation {
-      @Override
-      public GutterIconRenderer createRenderer() {
-        if (!getChange().isFromActiveChangelist()) return null;
+    @Nullable
+    private DiffGutterOperation createExcludeOperation() {
+      if (!getChange().isFromActiveChangelist()) return null;
 
+      return createOperation(() -> {
         final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
         Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
         return new DiffGutterRenderer(icon, "Include into commit") {
@@ -260,7 +261,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
             LocalTrackerDiffUtil.toggleRangeAtLine(getViewer().myTrackerActionProvider, line, isExcludedFromCommit);
           }
         };
-      }
+      });
     }
   }
 

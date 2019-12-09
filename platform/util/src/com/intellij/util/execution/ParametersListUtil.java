@@ -54,6 +54,16 @@ public class ParametersListUtil {
     return encode(parameters);
   }
 
+  /**
+   * @see ParametersListUtil#join(List)
+   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
+   */
+  @NotNull
+  public static String join(@NotNull final List<? extends CharSequence> parameters,
+                            @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
+    return encode(parameters, commandLineArgumentEncoder);
+  }
+
   @NotNull
   public static String join(final String... parameters) {
     return encode(Arrays.asList(parameters));
@@ -105,7 +115,17 @@ public class ParametersListUtil {
 
   @NotNull
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
-    parameterString = parameterString.trim();
+    return parse(parameterString, keepQuotes, supportSingleQuotes, false);
+  }
+
+  @NotNull
+  public static List<String> parse(@NotNull String parameterString,
+                                   boolean keepQuotes,
+                                   boolean supportSingleQuotes,
+                                   boolean keepEmptyParameters) {
+    if (!keepEmptyParameters) {
+      parameterString = parameterString.trim();
+    }
 
     final ArrayList<String> params = new ArrayList<>();
     if (parameterString.isEmpty()) {
@@ -137,7 +157,7 @@ public class ParametersListUtil {
       }
       else if (Character.isWhitespace(ch)) {
         if (!inQuotes) {
-          if (token.length() > 0 || nonEmpty) {
+          if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
             params.add(token.toString());
             token.setLength(0);
             nonEmpty = false;
@@ -158,7 +178,7 @@ public class ParametersListUtil {
       token.append(ch);
     }
 
-    if (token.length() > 0 || nonEmpty) {
+    if (keepEmptyParameters || token.length() > 0 || nonEmpty) {
       params.add(token.toString());
     }
 
@@ -167,6 +187,12 @@ public class ParametersListUtil {
 
   @NotNull
   private static String encode(@NotNull final List<? extends CharSequence> parameters) {
+    return encode(parameters, CommandLineArgumentEncoder.DEFAULT_ENCODER);
+  }
+
+  @NotNull
+  private static String encode(@NotNull final List<? extends CharSequence> parameters,
+                               @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
     if (parameters.isEmpty()) {
       return "";
     }
@@ -179,20 +205,10 @@ public class ParametersListUtil {
       }
 
       paramBuilder.append(parameter);
-      encodeParam(paramBuilder);
+      commandLineArgumentEncoder.encodeArgument(paramBuilder);
       buffer.append(paramBuilder);
       paramBuilder.setLength(0);
     }
     return buffer.toString();
-  }
-
-  private static void encodeParam(@NotNull StringBuilder builder) {
-    StringUtil.escapeQuotes(builder);
-    if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
-      // don't let a trailing backslash (if any) unintentionally escape the closing quote
-      int numTrailingBackslashes = builder.length() - StringUtil.trimTrailing(builder, '\\').length();
-      StringUtil.quote(builder);
-      StringUtil.repeatSymbol(builder, '\\', numTrailingBackslashes);
-    }
   }
 }

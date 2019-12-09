@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,19 +13,21 @@ import javax.swing.*;
  */
 @SuppressWarnings("StaticInheritance")
 public abstract class ToggleAction extends AnAction implements Toggleable {
-  public ToggleAction(){
+  public ToggleAction() {
   }
 
-  public ToggleAction(@Nullable final String text){
+  public ToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) final String text) {
     super(text);
   }
 
-  public ToggleAction(@Nullable final String text, @Nullable final String description, @Nullable final Icon icon) {
+  public ToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) final String text,
+                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) final String description,
+                      @Nullable final Icon icon) {
     super(text, description, icon);
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e){
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final boolean state = !isSelected(e);
     setSelected(e, state);
     final Presentation presentation = e.getPresentation();
@@ -33,6 +36,7 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
 
   /**
    * Returns the selected (checked, pressed) state of the action.
+   *
    * @param e the action event representing the place and context in which the selected state is queried.
    * @return true if the action is selected, false otherwise
    */
@@ -40,13 +44,14 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
 
   /**
    * Sets the selected state of the action to the specified value.
+   *
    * @param e     the action event which caused the state change.
    * @param state the new selected state of the action.
    */
   public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
   @Override
-  public void update(@NotNull final AnActionEvent e){
+  public void update(@NotNull final AnActionEvent e) {
     boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);

@@ -2,7 +2,6 @@
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +23,7 @@ public enum LanguageLevel {
   JDK_13(13), JDK_13_PREVIEW(13),
   JDK_X(14);
 
-  public static final LanguageLevel HIGHEST = JDK_12;
+  public static final LanguageLevel HIGHEST = JDK_13;
 
   private final JavaVersion myVersion;
 
@@ -39,12 +38,5 @@ public enum LanguageLevel {
 
   public boolean isPreview() {
     return name().endsWith("_PREVIEW");
-  }
-
-  /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  @Deprecated
-  public String getComplianceOption() {
-    return JpsJavaSdkType.complianceOption(toJavaVersion());
   }
 }

@@ -11,51 +11,57 @@ import java.net.Socket;
  */
 public class ForkedDebuggerHelper {
 
-  public static final String DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
+  public static final String JVM_DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
   public static final String DEBUG_FORK_SOCKET_PARAM = "-forkSocket";
 
-  public static String setupDebugger(String processName, int debugPort) {
-    String setup = "";
+  public static final String DEBUG_SERVER_PORT_KEY = "DEBUG_SERVER_PORT";
+  public static final String PARAMETERS_SEPARATOR = ";";
+
+  public static final String FINISH_PARAMS = "FINISH_PARAMS";
+
+  // returns port at which debugger is supposed to communicate with debuggee process
+  public static int setupDebugger(String debuggerId, String processName, String processParameters, int dispatchPort) {
+    int port = 0;
     try {
-      if (debugPort > -1) {
-        int debugAddress = findAvailableSocketPort();
-        if (debugAddress > -1) {
-          setup = DEBUG_SETUP_PREFIX + debugAddress;
-          send(debugAddress, processName, debugPort);
-        }
-      }
+      port = findAvailableSocketPort();
+      processParameters = (processParameters == null || processParameters.isEmpty()) ? "" : processParameters + PARAMETERS_SEPARATOR;
+      processParameters = processParameters + DEBUG_SERVER_PORT_KEY + "=" + port;
+      send(debuggerId, processName, processParameters, dispatchPort);
     }
-    catch (Exception e) {
+    catch (IOException e) {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
-    return setup;
+    return port;
   }
 
-  public static void processFinished(String processName, int debugPort) {
-    send(0, processName, debugPort);
-  }
-
-  private static void send(int signal, String processName, int debugPort) {
+  public static void signalizeFinish(String debuggerId, String processName, int dispatchPort) {
     try {
-      Socket socket = new Socket("127.0.0.1", debugPort);
+      send(debuggerId, processName, FINISH_PARAMS, dispatchPort);
+    }
+    catch (IOException e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+  }
+
+  private static void send(String debuggerId, String processName, String processParameters, int dispatchPort) throws IOException {
+    Socket socket = new Socket("127.0.0.1", dispatchPort);
+    try {
+      DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
       try {
-        DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
-        try {
-          stream.writeInt(signal);
-          stream.writeUTF(processName);
-          // wait for the signal handling
-          int read = socket.getInputStream().read();
-        }
-        finally {
-          stream.close();
-        }
+        stream.writeUTF(debuggerId);
+        stream.writeUTF(processName);
+        stream.writeUTF(processParameters);
+        // wait for the signal handling
+        int read = socket.getInputStream().read();
       }
       finally {
-        socket.close();
+        stream.close();
       }
     }
-    catch (Exception ignore) {
+    finally {
+      socket.close();
     }
   }
 
@@ -76,6 +82,11 @@ public class ForkedDebuggerHelper {
           e.printStackTrace();
         }
       }
+
+      if (port <= -1) {
+        throw new IOException("Failed to find available port");
+      }
+
       return port;
     }
     finally {

@@ -51,13 +51,13 @@ public class JUnitForkIntegrationTest extends AbstractTestFrameworkCompilingInte
 
     JpsMavenRepositoryLibraryDescriptor junit4Lib =
       new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12");
-    addLibs(myModule, junit4Lib, repoManager);
-    addLibs(module2, junit4Lib, repoManager);
+    addMavenLibs(myModule, junit4Lib, repoManager);
+    addMavenLibs(module2, junit4Lib, repoManager);
 
     JpsMavenRepositoryLibraryDescriptor junit5Lib =
       new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0");
-    addLibs(myModule, junit5Lib, repoManager);
-    addLibs(module2, junit5Lib, repoManager);
+    addMavenLibs(myModule, junit5Lib, repoManager);
+    addMavenLibs(module2, junit5Lib, repoManager);
   }
 
   public void testForkPerModule() throws ExecutionException {

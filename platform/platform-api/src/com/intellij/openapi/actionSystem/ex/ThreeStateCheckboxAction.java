@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.actionSystem.ex;
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,11 +18,12 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
 
   protected ThreeStateCheckboxAction() {}
 
-  protected ThreeStateCheckboxAction(final String text) {
+  protected ThreeStateCheckboxAction(final @Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
   }
 
-  protected ThreeStateCheckboxAction(final String text, final String description, final Icon icon) {
+  protected ThreeStateCheckboxAction(final @Nls(capitalization = Nls.Capitalization.Title) String text,
+                                     final @Nls(capitalization = Nls.Capitalization.Sentence) String description, final Icon icon) {
     super(text, description, icon);
   }
 

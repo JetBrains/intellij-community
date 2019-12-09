@@ -7,11 +7,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
-import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
@@ -19,7 +19,6 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -30,7 +29,11 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
+import static java.awt.BorderLayout.*;
+
 public class TabLabel extends JPanel implements Accessible, Disposable {
+  private static final Logger LOG = Logger.getInstance(TabLabel.class);
+
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
   protected final SimpleColoredComponent myLabel;
 
@@ -56,10 +59,10 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     // navigate through the other tabs using the LEFT/RIGHT keys.
     setFocusable(ScreenReader.isActive());
     setOpaque(false);
-    setLayout(new MigLayout("gap 0 0,novisualpadding,ins 0,aligny center"));
+    setLayout(new DominantCenterBorderLayout());
 
     myLabelPlaceholder.setOpaque(false);
-    addLabelPlaceholder();
+    add(myLabelPlaceholder, BorderLayout.CENTER);
 
     setAlignmentToCenter(true);
 
@@ -149,12 +152,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         }
       });
     }
-  }
-
-  private void addLabelPlaceholder() {
-    JBTabsPosition position = myTabs.getTabsPosition();
-    String labelAlignment = position.isSide() ? "ax left" : "ax center";
-    add(myLabelPlaceholder, "pushx, " + labelAlignment);
   }
 
   @Override
@@ -401,17 +398,9 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
     toggleShowActions(false);
 
-    addActionPanel();
+    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? EAST : WEST);
 
     myTabs.revalidateAndRepaint(false);
-  }
-
-  private void addActionPanel() {
-    boolean closeOnRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    add(myActionPanel);
-    if (!closeOnRight) {
-      setComponentZOrder(myActionPanel, 0);
-    }
   }
 
   private void removeOldActionPanel() {
@@ -545,6 +534,9 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     }
   }
 
+  /**
+   * Notice, that using this method can cause changing of TabLabel instance size.
+   */
   public void setActionPanelVisible(boolean visible) {
     if (myActionPanel != null) {
       if(visible == myActionPanel.isVisible()) return;
@@ -554,18 +546,17 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
         myActionPanel.update();
       }
 
-      handleUISettingsChange();
+      updateActionLabelPosition();
     }
   }
 
-  void handleUISettingsChange() {
-    addLabelPlaceholder();
+  void updateActionLabelPosition() {
     if (myActionPanel != null) {
       if (!myActionPanel.isVisible()) {
         remove(myActionPanel);
       }
       else {
-        addActionPanel();
+        add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? EAST : WEST);
       }
     }
   }
@@ -614,6 +605,188 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PAGE_TAB;
+    }
+  }
+
+  /**
+   * This is a modification of BorderLayout, which allows to keep the preferred width of central element
+   * by reducing width of side components when width of parent container is too small to fit
+   * all components with there preferred width.
+   * <p>
+   * This layout can work only with horizontal components. Use these constants to define a region for added component:
+   * <p><ul>
+   * <li> BorderLayout.WEST
+   * <li> BorderLayout.CENTER
+   * <li> BorderLayout.EAST
+   * </ul><p>
+   * Don't use these regions (they are not supported yet):
+   * <p><ul>
+   * <li> BorderLayout.NORTH
+   * <li> BorderLayout.SOUTH
+   * </ul><p>
+   */
+  private static class DominantCenterBorderLayout implements LayoutManager2 {
+
+    final BorderLayout myBorderLayout = new BorderLayout();
+
+    @Override
+    public void addLayoutComponent(Component comp, Object constraints) {
+      checkConstraints(constraints);
+      myBorderLayout.addLayoutComponent(comp, constraints);
+    }
+
+    private static void checkConstraints(Object constraints) {
+      if (NORTH.equals(constraints) || SOUTH.equals(constraints)) {
+        LOG.warn(new IllegalArgumentException("constraints=" + constraints));
+      }
+    }
+
+    @Override
+    public Dimension maximumLayoutSize(Container target) {
+      return myBorderLayout.maximumLayoutSize(target);
+    }
+
+    @Override
+    public float getLayoutAlignmentX(Container target) {
+      return myBorderLayout.getLayoutAlignmentX(target);
+    }
+
+    @Override
+    public float getLayoutAlignmentY(Container target) {
+      return myBorderLayout.getLayoutAlignmentY(target);
+    }
+
+    @Override
+    public void invalidateLayout(Container target) {
+      myBorderLayout.invalidateLayout(target);
+    }
+
+    @Override
+    public void addLayoutComponent(String name, Component comp) {
+      myBorderLayout.addLayoutComponent(name, comp);
+    }
+
+    @Override
+    public void removeLayoutComponent(Component comp) {
+      myBorderLayout.removeLayoutComponent(comp);
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      return myBorderLayout.preferredLayoutSize(parent);
+    }
+
+    @Override
+    public Dimension minimumLayoutSize(Container parent) {
+      synchronized (parent.getTreeLock()) {
+        Component center = myBorderLayout.getLayoutComponent(CENTER);
+        if (center != null) {
+          return center.getMinimumSize();
+        }
+        else {
+          return new Dimension(0, 0);
+        }
+      }
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      if (canFit(parent)) {
+        myBorderLayout.layoutContainer(parent);
+      }
+      else {
+        layoutContainerCompressively(parent);
+      }
+    }
+
+    private void layoutContainerCompressively(Container parent) {
+      synchronized (parent.getTreeLock()) {
+        layoutContainerCompressively_locked(parent);
+      }
+    }
+
+    private void layoutContainerCompressively_locked(Container parent) {
+
+      Component west = myBorderLayout.getLayoutComponent(WEST);
+      Component center = myBorderLayout.getLayoutComponent(CENTER);
+      Component east = myBorderLayout.getLayoutComponent(EAST);
+
+      if (center == null) {
+        myBorderLayout.layoutContainer(parent);
+        return;
+      }
+
+      int top = parent.getInsets().top;
+      int left = parent.getInsets().left;
+      int bottom = parent.getHeight() - parent.getInsets().bottom;
+      int right = parent.getWidth() - parent.getInsets().right;
+      int availableWidth = right - left;
+      int availableHeight = bottom - top;
+      int preferredCenterCompWidth = center.getPreferredSize().width;
+
+      if (preferredCenterCompWidth >= availableWidth) {
+        Dimension zeroSize = new Dimension(0, 0);
+        if (west != null) west.setSize(zeroSize);
+        if (east != null) east.setSize(zeroSize);
+        center.setBounds(left, top, availableWidth, availableHeight);
+        return;
+      }
+
+      int availableWidthForSideComponents = availableWidth - preferredCenterCompWidth - 2 * myBorderLayout.getHgap();
+      if (availableWidthForSideComponents <= 0) {
+        Dimension zeroSize = new Dimension(0, 0);
+        if (west != null) west.setSize(zeroSize);
+        if (east != null) east.setSize(zeroSize);
+        int offset = (availableWidth - preferredCenterCompWidth) / 2;
+        center.setBounds(offset, top, preferredCenterCompWidth, availableHeight);
+        return;
+      }
+
+      int westWidth;
+      int eastWidth;
+
+      if (west == null) {
+        if (east == null) {
+          LOG.warn(new IllegalStateException(
+            String.format("parentSize=%s; insets=%s; centerCompSize=%s",
+                          parent.getSize().toString(), parent.getInsets().toString(), center.getSize().toString())));
+          westWidth = availableWidthForSideComponents / 2;
+        }
+        else {
+          westWidth = 0;
+        }
+      }
+      else {
+        if (east == null) {
+          westWidth = availableWidthForSideComponents;
+        }
+        else {
+          double westWidthPart = (double)west.getPreferredSize().width / (west.getPreferredSize().width + west.getPreferredSize().height);
+          westWidth = (int)(availableWidthForSideComponents * westWidthPart);
+        }
+      }
+
+      eastWidth = availableWidthForSideComponents - westWidth;
+      int offset = left;
+      if (west != null) west.setBounds(offset, top, westWidth, availableHeight);
+      offset += westWidth + myBorderLayout.getHgap();
+      center.setBounds(offset, top, preferredCenterCompWidth, availableHeight);
+      offset += preferredCenterCompWidth + myBorderLayout.getHgap();
+      if (east != null) east.setBounds(offset, top, eastWidth, availableHeight);
+    }
+
+    private boolean canFit(Container parent) {
+      Dimension size = new Dimension(0, 0);
+      size.width += parent.getInsets().left;
+      size.width += parent.getInsets().right;
+      size.width += 2 * myBorderLayout.getHgap();
+      for (String position : new String[]{EAST, CENTER, WEST}) {
+        Component component = myBorderLayout.getLayoutComponent(position);
+        if (component != null) {
+          size.width += component.getPreferredSize().width;
+        }
+      }
+      return size.width <= parent.getWidth();
     }
   }
 }

@@ -56,7 +56,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class PluginManagerCore {
@@ -632,8 +631,9 @@ public class PluginManagerCore {
       List<PluginId> list = it.backtrace().skip(1).toList();
       int idx = list.indexOf(id);
       if (idx == -1) continue;
-      cycles.add(list);
-      ignored.addAll(list);
+      List<PluginId> cycle = list.subList(0, idx + 1);
+      cycles.add(cycle);
+      ignored.addAll(cycle);
     }
     if (cycles.isEmpty()) return;
     for (PluginId id : JBIterable.from(cycles).flatMap(o -> o)) {
@@ -995,9 +995,10 @@ public class PluginManagerCore {
         text += "not loaded plugins";
       }
       actions.add(text + "</a>");
-      boolean disabledRequired = JBIterable.from(disabledRequiredIds).find(o -> !disabledIds.containsKey(o)) == null;
-      if (disabledRequired) {
-        String name = disabledRequiredIds.size() == 1 ? disabledIds.get(disabledRequiredIds.iterator().next()) : " all necessary plugins";
+      if (!disabledRequiredIds.isEmpty()) {
+        String name = disabledRequiredIds.size() == 1
+                      ? toPresentableName(idMap.get(disabledRequiredIds.iterator().next()))
+                      : "all necessary plugins";
         actions.add("<a href=\"" + ENABLE + "\">Enable " + name + "</a>");
       }
       actions.add("<a href=\"" + EDIT + "\">Open plugin manager</a>");
@@ -1161,18 +1162,13 @@ public class PluginManagerCore {
 
   private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> result,
                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
+    Condition<PluginId> enabledCondition = depId -> {
+      IdeaPluginDescriptorImpl dep = idMap.get(depId);
+      return dep != null && dep.isEnabled();
+    };
     for (IdeaPluginDescriptorImpl descriptor : result) {
-      Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
-      if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
-        descriptor.setOptionalDescriptors(null);
-
-        for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : optionalDescriptors.entrySet()) {
-          IdeaPluginDescriptorImpl dep = idMap.get(entry.getKey());
-          if (dep == null || !dep.isEnabled()) continue;
-          for (IdeaPluginDescriptorImpl optionalDescriptor : entry.getValue()) {
-            descriptor.mergeOptionalConfig(optionalDescriptor);
-          }
-        }
+      for (IdeaPluginDescriptorImpl d : optionalDescriptorRecursively(descriptor, enabledCondition)) {
+        descriptor.mergeOptionalConfig(d);
       }
     }
   }
@@ -1204,14 +1200,16 @@ public class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull JBTreeTraverser<PluginId> traverser,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull Set<PluginId> brokenIds) {
+                                                 @NotNull Set<PluginId> brokenIds,
+                                                 @NotNull List<String> errors) {
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
     boolean shouldLoadPlugins = shouldLoadPlugins();
 
     Set<IdeaPluginDescriptorImpl> allDescriptors = new LinkedHashSet<>(idMap.values());
     IdeaPluginDescriptorImpl coreDescriptor = idMap.get(PluginId.getId(CORE_PLUGIN_ID));
-    boolean checkModuleDependencies = !coreDescriptor.getModules().isEmpty() && !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
+    boolean checkModuleDependencies = !coreDescriptor.getModules().isEmpty() &&
+                                      !coreDescriptor.getModules().contains(ALL_MODULES_MARKER);
 
     LinkedHashSet<PluginId> explicitlyEnabled = null;
     if (selectedIds != null) {
@@ -1230,7 +1228,7 @@ public class PluginManagerCore {
       // add all required dependencies
       traverser.withRoots(new ArrayList<>(explicitlyEnabled)).unique().traverse().addAllTo(explicitlyEnabled);
     }
-
+    BuildNumber buildNumber = getBuildNumber();
     for (IdeaPluginDescriptorImpl descriptor : allDescriptors) {
       String errorSuffix;
       if (descriptor == coreDescriptor) {
@@ -1250,23 +1248,22 @@ public class PluginManagerCore {
         }
       }
       else if (!shouldLoadPlugins) {
-        errorSuffix = "skipped (plugins loading disabled)";
+        errorSuffix = "is skipped (plugins loading disabled)";
       }
       else if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
         // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
         // If a plugin does not include any module dependency tags in its plugin.xml,
         // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
-        errorSuffix = "does not include any module dependency tags in its plugin.xml " +
-                      "therefore is assumed legacy and can be loaded only in IntelliJ IDEA";
+        errorSuffix = "defines no module dependencies (supported only in IntelliJ IDEA)";
       }
       else if (isDisabled(descriptor.getPluginId().getIdString())) {
         // do not log disabled plugins on each start
         errorSuffix = "";
       }
-      else if (isIncompatible(descriptor)) {
-        errorSuffix = "since-build(" + descriptor.getSinceBuild() +
-                      ") or until-build(" + descriptor.getUntilBuild() +
-                      ") don't match this product's build number(" + getBuildNumber() + ")";
+      else if (isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
+        errorSuffix = "is incompatible (target build range is " +
+                      StringUtil.notNullize(descriptor.getSinceBuild(), "0.0") + " to " +
+                      StringUtil.notNullize(descriptor.getUntilBuild(), "*.*") + ")";
       }
       else if (isBrokenPlugin(descriptor)) {
         errorSuffix = "version was marked as incompatible";
@@ -1278,7 +1275,7 @@ public class PluginManagerCore {
       if (errorSuffix != null) {
         descriptor.setEnabled(false);
         if (StringUtil.isNotEmpty(errorSuffix)) {
-          getLogger().info("Plugin " + toPresentableName(descriptor) + " " + errorSuffix);
+          errors.add("Plugin " + toPresentableName(descriptor) + " " + errorSuffix);
         }
       }
     }
@@ -1301,40 +1298,36 @@ public class PluginManagerCore {
       buildNumber = getBuildNumber();
     }
 
-    try {
-      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), descriptor.getName(), descriptor.toString());
+    String message = isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild());
+    if (message != null) {
+      getLogger().warn("Plugin " + toPresentableName(descriptor) + " is incompatible (" + message + ")");
+      return true;
     }
-    catch (RuntimeException e) {
-      getLogger().error(e);
-    }
-
     return false;
   }
 
-  static boolean isIncompatible(@NotNull BuildNumber buildNumber,
-                                @Nullable String sinceBuild,
-                                @Nullable String untilBuild,
-                                @Nullable String descriptorName,
-                                @Nullable String descriptorDebugString) {
-    List<String> messages = null;
-    BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, descriptorName, null);
-    if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
-      messages = new SmartList<>("since build " + sinceBuildNumber + " > " + buildNumber);
-    }
-
-    BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, descriptorName, null);
-    if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
-      if (messages == null) {
-        messages = new SmartList<>();
+  @Nullable
+  static String isIncompatible(@NotNull BuildNumber buildNumber,
+                               @Nullable String sinceBuild,
+                               @Nullable String untilBuild) {
+    try {
+      String message = "";
+      BuildNumber sinceBuildNumber = StringUtil.isEmpty(sinceBuild) ? null : BuildNumber.fromString(sinceBuild, null, null);
+      if (sinceBuildNumber != null && sinceBuildNumber.compareTo(buildNumber) > 0) {
+        message += "since build " + sinceBuildNumber + " > " + buildNumber;
       }
-      messages.add("until build " + untilBuildNumber + " < " + buildNumber);
-    }
-    if (messages != null) {
-      getLogger().warn(toPresentableName(chooseNotNull(descriptorName, descriptorDebugString)) + " not loaded: " + StringUtil.join(messages, ", "));
-      return true;
-    }
 
-    return false;
+      BuildNumber untilBuildNumber = StringUtil.isEmpty(untilBuild) ? null : BuildNumber.fromString(untilBuild, null, null);
+      if (untilBuildNumber != null && untilBuildNumber.compareTo(buildNumber) < 0) {
+        if (!message.isEmpty()) message += ", ";
+        message += "until build " + untilBuildNumber + " < " + buildNumber;
+      }
+      return StringUtil.nullize(message);
+    }
+    catch (Exception e) {
+      getLogger().error(e);
+      return "version check failed";
+    }
   }
 
   private static void checkEssentialPluginsAreAvailable(@NotNull Collection<IdeaPluginDescriptorImpl> plugins) {
@@ -1372,8 +1365,10 @@ public class PluginManagerCore {
     Set<PluginId> enabledIds = new LinkedHashSet<>();
 
     JBTreeTraverser<PluginId> requiredDepsTraverser = new PluginTraverser(idMap, false, false);
-    checkPluginCycles(requiredDepsTraverser, idMap, errors);
-    disableIncompatiblePlugins(requiredDepsTraverser, idMap, brokenIds);
+    JBTreeTraverser<PluginId> allDepsTraverser = new PluginTraverser(idMap, true, false);
+
+    disableIncompatiblePlugins(requiredDepsTraverser, idMap, brokenIds, errors);
+    checkPluginCycles(allDepsTraverser, idMap, errors);
 
     // topological sort based on required dependencies only
     JBIterable<PluginId> sortedRequired = requiredDepsTraverser
@@ -1397,12 +1392,7 @@ public class PluginManagerCore {
         initClassLoaderForDisabledPlugin(coreLoader, descriptor);
       }
     }
-    if (!brokenIds.isEmpty()) {
-      errors.add("Plugins " + StringUtil.join(brokenIds, id -> toPresentableName(idMap.get(id)), ", ") +
-                 " are not compatible with this build");
-    }
 
-    JBTreeTraverser<PluginId> allDepsTraverser = new PluginTraverser(idMap, true, false);
     // topological sort based on all (required and optional) dependencies
     JBIterable<PluginId> sortedAll = allDepsTraverser
       .withRoots(sortedRequired)
@@ -1487,7 +1477,8 @@ public class PluginManagerCore {
       result = false;
       if (descriptor.isImplementationDetail()) continue;
       IdeaPluginDescriptorImpl dep = idMap.get(depId);
-      if (dep != null) {
+      if (dep != null && isDisabled(depId.getIdString())) {
+        // broken/incompatible plugins can be updated, add them anyway
         disabledRequiredIds.add(dep.getPluginId());
       }
       String name = descriptor.getName();
@@ -1646,6 +1637,26 @@ public class PluginManagerCore {
     return new PluginTraverser(buildPluginIdMap(plugins, new ArrayList<>()), false, true).unique();
   }
 
+  @NotNull
+  private static JBIterable<IdeaPluginDescriptorImpl> optionalDescriptorRecursively(
+    @NotNull IdeaPluginDescriptorImpl descriptor,
+    @NotNull Condition<? super PluginId> condition) {
+    Map<PluginId, List<IdeaPluginDescriptorImpl>> optMap = descriptor.getOptionalDescriptors();
+    if (optMap == null || optMap.isEmpty()) return JBIterable.empty();
+
+    return JBTreeTraverser.<IdeaPluginDescriptorImpl>from(d -> {
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> map = d.getOptionalDescriptors();
+      if (map == null || map.isEmpty()) return JBIterable.empty();
+
+      return JBIterable.from(map.entrySet())
+        .filter(o -> condition.value(o.getKey()))
+        .flatten(o -> o.getValue());
+    })
+      .withRoot(descriptor)
+      .traverse()
+      .skip(1);
+  }
+
   private static class PluginTraverser extends JBTreeTraverser<PluginId> {
     final Map<PluginId, IdeaPluginDescriptorImpl> idMap;
 
@@ -1656,10 +1667,16 @@ public class PluginManagerCore {
         IdeaPluginDescriptorImpl descriptor = idMap.get(o);
         if (descriptor == null) return JBIterable.empty();
         PluginId implicitDep = getImplicitDependency(descriptor, idMap);
-        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep);
-        JBIterable<PluginId> selectedDeps = withOptionalDeps ? allDeps : allDeps
-          .filter(id -> idMap.get(id) != descriptor)
-          .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
+        JBIterable<PluginId> allDeps = JBIterable.of(descriptor.getDependentPluginIds()).append(implicitDep)
+          .filter(id -> idMap.get(id) != descriptor);
+        JBIterable<PluginId> selectedDeps =
+          withOptionalDeps
+          ? allDeps
+            .append(optionalDescriptorRecursively(descriptor, Conditions.alwaysTrue())
+              .flatten(d -> JBIterable.of(d.getOptionalDependentPluginIds())))
+            .unique()
+          : allDeps
+            .filter(id -> ArrayUtil.indexOf(descriptor.getOptionalDependentPluginIds(), id) == -1);
         return !convertModulesToPlugins ? selectedDeps : selectedDeps.map(
           id -> {
             if (!isModuleDependency(id)) return id;

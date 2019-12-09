@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -257,6 +258,12 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
     }
     return null;
+  }
+
+  protected static boolean isChangeSelected(@NotNull ThreesideDiffChangeBase change, @NotNull BitSet lines, @NotNull ThreeSide side) {
+    int line1 = change.getStartLine(side);
+    int line2 = change.getEndLine(side);
+    return DiffUtil.isSelectedByLine(lines, line1, line2);
   }
 
   //

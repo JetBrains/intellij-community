@@ -26,7 +26,6 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,17 +76,19 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   }
 
   @Override
-  public void switchToTask(@NotNull TaskInfo taskInfo, @Nullable Runnable invokeAfter) {
-    final String branchName = taskInfo.getName();
+  public boolean switchToTask(@NotNull TaskInfo taskInfo, @Nullable Runnable invokeAfter) {
     List<R> repositories = getRepositories(taskInfo.getRepositories());
     List<R> notFound = ContainerUtil.filter(repositories, repository -> !hasBranch(repository, taskInfo));
+    final String branchName = taskInfo.getName();
     if (!notFound.isEmpty()) {
       checkoutAsNewBranch(branchName, notFound);
     }
     repositories.removeAll(notFound);
     if (!repositories.isEmpty()) {
       checkout(branchName, repositories, invokeAfter);
+      return true;
     }
+    return false;
   }
 
   @Override

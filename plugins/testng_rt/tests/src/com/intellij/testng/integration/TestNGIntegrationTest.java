@@ -52,7 +52,7 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.testng", "testng", myTestNGVersion), getRepoManager());
     assertNotNull("Test annotation not found", 
                   JavaPsiFacade.getInstance(getProject())
                                .findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));

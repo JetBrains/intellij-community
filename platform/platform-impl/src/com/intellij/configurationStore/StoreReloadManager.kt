@@ -26,6 +26,9 @@ interface StoreReloadManager {
   @ApiStatus.Internal
   fun isReloadBlocked(): Boolean
 
+  @ApiStatus.Internal
+  fun scheduleProcessingChangedFiles()
+
   @TestOnly
   fun flushChangedProjectFileAlarm()
 

@@ -1237,15 +1237,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   @Override
   protected void configureByExistingFile(@NotNull VirtualFile virtualFile) {
     super.configureByExistingFile(virtualFile);
-    EditorTracker editorTracker = getProject().getComponent(EditorTracker.class);
-    editorTracker.setActiveEditors(Collections.singletonList(getEditor()));
+    EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
   }
 
   @Override
   protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, @NotNull VirtualFile... vFiles) throws IOException {
     VirtualFile file = super.configureByFiles(rawProjectRoot, vFiles);
-    EditorTracker editorTracker = getProject().getComponent(EditorTracker.class);
-    editorTracker.setActiveEditors(Collections.singletonList(getEditor()));
+    EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
     return file;
   }
 
@@ -1712,7 +1710,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
         configureByText(PlainTextFileType.INSTANCE, "");
         Editor editor = getEditor();
-        EditorTracker editorTracker = getProject().getComponent(EditorTracker.class);
+        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
         editorTracker.setActiveEditors(Collections.singletonList(editor));
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();

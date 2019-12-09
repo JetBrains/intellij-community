@@ -8,4 +8,8 @@ class DiffCustomCommandHandler : TerminalShellCommandHandler {
   override fun execute(project: Project, getWorkingDirectory: () -> String?, command: String): Boolean {
     return "diff" == command
   }
+
+  override fun isAvailable(project: Project, command: String): Boolean {
+    return command == "diff"
+  }
 }

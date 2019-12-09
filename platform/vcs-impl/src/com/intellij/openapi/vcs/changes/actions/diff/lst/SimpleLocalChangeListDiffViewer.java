@@ -7,6 +7,7 @@ import com.intellij.diff.tools.simple.SimpleDiffChange;
 import com.intellij.diff.tools.simple.SimpleDiffChangeUi;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.util.DiffGutterOperation;
 import com.intellij.diff.util.DiffGutterRenderer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
@@ -15,10 +16,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
@@ -218,22 +219,19 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     protected void doInstallActionHighlighters() {
       super.doInstallActionHighlighters();
-      if (getViewer().myAllowExcludeChangesFromCommit && getChange().isFromActiveChangelist()) {
-        myOperations.add(new ExcludeGutterOperation());
+      if (getViewer().myAllowExcludeChangesFromCommit) {
+        ContainerUtil.addIfNotNull(myOperations, createExcludeGutterOperation());
       }
     }
 
-    private class ExcludeGutterOperation extends GutterOperation {
-      ExcludeGutterOperation() {
-        super(Side.RIGHT);
-      }
+    @Nullable
+    private DiffGutterOperation createExcludeGutterOperation() {
+      if (!getChange().isFromActiveChangelist()) return null;
 
-      @Override
-      public GutterIconRenderer createRenderer() {
-        if (!getChange().isFromActiveChangelist()) return null;
+      final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
+      Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
 
-        final boolean isExcludedFromCommit = getChange().isExcludedFromCommit();
-        Icon icon = isExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
+      return createOperation(Side.RIGHT, (ctrlPressed, shiftPressed, altPressed) -> {
         return new DiffGutterRenderer(icon, "Include into commit") {
           @Override
           protected void handleMouseClick() {
@@ -243,7 +241,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
             LocalTrackerDiffUtil.toggleRangeAtLine(getViewer().myTrackerActionProvider, line, isExcludedFromCommit);
           }
         };
-      }
+      });
     }
   }
 

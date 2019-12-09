@@ -301,13 +301,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
 
+    myOldSdks = new SdkLeakTracker();
+
     boolean reusedProject = true;
     if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
       reusedProject = false;
     }
 
-    myOldSdks = new SdkLeakTracker();
+    descriptor.registerSdk(parentDisposable);
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
     Project project = ourProject;
@@ -410,8 +412,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         }
       },
       () -> checkEditorsReleased(),
-      () -> myOldSdks.checkForJdkTableLeaks(),
       super::tearDown,
+      () -> myOldSdks.checkForJdkTableLeaks(),
       () -> {
         if (myThreadTracker != null) {
           myThreadTracker.checkLeak();

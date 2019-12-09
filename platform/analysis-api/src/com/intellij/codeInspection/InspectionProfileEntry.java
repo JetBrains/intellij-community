@@ -197,6 +197,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     @Nullable
     String getDefaultShortName();
 
+    /**
+     * Unlocalized inspection group name
+     */
+    @NonNls
+    @Nullable
+    String getGroupKey();
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Nullable
     String getDefaultDisplayName();
@@ -224,6 +231,18 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     }
     LOG.error(getClass() + ": group display name should be overridden or configured via XML " + getClass());
     return "";
+  }
+
+  /**
+   * @see InspectionEP#groupKey
+   */
+  @NonNls
+  @Nullable
+  public String getGroupKey() {
+    if (myNameProvider != null) {
+      return myNameProvider.getGroupKey();
+    }
+    return null;
   }
 
   /**

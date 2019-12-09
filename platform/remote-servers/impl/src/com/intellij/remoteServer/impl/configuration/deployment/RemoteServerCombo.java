@@ -14,6 +14,7 @@ import com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable
 import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,8 +247,8 @@ public class RemoteServerCombo<S extends ServerConfiguration> extends ComboboxWi
 
     @Override
     public void render(@NotNull SimpleColoredComponent ui) {
-      ui.setIcon(null);
-      ui.append(CloudBundle.getText("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+      ui.setIcon(EmptyIcon.create(myServerType.getIcon()));
+      ui.append(CloudBundle.getText("remote.server.combo.create.new.server"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     @Override

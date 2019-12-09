@@ -6,7 +6,6 @@ import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -25,6 +24,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -33,9 +34,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,19 +58,19 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static com.intellij.ui.IdeBorderFactory.createBorder;
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
-import static java.util.stream.Collectors.toList;
+import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
+import static java.util.Arrays.asList;
 
 @State(
   name = "ChangesViewManager",
@@ -252,12 +254,16 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   private static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
+    @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
+    @NotNull private static final RegistryValue isCommitSplitHorizontal =
+      Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
+
     @NotNull private final Project myProject;
     @NotNull private final ChangesViewManager myChangesViewManager;
     @NotNull private final VcsConfiguration myVcsConfiguration;
 
+    @NotNull private final ChangesViewPanel myChangesPanel;
     @NotNull private final ChangesListView myView;
-    @NotNull private final List<AnAction> myToolbarActions;
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     @NotNull private final PreviewDiffSplitterComponent myDiffPreviewSplitter;
@@ -277,13 +283,13 @@ public class ChangesViewManager implements ChangesViewEx,
       super(false, true);
       myProject = project;
       myChangesViewManager = changesViewManager;
+      CommitWorkflowManager commitWorkflowManager = CommitWorkflowManager.getInstance(myProject);
 
       myVcsConfiguration = VcsConfiguration.getInstance(myProject);
       myTreeUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
-      myView = new ChangesListView(project, false);
-      TreeExpander treeExpander = new MyTreeExpander(myView);
-      myView.setTreeExpander(treeExpander);
+      myChangesPanel = new ChangesViewPanel(project);
+      myView = myChangesPanel.getChangesView();
       myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       myView.addTreeSelectionListener(e -> {
@@ -296,34 +302,63 @@ public class ChangesViewManager implements ChangesViewEx,
       });
       ChangesDnDSupport.install(myProject, myView);
 
-      myToolbarActions = createChangesToolbarActions(treeExpander);
+      myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
+      myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
-      ActionToolbar changesToolbar = ActionManager.getInstance()
-        .createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, new DefaultActionGroup(myToolbarActions), false);
-      changesToolbar.setTargetComponent(myView);
-      JComponent toolbarComponent = simplePanel(changesToolbar.getComponent())
-        .withBorder(createBorder(JBColor.border(), SideBorder.RIGHT));
+      isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          boolean isToolbarHorizontal = value.asBoolean() && commitWorkflowManager.isNonModal();
 
-      BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(toolbarComponent);
+          myChangesPanel.setToolbarHorizontal(isToolbarHorizontal);
+          if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
+        }
+      }, this);
 
       myCommitPanelSplitter = new ChangesViewCommitPanelSplitter();
-      myCommitPanelSplitter.setFirstComponent(changesPanel);
+      myCommitPanelSplitter.setFirstComponent(myChangesPanel);
 
       BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
         @Override
         public Dimension getMinimumSize() {
-          return isMinimumSizeSet() ? super.getMinimumSize() : toolbarComponent.getPreferredSize();
+          return isMinimumSizeSet() || myChangesPanel.isToolbarHorizontal()
+                 ? super.getMinimumSize()
+                 : myChangesPanel.getToolbar().getComponent().getPreferredSize();
         }
       };
       contentPanel.addToCenter(myCommitPanelSplitter);
 
-      MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject, this);
+      ChangesViewDiffPreviewProcessor changeProcessor = new ChangesViewDiffPreviewProcessor(myView);
+      Disposer.register(this, changeProcessor);
+
       myDiffPreviewSplitter = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                                                myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
       BorderLayoutPanel mainPanel = simplePanel(myDiffPreviewSplitter).addToBottom(myProgressLabel);
       setContent(mainPanel);
+
+      setCommitSplitOrientation();
+      isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          setCommitSplitOrientation();
+        }
+      }, this);
+
+      isToggleCommitUi().addListener(new RegistryValueListener.Adapter() {
+        @Override
+        public void afterValueChanged(@NotNull RegistryValue value) {
+          if (myCommitWorkflowHandler == null) return;
+
+          if (value.asBoolean()) {
+            myCommitWorkflowHandler.deactivate();
+          }
+          else {
+            myCommitWorkflowHandler.activate();
+          }
+        }
+      }, this);
 
       MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
@@ -339,6 +374,20 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       });
       ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+
+      if (Registry.is("show.diff.as.editor.tab")) {
+        ChangesViewContentI changesViewContentManager = ChangesViewContentManager.getInstance(project);
+        if (changesViewContentManager instanceof ChangesViewContentManager) {
+          ((ChangesViewContentManager) changesViewContentManager).adviseSelectionChanged(new ContentManagerAdapter(){
+            @Override
+            public void selectionChanged(@NotNull ContentManagerEvent event) {
+              if (event.getContent().getDisplayName().equals("Commit") && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+                updatePreview(false);
+              }
+            }
+          });
+        }
+      }
 
       scheduleRefresh();
       updatePreview(false);
@@ -362,26 +411,42 @@ public class ChangesViewManager implements ChangesViewEx,
     public void updateCommitWorkflow(boolean isNonModal) {
       if (isNonModal) {
         if (myCommitPanel == null) {
+          myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
+          myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
+          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate();
           Disposer.register(this, myCommitPanel);
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
           myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
         }
       }
-      else if (myCommitPanel != null) {
-        myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
-        myCommitPanelSplitter.setSecondComponent(null);
-        Disposer.dispose(myCommitPanel);
+      else {
+        myChangesPanel.setToolbarHorizontal(false);
+        if (myCommitPanel != null) {
 
-        myCommitPanel = null;
-        myCommitWorkflowHandler = null;
+          myDiffPreviewSplitter.setAllowExcludeFromCommit(false);
+          myCommitPanelSplitter.setSecondComponent(null);
+          Disposer.dispose(myCommitPanel);
+
+          myCommitPanel = null;
+          myCommitWorkflowHandler = null;
+        }
       }
     }
 
     public boolean isAllowExcludeFromCommit() {
       return myCommitWorkflowHandler != null;
+    }
+
+    private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {
+      myDiffPreviewSplitter.setDetailsOn(isDiffPreviewVisible);
+      setCommitSplitOrientation();
+    }
+
+    private void setCommitSplitOrientation() {
+      myCommitPanelSplitter.setOrientation(myDiffPreviewSplitter.isDetailsOn() || !isCommitSplitHorizontal.asBoolean());
     }
 
     @NotNull
@@ -392,7 +457,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     @Override
     public List<AnAction> getActions(boolean originalProvider) {
-      return Collections.unmodifiableList(myToolbarActions);
+      return asList(myChangesPanel.getToolbarActionGroup().getChildren(null));
     }
 
     @Nullable
@@ -516,7 +581,6 @@ public class ChangesViewManager implements ChangesViewEx,
       myDiffPreviewSplitter.updatePreview(fromModelRefresh);
     }
 
-
     public void setGrouping(@NotNull String groupingKey) {
       myView.getGroupingSupport().setGroupingKeysOrSkip(set(groupingKey));
     }
@@ -592,22 +656,6 @@ public class ChangesViewManager implements ChangesViewEx,
       }
     }
 
-    private static class MyTreeExpander extends DefaultTreeExpander {
-      @NotNull private final Tree myTree;
-
-      MyTreeExpander(@NotNull Tree tree) {
-        super(tree);
-        myTree = tree;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 2);
-        TreeUtil.expand(myTree, 1);
-      }
-    }
-
-
     private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
       ToggleShowIgnoredAction() {
         super(VcsBundle.message("changes.action.show.ignored.text"),
@@ -630,54 +678,15 @@ public class ChangesViewManager implements ChangesViewEx,
     private class ToggleDetailsAction extends ShowDiffPreviewAction {
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myDiffPreviewSplitter.setDetailsOn(state);
+        setDiffPreviewVisible(state);
+
+        updatePreview(false);
         myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
       }
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-      }
-    }
-
-    private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-      MyChangeProcessor(@NotNull Project project, @NotNull Disposable disposable) {
-        super(project, DiffPlaces.CHANGES_VIEW);
-        Disposer.register(disposable, this);
-
-        putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
-      }
-
-      @NotNull
-      @Override
-      protected List<Wrapper> getSelectedChanges() {
-        boolean hasSelection = myView.getSelectionCount() != 0;
-        if (hasSelection) {
-          return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-        }
-        else {
-          return getAllChanges();
-        }
-      }
-
-      @NotNull
-      @Override
-      protected List<Wrapper> getAllChanges() {
-        return wrap(myView.getChanges(), myView.getUnversionedFiles());
-      }
-
-      @Override
-      protected void selectChange(@NotNull Wrapper change) {
-        TreePath path = myView.findNodePathInTree(change.getUserObject());
-        if (path != null) {
-          TreeUtil.selectPath(myView, path, false);
-        }
-      }
-
-      @NotNull
-      private List<Wrapper> wrap(@NotNull Stream<? extends Change> changes, @NotNull Stream<? extends FilePath> unversioned) {
-        return Stream.concat(changes.map(ChangeWrapper::new), unversioned.map(FilePath::getVirtualFile).filter(
-        Objects::nonNull).map(UnversionedFileWrapper::new)).collect(toList());
       }
     }
   }

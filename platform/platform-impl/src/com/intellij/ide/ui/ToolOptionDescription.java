@@ -16,32 +16,38 @@
 package com.intellij.ide.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ToolOptionDescription extends BooleanOptionDescription {
-  private final Tools myTool;
   private final Project myProject;
+  private final String myShortName;
 
   public ToolOptionDescription(Tools tool, Project project) {
-    super(tool.getTool().getGroupDisplayName() + ": " + tool.getTool().getDisplayName() , "Errors");
-
-    myTool = tool;
+    super(tool.getTool().getGroupDisplayName() + ": " + tool.getTool().getDisplayName(), "Errors");
+    myShortName = tool.getShortName();
     myProject = project;
   }
 
   @Override
   public boolean isOptionEnabled() {
-    return myTool.getDefaultState().isEnabled();
+    return getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(myShortName));
+  }
+
+  private InspectionProfileImpl getCurrentProfile() {
+    return InspectionProfileManager.getInstance(myProject).getCurrentProfile();
   }
 
   @Override
   public void setOptionState(boolean enabled) {
-    myTool.getDefaultState().setEnabled(enabled);
+    InspectionProfileImpl.setToolEnabled(enabled, getCurrentProfile(), myShortName, myProject);
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 }

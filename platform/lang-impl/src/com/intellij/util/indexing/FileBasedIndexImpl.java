@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -98,13 +99,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class FileBasedIndexImpl extends FileBasedIndex implements Disposable {
+public final class FileBasedIndexImpl extends FileBasedIndex {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -260,13 +260,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       }
     });
 
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
-      @Override
-      public void writeActionStarted(@NotNull Object action) {
-        myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
-      }
-    }, this);
-
     myConnection = connection;
 
     initComponent();
@@ -343,34 +336,30 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
    */
-  private static <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, @NotNull IndexConfiguration state) throws IOException {
+  private static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, @NotNull IndexConfiguration state,
+                                             @NotNull IndicesRegistrationResult registrationStatusSink) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
 
     final File versionFile = IndexInfrastructure.getVersionFile(name);
-    boolean versionChanged = false;
 
     if (IndexingStamp.versionDiffers(name, version)) {
       final boolean versionFileExisted = versionFile.exists();
 
-      if (versionFileExisted) {
-        versionChanged = true;
-        LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
-      }
-      else {
-        LOG.debug("Index " + name + " will be built.");
-      }
-      if (extension.hasSnapshotMapping() && versionChanged) {
+      if (versionFileExisted) registrationStatusSink.registerIndexAsChanged(name);
+      else registrationStatusSink.registerIndexAsInitiallyBuilt(name);
+
+      if (extension.hasSnapshotMapping() && versionFileExisted) {
         FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name));
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
       if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
       IndexingStamp.rewriteVersion(name, version);
+    } else {
+      registrationStatusSink.registerIndexAsUptoDate(name);
     }
 
     initIndexStorage(extension, version, state);
-
-    return versionChanged;
   }
 
   private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
@@ -496,11 +485,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
     return extension instanceof CustomImplementationFileBasedIndexExtension
            ? ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, storage)
            : new VfsAwareMapReduceIndex<>(extension, storage);
-  }
-
-  @Override
-  public void dispose() {
-    performShutdown();
   }
 
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
@@ -2412,7 +2396,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
   private class FileIndexDataInitialization extends IndexInfrastructure.DataInitialization<IndexConfiguration> {
     private final IndexConfiguration state = new IndexConfiguration();
-    private final Set<ID<?, ?>> versionChangedIndexes = ContainerUtil.newConcurrentSet();
+    private final IndicesRegistrationResult registrationResultSink = new IndicesRegistrationResult();
     private boolean currentVersionCorrupted;
 
     private void initAssociatedDataForExtensions() {
@@ -2444,9 +2428,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
         addNestedInitializationTask(() -> {
           try {
-            if (registerIndexer(extension, state)) {
-              versionChangedIndexes.add(extension.getName());
-            }
+            registerIndexer(extension, state, registrationResultSink);
           }
           catch (IOException io) {
             throw io;
@@ -2463,6 +2445,19 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
 
     @Override
     protected void prepare() {
+      // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
+      // 1) we call for it's instance before index creation to make sure it's initialized
+      // 2) we dispose FileBasedIndex before PersistentFS disposing
+      PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
+      Disposable disposable = () -> performShutdown();
+      ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
+        @Override
+        public void writeActionStarted(@NotNull Object action) {
+          myUpToDateIndicesForUnsavedOrTransactedDocuments.clear();
+        }
+      }, disposable);
+      Disposer.register(fs, disposable);
+
       initAssociatedDataForExtensions();
 
       File indexRoot = PathManager.getIndexRoot();
@@ -2492,14 +2487,21 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
       try {
         state.finalizeFileTypeMappingForIndices();
 
+        String changedIndicesText = registrationResultSink.changedIndices();
         String rebuildNotification = null;
+
         if (currentVersionCorrupted) {
           rebuildNotification = "Index files on disk are corrupted. Indices will be rebuilt.";
         }
-        else if (!versionChangedIndexes.isEmpty()) {
-          String changedIndexesText = versionChangedIndexes.stream().map(id -> id.getName()).collect(Collectors.joining(", "));
-          rebuildNotification = "Index file format has changed for " + changedIndexesText + " indices. These indices will be rebuilt.";
+        else if (!changedIndicesText.isEmpty()) {
+          rebuildNotification = "Index file format has changed for " + changedIndicesText + " indices. These indices will be rebuilt.";
         }
+
+        registrationResultSink.logChangedAndFullyBuiltIndices(
+          LOG,
+          "Indices to be rebuilt after version change:",
+          currentVersionCorrupted ? "Indices to be rebuilt after corruption:":"Indices to be built:"
+        );
         if (rebuildNotification != null
             && !ApplicationManager.getApplication().isHeadlessEnvironment()
             && Registry.is("ide.showIndexRebuildMessage")) {
@@ -2584,8 +2586,10 @@ public final class FileBasedIndexImpl extends FileBasedIndex implements Disposab
   public synchronized FileContentHashIndex getFileContentHashIndex(@NotNull File enumeratorPath) {
     UpdatableIndex<Integer, Void, FileContent> index = getState().getIndex(FileContentHashIndexExtension.HASH_INDEX_ID);
     if (index == null) {
+      IndicesRegistrationResult registrationResult = new IndicesRegistrationResult();
       try {
-        registerIndexer(FileContentHashIndexExtension.create(enumeratorPath, this), myState);
+        registerIndexer(FileContentHashIndexExtension.create(enumeratorPath, ApplicationManager.getApplication()), myState, registrationResult);
+        registrationResult.logChangedAndFullyBuiltIndices(LOG, "Version was changed for:", "Index is to be rebuilt:");
       }
       catch (IOException e) {
         throw new RuntimeException(e);

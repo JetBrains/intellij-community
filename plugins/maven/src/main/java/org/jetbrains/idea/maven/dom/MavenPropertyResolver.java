@@ -42,7 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MavenPropertyResolver {
-  public static final Pattern PATTERN = Pattern.compile("\\$\\{(.+?)\\}|@(.+?)@");
+  public static final Pattern PATTERN = Pattern.compile("\\$\\{(.+?)}|@(.+?)@");
 
   public static void doFilterText(Module module,
                                   String text,
@@ -157,17 +157,6 @@ public class MavenPropertyResolver {
    * @return string with the properties resolved
    */
   public static String resolve(String text, MavenDomProjectModel projectDom) {
-    return resolve(PATTERN, text, projectDom);
-  }
-
-  /**
-   * Resolve properties from text using custom regexp to extract them
-   * @param pattern a regexp pattern to extract properties
-   * @param text text string to resolve properties in
-   * @param projectDom a project dom
-   * @return string with the properties resolved
-   */
-  public static String resolve(Pattern pattern, String text, MavenDomProjectModel projectDom) {
     XmlElement element = projectDom.getXmlElement();
     if (element == null) return text;
 
@@ -180,7 +169,7 @@ public class MavenPropertyResolver {
 
     StringBuilder res = new StringBuilder();
     try {
-      doFilterText(pattern, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null, res);
+      doFilterText(PATTERN, manager, mavenProject, text, collectPropertiesFromDOM(mavenProject, projectDom), null, false, null, res);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // never thrown
@@ -189,7 +178,7 @@ public class MavenPropertyResolver {
     return res.toString();
   }
 
-  private static Properties collectPropertiesFromDOM(MavenProject project, MavenDomProjectModel projectDom) {
+  public static Properties collectPropertiesFromDOM(MavenProject project, MavenDomProjectModel projectDom) {
     Properties result = new Properties();
 
     collectPropertiesFromDOM(projectDom.getProperties(), result);

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -22,6 +23,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
@@ -54,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
@@ -76,7 +79,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
   private static final int ROOT_NAME_MAX_WIDTH = 300;
-  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
+  private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
   public static final String LOADING_COMMITS_TEXT = "Loading commits...";
@@ -91,7 +94,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
-  private boolean myAuthorColumnInitialized = false;
+  @NotNull private final Set<VcsLogColumn> myInitializedColumns = EnumSet.noneOf(VcsLogColumn.class);
 
   @Nullable private Selection mySelection = null;
 
@@ -104,7 +107,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                           @NotNull VcsLogData logData,
                           @NotNull VisiblePack initialDataPack,
                           @NotNull Consumer<Runnable> requestMore) {
-    super(new GraphTableModel(initialDataPack, logData, requestMore));
+    super(new GraphTableModel(initialDataPack, logData, requestMore, ui.getProperties()));
     myLogData = logData;
     myId = ui.getId();
     myProperties = ui.getProperties();
@@ -199,7 +202,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     setPaintBusy(false);
-    myAuthorColumnInitialized = myAuthorColumnInitialized && !filtersChanged;
+    if (filtersChanged) myInitializedColumns.clear();
     reLayout();
   }
 
@@ -262,7 +265,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void forceReLayout(@NotNull VcsLogColumn column) {
-    if (column == VcsLogColumn.AUTHOR) myAuthorColumnInitialized = false;
+    myInitializedColumns.remove(column);
     reLayout();
   }
 
@@ -291,7 +294,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
       int width = CommonUiProperties.getColumnWidth(myProperties, logColumn);
       if (width <= 0 || width > getWidth()) {
-        if (logColumn != VcsLogColumn.AUTHOR || !myAuthorColumnInitialized) {
+        if (logColumn.getContentSample() != null || !myInitializedColumns.contains(logColumn)) {
           width = getColumnWidthFromData(column);
         }
         else {
@@ -311,26 +314,19 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int index = column.getModelIndex();
     VcsLogColumn logColumn = VcsLogColumn.fromOrdinal(index);
 
-    if (logColumn == VcsLogColumn.AUTHOR) {
-      if (getModel().getRowCount() <= 0) {
-        return column.getPreferredWidth();
-      }
-      return estimateAuthorColumnWidth(logColumn);
-    }
     String contentSample = logColumn.getContentSample();
     if (contentSample != null) {
       return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(contentSample) +
              VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer);
     }
-    LOG.error("Cannot estimate the content width for " + logColumn);
-    return column.getPreferredWidth();
-  }
+    if (getModel().getRowCount() <= 0 || logColumn.getContentClass() != String.class) {
+      return column.getPreferredWidth();
+    }
 
-  private int estimateAuthorColumnWidth(@NotNull VcsLogColumn logColumn) {
     Font tableFont = getTableFont();
-    // detect author with the longest name
+    // detect the longest value
     int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-    int maxAuthorWidth = 0;
+    int maxValueWidth = 0;
     int unloaded = 0;
     for (int row = 0; row < maxRowsToCheck; row++) {
       String value = getModel().getValueAt(row, logColumn).toString();
@@ -346,12 +342,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       else if (ITALIC.equals(style)) {
         font = tableFont.deriveFont(Font.ITALIC);
       }
-      maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
+      maxValueWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxValueWidth);
     }
 
-    int width = Math.min(maxAuthorWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
-                         JBUIScale.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-    if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
+    int width = Math.min(maxValueWidth + VcsLogUiUtil.getHorizontalTextPadding(myStringCellRenderer),
+                         JBUIScale.scale(MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH));
+    if (unloaded * 2 <= maxRowsToCheck) myInitializedColumns.add(logColumn);
     return width;
   }
 
@@ -463,39 +459,39 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    else if (VcsDataKeys.VCS.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
-      if (roots.size() == 1) {
-        return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
-      }
-    }
-    else if (VcsLogDataKeys.VCS_LOG_BRANCHES.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length != 1) return null;
-      return getModel().getBranchesAtRow(selectedRows[0]);
-    }
-    else if (VcsLogDataKeys.VCS_LOG_REFS.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length != 1) return null;
-      return getModel().getRefsAtRow(selectedRows[0]);
-    }
-    else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.is(dataId)) {
-      int[] selectedRows = getSelectedRows();
-      if (selectedRows.length == 0) return null;
+    return ValueKey.match(dataId)
+      .ifEq(PlatformDataKeys.COPY_PROVIDER).then(this)
+      .ifEq(VcsDataKeys.VCS).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
+        if (roots.size() == 1) {
+          return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
+        }
+        return null;
+      })
+      .ifEq(VcsLogDataKeys.VCS_LOG_BRANCHES).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length != 1) return null;
+        return getModel().getBranchesAtRow(selectedRows[0]);
+      })
+      .ifEq(VcsLogDataKeys.VCS_LOG_REFS).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length != 1) return null;
+        return getModel().getRefsAtRow(selectedRows[0]);
+      })
+      .ifEq(VcsDataKeys.PRESET_COMMIT_MESSAGE).thenGet(() -> {
+        int[] selectedRows = getSelectedRows();
+        if (selectedRows.length == 0) return null;
 
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-        sb.append(getModel().getValueAt(selectedRows[i], VcsLogColumn.COMMIT).toString());
-        if (i != selectedRows.length - 1) sb.append("\n");
-      }
-      return sb.toString();
-    }
-    return null;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
+          sb.append(getModel().getValueAt(selectedRows[i], VcsLogColumn.COMMIT).toString());
+          if (i != selectedRows.length - 1) sb.append("\n");
+        }
+        return sb.toString();
+      })
+      .orNull();
   }
 
   @Override
@@ -678,12 +674,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @Override
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
-    int lastRow = getRowCount() - 1;
-    if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
+    paintTopBottomBorder(g, x, y, width, height, false);
+  }
+
+  private void paintTopBottomBorder(@NotNull Graphics g, int x, int y, int width, int height, boolean isTopBorder) {
+    int targetRow = isTopBorder ? 0 : getRowCount() - 1;
+    if (targetRow >= 0 && targetRow < getRowCount()) {
+      g.setColor(getStyle(targetRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myColorManager.hasMultiplePaths()) {
-        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(lastRow, VcsLogColumn.ROOT), myColorManager));
+        g.setColor(getPathBackgroundColor((FilePath)getModel().getValueAt(targetRow, VcsLogColumn.ROOT), myColorManager));
 
         int rootWidth = getRootColumn().getWidth();
         if (!isShowRootNames()) rootWidth -= JBUIScale.scale(ROOT_INDICATOR_WHITE_WIDTH);
@@ -692,9 +692,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(targetRow, getColumnViewIndex(VcsLogColumn.COMMIT), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
+  }
+
+  @NotNull
+  public Border createTopBottomBorder(int top, int bottom) {
+    return new MyTopBottomBorder(top, bottom);
   }
 
   public boolean isResizingColumns() {
@@ -706,7 +711,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       component.setBackground(isSelected
-                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListUnfocusedSelectionBackground()
+                              ? table.hasFocus() ? UIUtil.getListSelectionBackground(true) : UIUtil.getListSelectionBackground(false)
                               : UIUtil.getListBackground());
       return component;
     }
@@ -820,6 +825,30 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (getVcsLogColumn(columnIndex) == VcsLogColumn.ROOT || getVcsLogColumn(newIndex) == VcsLogColumn.ROOT) return;
       super.moveColumn(columnIndex, newIndex);
       saveColumnOrderToSettings();
+    }
+  }
+
+  private class MyTopBottomBorder implements Border {
+    @NotNull private final JBInsets myInsets;
+
+    private MyTopBottomBorder(int top, int bottom) {
+      myInsets = JBUI.insets(top, 0, bottom, 0);
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (myInsets.top > 0) paintTopBottomBorder(g, x, y, width, myInsets.top, true);
+      if (myInsets.bottom > 0) paintTopBottomBorder(g, x, y + height - myInsets.bottom, width, myInsets.bottom, false);
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return myInsets;
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return true;
     }
   }
 }

@@ -185,7 +185,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     if (!area.hasExtensionPoint(collector.getName())) {
       area.registerFakeBeanPoint(collector.getName(), getPluginDescriptor());
     }
-    ExtensionTestUtil.addExtension(area, collector, language, object);
+    ExtensionTestUtil.addExtension(area, collector, new LanguageExtensionPoint<>(language.getID(), object));
   }
 
   protected final <T> void registerExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> aClass) {

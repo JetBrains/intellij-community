@@ -10,6 +10,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,10 +49,39 @@ public class Utils{
                                                  PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place){
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false)
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, null);
+  }
+
+  public static List<AnAction> expandActionGroup(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place, ActionGroupVisitor visitor) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
+  public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
+                                                                          @NotNull ActionGroup group,
+                                                                          PresentationFactory presentationFactory,
+                                                                          @NotNull DataContext context,
+                                                                          String place, @Nullable Utils.ActionGroupVisitor visitor) {
+    if (!(context instanceof AsyncDataContext))
+      context = new AsyncDataContext(context);
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+      .expandActionGroupAsync(group, group instanceof CompactActionGroup);
+  }
+
+  public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place, ActionGroupVisitor visitor) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+      .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+  }
+
+  private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
   static void fillMenu(@NotNull ActionGroup group,
                        JComponent component,
@@ -64,7 +95,9 @@ public class Utils{
     final boolean checked = group instanceof CheckedActionGroup;
 
     ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
-    List<AnAction> list = updater.expandActionGroupFull(group, group instanceof CompactActionGroup);
+    List<AnAction> list = DO_FULL_EXPAND ?
+                          updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
+                          updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
@@ -148,5 +181,15 @@ public class Utils{
         }
       });
     }
+  }
+
+  public interface ActionGroupVisitor {
+    boolean enterNode(@NotNull ActionGroup groupNode);
+    void visitLeaf(@NotNull AnAction act);
+    void leaveNode();
+    Component getCustomComponent(@NotNull AnAction action);
+
+    boolean beginUpdate(@NotNull AnAction action, AnActionEvent e);
+    void endUpdate(@NotNull AnAction action);
   }
 }

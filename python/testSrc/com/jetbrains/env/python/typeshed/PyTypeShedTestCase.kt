@@ -15,13 +15,10 @@
  */
 package com.jetbrains.env.python.typeshed
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.EdtTestUtil
@@ -37,6 +34,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.tools.sdkTools.PySdkTools
 import org.junit.After
 import org.junit.Before
@@ -70,10 +68,8 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     }
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
       SdkConfigurationUtil.addSdk(sdk)
-      ApplicationManager.getApplication().runWriteAction {
-        ProjectRootManager.getInstance(project).projectSdk = sdk
-      }
-      ModuleRootModificationUtil.setModuleSdk(module, sdk)
+      project.pythonSdk = sdk
+      module.pythonSdk = sdk
     })
   }
 

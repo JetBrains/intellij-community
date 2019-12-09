@@ -15,13 +15,16 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -58,6 +61,13 @@ public class LightProjectDescriptor {
         createContentEntry(module, sourceRoot);
       }
     });
+  }
+
+  public void registerSdk(Disposable disposable) {
+    Sdk sdk = getSdk();
+    if (sdk != null) {
+      registerJdk(sdk, disposable);
+    }
   }
 
   @NotNull
@@ -141,6 +151,13 @@ public class LightProjectDescriptor {
       contentEntry.addSourceFolder(srcRoot, getSourceRootType());
 
       configureModule(module, model, contentEntry);
+    });
+  }
+
+  private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
+    WriteAction.run(() -> {
+      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+      ((ProjectJdkTableImpl)jdkTable).addTestJdk(jdk, parentDisposable);
     });
   }
 

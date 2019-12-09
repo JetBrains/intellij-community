@@ -78,7 +78,7 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
         val generatedRoot = module.getSourceRoots(JavaSourceRootType.SOURCE).find { it.properties.isForGeneratedSources }
         val targetRoot = (generatedRoot ?: firstRoot).file.toPath().resolve("icons")
 
-        if (generatedRoot != null && oldClassName != null) {
+        if (generatedRoot != null && oldClassName != null && firstRoot != generatedRoot) {
           val oldFile = firstRootDir.resolve("$oldClassName.java")
           println("deleting $oldFile from source root which isn't marked as 'generated'")
           Files.delete(oldFile)

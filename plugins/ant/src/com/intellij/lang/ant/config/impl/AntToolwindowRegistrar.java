@@ -90,9 +90,7 @@ public class AntToolwindowRegistrar implements ProjectComponent {
   private static DataContext createDataContext(CompileContext context) {
     final HashMap<String, Object> dataMap = new HashMap<>();
     final Project project = context.getProject();
-    if (project != null) {
-      dataMap.put(CommonDataKeys.PROJECT.getName(), project);
-    }
+    dataMap.put(CommonDataKeys.PROJECT.getName(), project);
     final CompileScope scope = context.getCompileScope();
     final Module[] modules = scope.getAffectedModules();
     if (modules.length == 1) {

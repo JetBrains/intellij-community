@@ -93,6 +93,11 @@ public interface StatusBarWidget extends Disposable {
     @Deprecated
     @ApiStatus.ScheduledForRemoval
     default String getMaxValue() { return ""; }
+
+    @Nullable
+    default Icon getIcon() {
+      return null;
+    }
   }
 
   abstract class WidgetBorder implements Border {

@@ -70,8 +70,8 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
     try {
       myPersistentMap.close();
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (IOException e) {
+      LOG.info(e);
     }
     PersistentHashMap.deleteFilesStartingWith(baseFile);
     myPersistentMap = createMap(myMapFile);

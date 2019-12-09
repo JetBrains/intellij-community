@@ -18,6 +18,7 @@ package com.intellij.roots;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -145,7 +146,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   }
 
   protected boolean underTreeProjectModel() {
-    return myProject.getClass().getName() == "com.intellij.openapi.project.impl.LegacyBridgeProjectImpl";
+    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.treeProjectModel.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
   }
 
   protected void ignoreTestUnderTreeProjectModel() {

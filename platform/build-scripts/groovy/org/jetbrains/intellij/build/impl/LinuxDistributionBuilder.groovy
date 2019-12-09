@@ -64,7 +64,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
       // Used for Snap packages
-      String jreDirectoryPath = buildContext.bundledJreManager.extractJre("linux")
+      String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
       buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
 
       if (jreDirectoryPath != null) {

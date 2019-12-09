@@ -58,6 +58,8 @@ public class PluginDownloader {
   private File myFile;
   private File myOldFile;
 
+  private boolean myShownErrors;
+
   private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber) {
     myPluginId = descriptor.getPluginId().getIdString();
     myPluginName = descriptor.getName();
@@ -115,7 +117,13 @@ public class PluginDownloader {
     return myFile;
   }
 
+  public boolean isShownErrors() {
+    return myShownErrors;
+  }
+
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
+    myShownErrors = false;
+
     if (myFile != null) {
       return true;
     }
@@ -146,6 +154,7 @@ public class PluginDownloader {
     if (myFile == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null) {
+        myShownErrors = true;
         if (errorMessage == null) {
           errorMessage = IdeBundle.message("unknown.error");
         }

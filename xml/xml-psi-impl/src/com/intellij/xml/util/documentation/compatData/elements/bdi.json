@@ -9,7 +9,7 @@
               "version_added": "16"
             },
             "chrome_android": {
-              "version_added": false
+              "version_added": "18"
             },
             "edge": {
               "version_added": false
@@ -24,10 +24,10 @@
               "version_added": false
             },
             "opera": {
-              "version_added": false
+              "version_added": "15"
             },
             "opera_android": {
-              "version_added": false
+              "version_added": "14"
             },
             "safari": {
               "version_added": false
@@ -36,10 +36,10 @@
               "version_added": false
             },
             "samsunginternet_android": {
-              "version_added": false
+              "version_added": "1.0"
             },
             "webview_android": {
-              "version_added": false
+              "version_added": "≤37"
             }
           },
           "status": {

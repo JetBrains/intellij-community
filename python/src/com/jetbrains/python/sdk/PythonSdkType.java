@@ -53,6 +53,7 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +64,6 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
-
-import static com.jetbrains.python.sdk.PythonSdkUtil.getAllSdks;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -615,6 +614,154 @@ public final class PythonSdkType extends SdkType {
       }
     }
     return null;
+  }
+
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean hasValidSdk() {
+    return PythonSdkUtil.hasValidSdk();
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isInvalid(@NotNull Sdk sdk) {
+    return PythonSdkUtil.isInvalid(sdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isRemote(@Nullable Sdk sdk) {
+    return PythonSdkUtil.isRemote(sdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isRemote(@Nullable String sdkPath) {
+    return PythonSdkUtil.isRemote(sdkPath);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
+    return PythonSdkUtil.isVirtualEnv(sdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isVirtualEnv(@Nullable String path) {
+    return PythonSdkUtil.isVirtualEnv(path);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isConda(@NotNull Sdk sdk) {
+    return PythonSdkUtil.isConda(sdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isConda(@Nullable String sdkPath) {
+    return PythonSdkUtil.isConda(sdkPath);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
+    return PythonSdkUtil.isCondaVirtualEnv(sdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static File getVirtualEnvRoot(@NotNull final String binaryPath) {
+    return PythonSdkUtil.getVirtualEnvRoot(binaryPath);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static File findExecutableFile(File parent, String name) {
+    return PythonSdkUtil.findExecutableFile(parent, name);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static final OrderRootType BUILTIN_ROOT_TYPE = PythonSdkUtil.BUILTIN_ROOT_TYPE;
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static List<Sdk> getAllSdks() {
+    return PythonSdkUtil.getAllSdks();
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static Sdk findPythonSdk(@Nullable Module module) {
+    return PythonSdkUtil.findPythonSdk(module);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static Sdk findPythonSdk(@NotNull final PsiElement element) {
+    return PythonSdkUtil.findPythonSdk(element);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static Sdk findSdkByPath(@Nullable String path) {
+    return PythonSdkUtil.findSdkByPath(path);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
+    return PythonSdkUtil.findSdkByPath(sdkList, path);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
+    return PythonSdkUtil.isStdLib(vFile, pythonSdk);
+  }
+
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    return PythonSdkUtil.getSitePackagesDirectory(pythonSdk);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static List<Sdk> getAllLocalCPythons() {
+    return PythonSdkUtil.getAllLocalCPythons();
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static String getPythonExecutable(@NotNull String rootPath) {
+    return PythonSdkUtil.getPythonExecutable(rootPath);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static String getExecutablePath(@NotNull final String homeDirectory, @NotNull String name) {
+    return PythonSdkUtil.getExecutablePath(homeDirectory, name);
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Nullable
+  public static Sdk findSdkByKey(@NotNull String key) {
+    return PythonSdkUtil.findSdkByKey(key);
   }
 }
 

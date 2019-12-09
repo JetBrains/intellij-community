@@ -135,6 +135,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     }
   }
 
+  @Override
+  protected int getMnemonicIndex(AbstractButton b) {
+    return b.getDisplayedMnemonicIndex();
+  }
+
   private static Color getBackgroundColor(AbstractButton b) {
     ButtonModel bm = b.getModel();
 

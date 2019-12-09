@@ -96,18 +96,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
     final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
 
-    if (eventWindow instanceof JWindow) {
-      eventRootPane = ((JWindow)eventWindow).getRootPane();
-      if (eventRootPane != null) {
-        if (!(eventRootPane.getGlassPane() instanceof IdeGlassPane)) {
-          final Container parentWindow = eventWindow.getParent();
-          if (parentWindow instanceof Window) {
-            eventWindow = (Window)parentWindow;
-          }
-        }
-      }
-    }
-
     if (eventWindow != thisGlassWindow) return false;
 
     if (me.getID() == MouseEvent.MOUSE_DRAGGED) {

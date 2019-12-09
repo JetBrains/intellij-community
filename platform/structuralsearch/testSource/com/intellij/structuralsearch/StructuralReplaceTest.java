@@ -2108,9 +2108,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceAnnotation() {
-    String in1 = "@SuppressWarnings(\"ALL\")\n" +
-                "public class A {}";
-    String what = "@SuppressWarnings(\"ALL\")";
+    final String in1 = "@SuppressWarnings(\"ALL\")\n" +
+                       "public class A {}";
+    final String what = "@SuppressWarnings(\"ALL\")";
 
     final String expected1a = "public class A {}";
     assertEquals(expected1a, replace(in1, what, ""));
@@ -2175,7 +2175,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                              "}";
     assertEquals(expected4, replace(in4, "@'_A('_p*=1)", "@$A$($p$=1, three=1)"));
 
-    final String expected4b = "class X {  @Anno(one=2,two=1) String s;}";
+    final String expected4b = "class X {  @Anno(one=2, two=1) String s;}";
     assertEquals(expected4b, replace(in4, "@'_A('_p:one =1)", "@$A$($p$=2)"));
 
     final String in5 = "@RunWith(SpringJUnit4ClassRunner.class)\n" +
@@ -2195,6 +2195,33 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(expected5, replace(in5, "@ContextConfiguration(classes = {'_X*})", "@ContextHierarchy(classes = {\n" +
                                                                                     "        @ContextConfiguration(classes = {$X$, Object.class})\n" +
                                                                                     "})"));
+
+    final String in6 = "class X {\n" +
+                       "  @WastingTime @Override\n" +
+                       "  public @Constant @Sorrow String value() {\n" +
+                       "    return null;\n" +
+                       "  }\n" +
+                       "}";
+    final String expected6 = "class X {\n" +
+                             "  @WastingTime @Override\n" +
+                             "  private @Constant @Sorrow String value() {\n" +
+                             "    return null;\n" +
+                             "  }\n" +
+                             "}";
+    assertEquals(expected6, replace(in6, "'_ReturnType '_method('_ParameterType '_parameter*);",
+                                    "private $ReturnType$ $method$($ParameterType$ $parameter$);"));
+
+    final String in7 = "public class IssueLink {\n" +
+                       "    @XmlAttribute(name = \"default\", namespace = \"space\")\n" +
+                       "    @Deprecated\n" +
+                       "    public String typeInward;\n" +
+                       "}";
+    final String expected7 = "public class IssueLink {\n" +
+                             "    @XmlAttribute(name=\"default\", namespace = \"space\")\n" +
+                             "    public String typeInward;\n" +
+                             "}";
+    assertEquals(expected7, replace(in7, "@XmlAttribute(name=\"default\") @Deprecated '_Type '_field;",
+                                    "@XmlAttribute(name=\"default\") $Type$ $field$;"));
   }
 
   public void testReplacePolyadicExpression() {

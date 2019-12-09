@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -58,6 +59,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
@@ -212,8 +214,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     String preferredRunner = getRunner();
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final Project project = getConfiguration().getProject();
-      GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
-      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope);
+      Module module = getConfiguration().getConfigurationModule().getModule();
+      GlobalSearchScope globalSearchScope = getScopeForJUnit(module, project);
+      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope, module != null && findJavaModule(module,true) != null);
     }
   }
 
@@ -264,7 +267,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return javaParameters;
   }
 
-  public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException {
+  @TestOnly
+  public JavaParameters createJavaParameters4Tests() throws ExecutionException {
+    return createJavaParameters();
+  }
+
+  public void appendJUnit5LauncherClasses(JavaParameters javaParameters,
+                                          Project project,
+                                          GlobalSearchScope globalSearchScope,
+                                          boolean ensureOnModulePath) throws CantRunException {
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
@@ -276,7 +287,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       return;
     }
 
-    boolean isModularized = JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
+    boolean isModularized = ensureOnModulePath &&
+                            JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_9) &&
+                            FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, globalSearchScope).length > 0 &&
                             VersionComparatorUtil.compare(launcherVersion, "1.5.0") >= 0;
 
     if (isModularized) { //for modularized junit ensure launcher is included in the module graph
@@ -299,10 +312,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
         () -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
       String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
-      if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
-          hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        downloadDependenciesWhenRequired(project, pathsList,
-                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+      if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        String moduleNameToMove = "org.junit.jupiter.api";
+        if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
+          downloadDependenciesWhenRequired(project, pathsList,
+                                           new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+        }
+        else {
+          moduleNameToMove = "org.junit.jupiter.engine";
+        }
+
+        if (isModularized) {
+          //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
+          for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
+            putDependenciesOnModulePath(pathsList, javaParameters.getClassPath(), module);
+          }
+        }
       }
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
@@ -348,7 +373,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     for (OrderRoot root : roots) {
       if (root.getType() == OrderRootType.CLASSES) {
-        classPath.add(root.getFile());
+        VirtualFile file = root.getFile();
+        if (!classPath.getPathList().contains(PathUtil.getLocalPath(file))) {
+          classPath.add(file);
+        }
       }
     }
   }

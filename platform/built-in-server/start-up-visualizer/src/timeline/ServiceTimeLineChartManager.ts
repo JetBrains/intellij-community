@@ -60,8 +60,6 @@ export class ServiceTimeLineChartManager extends BaseTimeLineChartManager {
       }
     }
 
-    console.log(this.guides)
-
     this.rangeLegend.data = this.guides.map(it => {
       const result: LegendItem = {name: it.label, fill: it.color}
       return result

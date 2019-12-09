@@ -21,11 +21,20 @@ fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX 
  *
  * [requestor] is deprecated (never use it in a new code).
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String,
-                                                          val userName: String? = null,
-                                                          val requestor: Class<*>? = null,
-                                                          val isPasswordMemoryOnly: Boolean = false,
-                                                          val cacheDeniedItems: Boolean = true)
+data class CredentialAttributes(
+  val serviceName: String,
+  val userName: String? = null,
+  val requestor: Class<*>? = null,
+  val isPasswordMemoryOnly: Boolean = false,
+  val cacheDeniedItems: Boolean = true
+) {
+  @JvmOverloads
+  constructor(serviceName: String,
+              userName: String? = null,
+              requestor: Class<*>? = null,
+              isPasswordMemoryOnly: Boolean = false)
+    : this(serviceName, userName, requestor, isPasswordMemoryOnly, true)
+}
 
 /**
  * Pair of user and password.

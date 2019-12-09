@@ -28,6 +28,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -52,7 +53,7 @@ public class ActionUtil {
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
-  @NonNls private static final String ACTION_UPDATE_DATA = ActionUtil.class.getName() + "ACTION_UPDATE_DATA";
+  @NonNls private static final Key<ActionUpdateData> ACTION_UPDATE_DATA = Key.create("ACTION_UPDATE_DATA");
 
   private ActionUtil() {
   }
@@ -113,7 +114,7 @@ public class ActionUtil {
    */
   public static void performFastUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent event, boolean forceUseCached) {
     final Presentation templatePresentation = action.getTemplatePresentation();
-    ActionUpdateData ud = (ActionUpdateData)templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
+    ActionUpdateData ud = templatePresentation.getClientProperty(ACTION_UPDATE_DATA);
     if (ud == null)
       templatePresentation.putClientProperty(ACTION_UPDATE_DATA, ud = new ActionUpdateData());
 

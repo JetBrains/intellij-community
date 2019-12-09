@@ -8,17 +8,12 @@ import org.jetbrains.annotations.Nullable;
 class TBItemGroup extends TBItem {
   private final ItemsContainer myGroupItems;
 
-  TBItemGroup(@NotNull String uid, @Nullable ItemListener listener) {
-    super(uid, listener);
-    myGroupItems = new ItemsContainer(uid + "_group", listener);
+  TBItemGroup(@NotNull String name, @Nullable ItemListener listener) {
+    super("group", listener);
+    myGroupItems = new ItemsContainer(name + "_group");
   }
 
   ItemsContainer getContainer() { return myGroupItems; }
-
-  @Override
-  protected void _updateNativePeer() {
-    myGroupItems.forEachDeep(item->item._updateNativePeer());
-  }
 
   @Override
   protected ID _createNativePeer() {
@@ -26,7 +21,7 @@ class TBItemGroup extends TBItem {
       return ID.NIL;
 
     final ID[] ids = myGroupItems.getVisibleNativePeers();
-    return NST.createGroupItem(myUid, ids);
+    return NST.createGroupItem(getUid(), ids);
   }
 
   @Override

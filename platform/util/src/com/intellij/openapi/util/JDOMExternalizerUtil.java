@@ -14,7 +14,7 @@ import java.util.List;
 
 public class JDOMExternalizerUtil {
   /**
-   * Adds {@code <option name="{fieldName}" value="{value}"/>} element to the parent.
+   * Adds the {@code <option name="{fieldName}" value="{value}"/>} element to the parent.
    */
   public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value) {
     Element element = new Element(Constants.OPTION);
@@ -24,7 +24,7 @@ public class JDOMExternalizerUtil {
   }
 
   /**
-   * Adds {@code <option name="{fieldName}" value="{value}"/>} element to the parent when the value differs from the default.
+   * Adds the {@code <option name="{fieldName}" value="{value}"/>} element to the parent when the value differs from the default.
    */
   public static void writeField(@NotNull Element parent, @NotNull String fieldName, @Nullable String value, @NotNull String defaultValue) {
     if (!defaultValue.equals(value)) {
@@ -49,7 +49,7 @@ public class JDOMExternalizerUtil {
   }
 
   /**
-   * Adds {@code <option name="{fieldName}"/>} element to the parent and returns the created element.
+   * Adds the {@code <option name="{fieldName}"/>} element to the parent and returns the created element.
    */
   @NotNull
   public static Element writeOption(@NotNull Element parent, @NotNull String fieldName) {
@@ -70,7 +70,7 @@ public class JDOMExternalizerUtil {
   }
 
   /**
-   * Adds {@code <{tagName} value="{value}"/>} element to the parent (or just {@code <{tagName}"/>} if the value is {@code null}).
+   * Adds the {@code <{tagName} value="{value}"/>} element to the parent (or just {@code <{tagName}"/>} if the value is {@code null}).
    */
   public static void writeCustomField(@NotNull Element parent, @NotNull String tagName, @Nullable String value) {
     Element element = new Element(tagName);
@@ -132,24 +132,17 @@ public class JDOMExternalizerUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #readOption(Element, String)} (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link #writeCustomField(Element, String, String)} */
   @Deprecated
-  public static Element getOption(@NotNull Element parent, @NotNull String fieldName) {
-    return readOption(parent, fieldName);
-  }
-
-  /** @deprecated use {@link #writeCustomField(Element, String, String)} (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {
     writeCustomField(parent, childTagName, attrValue);
     return parent.getChild(childTagName);
   }
 
-  /** @deprecated use {@link #readCustomField(Element, String)} (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated use {@link #readCustomField(Element, String)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static String getFirstChildValueAttribute(@NotNull Element parent, @NotNull String childTagName) {
     return readCustomField(parent, childTagName);
   }

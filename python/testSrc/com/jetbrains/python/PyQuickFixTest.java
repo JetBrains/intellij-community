@@ -186,6 +186,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyFromFutureImportInspection.class, PyBundle.message("QFIX.move.from.future.import"), true, true);
   }
 
+  // PY-23475
+  public void testMoveFromFutureImportAboveModuleLevelDunder() {
+    doInspectionTest(PyFromFutureImportInspection.class, PyBundle.message("QFIX.move.from.future.import"), true, true);
+  }
+
   public void testComparisonWithNone() {
     doInspectionTest(PyComparisonWithNoneInspection.class, PyBundle.message("QFIX.replace.equality"), true, true);
   }

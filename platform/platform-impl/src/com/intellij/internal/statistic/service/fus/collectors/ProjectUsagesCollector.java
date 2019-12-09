@@ -74,23 +74,13 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    */
   @NotNull
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
     return Collections.emptySet();
   }
 
-  /**
-   * @deprecated use {@link ProjectUsagesCollector#getData(Project)}
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public FUSUsageContext getContext(@NotNull Project project) {
-    return null;
-  }
-
   @Nullable
   public FeatureUsageData getData(@NotNull Project project) {
-    return ObjectUtils.doIfNotNull(getContext(project), context -> new FeatureUsageData().addFeatureContext(context));
+    return null;
   }
 }

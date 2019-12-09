@@ -201,7 +201,25 @@ common.attrs.present =
 		}
 
 common.attrs.other =
-	empty
+	(	common.attrs.autofocus?
+	&	common.attrs.inputmode?
+	&	common.attrs.nonce?
+	)
+
+	common.attrs.autofocus = 
+		attribute autofocus {
+			w:string "autofocus" | w:string ""
+		}
+
+	common.attrs.inputmode =
+		attribute inputmode {
+			string
+		}
+
+	common.attrs.nonce =
+		attribute nonce {
+			string
+		}
 
 # #####################################################################
 ##  Common Datatypes                                                  #

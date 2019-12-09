@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.WindowsRegistryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,11 +38,13 @@ public class WSLDistributionWithRoot extends WSLDistribution {
       }
       return Collections.unmodifiableMap(result);
     });
-  @Nullable private final String myWslRootInHost;
+  @Nullable protected final String myWslRootInHost;
 
   public WSLDistributionWithRoot(@NotNull WSLDistribution wslDistribution) {
     super(wslDistribution);
-    String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
+    final File uncRoot = getUNCRoot();
+    String wslRootInHost = uncRoot.exists() ? FileUtil.toSystemDependentName(uncRoot.getPath()) :
+                           DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
 
     if (wslRootInHost == null) {
       LOG.warn("WSL (" + wslDistribution.getPresentableName() +") rootfs is null");

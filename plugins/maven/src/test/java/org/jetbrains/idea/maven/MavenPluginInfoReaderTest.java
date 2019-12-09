@@ -15,12 +15,14 @@
  */
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import org.jetbrains.idea.maven.utils.MavenPluginInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MavenPluginInfoReaderTest extends MavenTestCase {
   private MavenPluginInfo p;
@@ -30,7 +32,8 @@ public class MavenPluginInfoReaderTest extends MavenTestCase {
     super.setUp();
     setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"));
     MavenId id = new MavenId("org.apache.maven.plugins", "maven-compiler-plugin", "2.0.2");
-    p = MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id);
+    p = ApplicationManager.getApplication().executeOnPooledThread(() -> MavenArtifactUtil.readPluginInfo(getRepositoryFile(), id))
+      .get(10, TimeUnit.SECONDS);
   }
 
   public void testLoadingPluginInfo() {

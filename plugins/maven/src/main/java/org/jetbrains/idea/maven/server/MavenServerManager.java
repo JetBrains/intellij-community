@@ -37,6 +37,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
@@ -302,6 +303,16 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
         && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
       new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                        "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
+                       sdkConfigLocation,
+                       NotificationType.WARNING).notify(null);
+    }
+  }
+
+  private static void showNofificationIfMaven360(@NotNull String mavenVersion, @NotNull String sdkConfigLocation) {
+    if(StringUtil.compareVersionNumbers(mavenVersion, "3.6.0") == 0) {
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                       "You use Maven 3.6.0, there could be issues importing multimodule project.<br>" +
+                       "It is recommended to upgrade or downgrade Maven version at <br>" +
                        sdkConfigLocation,
                        NotificationType.WARNING).notify(null);
     }
@@ -713,6 +724,8 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
       String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
       verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
+
+      showNofificationIfMaven360(mavenVersion,sdkConfigLocation);
 
       final List<String> classPath = new ArrayList<>();
       classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));

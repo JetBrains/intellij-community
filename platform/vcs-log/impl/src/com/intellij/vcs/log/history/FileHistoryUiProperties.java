@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,10 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
   @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+  private final VcsLogApplicationSettings myLogSettings =
+    ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
   private State myState = new State();
+  private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
 
   public static class State {
     public boolean SHOW_DETAILS = false;
@@ -34,32 +39,32 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (SHOW_DETAILS.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_DETAILS);
-    }
-    else if (SHOW_ALL_BRANCHES.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_OTHER_BRANCHES);
-    }
-    else if (COLUMN_ORDER.equals(property)) {
-      List<Integer> order = myState.COLUMN_ORDER;
-      if (order == null || order.isEmpty()) {
-        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
-                                  VcsLogColumn::ordinal);
-      }
-      return (T)order;
-    }
-    else if (property instanceof TableColumnProperty) {
+    if (property instanceof TableColumnProperty) {
       Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumnIndex());
       if (savedWidth == null) return (T)Integer.valueOf(-1);
       return (T)savedWidth;
     }
-    else if (SHOW_DIFF_PREVIEW.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_DIFF_PREVIEW);
+    return property.match()
+      .ifEq(SHOW_DETAILS).then(myState.SHOW_DETAILS)
+      .ifEq(SHOW_ALL_BRANCHES).then(myState.SHOW_OTHER_BRANCHES)
+      .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .ifEq(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
+      .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myLogSettings.get(PREFER_COMMIT_DATE))
+      .ifEq(COLUMN_ORDER).thenGet(() -> {
+        List<Integer> order = myState.COLUMN_ORDER;
+        if (order == null || order.isEmpty()) {
+          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE, VcsLogColumn.COMMIT),
+                                    VcsLogColumn::ordinal);
+        }
+        return order;
+      })
+      .get();
+  }
+
+  private <T> void onApplicationSettingChange(VcsLogUiProperty<T> property) {
+    if (PREFER_COMMIT_DATE.equals(property)) {
+      myListeners.forEach(l -> l.onPropertyChanged(property));
     }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_ROOT_NAMES);
-    }
-    throw new UnsupportedOperationException("Unknown property " + property);
   }
 
   @SuppressWarnings("unchecked")
@@ -83,6 +88,11 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ROOT_NAMES.equals(property)) {
       myState.SHOW_ROOT_NAMES = (Boolean)value;
     }
+    else if (PREFER_COMMIT_DATE.equals(property)) {
+      myLogSettings.set(property, value);
+      // listeners will be triggered via onApplicationSettingChange
+      return;
+    }
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
     }
@@ -96,6 +106,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
            COLUMN_ORDER.equals(property) ||
            SHOW_DIFF_PREVIEW.equals(property) ||
            SHOW_ROOT_NAMES.equals(property) ||
+           PREFER_COMMIT_DATE.equals(property) ||
            property instanceof TableColumnProperty;
   }
 
@@ -112,11 +123,17 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
+    if (myListeners.isEmpty()) {
+      myLogSettings.addChangeListener(myApplicationSettingsListener);
+    }
     myListeners.add(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
+    if (myListeners.isEmpty()) {
+      myLogSettings.removeChangeListener(myApplicationSettingsListener);
+    }
   }
 }

@@ -56,10 +56,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.*
 import java.nio.charset.Charset
 import java.util.*
 import java.util.concurrent.Future
@@ -535,7 +532,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       checkIfTrackerCanBeReleased(document)
     }
 
-    private fun LineStatusTrackerManager.handleCanceled(document: Document) {
+    private fun handleCanceled(document: Document) {
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
 
       val state = synchronized(LOCK) {
@@ -558,10 +555,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       }
     }
 
-    private fun LineStatusTrackerManager.handleSuccess(document: Document,
-                                                       refreshData: RefreshData) {
+    private fun handleSuccess(document: Document, refreshData: RefreshData) {
       val virtualFile = FileDocumentManager.getInstance().getFile(document)!!
 
+      val tracker: LocalLineStatusTracker<*>
       synchronized(LOCK) {
         val data = trackers[document]
         if (data == null) {
@@ -574,9 +571,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         }
 
         data.contentInfo = refreshData.info
+        tracker = data.tracker
       }
 
-      val tracker = getLineStatusTracker(document) as LocalLineStatusTracker<*>
       tracker.setBaseRevision(refreshData.text)
       log("Loading finished: success", virtualFile)
 
@@ -588,6 +585,25 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         }
       }
     }
+  }
+
+  /**
+   * We can speedup initial content loading if it was already loaded by someone.
+   * We do not set 'contentInfo' here to ensure, that following refresh will fix potential inconsistency.
+   */
+  @CalledInAwt
+  @ApiStatus.Internal
+  fun offerTrackerContent(document: Document, text: CharSequence) {
+    val tracker: LocalLineStatusTracker<*>
+    synchronized(LOCK) {
+      val data = trackers[document]
+      if (data == null || data.contentInfo != null) return
+
+      tracker = data.tracker
+    }
+
+    tracker.setBaseRevision(text)
+    log("Offered content", FileDocumentManager.getInstance().getFile(document))
   }
 
   private inner class MyFileStatusListener : FileStatusListener {

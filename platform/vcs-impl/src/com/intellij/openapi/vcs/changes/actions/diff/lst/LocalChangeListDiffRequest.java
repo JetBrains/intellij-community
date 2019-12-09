@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -130,6 +131,10 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
     if (document == null) return false;
 
     LineStatusTrackerManager.getInstance(myProject).requestTrackerFor(document, this);
+
+    DocumentContent beforeContent = (DocumentContent)getContents().get(0);
+    CharSequence beforeText = beforeContent.getDocument().getImmutableCharSequence();
+    LineStatusTrackerManager.getInstanceImpl(myProject).offerTrackerContent(document, beforeText);
     return true;
   }
 

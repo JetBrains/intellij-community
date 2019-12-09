@@ -15,9 +15,7 @@ import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
@@ -274,17 +272,18 @@ public class GitUtil {
                                                                          @NotNull Collection<? extends FilePath> filePaths,
                                                                          boolean ignoreNonGit)
     throws VcsException {
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    GitVcs gitVcs = GitVcs.getInstance(project);
     Map<VirtualFile, List<FilePath>> result = new HashMap<>();
     for (FilePath path : filePaths) {
-      GitRepository repository = manager.getRepositoryForFile(path);
-      if (repository == null) {
+      VcsRoot vcsRoot = manager.getVcsRootObjectFor(path);
+      AbstractVcs vcs = vcsRoot != null ? vcsRoot.getVcs() : null;
+      if (vcs == null || !vcs.equals(gitVcs)) {
         if (ignoreNonGit) continue;
         throw new GitRepositoryNotFoundException(path);
       }
 
-      List<FilePath> paths = result.computeIfAbsent(repository.getRoot(), key -> new ArrayList<>());
+      List<FilePath> paths = result.computeIfAbsent(vcsRoot.getPath(), key -> new ArrayList<>());
       paths.add(path);
     }
     return result;
@@ -364,10 +363,6 @@ public class GitUtil {
 
   public static boolean isGitRoot(@NotNull File folder) {
     return isGitRoot(folder.getPath());
-  }
-
-  public static boolean isGitRoot(@NotNull VirtualFile file) {
-    return isGitRoot(file.getPath());
   }
 
   /**
@@ -514,7 +509,7 @@ public class GitUtil {
       consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false, false));
     }
     if (s.hasMoreData()) {
-      throw new IllegalStateException("More input is avaialble: " + s.line());
+      throw new IllegalStateException("More input is available: " + s.line());
     }
   }
 
@@ -595,14 +590,12 @@ public class GitUtil {
                 if (VcsFileUtil.isOctal(path.charAt(j))) {
                   n++;
                   for (int k = 0; k < 3 && j < l && VcsFileUtil.isOctal(path.charAt(j)); k++) {
-                    //noinspection AssignmentToForLoopParameter
                     j++;
                   }
                 }
                 if (j + 1 >= l || path.charAt(j) != '\\' || !VcsFileUtil.isOctal(path.charAt(j + 1))) {
                   break;
                 }
-                //noinspection AssignmentToForLoopParameter
                 j++;
               }
               // convert to byte array
@@ -757,11 +750,6 @@ public class GitUtil {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
     if (repository == null) LOG.error(new GitRepositoryNotFoundException(root));
     return repository;
-  }
-
-  @NotNull
-  public static String getPrintableRemotes(@NotNull Collection<GitRemote> remotes) {
-    return StringUtil.join(remotes, remote -> remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]", "\n");
   }
 
   /**
@@ -1087,18 +1075,6 @@ public class GitUtil {
       }
       throw e;
     }
-  }
-
-  @NotNull
-  public static Map<GitRepository, Hash> getCurrentRevisions(@NotNull Collection<? extends GitRepository> repositories) {
-    Map<GitRepository, Hash> result = new LinkedHashMap<>();
-    for (GitRepository repository : repositories) {
-      String currentRevision = repository.getCurrentRevision();
-      if (currentRevision != null) {
-        result.put(repository, HashImpl.build(currentRevision));
-      }
-    }
-    return result;
   }
 
   private static class GitRepositoryNotFoundException extends VcsException {

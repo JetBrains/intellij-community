@@ -193,34 +193,57 @@ public final class StandardMethodContract extends MethodContract {
     String[] split = StringUtil.replace(text, " ", "").split(";");
     for (int clauseIndex = 0; clauseIndex < split.length; clauseIndex++) {
       String clause = split[clauseIndex];
-      String arrow = "->";
-      int arrowIndex = clause.indexOf(arrow);
-      if (arrowIndex < 0) {
-        throw ParseException.forClause("A contract clause must be in form arg1, ..., argN -> return-value", text, clauseIndex);
-      }
-
-      String beforeArrow = clause.substring(0, arrowIndex);
-      ValueConstraint[] args;
-      if (StringUtil.isNotEmpty(beforeArrow)) {
-        String[] argStrings = beforeArrow.split(",");
-        args = new ValueConstraint[argStrings.length];
-        for (int i = 0; i < args.length; i++) {
-          args[i] = parseConstraint(argStrings[i], text, clauseIndex, i);
-        }
-      }
-      else {
-        args = new ValueConstraint[0];
-      }
-      String returnValueString = clause.substring(arrowIndex + arrow.length());
-      ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
-      if (returnValue == null) {
-        throw ParseException.forReturnValue(
-          "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString,
-          text, clauseIndex);
-      }
-      result.add(new StandardMethodContract(args, returnValue));
+      result.add(fromText(text, clauseIndex, clause));
     }
     return result;
+  }
+
+  /**
+   * Create single contract from text. Used to initialize some hard-coded contracts only.
+   * @param clause contract clause like "_, null -> false"
+   * @return created contract
+   * @throws RuntimeException in case of parse error
+   * @see HardcodedContracts
+   */
+  @NotNull
+  static StandardMethodContract fromText(@NotNull String clause) {
+    try {
+      return fromText(clause, 0, clause);
+    }
+    catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  private static StandardMethodContract fromText(@NotNull String text, int clauseIndex, @NotNull String clause)
+    throws ParseException {
+    String arrow = "->";
+    int arrowIndex = clause.indexOf(arrow);
+    if (arrowIndex < 0) {
+      throw ParseException.forClause("A contract clause must be in form arg1, ..., argN -> return-value", text, clauseIndex);
+    }
+
+    String beforeArrow = clause.substring(0, arrowIndex);
+    ValueConstraint[] args;
+    if (StringUtil.isNotEmpty(beforeArrow)) {
+      String[] argStrings = beforeArrow.split(",");
+      args = new ValueConstraint[argStrings.length];
+      for (int i = 0; i < args.length; i++) {
+        args[i] = parseConstraint(argStrings[i], text, clauseIndex, i);
+      }
+    }
+    else {
+      args = new ValueConstraint[0];
+    }
+    String returnValueString = clause.substring(arrowIndex + arrow.length());
+    ContractReturnValue returnValue = ContractReturnValue.valueOf(returnValueString);
+    if (returnValue == null) {
+      throw ParseException.forReturnValue(
+        "Return value should be one of: null, !null, true, false, this, new, paramN, fail, _. Found: " + returnValueString,
+        text, clauseIndex);
+    }
+    return new StandardMethodContract(args, returnValue);
   }
 
   private static ValueConstraint parseConstraint(String name, String text, int clauseIndex, int constraintIndex) throws ParseException {

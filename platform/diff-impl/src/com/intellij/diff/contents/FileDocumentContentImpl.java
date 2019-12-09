@@ -19,6 +19,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
@@ -38,7 +39,7 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
                                  @NotNull Document document,
                                  @NotNull VirtualFile file,
                                  @Nullable VirtualFile highlightFile) {
-    super(project, document, file.getFileType(), highlightFile, getSeparator(file), file.getCharset(), file.getBOM() != null);
+    super(project, document, null, highlightFile, getSeparator(file), file.getCharset(), file.getBOM() != null);
     myFile = file;
   }
 
@@ -53,6 +54,12 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   @Override
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Nullable
+  @Override
+  public FileType getContentType() {
+    return myFile.getFileType();
   }
 
   @Override

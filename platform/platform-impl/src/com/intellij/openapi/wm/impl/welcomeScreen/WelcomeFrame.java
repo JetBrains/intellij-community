@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -98,32 +99,19 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     DimensionService.getInstance().setLocation(DIMENSION_KEY, middle, null);
   }
 
-  static void setupCloseAction(final JFrame frame) {
+  static void setupCloseAction(@NotNull JFrame frame) {
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    frame.addWindowListener(
-      new WindowAdapter() {
-        @Override
-        public void windowClosing(final WindowEvent e) {
-
-          // Android Studio: added by Change I7b1d7b0a / commit 42f5866
-          if (frame instanceof Disposable) {
-            // dispose via Disposer if possible, as per the intended com.intellij.openapi.Disposable design;
-            // amongst all, this ensures the same object isn't disposed multiple times, which may be undesired
-            Disposer.dispose((Disposable)frame);
-          }
-          else {
-            // OK, this is the usual JFrame dispose() - can call directly
-            frame.dispose();
-          }
-
-          if (ProjectManager.getInstance().getOpenProjects().length == 0) {
-            ApplicationManager.getApplication().exit();
-          }
-          else {
-            frame.dispose();
-          }
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        if (ProjectUtil.getOpenProjects().length == 0) {
+          ApplicationManager.getApplication().exit();
         }
-      });
+        else {
+          frame.dispose();
+        }
+      }
+    });
   }
 
   private static WelcomeScreen createScreen(JRootPane rootPane) {

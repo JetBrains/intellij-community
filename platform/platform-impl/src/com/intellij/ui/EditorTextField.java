@@ -725,7 +725,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public void requestFocus() {
     if (myEditor != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        if (myEditor != null) IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
+      });
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
   }

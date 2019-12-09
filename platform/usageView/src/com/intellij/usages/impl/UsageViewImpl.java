@@ -832,6 +832,7 @@ public class UsageViewImpl implements UsageViewEx {
     DefaultActionGroup group = new DefaultActionGroup();
     group.setPopup(true);
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+    group.getTemplatePresentation().setText(UsageViewBundle.message("action.group.by.title"));
     group.getTemplatePresentation().setDescription(UsageViewBundle.message("action.group.by.title"));
     final AnAction[] groupingActions = createGroupingActions();
     if (groupingActions.length > 0) {

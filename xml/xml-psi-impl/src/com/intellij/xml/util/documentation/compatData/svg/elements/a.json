@@ -123,10 +123,10 @@
                 "version_added": null
               },
               "safari": {
-                "version_added": false
+                "version_added": "9"
               },
               "safari_ios": {
-                "version_added": false
+                "version_added": "9"
               },
               "samsunginternet_android": {
                 "version_added": true

@@ -16,8 +16,10 @@
 package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
+import com.intellij.codeInsight.daemon.impl.HectorComponentFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -62,7 +64,7 @@ public class AntChangeContextFix extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final HectorComponent component = new HectorComponent(file);
+    final HectorComponent component = ServiceManager.getService(project, HectorComponentFactory.class).create(file);
     //final JComponent focusComponent = findComponentToFocus(component);
     component.showComponent(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
     //SwingUtilities.invokeLater(new Runnable() {

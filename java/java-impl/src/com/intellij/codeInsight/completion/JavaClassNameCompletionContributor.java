@@ -244,7 +244,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       return LangBundle.message("completion.no.suggestions") +
              "; " +
              StringUtil.decapitalize(
-                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
+                 CompletionBundle.message("completion.class.name.hint.2", CompletionUtil.getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
     }
 
     return null;

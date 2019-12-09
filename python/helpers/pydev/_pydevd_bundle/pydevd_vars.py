@@ -1,12 +1,12 @@
 """ pydevd_vars deals with variables:
     resolution/conversion to XML.
 """
+import math
 import pickle
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange
-
 
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange
+from _pydev_bundle.pydev_imports import quote
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
@@ -516,7 +516,7 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
         else:
             value = array[row][col]
         return value
-    xml += array_data_to_xml(rows, cols, lambda r: (get_value(r, c) for c in range(cols)))
+    xml += array_data_to_xml(rows, cols, lambda r: (get_value(r, c) for c in range(cols)), format)
     return xml
 
 
@@ -579,7 +579,7 @@ def array_to_meta_xml(array, name, format):
         slice += reslice
 
     bounds = (0, 0)
-    if type in "biufc":
+    if type in NUMPY_NUMERIC_TYPES:
         bounds = (array.min(), array.max())
     return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
 
@@ -612,7 +612,22 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     dim = len(df.axes)
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
-    xml = slice_to_xml(name, num_rows, num_cols, "", "", (0, 0))
+    format = format.replace('%', '')
+
+    if not format:
+        if num_rows > 0 and num_cols == 1:  # series or data frame with one column
+            try:
+                kind = df.dtype.kind
+            except AttributeError:
+                try:
+                    kind = df.dtypes[0].kind
+                except IndexError:
+                    kind = 'O'
+            format = array_default_format(kind)
+        else:
+            format = array_default_format('f')
+
+    xml = slice_to_xml(name, num_rows, num_cols, format, "", (0, 0))
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
@@ -626,7 +641,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
         for col in range(cols):
             dtype = df.dtypes.iloc[coffset + col].kind
             dtypes[col] = dtype
-            if dtype in "biufc":
+            if dtype in NUMPY_NUMERIC_TYPES:
                 cvalues = df.iloc[:, coffset + col]
                 bounds = (cvalues.min(), cvalues.max())
             else:
@@ -635,36 +650,35 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
-        col_bounds[0] = (df.min(), df.max()) if dtype in "biufc" else (0, 0)
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES else (0, 0)
 
     df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
-    format = format.replace('%', '')
 
     def col_to_format(c):
-        return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
+        return format if dtypes[c] in NUMPY_NUMERIC_TYPES and format else array_default_format(dtypes[c])
 
     iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
 
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
     xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (iat[r, c] if dim > 1 else iat[r])
-                                                    for c in range(cols)))
+                                                    for c in range(cols)), format)
     return xml
 
 
-def array_data_to_xml(rows, cols, get_row):
+def array_data_to_xml(rows, cols, get_row, format):
     xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     for row in range(rows):
         xml += "<row index=\"%s\"/>\n" % to_string(row)
         for value in get_row(row):
-            xml += var_to_xml(value, '')
+            xml += var_to_xml(value, '', format=format)
     return xml
 
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, format, type, bounds[1], bounds[0])
+           (slice, rows, cols, quote(format), type, bounds[1], bounds[0])
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
@@ -680,11 +694,21 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     xml += "</headerdata>\n"
     return xml
 
+
+def is_able_to_format_number(format):
+    try:
+        format % math.pi
+    except Exception:
+        return False
+    return True
+
+
 TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml, "DataFrame": dataframe_to_xml, "Series": dataframe_to_xml}
 
 
 def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
     _, type_name, _ = get_type(array)
+    format = format if is_able_to_format_number(format) else '%'
     if type_name in TYPE_TO_XML_CONVERTERS:
         return "<xml>%s</xml>" % TYPE_TO_XML_CONVERTERS[type_name](array, name, roffset, coffset, rows, cols, format)
     else:

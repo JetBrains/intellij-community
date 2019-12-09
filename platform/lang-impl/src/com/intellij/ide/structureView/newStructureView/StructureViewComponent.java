@@ -2,6 +2,7 @@
 
 package com.intellij.ide.structureView.newStructureView;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
@@ -18,17 +19,19 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,6 +48,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
@@ -54,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -71,6 +76,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
@@ -95,13 +101,18 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private volatile AsyncPromise<TreePath> myCurrentFocusPromise;
 
   private boolean myAutoscrollFeedback;
-  private boolean myDisposed;
+  private volatile boolean myDisposed;
 
   private final Alarm myAutoscrollAlarm = new Alarm(this);
 
   private final CopyPasteDelegator myCopyPasteDelegator;
   private final MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
+
+  // read from different threads
+  // written from EDT only
+  @Nullable
+  private volatile CancellablePromise<?> myLastAutoscrollPromise;
 
 
   public StructureViewComponent(@Nullable FileEditor editor,
@@ -453,26 +464,45 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return;
     }
 
+    cancelScrollToSelectedElement();
     myAutoscrollAlarm.cancelAllRequests();
-    myAutoscrollAlarm.addRequest(
-      () -> {
-        if (isDisposed()) return;
-        if (UIUtil.isFocusAncestor(this)) return;
-        scrollToSelectedElementInner();
-      }, 1000);
+    myAutoscrollAlarm.addRequest(this::scrollToSelectedElementLater, 1000);
   }
 
-  private void scrollToSelectedElementInner() {
-    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
-      try {
-        final Object currentEditorElement = myTreeModel.getCurrentEditorElement();
-        if (currentEditorElement != null) {
-          select(currentEditorElement, false);
-        }
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-    });
+  private void cancelScrollToSelectedElement() {
+    final CancellablePromise<?> lastPromise = myLastAutoscrollPromise;
+    if (lastPromise != null && !lastPromise.isCancelled()) {
+      lastPromise.cancel();
+    }
+  }
+
+  private void scrollToSelectedElementLater() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    cancelScrollToSelectedElement();
+    if (isDisposed()) return;
+
+    myLastAutoscrollPromise = ReadAction.nonBlocking(this::doFindSelectedElement)
+      .withDocumentsCommitted(myProject)
+      .expireWith(this)
+      .finishOnUiThread(ModalityState.current(), this::doScrollToSelectedElement)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @Nullable
+  private Object doFindSelectedElement() {
+    try {
+      return myTreeModel.getCurrentEditorElement();
+    }
+    catch (IndexNotReadyException ignore) {
+    }
+    return null;
+  }
+
+  private void doScrollToSelectedElement(@Nullable Object currentEditorElement) {
+    if (currentEditorElement == null) return;
+    if (UIUtil.isFocusAncestor(this)) return;
+    select(currentEditorElement, false);
   }
 
   @Override
@@ -612,7 +642,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       getSettings().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors.length > 0 && state) {
-        scrollToSelectedElementInner();
+        scrollToSelectedElementLater();
       }
     }
   }

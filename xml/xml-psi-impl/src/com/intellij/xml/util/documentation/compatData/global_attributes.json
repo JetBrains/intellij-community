@@ -678,7 +678,7 @@
               "version_added": true
             },
             "edge": {
-              "version_added": true
+              "version_added": false
             },
             "firefox": {
               "version_added": true
@@ -687,7 +687,7 @@
               "version_added": true
             },
             "ie": {
-              "version_added": true
+              "version_added": false
             },
             "opera": {
               "version_added": true
@@ -787,10 +787,14 @@
               "version_added": false
             },
             "opera": {
-              "version_added": false
+              "version_added": true,
+              "prefix": "-webkit-",
+              "version_removed": "45"
             },
             "opera_android": {
-              "version_added": false
+              "version_added": true,
+              "prefix": "-webkit-",
+              "version_removed": "43"
             },
             "safari": {
               "version_added": false
@@ -997,7 +1001,7 @@
               "version_added": "53"
             },
             "opera_android": {
-              "version_added": false
+              "version_added": "47"
             },
             "safari": {
               "version_added": false

@@ -36,8 +36,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   // test-only
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
-  private static volatile Predicate<? super Class<?>> TYPE_CHECKER;
-
   private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.EMPTY_ARRAY : new ExtensionPointListener[n];
 
   private final String myName;
@@ -80,18 +78,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     myComponentManager = componentManager;
     myDescriptor = pluginDescriptor;
     myDynamic = dynamic;
-  }
-
-  @TestOnly
-  public static boolean setTestTypeChecker(@NotNull Predicate<? super Class<?>> typeChecker, @NotNull Disposable parentDisposable) {
-    if (TYPE_CHECKER != null) {
-      return false;
-    }
-
-    TYPE_CHECKER = typeChecker;
-    Disposer.register(parentDisposable, () -> TYPE_CHECKER = null);
-
-    return true;
   }
 
   @NotNull
@@ -219,11 +205,6 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
 
   private synchronized void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
-      Predicate<? super Class<?>> checker = TYPE_CHECKER;
-      if (checker != null && checker.test(extensionClass)) {
-        return;
-      }
-
       String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
       if (adapter != null) {
         message += ". It came from " + adapter;
@@ -335,18 +316,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   @NotNull
   private Iterator<T> createIterator() {
     int size;
-    List<ExtensionComponentAdapter> adapters;
-    synchronized (this) {
-      CHECK_CANCELED.run();
-
-      adapters = getSortedAdapters();
-      size = adapters.size();
-      if (size == 0) {
-        return Collections.emptyIterator();
-      }
-
-      // see method comment about listeners - to ensure that every client of this method doesn't introduce flaky tests/hard to reproduce bugs
-      LOG.assertTrue(myListeners.length == 0);
+    List<ExtensionComponentAdapter> adapters = getThreadSafeAdapterList(true);
+    size = adapters.size();
+    if (size == 0) {
+      return Collections.emptyIterator();
     }
 
     return new Iterator<T>() {
@@ -464,7 +437,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
                            @Nullable Class<T> extensionClassForCheck,
                            @Nullable List<? extends ExtensionComponentAdapter> adapters) {
     try {
-      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated();
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !myDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(myComponentManager);
       if (duplicates != null && !duplicates.add(extension)) {

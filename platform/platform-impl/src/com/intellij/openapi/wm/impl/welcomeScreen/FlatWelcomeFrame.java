@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -49,6 +50,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -125,7 +127,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setResizable(false);
 
     Dimension size = getPreferredSize();
-    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+    Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
     Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
     setBounds(
       screenBounds.x + (screenBounds.width - size.width) / 2,
@@ -140,10 +142,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
+      }
+    });
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appClosing() {
+        saveLocation(getBounds());
       }
     });
 
@@ -171,7 +180,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return;
     }
     myDisposed = true;
-    saveLocation(getBounds());
     super.dispose();
     if (myBalloonLayout != null) {
       ((BalloonLayoutImpl)myBalloonLayout).dispose();
@@ -181,9 +189,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     WelcomeFrame.resetInstance();
   }
 
-  private static void saveLocation(Rectangle location) {
+  private static void saveLocation(@NotNull Rectangle location) {
     Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
-    DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
+    WindowStateService.getInstance().putLocation(WelcomeFrame.DIMENSION_KEY, middle);
   }
 
   @Nullable
@@ -259,7 +267,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseProjectGroups()).length > 0) {
         final JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
-        final JList projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
+        JList<?> projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
           projectsList.getModel().addListDataListener(new ListDataListener() {
             @Override

@@ -121,10 +121,19 @@ fun Project.guessProjectDir() : VirtualFile? {
 
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.firstOrNull { it.name == this.name }
-  module?.rootManager?.contentRoots?.firstOrNull { it.isDirectory }?.let {
-    return it
-  }
+  module?.guessModuleDir()?.let { return it }
   return LocalFileSystem.getInstance().findFileByPath(basePath!!)
+}
+
+/**
+ * Tries to guess the main module directory
+ *
+ * Please use this method only in case if no any additional information about module location
+ *  eg. some contained files or etc.
+ */
+fun Module.guessModuleDir(): VirtualFile? {
+  val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
+  return contentRoots.find { it.name == name } ?: contentRoots.firstOrNull()
 }
 
 @JvmOverloads
@@ -144,7 +153,7 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
 
   // trim to avoid "File name too long"
-  name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
+  name = name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
   return "$name$hashSeparator${locationHash}$extensionWithDot"
 }
 
@@ -192,8 +201,8 @@ inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (
 }
 
 inline fun processOpenedProjects(processor: (Project) -> Unit) {
-  for (project in ProjectManager.getInstance().openProjects) {
-    if (!project.isInitialized || project.isDisposed) {
+  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
+    if (project.isDisposedOrDisposeInProgress || !project.isInitialized) {
       continue
     }
 

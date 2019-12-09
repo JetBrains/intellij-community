@@ -5,6 +5,7 @@ import com.intellij.codeInspection.streamToLoop.ChainContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -112,11 +113,13 @@ class OptionalToIfContext extends ChainContext {
       PsiReturnStatement returnStatement = tryCast(chainStatement, PsiReturnStatement.class);
       if (returnStatement != null) return ChainReturn.create(returnStatement, chainExpression);
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(chainStatement);
-      if (assignment != null && assignment.getRExpression() == chainExpression) return ChainAssignment.create(assignment);
+      if (assignment != null) return ChainAssignment.create(assignment, chainExpression);
       PsiDeclarationStatement declaration = tryCast(chainStatement, PsiDeclarationStatement.class);
       if (declaration != null) return ChainDeclaration.create(declaration, chainExpression);
       PsiExpressionStatement expressionStatement = tryCast(chainStatement, PsiExpressionStatement.class);
-      if (expressionStatement != null && expressionStatement.getExpression() == chainExpression) return new ChainStatement();
+      if (expressionStatement != null && PsiUtil.skipParenthesizedExprDown(expressionStatement.getExpression()) == chainExpression) {
+        return new ChainStatement();
+      }
       return null;
     }
   }
@@ -175,7 +178,7 @@ class OptionalToIfContext extends ChainContext {
 
     @Nullable
     private static ChainReturn create(@NotNull PsiReturnStatement chainReturn, @NotNull PsiExpression chainExpression) {
-      if (chainReturn.getReturnValue() != chainExpression) return null;
+      if (PsiUtil.skipParenthesizedExprDown(chainReturn.getReturnValue()) != chainExpression) return null;
       Object mark = new Object();
       PsiTreeUtil.mark(chainExpression, mark);
       PsiReturnStatement chainReturnCopy = tryCast(chainReturn.copy(), PsiReturnStatement.class);
@@ -213,7 +216,8 @@ class OptionalToIfContext extends ChainContext {
     }
 
     @Nullable
-    static ChainExpressionModel create(@NotNull PsiAssignmentExpression assignment) {
+    static ChainExpressionModel create(@NotNull PsiAssignmentExpression assignment, @NotNull PsiExpression chainExpression) {
+      if (PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) != chainExpression) return null;
       PsiReferenceExpression ref = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
       if (ref == null) return null;
       PsiVariable variable = tryCast(ref.resolve(), PsiVariable.class);
@@ -256,7 +260,7 @@ class OptionalToIfContext extends ChainContext {
       PsiElement[] elements = declaration.getDeclaredElements();
       if (elements.length != 1) return null;
       PsiVariable variable = tryCast(elements[0], PsiVariable.class);
-      if (variable == null || variable.getInitializer() != chainExpression) return null;
+      if (variable == null || PsiUtil.skipParenthesizedExprDown(variable.getInitializer()) != chainExpression) return null;
       String name = variable.getName();
       return name == null ? null : new ChainDeclaration(name, variable);
     }

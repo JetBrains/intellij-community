@@ -74,6 +74,7 @@ public class HighlightInfo implements Segment {
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
+  private final String inspectionGroupKey;
 
   private int group;
   private int fixStartOffset;
@@ -139,6 +140,11 @@ public class HighlightInfo implements Segment {
 
   public String getDescription() {
     return description;
+  }
+
+  @Nullable
+  public String getInspectionGroupKey() {
+    return inspectionGroupKey;
   }
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -277,6 +283,7 @@ public class HighlightInfo implements Segment {
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           ProblemGroup problemGroup,
+                          @Nullable String inspectionGroupKey,
                           GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
@@ -298,6 +305,7 @@ public class HighlightInfo implements Segment {
     this.navigationShift = navigationShift;
     myProblemGroup = problemGroup;
     this.gutterIconRenderer = gutterIconRenderer;
+    this.inspectionGroupKey = inspectionGroupKey;
   }
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
@@ -383,6 +391,7 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
     @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
+    @NotNull Builder inspectionGroupKey(@Nullable String groupKey);
 
     // only one allowed
     @NotNull Builder description(@NotNull String description);
@@ -439,6 +448,7 @@ public class HighlightInfo implements Segment {
 
     private GutterIconRenderer gutterIconRenderer;
     private ProblemGroup problemGroup;
+    private String inspectionGroupKey;
     private PsiElement psiElement;
 
     private B(@NotNull HighlightInfoType type) {
@@ -458,6 +468,14 @@ public class HighlightInfo implements Segment {
     public Builder problemGroup(@NotNull ProblemGroup problemGroup) {
       assert this.problemGroup == null : "problemGroup already set";
       this.problemGroup = problemGroup;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public Builder inspectionGroupKey(@Nullable String groupKey) {
+      assert this.inspectionGroupKey == null : "inspectionGroupKey already set";
+      this.inspectionGroupKey = groupKey;
       return this;
     }
 
@@ -616,7 +634,7 @@ public class HighlightInfo implements Segment {
 
       return new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift,
-                               problemGroup, gutterIconRenderer);
+                               problemGroup, inspectionGroupKey, gutterIconRenderer);
     }
   }
 
@@ -643,7 +661,7 @@ public class HighlightInfo implements Segment {
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotation.getGutterIconRenderer());
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), null, annotation.getGutterIconRenderer());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {

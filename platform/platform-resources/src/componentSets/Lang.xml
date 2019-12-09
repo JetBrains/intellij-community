@@ -66,10 +66,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonListeners</implementation-class>
       <option name="workspace" value="true"/>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
-      <loadForDefaultProject/>
-    </component>
 
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>

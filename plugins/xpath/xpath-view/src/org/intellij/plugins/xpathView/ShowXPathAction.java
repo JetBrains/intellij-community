@@ -17,6 +17,7 @@ package org.intellij.plugins.xpathView;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,6 +28,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,6 +50,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 public class ShowXPathAction extends XPathAction {
     @Override
@@ -126,6 +131,10 @@ public class ShowXPathAction extends XPathAction {
           @Override
           public void actionPerformed(ActionEvent e) {
             CopyPasteManager.getInstance().setContents(new StringSelection(path));
+              Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(p);
+              if (balloon != null) {
+                  balloon.hide(true);
+              }
           }
         });
 
@@ -137,6 +146,13 @@ public class ShowXPathAction extends XPathAction {
                 super.hide();
                 HighlighterUtil.removeHighlighter(editor, h);
             }
+
+
+          @Override
+          protected boolean canAutoHideOn(TooltipEvent event) {
+              InputEvent inputEvent = event.getInputEvent();
+              return ((inputEvent instanceof MouseEvent)) && ((MouseEvent)inputEvent).getButton() != 0;
+          }
         };
 
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());

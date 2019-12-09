@@ -69,6 +69,7 @@
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
+    <editorTabColorProvider implementation="com.intellij.vcs.log.ui.frame.VcsEditorTabColorProvider" order="first"/>
   </extensions>
 
   <actions>
@@ -99,6 +100,7 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowOnlyAffectedChangesAction" id="Vcs.Log.ShowOnlyAffectedChanges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction" id="Vcs.Log.ShowDiffPreviewInEditor"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
+    <action class="com.intellij.vcs.log.ui.actions.PreferCommitDateAction" id="Vcs.Log.PreferCommitDate"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
@@ -141,6 +143,7 @@
       <reference id="Vcs.Log.AlignLabels"/>
       <reference id="Vcs.Log.ShowTagNames"/>
       <reference id="Vcs.Log.ShowLongEdges"/>
+      <reference id="Vcs.Log.PreferCommitDate"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
       <reference id="Vcs.Log.ExpandAll"/>
@@ -205,6 +208,12 @@
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
+    <group id="Vcs.FileHistory.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
+           icon="AllIcons.Actions.Show" text="Presentation Settings"
+           description="Configure presentation of the File History" popup="true">
+      <reference id="Vcs.Log.PreferCommitDate"/>
+      <reference id="Vcs.Log.ToggleColumns"/>
+    </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Diff.ShowDiff"/>
@@ -212,7 +221,7 @@
       <reference id="Vcs.Log.ShowDiffPreviewInEditor"/>
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
-      <reference id="Vcs.Log.ToggleColumns"/>
+      <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>

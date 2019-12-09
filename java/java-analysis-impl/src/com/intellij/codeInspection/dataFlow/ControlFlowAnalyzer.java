@@ -1599,9 +1599,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (checkType != null) {
       operand.accept(this);
       PsiType type = checkType.getType();
-      if (type instanceof PsiClassType) {
-        type = ((PsiClassType)type).rawType();
-      }
       addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullability.NOT_NULL), null));
       addInstruction(new InstanceofInstruction(expression, operand, type));
     }

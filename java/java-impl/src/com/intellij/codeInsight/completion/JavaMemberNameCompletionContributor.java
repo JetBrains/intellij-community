@@ -106,7 +106,11 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     }
 
     PsiType type = var.getType();
-    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) return;
+    if (type instanceof PsiClassType &&
+        ((PsiClassType)type).resolve() == null &&
+        seemsMistypedKeyword(((PsiClassType)type).getClassName())) {
+      return;
+    }
     
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(variableKind, propertyName, null, type, StringUtil.isEmpty(matcher.getPrefix()));
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
@@ -136,6 +140,10 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       SuggestedNameInfo initializerSuggestions = IntroduceVariableBase.getSuggestedName(type, initializer);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
+  }
+
+  private static boolean seemsMistypedKeyword(String className) {
+    return className != null && !StringUtil.isCapitalized(className);
   }
 
   private static boolean hasStartMatches(PrefixMatcher matcher, Set<String> set) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -63,6 +63,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
+import static com.intellij.util.ui.JBUI.size;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
@@ -72,7 +73,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private final Project myProject;
   protected final SvnVcs myVCS;
-  private RepositoryBrowserComponent myRepositoryBrowser;
+  @NotNull private final RepositoryBrowserComponent myRepositoryBrowser;
 
   private final DeleteAction myDeleteAction;
   private AnAction copyUrlAction;
@@ -95,6 +96,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     myShowFiles = showFiles;
     myProject = project;
     myVCS = SvnVcs.getInstance(project);
+
+    myRepositoryBrowser = new RepositoryBrowserComponent(myVCS);
+    myRepositoryBrowser.setPreferredSize(size(300, 300));
+
     setTitle("SVN Repository Browser");
     setResizable(true);
     setOKButtonText(CommonBundle.getCloseButtonText());
@@ -279,23 +284,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       .clear()
       .appendText(SvnBundle.message("repository.browser.no.locations.added.info"))
       .appendSecondaryText(SvnBundle.message("repository.browser.add.location.action.description"), SimpleTextAttributes.LINK_ATTRIBUTES,
-                           e -> addLocation(myRepositoryBrowser));
+                           e -> addLocation(getRepositoryBrowser()));
     return panel;
   }
 
+  @NotNull
   protected RepositoryBrowserComponent getRepositoryBrowser() {
-    if (myRepositoryBrowser == null) {
-      myRepositoryBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
-      myRepositoryBrowser.setPreferredSize(new Dimension(300, 300));
-    }
     return myRepositoryBrowser;
   }
 
   public void disposeRepositoryBrowser() {
-    if (myRepositoryBrowser != null) {
-      Disposer.dispose(myRepositoryBrowser);
-      myRepositoryBrowser = null;
-    }
+    Disposer.dispose(myRepositoryBrowser);
   }
 
   @Override
@@ -661,7 +660,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         doCopy(src, dst, myMove, message);
 
         final CopyMoveReloadHelper sourceReloader = myMove ? new MoveSourceReloader(node) : CopyMoveReloadHelper.EMPTY;
-        final TargetReloader destinationReloader = new TargetReloader(dialog, node, rootNode, myRepositoryBrowser);
+        final TargetReloader destinationReloader = new TargetReloader(dialog, node, rootNode, getRepositoryBrowser());
 
         sourceReloader.doSynthetic();
         destinationReloader.doSynthetic();
@@ -1141,7 +1140,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
     SwingUtilities.invokeLater(() -> {
-      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes);
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(getRepositoryBrowser(), myProject, changes);
       dlg.markChangesInAir(true);
       dlg.setTitle(title);
       dlg.show();

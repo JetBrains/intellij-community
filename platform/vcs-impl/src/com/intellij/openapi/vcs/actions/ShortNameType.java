@@ -29,7 +29,7 @@ public enum ShortNameType {
   INITIALS("initials", "Initials"),
   LASTNAME("lastname", "Last Name"),
   FIRSTNAME("firstname", "First Name"),
-  NONE("full", "Full name");
+  NONE("full", "Full Name");
 
   private static final String KEY = "annotate.short.names.type";
   private final String myId;

@@ -1,20 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
-import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.DiffGutterRenderer;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Side;
+import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -26,7 +20,7 @@ public class UnifiedDiffChangeUi {
   @NotNull protected final UnifiedDiffChange myChange;
 
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull protected final List<MyGutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<DiffGutterOperation> myOperations = new ArrayList<>();
 
   public UnifiedDiffChangeUi(@NotNull UnifiedDiffViewer viewer, @NotNull UnifiedDiffChange change) {
     myViewer = viewer;
@@ -40,7 +34,7 @@ public class UnifiedDiffChangeUi {
     }
     myHighlighters.clear();
 
-    for (MyGutterOperation operation : myOperations) {
+    for (DiffGutterOperation operation : myOperations) {
       operation.dispose();
     }
     myOperations.clear();
@@ -60,11 +54,11 @@ public class UnifiedDiffChangeUi {
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
     if (leftEditable && rightEditable) {
-      myOperations.add(createOperation(Side.LEFT));
-      myOperations.add(createOperation(Side.RIGHT));
+      myOperations.add(createAcceptOperation(Side.LEFT));
+      myOperations.add(createAcceptOperation(Side.RIGHT));
     }
     else if (rightEditable) {
-      myOperations.add(createOperation(Side.LEFT));
+      myOperations.add(createAcceptOperation(Side.LEFT));
     }
   }
 
@@ -82,53 +76,31 @@ public class UnifiedDiffChangeUi {
   //
 
   public void updateGutterActions() {
-    for (MyGutterOperation operation : myOperations) {
-      operation.update();
+    for (DiffGutterOperation operation : myOperations) {
+      operation.update(true);
     }
   }
 
   @NotNull
-  private MyGutterOperation createOperation(@NotNull Side sourceSide) {
-    return new MyGutterOperation() {
-      @Nullable
-      @Override
-      public GutterIconRenderer createRenderer() {
-        if (myViewer.isStateIsOutOfDate()) return null;
-        if (!myViewer.isEditable(sourceSide.other(), true)) return null;
+  protected DiffGutterOperation createOperation(@NotNull DiffGutterOperation.RendererBuilder builder) {
+    int offset = myEditor.getDocument().getLineStartOffset(myChange.getLine1());
 
-        if (sourceSide.isLeft()) {
-          return createIconRenderer(sourceSide, "Revert", AllIcons.Diff.Remove);
-        }
-        else {
-          return createIconRenderer(sourceSide, "Accept", AllIcons.Actions.Checked);
-        }
-      }
-    };
+    return new DiffGutterOperation.Simple(myEditor, offset, builder);
   }
 
-  protected abstract class MyGutterOperation {
-    @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull
+  private DiffGutterOperation createAcceptOperation(@NotNull Side sourceSide) {
+    return createOperation(() -> {
+      if (myViewer.isStateIsOutOfDate()) return null;
+      if (!myViewer.isEditable(sourceSide.other(), true)) return null;
 
-    public MyGutterOperation() {
-      int offset = myEditor.getDocument().getLineStartOffset(myChange.getLine1());
-      myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                    HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                    null,
-                                                                    HighlighterTargetArea.LINES_IN_RANGE);
-
-      update();
-    }
-
-    public void dispose() {
-      myHighlighter.dispose();
-    }
-
-    public void update() {
-      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-    }
-
-    @Nullable
-    public abstract GutterIconRenderer createRenderer();
+      if (sourceSide.isLeft()) {
+        return createIconRenderer(sourceSide, "Revert", AllIcons.Diff.Remove);
+      }
+      else {
+        return createIconRenderer(sourceSide, "Accept", AllIcons.Actions.Checked);
+      }
+    });
   }
 
   private GutterIconRenderer createIconRenderer(@NotNull final Side sourceSide,

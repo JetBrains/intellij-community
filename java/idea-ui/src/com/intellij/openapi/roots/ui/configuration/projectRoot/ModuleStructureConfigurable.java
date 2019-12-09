@@ -38,10 +38,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProj
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -65,8 +62,8 @@ import java.util.function.Predicate;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
-    final NamedConfigurable configurable1 = o1.getConfigurable();
-    final NamedConfigurable configurable2 = o2.getConfigurable();
+    final NamedConfigurable<?> configurable1 = o1.getConfigurable();
+    final NamedConfigurable<?> configurable2 = o2.getConfigurable();
     if (configurable1.getClass() == configurable2.getClass()) {
       return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
     }
@@ -269,10 +266,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   @NotNull
   private static MyNode createModuleGroupNode(ModuleGroup moduleGroup) {
-    final NamedConfigurable moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
-                                                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
-                                                                             ProjectBundle.message("project.roots.module.groups.text"),
-                                                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    final NamedConfigurable<?> moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
+                                                                                ProjectBundle.message("module.group.banner.text",
+                                                                                                      moduleGroup.toString()),
+                                                                                ProjectBundle.message("project.roots.module.groups.text"),
+                                                                                PlatformIcons.CLOSED_MODULE_GROUP_ICON);
     return new ModuleGroupNodeImpl(moduleGroupConfigurable, moduleGroup);
   }
 
@@ -604,7 +602,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext;
   }
 
-  private static boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
+  private static boolean canBeCopiedByExtension(final NamedConfigurable<?> configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.canBeCopied(configurable)) {
         return true;
@@ -613,7 +611,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return false;
   }
 
-  private void copyByExtension(final NamedConfigurable configurable) {
+  private void copyByExtension(final NamedConfigurable<?> configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.copy(configurable, TREE_UPDATER);
     }
@@ -721,7 +719,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public boolean remove(@NotNull Collection<? extends Facet> facets) {
-      for (Facet facet : facets) {
+      for (Facet<?> facet : facets) {
         List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
         FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
       }
@@ -763,40 +761,38 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     @Nullable
     public Object getData(@NotNull @NonNls String dataId) {
-      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
-        final TreePath[] paths = myTree.getSelectionPaths();
-        if (paths != null) {
-          Set<Module> modules = new LinkedHashSet<>();
-          for (TreePath path : paths) {
-            MyNode node = (MyNode)path.getLastPathComponent();
-            final NamedConfigurable configurable = node.getConfigurable();
-            LOG.assertTrue(configurable != null, "already disposed");
-            final Object o = configurable.getEditableObject();
-            if (o instanceof Module) {
-              modules.add((Module)o);
-            }
-            else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
-              TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
-                if (descendant instanceof MyNode) {
-                  Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
-                  if (object instanceof Module) {
-                    modules.add((Module)object);
-                  }
-                }
-              });
-            }
+      return ValueKey.match(dataId)
+        .ifEq(LangDataKeys.MODULE_CONTEXT_ARRAY).thenGet(this::getModuleContexts)
+        .ifEq(LangDataKeys.MODULE_CONTEXT).thenGet(() -> getSelectedModule())
+        .ifEq(LangDataKeys.MODIFIABLE_MODULE_MODEL).thenGet(() -> myContext.myModulesConfigurator.getModuleModel())
+        .orNull();
+    }
+
+    private Module[] getModuleContexts() {
+      final TreePath[] paths = myTree.getSelectionPaths();
+      Set<Module> modules = new LinkedHashSet<>();
+      if (paths != null) {
+        for (TreePath path : paths) {
+          MyNode node = (MyNode)path.getLastPathComponent();
+          final NamedConfigurable<?> configurable = node.getConfigurable();
+          LOG.assertTrue(configurable != null, "already disposed");
+          final Object o = configurable.getEditableObject();
+          if (o instanceof Module) {
+            modules.add((Module)o);
           }
-          return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
+          else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
+            TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
+              if (descendant instanceof MyNode) {
+                Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
+                if (object instanceof Module) {
+                  modules.add((Module)object);
+                }
+              }
+            });
+          }
         }
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return getSelectedModule();
-      }
-      if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)) {
-        return myContext.myModulesConfigurator.getModuleModel();
-      }
-
-      return null;
+      return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
     }
   }
 
@@ -909,7 +905,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final NamedConfigurable namedConfigurable = getSelectedConfigurable();
+      final NamedConfigurable<?> namedConfigurable = getSelectedConfigurable();
       if (namedConfigurable instanceof ModuleConfigurable) {
         try {
           final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
@@ -1019,7 +1015,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         e.getPresentation().setEnabled(false);
       }
       else {
-        final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
+        final NamedConfigurable<?> selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
     }

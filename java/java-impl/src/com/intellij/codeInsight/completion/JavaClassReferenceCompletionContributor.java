@@ -58,7 +58,7 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
         reference.processSubclassVariants((PsiPackage)context, extendClassNames, result.withPrefixMatcher(fullPrefix));
         return;
       }
-      result.addLookupAdvertisement("Press " + getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION) + " to see inheritors of " +
+      result.addLookupAdvertisement("Press " + CompletionUtil.getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION) + " to see inheritors of " +
                                     StringUtil.join(extendClassNames, ", "));
     }
 

@@ -82,11 +82,6 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean isSearchOutsideRootModel() {
-    return mySearchOutsideRootModel;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
@@ -111,26 +106,6 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
 
   public void setDisplayName(@NotNull String displayName) {
     myDisplayName = displayName;
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope intersectWith(@NotNull final GlobalSearchScope scope) {
-    if (scope.isSearchOutsideRootModel()) {
-      return super.intersectWith(scope);
-    }
-
-    return scope;
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope uniteWith(@NotNull final GlobalSearchScope scope) {
-    if (scope.isSearchOutsideRootModel()) {
-      return super.uniteWith(scope);
-    }
-
-    return this;
   }
 
   @Override

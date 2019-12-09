@@ -25,8 +25,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,17 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class TextMergeChange extends ThreesideDiffChangeBase {
   private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
   @NotNull private final TextMergeViewer myMergeViewer;
   @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
-
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   private final int myIndex;
   @NotNull private final MergeLineFragment myFragment;
@@ -68,13 +62,6 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     myFragment = fragment;
 
     reinstallHighlighters();
-  }
-
-  @CalledInAwt
-  public void destroy() {
-    destroyHighlighters();
-    destroyOperations();
-    destroyInnerHighlighters();
   }
 
   @CalledInAwt
@@ -196,106 +183,47 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   // Gutter actions
   //
 
+  @Override
   @CalledInAwt
-  private void installOperations() {
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.BASE, OperationType.RESOLVE));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.APPLY));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.LEFT, OperationType.IGNORE));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.APPLY));
-    ContainerUtil.addIfNotNull(myOperations, createOperation(ThreeSide.RIGHT, OperationType.IGNORE));
-  }
-
-  @CalledInAwt
-  private void destroyOperations() {
-    for (MyGutterOperation operation : myOperations) {
-      operation.dispose();
-    }
-    myOperations.clear();
+  protected void installOperations() {
+    ContainerUtil.addIfNotNull(myOperations, createResolveOperation());
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.IGNORE));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.APPLY));
+    ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
   }
 
   @Nullable
-  private MyGutterOperation createOperation(@NotNull ThreeSide side, @NotNull OperationType type) {
+  private DiffGutterOperation createOperation(@NotNull ThreeSide side, @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
     if (isResolved(side)) return null;
 
     EditorEx editor = myViewer.getEditor(side);
-    Document document = editor.getDocument();
+    int offset = DiffGutterOperation.lineToOffset(editor, getStartLine(side));
 
-    int line = getStartLine(side);
-    int offset = line == DiffUtil.getLineCount(document) ? document.getTextLength() : document.getLineStartOffset(line);
-
-    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                               null,
-                                                                               HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter, type);
+    return new DiffGutterOperation.WithModifiers(editor, offset, myViewer.getModifierProvider(), builder);
   }
 
-  public void updateGutterActions(boolean force) {
-    for (MyGutterOperation operation : myOperations) {
-      operation.update(force);
-    }
+  @Nullable
+  private DiffGutterOperation createResolveOperation() {
+    return createOperation(ThreeSide.BASE, (ctrlPressed, shiftPressed, altPressed) -> {
+      if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
+      return createResolveRenderer();
+    });
   }
 
-  private class MyGutterOperation {
-    @NotNull private final ThreeSide mySide;
-    @NotNull private final RangeHighlighter myHighlighter;
-    @NotNull private final OperationType myType;
+  @Nullable
+  private DiffGutterOperation createAcceptOperation(@NotNull Side versionSide, @NotNull OperationType type) {
+    ThreeSide side = versionSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+    return createOperation(side, (ctrlPressed, shiftPressed, altPressed) -> {
+      if (!isChange(versionSide)) return null;
 
-    private boolean myCtrlPressed;
-    private boolean myShiftPressed;
-
-    private MyGutterOperation(@NotNull ThreeSide side, @NotNull RangeHighlighter highlighter, @NotNull OperationType type) {
-      mySide = side;
-      myHighlighter = highlighter;
-      myType = type;
-
-      update(true);
-    }
-
-    public void dispose() {
-      myHighlighter.dispose();
-    }
-
-    public void update(boolean force) {
-      if (!force && !areModifiersChanged()) {
-        return;
-      }
-      if (myHighlighter.isValid()) myHighlighter.setGutterIconRenderer(createRenderer());
-    }
-
-    private boolean areModifiersChanged() {
-      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed() ||
-             myShiftPressed != myViewer.getModifierProvider().isShiftPressed();
-    }
-
-    @Nullable
-    public GutterIconRenderer createRenderer() {
-      myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-      myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
-
-      if (mySide == ThreeSide.BASE) {
-        if (myType == OperationType.RESOLVE) {
-          if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
-          return createResolveRenderer();
-        }
-        throw new IllegalArgumentException(myType.name());
+      if (type == OperationType.APPLY) {
+        return createApplyRenderer(versionSide, ctrlPressed);
       }
       else {
-        Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
-        assert versionSide != null;
-
-        if (!isChange(versionSide)) return null;
-
-        switch (myType) {
-          case APPLY:
-            return createApplyRenderer(versionSide, myCtrlPressed);
-          case IGNORE:
-            return createIgnoreRenderer(versionSide, myCtrlPressed);
-          default:
-            throw new IllegalArgumentException(myType.name());
-        }
+        return createIgnoreRenderer(versionSide, ctrlPressed);
       }
-    }
+    });
   }
 
   @Nullable
@@ -333,7 +261,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   private enum OperationType {
-    APPLY, IGNORE, RESOLVE
+    APPLY, IGNORE
   }
 
   //

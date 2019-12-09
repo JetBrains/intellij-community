@@ -721,7 +721,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @NotNull
-    public ModifierProvider getModifierProvider() {
+    public KeyboardModifierListener getModifierProvider() {
       return myModifierProvider;
     }
 

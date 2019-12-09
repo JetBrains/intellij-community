@@ -3283,4 +3283,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find for loops with 2 update expressions", 2, findMatchesCount(in2, "for (;;'_update{2,2}) '_st;"));
     assertEquals("find for loops with 2 update expressions 2", 2, findMatchesCount(in2, "for (;;'_update1, '_update2) '_st;"));
   }
+
+  public void testReceiverParameter() {
+    String in = "class X {\n" +
+                "  public String toString(X this) {" +
+                "    return \"x\";" +
+                "  }" +
+                "  void f() {}" +
+                "  void g() {}" +
+                "}";
+    assertEquals("find methods with receiver parameter", 3, findMatchesCount(in, "'_RT '_m();"));
+    assertEquals("find methods with explicit receiver parameter", 1, findMatchesCount(in, "'_RT '_m('_T this);"));
+    assertEquals("find methods without receiver parameter", 2, findMatchesCount(in, "'_RT '_m('_T '_this{0,0}:(\\w*\\.)?this );"));
+    assertEquals("find methods with receiver parameter 2", 1, findMatchesCount(in, "'_RT '_m('_T '_this:(\\w*\\.)?this );"));
+  }
 }

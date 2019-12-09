@@ -3,7 +3,7 @@ class OperatorAssignment {
       int a = 10;
       double b = 0.5;
 
-      a *= <caret>b;
+      <caret>a *= b;
 
       System.out.println(a);
     }

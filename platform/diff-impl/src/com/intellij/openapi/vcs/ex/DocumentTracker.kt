@@ -47,10 +47,13 @@ class DocumentTracker : Disposable {
     this.document2 = document2
     this.handler = handler
 
-    val changes = compareLines(document1.immutableCharSequence,
-                               document2.immutableCharSequence,
-                               document1.lineOffsets,
-                               document2.lineOffsets).iterateChanges().toList()
+    val changes = when {
+      document1.immutableCharSequence === document2.immutableCharSequence -> emptyList()
+      else -> compareLines(document1.immutableCharSequence,
+                           document2.immutableCharSequence,
+                           document1.lineOffsets,
+                           document2.lineOffsets).iterateChanges().toList()
+    }
     tracker = LineTracker(this.handler, changes)
 
     val application = ApplicationManager.getApplication()

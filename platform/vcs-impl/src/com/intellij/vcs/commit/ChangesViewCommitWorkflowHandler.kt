@@ -2,17 +2,16 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import gnu.trove.THashSet
 
@@ -50,6 +49,14 @@ class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
+  }
+
+  override fun createDataProvider(): DataProvider = object : DataProvider {
+    private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
+
+    override fun getData(dataId: String): Any? =
+      if (COMMIT_WORKFLOW_HANDLER.`is`(dataId)) this@ChangesViewCommitWorkflowHandler.takeIf { it.isActive }
+      else superProvider.getData(dataId)
   }
 
   private fun ensureCommitOptions(): CommitOptions {
@@ -136,7 +143,9 @@ class ChangesViewCommitWorkflowHandler(
     }
   }
 
+  val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = ui.activate()
+  fun deactivate() = ui.deactivate()
 
   fun showCommitOptions(isFromToolbar: Boolean, dataContext: DataContext) =
     ui.showCommitOptions(ensureCommitOptions(), getCommitActionName(), isFromToolbar, dataContext)
@@ -153,6 +162,11 @@ class ChangesViewCommitWorkflowHandler(
 
     updateDefaultCommitActionEnabled()
     super.inclusionChanged()
+  }
+
+  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
+    super.beforeCommitChecksEnded(isDefaultCommit, result)
+    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
   }
 
   override fun updateWorkflow() {

@@ -157,7 +157,8 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   @Nullable
   private static String loadLogFile() {
-    File logFile = getPtyLogFile();
+    Application app = ApplicationManager.getApplication();
+    File logFile = app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null;
     if (logFile != null && logFile.exists()) {
       try {
         return FileUtil.loadFile(logFile);
@@ -167,11 +168,6 @@ public class PtyCommandLine extends GeneralCommandLine {
       }
     }
     return null;
-  }
-
-  private static File getPtyLogFile() {
-    Application app = ApplicationManager.getApplication();
-    return app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null;
   }
 
   @NotNull
@@ -228,12 +224,13 @@ public class PtyCommandLine extends GeneralCommandLine {
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
     boolean cygwin = myUseCygwinLaunch && SystemInfo.isWindows;
+    Application app = ApplicationManager.getApplication();
     PtyProcessBuilder builder = new PtyProcessBuilder(command)
       .setEnvironment(env)
       .setDirectory(directory)
       .setConsole(myConsoleMode)
       .setCygwin(cygwin)
-      .setLogFile(getPtyLogFile())
+      .setLogFile(app != null && app.isEAP() ? new File(PathManager.getLogPath(), "pty.log") : null)
       .setRedirectErrorStream(isRedirectErrorStream())
       .setWindowsAnsiColorEnabled(myWindowsAnsiColorEnabled);
     return builder.start();

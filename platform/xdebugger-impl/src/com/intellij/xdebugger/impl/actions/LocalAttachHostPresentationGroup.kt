@@ -18,8 +18,16 @@ object LocalAttachHostPresentationGroup: XAttachPresentationGroup<XAttachHost> {
     return ""
   }
 
+  override fun getProcessIcon(project: Project, info: XAttachHost, dataHolder: UserDataHolder): Icon {
+    TODO("deprecated method should not be invoked")
+  }
+
   override fun getItemIcon(project: Project, info: XAttachHost, dataHolder: UserDataHolder): Icon {
     return EmptyIcon.ICON_16
+  }
+
+  override fun getProcessDisplayText(project: Project, info: XAttachHost, dataHolder: UserDataHolder): String {
+    TODO("deprecated method should not be invoked")
   }
 
   override fun getItemDisplayText(project: Project, info: XAttachHost, dataHolder: UserDataHolder): String {

@@ -153,6 +153,30 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  @EnvTestTagsRequired(tags = "-messages") //messages registered 2 times when launched with testdir plugin, should be fixed separately
+  @Test
+  public void testTestDirFixture() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testdir", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_foo.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+
+          Assert.assertEquals(stderr, 1, runner.getAllTestsCount());
+          Assert.assertEquals(stderr, 1, runner.getPassedTestsCount());
+        }
+      });
+  }
+
   /**
    * Test name must be reported as meta info to be used as argument for "-k" for parametrized tests
    */

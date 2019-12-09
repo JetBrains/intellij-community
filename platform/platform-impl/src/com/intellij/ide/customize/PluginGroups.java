@@ -197,7 +197,6 @@ public class PluginGroups {
     tree.put("Clouds", Pair.create(PlatformImplIcons.Clouds, Arrays.asList(
       "CloudFoundry",
       "CloudBees",
-      "Heroku",
       "OpenShift"
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));

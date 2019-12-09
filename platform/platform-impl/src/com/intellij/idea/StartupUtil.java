@@ -502,6 +502,10 @@ public final class StartupUtil {
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
+    if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
+      System.setOut(new PrintStreamLogger("STDOUT"));
+      System.setErr(new PrintStreamLogger("STDERR"));
+    }
     return log;
   }
 
@@ -516,7 +520,6 @@ public final class StartupUtil {
       .thenRun(() -> subActivity.end());
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
     Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
 

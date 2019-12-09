@@ -6,6 +6,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ValueKey;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -84,6 +86,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable.setCompactReferencesView(true);
     myGraphTable.setShowTagNames(false);
     myGraphTable.setLabelsLeftAligned(false);
+    myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
 
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, new VcsLogColorManagerImpl(Collections.singleton(myRoot)), this) {
       @Override
@@ -170,6 +173,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   void showDiffPreview(boolean state) {
+    if (Registry.is("show.log.as.editor.tab")) {
+      return;
+    }
+
     if (myDiffPreview != null) {
       myDiffPreview.updatePreview(state);
       myDiffPreviewSplitter.setSecondComponent(state ? myDiffPreview.getComponent() : null);
@@ -196,67 +203,57 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
-      Change change = myUi.getSelectedChange();
-      if (change != null) {
-        return new Change[]{change};
-      }
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
-      if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
-      return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
-    }
-    else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
-      return myUi.getProperties();
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
-      if (details.isEmpty()) return null;
-      return myUi.createRevision(getFirstItem(details));
-    }
-    else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
-      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
-      if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ContainerUtil.mapNotNull(details, myUi::createRevision).toArray(new VcsFileRevision[0]);
-    }
-    else if (VcsDataKeys.FILE_PATH.is(dataId)) {
-      return myFilePath;
-    }
-    else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
-      if (details.isEmpty()) return null;
-      VcsCommitMetadata detail = notNull(getFirstItem(details));
-      Object revision = FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
-      if (revision != null) return revision;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return myFilePath.getVirtualFile();
-    }
-    else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
-      return false;
-    }
-    else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
-      return myUi.getLogData().getLogProvider(myRoot).getDiffHandler();
-    }
-    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
-      if (myFilePath.isDirectory()) return null;
-      return new ShowPreviewEditorAction.DiffPreviewProvider() {
-        @NotNull
-        @Override
-        public DiffRequestProcessor createDiffRequestProcessor() {
-          FileHistoryDiffPreview preview = notNull(createDiffPreview(true));
-          preview.updatePreview(true);
-          return preview;
+    return ValueKey.match(dataId)
+      .ifEq(VcsDataKeys.CHANGES).or(VcsDataKeys.SELECTED_CHANGES).thenGet(() -> {
+        Change change = myUi.getSelectedChange();
+        if (change != null) {
+          return new Change[]{change};
         }
+        List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        if (VcsLogUtil.getMaxSize(details) > VcsLogUtil.getShownChangesLimit()) return null;
+        return VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)).toArray(new Change[0]);
+      })
+      .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).thenGet(myUi::getProperties)
+      .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
+        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        if (details.isEmpty()) return null;
+        return myUi.createRevision(getFirstItem(details));
+      })
+      .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
+        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+        return ContainerUtil.mapNotNull(details, myUi::createRevision).toArray(new VcsFileRevision[0]);
+      })
+      .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
+      .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
+        List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
+        if (details.isEmpty()) return null;
+        VcsCommitMetadata detail = notNull(getFirstItem(details));
+        return FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
+      })
+      .ifEq(CommonDataKeys.VIRTUAL_FILE).thenGet(myFilePath::getVirtualFile)
+      .ifEq(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION).then(false)
+      .ifEq(VcsLogInternalDataKeys.LOG_DIFF_HANDLER).thenGet(() -> myUi.getLogData().getLogProvider(myRoot).getDiffHandler())
+      .ifEq(ShowPreviewEditorAction.DATA_KEY).thenGet(() -> {
+        if (myFilePath.isDirectory()) return null;
+        return new ShowPreviewEditorAction.DiffPreviewProvider() {
+          @NotNull
+          @Override
+          public DiffRequestProcessor createDiffRequestProcessor() {
+            FileHistoryDiffPreview preview = notNull(createDiffPreview(true));
+            preview.updatePreview(true);
+            return preview;
+          }
 
-        @NotNull
-        @Override
-        public Object getOwner() {
-          return myUi;
-        }
-      };
-    }
-    return null;
+          @NotNull
+          @Override
+          public Object getOwner() {
+            return myUi;
+          }
+        };
+      })
+      .orNull();
   }
 
   @Override

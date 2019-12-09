@@ -204,7 +204,7 @@ runner = DocTestRunner()
 
 
 def _load_file(moduleName, fileName):
-  if sys.version_info[:2] >= (3, 3):
+  if sys.version_info >= (3, 3):
       from importlib import machinery
       return machinery.SourceFileLoader(moduleName, fileName).load_module()
   else:

@@ -79,12 +79,6 @@ class BarContainer {
       myOnHideCallback.run();
   }
 
-  void setComponent(Component component) {
-    myMain.setComponent(component);
-    if (myKeyMask2Alt != null)
-      myKeyMask2Alt.values().forEach(tb -> tb.setComponent(component));
-  }
-
   void setOptionalContextActions(@Nullable ActionGroup actions, @NotNull String contextName) {
     if (actions == null)
       myMain.removeOptionalContextItems(contextName);

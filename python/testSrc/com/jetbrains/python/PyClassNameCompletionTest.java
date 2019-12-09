@@ -96,6 +96,11 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-23475
+  public void testImportAddedAfterModuleLevelDunder() {
+    doTest();
+  }
+
   // PY-20976
   public void testOrderingLexicographicalBaseline() {
     doTestCompletionOrder("a.foo", "b.foo");

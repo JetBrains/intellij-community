@@ -10,6 +10,7 @@ import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,10 +44,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
-  private static final CallMatcher OPTIONAL_OR_ELSE_OR_ELSE_GET = CallMatcher.anyOf(
-    OPTIONAL_OR_ELSE,
-    OPTIONAL_OR_ELSE_GET
-  );
   private static final CallMatcher OPTIONAL_MAP =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
@@ -852,16 +849,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiLambdaExpression outerIfPresentArgument = tryCast(call.getArgumentList().getExpressions()[0], PsiLambdaExpression.class);
       if (outerIfPresentArgument == null) return null;
       if (outerIfPresentArgument.getParameterList().getParametersCount() != 1) return null;
-      PsiParameter parameter = outerIfPresentArgument.getParameterList().getParameters()[0];
-      if (parameter == null) return null;
-      String outerIfPresentParameterName = parameter.getName();
+      PsiParameter outerParameter = outerIfPresentArgument.getParameterList().getParameters()[0];
+      if (outerParameter == null) return null;
+      String outerIfPresentParameterName = outerParameter.getName();
       if (outerIfPresentParameterName == null) return null;
       PsiExpression outerIfPresentBodyExpr = LambdaUtil.extractSingleExpressionFromBody(outerIfPresentArgument.getBody());
       PsiMethodCallExpression outerIfPresentBody = tryCast(outerIfPresentBodyExpr, PsiMethodCallExpression.class);
       if (!OPTIONAL_IF_PRESENT.test(outerIfPresentBody)) return null;
+
       PsiExpression innerIfPresentQualifier = outerIfPresentBody.getMethodExpression().getQualifierExpression();
-      PsiExpression nonTrivialQualifier = ExpressionUtils.isReferenceTo(innerIfPresentQualifier, parameter) ? null : innerIfPresentQualifier;
+      PsiExpression nonTrivialQualifier = ExpressionUtils.isReferenceTo(innerIfPresentQualifier, outerParameter) ? null : innerIfPresentQualifier;
       PsiExpression innerIfPresentArgument = outerIfPresentBody.getArgumentList().getExpressions()[0];
+      if (ReferencesSearch.search(outerParameter, new LocalSearchScope(innerIfPresentArgument)).findFirst() != null) return null;
 
       PsiMethodCallExpression mapBefore = null;
       if (OPTIONAL_MAP.test(qualifierCall)) {

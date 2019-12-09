@@ -26,7 +26,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 grammar {
     SVG.id.attrib = attribute id { w:xml-name }?
     SVG.base.attrib = attribute xml:base { URI.datatype }?
-    SVG.lang.attrib = attribute xml:lang { LanguageCode.datatype }?
+    SVG.lang.attrib = ( attribute xml:lang { LanguageCode.datatype }
+                      | attribute lang { LanguageCode.datatype }
+                      )?
     SVG.space.attrib = attribute xml:space { string "default" | string "preserve" }?
     SVG.tabindex.attrib = attribute tabindex { Integer.datatype }?
     SVG.focusable.attrib = attribute focusable { string "true" | string "false" }?

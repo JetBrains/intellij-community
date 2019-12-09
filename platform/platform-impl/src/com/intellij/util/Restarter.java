@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -92,7 +91,6 @@ public class Restarter {
   }
 
   public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
-    Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }
@@ -233,6 +231,7 @@ public class Restarter {
     boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
     File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
     restarterArgs.add(0, restarter.getPath());
+    Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
     Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(restarterArgs));
   }
 

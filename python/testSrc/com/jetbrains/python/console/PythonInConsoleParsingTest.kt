@@ -3,7 +3,7 @@ package com.jetbrains.python.console
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonParserDefinition
-import com.jetbrains.python.PythonParsingTest
+import com.jetbrains.python.parsing.PythonParsingTest
 import com.jetbrains.python.parsing.console.PyConsoleParser
 import com.jetbrains.python.parsing.console.PythonConsoleData
 import com.jetbrains.python.parsing.console.PythonConsoleLexer

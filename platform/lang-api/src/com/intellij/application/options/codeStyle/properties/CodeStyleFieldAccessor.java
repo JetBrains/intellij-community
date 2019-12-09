@@ -48,9 +48,8 @@ public abstract class CodeStyleFieldAccessor<T,V> extends CodeStylePropertyAcces
     return null;
   }
 
-  @NotNull
-  public Class<?> getObjectClass() {
-    return myObject.getClass();
+  public Object getDataObject() {
+    return myObject;
   }
 
   protected boolean isEmpty(@NotNull T value) {

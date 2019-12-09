@@ -18,6 +18,7 @@ package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
@@ -53,6 +54,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected Pair<JComponent, Dimension> createDiffPanel(JPanel root, ExcludingTraversalPolicy traversalPolicy) {
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myProject, this, getFrame());
+    myDiffPanel.setRequest(new MessageDiffRequest(""));
     return Pair.create(myDiffPanel.getComponent(), null);
   }
 

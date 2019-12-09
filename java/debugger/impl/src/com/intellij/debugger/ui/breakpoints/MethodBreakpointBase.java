@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -20,7 +20,7 @@ public interface MethodBreakpointBase extends FilteredRequestor {
   boolean isWatchEntry();
   boolean isWatchExit();
 
-  StreamEx matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess);
+  StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess);
 
   void disableEmulation();
 

@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
   </component>
   <component name="copyright">
     <Base>

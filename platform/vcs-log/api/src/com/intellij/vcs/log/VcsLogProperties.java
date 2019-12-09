@@ -36,6 +36,10 @@ public class VcsLogProperties {
   @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_INDEXING = new VcsLogProperty<>(false);
   @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_LOG_DIRECTORY_HISTORY = new VcsLogProperty<>(false);
   @NotNull public static final VcsLogProperty<Boolean> CASE_INSENSITIVE_REGEX = new VcsLogProperty<>(true);
+  /**
+   * True if VCS has separate committer and committed date information which may differ from author and author date
+   */
+  @NotNull public static final VcsLogProperty<Boolean> HAS_COMMITTER = new VcsLogProperty<>(false);
 
   /**
    * @deprecated use {@link VcsLogProperty#getOrDefault(VcsLogProvider)}

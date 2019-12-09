@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.ui.update.ComparableObject;
@@ -39,8 +39,8 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
   @Nullable
   @Override
   public Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    if (element instanceof PsiFileSystemItem) {
-      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+    if (element instanceof PsiFile) {
+      VirtualFile file = ((PsiFile)element).getVirtualFile();
       if (file != null) return doGetIcon(file, flags);
     }
     return null;

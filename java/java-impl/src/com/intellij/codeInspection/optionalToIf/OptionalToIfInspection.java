@@ -39,7 +39,9 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         String methodName = terminalCall.getMethodExpression().getReferenceName();
         if (methodName == null || !SUPPORTED_TERMINALS.contains(methodName)) return;
         List<Operation> operations = extractOperations(terminalCall, true);
-        if (operations == null || OptionalToIfContext.create(terminalCall) == null) return;
+        if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
+        OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
+        if (context == null) return;
         holder.registerProblem(terminalCall, "Replace Optional with if statements", new ReplaceOptionalWithIfFix());
       }
     };

@@ -97,4 +97,12 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("a.py");
     myFixture.checkHighlighting(true, false, false);
   }
+
+  // PY-38101
+  public void testDeprecatedElementInPyi() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedElementInPyi", "");
+    myFixture.configureByFile("a.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
 }

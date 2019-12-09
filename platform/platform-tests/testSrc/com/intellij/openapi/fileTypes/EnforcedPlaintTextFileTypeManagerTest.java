@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.file.exclude.EnforcedPlainTextFileType;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +35,8 @@ public class EnforcedPlaintTextFileTypeManagerTest extends BasePlatformTestCase 
     UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
     FileType changedType = file.getFileType();
     assertEquals(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT, changedType.getName());
+    assertTrue(FileTypeManager.getInstance().isFileOfType(file, EnforcedPlainTextFileType.INSTANCE));
+    assertFalse(FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.JAVA));
     manager.resetOriginalFileType(getProject(), file);
     FileType revertedType = file.getFileType();
     assertEquals(originalType, revertedType);

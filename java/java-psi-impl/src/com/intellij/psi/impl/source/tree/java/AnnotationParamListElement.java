@@ -61,53 +61,51 @@ public class AnnotationParamListElement extends CompositeElement {
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first.getElementType() == JavaElementType.NAME_VALUE_PAIR && last.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
-      ASTNode lparenth = findChildByType(JavaTokenType.LPARENTH);
-      if (lparenth == null) {
-        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, treeCharTab, getManager());
-        super.addInternal(created, created, getFirstChildNode(), true);
-      }
+    ASTNode lparenth = findChildByType(JavaTokenType.LPARENTH);
+    if (lparenth == null) {
+      CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement created = Factory.createSingleLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, treeCharTab, getManager());
+      super.addInternal(created, created, getFirstChildNode(), true);
+    }
 
-      ASTNode rparenth = findChildByType(JavaTokenType.RPARENTH);
-      if (rparenth == null) {
-        CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-        LeafElement created = Factory.createSingleLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, treeCharTab, getManager());
-        super.addInternal(created, created, getLastChildNode(), false);
-      }
+    ASTNode rparenth = findChildByType(JavaTokenType.RPARENTH);
+    if (rparenth == null) {
+      CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+      LeafElement created = Factory.createSingleLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, treeCharTab, getManager());
+      super.addInternal(created, created, getLastChildNode(), false);
+    }
 
-      ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
-      if (nodes.length == 1) {
-        ASTNode node = nodes[0];
-        if (node instanceof PsiNameValuePair) {
-          PsiNameValuePair pair = (PsiNameValuePair)node;
-          if (pair.getName() == null) {
-            PsiAnnotationMemberValue value = pair.getValue();
-            if (value != null) {
-              try {
-                PsiElementFactory factory = JavaPsiFacade.getElementFactory(getPsi().getProject());
-                PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
-                replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
+    ASTNode[] nodes = getChildren(NAME_VALUE_PAIR_BIT_SET);
+    if (nodes.length == 1) {
+      ASTNode node = nodes[0];
+      if (node instanceof PsiNameValuePair) {
+        PsiNameValuePair pair = (PsiNameValuePair)node;
+        if (pair.getName() == null) {
+          PsiAnnotationMemberValue value = pair.getValue();
+          if (value != null) {
+            try {
+              PsiElementFactory factory = JavaPsiFacade.getElementFactory(getPsi().getProject());
+              PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
+              replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
             }
           }
         }
       }
-
-      if (anchor == null) {
-        if (before == null) before = Boolean.TRUE;
-        anchor = findChildByType(before ? JavaTokenType.RPARENTH : JavaTokenType.LPARENTH);
-      }
-
-      TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-      JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
-      return firstAdded;
     }
 
-    return super.addInternal(first, last, anchor, before);
+    if (anchor == null) {
+      if (before == null) before = Boolean.TRUE;
+      anchor = findChildByType(before ? JavaTokenType.RPARENTH : JavaTokenType.LPARENTH);
+    }
+
+    TreeElement firstAdded = super.addInternal(first, last, anchor, before);
+    if (first == last && first.getElementType() == JavaElementType.NAME_VALUE_PAIR) {
+      JavaSourceUtil.addSeparatingComma(this, first, NAME_VALUE_PAIR_BIT_SET);
+    }
+    return firstAdded;
   }
 
   @Override

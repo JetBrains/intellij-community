@@ -2,32 +2,11 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -49,12 +28,7 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
   @NotNull
   @Override
   public GlobalSearchScope buildAllScope() {
-    return new ProjectAndLibrariesScope(myProject) {
-      @Override
-      public boolean isSearchOutsideRootModel() {
-        return true;
-      }
-    };
+    return new ProjectAndLibrariesScope(myProject);
   }
 
   /**

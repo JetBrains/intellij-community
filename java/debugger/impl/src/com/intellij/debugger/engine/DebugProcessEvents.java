@@ -16,10 +16,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
-import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.openapi.application.ApplicationManager;
@@ -483,8 +480,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           final String message = "Method <b>" + ((NamedMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
           XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
-        if (hint.wasStepTargetMethodMatched() && hint.isResetIgnoreFilters()) {
-          checkPositionNotFiltered(suspendContext.getThread(), filters -> mySession.resetIgnoreStepFiltersFlag());
+        if (hint.wasStepTargetMethodMatched()) {
+          suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
         }
       }
     }
@@ -519,7 +516,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;
-        long start = requestor instanceof OverheadProducer && !(requestor instanceof RunToCursorBreakpoint) ? System.currentTimeMillis() : 0;
+        long start = requestor instanceof OverheadProducer && ((OverheadProducer)requestor).track() ? System.currentTimeMillis() : 0;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }

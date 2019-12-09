@@ -65,6 +65,12 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
     return groupDisplayName == null ? groupDisplayName = getLocalizedString(groupBundle, groupKey) : groupDisplayName;
   }
 
+
+  @Override
+  @Nullable
+  public String getGroupKey() {
+    return groupKey;
+  }
   /**
    * Message key for {@link #displayName}.
    *

@@ -625,6 +625,7 @@ class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(!new GitMultiRootBranchConfig(myRepositories).diverged());
       String description = String.format("Compare the current working tree with the tree in %1$s", getBranchPresentation(myBranchName));
       e.getPresentation().setDescription(description);
     }

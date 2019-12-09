@@ -226,12 +226,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       @Override
       public void run() {
         if (isDisposedOrDisposeInProgress()) {
-          LOG.debug("Task to execute on pooled thread is skipped because app is being disposed: " + this.getClass().getName());
           return;
         }
 
         // see the comment in "executeOnPooledThread(Callable)"
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
+          if (isDisposedOrDisposeInProgress()) {
+            return;
+          }
+
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -254,12 +257,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
+        if (isDisposedOrDisposeInProgress()) {
+          return null;
+        }
+
         // This is very special magic only needed by threads that need read actions and can be executed
         // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
         // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
 
         // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
         try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
+          if (isDisposedOrDisposeInProgress()) {
+            return null;
+          }
+
           return action.call();
         }
         catch (ProcessCanceledException e) {

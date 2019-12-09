@@ -22,13 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -99,12 +98,9 @@ public final class PySdkTools {
 
     if (module != null) {
       project = module.getProject();
-      final Project finalProject = project;
-      // Associate with module
-      ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
-      ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication()
-        .runWriteAction(() -> ProjectRootManager.getInstance(finalProject).setProjectSdk(sdk)));
+      PySdkExtKt.setPythonSdk(project, sdk);
+      PySdkExtKt.setPythonSdk(module, sdk);
     }
 
 

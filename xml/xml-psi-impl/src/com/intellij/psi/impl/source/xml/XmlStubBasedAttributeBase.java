@@ -89,7 +89,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
 
   @Override
   public PsiElement getContext() {
-    XmlAttributeStub<?> stub = getGreenStub();
+    XmlAttributeStub<?> stub = getStub();
     if (stub != null) {
       if (!(stub instanceof PsiFileStub)) {
         return stub.getParentStub().getPsi();

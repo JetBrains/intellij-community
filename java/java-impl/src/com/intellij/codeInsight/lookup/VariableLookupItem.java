@@ -164,8 +164,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       if (willBeImported()) {
         RangeMarker toDelete = JavaCompletionUtil.insertTemporary(context.getTailOffset(), document, " ");
         context.commitDocument();
-        final PsiReferenceExpression
-          ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
+        PsiReferenceExpression ref = findReference(context, context.getStartOffset());
         if (ref != null) {
           if (ref.isQualified()) {
             return; // shouldn't happen, but sometimes we see exceptions because of this
@@ -183,12 +182,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       }
     }
 
-    PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    PsiReferenceExpression ref = findReference(context, context.getTailOffset() - 1);
     if (ref != null) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(ref);
     }
 
-    ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    ref = findReference(context, context.getTailOffset() - 1);
     PsiElement target = ref == null ? null : ref.resolve();
     if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
       makeFinalIfNeeded(context, (PsiVariable)target);
@@ -218,6 +217,23 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+    else if (completionChar == Lookup.REPLACE_SELECT_CHAR) {
+      removeEmptyCallParentheses(context);
+    }
+  }
+
+  private static void removeEmptyCallParentheses(@NotNull InsertionContext context) {
+    PsiReferenceExpression ref = findReference(context, context.getTailOffset() - 1);
+    if (ref != null && ref.getParent() instanceof PsiMethodCallExpression) {
+      PsiExpressionList argList = ((PsiMethodCallExpression)ref.getParent()).getArgumentList();
+      if (argList.getExpressionCount() == 0) {
+        context.getDocument().deleteString(argList.getTextRange().getStartOffset(), argList.getTextRange().getEndOffset());
+      }
+    }
+  }
+
+  private static PsiReferenceExpression findReference(@NotNull InsertionContext context, int offset) {
+    return PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset, PsiReferenceExpression.class, false);
   }
 
   private static boolean isTernaryCondition(PsiReferenceExpression ref) {

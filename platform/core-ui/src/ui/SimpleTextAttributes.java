@@ -22,7 +22,7 @@ public final class SimpleTextAttributes {
   @MagicConstant(flags = {
     STYLE_PLAIN, STYLE_BOLD, STYLE_ITALIC, STYLE_STRIKEOUT, STYLE_WAVED, STYLE_UNDERLINE,
     STYLE_BOLD_DOTTED_LINE, STYLE_SEARCH_MATCH, STYLE_SMALLER, STYLE_OPAQUE,
-    STYLE_CLICKABLE, STYLE_HOVERED})
+    STYLE_CLICKABLE, STYLE_HOVERED, STYLE_NO_BORDER})
   public @interface StyleAttributeConstant { }
 
   public static final int STYLE_PLAIN = Font.PLAIN;
@@ -38,6 +38,7 @@ public final class SimpleTextAttributes {
   public static final int STYLE_OPAQUE = STYLE_SMALLER << 1;
   public static final int STYLE_CLICKABLE = STYLE_OPAQUE << 1;
   public static final int STYLE_HOVERED = STYLE_CLICKABLE << 1;
+  public static final int STYLE_NO_BORDER = STYLE_HOVERED << 1;
 
   public static final SimpleTextAttributes REGULAR_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, null);
   public static final SimpleTextAttributes REGULAR_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_BOLD, null);
@@ -97,7 +98,8 @@ public final class SimpleTextAttributes {
            STYLE_SMALLER |
            STYLE_OPAQUE |
            STYLE_CLICKABLE |
-           STYLE_HOVERED) & style) != 0) {
+           STYLE_HOVERED |
+           STYLE_NO_BORDER) & style) != 0) {
       throw new IllegalArgumentException("Wrong style: " + style);
     }
 
@@ -177,6 +179,10 @@ public final class SimpleTextAttributes {
 
   public boolean isHovered() {
     return BitUtil.isSet(myStyle, STYLE_HOVERED);
+  }
+
+  public boolean isNoBorder() {
+    return BitUtil.isSet(myStyle, STYLE_NO_BORDER);
   }
 
   @NotNull

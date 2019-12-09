@@ -3,7 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
 
 class ToggleAmendCommitModeAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
@@ -22,5 +22,5 @@ class ToggleAmendCommitModeAction : DumbAwareToggleAction() {
     getAmendCommitHandler(e)!!.isAmendCommitMode = state
   }
 
-  private fun getAmendCommitHandler(e: AnActionEvent) = e.getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)?.amendCommitHandler
+  private fun getAmendCommitHandler(e: AnActionEvent) = e.getContextCommitWorkflowHandler()?.amendCommitHandler
 }

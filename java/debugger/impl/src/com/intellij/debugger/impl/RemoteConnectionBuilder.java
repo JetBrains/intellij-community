@@ -47,6 +47,7 @@ public class RemoteConnectionBuilder {
   private boolean myAsyncAgent;
   private boolean myMemoryAgent;
   private boolean myQuiet;
+  private boolean mySuspend = true;
 
   public RemoteConnectionBuilder(boolean server, int transport, String address) {
     myTransport = transport;
@@ -74,6 +75,11 @@ public class RemoteConnectionBuilder {
     return this;
   }
 
+  public RemoteConnectionBuilder suspend(boolean suspend) {
+    mySuspend = suspend;
+    return this;
+  }
+
   public RemoteConnection create(JavaParameters parameters) throws ExecutionException {
     if (myCheckValidity) {
       checkTargetJPDAInstalled(parameters);
@@ -97,24 +103,21 @@ public class RemoteConnectionBuilder {
     }
 
     final String debugAddress = myServer && useSockets ? DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
-    String debuggeeRunProperties =
-      "transport=" + DebugProcessImpl.findConnector(useSockets, myServer).transport().name() + ",address=" + debugAddress;
-    if (myServer) {
-      debuggeeRunProperties += ",suspend=y,server=n";
-    }
-    else {
-      debuggeeRunProperties += ",suspend=n,server=y";
-    }
+    StringBuilder debuggeeRunProperties = new StringBuilder();
+    debuggeeRunProperties.append("transport=").append(DebugProcessImpl.findConnector(useSockets, myServer).transport().name());
+    debuggeeRunProperties.append(",address=").append(debugAddress);
+    debuggeeRunProperties.append(mySuspend ? ",suspend=y" : ",suspend=n");
+    debuggeeRunProperties.append(myServer ? ",server=n" : ",server=y");
 
     if (StringUtil.containsWhitespaces(debuggeeRunProperties)) {
-      debuggeeRunProperties = "\"" + debuggeeRunProperties + "\"";
+      debuggeeRunProperties.append("\"").append(debuggeeRunProperties).append("\"");
     }
 
     if (myQuiet) {
-      debuggeeRunProperties += ",quiet=y";
+      debuggeeRunProperties.append(",quiet=y");
     }
 
-    final String _debuggeeRunProperties = debuggeeRunProperties;
+    final String _debuggeeRunProperties = debuggeeRunProperties.toString();
 
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());

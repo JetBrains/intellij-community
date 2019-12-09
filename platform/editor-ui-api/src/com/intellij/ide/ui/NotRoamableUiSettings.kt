@@ -33,7 +33,7 @@ class NotRoamableUiSettings : PersistentStateComponent<NotRoamableUiOptions> {
     var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, state.fontSize))
     if (!fontIsValid) {
       for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (UIUtil.isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
+        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, state.fontSize))) {
           state.fontFace = preferredFont
           fontIsValid = true
           break

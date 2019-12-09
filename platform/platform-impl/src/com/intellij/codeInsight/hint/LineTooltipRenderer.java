@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogg
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,7 +95,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
       @Override
       public int getPreferredHeight(int width) {
         Dimension size = editorPane.getSize();
-        editorPane.setSize(width - leftBorder - rightBorder, Math.max(1, size.height));
+        int sideComponentsWidth = getSideComponentWidth();
+        editorPane.setSize(width - leftBorder - rightBorder - sideComponentsWidth, Math.max(1, size.height));
         int height;
         try {
           height = getPreferredSize().height;
@@ -113,6 +115,35 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
             return getParent();
           }
         };
+      }
+
+      private int getSideComponentWidth() {
+        GridBagLayout layout = (GridBagLayout)getLayout();
+        Component sideComponent = null;
+        GridBagConstraints sideComponentConstraints = null;
+        boolean unsupportedLayout = false;
+        for (Component component : getComponents()) {
+          GridBagConstraints c = layout.getConstraints(component);
+          if (c.gridx > 0) {
+            if (sideComponent == null && c.gridy == 0) {
+              sideComponent = component;
+              sideComponentConstraints = c;
+            }
+            else {
+              unsupportedLayout = true;
+            }
+          }
+        }
+        if (unsupportedLayout) {
+          Logger.getInstance(LineTooltipRenderer.class).error("Unsupported tooltip layout");
+        }
+        if (sideComponent == null) {
+          return 0;
+        }
+        else {
+          Insets insets = sideComponentConstraints.insets;
+          return sideComponent.getPreferredSize().width + (insets == null ? 0 : insets.left + insets.right);
+        }
       }
     }
     JPanel grid = new MyPanel();

@@ -716,6 +716,8 @@ public class Switcher extends AnAction implements DumbAware {
         int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
         boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
+        EditorWindow currentWindow = editorManager.getCurrentWindow();
+        VirtualFile currentFile = currentWindow != null ? currentWindow.getSelectedFile() : null;
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
           if (pinned
               && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
@@ -735,7 +737,7 @@ public class Switcher extends AnAction implements DumbAware {
           }
           if (add) {
             filesData.add(info);
-            if (!firstRecentMarked) {
+            if (!firstRecentMarked && !info.first.equals(currentFile)) {
               selectionIndex = filesData.size() - 1;
               firstRecentMarked = true;
             }

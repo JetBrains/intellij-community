@@ -153,8 +153,9 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     }
 
     private void checkOverridePackageLocal(@NotNull UMethod sourceNode, @NotNull PsiJvmMember targetElement) {
-      PsiMethod sourcePsi = sourceNode.getPsi();
-      if (targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
+      PsiElement sourcePsi = sourceNode.getSourcePsi();
+      PsiElement nameIdentifier = UElementKt.getSourcePsiElement(sourceNode.getUastAnchor());
+      if (sourcePsi != null && nameIdentifier != null && targetElement.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
         Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
         Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
         if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
@@ -168,7 +169,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
           String problem = elementDescription + " overrides a package-private method from " + classDescription +
                            " which is declared in a different module '" + targetModule.getName() + "'";
-          myProblemsHolder.registerProblem(sourcePsi.getNameIdentifier(), problem,
+          myProblemsHolder.registerProblem(nameIdentifier, problem,
                                            ArrayUtil.append(quickFixes,
                                                             new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
                                                                                                targetModule.getName())));

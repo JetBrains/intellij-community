@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.impl.CommonUiProperties.COLUMN_ORDER;
-import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_DIFF_PREVIEW;
+import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = {@Storage("vcs.xml")})
@@ -32,34 +31,25 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     myState = state;
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (COMPACT_REFERENCES_VIEW.equals(property)) {
-      return (T)Boolean.valueOf(myState.COMPACT_REFERENCES_VIEW);
-    }
-    else if (SHOW_TAG_NAMES.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_TAG_NAMES);
-    }
-    else if (LABELS_LEFT_ALIGNED.equals(property)) {
-      return (T)Boolean.valueOf(myState.LABELS_LEFT_ALIGNED);
-    }
-    else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_CHANGES_FROM_PARENTS);
-    }
-    else if (SHOW_DIFF_PREVIEW.equals(property)) {
-      return (T)Boolean.valueOf(myState.SHOW_DIFF_PREVIEW);
-    }
-    else if (COLUMN_ORDER.equals(property)) {
-      List<Integer> order = myState.COLUMN_ORDER;
-      if (order == null || order.isEmpty()) {
-        order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
-                                  VcsLogColumn::ordinal);
-      }
-      return (T)order;
-    }
-    throw new UnsupportedOperationException("Property " + property + " does not exist");
+    return property.match()
+      .ifEq(COMPACT_REFERENCES_VIEW).then(myState.COMPACT_REFERENCES_VIEW)
+      .ifEq(SHOW_TAG_NAMES).then(myState.SHOW_TAG_NAMES)
+      .ifEq(LABELS_LEFT_ALIGNED).then(myState.LABELS_LEFT_ALIGNED)
+      .ifEq(SHOW_CHANGES_FROM_PARENTS).then(myState.SHOW_CHANGES_FROM_PARENTS)
+      .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
+      .ifEq(PREFER_COMMIT_DATE).then(myState.PREFER_COMMIT_DATE)
+      .ifEq(COLUMN_ORDER).thenGet(() -> {
+        List<Integer> order = myState.COLUMN_ORDER;
+        if (order == null || order.isEmpty()) {
+          order = ContainerUtil.map(Arrays.asList(VcsLogColumn.ROOT, VcsLogColumn.COMMIT, VcsLogColumn.AUTHOR, VcsLogColumn.DATE),
+                                    VcsLogColumn::ordinal);
+        }
+        return order;
+      })
+      .get();
   }
 
   @Override
@@ -79,6 +69,9 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     else if (SHOW_DIFF_PREVIEW.equals(property)) {
       myState.SHOW_DIFF_PREVIEW = (Boolean)value;
     }
+    else if (PREFER_COMMIT_DATE.equals(property)) {
+      myState.PREFER_COMMIT_DATE = (Boolean)value;
+    }
     else if (COLUMN_ORDER.equals(property)) {
       //noinspection unchecked
       myState.COLUMN_ORDER = (List<Integer>)value;
@@ -93,7 +86,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
     return COMPACT_REFERENCES_VIEW.equals(property) || SHOW_TAG_NAMES.equals(property) || LABELS_LEFT_ALIGNED.equals(property) ||
            SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_DIFF_PREVIEW.equals(property) ||
-           COLUMN_ORDER.equals(property);
+           COLUMN_ORDER.equals(property) || PREFER_COMMIT_DATE.equals(property);
   }
 
   @Override
@@ -119,6 +112,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
     public boolean LABELS_LEFT_ALIGNED = Registry.is("vcs.log.labels.left.aligned");
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
     public boolean SHOW_DIFF_PREVIEW = false;
+    public boolean PREFER_COMMIT_DATE = false;
     public List<Integer> COLUMN_ORDER = new ArrayList<>();
   }
 }

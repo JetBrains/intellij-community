@@ -29,7 +29,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private Set<AnActionButtonUpdater> myUpdaters;
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
-  public AnActionButton(String text) {
+  public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
   }
 

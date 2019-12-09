@@ -210,9 +210,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (!Double.isFinite(delta)) return false;
 
     int value = getTargetValue();
-    double minDelta = (double)(getMinimum() - value);
-    double maxDelta = (double)(getMaximum() - getVisibleAmount() - value);
-    double deltaAdjusted = Math.max(minDelta, Math.min(maxDelta, delta));
+    double deltaAdjusted = getDeltaAdjusted(value, delta);
     if (deltaAdjusted != 0.0) {
       boolean isPositiveDelta = deltaAdjusted > 0.0;
       if (wasPositiveDelta != isPositiveDelta) {
@@ -257,6 +255,25 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   }
 
   private static double boundDelta(double minDelta, double maxDelta, double delta) {
+    return Math.max(minDelta, Math.min(maxDelta, delta));
+  }
+
+  protected double getDeltaAdjusted(MouseWheelEvent event) {
+    int value = getTargetValue();
+    double delta = getPreciseDelta(event);
+    return getDeltaAdjusted(value, delta);
+  }
+
+  /**
+   * Calculates adjusted delta for the bar.
+   *
+   * @param value the target value for the bar
+   * @param delta the supposed delta
+   * @return the delta itself or an adjusted delta
+   */
+  private double getDeltaAdjusted(int value, double delta) {
+    double minDelta = getMinimum() - value;
+    double maxDelta = getMaximum() - getVisibleAmount() - value;
     return Math.max(minDelta, Math.min(maxDelta, delta));
   }
 

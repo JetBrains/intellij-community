@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
-  private static final String PROXY_CALL_SIGNATURE = "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
+  private static final String PROXY_CALL_SIGNATURE_POSTFIX = "Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 
   @NotNull
   protected final JVMName myDeclaringClassName;
@@ -86,7 +87,7 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
-      if (isLambdaCall(process, name, location) || isProxyCall(process, method, stackFrame)) {
+      if (isLambdaCall(process, name, location)) {
         return true;
       }
       if (!caller && myCheckCaller) {
@@ -138,32 +139,66 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return false;
   }
 
+  public boolean proxyCheck(Location location, SuspendContextImpl context, RequestHint hint) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    if (isProxyCall(debugProcess, location.method(), context.getFrameProxy())) {
+      if (!DebugProcessImpl.isPositionFiltered(location)) {
+        return true;
+      }
+      try {
+        StepIntoMethodBreakpoint breakpoint =
+          new StepIntoMethodBreakpoint(myDeclaringClassName.getName(debugProcess),
+                                       myTargetMethodName,
+                                       myTargetMethodSignature != null ? myTargetMethodSignature.getName(debugProcess) : null,
+                                       debugProcess.getProject());
+        DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, false);
+      }
+      catch (EvaluateException e) {
+        LOG.error(e);
+      }
+    }
+    return false;
+  }
+
   private boolean isProxyCall(DebugProcessImpl process, Method method, @Nullable StackFrameProxyImpl stackFrame) {
     try {
-      if (stackFrame != null && PROXY_CALL_SIGNATURE.equals(method.signature())) {
-        if ("invoke".equals(method.name())) {
+      String signature = method.signature();
+      if (stackFrame != null && signature != null && signature.endsWith(PROXY_CALL_SIGNATURE_POSTFIX)) {
+        String methodName = method.name();
+        boolean match = false;
+        // standard
+        if ("invoke".equals(methodName)) {
           ReferenceType type = method.declaringType();
-          if (!(type instanceof ClassType) ||
-              ((ClassType)type).interfaces().stream().map(InterfaceType::name).noneMatch("java.lang.reflect.InvocationHandler"::equals)) {
-            return false;
+          if ((type instanceof ClassType) &&
+              ((ClassType)type).interfaces().stream().map(InterfaceType::name).anyMatch("java.lang.reflect.InvocationHandler"::equals)) {
+            match = true;
           }
         }
-        else if (!DebuggerUtilsEx.isLambdaName(method.name())) {
-          return false;
+        if (DebuggerUtilsEx.isLambdaName(methodName)) {
+          match = true;
         }
-        List<Value> argumentValues = stackFrame.getArgumentValues();
-        if (argumentValues.size() == 3) {
-          Value proxyValue = argumentValues.get(0);
-          if (proxyValue != null) {
-            Type proxyType = proxyValue.type();
-            if (proxyType instanceof ReferenceType &&
-                DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), (ReferenceType)proxyType)) {
-              Value methodValue = argumentValues.get(1);
-              if (methodValue instanceof ObjectReference) {
-                // TODO: no signature check for now
-                ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
-                return myTargetMethodName.equals(
-                  ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+        else {
+          ObjectReference thisObject = stackFrame.thisObject();
+          if (thisObject != null && StringUtil.containsIgnoreCase(thisObject.referenceType().name(), "CGLIB")) {
+            match = true;
+          }
+        }
+        if (match) {
+          List<Value> argumentValues = stackFrame.getArgumentValues();
+          int size = argumentValues.size();
+          if (size >= 3) {
+            Value proxyValue = argumentValues.get(size - 3);
+            if (proxyValue != null) {
+              Type proxyType = proxyValue.type();
+              if (proxyType instanceof ReferenceType &&
+                  DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), proxyType)) {
+                Value methodValue = argumentValues.get(size - 2);
+                if (methodValue instanceof ObjectReference) {
+                  // TODO: no signature check for now
+                  ReferenceType methodType = ((ObjectReference)methodValue).referenceType();
+                  return myTargetMethodName.equals(
+                    ((StringReference)((ObjectReference)methodValue).getValue(methodType.fieldByName("name"))).value());
+                }
               }
             }
           }

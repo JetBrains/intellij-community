@@ -16,9 +16,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
-import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
@@ -99,6 +97,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
   private Content myContent;
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
+  private GlobalReportedProblemFilter myGlobalReportedProblemFilter = null;
+  private ReportedProblemFilter myReportedProblemFilter = null;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
@@ -110,9 +110,25 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
     return myContentManager.getValue();
   }
 
+  public ReportedProblemFilter getReportedProblemFilter() {
+    return myReportedProblemFilter;
+  }
+
+  public void setReportedProblemFilter(ReportedProblemFilter reportedProblemFilter) {
+    myReportedProblemFilter = reportedProblemFilter;
+  }
+
+  public GlobalReportedProblemFilter getGlobalReportedProblemFilter() {
+    return myGlobalReportedProblemFilter;
+  }
+
+  public void setGlobalReportedProblemFilter(GlobalReportedProblemFilter reportedProblemFilter) {
+    myGlobalReportedProblemFilter = reportedProblemFilter;
+  }
+
   public void addView(@NotNull InspectionResultsView view,
-                                   @NotNull String title,
-                                   boolean isOffline) {
+                      @NotNull String title,
+                      boolean isOffline) {
     LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
     myView = view;
     if (!isOffline) {
@@ -223,7 +239,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
                 InspectionToolWrapper toolWrapper = state.getTool();
                 InspectionToolPresentation presentation = getPresentation(toolWrapper);
                 BufferedWriter writer = writers[i];
-                if (writer != null) {
+                if (writer != null &&
+                    (myGlobalReportedProblemFilter == null ||
+                     myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName())) ) {
                   presentation.exportResults(e -> {
                     try {
                       JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
@@ -384,8 +402,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
 
     InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
     if (!(myView == null ? newView : myView).hasProblems()) {
+      int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
       NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                      scope.getFileCount(),
+                                                                      totalFiles,
                                                                       scope.getShortenName()),
                                             MessageType.INFO).notify(getProject());
       close(true);

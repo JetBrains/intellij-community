@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,17 +44,16 @@ public class InstallPluginInfo {
     closeStatusBarIndicator();
   }
 
-  public synchronized void finish(boolean success, boolean cancel, boolean restartRequired) {
+  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
       if (success && restartRequired) {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp(IdeBundle.message("update.notifications.title")));
+        ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
       }
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, success, true, restartRequired);
+      myPluginModel.finishInstall(myDescriptor, success, showErrors, restartRequired);
     }
   }
 

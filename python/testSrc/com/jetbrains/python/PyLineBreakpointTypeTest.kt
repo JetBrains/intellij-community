@@ -7,8 +7,8 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil.getUserSkeletonsDirectory
 import com.jetbrains.python.debugger.PyLineBreakpointType
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.sdk.PythonSdkUtil.findSkeletonsDir
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.PythonSdkUtil.findSkeletonsDir
 
 class PyLineBreakpointTypeTest : PyTestCase() {
 

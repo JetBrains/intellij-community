@@ -181,7 +181,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
         return;
       }
       removeSceneBuilder();
-      mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
+      mySceneBuilder = SceneBuilderUtil.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);

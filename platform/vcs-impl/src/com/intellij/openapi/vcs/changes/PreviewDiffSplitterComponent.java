@@ -2,9 +2,9 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SideBorder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -13,7 +13,6 @@ import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListD
 import static com.intellij.util.ui.JBUI.emptySize;
 
 public class PreviewDiffSplitterComponent extends OnePixelSplitter {
-  @NotNull private final JComponent myFirstComponent;
   @NotNull private final DiffPreviewUpdateProcessor myProcessor;
   private boolean myDetailsOn;
 
@@ -21,13 +20,17 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
                                       @NotNull DiffPreviewUpdateProcessor processor,
                                       @NotNull String splitterDimensionKey, boolean detailsOn) {
     super(splitterDimensionKey, 0.5f);
-    myFirstComponent = firstComponent;
     myProcessor = processor;
     setFirstComponent(firstComponent);
     setDetailsOn(detailsOn);
   }
 
   public void updatePreview(boolean fromModelRefresh) {
+    if (Registry.is("show.log.as.editor.tab") && myProcessor instanceof ChangeViewDiffRequestProcessor && myDetailsOn) {
+      ((ChangeViewDiffRequestProcessor) myProcessor).updatePreview(false, fromModelRefresh);
+      return;
+    }
+
     if (isDetailsOn()) {
       myProcessor.refresh(fromModelRefresh);
     }
@@ -46,8 +49,10 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   private void updateVisibility() {
+    if (Registry.is("show.log.as.editor.tab"))
+      return;
+
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
-    myFirstComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {
       secondComponent.setMinimumSize(emptySize());

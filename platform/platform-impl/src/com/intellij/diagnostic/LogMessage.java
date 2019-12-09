@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.idea.IdeaLogger;
@@ -60,9 +60,9 @@ public class LogMessage extends AbstractMessage {
     return Collections.unmodifiableList(myAttachments);
   }
 
-  /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} (to be removed in IDEA 2019) */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
+  /** @deprecated pass all attachments to {@link #createEvent(Throwable, String, Attachment...)} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public synchronized void addAttachment(@NotNull Attachment attachment) {
     myAttachments.add(attachment);
   }

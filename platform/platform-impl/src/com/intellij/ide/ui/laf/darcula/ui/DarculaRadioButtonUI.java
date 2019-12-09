@@ -105,8 +105,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       }
       else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        int mnemonicIndex = DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
-        UIUtilities.drawStringUnderlineCharAt(b, g, text, mnemonicIndex, textRect.x, textRect.y + fm.getAscent());
+        UIUtilities.drawStringUnderlineCharAt(b, g, text, getMnemonicIndex(b), textRect.x, textRect.y + fm.getAscent());
       }
     }
 
@@ -114,6 +113,10 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
         textRect.width > 0 && textRect.height > 0) {
       paintFocus(g, textRect, b.getSize());
     }
+  }
+
+  protected int getMnemonicIndex(AbstractButton b) {
+    return DarculaLaf.isAltPressed() ? b.getDisplayedMnemonicIndex() : -1;
   }
 
   @Override

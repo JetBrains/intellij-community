@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -83,5 +84,9 @@ internal class GHPullRequestsDataContextRepository(private val project: Project)
     return GHPullRequestsDataContext(gitRemoteCoordinates, GHRepositoryCoordinates(account.server, repoDetails.fullPath), account,
                                      requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
                                      busyStateTracker, metadataService, stateService)
+  }
+
+  companion object {
+    fun getInstance(project: Project) = project.service<GHPullRequestsDataContextRepository>()
   }
 }

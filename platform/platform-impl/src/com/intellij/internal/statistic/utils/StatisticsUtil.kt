@@ -4,8 +4,6 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.*
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.internal.statistic.eventLog.newData
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -25,10 +23,6 @@ import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
   return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
-}
-
-fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
-  return newData(project, context)
 }
 
 fun addPluginInfoTo(info: PluginInfo, data : MutableMap<String, Any>) {

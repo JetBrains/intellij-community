@@ -137,7 +137,7 @@ class PluginsCollector {
     @Override
     URL resolvePath(@NotNull String relativePath, @Nullable URL url) throws MalformedURLException {
       Ref<URL> result = Ref.create()
-      JpsJavaExtensionService.dependencies(myMainModule).processModules({ module ->
+      JpsJavaExtensionService.dependencies(myMainModule).recursively().processModules({ module ->
         for (def sourceRoot : module.sourceRoots) {
           def resolved = new File(sourceRoot.file, relativePath)
           if (resolved.exists()) {

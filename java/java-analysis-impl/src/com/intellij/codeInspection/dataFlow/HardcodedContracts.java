@@ -107,9 +107,12 @@ public class HardcodedContracts {
     .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
-    .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
+    .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
               ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
-    .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+    .register(anyOf(
+      instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+      instanceCall("java.util.Deque", "getFirst", "getLast").parameterCount(0),
+      instanceCall("java.util.Queue", "element").parameterCount(0)),
               ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))
@@ -118,7 +121,7 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.of(new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
+              ContractProvider.of(StandardMethodContract.fromText("_->_")))
     .register(anyOf(
       instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
       instanceCall("java.util.Deque", "peekFirst", "peekLast", "pollFirst", "pollLast").parameterCount(0)),
@@ -151,10 +154,20 @@ public class HardcodedContracts {
               ContractProvider.of(
                 singleConditionContract(ContractValue.argument(0), DfaRelationValue.RelationType.EQ, ContractValue.argument(1),
                                         returnTrue()),
-                new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
-                new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
+                StandardMethodContract.fromText("null,!null->false"),
+                StandardMethodContract.fromText("!null,null->false")
               ))
-    .register(enumValues(), ContractProvider.of(new StandardMethodContract(new ValueConstraint[0], returnNew())));
+    .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
+    // Convert the following to external annotation once we support Java 9+ external annotations (IDEA-198249)
+    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterCount(2),
+              ContractProvider.of(
+                StandardMethodContract.fromText("!null,_->param1"),
+                StandardMethodContract.fromText("null,!null->param2"),
+                StandardMethodContract.fromText("null,null->fail")))
+    .register(staticCall(JAVA_UTIL_OBJECTS, "requireNonNullElseGet").parameterCount(2),
+              ContractProvider.of(
+                StandardMethodContract.fromText("!null,_->param1"),
+                StandardMethodContract.fromText("null,_->!null")));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -464,6 +477,10 @@ public class HardcodedContracts {
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
         return false;
       }
+    }
+
+    if ("remove".equals(name)) {
+      return false;
     }
 
     if ("java.lang.System".equals(className)) {

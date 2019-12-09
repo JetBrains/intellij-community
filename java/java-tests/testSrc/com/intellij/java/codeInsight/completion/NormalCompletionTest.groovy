@@ -1916,4 +1916,8 @@ class Abc {
     myFixture.type('\n')
     myFixture.checkResult("class MyClass { MyClass<caret> }")
   }
+
+  void testRemoveParenthesesWhenReplacingEmptyCallWithConstant() {
+    doTest('\t')
+  }
 }

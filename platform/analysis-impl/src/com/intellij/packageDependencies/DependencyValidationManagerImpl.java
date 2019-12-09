@@ -33,7 +33,7 @@ import java.util.Map;
   name = "DependencyValidationManager",
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
-public class DependencyValidationManagerImpl extends DependencyValidationManager {
+public final class DependencyValidationManagerImpl extends DependencyValidationManager {
   private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
     @NotNull
     @Override

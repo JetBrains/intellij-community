@@ -102,13 +102,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  static boolean isThreadUnderIndicator(@NotNull ProgressIndicator indicator, @NotNull Thread thread) {
-    synchronized (threadsUnderIndicator) {
-      Set<Thread> threads = threadsUnderIndicator.get(indicator);
-      return threads != null && threads.contains(thread);
-    }
-  }
-
   List<ProgressIndicator> getCurrentIndicators() {
     synchronized (threadsUnderIndicator) {
       return new ArrayList<>(threadsUnderIndicator.keySet());

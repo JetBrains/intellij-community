@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,8 @@ public class ImportOldConfigsUsagesCollector  {
     public void componentsInitialized() {
       final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
-        FUCounterUsageLogger.getInstance().logEvent("import.old.config", state.getType().name());
+        final FeatureUsageData data = new FeatureUsageData().addData("selected", state.getType().name());
+        FUCounterUsageLogger.getInstance().logEvent("import.old.config", "import.dialog.shown", data);
       }
     }
   }

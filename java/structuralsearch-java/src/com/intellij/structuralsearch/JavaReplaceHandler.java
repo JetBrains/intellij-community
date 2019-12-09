@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -276,8 +275,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       if (originalMember == null) {
         continue;
       }
-      for (Iterator<? extends PsiElement> iterator = elements.iterator(); iterator.hasNext(); ) {
-        PsiElement element = iterator.next();
+      final Iterator<? extends PsiElement> iterator = elements.iterator();
+      while (iterator.hasNext()) {
+        final PsiElement element = iterator.next();
         if (PsiElementOrderComparator.getInstance().compare(element, originalMember) < 0) {
           addElementAndWhitespaceBeforeAnchor(replacementClass, element, anchor);
           iterator.remove();
@@ -327,7 +327,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
   }
 
-  private static void copyAnnotationParameters(PsiAnnotation original, PsiAnnotation query, PsiAnnotation replacement) {
+  private void copyAnnotationParameters(PsiAnnotation original, PsiAnnotation query, PsiAnnotation replacement) {
     final PsiAnnotationParameterList originalParameters = original.getParameterList();
     if (originalParameters.getTextLength() > 0) {
       final PsiAnnotationParameterList replacementParameters = replacement.getParameterList();
@@ -338,15 +338,14 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
       final List<? extends PsiElement> unmatchedAttributes = original.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
       if (unmatchedAttributes != null) {
         for (PsiElement attribute : unmatchedAttributes) {
+          replacementParameters.add(whiteSpace(attribute.getPrevSibling(), " "));
           replacementParameters.add(attribute);
         }
       }
     }
   }
 
-  private static void copyModifiersAndAnnotations(PsiModifierListOwner original,
-                                                  PsiModifierListOwner query,
-                                                  PsiModifierListOwner replacement) {
+  private void copyModifiersAndAnnotations(PsiModifierListOwner original, PsiModifierListOwner query, PsiModifierListOwner replacement) {
     final PsiModifierList originalModifierList = original.getModifierList();
     final PsiModifierList queryModifierList = query.getModifierList();
     final PsiModifierList replacementModifierList = replacement.getModifierList();
@@ -354,39 +353,58 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (originalModifierList == null || queryModifierList == null || replacementModifierList == null) {
       return;
     }
-    if (originalModifierList.getTextLength() != 0) {
-      final PsiModifierList copy = (PsiModifierList)originalModifierList.copy();
-      for (String modifier : PsiModifier.MODIFIERS) {
-        if (replacementModifierList.hasExplicitModifier(modifier)) {
-          copy.setModifierProperty(modifier, true);
-        }
-        else if (queryModifierList.hasExplicitModifier(modifier) && !replacementModifierList.hasModifierProperty(modifier)) {
-          copy.setModifierProperty(modifier, false);
+    final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
+    final PsiElement anchor = replacementModifierList.getFirstChild();
+    boolean append = (anchor == null);
+    PsiElement child = originalModifierList.getFirstChild();
+    while (child != null) {
+      if (child instanceof PsiKeyword) {
+        append = true;
+        @PsiModifier.ModifierConstant final String modifierText = child.getText();
+        if (isCompatibleModifier(modifierText, replacementModifierList) && !queryModifierList.hasExplicitModifier(modifierText)) {
+          if (anchor != null) replacementModifierList.add(whiteSpace(child.getPrevSibling(), " "));
+          replacementModifierList.add(child);
         }
       }
-      final List<? extends PsiElement> unmatchedAnnotations = originalModifierList.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
-      if (unmatchedAnnotations != null) {
-        outer:
-        for (PsiAnnotation copyAnnotation : copy.getAnnotations()) {
-          for (PsiElement unmatchedAnnotation : unmatchedAnnotations) {
-            if (AnnotationUtil.equal(copyAnnotation, (PsiAnnotation)unmatchedAnnotation)) {
-              continue outer;
-            }
+      else if (child instanceof PsiAnnotation && (unmatchedAnnotations == null || unmatchedAnnotations.contains(child))) {
+        if (append) {
+          if (anchor != null) replacementModifierList.add(whiteSpace(child.getPrevSibling(), " "));
+          replacementModifierList.add(child);
+        }
+        else {
+          final PsiElement next = replacementModifierList.addBefore(child, anchor).getNextSibling();
+          final PsiWhiteSpace whiteSpace = whiteSpace(child.getNextSibling(), " ");
+          if (!(next instanceof PsiWhiteSpace)) {
+            replacementModifierList.addBefore(whiteSpace, anchor);
           }
-          copyAnnotation.delete();
+          else {
+            next.replace(whiteSpace);
+          }
         }
       }
-      for (PsiAnnotation annotation : replacementModifierList.getAnnotations()) {
-        copy.addBefore(annotation, copy.getFirstChild());
-      }
-      replacementModifierList.replace(copy);
+      child = child.getNextSibling();
     }
   }
 
+  private PsiWhiteSpace whiteSpace(PsiElement element, @SuppressWarnings("SameParameterValue") String defaultWs) {
+    return element instanceof PsiWhiteSpace
+           ? (PsiWhiteSpace)element
+           : (PsiWhiteSpace)PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText(defaultWs);
+  }
+
+  private static boolean isCompatibleModifier(String modifier, PsiModifierList modifierList) {
+    if (PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) || PsiModifier.PRIVATE.equals(modifier)) {
+      return !modifierList.hasExplicitModifier(PsiModifier.PUBLIC)
+             && !modifierList.hasExplicitModifier(PsiModifier.PROTECTED)
+             && !modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
+    }
+    return true;
+  }
+
   private PsiElement handleSymbolReplacement(PsiElement replacement, final PsiElement el) {
-    PsiNamedElement nameElement = getSymbolReplacementTarget(el);
+    final PsiNamedElement nameElement = getSymbolReplacementTarget(el);
     if (nameElement != null) {
-      PsiElement oldReplacement = replacement;
+      final PsiElement oldReplacement = replacement;
       replacement = el.copy();
       ((PsiNamedElement)replacement).setName(oldReplacement.getText());
     }

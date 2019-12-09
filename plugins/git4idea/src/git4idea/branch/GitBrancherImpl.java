@@ -20,10 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.VcsLogRangeFilter;
-import com.intellij.vcs.log.VcsLogRootFilter;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
@@ -214,12 +210,7 @@ class GitBrancherImpl implements GitBrancher {
       execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         Application application = ApplicationManager.getApplication();
-        if (application.isUnitTestMode()) {
-          myCallInAwtAfterExecution.run();
-        }
-        else {
-          application.invokeLater(myCallInAwtAfterExecution, application.getDefaultModalityState());
-        }
+        application.invokeLater(myCallInAwtAfterExecution, application.getDefaultModalityState());
       }
     }
 

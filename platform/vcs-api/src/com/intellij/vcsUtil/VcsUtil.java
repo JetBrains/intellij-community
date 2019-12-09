@@ -23,13 +23,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,7 +36,9 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
@@ -368,39 +367,6 @@ public class VcsUtil {
   public static VirtualFile[] getVirtualFiles(@NotNull AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files == null ? VirtualFile.EMPTY_ARRAY : files;
-  }
-
-  /**
-   * Collects all files which are located in the passed directory.
-   *
-   * @throws IllegalArgumentException if {@code dir} isn't a directory.
-   */
-  public static void collectFiles(final VirtualFile dir,
-                                  final List<? super VirtualFile> files,
-                                  final boolean recursive,
-                                  final boolean addDirectories) {
-    if (!dir.isDirectory()) {
-      throw new IllegalArgumentException(VcsBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
-    }
-
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (file.isDirectory()) {
-          if (addDirectories) {
-            files.add(file);
-          }
-          if (!recursive && !Comparing.equal(file, dir)) {
-            return false;
-          }
-        }
-        else if (fileTypeManager == null || file.getFileType() != FileTypes.UNKNOWN) {
-          files.add(file);
-        }
-        return true;
-      }
-    });
   }
 
   /**

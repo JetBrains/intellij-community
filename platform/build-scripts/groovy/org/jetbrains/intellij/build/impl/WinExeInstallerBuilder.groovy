@@ -125,38 +125,39 @@ class WinExeInstallerBuilder {
     }
 
     ant.unzip(src: "$communityHome/build/tools/NSIS.zip", dest: box)
-    buildContext.messages.progress("Running NSIS tool to build .exe installer for Windows")
-    if (SystemInfo.isWindows) {
-      ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
-                        " /DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " /DIPR=\"${customizer.associateIpr}\"" +
-                        " /DOUT_FILE=\"${outFileName}\"" +
-                        " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                        " \"${box}/nsiconf/idea.nsi\"")
-    }
-    else if (SystemInfo.isLinux) {
-      String installerToolsDir = "$box/installer"
-      String installScriptPath = "$installerToolsDir/install_nsis3.sh"
-      buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
-      buildContext.ant.copy(todir: "$installerToolsDir") {
-        fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
-          include(name: "nsis*.*")
-          include(name: "scons*.*")
-        }
+    buildContext.messages.block("Running NSIS tool to build .exe installer for Windows") {
+      if (SystemInfo.isWindows) {
+        ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
+                          " /DCOMMUNITY_DIR=\"$communityHome\"" +
+                          " /DIPR=\"${customizer.associateIpr}\"" +
+                          " /DOUT_FILE=\"${outFileName}\"" +
+                          " /DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
+                          " \"${box}/nsiconf/idea.nsi\"")
       }
+      else if (SystemInfo.isLinux) {
+        String installerToolsDir = "$box/installer"
+        String installScriptPath = "$installerToolsDir/install_nsis3.sh"
+        buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
+        buildContext.ant.copy(todir: "$installerToolsDir") {
+          fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
+            include(name: "nsis*.*")
+            include(name: "scons*.*")
+          }
+        }
 
-      buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
-      ant.exec(command: "chmod u+x \"$installScriptPath\"")
-      ant.exec(command: "\"$installScriptPath\" \"$installerToolsDir\"")
-      ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
-                        " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
-                        " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
-                        " -DNSIS_DIR=\"${box}/NSIS\"" +
-                        " -DCOMMUNITY_DIR=\"$communityHome\"" +
-                        " -DIPR=\"${customizer.associateIpr}\"" +
-                        " -DOUT_FILE=\"${outFileName}\"" +
-                        " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
-                        " \"${box}/nsiconf/idea.nsi\"")
+        buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
+        ant.exec(command: "chmod u+x \"$installScriptPath\"")
+        ant.exec(command: "\"$installScriptPath\" \"$installerToolsDir\"")
+        ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
+                          " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
+                          " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                          " -DNSIS_DIR=\"${box}/NSIS\"" +
+                          " -DCOMMUNITY_DIR=\"$communityHome\"" +
+                          " -DIPR=\"${customizer.associateIpr}\"" +
+                          " -DOUT_FILE=\"${outFileName}\"" +
+                          " -DOUT_DIR=\"${buildContext.paths.artifacts}\"" +
+                          " \"${box}/nsiconf/idea.nsi\"")
+      }
     }
 
     def installerPath = "${buildContext.paths.artifacts}/${outFileName}.exe"

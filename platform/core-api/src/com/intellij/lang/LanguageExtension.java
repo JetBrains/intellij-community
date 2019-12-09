@@ -27,8 +27,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
   private final T myDefaultImplementation;
   private final /* non static!!! */ Key<T> myCacheKey;
+  private final /* non static!!! */ Key<List<T>> myAllCacheKey;
 
-  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName) {
+  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
     this(epName.getName(), null);
   }
 
@@ -36,7 +37,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     this(epName, null);
   }
 
-  public LanguageExtension(@NotNull final ExtensionPointName<KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
+  public LanguageExtension(@NotNull final ExtensionPointName<? extends KeyedLazyInstance<T>> epName, @Nullable T defaultImplementation) {
     this(epName.getName(), defaultImplementation);
   }
 
@@ -44,6 +45,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     super(epName);
     myDefaultImplementation = defaultImplementation;
     myCacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
+    myAllCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
   }
 
   @NotNull
@@ -55,6 +57,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   @TestOnly
   public void clearCache(@NotNull Language language) {
     language.putUserData(myCacheKey, null);
+    language.putUserData(myAllCacheKey, null);
     clearCache();
   }
 
@@ -64,6 +67,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     final Language language = Language.findLanguageByID(key);
     if (language != null) {
       language.putUserData(myCacheKey, null);
+      language.putUserData(myAllCacheKey, null);
     }
   }
 
@@ -92,6 +96,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    */
   @NotNull
   public List<T> allForLanguage(@NotNull Language language) {
+    List<T> cached = language.getUserData(myAllCacheKey);
+    if (cached != null) return cached;
+    List<T> result = collectAllForLanguage(language);
+    return language.putUserDataIfAbsent(myAllCacheKey, result);
+  }
+
+  @NotNull
+  private List<T> collectAllForLanguage(@NotNull Language language) {
     boolean copyList = true;
     List<T> result = null;
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
@@ -138,12 +150,14 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   @Override
   public void addExplicitExtension(@NotNull Language key, @NotNull T t) {
     key.putUserData(myCacheKey, null);
+    key.putUserData(myAllCacheKey, null);
     super.addExplicitExtension(key, t);
   }
 
   @Override
   public void removeExplicitExtension(@NotNull Language key, @NotNull T t) {
     key.putUserData(myCacheKey, null);
+    key.putUserData(myAllCacheKey, null);
     super.removeExplicitExtension(key, t);
   }
 

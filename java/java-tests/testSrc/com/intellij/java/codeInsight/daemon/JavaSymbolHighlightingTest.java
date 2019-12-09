@@ -37,6 +37,27 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
     
     doTestConfiguredFile(true, true, true, null);
   }
+
+  public void testReassignedVariables() {
+    configureFromFileText("Test.java",
+                          "class Test {\n" +
+                          "  void foo() {\n" +
+                          "    int <symbolName type=\"REASSIGNED_LOCAL_VARIABLE\">x</symbolName> = 0;\n" +
+                          "    x = 1;\n" +
+                          "  }\n" +
+                          "  \n" +
+                          "  String loop() {\n" +
+                          "    String <symbolName type=\"REASSIGNED_LOCAL_VARIABLE\">a</symbolName>;\n" +
+                          "\n" +
+                          "    do {\n" +
+                          "      a = \"aaaa\";\n" +
+                          "    }\n" +
+                          "    while (a.equals(\"bbb\"));\n" +
+                          "    return a;\n" +
+                          "  }\n" +
+                          "}");
+    doTestConfiguredFile(true, true, true, null);
+  }
   
   @Override
   protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {

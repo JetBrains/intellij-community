@@ -630,7 +630,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     void beforeUpdate();
   }
 
-  private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
+  private static final class MultipleTextValuesPresentationWrapper extends TextPanel.WithIconAndArrows implements StatusBarWrapper {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
@@ -659,6 +659,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     public void beforeUpdate() {
       String value = myPresentation.getSelectedValue();
       setText(value);
+      setIcon(myPresentation.getIcon());
       setVisible(StringUtil.isNotEmpty(value));
       setToolTipText(myPresentation.getTooltipText());
     }

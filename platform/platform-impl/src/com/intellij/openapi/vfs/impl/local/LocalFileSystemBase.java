@@ -645,15 +645,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
         int slashCount = 0;
         int idx;
+        boolean isSlash = false;
         for (idx = 2; idx < path.length() && slashCount < 2; idx++) {
           char c = path.charAt(idx);
-          if (c == '\\' || c == '/') {
+          isSlash = c == '\\' || c == '/';
+          if (isSlash) {
             slashCount++;
-            idx--;
+            if (slashCount == 2) {
+              idx--;
+            }
           }
         }
 
-        return path.substring(0, idx);
+        if (slashCount == 2 || slashCount == 1 && !isSlash) {
+          return path.substring(0, idx);
+        }
       }
 
       return "";
