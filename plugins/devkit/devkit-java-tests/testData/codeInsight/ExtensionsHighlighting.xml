@@ -31,6 +31,10 @@
         <myService serviceImplementation="foo.<error descr="Cannot resolve class 'MyInvalid'">MyInvalid</error>"/>
 
         <myService serviceImplementation="foo.MyRunnable" os="mac"/>
+
+        <myService serviceImplementation="foo.MyRunnable" timeUnit="seconds"/>
+        <myService serviceImplementation="foo.MyRunnable" timeUnit="<error descr="Cannot resolve 'INVALID_VALUE' in java.util.concurrent.TimeUnit">INVALID_VALUE</error>"/>
+
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor/>
         <custom.custom/>

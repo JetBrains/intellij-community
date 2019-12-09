@@ -159,7 +159,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
-                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
+                       "public class MyServiceDescriptor { " +
+                       "  @Attribute public String serviceImplementation; " +
+                       "  @Attribute public java.util.concurrent.TimeUnit timeUnit;" +
+                       "}")
 
     configureByFile()
     myFixture.copyFileToProject("ExtensionsHighlighting-included.xml")

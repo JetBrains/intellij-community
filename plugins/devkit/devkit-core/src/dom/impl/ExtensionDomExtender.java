@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
+import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +14,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
@@ -31,6 +35,7 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -124,8 +129,16 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         if (PsiUtil.findAnnotation(RequiredElement.class, field) != null) {
           extension.addCustomAnnotation(MyRequired.INSTANCE);
         }
-        if (clazz == String.class && PsiUtil.findAnnotation(NonNls.class, field) != null) {
-          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+        if (clazz == String.class) {
+          if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
+            extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+          }
+          else {
+            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(field.getType());
+            if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
+              extension.setConverter(createEnumConverter(fieldPsiClass));
+            }
+          }
         }
 
         markAsClass(extension, fieldName, withElement);
@@ -320,5 +333,51 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     public String value() {
       return myInterfaceName;
     }
+  }
+
+  @NotNull
+  private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
+    return new ResolvingConverter<PsiEnumConstant>() {
+
+      @Override
+      public String getErrorMessage(@Nullable String s, ConvertContext context) {
+        return "Cannot resolve '" + s + "' in " + fieldPsiClass.getQualifiedName();
+      }
+
+      @NotNull
+      @Override
+      public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
+        return ContainerUtil.findAll(fieldPsiClass.getFields(), PsiEnumConstant.class);
+      }
+
+      @Nullable
+      @Override
+      public LookupElement createLookupElement(PsiEnumConstant constant) {
+        return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
+      }
+
+      @Nullable
+      @Override
+      public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
+        if (s == null) return null;
+
+        final PsiField name = fieldPsiClass.findFieldByName(fromXmlName(s), false);
+        return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
+      }
+
+      @Nullable
+      @Override
+      public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
+        return constant == null ? null : toXmlName(constant);
+      }
+
+      private String fromXmlName(@NotNull String name) {
+        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
+      }
+
+      private String toXmlName(PsiEnumConstant constant) {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constant.getName());
+      }
+    };
   }
 }
