@@ -8,7 +8,7 @@
     </component>
   </application-components>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
   </extensions>
