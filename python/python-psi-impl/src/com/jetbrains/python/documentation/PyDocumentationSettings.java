@@ -33,7 +33,7 @@ public abstract class PyDocumentationSettings
   private static final PyDefaultProjectAwareServiceClasses<ServiceState, PyDocumentationSettings, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
-  final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.PLAIN;
+  final static DocStringFormat DEFAULT_DOC_STRING_FORMAT = DocStringFormat.REST;
   private static final PyDocumentationSettingsDetector DETECTOR = new PyDocumentationSettingsDetector();
 
   protected PyDocumentationSettings() {
