@@ -29,15 +29,6 @@ public interface XmlChildRole {
     }
   };
 
-  RoleFinder DOCUMENT_FINDER = new RoleFinder() {
-    @Override
-    public ASTNode findChild(@NotNull ASTNode parent) {
-      ASTNode oldDocument = parent.findChildByType(XmlElementType.XML_DOCUMENT);
-      if(oldDocument == null) oldDocument = parent.findChildByType(XmlElementType.HTML_DOCUMENT);
-      return oldDocument;
-    }
-  };
-
   RoleFinder ATTRIBUTE_VALUE_FINDER = new DefaultRoleFinder(XmlElementType.XML_ATTRIBUTE_VALUE);
   RoleFinder CLOSING_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_END_TAG_START);
   RoleFinder EMPTY_TAG_END_FINDER = new DefaultRoleFinder(XmlTokenType.XML_EMPTY_ELEMENT_END);
@@ -51,8 +42,6 @@ public interface XmlChildRole {
     }
   };
   RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
-  RoleFinder PROLOG_FINDER = new DefaultRoleFinder(XmlElementType.XML_PROLOG);
-
 
   int XML_DOCUMENT = 223;
   int XML_TAG_NAME = 224;
