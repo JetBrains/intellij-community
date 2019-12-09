@@ -65,7 +65,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   /**
    * That is the default layout.
    */
-  private final DesktopLayout myLayout = new DesktopLayout();
+  private DesktopLayout myLayout = new DesktopLayout();
 
   // null keys must be supported
   // null key - root frame
@@ -729,7 +729,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public final void setLayout(@NotNull DesktopLayout layout) {
-    myLayout.copyFrom(layout);
+    myLayout = layout.copy();
   }
 
   public WindowWatcher getWindowWatcher() {

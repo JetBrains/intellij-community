@@ -23,7 +23,7 @@ class DesktopLayout {
   /**
    * Map between `id`s `WindowInfo`s.
    */
-  private val idToInfo: MutableMap<String, WindowInfoImpl> = THashMap()
+  private val idToInfo = THashMap<String, WindowInfoImpl>()
 
   private val registeredInfos = object : ClearableLazyValue<List<WindowInfoImpl>>() {
     override fun compute(): List<WindowInfoImpl> {
@@ -42,42 +42,19 @@ class DesktopLayout {
     }
   }
 
-  /**
-   * Copies itself from the passed
-   * @param layout to be copied.
-   */
-  fun copyFrom(layout: DesktopLayout) {
-    val old = THashMap(idToInfo)
-    idToInfo.clear()
-    for (otherInfo in layout.idToInfo.values) {
-      val oldInfo = old.get(otherInfo.id)
-      if (oldInfo == null) {
-        val newInfo = otherInfo.copy()
-        newInfo.isRegistered = otherInfo.isRegistered
-        idToInfo.put(otherInfo.id!!, newInfo)
+  @JvmOverloads
+  fun copy(markAllAsUnregistered: Boolean = false): DesktopLayout {
+    val result = DesktopLayout()
+    result.idToInfo.ensureCapacity(idToInfo.size)
+    idToInfo.forEachEntry { id, info ->
+      val newInfo = info.copy()
+      if (markAllAsUnregistered) {
+        newInfo.isRegistered = false
       }
-      else {
-        oldInfo.copyFrom(otherInfo)
-        oldInfo.isRegistered = otherInfo.isRegistered
-        idToInfo.put(otherInfo.id!!, oldInfo)
-      }
+      result.idToInfo.put(id, newInfo)
+      true
     }
-    normalizeOrders()
-  }
-
-  /**
-   * Copy information about non-registered tool windows from the supplied layout
-   * @param layout layout to copy from
-   */
-  fun copyNotRegisteredFrom(layout: DesktopLayout) {
-    val old = THashMap(idToInfo)
-    for (otherInfo in layout.idToInfo.values) {
-      val oldInfo = old.get(otherInfo.id)
-      if ((oldInfo == null || !oldInfo.isRegistered) && !otherInfo.isRegistered) {
-        idToInfo.put(otherInfo.id!!, otherInfo.copy())
-      }
-    }
-    normalizeOrders()
+    return result
   }
 
   private fun normalizeOrders() {
@@ -162,7 +139,7 @@ class DesktopLayout {
   /**
    * @return comparator which compares `StripeButtons` in the stripe with specified `anchor`.
    */
-  fun comparator(anchor: ToolWindowAnchor): Comparator<StripeButton> {
+  internal fun comparator(anchor: ToolWindowAnchor): Comparator<StripeButton> {
     return MyStripeButtonComparator(anchor)
   }
 

@@ -15,16 +15,6 @@ import kotlin.math.min
 
 private val LOG = logger<WindowInfoImpl>()
 
-private fun canActivateOnStart(id: String?): Boolean {
-  for (ep in ToolWindowEP.EP_NAME.extensions) {
-    if (id == ep.id) {
-      val factory = ep.toolWindowFactory
-      return !factory!!.isDoNotActivateOnStart
-    }
-  }
-  return true
-}
-
 @Suppress("EqualsOrHashCode")
 @Tag("window_info")
 @Property(style = Property.Style.ATTRIBUTE)
@@ -104,6 +94,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.copyFrom(this)
+    info.isRegistered = isRegistered
     return info
   }
 
@@ -124,7 +115,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
 
     setTypeAndCheck(type)
 
-    if (isVisible && !canActivateOnStart(id)) {
+    if (isVisible && id != null && !canActivateOnStart(id!!)) {
       isVisible = false
     }
   }
@@ -145,13 +136,13 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
-  override fun toString(): String = "id: $id, ${super.toString()}"
+  override fun toString() = "id: $id, ${super.toString()}"
 }
 
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {
   override fun fromString(value: String): ToolWindowContentUiType = ToolWindowContentUiType.getInstance(value)
 
-  override fun toString(value: ToolWindowContentUiType): String  = value.name
+  override fun toString(value: ToolWindowContentUiType): String = value.name
 }
 
 private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
@@ -165,5 +156,14 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
     }
   }
 
-  override fun toString(value: ToolWindowAnchor): String  = value.toString()
+  override fun toString(value: ToolWindowAnchor) = value.toString()
+}
+
+private fun canActivateOnStart(id: String): Boolean {
+  for (ep in ToolWindowEP.EP_NAME.extensionList) {
+    if (id == ep.id) {
+      return !ep.toolWindowFactory!!.isDoNotActivateOnStart
+    }
+  }
+  return true
 }

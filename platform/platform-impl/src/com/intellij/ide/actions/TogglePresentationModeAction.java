@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class TogglePresentationModeAction extends AnAction implements DumbAware {
+public final class TogglePresentationModeAction extends AnAction implements DumbAware {
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
   private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static int ourSavedConsoleFontSize;
@@ -56,13 +56,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     setPresentationMode(project, !settings.getPresentationMode());
   }
 
-  //public static void restorePresentationMode() {
-  //  UISettings instance = UISettings.getInstance();
-  //  tweakUIDefaults(instance, true);
-  //  tweakEditorAndFireUpdateUI(instance, true);
-  //}
-
-  public static void setPresentationMode(final Project project, final boolean inPresentation) {
+  public static void setPresentationMode(@Nullable Project project, boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
     settings.setPresentationMode(inPresentation);
 
@@ -164,7 +158,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     String[] ids = manager.getToolWindowIds();
     boolean hasVisible = false;
     for (String id : ids) {
-      final ToolWindow toolWindow = manager.getToolWindow(id);
+      ToolWindow toolWindow = manager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);
         hasVisible = true;
@@ -177,8 +171,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     if (project == null) return false;
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
 
-    DesktopLayout layout = new DesktopLayout();
-    layout.copyFrom(manager.getLayout());
+    DesktopLayout layout = manager.getLayout().copy();
     boolean hasVisible = hideAllToolWindows(manager);
 
     if (hasVisible) {
@@ -189,7 +182,10 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
   }
 
   static void restoreToolWindows(Project project, boolean needsRestore, boolean inPresentation) {
-    if (project == null || !needsRestore) return;
+    if (project == null || !needsRestore) {
+      return;
+    }
+
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {

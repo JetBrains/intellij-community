@@ -83,7 +83,7 @@ private val LOG = Logger.getInstance(ToolWindowManagerImpl::class.java)
 )
 open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), PersistentStateComponent<Element?> {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
-  private var layout = DesktopLayout()
+  private var layout: DesktopLayout
   private val idToEntry: MutableMap<String, ToolWindowEntry> = HashMap()
   private val toolWindowPropertyChangeListener = MyToolWindowPropertyChangeListener()
   private val internalDecoratorListener: InternalDecoratorListener = MyInternalDecoratorListener()
@@ -107,19 +107,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return layout.isToolWindowRegistered(id)
   }
 
-  private enum class KeyState {
-    WAITING, PRESSED, RELEASED, HOLD
-  }
-
   private val commandProcessor = CommandProcessor()
 
   init {
     if (project.isDefault) {
       waiterForSecondPress = null
+      layout = DesktopLayout()
     }
     else {
-      layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
-      layout.infos.forEach { layout.unregister(it.id!!) }
+      layout = WindowManagerEx.getInstanceEx().layout.copy(markAllAsUnregistered = true)
     }
   }
 
@@ -899,8 +895,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow)
 
     // create decorator
-    val decorator = InternalDecorator(project, info.copy(), toolWindow, task.canWorkInDumbMode, disposable)
-    decorator.addInternalDecoratorListener(internalDecoratorListener)
+    val decorator = InternalDecorator(project, info.copy(), toolWindow, task.canWorkInDumbMode, disposable, internalDecoratorListener)
     toolWindow.addPropertyChangeListener(toolWindowPropertyChangeListener)
 
     // create and show tool button
@@ -999,47 +994,48 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun setLayout(layout: DesktopLayout) {
     ApplicationManager.getApplication().assertIsDispatchThread()
+
     // hide tool window that are invisible or its info is not presented in new layout
-    val currentInfos = layout.infos
+    val currentInfos = this.layout.infos
     if (currentInfos.isEmpty()) {
       this.layout = layout
       return
     }
 
-    val commandList = mutableListOf<FinalizableCommand>()
-    for (currentInfo: WindowInfoImpl in currentInfos) {
+    val commands = mutableListOf<FinalizableCommand>()
+    for (currentInfo in currentInfos) {
       val info = layout.getInfo(currentInfo.id!!, false)
       if (currentInfo.isVisible && (info == null || !info.isVisible)) {
-        deactivateToolWindowImpl(currentInfo, true, commandList)
+        deactivateToolWindowImpl(currentInfo, true, commands)
       }
     }
     // change anchor of tool windows
-    for (currentInfo: WindowInfoImpl in currentInfos) {
+    for (currentInfo in currentInfos) {
       val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (currentInfo.anchor != info.anchor || currentInfo.order != info.order) {
-        setToolWindowAnchorImpl((currentInfo.id)!!, info.anchor, info.order, commandList)
+        setToolWindowAnchorImpl((currentInfo.id)!!, info.anchor, info.order, commands)
       }
     }
     // change types of tool windows
-    for (currentInfo: WindowInfoImpl in currentInfos) {
+    for (currentInfo in currentInfos) {
       val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (currentInfo.type != info.type) {
-        setToolWindowTypeImpl((currentInfo.id)!!, info.type, commandList)
+        setToolWindowTypeImpl((currentInfo.id)!!, info.type, commands)
       }
     }
     // change other properties
-    for (currentInfo: WindowInfoImpl in currentInfos) {
+    for (currentInfo in currentInfos) {
       val info = layout.getInfo(currentInfo.id!!, false) ?: continue
-      copyWindowOptions(info, commandList)
+      copyWindowOptions(info, commands)
     }
     // restore visibility
-    for (currentInfo: WindowInfoImpl in currentInfos) {
+    for (currentInfo in currentInfos) {
       val info = layout.getInfo(currentInfo.id!!, false) ?: continue
       if (info.isVisible) {
-        showToolWindowImpl((currentInfo.id)!!, false, commandList)
+        showToolWindowImpl((currentInfo.id)!!, false, commands)
       }
     }
-    execute(commandList)
+    execute(commands)
     checkInvariants("")
     this.layout = layout
   }
@@ -1508,12 +1504,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun loadState(state: Element) {
-    for (e: Element in state.children) {
-      if (DesktopLayout.TAG == e.name) {
+    for (element in state.children) {
+      if (DesktopLayout.TAG == element.name) {
         val layout = DesktopLayout()
-        layout.readExternal(e)
+        layout.readExternal(element)
         val task = Runnable {
-          layout.copyNotRegisteredFrom(this.layout)
           setLayout(layout)
         }
         val app = ApplicationManager.getApplication()
@@ -1528,9 +1523,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }, project.disposed)
         }
       }
-      else if (LAYOUT_TO_RESTORE == e.name) {
+      else if (LAYOUT_TO_RESTORE == element.name) {
         layoutToRestoreLater = DesktopLayout()
-        layoutToRestoreLater!!.readExternal(e)
+        layoutToRestoreLater!!.readExternal(element)
       }
     }
     checkInvariants("")
@@ -2016,6 +2011,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       LOG.error("Invariants failed: \n${java.lang.String.join("\n", violations)}\nContext: $additionalMessage")
     }
   }
+}
+
+private enum class KeyState {
+  WAITING, PRESSED, RELEASED, HOLD
 }
 
 private fun focusDefaultElementInSelectedEditor() {

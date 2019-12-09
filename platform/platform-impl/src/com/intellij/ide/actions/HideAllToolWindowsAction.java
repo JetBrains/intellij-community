@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import org.jetbrains.annotations.NotNull;
 
-public class HideAllToolWindowsAction extends AnAction implements DumbAware {
+final class HideAllToolWindowsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -22,12 +22,10 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
     performAction(project);
   }
 
-  public static void performAction(final Project project) {
+  public static void performAction(@NotNull Project project) {
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
-    DesktopLayout layout = new DesktopLayout();
-    layout.copyFrom(toolWindowManager.getLayout());
-
+    DesktopLayout layout = toolWindowManager.getLayout().copy();
     // to clear windows stack
     toolWindowManager.clearSideStack();
     //toolWindowManager.activateEditorComponent();
@@ -47,7 +45,7 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
       toolWindowManager.activateEditorComponent();
     }
     else {
-      final DesktopLayout restoredLayout = toolWindowManager.getLayoutToRestoreLater();
+      DesktopLayout restoredLayout = toolWindowManager.getLayoutToRestoreLater();
       if (restoredLayout != null) {
         toolWindowManager.setLayoutToRestoreLater(null);
         toolWindowManager.setLayout(restoredLayout);
@@ -65,8 +63,7 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
     }
 
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
-    String[] ids = toolWindowManager.getToolWindowIds();
-    for (String id : ids) {
+    for (String id : toolWindowManager.getToolWindowIds()) {
       if (HideToolWindowAction.shouldBeHiddenByShortCut(toolWindowManager, id)) {
         presentation.setEnabled(true);
         presentation.setText(IdeBundle.message("action.hide.all.windows"), true);
@@ -74,7 +71,7 @@ public class HideAllToolWindowsAction extends AnAction implements DumbAware {
       }
     }
 
-    final DesktopLayout layout = toolWindowManager.getLayoutToRestoreLater();
+    DesktopLayout layout = toolWindowManager.getLayoutToRestoreLater();
     if (layout != null) {
       presentation.setEnabled(true);
       presentation.setText(IdeBundle.message("action.restore.windows"));

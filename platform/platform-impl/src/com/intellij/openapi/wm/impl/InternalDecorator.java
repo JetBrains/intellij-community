@@ -25,7 +25,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.paint.LinePainter2D;
-import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;
   private final MyDivider myDivider;
-  private final EventDispatcher<InternalDecoratorListener> myDispatcher = EventDispatcher.create(InternalDecoratorListener.class);
+  private final InternalDecoratorListener listener;
   private final RemoveStripeButtonAction myRemoveFromSideBarAction;
 
   private ActionGroup myAdditionalGearActions;
@@ -71,7 +70,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final ToolWindowHeader myHeader;
   private final ActionGroup myToggleToolbarGroup;
 
-  InternalDecorator(@NotNull Project project, @NotNull WindowInfoImpl info, @NotNull ToolWindowImpl toolWindow, boolean dumbAware, @NotNull Disposable parentDisposable) {
+  InternalDecorator(@NotNull Project project,
+                    @NotNull WindowInfoImpl info,
+                    @NotNull ToolWindowImpl toolWindow,
+                    boolean dumbAware,
+                    @NotNull Disposable parentDisposable,
+                    @NotNull InternalDecoratorListener listener) {
     super(new BorderLayout());
 
     myProject = project;
@@ -107,6 +111,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     init(dumbAware, parentDisposable);
 
     apply(info);
+
+    this.listener = listener;
   }
 
   @Override
@@ -134,7 +140,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myInfo = info;
 
     // Anchor
-    final ToolWindowAnchor anchor = myInfo.getAnchor();
+    ToolWindowAnchor anchor = myInfo.getAnchor();
     if (info.isSliding()) {
       myDivider.invalidate();
       if (ToolWindowAnchor.TOP == anchor) {
@@ -151,13 +157,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
       myDivider.setPreferredSize(new Dimension(0, 0));
     }
-    else { // docked and floating windows don't have divider
+    else {
+      // docked and floating windows don't have divider
       remove(myDivider);
     }
 
     validate();
     repaint();
-
 
     // Push "apply" request forward
 
@@ -181,45 +187,37 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return null;
   }
 
-  final void addInternalDecoratorListener(InternalDecoratorListener l) {
-    myDispatcher.addListener(l);
-  }
-
-  final void removeInternalDecoratorListener(InternalDecoratorListener l) {
-    myDispatcher.removeListener(l);
-  }
-
   /**
    * Fires event that "hide" button has been pressed.
    */
   final void fireHidden() {
-    myDispatcher.getMulticaster().hidden(this);
+    listener.hidden(this);
   }
 
   /**
    * Fires event that "hide" button has been pressed.
    */
   final void fireHiddenSide() {
-    myDispatcher.getMulticaster().hiddenSide(this);
+    listener.hiddenSide(this);
   }
 
   /**
    * Fires event that user performed click into the title bar area.
    */
   final void fireActivated() {
-    myDispatcher.getMulticaster().activated(this);
+    listener.activated(this);
   }
 
   final void fireResized() {
-    myDispatcher.getMulticaster().resized(this);
+    listener.resized(this);
   }
 
   private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
-    myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
+    listener.contentUiTypeChanges(this, type);
   }
 
   private void fireVisibleOnPanelChanged(boolean visibleOnPanel) {
-    myDispatcher.getMulticaster().visibleStripeButtonChanged(this, visibleOnPanel);
+    listener.visibleStripeButtonChanged(this, visibleOnPanel);
   }
 
   private void init(boolean dumbAware, @NotNull Disposable parentDisposable) {
