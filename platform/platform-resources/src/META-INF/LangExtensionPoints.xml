@@ -150,7 +150,7 @@
 
     <extensionPoint name="multiLangCommenter" interface="com.intellij.psi.templateLanguages.MultipleLangCommentProvider" dynamic="true"/>
 
-    <extensionPoint name="cacheBuilder" beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP">
+    <extensionPoint name="cacheBuilder" beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP" dynamic="true">
       <with attribute="wordsScannerClass" implements="com.intellij.lang.cacheBuilder.WordsScanner"/>
     </extensionPoint>
 
