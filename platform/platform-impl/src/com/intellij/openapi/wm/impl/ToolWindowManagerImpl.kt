@@ -93,7 +93,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var frame: ProjectFrameHelper? = null
   private var layoutToRestoreLater: DesktopLayout? = null
   private var currentState = KeyState.WAITING
-  private val waiterForSecondPress: Alarm?
+  private var waiterForSecondPress: Alarm? = null
 
   private val pendingSetLayoutTask = AtomicReference<Runnable?>()
 
@@ -118,27 +118,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       waiterForSecondPress = null
     }
     else {
-      // manager is used in light tests (light project is never disposed), so, earlyDisposable must be used
-      val disposable = (project as ProjectEx).earlyDisposable
-
-      waiterForSecondPress = Alarm(disposable)
-
-      val connection = project.messageBus.connect(disposable)
-      connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
-
       layout.copyFrom(WindowManagerEx.getInstanceEx().layout)
       layout.infos.forEach { layout.unregister(it.id!!) }
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
-            override fun run() {
-              if (FileEditorManager.getInstance(project).hasOpenFiles()) {
-                focusToolWindowByDefault(null)
-              }
-            }
-          })
-        }
-      })
     }
   }
 
@@ -317,7 +298,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       if (currentState == KeyState.PRESSED) {
         currentState = KeyState.RELEASED
-        if (waiterForSecondPress != null) {
+        waiterForSecondPress?.let { waiterForSecondPress ->
           waiterForSecondPress.cancelAllRequests()
           waiterForSecondPress.addRequest(secondPressRunnable, SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650))
         }
@@ -337,6 +318,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (toolWindowPane != null) {
       return
     }
+
+    // manager is used in light tests (light project is never disposed), so, earlyDisposable must be used
+    val disposable = (project as ProjectEx).earlyDisposable
+    waiterForSecondPress = Alarm(disposable)
+
+    val connection = project.messageBus.connect(disposable)
+    connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
+          override fun run() {
+            if (FileEditorManager.getInstance(project).hasOpenFiles()) {
+              focusToolWindowByDefault(null)
+            }
+          }
+        })
+      }
+    })
 
     val frameHelper = WindowManagerEx.getInstanceEx().allocateFrame(project)
     frame = frameHelper
