@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.FloatingDecorator;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.wm.impl.WindowWatcher;
+import com.intellij.openapi.wm.impl.*;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,11 +120,12 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         }
         else {
           Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+          ToolWindowManagerImpl manager = myToolWindow.getToolWindowManager();
           if (owner != c) {
-            myManager.getFocusManager().requestFocusInProject(c, myProject);
+            manager.getFocusManager().requestFocusInProject(c, myProject);
             bringOwnerToFront();
           }
-          myManager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
+          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
         }
       }
     }, 0);

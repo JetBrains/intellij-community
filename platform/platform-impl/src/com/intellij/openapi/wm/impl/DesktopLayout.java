@@ -20,9 +20,6 @@ import java.util.*;
 
 import static com.intellij.configurationStore.XmlSerializer.serialize;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class DesktopLayout {
   private static final Logger LOG = Logger.getInstance(DesktopLayout.class);
 
@@ -129,7 +126,7 @@ public final class DesktopLayout {
    * @param id     {@code id} of tool window to be registered.
    * @param anchor the default tool window anchor.
    */
-  final WindowInfoImpl register(@NotNull RegisterToolWindowTask task) {
+  WindowInfoImpl register(@NotNull RegisterToolWindowTask task) {
     WindowInfoImpl info = myIdToInfo.get(task.getId());
     if (info == null) {
       info = new WindowInfoImpl();

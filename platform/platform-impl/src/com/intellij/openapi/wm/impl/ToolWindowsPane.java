@@ -231,8 +231,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                  final boolean dirtyMode,
                                                  @NotNull Runnable finishCallBack) {
     WindowInfoImpl copiedInfo = info.copy();
-    String id = copiedInfo.getId();
-
     myDecoratorToInfo.put(decorator, copiedInfo);
 
     if (info.isDocked()) {

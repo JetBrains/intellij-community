@@ -518,17 +518,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (commands.isEmpty()) {
       return
     }
-    if (isFireStateChangedEvent) {
-      for (each in commands) {
-        if (each.willChangeState()) {
-          fireStateChanged()
-          break
-        }
-      }
+
+    if (isFireStateChangedEvent && commands.any { it.willChangeState() }) {
+      fireStateChanged()
     }
-    for (each in commands) {
-      each.beforeExecute(this)
-    }
+
     commandProcessor.execute(commands) { project.isDisposed }
   }
 
@@ -536,10 +530,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     focusDefaultElementInSelectedEditor()
   }
 
-  private fun deactivateWindows(idToIgnore: String, commandList: MutableList<FinalizableCommand>) {
-    for (info: WindowInfoImpl in layout.infos) {
+  private fun deactivateWindows(idToIgnore: String, commands: MutableList<FinalizableCommand>) {
+    for (info in layout.infos) {
       if (idToIgnore != info.id) {
-        deactivateToolWindowImpl(info, isToHideOnDeactivation(info), commandList)
+        deactivateToolWindowImpl(info, isToHideOnDeactivation(info), commands)
       }
     }
   }
@@ -554,7 +548,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    */
   private fun showAndActivate(id: String,
                               dirtyMode: Boolean,
-                              commandsList: MutableList<FinalizableCommand>,
+                              commands: MutableList<FinalizableCommand>,
                               autoFocusContents: Boolean) {
     if (!getToolWindow(id)!!.isAvailable) {
       return
@@ -568,15 +562,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       toApplyInfo = true
     }
 
-    showToolWindowImpl(id, dirtyMode, commandsList)
+    showToolWindowImpl(id, dirtyMode, commands)
     // activate
     if (toApplyInfo) {
-      appendApplyWindowInfoCmd(info, commandsList)
+      appendApplyWindowInfoCmd(info, commands)
       activeStack.push(id)
     }
 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
-      appendRequestFocusInToolWindowCmd(id, commandsList)
+      appendRequestFocusInToolWindowCmd(id, commands)
     }
   }
 
@@ -890,8 +884,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val existingInfo = layout.getInfo(task.id, false)
-    if (existingInfo != null && existingInfo.isRegistered) {
+    if (idToEntry.containsKey(task.id)) {
       throw IllegalArgumentException("window with id=\"${task.id}\" is already registered")
     }
 
@@ -915,8 +908,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // create and show tool button
     val button = StripeButton(decorator, (toolWindowPane)!!)
-    val commandsList = mutableListOf<FinalizableCommand>()
-    appendAddButtonCmd(button, info, commandsList)
+    val commands = mutableListOf<FinalizableCommand>()
+    appendAddButtonCmd(button, info, commands)
 
     idToEntry.put(task.id, ToolWindowEntry(button, decorator, ToolWindowFocusWatcher(toolWindow), disposable))
 
@@ -926,13 +919,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // (for example, tool window is in auto hide mode) then we just activate editor component.
     if (!info.isAutoHide && (info.isDocked || info.isFloating)) {
       if (wasActive) {
-        activateToolWindowImpl(info.id!!, commandsList, true, true)
+        activateToolWindowImpl(info.id!!, commands, true, true)
       }
       else if (wasVisible) {
-        showToolWindowImpl(info.id!!, false, commandsList)
+        showToolWindowImpl(info.id!!, false, commands)
       }
     }
-    execute(commandsList)
+    execute(commands)
     fireToolWindowRegistered(task.id)
     return toolWindow
   }
