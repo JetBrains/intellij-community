@@ -52,6 +52,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
@@ -277,19 +278,21 @@ public class DiffUtil {
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
-    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
-    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
+    editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
+                                                                           : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+    TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
   }
 
   @Nullable

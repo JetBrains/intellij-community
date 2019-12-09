@@ -57,6 +57,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   /**
    * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter)} instead.
+   * @see LineNumberConverterAdapter
    */
   @Deprecated
   public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
@@ -65,6 +66,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   /**
    * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter, LineNumberConverter)} instead.
+   * @see LineNumberConverterAdapter
    */
   @Deprecated
   public void setLineNumberConvertor(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {

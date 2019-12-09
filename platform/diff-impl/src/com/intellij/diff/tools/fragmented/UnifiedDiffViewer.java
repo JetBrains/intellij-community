@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -410,9 +411,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
       TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
       TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      myEditor.getGutterComponentEx().setLineNumberConvertor(
-        mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor),
-        mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor));
+      TIntFunction merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
+      TIntFunction merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
+      myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
+                                                  merged2 == null ? null : new LineNumberConverterAdapter(merged2));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;

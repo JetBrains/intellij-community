@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
@@ -287,7 +288,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     LineNumberConvertor convertor1 = builder.getLineConvertor1();
     LineNumberConvertor convertor2 = builder.getLineConvertor2();
-    myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor1.createConvertor(), convertor2.createConvertor());
+    myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
+                                                     new LineNumberConverterAdapter(convertor2.createConvertor()));
 
     TIntArrayList lines = builder.getSeparatorLines();
     for (int i = 0; i < lines.size(); i++) {
