@@ -145,11 +145,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     changesLoadingPane.add(myChangesBrowser);
 
-    myPreviewDiff = createDiffPreview(logData.getProject(), false, this);
-
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
-    myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
+
+    myPreviewDiff = createDiffPreview(logData.getProject(), false, this);
 
     MyCommitSelectionListenerForDiff listenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
     myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
@@ -198,7 +197,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull
   private VcsLogChangeProcessor createDiffPreview(@NotNull Project project, boolean isInEditor, @NotNull Disposable owner) {
-    return new VcsLogChangeProcessor(project, myChangesBrowser, isInEditor, owner);
+    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(project, myChangesBrowser, isInEditor, owner);
+    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
+    return processor;
   }
 
   private void initPreviewInEditor(Project project) {
