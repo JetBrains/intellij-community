@@ -23,6 +23,7 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.util.PathUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
+import java.io.FileNotFoundException
 import java.io.IOException
 
 internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.DumbAware {
@@ -61,7 +62,13 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
     }
 
     val expected = SystemInfo.isFileSystemCaseSensitive
-    val actual = FileUtil.isFileSystemCaseSensitive(path)
+    val actual = try {
+      FileUtil.isFileSystemCaseSensitive(path)
+    }
+    catch (ignore: FileNotFoundException) {
+      return
+    }
+
     LOG.info("$path case-sensitivity: expected=$expected actual=$actual")
     if (actual != expected) {
       // IDE=true -> FS=false -> prefix='in'
