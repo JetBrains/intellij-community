@@ -218,8 +218,7 @@ public abstract class XmlTagDelegate {
       }
     }
 
-    Map<String, CachedValue<XmlNSDescriptor>> map = getNSDescriptorsMap();
-    final CachedValue<XmlNSDescriptor> descriptor = map.get(namespace);
+    NullableLazyValue<XmlNSDescriptor> descriptor = getNSDescriptorMap().get(namespace);
     if (descriptor != null) {
       final XmlNSDescriptor value = descriptor.getValue();
       if (value != null) {
@@ -258,7 +257,7 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  private Map<String, CachedValue<XmlNSDescriptor>> getNSDescriptorsMap() {
+  private Map<String, NullableLazyValue<XmlNSDescriptor>> getNSDescriptorMap() {
     XmlTag tag = myTag;
     return CachedValuesManager.getCachedValue(tag, () ->
       Result.create(computeNsDescriptorMap(tag),
@@ -271,8 +270,8 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  private static Map<String, CachedValue<XmlNSDescriptor>> computeNsDescriptorMap(@NotNull XmlTag tag) {
-    Map<String, CachedValue<XmlNSDescriptor>> map = null;
+  private static Map<String, NullableLazyValue<XmlNSDescriptor>> computeNsDescriptorMap(@NotNull XmlTag tag) {
+    Map<String, NullableLazyValue<XmlNSDescriptor>> map = null;
     // XSD aware attributes processing
 
     final String noNamespaceDeclaration = tag.getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
@@ -313,16 +312,16 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  private static Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(@NotNull final XmlTag tag,
+  private static Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(@NotNull final XmlTag tag,
                                                                             @Nullable final String namespace,
                                                                             @Nullable final String version,
                                                                             @NotNull final Set<String> fileLocations,
-                                                                            @Nullable Map<String, CachedValue<XmlNSDescriptor>> map,
+                                                                            @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
                                                                             final boolean nsDecl) {
     if (map == null) map = new THashMap<>();
 
     // We put cached value in any case to cause its value update on e.g. mapping change
-    map.put(namespace, CachedValuesManager.getManager(tag.getProject()).createCachedValue(() -> {
+    map.put(namespace, NullableLazyValue.createValue(() -> {
       final XmlFile[] file = new XmlFile[1];
       List<XmlNSDescriptor> descriptors = fileLocations.stream().map(s -> {
         file[0] = retrieveFile(tag, s, version, namespace, nsDecl);
@@ -337,15 +336,14 @@ public abstract class XmlTagDelegate {
         descriptor = new MultiFileNsDescriptor(ContainerUtil.map(descriptors, descriptor1 -> (XmlNSDescriptorImpl)descriptor1));
       }
       if (descriptor == null) {
-        return new Result<>(null, tag, file[0] == null ? tag : file[0],
-                            ExternalResourceManager.getInstance());
+        return null;
       }
       XmlExtension extension = XmlExtension.getExtensionByElement(tag);
       if (extension != null) {
         descriptor = extension.wrapNSDescriptor(tag, descriptor);
       }
-      return new Result<>(descriptor, descriptor.getDependencies(), tag);
-    }, false));
+      return descriptor;
+    }));
 
     return map;
   }
