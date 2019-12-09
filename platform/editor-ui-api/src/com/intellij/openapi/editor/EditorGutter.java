@@ -64,6 +64,15 @@ public interface EditorGutter {
   void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations);
 
   /**
+   * Changes the display of line numbers in gutter. Disables showing additional line numbers.
+   *
+   * @see #setLineNumberConverter(LineNumberConverter, LineNumberConverter)
+   */
+  default void setLineNumberConverter(@NotNull LineNumberConverter converter) {
+    setLineNumberConverter(converter, null);
+  }
+
+  /**
    * Changes the display of line numbers in gutter
    *
    * @param primaryConverter converter for primary line number shown in gutter

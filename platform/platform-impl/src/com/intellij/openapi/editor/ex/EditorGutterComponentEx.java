@@ -55,10 +55,18 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract Point getCenterPoint(GutterIconRenderer renderer);
 
+  /**
+   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter)} instead.
+   */
+  @Deprecated
   public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
     setLineNumberConvertor(lineNumberConvertor, null);
   }
 
+  /**
+   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter, LineNumberConverter)} instead.
+   */
+  @Deprecated
   public void setLineNumberConvertor(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
     setLineNumberConverter(convertor1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(convertor1),
                            convertor2 == null ? null : new LineNumberConverterAdapter(convertor2));

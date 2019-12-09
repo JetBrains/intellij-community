@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
  * Defines a mapping between document line number and the numbers displayed in gutter.
  *
  * @see EditorGutter#setLineNumberConverter(LineNumberConverter, LineNumberConverter)
+ * @see Simple
  */
 public interface LineNumberConverter {
   /**
@@ -37,4 +38,20 @@ public interface LineNumberConverter {
       return editor.getDocument().getLineCount();
     }
   };
+
+  /**
+   * Specialization of {@link LineNumberConverter} whose {@link #convert(Editor, int)} method
+   * always produces monotonically increasing numbers.
+   */
+  interface Simple extends LineNumberConverter {
+    @Nullable
+    @Override
+    default Integer getMaxLineNumber(@NotNull Editor editor) {
+      for (int i = editor.getDocument().getLineCount(); i > 0; i--) {
+        Integer number = convert(editor, i);
+        if (number != null) return number;
+      }
+      return null;
+    }
+  }
 }
