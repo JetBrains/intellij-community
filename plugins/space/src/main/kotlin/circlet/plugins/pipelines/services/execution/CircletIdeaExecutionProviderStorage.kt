@@ -7,7 +7,7 @@ import circlet.pipelines.engine.api.storage.*
 import circlet.pipelines.provider.api.*
 import libraries.klogging.*
 
-class CircletIdeaExecutionProviderStorage(private val task: ScriptTask) : ExecutionProviderStorage {
+class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : ExecutionProviderStorage {
     companion object : KLogging()
 
     private val idStorage = TaskLongIdStorage()
@@ -35,7 +35,7 @@ class CircletIdeaExecutionProviderStorage(private val task: ScriptTask) : Execut
 
     override fun findGraphMeta(graphMetaId: Long): AGraphMetaEntity? {
         logger.debug { "findMetaTask $graphMetaId" }
-        return CircletIdeaAGraphMetaEntity(graphMetaId, task)
+        return CircletIdeaAGraphMetaEntity(graphMetaId, job)
     }
 
     override fun findGraphExecutionByJobActionExecutionId(id: Long): AGraphExecutionEntity? {

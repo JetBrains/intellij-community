@@ -182,7 +182,7 @@ class CircletScriptsViewFactory : KLogging() {
 
         val config = model.config
 
-        val tasks = config.tasks
+        val tasks = config.jobs
         val targets = config.targets
         val pipelines = config.pipelines
 
@@ -199,7 +199,7 @@ class CircletScriptsViewFactory : KLogging() {
         val shouldAddGroupingNodes = jobsTypesCount > 1
         if (tasks.any()) {
             val tasksCollectionNode = getGroupingNode(root, "tasks", shouldAddGroupingNodes)
-            config.tasks.forEach {
+            config.jobs.forEach {
                 val taskNode = CircletModelTreeNode(it.name, true)
                 if (extendedViewModeEnabled) {
                     val triggers = it.triggers

@@ -78,7 +78,7 @@ class SmokeTest : HeavyPlatformTestCase() {
 
     private fun ScriptViewModel.isScriptEmpty(): Boolean {
         val config = this.config
-        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.tasks.isEmpty()
+        return config.pipelines.isEmpty() && config.targets.isEmpty() && config.jobs.isEmpty()
     }
 
     private fun createGoldModel(): ScriptConfig {

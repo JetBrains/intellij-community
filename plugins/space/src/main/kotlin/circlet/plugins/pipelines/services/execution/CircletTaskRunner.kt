@@ -28,7 +28,7 @@ class CircletTaskRunner(val project: Project) {
         }
 
         val config = script.config
-        val task = script.config.tasks.firstOrNull { x -> x.name == taskName }
+        val task = script.config.jobs.firstOrNull { x -> x.name == taskName }
         if (task == null) {
             //logData.add("Task $taskName doesn't exist")
             throw com.intellij.execution.ExecutionException("Task $taskName doesn't exist")
