@@ -1,200 +1,178 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm;
+package com.intellij.openapi.wm
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.event.HyperlinkListener
 
 /**
- * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
+ * If you want to register a toolwindow, which will be enabled during the dumb mode, please use [ToolWindowManager]'s
  * registration methods which have 'canWorkInDumbMode' parameter.
  */
-public abstract class ToolWindowManager {
-  public abstract boolean canShowNotification(@NotNull String toolWindowId);
+abstract class ToolWindowManager {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): ToolWindowManager = project.getService(ToolWindowManager::class.java)
 
-  public static ToolWindowManager getInstance(@NotNull Project project){
-    return project.getService(ToolWindowManager.class);
+    @JvmStatic
+    fun getActiveToolWindow(): ToolWindow? {
+      val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
+      val project = if (frame == null) ProjectManager.getInstance().defaultProject else frame.project
+      if (project != null && !project.isDisposed) {
+        return getInstance(project).getToolWindow(getActiveId())
+      }
+      return null
+    }
+
+    @JvmStatic
+    fun getActiveId(): String? {
+      val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame ?: return null
+      val project = lastFocusedFrame.project
+      if (project != null && !project.isDisposed) {
+        return getInstance(project).activeToolWindowId
+      }
+      return null
+    }
   }
 
-  /**
-   * Register specified tool window into IDE window system.
-   * @param id {@code id} of tool window to be registered.
-   * @param component {@code component} which represents tool window content.
-   * May be null. Content can be further added via content manager for this tool window (See {@link ToolWindow#getContentManager()})
-   * @param anchor the default anchor for first registration. It uses only first time the
-   * tool window with the specified {@code id} is being registered into the window system.
-   * After the first registration window's anchor is stored in project file
-   * and {@code anchor} is ignored.
-   * @exception IllegalArgumentException if the same window is already installed or one
-   * of the parameters is {@code null}.
-   * @return tool window
-   * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
-   */
-  @Deprecated
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor);
+  abstract val focusManager: IdeFocusManager
 
-  /**
-  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
-  */
-  @Deprecated
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                @NotNull JComponent component,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                @NotNull Disposable parentDisposable);
+  abstract fun canShowNotification(toolWindowId: String): Boolean
 
-  /**
-  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
-  */
-  @Deprecated
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                @NotNull JComponent component,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                @NotNull Disposable parentDisposable,
-                                                boolean canWorkInDumbMode);
-  /**
-  * @deprecated use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
-  */
-  @Deprecated
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                @NotNull JComponent component,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                @NotNull Disposable parentDisposable,
-                                                boolean canWorkInDumbMode,
-                                                boolean canCloseContents);
-
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor);
-
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                boolean canCloseContent,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                boolean secondary);
-
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                boolean canCloseContent,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                @NotNull Disposable parentDisposable,
-                                                boolean canWorkInDumbMode);
-
-  @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id,
-                                                boolean canCloseContent,
-                                                @NotNull ToolWindowAnchor anchor,
-                                                @NotNull Disposable parentDisposable,
-                                                boolean canWorkInDumbMode,
-                                                boolean secondary);
-
-  @NotNull
-  public final ToolWindow registerToolWindow(@NotNull String id,
-                                             boolean canCloseContent,
-                                             @NotNull ToolWindowAnchor anchor,
-                                             @NotNull Disposable parentDisposable) {
-    return registerToolWindow(id, canCloseContent, anchor, parentDisposable, false);
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
+                                                     canCloseContent = false, canWorkInDumbMode = false))
   }
 
-  @NotNull
-  protected abstract ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task);
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  fun registerToolWindow(id: String,
+                         component: JComponent,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
+                         canWorkInDumbMode: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
+                                                     canWorkInDumbMode = canWorkInDumbMode))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String,
+                         component: JComponent,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
+                         canWorkInDumbMode: Boolean,
+                         canCloseContents: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
+                                                     canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String, canCloseContent: Boolean, anchor: ToolWindowAnchor): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String,
+                         canCloseContent: Boolean,
+                         anchor: ToolWindowAnchor,
+                         secondary: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String,
+                         canCloseContent: Boolean,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
+                         canWorkInDumbMode: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = false,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String,
+                         canCloseContent: Boolean,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
+                         canWorkInDumbMode: Boolean,
+                         secondary: Boolean): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
+  }
+
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  fun registerToolWindow(id: String,
+                         canCloseContent: Boolean,
+                         anchor: ToolWindowAnchor,
+                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable): ToolWindow {
+    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = false,
+                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
+
+  }
+
+  protected abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow
 
   /**
    * does nothing if tool window with specified isn't registered.
    */
-  public abstract void unregisterToolWindow(@NotNull String id);
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
+  abstract fun unregisterToolWindow(id: String)
 
   /**
    */
-  public abstract void activateEditorComponent();
+  abstract fun activateEditorComponent()
 
   /**
-   * @return {@code true} if and only if editor component is active.
+   * @return `true` if and only if editor component is active.
    */
-  public abstract boolean isEditorComponentActive();
+  abstract val isEditorComponentActive: Boolean
 
   /**
-   * @return array of {@code id}s of all registered tool windows.
+   * @return array of `id`s of all registered tool windows.
    */
-  @NotNull
-  public abstract String[] getToolWindowIds();
+  abstract val toolWindowIds: Array<String>
 
   /**
-   * @return {@code ID} of currently active tool window or {@code null} if there is no active
+   * @return `ID` of currently active tool window or `null` if there is no active
    * tool window.
    */
-  @Nullable
-  public abstract String getActiveToolWindowId();
-
-  @Nullable
-  public static ToolWindow getActiveToolWindow () {
-    IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    Project project = frame == null ? ProjectManager.getInstance().getDefaultProject() : frame.getProject();
-
-    if (project != null && !project.isDisposed()) {
-      ToolWindowManager managerInstance = getInstance(project);
-      if (managerInstance != null) {
-        return managerInstance.getToolWindow(getActiveId());
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static String getActiveId () {
-    IdeFrame lastFocusedFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-
-    if (lastFocusedFrame !=null) {
-      Project project = lastFocusedFrame.getProject();
-      if (project != null && !project.isDisposed()) {
-        ToolWindowManager instance = getInstance(project);
-        return instance == null ? "" : instance.getActiveToolWindowId();
-      }
-    }
-    return "";
-  }
-
+  abstract val activeToolWindowId: String?
 
   /**
-   * @return registered tool window with specified {@code id}. If there is no registered
-   * tool window with specified {@code id} then the method returns {@code null}.
+   * @return registered tool window with specified `id`. If there is no registered
+   * tool window with specified `id` then the method returns `null`.
    * @see ToolWindowId
    */
-  public abstract ToolWindow getToolWindow(@Nullable String id);
+  abstract fun getToolWindow(id: String?): ToolWindow?
 
   /**
    * Puts specified runnable to the tail of current command queue.
    */
-  public abstract void invokeLater(@NotNull Runnable runnable);
+  abstract fun invokeLater(runnable: Runnable)
 
-  /**
-   * Utility method for quick access to the focus manager
-   */
-  @NotNull
-  public abstract IdeFocusManager getFocusManager();
+  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String)
 
-  public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody);
+  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String, icon: Icon?, listener: HyperlinkListener?)
 
-  public abstract void notifyByBalloon(@NotNull final String toolWindowId,
-                                       @NotNull final MessageType type,
-                                       @NotNull final String htmlBody,
-                                       @Nullable final Icon icon,
-                                       @Nullable HyperlinkListener listener);
+  abstract fun getToolWindowBalloon(id: String): Balloon?
 
-  @Nullable
-  public abstract Balloon getToolWindowBalloon(@NotNull String id);
+  abstract fun isMaximized(wnd: ToolWindow): Boolean
 
-  public abstract boolean isMaximized(@NotNull ToolWindow wnd);
-
-  public abstract void setMaximized(@NotNull ToolWindow wnd, boolean maximized);
+  abstract fun setMaximized(wnd: ToolWindow, maximized: Boolean)
 }

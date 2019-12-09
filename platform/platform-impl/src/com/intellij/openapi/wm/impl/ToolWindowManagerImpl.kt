@@ -639,19 +639,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     checkInvariants("Info: $info; shouldHide: $shouldHide")
   }
 
-  override fun getToolWindowIds(): Array<String> {
-    val infos = layout.infos
-    val ids = ArrayUtil.newStringArray(infos.size)
-    for (i in infos.indices) {
-      ids[i] = infos[i].id
+  override val toolWindowIds: Array<String>
+    get() {
+      val infos = layout.infos
+      val ids = ArrayUtil.newStringArray(infos.size)
+      for (i in infos.indices) {
+        ids[i] = infos[i].id
+      }
+      return ids
     }
-    return ids
-  }
 
-  override fun getActiveToolWindowId(): String? {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return layout.activeId
-  }
+  override val activeToolWindowId: String?
+    get() {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      return layout.activeId
+    }
 
   override fun getLastActiveToolWindowId(): String? {
     return getLastActiveToolWindowId(null)
@@ -880,70 +882,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     checkInvariants("Id: $id; dirtyMode: $dirtyMode")
   }
 
-  override fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
-                                                     canCloseContent = false, canWorkInDumbMode = false))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  component: JComponent,
-                                  anchor: ToolWindowAnchor,
-                                  parentDisposable: Disposable): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  component: JComponent,
-                                  anchor: ToolWindowAnchor,
-                                  parentDisposable: Disposable,
-                                  canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canWorkInDumbMode = canWorkInDumbMode))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  component: JComponent,
-                                  anchor: ToolWindowAnchor,
-                                  parentDisposable: Disposable,
-                                  canWorkInDumbMode: Boolean,
-                                  canCloseContents: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
-                                                     canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  canCloseContent: Boolean,
-                                  anchor: ToolWindowAnchor): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor,
-                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  canCloseContent: Boolean,
-                                  anchor: ToolWindowAnchor,
-                                  secondary: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
-                                                     canCloseContent = canCloseContent, canWorkInDumbMode = false))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  canCloseContent: Boolean,
-                                  anchor: ToolWindowAnchor,
-                                  parentDisposable: Disposable,
-                                  canWorkInDumbMode: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = false,
-                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
-  }
-
-  override fun registerToolWindow(id: String,
-                                  canCloseContent: Boolean,
-                                  anchor: ToolWindowAnchor,
-                                  parentDisposable: Disposable,
-                                  canWorkInDumbMode: Boolean,
-                                  secondary: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = secondary,
-                                                     canCloseContent = canCloseContent, canWorkInDumbMode = canWorkInDumbMode))
-  }
-
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
     init()
 
@@ -999,6 +937,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return toolWindow
   }
 
+  @Suppress("OverridingDeprecatedMember")
   override fun unregisterToolWindow(id: String) {
     val window = getToolWindow(id) as ToolWindowImpl?
     if (window != null) {
@@ -1119,7 +1058,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     execute(listOf(InvokeLaterCmd(runnable, commandProcessor)))
   }
 
-  override fun getFocusManager(): IdeFocusManager = IdeFocusManager.getInstance(project)!!
+  override val focusManager: IdeFocusManager
+    get() = IdeFocusManager.getInstance(project)!!
 
   override fun canShowNotification(toolWindowId: String): Boolean {
     if (!layout.isToolWindowRegistered(toolWindowId)) {
@@ -1132,7 +1072,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     notifyByBalloon(toolWindowId, type, htmlBody, null, null)
   }
 
-  override fun notifyByBalloon(toolWindowId: String, type: MessageType, text: String, icon: Icon?, listener: HyperlinkListener?) {
+  override fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String, icon: Icon?, listener: HyperlinkListener?) {
     getRegisteredInfoOrLogError(toolWindowId)
     val entry = idToEntry.get(toolWindowId)
     val existing = entry!!.balloon
@@ -1160,7 +1100,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val listenerWrapper = BalloonHyperlinkListener(listener)
     val balloon = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.titleForeground, type.popupBackground, listenerWrapper)
+      .createHtmlTextBalloonBuilder(htmlBody.replace("\n", "<br>"), icon, type.titleForeground, type.popupBackground, listenerWrapper)
       .setBorderColor(type.borderColor)
       .setHideOnClickOutside(false)
       .setHideOnFrameResize(false)
@@ -1182,7 +1122,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     execute(listOf(object : FinalizableCommand(null) {
       override fun run() {
         val button = stripe.getButtonFor(toolWindowId)
-        LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. Toolwindow id: $toolWindowId, message: $text, message type: $type"))
+        LOG.assertTrue(button != null, ("Button was not found, popup won't be shown. Toolwindow id: $toolWindowId, message: $htmlBody, message type: $type"))
         if (button == null) {
           return
         }
@@ -1233,10 +1173,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun getToolWindowBalloon(id: String) = idToEntry.get(id)?.balloon
 
-  override fun isEditorComponentActive(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusManager.focusOwner) != null
-  }
+  override val isEditorComponentActive: Boolean
+    get() {
+      ApplicationManager.getApplication().assertIsDispatchThread()
+      return ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusManager.focusOwner) != null
+    }
 
   fun getToolWindowAnchor(id: String) = getRegisteredInfoOrLogError(id).anchor
 

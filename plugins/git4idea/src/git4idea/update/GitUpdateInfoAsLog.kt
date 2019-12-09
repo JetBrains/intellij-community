@@ -166,7 +166,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                                    DateFormatUtil.formatDateTime(System.currentTimeMillis()),
                                    select, panel.getUi())
     if (select) {
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)
     }
   }
 

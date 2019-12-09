@@ -50,15 +50,14 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
       }
 
       if (!askAndMove(project, changes, unversionedFiles)) return
-      if (!changedFiles.isEmpty()) {
+      if (changedFiles.isNotEmpty()) {
         selectAndShowFile(project, changedFiles[0])
       }
     }
   }
 
   private fun selectAndShowFile(project: Project, file: VirtualFile) {
-    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-
+    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return
     if (!window.isVisible) {
       window.activate { ChangesViewManager.getInstance(project).selectFile(file) }
     }
@@ -74,7 +73,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
         val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
         changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
-        if (!unversionedFiles.isEmpty()) {
+        if (unversionedFiles.isNotEmpty()) {
           changeListManager.addUnversionedFiles(targetList, unversionedFiles)
         }
         return true

@@ -1037,7 +1037,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         val changes = defaultList.changes.filter { virtualFiles.contains(it.virtualFile) }
 
         val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-        window.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
+        window?.activate { ChangesViewManager.getInstance(project).selectChanges(changes) }
         expire()
       })
     }

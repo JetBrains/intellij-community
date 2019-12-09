@@ -17,7 +17,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowImpl
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
@@ -480,7 +479,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
-      .filter { toolwindow -> toolwindow.isVisible }
+      .filter { toolwindow -> toolwindow?.isVisible ?: false }
       .filterIsInstance<ToolWindowImpl>()
     return visibleToolWindows
       .find { it.component.containsLocationOnScreen(pointOnScreen) }
@@ -536,7 +535,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     val visibleToolWindows = toolWindowManager.toolWindowIds
       .asSequence()
       .map { toolWindowId -> toolWindowManager.getToolWindow(toolWindowId) }
-      .filter { toolwindow -> toolwindow.isVisible }
+      .filter { toolwindow -> toolwindow?.isVisible ?: false }
       .filterIsInstance<ToolWindowImpl>()
     return visibleToolWindows
       .find { it.component.containsLocationOnScreen(pointOnScreen) }
