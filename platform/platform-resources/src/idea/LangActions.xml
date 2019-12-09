@@ -29,6 +29,7 @@
     </group>
 
     <action id="ClassNameCompletion" class="com.intellij.codeInsight.completion.actions.ClassNameCompletionAction"/>
+    <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
 
     <group id="GenerateGroup">
       <action id="OverrideMethods" class="com.intellij.codeInsight.generation.actions.OverrideMethodsAction"/>
