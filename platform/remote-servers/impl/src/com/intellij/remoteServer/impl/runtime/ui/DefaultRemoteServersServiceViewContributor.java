@@ -61,7 +61,7 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
     for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
       if (logName.equals(loggingComponent.getPresentableName())) {
         DeploymentLogNode logNode = new DeploymentLogNode(project, loggingComponent, node);
-        ServiceViewManager.getInstance(project).select(logNode, DefaultRemoteServersServiceViewContributor.class, false, false);
+        ServiceViewManager.getInstance(project).select(logNode, DefaultRemoteServersServiceViewContributor.class, true, true);
       }
     }
   }
