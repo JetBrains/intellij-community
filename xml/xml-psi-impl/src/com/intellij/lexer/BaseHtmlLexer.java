@@ -207,7 +207,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   protected IElementType getCurrentStylesheetElementType() {
     Language language = getStyleLanguage();
     if (language != null) {
-      for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getPoint(null).getExtensions()) {
+      for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList()) {
         IElementType elementType = provider.getElementType();
         if (language.is(elementType.getLanguage())) {
           return elementType;
