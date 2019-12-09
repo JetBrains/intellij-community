@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -10,6 +11,8 @@ import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
@@ -49,6 +52,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -426,52 +431,65 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private final Set<String> widgetIds = new THashSet<>();
 
-  private void addWidget(@NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+  private boolean addWidget(@NotNull Disposable disposable, @NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
     if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
-      return;
+      return false;
     }
 
     statusBar.doAddWidget(widget, anchor);
+
+    final String id = widget.ID();
+    Disposer.register(disposable, () -> {
+      widgetIds.remove(id);
+      statusBar.removeWidget(id);
+    });
+    return true;
   }
 
   private void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(project, statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
 
     LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
-    addWidget(statusBar, lineSeparatorPanel, StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    addWidget(project, statusBar, lineSeparatorPanel, StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     EncodingPanel encodingPanel = new EncodingPanel(project);
-    addWidget(statusBar, encodingPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
+    addWidget(project, statusBar, encodingPanel, StatusBar.Anchors.after(lineSeparatorPanel.ID()));
 
-    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
-    addWidget(statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
+    addWidget(project, statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(encodingPanel.ID()));
+    addWidget(project, statusBar, new ToggleReadOnlyAttributePanel(), StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
-    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
-      StatusBarWidget widget = widgetProvider.getWidget(project);
-      if (widget == null) {
-        continue;
-      }
-
-      addWidget(statusBar, widget, widgetProvider.getAnchor());
-    }
-
-    statusBar.repaint();
-
-    disposeWidgets(project);
-  }
-
-  private void disposeWidgets(@NotNull Project project) {
-    Disposer.register(project, () -> {
-      IdeStatusBarImpl statusBar = getStatusBar();
-      if (statusBar != null) {
-        for (String widgetID: widgetIds) {
-          statusBar.removeWidget(widgetID);
+    final Map<StatusBarWidgetProvider, Disposable> providerToWidgetDisposable = new HashMap<>();
+    StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
+      @Override
+      public void extensionAdded(@NotNull StatusBarWidgetProvider widgetProvider, @NotNull PluginDescriptor pluginDescriptor) {
+        StatusBarWidget widget = widgetProvider.getWidget(project);
+        if (widget == null) {
+          return;
         }
+
+        Disposable widgetDisposable = new Disposable() {
+          @Override
+          public void dispose() {
+            providerToWidgetDisposable.remove(widgetProvider);
+          }
+        };
+
+        if (addWidget(widgetDisposable, statusBar, widget, widgetProvider.getAnchor())) {
+          Disposer.register(project, widgetDisposable);
+          providerToWidgetDisposable.put(widgetProvider, widgetDisposable);
+        }
+        statusBar.repaint();
       }
-      widgetIds.clear();
-    });
+
+      @Override
+      public void extensionRemoved(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        assert providerToWidgetDisposable.containsKey(provider);
+        Disposer.dispose(providerToWidgetDisposable.get(provider));
+        statusBar.repaint();
+      }
+    }, true, project);
   }
 
   @Override

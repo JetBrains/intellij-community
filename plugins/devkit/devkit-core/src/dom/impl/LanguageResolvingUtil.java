@@ -54,7 +54,7 @@ class LanguageResolvingUtil {
 
         final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
         GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
-        final Collection<PsiClass> allInheritors = ClassInheritorsSearch.search(languageClass, allScope, true).findAll();
+        Collection<PsiClass> allInheritors = new HashSet<>(ClassInheritorsSearch.search(languageClass, allScope, true).findAll());
         return Result.create(allInheritors, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     if (allLanguages.isEmpty()) {

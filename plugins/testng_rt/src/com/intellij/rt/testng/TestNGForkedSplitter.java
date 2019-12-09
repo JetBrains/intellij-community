@@ -33,6 +33,7 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
                                    String packageName,
                                    String workingDir,
                                    String classpath,
+                                   List moduleOptions,
                                    String repeatCount, int result, final String filters) throws Exception {
     final LinkedHashMap<String, Map<String, List<String>>> classes = new LinkedHashMap<String, Map<String, List<String>>>();
     for (Object className : classNames) {
@@ -48,7 +49,9 @@ public class TestNGForkedSplitter extends ForkedByModuleSplitter {
       TestNGXmlSuiteHelper.writeSuite(classes, new LinkedHashMap<String, String>(), moduleName, rootPath, TestNGXmlSuiteHelper.Logger.DEAF);
     file.deleteOnExit();
 
-    return Math.min(result, startChildFork(Collections.singletonList(file.getAbsolutePath()), new File(workingDir), classpath, repeatCount));
+    return Math.min(result, startChildFork(Collections.singletonList(file.getAbsolutePath()), new File(workingDir), classpath,
+                                           moduleOptions,
+                                           repeatCount));
   }
 
 }

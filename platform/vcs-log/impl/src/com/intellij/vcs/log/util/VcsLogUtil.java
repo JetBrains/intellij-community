@@ -277,8 +277,6 @@ public class VcsLogUtil {
 
   @Nullable
   public static Collection<FilePath> getAffectedPaths(@NotNull VirtualFile root, @NotNull AnActionEvent e) {
-    if (!isFolderHistoryShownInLog()) return null;
-
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     if (properties != null && properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
       if (properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)) {
@@ -294,10 +292,6 @@ public class VcsLogUtil {
       }
     }
     return null;
-  }
-
-  public static boolean isFolderHistoryShownInLog() {
-    return Registry.is("vcs.folder.history.in.log");
   }
 
   public static int getMaxSize(@NotNull List<? extends VcsFullCommitDetails> detailsList) {

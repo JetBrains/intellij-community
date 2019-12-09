@@ -139,7 +139,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
     @Override
     public String toString() {
-      return "VcsLogTab \'" + myTabId + '\'';
+      return "VcsLogTab '" + myTabId + '\'';
     }
   }
 
@@ -157,7 +157,7 @@ public class VcsLogTabsWatcher implements Disposable {
       VcsLogWindow logWindow = ContainerUtil.find(myRefresher.getLogWindows(),
                                                   window -> window instanceof VcsLogTab && ((VcsLogTab)window).myTabId.equals(tabId));
       if (logWindow != null) {
-        LOG.debug("Selected log window \'" + logWindow + "\'");
+        LOG.debug("Selected log window '" + logWindow + "'");
         VcsLogUsageTriggerCollector.triggerUsage(VcsLogUsageTriggerCollector.VcsLogEvent.TAB_NAVIGATED, null);
         myRefresher.refresherActivated(logWindow.getRefresher(), false);
       }

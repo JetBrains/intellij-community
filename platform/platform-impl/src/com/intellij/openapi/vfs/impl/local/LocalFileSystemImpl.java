@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -27,12 +26,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
   private static final String FS_ROOT = "/";
@@ -374,31 +369,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     else {
       heavyRefresh.run();
     }
-  }
-
-  @Override
-  @NotNull
-  public Stream<String> listStream(@NotNull VirtualFile file) {
-    if (file.getParent() == null) {
-      Iterable<Path> roots = FileSystems.getDefault().getRootDirectories();
-
-      // return drive letter names for the 'fake' root on windows
-      if (SystemInfo.isWindows && file.getName().isEmpty()) {
-        return StreamSupport.stream(roots.spliterator(), false).
-          map(p -> StringUtil.trimTrailing(p.toString(), File.separatorChar));
-      }
-      else {
-        for (Path path : roots) {
-          if (path.getNameCount() == 0) {
-            return DirectoryAccessChecker.getCheckedStream(path).map(p -> p.getFileName().toString());
-          }
-          else
-            return Stream.empty();
-        }
-      }
-    }
-
-    return DirectoryAccessChecker.getCheckedStream(convertToPath(file)).map(p -> p.getFileName().toString());
   }
 
   @Override

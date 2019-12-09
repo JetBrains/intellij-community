@@ -10,10 +10,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
-import com.jetbrains.python.psi.PyExceptPart;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTypeDeclarationStatement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,8 +58,16 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
 
     String name = null;
     // Process readwrite instruction
-    if (instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess()) {
-      name = ((ReadWriteInstruction)instruction).getName();
+    if (instruction instanceof ReadWriteInstruction) {
+      ReadWriteInstruction rwInstruction = (ReadWriteInstruction) instruction;
+      if (rwInstruction.getAccess().isWriteAccess()) {
+        name = ((ReadWriteInstruction)instruction).getName();
+      }
+      else if (rwInstruction.getAccess().isDeleteAccess() && instruction.getElement() instanceof PyReferenceExpression) {
+        map = map.asWritable();
+        map.remove(((ReadWriteInstruction)instruction).getName());
+        return map;
+      }
     }
     // Processing PyFunction
     else if (element instanceof PyFunction){

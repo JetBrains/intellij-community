@@ -106,6 +106,7 @@ import java.util.stream.Stream;
  */
 public final class FileBasedIndexImpl extends FileBasedIndex {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
+  private static final ThreadLocal<VirtualFile> ourFileToBeIndexed = new ThreadLocal<>();
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private static final NotificationGroup NOTIFICATIONS = new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false);
@@ -204,6 +205,13 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
       public void fileTypesChanged(@NotNull final FileTypeEvent event) {
         final Map<FileType, Set<String>> oldTypeToExtensionsMap = myTypeToExtensionMap;
         myTypeToExtensionMap = null;
+
+        // file type added
+        if (event.getAddedFileType() != null) {
+          rebuildAllIndices("The following file type was added: " + event.getAddedFileType());
+          return;
+        }
+
         if (oldTypeToExtensionsMap == null) {
           return;
         }
@@ -213,8 +221,7 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
         for (FileType type : fileTypeManager.getRegisteredFileTypes()) {
           newTypeToExtensionsMap.put(type, getExtensions(type, fileTypeManager));
         }
-        // we are interested only in extension changes or removals.
-        // addition of an extension is handled separately by RootsChanged event
+        // file type changes and removals
         if (!newTypeToExtensionsMap.keySet().containsAll(oldTypeToExtensionsMap.keySet())) {
           Set<FileType> removedFileTypes = new HashSet<>(oldTypeToExtensionsMap.keySet());
           removedFileTypes.removeAll(newTypeToExtensionsMap.keySet());
@@ -1719,7 +1726,8 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public VirtualFile getFileBeingCurrentlyIndexed() {
-    return ourIndexedFile.get();
+    VirtualFile file = ourIndexedFile.get();
+    return file != null ? file : ourFileToBeIndexed.get();
   }
 
   private class VirtualFileUpdateTask extends UpdateTask<VirtualFile> {
@@ -1806,6 +1814,10 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices);
 
+    // transient index value can depend on disk value because former is diff to latter
+    // it doesn't matter content hanged or not: indices might depend on file name too
+    removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
+
     if (contentChanged) {
       // only mark the file as outdated, reindex will be done lazily
       if (!fileIndexedStatesToUpdate.isEmpty()) {
@@ -1816,9 +1828,6 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
             getIndex(indexId).resetIndexedStateForFile(fileId);
           }
         }
-
-        // transient index value can depend on disk value because former is diff to latter
-        removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
         // the file is for sure not a dir and it was previously indexed by at least one index
         if (file.isValid()) {
@@ -1872,28 +1881,33 @@ public final class FileBasedIndexImpl extends FileBasedIndex {
         getChangedFilesCollector().removeScheduledFileFromUpdate(file);
       }
       else {
-        getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
-          final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+        ourFileToBeIndexed.set(file);
+        try {
+          getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
+            final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
 
-          boolean scheduleForUpdate = false;
+            boolean scheduleForUpdate = false;
 
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0, size = candidates.size(); i < size; ++i) {
-            final ID<?, ?> indexId = candidates.get(i);
-            if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-              getIndex(indexId).resetIndexedStateForFile(fileId);
-              scheduleForUpdate = true;
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0, size = candidates.size(); i < size; ++i) {
+              final ID<?, ?> indexId = candidates.get(i);
+              if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
+                getIndex(indexId).resetIndexedStateForFile(fileId);
+                scheduleForUpdate = true;
+              }
             }
-          }
 
-          if (scheduleForUpdate) {
-            IndexingStamp.flushCache(fileId);
-            getChangedFilesCollector().scheduleForUpdate(file);
-          }
-          else if (file instanceof VirtualFileSystemEntry) {
-            ((VirtualFileSystemEntry)file).setFileIndexed(true);
-          }
-        });
+            if (scheduleForUpdate) {
+              IndexingStamp.flushCache(fileId);
+              getChangedFilesCollector().scheduleForUpdate(file);
+            }
+            else if (file instanceof VirtualFileSystemEntry) {
+              ((VirtualFileSystemEntry)file).setFileIndexed(true);
+            }
+          });
+        } finally {
+          ourFileToBeIndexed.remove();
+        }
       }
     }
   }

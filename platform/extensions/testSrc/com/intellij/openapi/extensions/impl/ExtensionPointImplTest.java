@@ -257,6 +257,24 @@ public class ExtensionPointImplTest {
   }
 
   @Test
+  public void testClearCacheOnUnregisterExtensions() {
+    ExtensionPoint<String> extensionPoint = buildExtensionPoint(String.class);
+
+    List<Integer> sizeList = new ArrayList<>();
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<String>() {
+      @Override
+      public void extensionRemoved(@NotNull String extension, @NotNull PluginDescriptor pluginDescriptor) {
+        sizeList.add(extensionPoint.getExtensionList().size());
+      }
+    }, true, null);
+
+    extensionPoint.registerExtension("first");
+    assertThat(extensionPoint.getExtensionList().size()).isEqualTo(1);
+    extensionPoint.unregisterExtensions((adapterName, adapter) -> false, false);
+    assertThat(sizeList).contains(0);
+  }
+
+  @Test
   public void clientsCannotModifyCachedExtensions() {
     ExtensionPoint<Integer> extensionPoint = buildExtensionPoint(Integer.class);
     extensionPoint.registerExtension(4, disposable);

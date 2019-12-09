@@ -416,7 +416,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
       caretRight();
-      type(" ");
 
       doHighlighting();
 
@@ -518,6 +517,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     try {
+      type(" ");
       List<HighlightInfo> errs = highlightErrors();
       assertEmpty(errs);
 

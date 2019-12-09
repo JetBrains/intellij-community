@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,49 +36,28 @@ public abstract class WindowStateService {
 
 
   /**
-   * Loads a state of the specified component by the specified key.
+   * Returns a window state by the specified key.
+   * Also it adds a listener to save a modified state automatically.
    *
-   * @param key       an unique string key
-   * @param component a component which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   * @param key    an unique string key
+   * @param window a window state which should be watched for
+   * @return a corresponding window state
    */
-  public final boolean loadState(@NotNull String key, @NotNull Component component) {
-    return loadStateFor(project, key, component);
+  public final WindowState getState(@NotNull String key, @NotNull Window window) {
+    return getStateFor(project, key, window);
   }
 
   /**
-   * Loads a state of the specified component by the given screen and the specified key.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
+   * Returns a window state by the given project and the specified key.
+   * Also it adds a listener to save a modified state automatically.
    *
-   * @param object    an object that specifies a screen to which a component state belongs
-   * @param key       an unique string key
-   * @param component a component which state should be changed
-   * @return {@code true} if a state is loaded successfully, {@code false} otherwise
+   * @param project an project that specifies a main screen
+   * @param key     an unique string key
+   * @param window  a window state which should be watched for
+   * @return a corresponding window state
    */
-  public abstract boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component);
+  public abstract WindowState getStateFor(@Nullable Project project, @NotNull String key, @NotNull Window window);
 
-  /**
-   * Stores the specified location that corresponds to the specified key.
-   * If it is {@code null} the stored location will be removed.
-   *
-   * @param key       an unique string key
-   * @param component a component which state should be saved
-   */
-  public final void saveState(@NotNull String key, @NotNull Component component) {
-    saveStateFor(project, key, component);
-  }
-
-  /**
-   * Stores the specified location that corresponds to the given screen and the specified key.
-   * If it is {@code null} the stored location will be removed.
-   * A screen can be specified by {@link Project}, {@link Window}, or {@link GraphicsDevice}.
-   * Do not use a screen which is calculated from the specified component.
-   *
-   * @param object    an object that specifies a screen to which a component state belongs
-   * @param key       an unique string key
-   * @param component a component which state should be saved
-   */
-  public abstract void saveStateFor(Object object, @NotNull String key, @NotNull Component component);
 
   /**
    * Returns a location that corresponds to the specified key or {@code null}

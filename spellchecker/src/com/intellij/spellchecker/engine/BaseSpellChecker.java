@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -157,7 +158,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     if (transformed == null || maxSuggestions < 1) return Collections.emptyList();
     Queue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
     for (Dictionary dict : ContainerUtil.concat(bundledDictionaries, dictionaries)) {
-      dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, EditDistance.optimalAlignment(transformed, s, true))));
+      dict.consumeSuggestions(transformed, s -> {
+        ProgressManager.checkCanceled();
+        suggestions.add(new Suggestion(s, EditDistance.optimalAlignment(transformed, s, true)));
+      });
     }
     if (suggestions.isEmpty()) {
       return Collections.emptyList();

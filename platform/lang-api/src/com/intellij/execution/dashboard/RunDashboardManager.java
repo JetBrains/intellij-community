@@ -21,7 +21,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
@@ -47,26 +46,15 @@ public interface RunDashboardManager {
 
   ContentManager getDashboardContentManager();
 
+  @NotNull
   String getToolWindowId();
 
   @NotNull
   Icon getToolWindowIcon();
 
-  String getToolWindowContextHelpId();
-
-  boolean isToolWindowAvailable();
-
-  void createToolWindowContent(@NotNull ToolWindow toolWindow);
-
   void updateDashboard(boolean withStructure);
 
   List<RunDashboardService> getRunConfigurations();
-
-  boolean isShowConfigurations();
-
-  void setShowConfigurations(boolean value);
-
-  float getContentProportion();
 
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
@@ -74,9 +62,6 @@ public interface RunDashboardManager {
   Set<String> getTypes();
 
   void setTypes(Set<String> types);
-
-  @NotNull
-  List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings, @Nullable RunContentDescriptor descriptor);
 
   @NotNull
   Condition<Content> getReuseCondition();

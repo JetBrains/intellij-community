@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters
 
+import com.intellij.openapi.util.Comparing
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 
@@ -20,12 +21,10 @@ internal class VcsLogRangeFilterImpl(override val ranges: List<RefRange>) : VcsL
 
     other as VcsLogRangeFilterImpl
 
-    if (ranges != other.ranges) return false
-
-    return true
+    return Comparing.haveEqualElements(ranges, other.ranges)
   }
 
   override fun hashCode(): Int {
-    return ranges.hashCode()
+    return Comparing.unorderedHashcode(ranges)
   }
 }

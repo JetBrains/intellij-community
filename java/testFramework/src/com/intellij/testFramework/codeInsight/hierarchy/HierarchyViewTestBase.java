@@ -18,7 +18,6 @@ package com.intellij.testFramework.codeInsight.hierarchy;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -28,16 +27,14 @@ import java.io.IOException;
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
 public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
-  private final HierarchyViewTestFixture myFixture = new HierarchyViewTestFixture();
 
   protected abstract String getBasePath();
 
   protected void doHierarchyTest(@NotNull Computable<? extends HierarchyTreeStructure> treeStructureComputable,
-                                 @NotNull String... fileNames) throws Exception {
+                                 @NotNull String... fileNames) throws IOException {
     configure(fileNames);
-    String expectedStructure = loadExpectedStructure();
-
-    myFixture.doHierarchyTest(treeStructureComputable.compute(), expectedStructure);
+    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
+    HierarchyViewTestFixture.doHierarchyTest(treeStructureComputable.compute(), new File(verificationFilePath));
   }
 
   private void configure(@NotNull String[] fileNames) {
@@ -46,11 +43,5 @@ public abstract class HierarchyViewTestBase extends JavaCodeInsightTestCase {
       relFilePaths[i] = "/" + getBasePath() + "/" + fileNames[i];
     }
     configureByFiles(null, relFilePaths);
-  }
-
-  @NotNull
-  private String loadExpectedStructure() throws IOException {
-    String verificationFilePath = getTestDataPath() + "/" + getBasePath() + "/" + getTestName(false) + "_verification.xml";
-    return FileUtil.loadFile(new File(verificationFilePath));
   }
 }

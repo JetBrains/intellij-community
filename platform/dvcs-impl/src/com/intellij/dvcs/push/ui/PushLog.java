@@ -288,7 +288,7 @@ public class PushLog extends JPanel implements DataProvider {
     splitter.setFirstComponent(myScrollPane);
     splitter.setSecondComponent(detailsSplitter);
 
-    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     setLayout(new BorderLayout());
     add(splitter);
     myTree.setRowHeight(0);

@@ -153,7 +153,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   protected void subscribeToLocalChanges() {
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), this::refreshPackagesSynchronously);
+    PyPackageUtil.runOnChangeUnderInterpreterPaths(getSdk(), () -> PythonSdkType.getInstance().setupSdkPaths(getSdk()));
   }
 
   @NotNull

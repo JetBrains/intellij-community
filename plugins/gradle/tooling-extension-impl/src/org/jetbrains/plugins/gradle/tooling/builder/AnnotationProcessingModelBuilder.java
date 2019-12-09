@@ -25,7 +25,8 @@ import java.util.*;
 public class AnnotationProcessingModelBuilder extends AbstractModelBuilderService {
 
   private static final boolean isAtLeastGradle3_4 = GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0;
-  private static final boolean isAtLeastGradle4_5 = isAtLeastGradle3_4 && GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0;
+  private static final boolean isAtLeastGradle4_3 = isAtLeastGradle3_4 && GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0;
+  private static final boolean isAtLeastGradle4_5 = isAtLeastGradle4_3 && GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0;
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
@@ -60,7 +61,15 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
                 annotationProcessorArgs.add(arg);
               }
             }
-            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(files, annotationProcessorArgs));
+            Set<String> paths = new LinkedHashSet<String>(files.size());
+            for (File file : files) {
+              paths.add(file.getAbsolutePath());
+            }
+
+            File generatedSourcesDirectory = isAtLeastGradle4_3 ? options.getAnnotationProcessorGeneratedSourcesDirectory() : null;
+            String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
+            boolean isTest = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName());
+            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(paths, annotationProcessorArgs, output, isTest));
           }
         }
       }

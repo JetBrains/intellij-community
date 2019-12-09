@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
@@ -288,12 +287,13 @@ class ServiceModel implements Disposable, InvokerSupplier {
   private static void updateServiceViewDescriptor(ServiceNode node, Object target) {
     ServiceViewContributor<?> providingContributor = node.getProvidingContributor();
     if (providingContributor != null && !providingContributor.equals(target)) {
-      ((ServiceViewItem)node).setViewDescriptor(providingContributor.getViewDescriptor());
+      ((ServiceViewItem)node).setViewDescriptor(providingContributor.getViewDescriptor(node.myProject));
       return;
     }
 
     //noinspection unchecked
-    ServiceViewDescriptor viewDescriptor = ((ServiceViewContributor<Object>)node.getContributor()).getServiceDescriptor(target);
+    ServiceViewDescriptor viewDescriptor =
+      ((ServiceViewContributor<Object>)node.getContributor()).getServiceDescriptor(node.myProject, target);
     ((ServiceViewItem)node).setViewDescriptor(viewDescriptor);
   }
 
@@ -366,11 +366,8 @@ class ServiceModel implements Disposable, InvokerSupplier {
   }
 
   @NotNull
-  public static ServiceViewContributor<?>[] getContributors() {
-    ServiceViewContributor<?>[] result = EP_NAME.getExtensions();
-    return Registry.is("ide.service.view") ?
-           result :
-           Arrays.stream(result).filter(c -> c instanceof ServiceViewAlwaysEnabledContributor).toArray(ServiceViewContributor<?>[]::new);
+  static ServiceViewContributor<?>[] getContributors() {
+    return EP_NAME.getExtensions();
   }
 
   private static <T> List<ServiceViewItem> getContributorChildren(Project project,
@@ -400,7 +397,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     }
 
     ServiceNode
-      serviceNode = new ServiceNode(value, parent, contributor, contributor.getServiceDescriptor(typedService), project,
+      serviceNode = new ServiceNode(value, parent, contributor, contributor.getServiceDescriptor(project, typedService), project,
                                     service instanceof ServiceViewContributor ? (ServiceViewContributor<?>)service : null);
     addServiceOrdered(children, serviceNode, contributor);
     return serviceNode;
@@ -436,8 +433,8 @@ class ServiceModel implements Disposable, InvokerSupplier {
       }
     }
     ServiceNode
-      serviceNode = new ServiceNode(value, groupParent, groupingContributor, groupingContributor.getServiceDescriptor(service), project,
-                                    service instanceof ServiceViewContributor ? (ServiceViewContributor<?>)service : null);
+      serviceNode = new ServiceNode(value, groupParent, groupingContributor, groupingContributor.getServiceDescriptor(project, service),
+                                    project, service instanceof ServiceViewContributor ? (ServiceViewContributor<?>)service : null);
     addServiceOrdered(currentChildren, serviceNode, groupingContributor);
     return serviceNode;
   }
@@ -590,7 +587,7 @@ class ServiceModel implements Disposable, InvokerSupplier {
     private final Project myProject;
 
     ContributorNode(@NotNull Project project, @NotNull ServiceViewContributor<?> contributor) {
-      super(contributor, null, contributor, contributor.getViewDescriptor());
+      super(contributor, null, contributor, contributor.getViewDescriptor(project));
       myProject = project;
     }
 

@@ -11,9 +11,8 @@
   <depends <warning descr="Superfluous declaration">optional="false"</warning>>com.intellij.custom3</depends>
   <error descr="Must specify 'config-file'"><depends optional="true">com.intellij.custom4</depends></error>
 
-  <depends config-file="optional.xml">com.intellij</depends>
   <depends config-file="<error descr="Cannot resolve file 'INVALID_VALUE'">INVALID_VALUE</error>">com.intellij.custom2</depends>
 
-  <error descr="Duplicate dependency 'com.intellij.duplicated'"><depends config-file="optional.xml">com.intellij.duplicated</depends></error>
-  <error descr="Duplicate dependency 'com.intellij.duplicated'"><depends config-file="optional.xml">com.intellij.duplicated</depends></error>
+  <error descr="Duplicate dependency configuration file 'optional.xml'"><depends config-file="optional.xml">com.intellij.duplicated</depends></error>
+  <error descr="Duplicate dependency configuration file 'optional.xml'"><depends config-file="optional.xml" optional="true">com.intellij.duplicated</depends></error>
 </idea-plugin>

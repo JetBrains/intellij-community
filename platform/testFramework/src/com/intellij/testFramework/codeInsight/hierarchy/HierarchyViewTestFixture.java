@@ -6,14 +6,17 @@ package com.intellij.testFramework.codeInsight.hierarchy;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
 
 public class HierarchyViewTestFixture {
   private static final String NODE_ELEMENT_NAME = "node";
@@ -21,14 +24,43 @@ public class HierarchyViewTestFixture {
   private static final String TEXT_ATTR_NAME = "text";
   private static final String BASE_ATTR_NAME = "base";
 
-  public void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
-                              @NotNull String expectedStructure) {
+  /**
+   * Check the tree structure against the expected.
+   * @param treeStructure tree structure to check
+   * @param expectedStructure an expected structure in XML format.
+   *                          If you load expected XML structure from the file,
+   *                          better to use {@link #doHierarchyTest(HierarchyTreeStructure, File)} instead.
+   */
+  public static void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
+                                     @NotNull String expectedStructure) {
+    doHierarchyTest(treeStructure, expectedStructure, null);
+  }
+
+  /**
+   * Check the tree structure against the expected.
+   * @param treeStructure tree structure to check
+   * @param expectedFile an XML file containing expected structure
+   * @throws IOException if expectedFile reading failed
+   * @throws FileComparisonFailure if content doesn't match
+   */
+  public static void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
+                                     @NotNull File expectedFile) throws IOException {
+    doHierarchyTest(treeStructure, FileUtil.loadFile(expectedFile), expectedFile);
+  }
+
+  private static void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
+                                      @NotNull String expectedStructure,
+                                      @Nullable File expectedFile) {
     try {
       checkHierarchyTreeStructure(treeStructure, JDOMUtil.load(expectedStructure));
     }
     catch (Throwable e) {
-      assertEquals("XML structure comparison for your convenience, actual failure details BELOW",
-                   expectedStructure, dump(treeStructure, null, 0));
+      String actual = dump(treeStructure, null, 0);
+      if (!expectedStructure.equals(actual)) {
+        throw new FileComparisonFailure("XML structure comparison for your convenience, actual failure details BELOW",
+                                        expectedStructure, actual,
+                                        expectedFile == null ? null : expectedFile.getAbsolutePath());
+      }
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
@@ -97,7 +129,7 @@ public class HierarchyViewTestFixture {
     String baseAttrValue = expectedElement.getAttributeValue(BASE_ATTR_NAME);
     HierarchyNodeDescriptor baseDescriptor = treeStructure.getBaseDescriptor();
     boolean mustBeBase = "true".equalsIgnoreCase(baseAttrValue);
-    assertTrue("Incorrect base node", mustBeBase ? baseDescriptor == descriptor : baseDescriptor != descriptor);
+    assertEquals("Incorrect base node", mustBeBase, baseDescriptor == descriptor);
   }
 
   private static void checkContent(@NotNull HierarchyNodeDescriptor descriptor,

@@ -2063,6 +2063,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myCaretCursor.getCaretLocations(onlyIfShown);
   }
 
+  @Override
   public int getAscent() {
     return myView.getAscent();
   }

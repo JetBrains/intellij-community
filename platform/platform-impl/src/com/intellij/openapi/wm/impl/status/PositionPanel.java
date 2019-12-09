@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -79,6 +80,10 @@ public final class PositionPanel extends EditorBasedWidget
 
   @Override
   public String getTooltipText() {
+    final String shortcut = KeymapUtil.getFirstKeyboardShortcutText("GotoLine");
+    if (!shortcut.isEmpty()) {
+      return UIBundle.message("go.to.line.command.name") + " (" + shortcut + ")";
+    }
     return UIBundle.message("go.to.line.command.name");
   }
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-class ServersToolWindowMessagePanel implements ServersToolWindowContent.MessagePanel {
+class ServersToolWindowMessagePanel implements RemoteServersDeploymentManager.MessagePanel {
   private JPanel myPanel;
   private JEditorPane myMessageArea;
   private String myCurrentText;

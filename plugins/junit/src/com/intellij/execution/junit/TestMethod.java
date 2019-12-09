@@ -8,6 +8,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -15,6 +16,7 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 
 class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -27,6 +29,11 @@ class TestMethod extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     javaParameters.getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodNameWithSignature());
     return javaParameters;
+  }
+
+  @Override
+  protected void collectPackagesToOpen(List<String> options) {
+    options.add(StringUtil.getPackageName(getConfiguration().getPersistentData().getMainClassName()));
   }
 
   protected JavaParameters createDefaultJavaParameters() throws ExecutionException {

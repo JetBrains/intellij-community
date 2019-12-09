@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -103,4 +103,19 @@ public abstract class PyInspectionExtension {
   public boolean ignoreTrailingSemicolon(@NotNull PyStatement statement) {
     return false;
   }
+
+  /**
+   * Checks whether Python interpreter is required for the python file.
+   *
+   * @param file file being analyzed
+   * @return true if warnings produced by {@link PyInterpreterInspection} should be ignored
+   */
+  public boolean ignoreInterpreterWarnings(@NotNull PyFile file) {
+    return false;
+  }
+
+  /**
+   * @return Do not report "unused import"
+   */
+ public boolean ignoreUnusedImports(@NotNull PyImportedNameDefiner importNameDefiner) {return false;}
 }

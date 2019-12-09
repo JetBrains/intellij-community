@@ -74,7 +74,7 @@ public class DictionaryTest {
   public void testGetSuggestions(){
     final ArrayList<String> suggestions = new ArrayList<>();
     Dictionary dictionary = CompressedDictionary.create(getLoader(ENGLISH_DIC), myTransformation);
-    dictionary.getSuggestions("typpo",suggestions::add);
+    dictionary.consumeSuggestions("typpo", suggestions::add);
     assert suggestions.contains("typo");
     assert suggestions.stream().anyMatch(a -> a.charAt(0) == 't');
   }
@@ -83,7 +83,7 @@ public class DictionaryTest {
   public void testNoSuggestions(){
     final ArrayList<String> suggestions = new ArrayList<>();
     Dictionary dictionary = CompressedDictionary.create(getLoader(ENGLISH_DIC), myTransformation);
-    dictionary.getSuggestions("руссский",suggestions::add);
+    dictionary.consumeSuggestions("руссский", suggestions::add);
     assert suggestions.isEmpty();
   }
 

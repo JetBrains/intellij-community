@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
+import com.intellij.mock.MockLanguageFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
@@ -23,6 +26,9 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   private val descriptor = DefaultPluginDescriptor(PluginId.getId(""), javaClass.classLoader)
   private lateinit var area: ExtensionsAreaImpl
   private lateinit var extension: LanguageExtension<String>
+  private val plainTextDialect = object : Language(PlainTextLanguage.INSTANCE, "PlainTextDialect") {
+  }
+
 
   override fun setUp() {
     super.setUp()
@@ -32,6 +38,10 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
       area.unregisterExtensionPoint(myExtensionPointName)
     })
     extension = LanguageExtension(myExtensionPointName, null)
+
+    val plainTextDialectFileType = MockLanguageFileType(plainTextDialect, "xxxx")
+    FileTypeManager.getInstance().registerFileType(plainTextDialectFileType)
+    Disposer.register(testRootDisposable, Disposable { FileTypeManagerEx.getInstanceEx().unregisterFileType(plainTextDialectFileType) })
   }
 
   private fun registerExtension(languageID: String, implementationFqn: String) {
@@ -51,9 +61,13 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
     extension.addExplicitExtension(language, "hello")
     assertSize(2, extension.allForLanguage(language))
     assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
+    assertEquals("hello", extension.forLanguage(language))  // explicit extension takes precedence over extension from plugin.xml
+
+    assertSize(2, extension.allForLanguage(plainTextDialect))
 
     extension.removeExplicitExtension(language, "hello")
     assertSize(1, extension.allForLanguage(language))
+    assertSize(1, extension.allForLanguage(plainTextDialect))
     assertEquals("", extension.forLanguage(language))
   }
 }

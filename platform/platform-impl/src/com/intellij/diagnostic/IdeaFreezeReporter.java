@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -21,13 +20,15 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ThreadInfo;
 import java.util.*;
+import java.util.function.Function;
 
 final class IdeaFreezeReporter implements IdePerformanceListener {
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 5 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   public static final String MESSAGE_FILE_NAME = ".message";
   public static final String THROWABLE_FILE_NAME = ".throwable";
+  public static final String APPINFO_FILE_NAME = ".appinfo";
 
   @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
 
@@ -48,7 +49,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           File[] files = dir.listFiles();
           if (files != null) {
             List<Attachment> attachments = new ArrayList<>();
-            String message = null, throwable = null;
+            String message = null, throwable = null, appinfo = null;
+            List<String> dumps = new ArrayList<>();
             for (File file : files) {
               String text = FileUtil.loadFile(file);
               String name = file.getName();
@@ -58,19 +60,28 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
               else if (THROWABLE_FILE_NAME.equals(name)) {
                 throwable = text;
               }
+              else if (APPINFO_FILE_NAME.equals(name)) {
+                appinfo = text;
+              }
               else if (name.startsWith(REPORT_PREFIX)) {
-                attachments.add(new Attachment(REPORT_PREFIX + "-" + duration + "s.txt", text));
+                attachments.add(createReportAttachment(duration, text));
               }
               else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
-                attachments.add(new Attachment(DUMP_PREFIX + "-" + attachments.size() + ".txt", text));
+                dumps.add(text);
               }
             }
+
+            addDumpsAttachments(dumps, Function.identity(), attachments);
 
             cleanup(dir);
 
             if (message != null && throwable != null && !attachments.isEmpty()) {
-              attachments.forEach(a -> a.setIncluded(true));
-              report(LogMessage.createEvent(new Freeze(throwable), message, attachments.toArray(Attachment.EMPTY_ARRAY)));
+              IdeaLoggingEvent event = LogMessage.createEvent(new Freeze(throwable), message, attachments.toArray(Attachment.EMPTY_ARRAY));
+              Object data = event.getData();
+              if (data instanceof AbstractMessage) {
+                ((AbstractMessage)data).setAppInfo(appinfo);
+              }
+              report(event);
             }
           }
         }
@@ -80,9 +91,27 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     });
   }
 
+  private static Attachment createReportAttachment(int lengthInSeconds, String text) {
+    Attachment res = new Attachment(REPORT_PREFIX + "-" + lengthInSeconds + "s.txt", text);
+    res.setIncluded(true);
+    return res;
+  }
+
+  // get 20 scattered elements
+  private static <T> void addDumpsAttachments(List<T> from, Function<T, String> textMapper, List<Attachment> container) {
+    int size = Math.min(from.size(), 20);
+    int step = from.size() / size;
+    for (int i = 0; i < size; i++) {
+      Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", textMapper.apply(from.get(i * step)));
+      attachment.setIncluded(true);
+      container.add(attachment);
+    }
+  }
+
   private static void cleanup(File dir) {
     FileUtil.delete(new File(dir, MESSAGE_FILE_NAME));
     FileUtil.delete(new File(dir, THROWABLE_FILE_NAME));
+    FileUtil.delete(new File(dir, APPINFO_FILE_NAME));
   }
 
   @Override
@@ -112,11 +141,18 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       }
       File dir = toFile.getParentFile();
       IdeaLoggingEvent event = createEvent((int)((myDumpTask.getTotalTime() + PerformanceWatcher.getUnresponsiveInterval()) / 1000),
-                                           Attachment.EMPTY_ARRAY, myDumpTask, dir, false);
+                                           Collections.emptyList(), myDumpTask, dir, false);
       if (event != null) {
         try {
           FileUtil.writeToFile(new File(dir, MESSAGE_FILE_NAME), event.getMessage());
           FileUtil.writeToFile(new File(dir, THROWABLE_FILE_NAME), event.getThrowableText());
+          File appInfoFile = new File(dir, APPINFO_FILE_NAME);
+          if (!appInfoFile.exists()) {
+            String appInfo = ITNProxy.getAppInfoString();
+            if (appInfo != null) {
+              FileUtil.writeToFile(appInfoFile, appInfo);
+            }
+          }
         }
         catch (IOException ignored) {
         }
@@ -142,14 +178,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
            myCurrentDumps.size() >=
            Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
           !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
-        int size = Math.min(myCurrentDumps.size(), 20); // report up to 20 dumps
-        int step = myCurrentDumps.size() / size;
-        Attachment[] attachments = new Attachment[size];
-        for (int i = 0; i < size; i++) {
-          Attachment attachment = new Attachment(DUMP_PREFIX + "-" + i + ".txt", myCurrentDumps.get(i * step).getRawDump());
-          attachment.setIncluded(true);
-          attachments[i] = attachment;
-        }
+        List<Attachment> attachments = new ArrayList<>();
+        addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
+
         report(createEvent(lengthInSeconds, attachments, myDumpTask, reportDir, true));
       }
     }
@@ -219,7 +250,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   @Nullable
   private IdeaLoggingEvent createEvent(int lengthInSeconds,
-                                       Attachment[] attachments,
+                                       List<Attachment> attachments,
                                        @NotNull SamplingTask dumpTask,
                                        @Nullable File reportDir,
                                        boolean finished) {
@@ -248,14 +279,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       nonEdtCause = !ThreadDumper.isEDT(commonStackNode.myThreadInfo);
     }
 
-    String text = root.dump();
-    String name = REPORT_PREFIX + "-" + lengthInSeconds + "s.txt";
-    Attachment attachment = new Attachment(name, text);
-    attachment.setIncluded(true);
-    attachments = ArrayUtil.append(attachments, attachment);
+    String reportText = root.dump();
 
     try {
-      FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), text);
+      FileUtil.writeToFile(new File(reportDir, REPORT_PREFIX + ".txt"), reportText);
     }
     catch (IOException ignored) {
     }
@@ -276,7 +303,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
       }
-      return LogMessage.createEvent(new Freeze(commonStack), message, attachments);
+      Attachment report = createReportAttachment(lengthInSeconds, reportText);
+      return LogMessage.createEvent(new Freeze(commonStack), message,
+                                    ContainerUtil.append(attachments, report).toArray(Attachment.EMPTY_ARRAY));
     }
     return null;
   }

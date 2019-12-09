@@ -103,7 +103,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
         addInvalidModuleEntry(rootModel, exported, moduleName);
       }
       else {
-        String srcUrl = pathToUrl(path.isEmpty() ? myRootPath : (myRootPath + "/" + path));
+        String srcUrl = pathToUrl(getPathRelativeToRoot(path));
         boolean isTestFolder;
         try {
           isTestFolder = !StringUtil.isEmpty(testPattern) && path.matches(testPattern);
@@ -130,7 +130,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
       }
     }
     else if (kind.equals(EclipseXml.OUTPUT_KIND)) {
-      String output = path.isEmpty() ? myRootPath : (myRootPath + "/" + path);
+      String output = getPathRelativeToRoot(path);
       String linked = expandLinkedResourcesPath(macroMap, path);
       if (linked != null) {
         output = linked;
@@ -241,6 +241,10 @@ public abstract class AbstractEclipseClasspathReader<T> {
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private String getPathRelativeToRoot(String path) {
+    return path.isEmpty() ? myRootPath : (myRootPath + "/" + path);
   }
 
   private static String getNativeLibraryRoot(Element element) {

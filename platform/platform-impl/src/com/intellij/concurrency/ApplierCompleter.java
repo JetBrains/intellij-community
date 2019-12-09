@@ -123,20 +123,14 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
   @Nullable
   private ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
-    long start = System.currentTimeMillis();
     ApplierCompleter<T> right = null;
     Throwable throwable = null;
 
     try {
       for (int i = lo; i < hi; ++i) {
         ProgressManager.checkCanceled();
-        if (!processor.process(array.get(i))) {
-          throw new ComputationAbortedException();
-        }
-        long finish = System.currentTimeMillis();
-        long elapsed = finish - start;
-        if (elapsed > 1 && hi - i >= 2) {
-          int availableParallelism = JobSchedulerImpl.getJobPoolParallelism() - getSurplusQueuedTaskCount();
+        if (hi - i >= 2) {
+          int availableParallelism = JobSchedulerImpl.getJobPoolParallelism() - Math.max(0,getSurplusQueuedTaskCount());
           if (availableParallelism > 1) {
             // fork off several sub-tasks at once to reduce rampup
             for (int n=0; n<availableParallelism; n++) {
@@ -149,8 +143,10 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
               right.fork();
               hi = mid;
             }
-            start = finish;
           }
+        }
+        if (!processor.process(array.get(i))) {
+          throw new ComputationAbortedException();
         }
       }
 

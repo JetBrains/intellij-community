@@ -82,8 +82,6 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
             ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(event, pushers));
           }
         }
-
-        ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
       }
       else if (event instanceof VFileMoveEvent || event instanceof VFileCopyEvent) {
         VirtualFile file = getFile(event);
@@ -159,7 +157,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       // delay calling event.getFile() until background to avoid expensive VFileCreateEvent.getFile() in EDT
       VirtualFile dir = getFile(event);
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (dir != null && fileIndex.isInContent(dir) && !ProjectUtil.isProjectOrWorkspaceFile(dir)) {
+      if (dir != null && ReadAction.compute(() -> fileIndex.isInContent(dir)) && !ProjectUtil.isProjectOrWorkspaceFile(dir)) {
         doPushRecursively(dir, pushers, fileIndex);
       }
     };

@@ -54,8 +54,8 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     assertEquals(2, modules.length);
     List<VirtualFile> contentRoots = getSingleContentRoots(modules);
-    assertEquals(path + "/m1", contentRoots.get(0).getPath());
-    assertEquals(path + "/m2", contentRoots.get(1).getPath());
+    assertPathsEqual(path + "/m1", contentRoots.get(0).getPath());
+    assertPathsEqual(path + "/m2", contentRoots.get(1).getPath());
   }
 
   public void testUnbalanced() {
@@ -64,8 +64,8 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     assertEquals(2, modules.length);
     List<VirtualFile> contentRoots = getSingleContentRoots(modules);
-    assertEquals(path + "/inner/m1", contentRoots.get(0).getPath());
-    assertEquals(path + "/inner/m2", contentRoots.get(1).getPath());
+    assertPathsEqual(path + "/inner/m1", contentRoots.get(0).getPath());
+    assertPathsEqual(path + "/inner/m2", contentRoots.get(1).getPath());
   }
 
   public void testSingleModuleInProject() {
@@ -74,7 +74,11 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     Module[] modules = ModuleManager.getInstance(project).getModules();
     assertEquals(1, modules.length);
     List<VirtualFile> contentRoots = getSingleContentRoots(modules);
-    assertEquals(path, contentRoots.get(0).getPath());
+    assertPathsEqual(path, contentRoots.get(0).getPath());
+  }
+
+  private static void assertPathsEqual(String path1, String path2) {
+    assertEquals(FileUtil.normalize(path1), FileUtil.normalize(path2));
   }
 
   private static String getModuleMaximizationPath(String projectName) {

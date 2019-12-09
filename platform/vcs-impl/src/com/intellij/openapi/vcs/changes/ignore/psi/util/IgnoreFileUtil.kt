@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileConstants
@@ -36,8 +37,12 @@ fun addNewElementsToIgnoreBlock(project: Project,
   }
 }
 
-fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<IgnoredFileDescriptor>) {
-  changeIgnoreFile(project, ignoreFile) { provider ->
+fun addNewElements(project: Project,
+                   ignoreFile: VirtualFile,
+                   newEntries: List<IgnoredFileDescriptor>,
+                   vcs: AbstractVcs? = null,
+                   ignoreEntryRoot: VirtualFile? = null) {
+  changeIgnoreFile(project, ignoreFile, vcs) { provider ->
     val document = FileDocumentManager.getInstance().getDocument(ignoreFile) ?: return@changeIgnoreFile
     if (document.textLength != 0 && document.charsSequence.last() != '\n') {
       document.insertString(document.textLength, IgnoreFileConstants.NEWLINE)
@@ -46,16 +51,17 @@ fun addNewElements(project: Project, ignoreFile: VirtualFile, newEntries: List<I
     val text = newEntries.joinToString(
       separator = IgnoreFileConstants.NEWLINE,
       postfix = IgnoreFileConstants.NEWLINE
-    ) { it.toText(provider, ignoreFile) }
+    ) { it.toText(provider, ignoreFile, ignoreEntryRoot) }
     document.insertString(textEndOffset, text)
   }
 }
 
 private fun changeIgnoreFile(project: Project,
                              ignoreFile: VirtualFile,
+                             vcs: AbstractVcs? = null,
                              action: (IgnoredFileContentProvider) -> Unit) {
-  val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
-  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(vcs) ?: return
+  val determinedVcs = (vcs ?: VcsUtil.getVcsFor(project, ignoreFile)) ?: return
+  val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(determinedVcs) ?: return
   invokeAndWaitIfNeeded {
     runUndoTransparentWriteAction {
       if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
@@ -142,11 +148,13 @@ private fun createIgnoreGroup(text: CharSequence, ignoredGroupDescription: Strin
   }
 }
 
-private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFileContentProvider, ignoreFile: VirtualFile): String {
+private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFileContentProvider,
+                                         ignoreFile: VirtualFile,
+                                         ignoreEntryRoot: VirtualFile? = null): String {
   val ignorePath = path
   val ignoreMask = mask
   return if (ignorePath != null) {
-    val ignoreFileContainingDir = ignoreFile.parent ?: throw IllegalStateException(
+    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent ?: throw IllegalStateException(
       "Cannot determine ignore file path for $ignoreFile")
     ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
   }

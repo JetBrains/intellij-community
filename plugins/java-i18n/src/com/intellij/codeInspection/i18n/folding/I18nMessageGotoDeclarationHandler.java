@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
-import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.CompositeFoldingBuilder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.psi.*;
@@ -32,37 +15,18 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
     if (!(element instanceof PsiJavaToken)) return null;
+    FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(element.getTextRange().getStartOffset());
+    if (region == null) return null;
 
-    int i = 4; //some street magic
-    while (element != null && i > 0) {
-      final ASTNode node = element.getNode();
-      if (node != null && node.getUserData(CompositeFoldingBuilder.FOLDING_BUILDER) instanceof PropertyFoldingBuilder) {
-        break;
-      }
-      else {
-        i--;
-        element = element.getParent();
-      }
-    }
-
+    PsiElement editableElement = EditPropertyValueAction.getEditableElement(region);
     //case: "literalAnnotatedWithPropertyKey"
-    if (element instanceof PsiLiteralExpression) {
-      return resolve(element);
+    if (editableElement instanceof PsiLiteralExpression) {
+      return resolve(editableElement);
     }
 
     //case: MyBundle.message("literalAnnotatedWithPropertyKey", param1, param2)
-    if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-      FoldRegion foldRegion = null;
-      for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
-        final PsiElement psiElement = EditorFoldingInfo.get(editor).getPsiElement(region);
-        if (methodCall.equals(psiElement)) {
-          foldRegion = region;
-        }
-      }
-
-      if (foldRegion == null || foldRegion.isExpanded()) return null;
-
+    if (editableElement instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)editableElement;
       for (PsiExpression expression : methodCall.getArgumentList().getExpressions()) {
         if (expression instanceof PsiLiteralExpression && PropertyFoldingBuilder.isI18nProperty((PsiLiteralExpression)expression)) {
           return resolve(expression);

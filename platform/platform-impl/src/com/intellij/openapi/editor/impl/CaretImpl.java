@@ -410,6 +410,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     VerticalInfo oldVerticalInfo = myVerticalInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
     VisualPosition oldVisualPosition = myVisibleCaret;
+    boolean oldInVirtualSpace = isInVirtualSpace();
 
     LogicalPosition logicalPositionToUse = new LogicalPosition(line, column, leansForward);
     final int offset = myEditor.logicalPositionToOffset(logicalPositionToUse);
@@ -493,6 +494,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     if (!oldVisualPosition.equals(myVisibleCaret) || !oldCaretPosition.equals(myLogicalCaret)) {
+      if (oldInVirtualSpace || isInVirtualSpace()) {
+        myCaretModel.validateEditorSize();
+      }
       CaretEvent event = new CaretEvent(this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myCaretModel.fireCaretPositionChanged(event);
@@ -612,6 +616,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     VerticalInfo oldVerticalInfo = myVerticalInfo;
     LogicalPosition oldPosition = myLogicalCaret;
+    boolean oldInVirtualSpace = isInVirtualSpace();
 
     myLogicalCaret = myEditor.visualToLogicalPosition(myVisibleCaret);
     VisualPosition mappedPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
@@ -627,9 +632,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myEditor.updateCaretCursor();
     requestRepaint(oldVerticalInfo);
 
-    if (fireListeners && (!oldPosition.equals(myLogicalCaret) || !oldVisualPosition.equals(myVisibleCaret))) {
-      CaretEvent event = new CaretEvent(this, oldPosition, myLogicalCaret);
-      myCaretModel.fireCaretPositionChanged(event);
+    if (!oldPosition.equals(myLogicalCaret) || !oldVisualPosition.equals(myVisibleCaret)) {
+      if (oldInVirtualSpace || isInVirtualSpace()) {
+        myCaretModel.validateEditorSize();
+      }
+      if (fireListeners) {
+        CaretEvent event = new CaretEvent(this, oldPosition, myLogicalCaret);
+        myCaretModel.fireCaretPositionChanged(event);
+      }
     }
   }
 
@@ -1486,16 +1496,20 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     if (!ApplicationManager.getApplication().isDispatchThread()) return;
     int modelCounter = myCaretModel.myDocumentUpdateCounter;
     if (myDocumentUpdateCounter != modelCounter) {
-      LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
-      myLogicalCaret = new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets);
-      VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
-      myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
-      updateVisualLineInfo();
-      setLastColumnNumber(myLogicalCaret.column);
-      myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
-      myDesiredX = -1;
+      updateCachedState();
       myDocumentUpdateCounter = modelCounter;
     }
+  }
+
+  private void updateCachedState() {
+    LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
+    myLogicalCaret = new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets);
+    VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+    myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
+    updateVisualLineInfo();
+    setLastColumnNumber(myLogicalCaret.column);
+    myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
+    myDesiredX = -1;
   }
 
   public boolean isInVirtualSpace() {

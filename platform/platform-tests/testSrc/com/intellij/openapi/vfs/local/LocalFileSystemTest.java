@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -792,5 +793,14 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(expected, file.canWrite());
     assertEquals(expected, ObjectUtils.assertNotNull(FileSystemUtil.getAttributes(file)).isWritable());
     assertEquals(expected, vFile.isWritable());
+  }
+
+  @Test
+  public void testMountFilterSanity() {
+    VirtualFile userHome = myFS.refreshAndFindFileByPath(SystemProperties.getUserHome());
+    assertNotNull(userHome);
+    VirtualFile home = userHome.getParent();
+    assumeTrue("User home is mapped to root (" + userHome + ")", home != null);
+    assertThat(myFS.list(home)).containsExactlyInAnyOrder(new File(home.getPath()).list());
   }
 }

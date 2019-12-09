@@ -29,14 +29,14 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
   public void testScrollingThroughLongTextFile() {
     initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
-    doTestScrollingPerformance("scrolling through text file with many lines", 3600);
+    doTestScrollingPerformance("scrolling through text file with many lines", 2600);
   }
 
   public void testScrollingThroughLongSoftWrappedLine() {
     initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
     EditorTestUtil.configureSoftWraps(getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-    doTestScrollingPerformance("scrolling through long soft wrapped line", 4800);
+    doTestScrollingPerformance("scrolling through long soft wrapped line", 2500);
   }
 
   private void doTestScrollingPerformance(String message, int expectedMs) {

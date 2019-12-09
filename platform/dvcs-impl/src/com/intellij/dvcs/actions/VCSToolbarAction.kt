@@ -5,13 +5,13 @@ import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 
-class VCSToolbarAction() : IconWithTextAction() {
+@Suppress("unused")
+class VcsToolbarAction() : IconWithTextAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val vcsOperationPopupAction =
             ActionManager.getInstance().getAction("Vcs.QuickListPopupAction") ?: error("cannot find VcsOperationPopup action")

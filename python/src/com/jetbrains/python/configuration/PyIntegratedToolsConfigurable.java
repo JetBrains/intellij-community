@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -60,6 +61,7 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,7 +75,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JComboBox myTestRunnerComboBox;
   private JComboBox<DocStringFormat> myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
-  @NotNull private final Module myModule;
+  @Nullable private final Module myModule;
   @NotNull private final Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
@@ -88,9 +90,18 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myTestsPanel;
   private TextFieldWithBrowseButton myPipEnvPathField;
 
+
+  public PyIntegratedToolsConfigurable() {
+    this(null, DefaultProjectFactory.getInstance().getDefaultProject());
+  }
+
   public PyIntegratedToolsConfigurable(@NotNull Module module) {
+    this(module, module.getProject());
+  }
+
+  private PyIntegratedToolsConfigurable(@Nullable Module module, @NotNull Project project) {
     myModule = module;
-    myProject = myModule.getProject();
+    myProject = project;
     myDocumentationSettings = PyDocumentationSettings.getInstance(myModule);
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel<>(Arrays.asList(DocStringFormat.values()),
                                                                      myDocumentationSettings.getFormat()));
@@ -116,8 +127,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @NotNull
   private String getRequirementsPath() {
-    final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
-    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && !PyPackageUtil.hasRequirementsTxt(myModule)) {
+    PyPackageRequirementsSettings settings = PyPackageRequirementsSettings.getInstance(myModule);
+    final String path = settings.getRequirementsPath();
+    if (myModule != null && settings.isDefaultPath() && !PyPackageUtil.hasRequirementsTxt(myModule)) {
       return "";
     }
     else {

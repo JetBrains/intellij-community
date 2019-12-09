@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 public class PluginManagerTest {
 
   private static String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/ide/plugins/sort";
+    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/sort";
   }
 
   @Test

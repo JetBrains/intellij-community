@@ -71,4 +71,12 @@ public interface TextAnnotationGutterProvider {
    * @see EditorGutter#closeAllAnnotations()
    */
   void gutterClosed();
+
+  /**
+   * If {@code true}, a couple of pixels will be added at both sides of displayed text (if it's not empty),
+   * otherwise the width of annotation will be equal to the width of provided text.
+   */
+  default boolean useMargin() {
+    return true;
+  }
 }

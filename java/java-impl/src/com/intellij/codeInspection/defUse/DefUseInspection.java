@@ -13,9 +13,11 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,6 +86,13 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           }
         }
         else if (context instanceof PsiAssignmentExpression) {
+          PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
+          if (parent == psiVariable) continue; // int x = x = 5; -- compilation error and reported as reassigned var
+          if (parent instanceof PsiAssignmentExpression && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
+            ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
+            // x = x = 5; reported by "Variable is assigned to itself"
+            continue;
+          }
           reportAssignmentProblem(psiVariable, (PsiAssignmentExpression)context, holder, isOnTheFly);
         }
         else {
@@ -97,9 +106,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     }
   }
 
-  private void reportInitializerProblem(PsiVariable psiVariable, ProblemsHolder holder, boolean isOnTheFly) {
+  private static void reportInitializerProblem(PsiVariable psiVariable, ProblemsHolder holder, boolean isOnTheFly) {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-      isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? createRemoveInitializerFix() : null);
+      isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? new RemoveInitializerFix() : null);
     holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
                            InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                      "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
@@ -108,12 +117,12 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     );
   }
 
-  private void reportAssignmentProblem(PsiVariable psiVariable,
-                                       PsiAssignmentExpression assignment,
-                                       ProblemsHolder holder,
-                                       boolean isOnTheFly) {
+  private static void reportAssignmentProblem(PsiVariable psiVariable,
+                                              PsiAssignmentExpression assignment,
+                                              ProblemsHolder holder,
+                                              boolean isOnTheFly) {
     List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
-      isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? createRemoveAssignmentFix() : null);
+      isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? new RemoveAssignmentFix() : null);
     holder.registerProblem(assignment.getLExpression(),
                            InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
                                                      ObjectUtils.assertNotNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
@@ -235,14 +244,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     return isOnTheFly || !RemoveUnusedVariableUtil.checkSideEffects(initializer, psiVariable, new ArrayList<>());
   }
 
-  
-  protected LocalQuickFix createRemoveInitializerFix() {
-    return new RemoveInitializerFix();
-  }
-
-  protected LocalQuickFix createRemoveAssignmentFix() {
-    return new RemoveAssignmentFix();
-  }
 
   @Override
   public JComponent createOptionsPanel() {

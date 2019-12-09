@@ -15,7 +15,7 @@ class LibraryLicense {
   public static final String JETBRAINS_OWN = "JetBrains"
 
   /**
-   * Presentable full name of the library
+   * Presentable full name of the library. If {@code null} {@link #libraryName} will be used instead.
    */
   final String name
 
@@ -25,7 +25,8 @@ class LibraryLicense {
   final String url
 
   /**
-   * Version of the library
+   * Version of the library. If {@link #libraryName} points to a Maven library version is taken from the library configuration so it must
+   * not be specified explicitly.
    */
   final String version
 
@@ -51,21 +52,31 @@ class LibraryLicense {
   final String attachedTo
 
   /**
+   * Set to {@code true} if this entry describes license for a transitive dependency included into the library specified by {@link #libraryName}
+   */
+  final boolean transitiveDependency
+
+  /**
    * Type of a license (e.g. {@code 'Apache 2.0'})
    */
   final String license
 
   /**
-   * URL of a page on the library site (or a generic site) containing the license text, may be {@code null} if there is no such page.
+   * URL of a page on the library site (or a generic site) containing the license text, may be {@code null} for standard licenses
+   * (see {@link #PREDEFINED_LICENSE_URLS}) or if there is no such page.
    */
   final String licenseUrl
 
   static jetbrainsLibrary(String libraryName) {
-    new LibraryLicense(name: libraryName, license: JETBRAINS_OWN)
+    new LibraryLicense(libraryName: libraryName, license: JETBRAINS_OWN)
   }
 
   List<String> getLibraryNames() {
-    return ContainerUtil.createMaybeSingletonList(libraryName ?: name) + (additionalLibraryNames ?: [] as List<String>)
+    return ContainerUtil.createMaybeSingletonList(libraryName) + (additionalLibraryNames ?: [] as List<String>)
+  }
+
+  String getPresentableName() {
+    name ?: libraryName
   }
 
   String getLibraryLicenseUrl() {

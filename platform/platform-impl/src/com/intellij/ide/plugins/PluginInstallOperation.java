@@ -238,8 +238,9 @@ public class PluginInstallOperation {
     PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
     if (downloader.prepareToInstall(myIndicator)) {
-      if (myAllowInstallWithoutRestart && DynamicPlugins.isUnloadSafe(downloader.getDescriptor())) {
-        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), downloader.getDescriptor()));
+      IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
+      if (myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
         if (state != null) {
           state.onPluginInstall(downloader.getDescriptor(), false, false);

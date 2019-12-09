@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
@@ -23,7 +22,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   private static final StringContentIndentRenderer RENDERER = new StringContentIndentRenderer();
-  private static final Key<Long> LAST_TIME_CONTENT_INDENT_CHANGED = Key.create("LAST_TIME_CONTENT_INDENT_CHANGED");
 
   private final Editor myEditor;
   private final PsiJavaFile myFile;
@@ -56,14 +53,11 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    Document document = myEditor.getDocument();
-    if (!isDocumentUpdated(document)) return;
-
     if (!myEditor.getSettings().isStringContentIndentGuideShown()) {
       myIndents = Collections.emptyList();
       return;
     }
-
+    Document document = myEditor.getDocument();
     IndentCollector collector = new IndentCollector(document);
     myFile.accept(collector);
     myIndents = collector.getIndents();
@@ -71,8 +65,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    Document document = myEditor.getDocument();
-    if (!isDocumentUpdated(document)) return;
+    if (!StringContentIndentUtil.isDocumentUpdated(myEditor)) return;
     MarkupModel model = myEditor.getMarkupModel();
     Map<TextRange, RangeHighlighter> oldHighlighters = StringContentIndentUtil.getIndentHighlighters(myEditor);
     List<RangeHighlighter> newHighlighters = new ArrayList<>();
@@ -99,16 +92,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     oldHighlighters.values().forEach(RangeMarker::dispose);
     StringContentIndentUtil.addIndentHighlighters(myEditor, newHighlighters);
 
-    long timestamp = myEditor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
-    document.putUserData(LAST_TIME_CONTENT_INDENT_CHANGED, timestamp);
-  }
-
-  @Contract("null -> false")
-  private boolean isDocumentUpdated(Document document) {
-    if (document == null) return false;
-    long stamp = myEditor.getSettings().isStringContentIndentGuideShown() ? document.getModificationStamp() : -1;
-    Long prevStamp = document.getUserData(LAST_TIME_CONTENT_INDENT_CHANGED);
-    return prevStamp == null || prevStamp != stamp;
+    StringContentIndentUtil.updateTimestamp(myEditor);
   }
 
   private static class StringContentIndent {
@@ -158,7 +142,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       FontMetrics fontMetrics = g.getFontMetrics();
       int ascent = fontMetrics.getAscent();
       int descent = fontMetrics.getDescent();
-      float baseline = SimpleColoredComponent.getTextBaseLine(fontMetrics, editor.getLineHeight());
+      float baseline = editor.getAscent();
 
       float startY = start.y + baseline - ascent;
       float endY = end.y + baseline + descent;

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -10,14 +12,17 @@ import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.TerminalShellCommandHandler;
+import com.intellij.util.Alarm;
 import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.CharBuffer;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 
+import javax.swing.event.HyperlinkEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -29,6 +34,9 @@ import java.util.Queue;
 public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
+
+  @NonNls String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
+  @NonNls private static final String GOT_IT = "got_it";
 
   private final Project myProject;
   private boolean myEscapePressed = false;
@@ -42,32 +50,71 @@ public class ShellTerminalWidget extends JBTerminalWidget {
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
     myProject = project;
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     ((JBTerminalPanel)getTerminalPanel()).addPreKeyEventHandler(e -> {
       if (e.getID() != KeyEvent.KEY_PRESSED) return;
       if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         myEscapePressed = true;
       }
-      if (myPromptUpdateNeeded)  {
+      if (myPromptUpdateNeeded) {
         myPrompt = getLineAtCursor();
         if (LOG.isDebugEnabled()) {
           LOG.info("Guessed shell prompt: " + myPrompt);
         }
         myPromptUpdateNeeded = false;
       }
+
+      alarm.cancelAllRequests();
+      alarm.addRequest(() -> {
+        highlightMatchedCommand(project);
+      }, 50);
+
       if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
-        handleShellCommandBeforeExecution(getTypedShellCommand(), e);
+        executeMatchedCommand(getTypedShellCommand(), e);
         myPromptUpdateNeeded = true;
         myEscapePressed = false;
       }
     });
+  }
 
-    JBTerminalPanel terminalPanel = (JBTerminalPanel)getTerminalPanel();
-    terminalPanel.addPostProcessKeyEventHandler(e -> {
-      String command = getTypedShellCommand();
-      SubstringFinder.FindResult result =
-        TerminalShellCommandHandler.Companion.isAvailable(project, command) ? searchMatchedCommand(command, true) : null;
-      terminalPanel.setFindResult(result);
-    });
+  private void highlightMatchedCommand(@NotNull Project project) {
+    if (!PropertiesComponent.getInstance(project).getBoolean(TerminalCommandHandlerCustomizer.TERMINAL_CUSTOM_COMMAND_EXECUTION, true)) {
+      getTerminalPanel().setFindResult(null);
+      return;
+    }
+
+    //highlight matched command
+    String command = getTypedShellCommand();
+    SubstringFinder.FindResult result =
+      TerminalShellCommandHandler.Companion.matches(project, command) ? searchMatchedCommand(command, true) : null;
+    getTerminalPanel().setFindResult(result);
+
+    //show notification
+    if (PropertiesComponent.getInstance(project).getBoolean(TERMINAL_CUSTOM_COMMANDS_GOT_IT, false)) {
+      return;
+    }
+
+    if (result != null) {
+      String content =
+        "Commands that have particular highlighting can be interpreted and launched by IDE in a smart way.<br>" +
+        "Press <b>Ctrl+Enter</b> to try it or <b>Enter</b> to execute it in the console as usual.<br>" +
+        "Any time you can turn it on/off on Preferences | Tools | Terminal.<br>" +
+        "<a href=\"" + GOT_IT + "\"/>Got it!</a>";
+
+      new SingletonNotificationManager(
+        NotificationGroup.toolWindowGroup("TerminalCustomCommandsHandling", TerminalToolWindowFactory.TOOL_WINDOW_ID),
+        NotificationType.INFORMATION, null)
+        .notify("Smart commands execution", content, project,
+                new NotificationListener.Adapter() {
+                  @Override
+                  protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                    if (GOT_IT.equals(e.getDescription())) {
+                      PropertiesComponent.getInstance(project)
+                        .setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
+                    }
+                  }
+                });
+    }
   }
 
   @Nullable
@@ -96,12 +143,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
     return finder.getResult();
   }
 
-  private void handleShellCommandBeforeExecution(@NotNull String shellCommand, @NotNull KeyEvent enterEvent) {
+  private void executeMatchedCommand(@NotNull String shellCommand, @NotNull KeyEvent enterEvent) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + shellCommand);
     }
 
-    if (!TerminalShellCommandHandler.Companion.isAvailable(myProject, shellCommand)) {
+    if (!TerminalShellCommandHandler.Companion.matches(myProject, shellCommand)) {
       return;
     }
 

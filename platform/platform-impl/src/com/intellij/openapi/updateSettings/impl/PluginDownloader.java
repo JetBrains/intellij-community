@@ -22,17 +22,14 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author anna
@@ -234,6 +231,22 @@ public class PluginDownloader {
     if (state != null) {
       state.onPluginInstall(myDescriptor, PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
     }
+  }
+
+  public boolean tryInstallWithoutRestart(@Nullable JComponent ownerComponent) {
+    final IdeaPluginDescriptorImpl descriptorImpl = (IdeaPluginDescriptorImpl)myDescriptor;
+    if (!DynamicPlugins.allowLoadUnloadWithoutRestart(descriptorImpl)) return false;
+
+    if (myOldFile != null) {
+      final IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(myDescriptor.getPluginId());
+      if (installedPlugin == null) return false;
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManagerCore.loadDescriptor(installedPlugin.getPath(), PluginManagerCore.PLUGIN_XML, true);
+      if (installedPluginDescriptor == null) return false;
+      if (!DynamicPlugins.unloadPlugin(installedPluginDescriptor)) return false;
+    }
+
+    PluginInstaller.installAndLoadDynamicPlugin(myFile, ownerComponent, descriptorImpl);
+    return true;
   }
 
   @NotNull

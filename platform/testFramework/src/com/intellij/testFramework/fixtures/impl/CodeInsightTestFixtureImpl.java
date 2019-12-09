@@ -55,7 +55,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -129,6 +128,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -347,8 +348,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (candidate.isAbsolute()) {
         sourceFile = candidate;
         if (targetPath == sourcePath) {
-          targetPath = PathUtil.getFileName(sourcePath);
-          Logger.getInstance(getClass()).warn("Absolute target path '" + sourcePath + "' trimmed to '" + targetPath + "'");
+          Path testDataPathObj = Paths.get(testDataPath), targetPathObj = Paths.get(targetPath);
+          if (targetPathObj.startsWith(testDataPathObj) && !targetPathObj.equals(testDataPathObj)) {
+            targetPath = testDataPathObj.relativize(targetPathObj).toString();
+          }
+          else {
+            throw new IllegalArgumentException("Cannot guess target path for '" + sourcePath + "'; please specify explicitly");
+          }
         }
       }
     }

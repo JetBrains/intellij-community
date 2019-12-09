@@ -239,8 +239,9 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       return null;
     }
     if (infix) {
-      if (StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0) >= 0) {
-        return FList.<TextRange>emptyList().prepend(new TextRange(1, myPattern.length));
+      int index = StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0);
+      if (index >= 0) {
+        return FList.<TextRange>emptyList().prepend(TextRange.from(index, myPattern.length - 1));
       }
       return null;
     }
@@ -283,11 +284,6 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
         return null;
       }
       return FList.emptyList();
-    }
-
-    FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex, isAsciiName);
-    if (ranges != null) {
-      return ranges;
     }
 
     return matchSkippingWords(name, patternIndex, nameIndex, true, isAsciiName);
@@ -333,6 +329,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
           return ranges;
         }
       }
+      nameIndex++;
     }
   }
 
@@ -343,7 +340,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                             boolean allowSpecialChars, boolean wordStartsOnly) {
     int next = wordStartsOnly
                ? indexOfWordStart(name, patternIndex, startAt)
-               : indexOfIgnoreCase(name, startAt + 1, myPattern[patternIndex], patternIndex, isAsciiName);
+               : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
 
     // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
     if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, startAt, next)) {
@@ -541,15 +538,15 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
         myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
       return -1;
     }
-    int nextWordStart = startFrom;
+    int nextWordStart = NameUtilCore.isWordStart(name, startFrom) ? startFrom : nextWord(name, startFrom);
     while (true) {
-      nextWordStart = nextWord(name, nextWordStart);
       if (nextWordStart >= name.length()) {
         return -1;
       }
       if (charEquals(p, patternIndex, name.charAt(nextWordStart), true)) {
         return nextWordStart;
       }
+      nextWordStart = nextWord(name, nextWordStart);
     }
   }
 

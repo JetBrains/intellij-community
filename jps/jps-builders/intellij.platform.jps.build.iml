@@ -34,5 +34,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
+    <orderEntry type="library" name="qdox-java-parser" level="project" />
   </component>
 </module>

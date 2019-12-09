@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.visible.filters;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 
 class VcsLogRootFilterImpl implements VcsLogRootFilter {
   @NotNull private final Collection<VirtualFile> myRoots;
@@ -31,11 +31,11 @@ class VcsLogRootFilterImpl implements VcsLogRootFilter {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VcsLogRootFilterImpl filter = (VcsLogRootFilterImpl)o;
-    return getRoots().equals(filter.getRoots());
+    return Comparing.haveEqualElements(getRoots(), filter.getRoots());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getRoots());
+    return Comparing.unorderedHashcode(getRoots());
   }
 }

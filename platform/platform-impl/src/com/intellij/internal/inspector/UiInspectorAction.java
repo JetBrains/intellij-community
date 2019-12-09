@@ -1139,6 +1139,17 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (sb.length() == 0) sb.append("-");
       value = sb;
     }
+    if (value.getClass().isArray()) {
+      int length = Array.getLength(value);
+      for (int index = 0; index < length; index++) {
+        if (sb.length() > 0) sb.append(", ");
+        Object obj = Array.get(value, index);
+        if (obj != null) {
+          sb.append(obj.getClass().getName());
+        }
+      }
+      value = sb.length() == 0 ? "-" : sb;
+    }
     String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
     return toString.replace('\n', ' ');
   }
@@ -1189,7 +1200,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       "getTooltipText", "getToolTipText", "cursor",
       "isShowing", "isEnabled", "isVisible", "isDoubleBuffered",
       "isFocusable", "isFocusCycleRoot", "isFocusOwner",
-      "isValid", "isDisplayable", "isLightweight", "getClientProperties"
+      "isValid", "isDisplayable", "isLightweight", "getClientProperties", "getMouseListeners"
     );
 
     final List<String> CHECKERS = Arrays.asList(

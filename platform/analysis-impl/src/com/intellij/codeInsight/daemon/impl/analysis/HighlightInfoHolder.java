@@ -20,9 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +39,7 @@ public class HighlightInfoHolder {
   private int myErrorCount;
   private final List<HighlightInfo> myInfos = new ArrayList<>(5);
 
-  public HighlightInfoHolder(@NotNull final PsiFile contextFile, @NotNull final HighlightInfoFilter... filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull HighlightInfoFilter... filters) {
     myContextFile = contextFile;
     myAnnotationSession = new AnnotationSession(contextFile);
     myFilters = filters;
@@ -109,11 +107,6 @@ public class HighlightInfoHolder {
 
   @NotNull
   public TextAttributesScheme getColorsScheme() {
-    return new TextAttributesScheme() {
-      @Override
-      public TextAttributes getAttributes(TextAttributesKey key) {
-        return key.getDefaultAttributes();
-      }
-    };
+    return key -> key.getDefaultAttributes();
   }
 }

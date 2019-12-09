@@ -218,11 +218,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           return;
         }
 
-        String editorScheme = theme.getEditorScheme();
-        if (editorScheme != null) {
-          ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager()
-            .loadBundledScheme(editorScheme, theme);
-        }
+        ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).handleThemeAdded(theme);
 
         List<UIManager.LookAndFeelInfo> lafList = myLaFs.getValue();
         List<UIManager.LookAndFeelInfo> newLaFs = new ArrayList<>(lafList.size() + 1);
@@ -250,7 +246,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
         myLaFs.setValue(list);
         if (switchLafTo != null) {
-          setCurrentLookAndFeel(switchLafTo);
+          setCurrentLookAndFeel(switchLafTo, true);
           updateUI();
         }
       }
@@ -396,6 +392,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    */
   @Override
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  }
+
+  /**
+   * Sets current LAF. The method doesn't update component hierarchy.
+   */
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean processChangeSynchronously) {
     UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
 
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
@@ -483,12 +486,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
-      ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf));
+      if (processChangeSynchronously) {
+        updateEditorSchemeIfNecessary(oldLaf, true);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf, false));
+      }
     }
     myFirstSetup = false;
   }
 
-  private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
+  private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {
     if (oldLaf instanceof TempUIThemeBasedLookAndFeelInfo || myCurrentLaf instanceof TempUIThemeBasedLookAndFeelInfo) return;
     if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
       if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
@@ -515,7 +523,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       EditorColorsScheme scheme = colorsManager.getScheme(targetScheme);
       if (scheme != null) {
-        colorsManager.setGlobalScheme(scheme);
+        ((EditorColorsManagerImpl) colorsManager).setGlobalScheme(scheme, processChangeSynchronously);
       }
     }
     UISettings.getShadowInstance().fireUISettingsChanged();

@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
@@ -339,7 +340,7 @@ public class DataManagerImpl extends DataManager {
     @Override
     public Object getData(@NotNull String dataId) {
       ProgressManager.checkCanceled();
-      boolean cacheable = ourSafeKeys.contains(dataId);
+      boolean cacheable = Registry.is("actionSystem.cache.data") || ourSafeKeys.contains(dataId);
       if (ApplicationManager.getApplication().isDispatchThread()) {
         int currentEventCount = IdeEventQueue.getInstance().getEventCount();
         if (myEventCount != -1 && myEventCount != currentEventCount) {
@@ -355,7 +356,7 @@ public class DataManagerImpl extends DataManager {
       }
 
       answer = doGetData(dataId);
-      if (cacheable) {
+      if (cacheable && !(answer instanceof Stream)) {
         myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
       }
       return answer;

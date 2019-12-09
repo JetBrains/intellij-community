@@ -9,13 +9,19 @@ import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
+import com.intellij.build.issue.BuildIssue
+import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
+import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
+import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -172,6 +178,7 @@ class MavenSyncConsole(private val myProject: Project) {
     completeTask(downloadString, downloadArtifactString, SuccessResultImpl(false))
   }
 
+
   @Synchronized
   private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) = doIfImportInProcess{
     val downloadString = SyncBundle.message("${keyPrefix}.download")
@@ -201,6 +208,20 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
+  @Synchronized
+  fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
+    val bundledVersion = MavenServerManager.getInstance().getMavenVersion(MavenServerManager.BUNDLED_MAVEN_3)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
+      override val title = "Maven version issue"
+      override val description: String = "${message}\n" +
+                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">Open Settings</a>\n" +
+                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">Use Bundled (${bundledVersion})</a>\n"
+
+      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
+      override fun getNavigatable(project: Project): Navigatable? = null
+    }, kind))
+  }
+
   private fun isJavadocOrSource(dependency: String): Boolean {
     val split = dependency.split(':')
     if (split.size < 4) {
@@ -214,7 +235,6 @@ class MavenSyncConsole(private val myProject: Project) {
     if (!started || finished) return
     action.invoke()
   }
-
 
   private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
     override fun downloadStarted(dependency: String) {

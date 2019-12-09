@@ -256,7 +256,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
                             info.type, fixedTextRange.getStartOffset(),
                             fixedTextRange.getEndOffset(),
                             info.getDescription(), info.getToolTip(), info.type.getSeverity(null),
-                            info.isAfterEndOfLine(), null, false, 0, info.getProblemGroup(), info.getInspectionGroupKey(), info.getGutterIconRenderer());
+                            info.isAfterEndOfLine(), null, false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer());
         patched.setFromInjection(true);
         outInfos.add(patched);
       }
@@ -319,7 +319,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.type.getSeverity(null), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getInspectionGroupKey(), info.getGutterIconRenderer());
+                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer());
       patched.setHint(info.hasHint());
 
       if (info.quickFixActionRanges != null) {
@@ -351,8 +351,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     return textRange;
   }
 
-  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi,
-                                               @NotNull final HighlightInfoHolder holder) {
+  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder) {
     HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
       final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());

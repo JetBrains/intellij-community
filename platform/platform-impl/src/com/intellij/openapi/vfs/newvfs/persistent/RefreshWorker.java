@@ -7,12 +7,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.DirectoryAccessChecker;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -30,10 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
@@ -70,8 +69,6 @@ public class RefreshWorker {
   }
 
   public void scan() {
-    DirectoryAccessChecker.refresh();
-
     if (myLocalFileSystemRefreshWorker != null) {
       myLocalFileSystemRefreshWorker.scan();
       return;
@@ -89,6 +86,10 @@ public class RefreshWorker {
       myHelper.scheduleDeletion(root);
       root.markClean();
       return;
+    }
+
+    if (fs instanceof LocalFileSystemBase) {
+      DirectoryAccessChecker.refresh();
     }
 
     checkAndScheduleChildRefresh(fs, persistence, root.getParent(), root, attributes);
@@ -152,13 +153,9 @@ public class RefreshWorker {
     String[] persistedNames = snapshot.getFirst();
     VirtualFile[] children = snapshot.getSecond();
 
-    Collection<String> upToDateNames;
-    try (Stream<String> ss = fs.listStream(dir)) {
-      upToDateNames = ss.filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
-    }
-
+    String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
     Set<String> newNames = newTroveSet(strategy, upToDateNames);
-    if (dir.allChildrenLoaded() && children.length < upToDateNames.size()) {
+    if (dir.allChildrenLoaded() && children.length < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
       }
@@ -168,9 +165,9 @@ public class RefreshWorker {
     }
 
     Set<String> deletedNames = newTroveSet(strategy, persistedNames);
-    deletedNames.removeAll(upToDateNames);
+    ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(upToDateNames, strategy);
+    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
     if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(persistedNames) + " +" + newNames + " -" + deletedNames);
 
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
@@ -246,12 +243,8 @@ public class RefreshWorker {
     List<VirtualFile> cached = snapshot.getFirst();
     List<String> wanted = snapshot.getSecond();
 
-    Collection<String> upToDateNames;
-    try (Stream<String> ss = fs.listStream(dir)) {
-      upToDateNames = ss.filter(s -> !VfsUtil.isBadName(s)).collect(Collectors.toList());
-    }
-
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(upToDateNames, strategy);
+    OpenTHashSet<String> actualNames =
+      fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
 
     if (LOG.isTraceEnabled()) LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
 

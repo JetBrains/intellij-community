@@ -30,6 +30,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private AbstractTreeNode<?> myParent;
   private Object myValue;
   private boolean myNullValueSet;
+  private Throwable myNullValueSetTrace;
   private final boolean myNodeWrapper;
   static final Object TREE_WRAPPER_VALUE = new Object();
 
@@ -153,9 +154,18 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     boolean debug = !myNodeWrapper && LOG.isDebugEnabled();
     int hash = !debug ? 0 : hashCode();
     myNullValueSet = value == null || setInternalValue(value);
+    myNullValueSetTrace = myNullValueSet ? new Throwable() : null;
     if (debug && hash != hashCode()) {
       LOG.warn("hash code changed: " + myValue);
     }
+  }
+
+  /**
+   * @return a trace when value been set to null if it was.
+   */
+  @Nullable
+  protected final Throwable getNullValueSetTrace() {
+    return myNullValueSetTrace;
   }
 
   /**

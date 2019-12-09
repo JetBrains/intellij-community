@@ -105,9 +105,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public VcsLogGraphTable(@NotNull AbstractVcsLogUi ui,
                           @NotNull VcsLogData logData,
-                          @NotNull VisiblePack initialDataPack,
                           @NotNull Consumer<Runnable> requestMore) {
-    super(new GraphTableModel(initialDataPack, logData, requestMore, ui.getProperties()));
+    super(new GraphTableModel(logData, requestMore, ui.getProperties()));
     myLogData = logData;
     myId = ui.getId();
     myProperties = ui.getProperties();
@@ -464,7 +463,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       .ifEq(VcsDataKeys.VCS).thenGet(() -> {
         int[] selectedRows = getSelectedRows();
         if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-        Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRoot(row));
+        Set<VirtualFile> roots = ContainerUtil.map2Set(Ints.asList(selectedRows), row -> getModel().getRootAtRow(row));
         if (roots.size() == 1) {
           return myLogData.getLogProvider(assertNotNull(getFirstItem(roots))).getSupportedVcs();
         }

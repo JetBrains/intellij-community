@@ -27,7 +27,6 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.impl.GenericDomValueReference;
@@ -40,6 +39,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class MavenDomProjectProcessorUtils {
@@ -327,45 +327,43 @@ public class MavenDomProjectProcessorUtils {
   }
 
 
+  private static boolean processDependencyRecurrently(@NotNull final Processor<? super MavenDomDependency> processor,
+                                                      @NotNull MavenDomDependency domDependency,
+                                                      @NotNull Set<String> recursionProtector) {
+    if ("import".equals(domDependency.getScope().getRawText())) {
+      GenericDomValue<String> version = domDependency.getVersion();
+      if (version.getXmlElement() != null) {
+        GenericDomValueReference<String> reference = new GenericDomValueReference<>(version);
+        PsiElement resolve = reference.resolve();
+        if (resolve instanceof XmlFile) {
+          if (!recursionProtector.add(((XmlFile)resolve).getVirtualFile().getPath())) {
+            return false;
+          }
+          MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
+          if (dependModel == null) {
+            return false;
+          }
+          for (MavenDomDependency dependency : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
+            processDependencyRecurrently(processor, dependency, recursionProtector);
+          }
+        }
+      }
+    }
+    else {
+      if (processor.process(domDependency)) return true;
+    }
+    return false;
+  }
+
+
   public static boolean processDependenciesInDependencyManagement(@NotNull MavenDomProjectModel projectDom,
                                                                   @NotNull final Processor<? super MavenDomDependency> processor,
                                                                   @NotNull final Project project) {
 
     Processor<MavenDomDependencies> managedDependenciesListProcessor = dependencies -> {
-      SmartList<MavenDomDependency> importDependencies = null;
-
       for (MavenDomDependency domDependency : dependencies.getDependencies()) {
-        if ("import".equals(domDependency.getScope().getRawText())) {
-          if (importDependencies == null) {
-            importDependencies = new SmartList<>();
-          }
-
-          importDependencies.add(domDependency);
-        }
-        else {
-          if (processor.process(domDependency)) return true;
-        }
+        if (processDependencyRecurrently(processor, domDependency, new HashSet<>())) return true;
       }
-
-      if (importDependencies != null) {
-        for (MavenDomDependency domDependency : importDependencies) {
-          GenericDomValue<String> version = domDependency.getVersion();
-          if (version.getXmlElement() != null) {
-            GenericDomValueReference<String> reference = new GenericDomValueReference<>(version);
-            PsiElement resolve = reference.resolve();
-
-            if (resolve instanceof XmlFile) {
-              MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
-              if (dependModel != null) {
-                for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
-                  if (processor.process(dep)) return true;
-                }
-              }
-            }
-          }
-        }
-      }
-
       return false;
     };
 

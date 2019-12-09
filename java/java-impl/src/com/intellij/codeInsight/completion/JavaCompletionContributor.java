@@ -65,9 +65,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class JavaCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
 
-  static final ElementPattern<PsiElement> ANNOTATION_NAME =
-    psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
-
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
@@ -78,7 +75,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
-  private static final ElementPattern IN_ENUM_SWITCH_LABEL =
+  private static final ElementPattern<PsiElement> IN_ENUM_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
       psiElement(PsiSwitchBlock.class).with(new PatternCondition<PsiSwitchBlock>("enumExpressionType") {
         @Override
@@ -109,8 +106,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
 
-    if (ANNOTATION_NAME.accepts(position)) {
-      return new AnnotationTypeFilter();
+    if (getAnnotationNameIfInside(position) != null) {
+      return new OrFilter(ElementClassFilter.PACKAGE, new AnnotationTypeFilter());
     }
 
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
@@ -468,7 +465,7 @@ public class JavaCompletionContributor extends CompletionContributor {
               items.putValue(result1, new IndentingDecorator(TailTypeDecorator.withTail(element, switchLabelTail)));
             }
             else {
-              final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
+              LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
               if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
                   !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
                 item.setTailType(TailType.NONE);
@@ -814,7 +811,19 @@ public class JavaCompletionContributor extends CompletionContributor {
           context.setReplacementOffset(range.getEndOffset());
         }
       }
+
+      PsiJavaCodeReferenceElement ref = getAnnotationNameIfInside(file.findElementAt(context.getStartOffset()));
+      if (ref != null) {
+        context.setReplacementOffset(ref.getTextRange().getEndOffset());
+      }
     }
+  }
+
+  @Nullable
+  static PsiJavaCodeReferenceElement getAnnotationNameIfInside(@Nullable PsiElement position) {
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
+    PsiJavaCodeReferenceElement ref = anno == null ? null : anno.getNameReferenceElement();
+    return ref != null && PsiTreeUtil.isAncestor(ref, position, false) ? ref : null;
   }
 
   @Nullable

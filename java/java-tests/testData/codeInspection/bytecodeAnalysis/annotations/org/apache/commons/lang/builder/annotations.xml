@@ -1191,6 +1191,21 @@
     <item name='org.apache.commons.lang.builder.ToStringBuilder void setDefaultStyle(org.apache.commons.lang.builder.ToStringStyle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle DEFAULT_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle MULTI_LINE_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle NO_FIELD_NAMES_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle SHORT_PREFIX_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle SIMPLE_STYLE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle ToStringStyle()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

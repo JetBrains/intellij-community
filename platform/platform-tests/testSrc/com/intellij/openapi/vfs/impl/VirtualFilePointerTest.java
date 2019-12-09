@@ -872,13 +872,6 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testCleanupPathWithWindowsUNC() {
     Assume.assumeTrue(SystemInfo.isWindows);
     final VirtualFilePointer path = createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null);
-    assertEquals("//wsl$/Ubuntu", path.getPresentableUrl());
-  }
-
-  @Test
-  public void testNonNormalizedPath() {
-    final String pathName = FileUtil.toSystemDependentName("//main///dir1/././/dir2/././file");
-    final VirtualFilePointer path = createPointerByFile(new File(pathName), null);
-    assertEquals("/main/dir1/dir2/file", path.getPresentableUrl());
+    assertEquals("\\\\wsl$\\Ubuntu\\", path.getPresentableUrl());
   }
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent.ActionGroups;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
@@ -57,8 +56,8 @@ public abstract class RemoteServersServiceViewContributor
 
   @NotNull
   @Override
-  public ServiceViewDescriptor getServiceDescriptor(@NotNull RemoteServerNodeServiceViewContributor service) {
-    return service.getViewDescriptor();
+  public ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull RemoteServerNodeServiceViewContributor service) {
+    return service.getViewDescriptor(project);
   }
 
   @Override
@@ -177,7 +176,7 @@ public abstract class RemoteServersServiceViewContributor
 
     @NotNull
     @Override
-    public ServiceViewDescriptor getViewDescriptor() {
+    public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
       return new RemoteServerNodeDescriptor(myNode, myRootContributor.getActionGroups());
     }
 
@@ -189,13 +188,43 @@ public abstract class RemoteServersServiceViewContributor
 
     @NotNull
     @Override
-    public ServiceViewDescriptor getServiceDescriptor(@NotNull RemoteServerNodeServiceViewContributor service) {
-      return service.getViewDescriptor();
+    public ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull RemoteServerNodeServiceViewContributor service) {
+      return service.getViewDescriptor(project);
     }
 
     @NotNull
     protected RemoteServersServiceViewContributor getRootContributor() {
       return myRootContributor;
     }
+  }
+
+  public static class ActionGroups {
+    @NotNull private final String myMainToolbarID;
+    @NotNull private final String mySecondaryToolbarID;
+    @NotNull private final String myPopupID;
+
+    public ActionGroups(@NotNull String mainToolbarID, @NotNull String secondaryToolbarID, @NotNull String popupID) {
+      myMainToolbarID = mainToolbarID;
+      mySecondaryToolbarID = secondaryToolbarID;
+      myPopupID = popupID;
+    }
+
+    @NotNull
+    public String getMainToolbarID() {
+      return myMainToolbarID;
+    }
+
+    @NotNull
+    public String getPopupID() {
+      return myPopupID;
+    }
+
+    @NotNull
+    public String getSecondaryToolbarID() {
+      return mySecondaryToolbarID;
+    }
+
+    public static final ActionGroups SHARED_ACTION_GROUPS = new ActionGroups(
+      "RemoteServersViewToolbar", "RemoteServersViewToolbar.Top", "RemoteServersViewPopup");
   }
 }

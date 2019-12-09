@@ -163,9 +163,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myRefCountHolder = refCountHolder;
         Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange dirtyScope = Optional.ofNullable(document)
-          .map(doc -> DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(doc, Pass.UPDATE_ALL))
-          .orElse(file.getTextRange());
+        TextRange dirtyScope = document == null ? null : DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(document, Pass.UPDATE_ALL);
+        if (dirtyScope == null) dirtyScope = file.getTextRange();
+
         success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
           highlight.run();
           ProgressManager.checkCanceled();

@@ -60,7 +60,7 @@ public abstract class BooleanPropertyToggleAction extends ToggleAction implement
   public void update(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setEnabledAndVisible(properties != null && properties.exists(getProperty()));
-    
+
     super.update(e);
   }
 }

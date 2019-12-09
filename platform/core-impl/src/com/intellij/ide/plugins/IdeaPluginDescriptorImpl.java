@@ -102,6 +102,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myEnabled = true;
   private boolean myDeleted;
   private Boolean mySkipped;
+  private boolean myExtensionsCleared = false;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath, boolean bundled) {
     myPath = pluginPath;
@@ -575,6 +576,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           }
           return true;
         });
+        myExtensionsCleared = true;
 
         if (myExtensions.isEmpty()) {
           myExtensions = null;
@@ -672,9 +674,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myCategory = category;
   }
 
-  @SuppressWarnings("UnusedDeclaration") // Used in Upsource
   @Nullable
   public Map<String, List<Element>> getExtensions() {
+    if (myExtensionsCleared) {
+      throw new IllegalStateException("Trying to retrieve extensions list after extension elements have been cleared");
+    }
     if (myExtensions == null) {
       return null;
     }

@@ -1,4 +1,4 @@
-// "Add on demand static import for 'test.SomeClass'" "false"
+// "Add on-demand static import for 'test.SomeClass'" "false"
 package test;
 
 public class SomeClass {

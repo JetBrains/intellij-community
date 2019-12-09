@@ -20,11 +20,13 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 @State(name = "Vcs.Log.History.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
+
   @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
-  private final VcsLogApplicationSettings myLogSettings =
+  @NotNull private final VcsLogApplicationSettings myAppSettings =
     ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+  @NotNull private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
+
   private State myState = new State();
-  private final PropertiesChangeListener myApplicationSettingsListener = this::onApplicationSettingChange;
 
   public static class State {
     public boolean SHOW_DETAILS = false;
@@ -49,7 +51,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       .ifEq(SHOW_ALL_BRANCHES).then(myState.SHOW_OTHER_BRANCHES)
       .ifEq(SHOW_DIFF_PREVIEW).then(myState.SHOW_DIFF_PREVIEW)
       .ifEq(SHOW_ROOT_NAMES).then(myState.SHOW_ROOT_NAMES)
-      .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myLogSettings.get(PREFER_COMMIT_DATE))
+      .ifEq(PREFER_COMMIT_DATE).thenGet(() -> myAppSettings.get(PREFER_COMMIT_DATE))
       .ifEq(COLUMN_ORDER).thenGet(() -> {
         List<Integer> order = myState.COLUMN_ORDER;
         if (order == null || order.isEmpty()) {
@@ -61,7 +63,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       .get();
   }
 
-  private <T> void onApplicationSettingChange(VcsLogUiProperty<T> property) {
+  private <T> void onApplicationSettingChange(@NotNull VcsLogUiProperty<T> property) {
     if (PREFER_COMMIT_DATE.equals(property)) {
       myListeners.forEach(l -> l.onPropertyChanged(property));
     }
@@ -89,7 +91,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
       myState.SHOW_ROOT_NAMES = (Boolean)value;
     }
     else if (PREFER_COMMIT_DATE.equals(property)) {
-      myLogSettings.set(property, value);
+      myAppSettings.set(property, value);
       // listeners will be triggered via onApplicationSettingChange
       return;
     }
@@ -124,7 +126,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
     if (myListeners.isEmpty()) {
-      myLogSettings.addChangeListener(myApplicationSettingsListener);
+      myAppSettings.addChangeListener(myApplicationSettingsListener);
     }
     myListeners.add(listener);
   }
@@ -133,7 +135,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
     if (myListeners.isEmpty()) {
-      myLogSettings.removeChangeListener(myApplicationSettingsListener);
+      myAppSettings.removeChangeListener(myApplicationSettingsListener);
     }
   }
 }

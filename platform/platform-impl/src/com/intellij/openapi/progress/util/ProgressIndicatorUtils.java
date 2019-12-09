@@ -85,7 +85,7 @@ public class ProgressIndicatorUtils {
    * write action</li>
    * </ul>
    * If caller needs to retry the invocation of this method in a loop, it should consider pausing between attempts, to avoid potential
-   * 100% CPU usage.
+   * 100% CPU usage. There is also alternative that implements the re-trying logic {@link com.intellij.openapi.application.NonBlockingReadAction}
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action) {
     return runInReadActionWithWriteActionPriority(action, null);

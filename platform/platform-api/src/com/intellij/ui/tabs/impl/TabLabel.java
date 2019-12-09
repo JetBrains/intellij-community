@@ -181,11 +181,6 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
   private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
-      protected boolean shouldDrawDimmed() {
-        return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
-      }
-
-      @Override
       public Font getFont() {
         if (isFontSet() || !myTabs.useSmallLabels()) {
           return super.getFont();

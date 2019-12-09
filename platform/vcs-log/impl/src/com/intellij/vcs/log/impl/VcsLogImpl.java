@@ -26,14 +26,15 @@ import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
@@ -48,19 +49,19 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @NotNull
   public List<CommitId> getSelectedCommits() {
-    return getSelectedDataFromTable(GraphTableModel::getCommitIdAtRow);
+    return myUi.getTable().getModel().getCommitIds(myUi.getTable().getSelectedRows());
   }
 
   @NotNull
   @Override
   public List<VcsCommitMetadata> getSelectedShortDetails() {
-    return getSelectedDataFromTable(GraphTableModel::getCommitMetadata);
+    return myUi.getTable().getModel().getCommitMetadata(myUi.getTable().getSelectedRows());
   }
 
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedDetails() {
-    return getSelectedDataFromTable(GraphTableModel::getFullDetails);
+    return myUi.getTable().getModel().getFullDetails(myUi.getTable().getSelectedRows());
   }
 
   @Override
@@ -106,22 +107,5 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   private VcsLogGraphTable getTable() {
     return myUi.getTable();
-  }
-
-  @NotNull
-  private <T> List<T> getSelectedDataFromTable(@NotNull BiFunction<? super GraphTableModel, ? super Integer, ? extends T> dataGetter) {
-    final int[] rows = myUi.getTable().getSelectedRows();
-    return new AbstractList<T>() {
-      @NotNull
-      @Override
-      public T get(int index) {
-        return dataGetter.apply(getTable().getModel(), rows[index]);
-      }
-
-      @Override
-      public int size() {
-        return rows.length;
-      }
-    };
   }
 }

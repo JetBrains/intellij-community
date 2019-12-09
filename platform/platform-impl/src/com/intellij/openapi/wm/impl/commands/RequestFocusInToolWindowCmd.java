@@ -77,7 +77,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
 
   @Nullable
   private Component getShowingComponentToRequestFocus() {
-    Container container = myToolWindow.getComponent();
+    JComponent container = myToolWindow.getComponent();
     if (container == null || !container.isShowing()) {
       LOG.debug(myToolWindow.getId(), " tool window - parent container is hidden: ", container);
       return null;
@@ -87,7 +87,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       LOG.warn(myToolWindow.getId() + " tool window does not provide focus traversal policy");
       return null;
     }
-    Component component = policy.getDefaultComponent(container);
+    Component component = IdeFocusManager.getInstance(myProject).getFocusTargetFor(container);
     if (component == null || !component.isShowing()) {
       LOG.debug(myToolWindow.getId(), " tool window - default component is hidden: ", container);
       return null;

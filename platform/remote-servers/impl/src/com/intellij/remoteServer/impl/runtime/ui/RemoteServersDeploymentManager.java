@@ -8,12 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.impl.runtime.ui.RemoteServersServiceViewContributor.RemoteServerNodeServiceViewContributor;
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent.MessagePanel;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
 import com.intellij.remoteServer.runtime.*;
@@ -45,11 +43,9 @@ public class RemoteServersDeploymentManager {
     myProject = project;
     myNodeSelector = new ServersTreeNodeSelectorImpl(project);
     initListeners();
-    if (Registry.is("ide.service.view")) {
-      RemoteServersView.getInstance(project)
-        .registerCustomTreeNodeSelector(myNodeSelector, connection -> myContributors.stream()
-          .anyMatch(contributor -> contributor.accept(connection.getServer())));
-    }
+    RemoteServersView.getInstance(project)
+      .registerTreeNodeSelector(myNodeSelector, connection -> myContributors.stream()
+        .anyMatch(contributor -> contributor.accept(connection.getServer())));
   }
 
   private void initListeners() {
@@ -94,7 +90,7 @@ public class RemoteServersDeploymentManager {
       public void serverAdded(@NotNull RemoteServer<?> server) {
         RemoteServersServiceViewContributor contributor = findContributor(server);
         if (contributor != null) {
-          myServerToContent.put(server, ServersToolWindowContent.createMessagePanel());
+          myServerToContent.put(server, createMessagePanel());
           myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC)
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
         }
@@ -117,7 +113,7 @@ public class RemoteServersDeploymentManager {
       AppUIUtil.invokeOnEdt(() -> {
         for (RemoteServer<?> server : RemoteServersManager.getInstance().getServers()) {
           if (contributor.accept(server)) {
-            myServerToContent.put(server, ServersToolWindowContent.createMessagePanel());
+            myServerToContent.put(server, createMessagePanel());
           }
         }
       }, myProject.getDisposed());
@@ -172,13 +168,21 @@ public class RemoteServersDeploymentManager {
 
   @Nullable
   public static ServersTreeNodeSelector getNodeSelector(@NotNull AnActionEvent e) {
-    ServersTreeNodeSelector nodeSelector = e.getData(ServersToolWindowContent.KEY);
-    if (nodeSelector != null) return nodeSelector;
-
     Project project = e.getProject();
-    if (project == null || !Registry.is("ide.service.view")) return null;
+    if (project == null) return null;
 
     return getInstance(project).getNodeSelector();
+  }
+
+  public static MessagePanel createMessagePanel() {
+    return new ServersToolWindowMessagePanel();
+  }
+
+  public interface MessagePanel {
+    void setEmptyText(@NotNull String text);
+
+    @NotNull
+    JComponent getComponent();
   }
 
   private static class ServersTreeNodeSelectorImpl implements ServersTreeNodeSelector {

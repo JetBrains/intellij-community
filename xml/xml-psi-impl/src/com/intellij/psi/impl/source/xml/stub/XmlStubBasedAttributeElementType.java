@@ -3,24 +3,23 @@ package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.xml.XmlStubBasedAttribute;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubInputStream;
+import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.xml.IXmlAttributeElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Locale;
 
 public class XmlStubBasedAttributeElementType
-  extends IStubElementType<XmlAttributeStubImpl, XmlStubBasedAttribute> implements ICompositeElementType {
+  extends XmlStubBasedElementType<XmlAttributeStubImpl, XmlStubBasedAttribute> implements ICompositeElementType, IXmlAttributeElementType {
 
-  private final @NotNull String externalId;
 
   public XmlStubBasedAttributeElementType(@NotNull String debugName,
                                           @NotNull Language language) {
-    super(language.getID().toUpperCase(Locale.ENGLISH) + ":" + debugName, language);
-    externalId = language.getID().toUpperCase(Locale.ENGLISH) + ":" + debugName;
+    super(debugName, language);
   }
 
   @Override
@@ -35,24 +34,15 @@ public class XmlStubBasedAttributeElementType
   }
 
   @Override
-  public void indexStub(@NotNull XmlAttributeStubImpl stub, @NotNull IndexSink sink) {
-  }
-
-  @Override
   @NotNull
   public XmlStubBasedAttribute createPsi(@NotNull XmlAttributeStubImpl stub) {
     return new XmlStubBasedAttribute(stub, this);
   }
 
+  @Override
   @NotNull
   public XmlStubBasedAttribute createPsi(@NotNull ASTNode node) {
     return new XmlStubBasedAttribute(node);
-  }
-
-  @NotNull
-  @Override
-  public String getExternalId() {
-    return externalId;
   }
 
   @NotNull
@@ -61,9 +51,4 @@ public class XmlStubBasedAttributeElementType
     return new XmlAttributeStubImpl(psi, parentStub, this);
   }
 
-  @NotNull
-  @Override
-  public ASTNode createCompositeNode() {
-    return new CompositeElement(this);
-  }
 }

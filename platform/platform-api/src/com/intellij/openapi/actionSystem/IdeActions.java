@@ -296,6 +296,8 @@ public interface IdeActions {
 
   @NonNls String ACTION_EDITOR_DUPLICATE = "EditorDuplicate";
   @NonNls String ACTION_EDITOR_DUPLICATE_LINES = "EditorDuplicateLines";
+  @NonNls String ACTION_EDITOR_SORT_LINES = "EditorSortLines";
+  @NonNls String ACTION_EDITOR_REVERSE_LINES = "EditorReverseLines";
 
   @NonNls String ACTION_EDIT_PROPERTY_VALUE = "EditPropertyValue";
 

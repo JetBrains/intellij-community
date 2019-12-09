@@ -78,6 +78,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
   private StructureTreeModel<AbstractTreeStructure> myTreeModel;
+  private LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
@@ -99,6 +100,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (myDescriptor == null) {
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
+    myRootRemovalHandler = myDescriptor.createRootRemovalHandler();
     myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
     myBottomPanel.add(BorderLayout.CENTER, myModificationOfImportedModelWarningComponent.getLabel());
     init(new LibraryTreeStructure(this, myDescriptor));
@@ -187,19 +189,21 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
         ApplicationManager.getApplication().runWriteAction(() -> {
           for (Object selectedElement : selectedElements) {
+            LibraryEditor libraryEditor = getLibraryEditor();
             if (selectedElement instanceof ItemElement) {
               final ItemElement itemElement = (ItemElement)selectedElement;
-              getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
+              libraryEditor.removeRoot(itemElement.getUrl(), itemElement.getRootType());
+              myRootRemovalHandler.onRootRemoved(itemElement.getUrl(), itemElement.getRootType(), libraryEditor);
             }
             else if (selectedElement instanceof OrderRootTypeElement) {
               final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
-              final String[] urls = getLibraryEditor().getUrls(rootType);
+              final String[] urls = libraryEditor.getUrls(rootType);
               for (String url : urls) {
-                getLibraryEditor().removeRoot(url, rootType);
+                libraryEditor.removeRoot(url, rootType);
               }
             }
             else if (selectedElement instanceof ExcludedRootElement) {
-              getLibraryEditor().removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
+              libraryEditor.removeExcludedRoot(((ExcludedRootElement)selectedElement).getUrl());
             }
           }
         });
@@ -226,13 +230,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
+        AttachFilesAction attachFilesAction = new AttachFilesAction(myDescriptor.getAttachFilesActionName());
         if (popupItems.isEmpty()) {
-          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).perform();
+          attachFilesAction.perform();
           return;
         }
 
         List<AnAction> actions = new ArrayList<>();
-        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
+        actions.add(attachFilesAction);
         for (AttachRootButtonDescriptor descriptor : popupItems) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText(), null));
         }

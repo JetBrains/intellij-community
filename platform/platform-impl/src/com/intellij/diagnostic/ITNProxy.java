@@ -191,11 +191,39 @@ class ITNProxy {
     }
   }
 
+  @Nullable
+  static String getAppInfoString() {
+    try {
+      StringBuilder builder = new StringBuilder();
+      appendAppInfo(builder);
+      return builder.toString();
+    }
+    catch (UnsupportedEncodingException ignored) {
+    }
+    return null;
+  }
+
+  private static void appendAppInfo(StringBuilder builder) throws UnsupportedEncodingException {
+    for (Map.Entry<String, String> entry : TEMPLATE.getValue().entrySet()) {
+      append(builder, entry.getKey(), entry.getValue());
+    }
+  }
+
   private static byte[] createRequest(String login, String password, ErrorBean error) throws UnsupportedEncodingException {
     StringBuilder builder = new StringBuilder(8192);
 
-    for (Map.Entry<String, String> entry : TEMPLATE.getValue().entrySet()) {
-      append(builder, entry.getKey(), entry.getValue());
+    Object eventData = error.event.getData();
+    boolean customAppInfo = false;
+    if (eventData instanceof AbstractMessage) {
+      String appInfo = ((AbstractMessage)eventData).getAppInfo();
+      if (appInfo != null) {
+        customAppInfo = true;
+        builder.append(appInfo);
+      }
+    }
+
+    if (!customAppInfo) {
+      appendAppInfo(builder);
     }
 
     append(builder, "user.login", login);
@@ -236,7 +264,6 @@ class ITNProxy {
       append(builder, "error.redacted", Boolean.toString(true));
     }
 
-    Object eventData = error.event.getData();
     if (eventData instanceof AbstractMessage) {
       AbstractMessage messageObj = (AbstractMessage)eventData;
       for (Attachment attachment : messageObj.getIncludedAttachments()) {

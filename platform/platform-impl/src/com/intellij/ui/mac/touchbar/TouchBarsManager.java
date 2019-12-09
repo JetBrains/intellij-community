@@ -49,6 +49,7 @@ public final class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final StackTouchBars ourStack = new StackTouchBars();
 
+  private static final Object ourLoadNstSync = new Object();
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
@@ -56,11 +57,10 @@ public final class TouchBarsManager {
   private static volatile boolean isEnabled = true;
 
   public static void onApplicationInitialized() {
-    if (!isTouchBarAvailable()) {
+    initialize();
+    if (!isInitialized || !isTouchBarEnabled()) {
       return;
     }
-
-    LOG.assertTrue(!isInitialized);
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       registerProject(project);
@@ -68,18 +68,6 @@ public final class TouchBarsManager {
 
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       registerEditor(editor);
-    }
-
-    isInitialized = true;
-
-    { // calculate isEnabled
-      final String appId = Utils.getAppId();
-      if (appId == null || appId.isEmpty()) {
-        LOG.debug("can't obtain application id from NSBundle");
-      } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
-        isEnabled = false;
-      }
     }
 
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -164,6 +152,27 @@ public final class TouchBarsManager {
         ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
       }
     });
+  }
+
+  public static void initialize() {
+    synchronized (ourLoadNstSync) {
+      if (isInitialized)
+        return;
+
+      NST.initialize();
+
+      { // calculate isEnabled
+        final String appId = Utils.getAppId();
+        if (appId == null || appId.isEmpty()) {
+          LOG.debug("can't obtain application id from NSBundle");
+        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+          LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+          isEnabled = false;
+        }
+      }
+
+      isInitialized = true;
+    }
   }
 
   public static boolean isTouchBarAvailable() {

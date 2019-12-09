@@ -102,7 +102,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
   }
 
   @Nullable
-  private static PsiElement getEditableElement(@NotNull FoldRegion region) {
+  public static PsiElement getEditableElement(@NotNull FoldRegion region) {
     PsiElement psiElement = EditorFoldingInfo.get(region.getEditor()).getPsiElement(region);
     return psiElement == null || psiElement.getUserData(EDITABLE_PROPERTY_VALUE) == null ? null : psiElement;
   }

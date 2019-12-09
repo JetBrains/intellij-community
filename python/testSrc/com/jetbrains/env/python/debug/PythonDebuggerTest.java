@@ -14,6 +14,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
@@ -40,6 +41,7 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
+@Staging
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     BreakpointStopAndEvalTask(String scriptName) {

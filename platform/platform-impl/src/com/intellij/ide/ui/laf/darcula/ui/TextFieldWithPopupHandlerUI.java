@@ -398,13 +398,28 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    if (size != null) updatePreferredSize(c, size);
+    if (size != null) {
+
+      JTextComponent component = getComponent();
+      int columns = component instanceof JTextField ? ((JTextField)component).getColumns() : 0;
+      if (columns != 0) {
+        Insets insets = component.getInsets();
+
+        FontMetrics fm = component.getFontMetrics(component.getFont());
+        size.width = columns * fm.charWidth('m') + insets.left + insets.right;
+      }
+
+      updatePreferredSize(component, size);
+    }
+
     return size;
   }
 
   protected void updatePreferredSize(JComponent c, Dimension size) {
     if (!isUnderComboBox(c)) {
-      JBInsets.addTo(size, ((JTextComponent)c).getMargin());
+      JBInsets.addTo(size, getDefaultMargins());
+      size.width += icons.values().stream().mapToInt(h -> h.extension.getPreferredSpace()).sum();
+
       size.height = Math.max(size.height, getMinimumHeight(size.height));
       size.width = Math.max(size.width, MINIMUM_WIDTH.get());
     }
@@ -652,6 +667,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public Icon getIcon(boolean hovered) {
       return getClearIcon(hovered, hasText());
+    }
+
+    @Override
+    public int getPreferredSpace() {
+      Icon icon = getClearIcon(false, true);
+      return icon != null ? getIconGap() + icon.getIconWidth() : 0;
     }
 
     @Override

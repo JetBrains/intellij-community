@@ -15,9 +15,9 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
-import com.intellij.util.containers.isEmpty
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
+import kotlin.streams.toList
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
@@ -30,10 +30,16 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
   override fun update(e: AnActionEvent) {
     val selectedFiles = getSelectedFiles(e)
-    val project = e.getData(CommonDataKeys.PROJECT)
     val presentation = e.presentation
 
-    if (project == null || selectedFiles == null || ScheduleForAdditionAction.getUnversionedFiles(e, project).isEmpty()) {
+    val project = e.getData(CommonDataKeys.PROJECT)
+    if (project == null) {
+      presentation.isVisible = false
+      return
+    }
+
+    val unversionedFiles = ScheduleForAdditionAction.getUnversionedFiles(e, project).toList()
+    if (unversionedFiles.isEmpty()) {
       presentation.isVisible = false
       return
     }
@@ -46,16 +52,25 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       resultedIgnoreFiles.retainAll(files) //only take ignore files which is suitable for all selected files
     }
 
+    val additionalActions = createAdditionalActions(project, selectedFiles, unversionedFiles)
     if (resultedIgnoreFiles.isNotEmpty()) {
-      actions = resultedIgnoreFiles.toActions(project)
+      actions = resultedIgnoreFiles.toActions(project, additionalActions.size)
     }
     else {
       actions = listOfNotNull(createNewIgnoreFileAction(project, selectedFiles))
     }
 
+    if (additionalActions.isNotEmpty()) {
+      actions += additionalActions
+    }
+
     isPopup = actions.size > 1
     presentation.isVisible = actions.isNotEmpty()
   }
+
+  protected open fun createAdditionalActions(project: Project,
+                                             selectedFiles: List<VirtualFile>,
+                                             unversionedFiles: List<VirtualFile>): List<AnAction> = emptyList()
 
   override fun canBePerformed(context: DataContext) = actions.size == 1
 
@@ -78,12 +93,12 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
       }
   }
 
-  private fun Collection<VirtualFile>.toActions(project: Project) =
+  private fun Collection<VirtualFile>.toActions(project: Project, additionalActionsSize: Int) =
     map { file ->
       IgnoreFileAction(file).apply {
         templatePresentation.apply {
           icon = ignoreFileType.icon
-          text = file.toTextRepresentation(project, this@toActions.size)
+          text = file.toTextRepresentation(project, this@toActions.size + additionalActionsSize)
         }
       }
     }

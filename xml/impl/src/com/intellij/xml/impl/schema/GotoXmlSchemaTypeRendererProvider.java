@@ -20,24 +20,24 @@ import com.intellij.codeInsight.navigation.GotoTargetRendererProvider;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoXmlSchemaTypeRendererProvider implements GotoTargetRendererProvider {
   @Override
   public PsiElementListCellRenderer getRenderer(@NotNull PsiElement element, @NotNull GotoTargetHandler.GotoData gotoData) {
-    if (element instanceof XmlTagImpl) {
-      if (SchemaDefinitionsSearch.isTypeElement((XmlTagImpl)element)) {
+    if (element instanceof XmlTag) {
+      if (SchemaDefinitionsSearch.isTypeElement((XmlTag)element)) {
         return new MyRenderer("");
-      }  else if (SchemaDefinitionsSearch.isElementWithSomeEmbeddedType((XmlTagImpl)element)) {
+      }  else if (SchemaDefinitionsSearch.isElementWithSomeEmbeddedType((XmlTag)element)) {
         return new MyRenderer("xsd:element: ");
       }
     }
     return null;
   }
 
-  private static class MyRenderer extends PsiElementListCellRenderer<XmlTagImpl> {
+  private static class MyRenderer extends PsiElementListCellRenderer<XmlTag> {
     private final String myPrefix;
 
     private MyRenderer(String prefix) {
@@ -45,13 +45,13 @@ public class GotoXmlSchemaTypeRendererProvider implements GotoTargetRendererProv
     }
 
     @Override
-    public String getElementText(XmlTagImpl element) {
+    public String getElementText(XmlTag element) {
       final XmlAttribute attr = SchemaDefinitionsSearch.getNameAttr(element);
       return myPrefix + (attr == null || attr.getValue() == null ? element.getName() : attr.getValue());
     }
 
     @Override
-    protected String getContainerText(XmlTagImpl element, String name) {
+    protected String getContainerText(XmlTag element, String name) {
       final PsiFile file = element.getContainingFile();
       return "(" + file.getName() + ")";
     }

@@ -8,4 +8,9 @@ class IgnoreCharConversion {
     byte b = <warning descr="Implicit numeric conversion of '1' from 'int' to 'byte'">1</warning>;
     a += <warning descr="Implicit numeric conversion of 'b' from 'byte' to 'int'"><caret>b</warning>;
   }
+
+  void ridiculous() {
+    char x = 2;
+    <warning descr="Implicit numeric conversion of result value from 'double' to 'char'">x</warning> *= 3.1;
+  }
 }

@@ -6,6 +6,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.ide.AssertiveRepaintManager;
 import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
@@ -494,6 +495,7 @@ public final class StartupUtil {
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @NotNull
   private static Logger setupLogger() {
     Logger.setFactory(new LoggerFactory());
@@ -503,8 +505,8 @@ public final class StartupUtil {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
     if (SystemProperties.getBooleanProperty("intellij.log.stdout", false)) {
-      System.setOut(new PrintStreamLogger("STDOUT"));
-      System.setErr(new PrintStreamLogger("STDERR"));
+      System.setOut(new PrintStreamLogger("STDOUT", System.out));
+      System.setErr(new PrintStreamLogger("STDERR", System.err));
     }
     return log;
   }
@@ -660,6 +662,9 @@ public final class StartupUtil {
     // frame buffer content without the usual repainting, even when the EDT is blocked.
     if (Patches.REPAINT_MANAGER_LEAK) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
+    }
+    else if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
+      RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 
     if (SystemInfo.isXWindow) {

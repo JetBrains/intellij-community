@@ -1,5 +1,5 @@
 class C {
-  String x = """
-      "<caret>"
-      """;
+    String x = """
+            "<caret>"
+            """;
 }

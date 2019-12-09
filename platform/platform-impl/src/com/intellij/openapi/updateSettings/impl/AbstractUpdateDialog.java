@@ -20,7 +20,7 @@ import java.awt.*;
  * @author anna
  */
 public abstract class AbstractUpdateDialog extends DialogWrapper {
-  private final boolean myEnableLink;
+  protected final boolean myEnableLink;
 
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);

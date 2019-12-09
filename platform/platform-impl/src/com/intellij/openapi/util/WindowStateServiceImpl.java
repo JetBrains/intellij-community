@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.FrameState;
 import com.intellij.ui.ScreenUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -18,12 +17,10 @@ import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-/**
- * @author Sergey.Malenkov
- */
-abstract class WindowStateServiceImpl extends WindowStateService implements PersistentStateComponent<Element> {
+abstract class WindowStateServiceImpl extends WindowStateService implements ModificationTracker, PersistentStateComponent<Element> {
   @NonNls private static final String KEY = "key";
   @NonNls private static final String STATE = "state";
   @NonNls private static final String MAXIMIZED = "maximized";
@@ -32,25 +29,30 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   @NonNls private static final String SCREEN = "screen";
 
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
+  private final AtomicLong myModificationCount = new AtomicLong();
   private final Map<String, Runnable> myRunnableMap = new TreeMap<>();
-  private final Map<String, WindowState> myStateMap = new TreeMap<>();
+  private final Map<String, CachedState> myStateMap = new TreeMap<>();
 
   protected WindowStateServiceImpl(@Nullable Project project) {
     super(project);
   }
 
   @Override
-  public final Element getState() {
+  public long getModificationCount() {
     synchronized (myRunnableMap) {
       myRunnableMap.values().forEach(Runnable::run);
-      myRunnableMap.clear();
     }
+    return myModificationCount.get();
+  }
+
+  @Override
+  public final Element getState() {
     Element element = new Element(STATE);
     synchronized (myStateMap) {
-      for (Map.Entry<String, WindowState> entry : myStateMap.entrySet()) {
+      for (Map.Entry<String, CachedState> entry : myStateMap.entrySet()) {
         String key = entry.getKey();
         if (key != null) {
-          WindowState state = entry.getValue();
+          CachedState state = entry.getValue();
           Element child = new Element(STATE);
           if (state.myLocation != null) {
             JDOMUtil.setLocation(child, state.myLocation);
@@ -94,7 +96,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         Dimension size = JDOMUtil.getSize(child);
         if (location == null && size == null) continue; // unexpected value
 
-        WindowState state = new WindowState();
+        CachedState state = new CachedState();
         state.myLocation = location;
         state.mySize = size;
         state.myMaximized = Boolean.parseBoolean(child.getAttributeValue(MAXIMIZED));
@@ -107,49 +109,32 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   @Override
-  public boolean loadStateFor(Object object, @NotNull String key, @NotNull Component component) {
+  public WindowState getStateFor(@Nullable Project project, @NotNull String key, @NotNull Window window) {
     synchronized (myRunnableMap) {
-      ComponentState state = ComponentState.getState(component);
-      Runnable runnable = myRunnableMap.put(key, () -> {
-        state.uninstall(component);
-        Rectangle bounds = state.getBounds();
-        putFor(object, key,
-               apply(Rectangle::getLocation, bounds), bounds != null,
-               apply(Rectangle::getSize, bounds), bounds != null,
-               Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
-               state.isFullScreen(), true);
+      WindowStateBean state = WindowStateAdapter.getState(window);
+      Runnable runnable = myRunnableMap.put(key, new Runnable() {
+        private long myModificationCount = state.getModificationCount();
+
+        @Override
+        public void run() {
+          long newModificationCount = state.getModificationCount();
+          if (myModificationCount != newModificationCount) {
+            myModificationCount = newModificationCount;
+            Point location = state.getLocation();
+            Dimension size = state.getSize();
+            putFor(project, key,
+                   location, location != null,
+                   size, size != null,
+                   Frame.MAXIMIZED_BOTH == state.getExtendedState(), true,
+                   state.isFullScreen(), true);
+          }
+        }
       });
       if (runnable != null) {
         runnable.run();
       }
     }
-    WindowState state = getFor(object, key, WindowState.class);
-    if (state == null) return false;
-    Frame frame = component instanceof Frame ? (Frame)component : null;
-    if (frame != null && Frame.NORMAL != frame.getExtendedState()) {
-      frame.setExtendedState(Frame.NORMAL);
-    }
-    Rectangle bounds = component.getBounds();
-    if (state.myLocation != null) {
-      bounds.setLocation(state.myLocation);
-    }
-    if (state.mySize != null) {
-      bounds.setSize(state.mySize);
-    }
-    if (bounds.isEmpty()) {
-      bounds.setSize(component.getPreferredSize());
-    }
-    component.setBounds(bounds);
-    if (frame != null && state.myMaximized) {
-      frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-    }
-    return true;
-  }
-
-  @Override
-  public void saveStateFor(Object object, @NotNull String key, @NotNull Component component) {
-    FrameState state = FrameState.getFrameState(component);
-    putFor(object, key, state.getLocation(), true, state.getSize(), true, state.isMaximized(), true, state.isFullScreen(), true);
+    return getFor(project, key, WindowState.class);
   }
 
   @Override
@@ -189,7 +174,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     if (UISettings.getInstance().getPresentationMode()) key += ".inPresentationMode"; // separate key for the presentation mode
     GraphicsConfiguration configuration = getConfiguration(object);
     synchronized (myStateMap) {
-      WindowState state = myStateMap.get(getAbsoluteKey(configuration, key));
+      CachedState state = myStateMap.get(getAbsoluteKey(configuration, key));
       if (isVisible(state)) return state.get(type, null);
 
       state = myStateMap.get(key);
@@ -208,20 +193,21 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       put(getAbsoluteKey(configuration, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
 
-      WindowState state = put(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      CachedState state = put(key, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (state != null) state.updateScreenRectangle(configuration); // update a screen to adjust stored state
     }
+    myModificationCount.getAndIncrement();
   }
 
   @Nullable
-  private WindowState put(@NotNull String key,
+  private CachedState put(@NotNull String key,
                           @Nullable Point location, boolean locationSet,
                           @Nullable Dimension size, boolean sizeSet,
                           boolean maximized, boolean maximizedSet,
                           boolean fullScreen, boolean fullScreenSet) {
-    WindowState state = myStateMap.get(key);
+    CachedState state = myStateMap.get(key);
     if (state == null) {
-      state = new WindowState();
+      state = new CachedState();
       if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) return null;
       myStateMap.put(key, state);
       return state;
@@ -284,7 +270,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
            : ScreenUtil.getMainScreenBounds();
   }
 
-  private static final class WindowState {
+  private static final class CachedState {
     private Rectangle myScreen;
     private Point myLocation;
     private Dimension mySize;
@@ -309,11 +295,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (type == Rectangle.class) return location == null || size == null ? null : (T)new Rectangle(location, size);
       if (type != WindowState.class) throw new IllegalArgumentException();
       // copy a current state
-      WindowState state = new WindowState();
-      state.myLocation = location;
-      state.mySize = size;
-      state.myMaximized = myMaximized;
-      state.myFullScreen = myFullScreen;
+      WindowStateBean state = new WindowStateBean();
+      state.setLocation(location);
+      state.setSize(size);
+      state.setExtendedState(myMaximized ? Frame.MAXIMIZED_BOTH : Frame.NORMAL);
+      state.setFullScreen(myFullScreen);
       return (T)state;
     }
 
@@ -348,7 +334,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     }
   }
 
-  private static boolean isVisible(WindowState state) {
+  private static boolean isVisible(CachedState state) {
     return state != null && isVisible(state.myLocation, state.mySize);
   }
 

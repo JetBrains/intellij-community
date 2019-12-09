@@ -82,12 +82,17 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testParamValueCompletion() {
     configureByFile("ParamValue0.java")
-    assertStringItems("a", "b", "c")
+    assertStringItems("a", "b", "c", "<A>", "<B>")
   }
 
   void testParamValueWithPrefixCompletion() {
     configureByFile("ParamValue1.java")
     assertStringItems("a1", "a2", "a3")
+  }
+
+  void testTypeParamValueWithPrefix() {
+    configureByTestName()
+    assertStringItems("<A>", "<B>")
   }
 
   void testDescribedParameters() {
@@ -244,6 +249,20 @@ class Foo {
     myFixture.type('\n intParam\n@para')
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'param', 'param param2'
+  }
+
+  void "test suggest type param names"() {
+    myFixture.configureByText "a.java", '''
+/**
+* @par<caret>
+*/
+class Foo<T,V>{}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param <T>', 'param <V>'
+    myFixture.type('\n <T>\n@para')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'param', 'param <V>'
   }
 
   void "test fqns in package info"() {

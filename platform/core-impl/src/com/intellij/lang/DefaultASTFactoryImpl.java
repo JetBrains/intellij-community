@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultASTFactoryImpl extends ASTFactory implements DefaultASTFactory {
   @Override
   @NotNull
-  public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
+  public LazyParseableElement createLazy(@NotNull final ILazyParseableElementType type, final CharSequence text) {
     if (type instanceof IFileElementType) {
       return new FileElement(type, text);
     }
@@ -23,7 +23,7 @@ public class DefaultASTFactoryImpl extends ASTFactory implements DefaultASTFacto
 
   @Override
   @NotNull
-  public CompositeElement createComposite(final IElementType type) {
+  public CompositeElement createComposite(@NotNull final IElementType type) {
     if (type instanceof IFileElementType) {
       return new FileElement(type, null);
     }

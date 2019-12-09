@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,7 +37,7 @@ import java.util.Collection;
 public class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof PsiDirectory) {
+    if (element instanceof PsiDirectory && shouldIndicatePythonPackages(element)) {
       final PsiDirectory directory = (PsiDirectory)element;
       // Preserve original icons for excluded directories and source roots
       if (!isSpecialDirectory(directory) && isImportablePackage(directory)) {
@@ -43,6 +45,14 @@ public class PyDirectoryIconProvider extends IconProvider {
       }
     }
     return null;
+  }
+
+  private static boolean shouldIndicatePythonPackages(@NotNull PsiElement moduleAnchor) {
+    if (PlatformUtils.isPyCharm()) {
+      return true;
+    }
+    final Module module = ModuleUtilCore.findModuleForPsiElement(moduleAnchor);
+    return module != null && PythonSdkUtil.findPythonSdk(module) != null;
   }
 
   private static boolean isSpecialDirectory(@NotNull PsiDirectory directory) {

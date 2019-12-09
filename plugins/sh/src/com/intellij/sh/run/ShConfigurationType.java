@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.run;
 
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.project.Project;
@@ -29,5 +30,9 @@ public class ShConfigurationType extends SimpleConfigurationType {
       configuration.setScriptWorkingDirectory(projectPath);
     }
     return configuration;
+  }
+
+  public static ShConfigurationType getInstance() {
+    return ConfigurationTypeUtil.findConfigurationType(ShConfigurationType.class);
   }
 }

@@ -97,23 +97,6 @@ public class JavacMain {
         return false;
       }
 
-      if (!classpath.isEmpty()) {
-        try {
-          fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
-          if (!usingJavac &&
-              isAnnotationProcessingEnabled(_options) &&
-              !_options.contains("-processorpath") &&
-              (javacBefore9 || !_options.contains("--processor-module-path"))) {
-            // for non-javac file manager ensure annotation processor path defaults to classpath
-            fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
-          }
-        }
-        catch (IOException e) {
-          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-          return false;
-        }
-      }
-
       if (!platformClasspath.isEmpty()) {
         try {
           fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -148,6 +131,24 @@ public class JavacMain {
                 return !outputDirToRoots.containsKey(file);
               }
             }));
+          }
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
+      }
+
+      if (!classpath.isEmpty()) {
+        // because module path has priority if present, initialize classpath after the module path
+        try {
+          fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+          if (!usingJavac &&
+              isAnnotationProcessingEnabled(_options) &&
+              !_options.contains("-processorpath") &&
+              (javacBefore9 || (!_options.contains("--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
+            // for non-javac file manager ensure annotation processor path defaults to classpath
+            fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
           }
         }
         catch (IOException e) {

@@ -135,8 +135,8 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
   override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
     prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
 
-  override fun buildIgnoreEntryContent(ignoreFileRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
-    "/${FileUtil.getRelativePath(ignoreFileRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
+  override fun buildIgnoreEntryContent(ignoreEntryRoot: VirtualFile, ignoredFileDescriptor: IgnoredFileDescriptor) =
+    "/${FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"

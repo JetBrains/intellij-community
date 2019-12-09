@@ -166,7 +166,7 @@
     </action>
 
     <group id="Hg.Ignore.File" class="org.zmlx.hg4idea.ignore.actions.HgIgnoreFileActionGroup">
-      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="hg4idea.add"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
       <add-to-group group-id="hg4idea.file.menu" anchor="after" relative-to-action="hg4idea.add"/>
       <add-to-group group-id="Unversioned.Files.Dialog.Popup" anchor="after" relative-to-action="$Delete"/>
     </group>

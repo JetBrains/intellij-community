@@ -126,6 +126,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
+  public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
+
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
 
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;

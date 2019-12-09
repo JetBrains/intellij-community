@@ -107,6 +107,7 @@ class JavaPsiIndexConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
     override fun performAction(model: Model) {
       PostponedFormatting.performAction(model)
       IdeaTestUtil.setModuleLanguageLevel(model.fixture.module, level, model.fixture.testRootDisposable)
+      model.refs.clear()
     }
   }
 

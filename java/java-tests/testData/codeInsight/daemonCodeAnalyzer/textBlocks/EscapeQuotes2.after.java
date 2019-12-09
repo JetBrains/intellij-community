@@ -1,6 +1,6 @@
 class C {
-  String x = """
-      "\"
-       target\""
-      """;
+    String x = """
+            "\"
+             target\""
+            """;
 }

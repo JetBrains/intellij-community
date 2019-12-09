@@ -67,6 +67,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
 
     XmlEmbeddmentHandler value = new XmlEmbeddmentHandler();
     registerHandler(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, value);
+    registerHandler(XmlTokenType.XML_START_TAG_START, value);
     registerHandler(XmlTokenType.XML_DATA_CHARACTERS, value);
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS, value);
   }
@@ -112,16 +113,10 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
               LOG.assertTrue(highlighter != null, ourStyleFileType);
               styleLexer = highlighter.getHighlightingLexer();
             }
-            else {
-              styleLexer = null;
-            }
             styleLexers.put(styleType, styleLexer);
           }
           else if (hasSeenAttribute()) {
-            if (ourStyleFileType == null) {
-              styleLexer = null;
-            }
-            else {
+            if (ourStyleFileType != null) {
               SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ourStyleFileType, null, null);
               LOG.assertTrue(highlighter != null, ourStyleFileType);
               styleLexer = highlighter.getHighlightingLexer();
@@ -265,6 +260,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       final IElementType tokenType = lexer.getTokenType();
 
       if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && hasSeenAttribute() ||
+          tokenType == XmlTokenType.XML_START_TAG_START && hasSeenTag() ||
           tokenType == XmlTokenType.XML_DATA_CHARACTERS && hasSeenTag() ||
           tokenType == XmlTokenType.XML_COMMENT_CHARACTERS && hasSeenTag()
         ) {

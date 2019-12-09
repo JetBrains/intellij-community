@@ -290,6 +290,14 @@ public class PyUtil {
     return element instanceof PyTargetExpression && ScopeUtil.getScopeOwner(element) instanceof PyClass;
   }
 
+  public static boolean hasIfNameEqualsMain(@NotNull PyFile file) {
+    final PyIfStatement dunderMain = SyntaxTraverser.psiApi()
+      .children(file)
+      .filterMap(psi -> psi instanceof PyIfStatement ? ((PyIfStatement)psi) : null)
+      .find(ifStatement -> isIfNameEqualsMain(ifStatement));
+    return dunderMain != null;
+  }
+
   public static boolean isIfNameEqualsMain(PyIfStatement ifStatement) {
     final PyExpression condition = ifStatement.getIfPart().getCondition();
     return isNameEqualsMain(condition);

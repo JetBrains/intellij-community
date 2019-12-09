@@ -79,8 +79,9 @@ public class UpdateHighlightersUtil {
                                                   @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!accept(project, info))
+    if (!accept(project, info)) {
       return;
+    }
 
     if (isFileLevelOrGutterAnnotation(info)) return;
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
@@ -140,9 +141,10 @@ public class UpdateHighlightersUtil {
     setHighlightersInRange(project, document, range, colorsScheme, new ArrayList<>(highlights), (MarkupModelEx)markup, group);
   }
 
-  private static ArrayList<HighlightInfo> applyPostFilter(@NotNull Project project,
-                                                          @NotNull List<? extends HighlightInfo> highlightInfos) {
-    ArrayList<HighlightInfo> result = new ArrayList<>();
+  @NotNull
+  private static List<HighlightInfo> applyPostFilter(@NotNull Project project,
+                                                     @NotNull List<? extends HighlightInfo> highlightInfos) {
+    List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
     for (HighlightInfo info : highlightInfos) {
       if (accept(project, info))
         result.add(info);
@@ -161,7 +163,7 @@ public class UpdateHighlightersUtil {
                                           final int endOffset,
                                           @NotNull final ProperTextRange priorityRange,
                                           final int group) {
-    ArrayList<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
+    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
@@ -256,7 +258,7 @@ public class UpdateHighlightersUtil {
         return true;
       });
 
-    final ArrayList<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
+    List<HighlightInfo> filteredInfos = applyPostFilter(project, infos);
     ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NODUPS);
     final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>(10);
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);

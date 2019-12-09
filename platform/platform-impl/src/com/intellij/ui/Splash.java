@@ -84,7 +84,9 @@ public final class Splash extends Window {
 
   @Override
   public void paint(Graphics g) {
-    StartupUiUtil.drawImage(g, myImage, 0, 0, null);
+    if (myProgress < 0.10 || myProgressSlideImages.isEmpty())
+      StartupUiUtil.drawImage(g, myImage, 0, 0, null);
+
     paintProgress(g);
   }
 

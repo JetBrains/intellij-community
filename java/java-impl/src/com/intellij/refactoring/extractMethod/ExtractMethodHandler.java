@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -226,6 +227,14 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+        }
+        return null;
+      }
+      if (element instanceof PsiStatement && PsiTreeUtil.getParentOfType(element, PsiClass.class) == null) {
+        if (showErrorMessages) {
+          String message = RefactoringBundle
+            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.EXTRACT_METHOD);
         }
         return null;

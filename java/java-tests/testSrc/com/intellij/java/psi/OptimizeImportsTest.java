@@ -16,9 +16,16 @@
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.formatting.fileSet.NamedScopeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.ServiceContainerUtil;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -70,6 +77,21 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     descriptor.setPattern("file:*.java");
     temp.getExcludedFiles().addDescriptor(descriptor);
     CodeStyle.doWithTemporarySettings(getProject(), temp, () -> doTest());
+  }
+
+  public void testPerFileImportSettings() {
+    CodeStyle.dropTemporarySettings(getProject());
+    MockCodeStyleSettingsModifier modifier = new MockCodeStyleSettingsModifier(
+      getTestName(false) + ".java",
+      settings -> {
+        JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+        javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+        javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+        javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+        javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      });
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), CodeStyleSettingsModifier.EP_NAME, modifier, getTestRootDisposable());
+    doTest();
   }
 
   private void doTest() {

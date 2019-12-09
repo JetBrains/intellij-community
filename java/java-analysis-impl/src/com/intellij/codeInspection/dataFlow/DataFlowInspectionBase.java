@@ -701,7 +701,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportFailingCasts(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    for (PsiTypeCastExpression typeCast : visitor.getFailingCastExpressions()) {
+    visitor.getFailingCastExpressions().forKeyValue((typeCast, alwaysFails) -> {
       PsiExpression operand = typeCast.getOperand();
       PsiTypeElement castType = typeCast.getCastType();
       assert castType != null;
@@ -710,8 +710,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (reporter.isOnTheFly()) {
         fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       }
-      reporter.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-    }
+      String message = alwaysFails ?
+                       InspectionsBundle.message("dataflow.message.cce.always", operand.getText()) :
+                       InspectionsBundle.message("dataflow.message.cce", operand.getText());
+      reporter.registerProblem(castType, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    });
   }
 
   private void handleBranchingInstruction(ProblemReporter reporter,

@@ -50,8 +50,8 @@
             description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
-    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
-            description="Change commit message" />
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Edit Commit Message..."
+            description="Change commit message via reword option of git rebase or amend" />
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
             description="Create a fixup commit"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
@@ -67,6 +67,7 @@
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
               text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+      <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
@@ -183,7 +184,7 @@
     </group>
 
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
-            text="Test Git login dialog" internal="true"/>
+            text="Test Git Login Dialog" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -269,6 +270,18 @@
     <lang.braceMatcher language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
     <lang.commenter language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
      <!--END Git ignore lang-->
+
+    <!-- Git exclude lang -->
+    <fileType language="GitExclude" fileNames="exclude" fieldName="INSTANCE" name="GitExclude file" implementationClass="git4idea.ignore.lang.GitExcludeFileType"/>
+    <lang.fileViewProviderFactory language="GitExclude"
+                                  implementationClass="git4idea.ignore.lang.GitExcludeViewProviderFactory"/>
+    <lang.parserDefinition language="GitExclude"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="GitExclude"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="GitExclude" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+     <!--END Git exclude lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />

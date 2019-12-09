@@ -1450,4 +1450,19 @@ public class PyResolveTest extends PyResolveTestCase {
       }
     );
   }
+
+  // PY-38220
+  public void testAssignedQNameForTargetInitializedWithSubscriptionExpression() {
+    final PyFile file = (PyFile)myFixture.configureByText(PythonFileType.INSTANCE, "import a\nt = a.b[c]");
+    assertNull(file.findTopLevelAttribute("t").getAssignedQName());
+  }
+
+  // PY-38220
+  public void testResolvingAssignedValueForTargetInitializedWithSubscriptionExpression() {
+    final PyFile file = (PyFile)myFixture.configureByText(PythonFileType.INSTANCE, "import a\nt = a.b[c]");
+    myFixture.addFileToProject("a.py", "b = {}  # type: dict"); // specify type of `b` so `__getitem__` could be resolved
+
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    assertEmpty(file.findTopLevelAttribute("t").multiResolveAssignedValue(PyResolveContext.noImplicits().withTypeEvalContext(context)));
+  }
 }

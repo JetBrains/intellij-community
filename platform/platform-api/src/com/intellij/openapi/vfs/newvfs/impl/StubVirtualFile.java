@@ -20,195 +20,199 @@ public class StubVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public byte[] contentsToByteArray() throws IOException {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public VirtualFile[] getChildren() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public InputStream getInputStream() throws IOException {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public long getLength() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public String getName() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public VirtualFile getParent() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public String getPath() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public long getTimeStamp() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public String getUrl() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public boolean isDirectory() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public boolean isValid() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public boolean isWritable() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setWritable(boolean writable) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull String name) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public VirtualFile createChildData(Object requestor, @NotNull String name) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void delete(Object requestor) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void move(Object requestor, @NotNull VirtualFile newParent) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public VirtualFile copy(Object requestor, @NotNull VirtualFile newParent, @NotNull String copyName) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   protected void storeCharset(Charset charset) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setCharset(Charset charset) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setCharset(Charset charset, @Nullable Runnable whenChanged) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setCharset(Charset charset, @Nullable Runnable whenChanged, boolean fireEventsWhenChanged) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void refresh(boolean asynchronous, boolean recursive) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setBOM(@Nullable byte[] BOM) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setDetectedLineSeparator(@Nullable String separator) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public void setPreloadedContentHint(byte[] preloadedContentHint) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @NotNull
   @Override
   public <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   protected void clearUserData() {
-    throw new UnsupportedOperationException();
+    throw unsupported();
   }
 
   @Override
   protected void setUserMap(@NotNull KeyFMap map) {
-    throw new UnsupportedOperationException();
+    throw unsupported();
+  }
+
+  private UnsupportedOperationException unsupported() {
+    return new UnsupportedOperationException(toString());
   }
 }

@@ -2,6 +2,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -13,23 +14,35 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Consumer;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -56,7 +69,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(@NotNull PsiTryStatement statement) {
+      public void visitTryStatement(PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiCatchSection[] catchSections = statement.getCatchSections();
         for (final PsiCatchSection section : catchSections) {
@@ -87,19 +100,36 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         if (block == null) return;
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
         if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
+          RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
+          AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
-                                 new EmptyCatchBlockFix(), fix);
+                                 renameFix, addBodyFix, fix);
         }
         else if (!VariableAccessUtils.variableIsUsed(parameter, section)) {
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   new RenameFix("ignored", false, false), fix);
+                                   new RenameFix(generateName(block), false, false), fix);
           }
         }
         else if (mayIgnoreVMException(parameter, block)) {
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.vm.ignored.message"), fix);
         }
+      }
+
+      @Nullable
+      private AddCatchBodyFix getAddBodyFix(PsiCodeBlock block) {
+        if (ControlFlowUtils.isEmpty(block, true, true)) {
+          try {
+            FileTemplate template =
+              FileTemplateManager.getInstance(holder.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+            if (!StringUtil.isEmptyOrSpaces(template.getText())) {
+              return new AddCatchBodyFix();
+            }
+          }
+          catch (IllegalStateException ignored) { }
+        }
+        return null;
       }
 
       /**
@@ -142,6 +172,11 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
+  @NotNull
+  private static String generateName(PsiCodeBlock block) {
+    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
+  }
+
   static class IgnoredExceptionVisitor extends SideEffectVisitor {
     private final @NotNull PsiParameter myParameter;
     private final @NotNull PsiCodeBlock myBlock;
@@ -182,12 +217,64 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
-  private static class EmptyCatchBlockFix implements LocalQuickFix {
+  private static class AddCatchBodyFix implements LocalQuickFix, LowPriorityAction {
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("inspection.empty.catch.block.generate.body");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiCatchSection catchSection = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiCatchSection.class);
+      if (catchSection == null) return;
+      PsiParameter parameter = catchSection.getParameter();
+      if (parameter == null) return;
+      String parameterName = parameter.getName();
+      if (parameterName == null) return;
+      FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+
+      Properties props = FileTemplateManager.getInstance(project).getDefaultProperties();
+      props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, parameterName);
+      props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, parameter.getType().getCanonicalText());
+      PsiDirectory directory = catchSection.getContainingFile().getContainingDirectory();
+      if (directory != null) {
+        JavaTemplateUtil.setPackageNameAttribute(props, directory);
+      }
+
+      try {
+        PsiCodeBlock block =
+          PsiElementFactory.getInstance(project).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+        Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
+      }
+      catch (ProcessCanceledException ce) {
+        throw ce;
+      }
+      catch (Exception e) {
+        throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+      }
+    }
+  }
+
+  private static class RenameCatchParameterFix implements LocalQuickFix {
+    private final String myName;
+
+    private RenameCatchParameterFix(String name) {
+      myName = name;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", myName);
+    }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored");
+      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", IGNORED_PARAMETER_NAME);
     }
 
     @Override
@@ -201,7 +288,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       final PsiIdentifier identifier = parameter.getNameIdentifier();
       if (identifier == null) return;
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiIdentifier newIdentifier = factory.createIdentifier(IGNORED_PARAMETER_NAME);
+      final PsiIdentifier newIdentifier = factory.createIdentifier(myName);
       identifier.replace(newIdentifier);
     }
   }

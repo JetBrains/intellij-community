@@ -5,11 +5,14 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.DuplicateMessageAware
 import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.impl.BuildIssueEventImpl
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.util.text.nullize
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
+import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
 import java.io.File
 import java.util.function.Consumer
 
@@ -57,7 +60,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       if (nextLine.isBlank()) break
       description.appendln(nextLine)
       val trimStart = nextLine.trimStart()
-      if(trimStart.startsWith("> ")) {
+      if (trimStart.startsWith("> ")) {
         reason = trimStart.substringAfter("> ").trimEnd('.')
       }
       when {
@@ -66,26 +69,81 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       }
     }
     // compilation errors should be added by the respective compiler output parser
-    if(reason == "Compilation failed; see the compiler error output for details" ||
-       reason == "Compilation error. See log for more details" ||
-       reason == "Script compilation error:" ||
-       reason.contains("compiler failed")) return false
+    if (reason == "Compilation failed; see the compiler error output for details" ||
+        reason == "Compilation error. See log for more details" ||
+        reason == "Script compilation error:" ||
+        reason.contains("compiler failed")) return false
 
     // JDK compatibility issues should be handled by org.jetbrains.plugins.gradle.issue.IncompatibleGradleJdkIssueChecker
-    if(reason.startsWith("Could not create service of type ") && reason.contains(" using BuildScopeServices.")) return false
+    if (reason.startsWith("Could not create service of type ") && reason.contains(" using BuildScopeServices.")) return false
 
     if (location != null && filter != null) {
-      val filePosition = FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0)
+      val errorText = description.toString()
+      val reasonAndFilePosition = getReasonAndFilePosition(reason, errorText, filter)
+      reason = reasonAndFilePosition.first
+      val filePosition = reasonAndFilePosition.second
       messageConsumer.accept(object : FileMessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, description.toString(), filePosition), DuplicateMessageAware {}
+        parentId, MessageEvent.Kind.ERROR, null, reason, errorText, filePosition), DuplicateMessageAware {}
       )
     }
     else {
-      messageConsumer.accept(object : MessageEventImpl(
-        parentId, MessageEvent.Kind.ERROR, null, reason, description.toString()), DuplicateMessageAware {}
-      )
+      val unresolvedMessageEvent = checkUnresolvedDependencyError(reason, description, parentId)
+      if (unresolvedMessageEvent != null) {
+        messageConsumer.accept(unresolvedMessageEvent)
+      }
+      else {
+        messageConsumer.accept(object : MessageEventImpl(parentId, MessageEvent.Kind.ERROR, null, reason,
+                                                         description.toString()), DuplicateMessageAware {})
+      }
     }
     return true
+  }
+
+  private fun getReasonAndFilePosition(reason: String, errorText: String, filter: GradleConsoleFilter): Pair<String, FilePosition> {
+    if (reason == "startup failed:") {
+      val startupError = getStartupErrorReasonAndFilePosition(errorText, filter)
+      if (startupError != null) return startupError
+    }
+
+    return Pair(reason, FilePosition(File(filter.filteredFileName), filter.filteredLineNumber - 1, 0))
+  }
+
+  private fun getStartupErrorReasonAndFilePosition(errorText: String, filter: GradleConsoleFilter): Pair<String, FilePosition>? {
+    val locationLine = errorText.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return null
+    val failedStartupReason = locationLine.substringAfter("'${filter.filteredFileName}': ${filter.filteredLineNumber}: ",
+                                                          "").nullize()?.substringBeforeLast('@') ?: return null
+    val locationPart = locationLine.substringAfterLast('@')
+    val line: Int
+    val column: Int
+
+    val values = Regex(" line (\\d+), column (\\d+)\\.").matchEntire(locationPart)?.groupValues
+    if (values != null) {
+      line = values[1].toInt() - 1
+      column = values[2].toInt()
+    } else {
+      line = filter.filteredLineNumber - 1
+      column = 0
+    }
+    val filePosition = FilePosition(File(filter.filteredFileName), line, column)
+    return Pair(failedStartupReason, filePosition)
+  }
+
+  private fun checkUnresolvedDependencyError(reason: String, description: StringBuilder, parentId: Any): BuildEvent? {
+    val noCachedVersionPrefix = "No cached version of "
+    val couldNotFindPrefix = "Could not find "
+    val cannotResolvePrefix = "Cannot resolve external dependency "
+    val cannotDownloadPrefix = "Could not download "
+    val prefix = when {
+                   reason.startsWith(noCachedVersionPrefix) -> noCachedVersionPrefix
+                   reason.startsWith(couldNotFindPrefix) -> couldNotFindPrefix
+                   reason.startsWith(cannotResolvePrefix) -> cannotResolvePrefix
+                   reason.startsWith(cannotDownloadPrefix) -> cannotDownloadPrefix
+                   else -> null
+                 } ?: return null
+    val indexOfSuffix = reason.indexOf(" available for offline mode")
+    val dependencyName = if (indexOfSuffix > 0) reason.substring(prefix.length, indexOfSuffix) else reason.substring(prefix.length)
+    val unresolvedDependencyIssue = UnresolvedDependencyBuildIssue(dependencyName, description.toString(), indexOfSuffix > 0)
+    return BuildIssueEventImpl(parentId, unresolvedDependencyIssue, MessageEvent.Kind.ERROR)
   }
 }
 

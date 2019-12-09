@@ -4,9 +4,9 @@ class TextBlockMigration {
 
   void concatenation() {
     String foobarbaz = """
-                       foo
-                       bar
-                       baz""";
+            foo
+            bar
+            baz""";
   }
 
 }

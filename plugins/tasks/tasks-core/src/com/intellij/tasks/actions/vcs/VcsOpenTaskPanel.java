@@ -170,9 +170,9 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
 
   @NotNull
   private String getBranchName(Task task) {
-    String branchName = myVcsTaskHandler != null
-               ? myVcsTaskHandler.cleanUpBranchName(myTaskManager.constructDefaultBranchName(task))
-               : myTaskManager.suggestBranchName(task);
+    String branchName = myTaskManager.suggestBranchName(task, StringUtil.notNullize(TaskSettings.getInstance().REPLACE_SPACES));
+    if (myVcsTaskHandler != null)
+      myVcsTaskHandler.cleanUpBranchName(branchName);
     return TaskSettings.getInstance().LOWER_CASE_BRANCH ? StringUtil.toLowerCase(branchName) : branchName;
   }
 

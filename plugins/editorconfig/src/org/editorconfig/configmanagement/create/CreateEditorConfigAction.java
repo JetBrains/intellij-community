@@ -93,7 +93,20 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
       presentation.setVisible(false);
       return;
     }
+    IdeView view = getIdeView(e);
+    if (view != null) {
+      presentation.setVisible(isAvailableFor(view.getDirectories()));
+    }
     presentation.setIcon(AllIcons.Nodes.Editorconfig);
+  }
+
+  private static boolean isAvailableFor(@NotNull PsiDirectory[] dirs) {
+    for (PsiDirectory dir : dirs) {
+      if (dir.getVirtualFile().getFileSystem().isReadOnly()) {
+        return false;
+      }
+    }
+    return dirs.length > 0;
   }
 
   @Override

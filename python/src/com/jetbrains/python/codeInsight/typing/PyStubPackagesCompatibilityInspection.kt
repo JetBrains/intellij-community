@@ -13,8 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
-import com.jetbrains.python.codeInsight.typing.PyStubPackagesInstallingStatus
-import com.jetbrains.python.codeInsight.typing.STUBS_SUFFIX
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyInterpreterInspection

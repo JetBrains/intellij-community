@@ -31,6 +31,7 @@
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
+    <injectionConfig config="resources/assertJ.xml"/>
     <injectionConfig config="resources/xmlInjections-java.xml"/>
   </extensions>
 </idea-plugin>

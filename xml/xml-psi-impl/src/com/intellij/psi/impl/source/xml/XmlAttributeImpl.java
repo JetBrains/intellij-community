@@ -39,11 +39,12 @@ import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENT
 public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myHC = ourHC++;
 
   //cannot be final because of clone implementation
   @Nullable
-  private volatile XmlAttributeDelegateImpl myImpl;
+  private volatile XmlAttributeDelegate myImpl;
 
   @Override
   public final int hashCode() {
@@ -54,20 +55,23 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     super(XmlElementType.XML_ATTRIBUTE);
   }
 
+  protected XmlAttributeImpl(@NotNull IElementType elementType) {
+    super(elementType);
+  }
+
   @NotNull
-  private XmlAttributeDelegateImpl getImpl() {
-    XmlAttributeDelegateImpl impl = myImpl;
+  private XmlAttributeDelegate getImpl() {
+    XmlAttributeDelegate impl = myImpl;
     if (impl != null) return impl;
-    impl = new XmlAttributeDelegateImpl(this,
-                                        this::createAttribute,
-                                        this::appendChildToDisplayValue);
+    impl = createDelegate();
     myImpl = impl;
 
     return impl;
   }
 
-  protected XmlAttributeImpl(@NotNull IElementType elementType) {
-    super(elementType);
+  @NotNull
+  protected XmlAttributeDelegate createDelegate() {
+    return new XmlAttributeImplDelegate();
   }
 
   @Override
@@ -93,11 +97,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Override
   public void setValue(@NotNull String valueText) throws IncorrectOperationException {
     getImpl().setValue(valueText);
-  }
-
-  @NotNull
-  protected XmlAttribute createAttribute(@NotNull String valueText, String name) {
-    return XmlElementFactory.getInstance(getProject()).createAttribute(name, valueText, this);
   }
 
   @Override
@@ -147,15 +146,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return valueElement != null ? valueElement.getValue() : null;
   }
 
-
-  protected void appendChildToDisplayValue(@NotNull StringBuilder buffer, @NotNull ASTNode child) {
-    buffer.append(child.getChars());
-  }
-
   @Override
   @Nullable
   public String getDisplayValue() {
-    final XmlAttributeDelegateImpl.VolatileState state = getImpl().getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? null : state.myDisplayText;
   }
 
@@ -172,7 +166,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @NotNull
   @Override
   public TextRange getValueTextRange() {
-    final XmlAttributeDelegateImpl.VolatileState state = getImpl().getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? TextRange.EMPTY_RANGE : state.myValueTextRange;
   }
 
@@ -245,5 +239,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public static String getRealName(@NotNull XmlAttribute attribute) {
     final String name = attribute.getLocalName();
     return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
+  }
+
+  protected class XmlAttributeImplDelegate extends XmlAttributeDelegate {
+
+    public XmlAttributeImplDelegate() {
+      super(XmlAttributeImpl.this);
+    }
   }
 }

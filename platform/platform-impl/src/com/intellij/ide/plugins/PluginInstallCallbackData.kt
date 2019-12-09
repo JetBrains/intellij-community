@@ -8,13 +8,13 @@ import java.io.File
  */
 data class PluginInstallCallbackData(
   val file: File,
-  val pluginDescriptor: IdeaPluginDescriptor,
+  val pluginDescriptor: IdeaPluginDescriptorImpl,
   val restartNeeded: Boolean
 )
 
 data class PendingDynamicPluginInstall(
   val file: File,
-  val pluginDescriptor: IdeaPluginDescriptor
+  val pluginDescriptor: IdeaPluginDescriptorImpl
 )
 
 fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {

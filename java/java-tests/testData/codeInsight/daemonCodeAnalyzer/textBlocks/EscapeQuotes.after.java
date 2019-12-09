@@ -1,5 +1,5 @@
 class C {
-  String empty = """
-      ""\"
-      target""\"<caret>""";
+    String empty = """
+            ""\"
+            target""\"<caret>""";
 }

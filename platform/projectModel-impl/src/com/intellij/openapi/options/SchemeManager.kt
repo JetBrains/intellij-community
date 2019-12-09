@@ -47,7 +47,7 @@ abstract class SchemeManager<T> {
   abstract fun setCurrentSchemeName(schemeName: String?, notify: Boolean)
 
   @JvmOverloads
-  open fun setCurrent(scheme: T?, notify: Boolean = true) {
+  open fun setCurrent(scheme: T?, notify: Boolean = true, processChangeSynchronously: Boolean = false) {
   }
 
   abstract fun removeScheme(scheme: T): Boolean

@@ -137,6 +137,19 @@
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="JumpToNextChange"/>
     </group>
 
+    <group id="GutterMenuBookmarks">
+      <reference ref="ToggleBookmark"/>
+      <reference ref="ToggleBookmarkWithMnemonic"/>
+      <separator/>
+
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
+    </group>
+
+    <group id="popup@BookmarkContextMenu">
+      <reference ref="ToggleBookmark"/>
+      <action id="EditBookmark" class="com.intellij.ide.bookmarks.actions.EditBookmarkAction"/>
+    </group>
+
     <action id="GotoDeclarationOnly" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction"/>
 
     <group id="GoToCodeGroup">
@@ -1007,7 +1020,7 @@
     <group id="ConsoleView.PopupMenu">
       <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
-      <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
+      <action id="ConsoleView.ClearAll" class="com.intellij.execution.actions.ClearConsoleAction"/>
     </group>
 
     <action id="SendEOF" class="com.intellij.execution.actions.EOFAction" text="Send EOF"/>
@@ -1145,11 +1158,7 @@
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"
               text="Stop" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
-      <separator/>
-      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"
-              text="Show Configurations" icon="AllIcons.Actions.ShowAsTree"/>
     </group>
-    <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               text="Edit Configuration" icon="AllIcons.Actions.EditSource"
@@ -1157,9 +1166,6 @@
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
-      <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
-              text="Remove Configuration" icon="AllIcons.General.Remove"
-              use-shortcut-of="$Delete"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
@@ -1211,7 +1217,7 @@
               text="Jump to Services" use-shortcut-of="ShowNavBar"/>
     </group>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction"
-            text="Show Services Tree" icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="RunDashboard.ShowConfigurations"/>
+            text="Show Services Tree" icon="AllIcons.Actions.ShowAsTree"/>
     <group id="RunDashboard.GroupBy" popup="true" text="Configuration" class="com.intellij.ide.actions.NonEmptyActionGroup">
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"
               text="Type"/>

@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.stub.XmlAttributeStubImpl;
 import com.intellij.psi.stubs.IStubElementType;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +16,6 @@ public class XmlStubBasedAttribute extends XmlStubBasedAttributeBase<XmlAttribut
 
   public XmlStubBasedAttribute(@NotNull ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public PsiElement getContext() {
-    // Using stubs for getting context require stubbed tags
-    return super.getParent();
   }
 
   @NotNull

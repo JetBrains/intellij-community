@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +94,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Nullable
   @Override
   protected JPanel createSouthAdditionalPanel() {
-    return createOptionsPanel();
+    return createSouthOptionsPanel();
   }
 
   @Override
@@ -104,16 +106,38 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = myListPanel;
-    panel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
+    JPanel panel = JBUI.Panels.simplePanel(0, 2)
+      .addToCenter(myListPanel)
+      .addToBottom(createOptionsPanel());
+    myListPanel.setPreferredSize(new JBDimension(CENTER_PANEL_WIDTH, CENTER_PANEL_HEIGHT));
     return panel;
   }
 
   @NotNull
   protected JPanel createOptionsPanel() {
+    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) {
+      @Override
+      public Component add(Component comp) {
+        JPanel wrapperPanel = new BorderLayoutPanel().addToCenter(comp);
+        wrapperPanel.setBorder(JBUI.Borders.empty(5, 15, 0, 0));
+        return super.add(wrapperPanel);
+      }
+    };
+    for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
+      if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.DEFAULT) {
+        optionsPanel.add(panel);
+      }
+    }
+    return optionsPanel;
+  }
+
+  @NotNull
+  private JPanel createSouthOptionsPanel() {
     JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %dpx 0 0, flowx, gapx %dpx", JBUI.scale(20), JBUI.scale(16))));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
-      optionsPanel.add(panel);
+      if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
+        optionsPanel.add(panel);
+      }
     }
     return optionsPanel;
   }

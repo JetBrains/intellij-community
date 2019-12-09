@@ -1,4 +1,4 @@
-// "Add on demand static import for 'java.util.Collections'" "false"
+// "Add on-demand static import for 'java.util.Collections'" "false"
 package test;
 
 import static java.util.Collections.*;

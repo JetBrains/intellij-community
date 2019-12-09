@@ -20,7 +20,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.Configurable;
@@ -115,8 +116,13 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         chooser.setCopyJavadocVisible(false);
         chooser.selectElements(getPreselection(clazz, dialogMembers));
         header.setChooser(chooser);
-        chooser.show();
 
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          chooser.close(DialogWrapper.OK_EXIT_CODE);
+        }
+        else {
+          chooser.show();
+        }
         if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
             Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(chooser.getSelectedElements());
 
@@ -128,7 +134,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 // decide what to do if the method already exists
                 ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
                 try {
-                    WriteAction.run(() -> worker.execute(selectedMembers, template, resolutionPolicy));
+                    WriteCommandAction.runWriteCommandAction(project, "Generate toString()", null,
+                                                             () -> worker.execute(selectedMembers, template, resolutionPolicy));
                 }
                 catch (Exception e) {
                     GenerationUtil.handleException(project, e);

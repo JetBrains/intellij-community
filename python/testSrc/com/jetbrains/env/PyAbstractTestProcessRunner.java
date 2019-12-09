@@ -17,6 +17,7 @@ package com.jetbrains.env;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -36,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
+import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +54,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigurationParams>
+public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfiguration<?>>
   extends ConfigurationBasedProcessRunner<CONF_T> {
 
   private final int myTimesToRerunFailedTests;
@@ -71,7 +73,13 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
   public PyAbstractTestProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
                                      @NotNull final Class<CONF_T> expectedConfigurationType,
                                      final int timesToRerunFailedTests) {
-    super(configurationFactory, expectedConfigurationType);
+    this(new PyTemplateConfigurationProducerForRunner<>(configurationFactory), expectedConfigurationType, timesToRerunFailedTests);
+  }
+
+  public PyAbstractTestProcessRunner(@NotNull PyConfigurationProducerForRunner<CONF_T> configurationProducer,
+                                     @NotNull final Class<CONF_T> expectedConfigurationType,
+                                     final int timesToRerunFailedTests) {
+    super(expectedConfigurationType, configurationProducer);
     myTimesToRerunFailedTests = timesToRerunFailedTests;
   }
 

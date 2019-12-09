@@ -487,20 +487,22 @@ public class JavaCompletionSorting {
 
     @NotNull
     @Override
-    public Comparable weigh(@NotNull LookupElement element) {
+    public Integer weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod && !FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
-        PsiType type = ((PsiMethod)object).getReturnType();
-        final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
-        if (callItem != null) {
-          type = callItem.getSubstitutor().substitute(type);
-        }
-
-        if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return 1;
-      }
-
-      return 0;
+      return object instanceof PsiMethod &&
+             !FunctionalExpressionCompletionProvider.isFunExprItem(element) &&
+             isTooGeneric(element, (PsiMethod)object) ? 1 : 0;
     }
+  }
+
+  static boolean isTooGeneric(@NotNull LookupElement element, PsiMethod method) {
+    PsiType type = method.getReturnType();
+    JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
+    if (callItem != null) {
+      type = callItem.getSubstitutor().substitute(type);
+    }
+
+    return type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeParameter;
   }
 
   private static class PreferSimple extends LookupElementWeigher {

@@ -251,6 +251,11 @@ public class GitRepositoryFiles {
   }
 
   @NotNull
+  public File getExcludeFile() {
+    return file(myExcludePath);
+  }
+
+  @NotNull
   private static File file(@NotNull String filePath) {
     return new File(FileUtil.toSystemDependentName(filePath));
   }

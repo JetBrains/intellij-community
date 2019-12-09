@@ -21,6 +21,7 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
@@ -38,7 +39,8 @@ import java.util.Arrays;
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
-  public static final String TAB_NAME = "Log";
+  @SuppressWarnings("StaticNonFinalField") //might be change in other IDEs
+  public static String TAB_NAME = "Log";
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
@@ -70,12 +72,13 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (Registry.is("show.log.as.editor.tab")) {
       ChangesViewContentI changesViewManager = ChangesViewContentManager.getInstance(project);
       if (changesViewManager instanceof ChangesViewContentManager) {
-        ((ChangesViewContentManager) changesViewManager).adviseSelectionChanged(new ContentManagerAdapter(){
+        ((ChangesViewContentManager)changesViewManager).adviseSelectionChanged(new ContentManagerAdapter() {
           @Override
           public void selectionChanged(@NotNull ContentManagerEvent event) {
             if (myUi != null) {
-              if (event.getContent().getDisplayName().equals("Repository") && event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-                VirtualFile graphFile = myProjectLog.getLogManager().getDataManager().tryGetGraphViewFile();
+              if (event.getContent().getDisplayName().equals(TAB_NAME) &&
+                  event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+                VirtualFile graphFile = myUi.getMainFrame().tryGetGraphViewFile();
                 if (graphFile != null) {
                   FileEditorManager.getInstance(project).openFile(graphFile, true);
                 }
@@ -97,7 +100,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogProjectTabsProperties.MAIN_LOG_ID, true);
-      VcsLogPanel panel = createPanel(logManager);
+      VcsLogPanel panel = createPanel(logManager, myUi);
       myContainer.add(panel, BorderLayout.CENTER);
       DataManager.registerDataProvider(myContainer, panel);
 
@@ -107,8 +110,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   @NotNull
-  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager) {
-    return new VcsLogPanel(logManager, myUi);
+  protected VcsLogPanel createPanel(@NotNull VcsLogManager logManager, AbstractVcsLogUi ui) {
+    return new VcsLogPanel(logManager, ui);
   }
 
   @CalledInAwt

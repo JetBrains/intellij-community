@@ -25,6 +25,10 @@
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="0"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
                     interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>

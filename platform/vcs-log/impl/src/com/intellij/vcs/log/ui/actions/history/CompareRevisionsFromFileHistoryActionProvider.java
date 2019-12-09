@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,7 +35,14 @@ public class CompareRevisionsFromFileHistoryActionProvider implements AnActionEx
       return;
     }
 
-    CompareRevisionsFromFolderHistoryActionProvider.updateActionText(e, log);
+    if (log.getSelectedCommits().size() >= 2) {
+      e.getPresentation().setText("Compare");
+      e.getPresentation().setDescription("Compare selected versions");
+    }
+    else {
+      e.getPresentation().setText("Show Diff");
+      e.getPresentation().setDescription("Show diff with previous version");
+    }
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {

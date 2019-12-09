@@ -24,7 +24,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
 
   //cannot be final because of clone implementation
   @Nullable
-  private volatile XmlAttributeDelegateImpl myImpl;
+  private volatile XmlAttributeDelegate myImpl;
 
   public XmlStubBasedAttributeBase(@NotNull StubT stub,
                                    @NotNull IStubElementType<? extends StubT, ? extends XmlAttribute> nodeType) {
@@ -36,17 +36,19 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   }
 
   @NotNull
-  private XmlAttributeDelegateImpl getImpl() {
-    XmlAttributeDelegateImpl impl = myImpl;
+  private XmlAttributeDelegate getImpl() {
+    XmlAttributeDelegate impl = myImpl;
     if (impl != null) return impl;
-    impl = new XmlAttributeDelegateImpl(this,
-                                        this::createAttribute,
-                                        this::appendChildToDisplayValue);
+    impl = createDelegate();
     myImpl = impl;
 
     return impl;
   }
 
+  @NotNull
+  protected XmlAttributeDelegate createDelegate() {
+    return new XmlStubBasedAttributeBaseDelegate();
+  }
 
   @Override
   public XmlAttributeValue getValueElement() {
@@ -56,11 +58,6 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   @Override
   public void setValue(@NotNull String valueText) throws IncorrectOperationException {
     getImpl().setValue(valueText);
-  }
-
-  @NotNull
-  protected XmlAttribute createAttribute(@NotNull String valueText, String name) {
-    return XmlElementFactory.getInstance(getProject()).createAttribute(name, valueText, this);
   }
 
   @Override
@@ -121,15 +118,10 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
     return valueElement != null ? valueElement.getValue() : null;
   }
 
-
-  protected void appendChildToDisplayValue(@NotNull StringBuilder buffer, @NotNull ASTNode child) {
-    buffer.append(child.getChars());
-  }
-
   @Override
   @Nullable
   public String getDisplayValue() {
-    final XmlAttributeDelegateImpl.VolatileState state = getImpl().getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? null : state.myDisplayText;
   }
 
@@ -146,7 +138,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   @NotNull
   @Override
   public TextRange getValueTextRange() {
-    final XmlAttributeDelegateImpl.VolatileState state = getImpl().getFreshState();
+    final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? TextRange.EMPTY_RANGE : state.myValueTextRange;
   }
 
@@ -205,5 +197,12 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
+  }
+
+  protected class XmlStubBasedAttributeBaseDelegate extends XmlAttributeDelegate {
+
+    public XmlStubBasedAttributeBaseDelegate() {
+      super(XmlStubBasedAttributeBase.this);
+    }
   }
 }

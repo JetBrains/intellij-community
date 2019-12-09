@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -37,7 +38,6 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
-import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
@@ -48,9 +48,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -99,6 +101,17 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   private boolean myLoggerExported;
   private boolean myDownloadListenerExported;
   private State myState = new State();
+
+  public void showMavenNotifications(MavenSyncConsole console) {
+    String mavenVersion = getCurrentMavenVersion();
+    if (mavenVersion == null) {
+      console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.nomaven"), MessageEvent.Kind.ERROR);
+    }
+
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6.0") == 0) {
+      console.showQuickFixBadMaven(SyncBundle.message("maven.sync.quickfixes.maven360"), MessageEvent.Kind.WARNING);
+    }
+  }
 
   private static class BundledMavenPathHolder {
     private static final File myBundledMaven2Home;
@@ -308,15 +321,6 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     }
   }
 
-  private static void showNofificationIfMaven360(@NotNull String mavenVersion, @NotNull String sdkConfigLocation) {
-    if(StringUtil.compareVersionNumbers(mavenVersion, "3.6.0") == 0) {
-      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                       "You use Maven 3.6.0, there could be issues importing multimodule project.<br>" +
-                       "It is recommended to upgrade or downgrade Maven version at <br>" +
-                       sdkConfigLocation,
-                       NotificationType.WARNING).notify(null);
-    }
-  }
 
   public static File getMavenEventListener() {
     return BundledMavenPathHolder.eventListenerJar;
@@ -724,8 +728,6 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
       params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
       String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
       verifyMavenSdkRequirements(jdk, mavenVersion, sdkConfigLocation);
-
-      showNofificationIfMaven360(mavenVersion,sdkConfigLocation);
 
       final List<String> classPath = new ArrayList<>();
       classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));

@@ -38,7 +38,7 @@ public class ShTerminalRunner extends ShRunner {
     Pair<Content, ShellTerminalWidget> pair = getSuitableProcess(contentManager, workingDirectory);
     try {
       if (pair == null) {
-        terminalView.createLocalShellWidget().executeCommand(command);
+        terminalView.createLocalShellWidget(workingDirectory).executeCommand(command);
         return;
       }
       window.activate(null);

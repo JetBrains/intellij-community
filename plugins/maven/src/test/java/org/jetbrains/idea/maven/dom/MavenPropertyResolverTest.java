@@ -308,7 +308,34 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
                  resolve(getModule("project"), "foo ${prop} bar", new Properties(), "/"));
   }
 
+  public void testChainResolvePropertiesForFileWhichIsNotAProjectPom() throws IOException {
+    VirtualFile file = createProjectSubFile("../some.pom",
+                                            "<project>" +
+                                            "    <parent>" +
+                                            "        <groupId>org.example</groupId>" +
+                                            "        <artifactId>parent-id</artifactId>" +
+                                            "        <version>1.1</version>" +
+                                            "    </parent>" +
+                                            "    <artifactId>child</artifactId>" +
+                                            "    <properties>" +
+                                            "        <first>one</first>" +
+                                            "        <second>${first}</second>" +
+                                            "        <third>${second}${parent.version}</third>" +
+                                            "    </properties>" +
+                                            "</project>");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals("one", resolve("${first}", file));
+    assertEquals("one", resolve("${second}", file));
+    assertEquals("one1.1", resolve("${third}", file));
+    assertEquals("parent-id", resolve("${parent.artifactId}", file));
+  }
+
   private String resolve(String text, VirtualFile f) {
     return MavenPropertyResolver.resolve(text, MavenDomUtil.getMavenDomProjectModel(myProject, f));
   }
 }
+

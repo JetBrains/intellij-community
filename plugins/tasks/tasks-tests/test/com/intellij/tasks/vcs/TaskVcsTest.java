@@ -421,6 +421,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     LocalTaskImpl strange = new LocalTaskImpl("1", "very long and strange summary");
     assertEquals("very-long", myTaskManager.suggestBranchName(strange));
+    assertEquals("very_long", myTaskManager.suggestBranchName(strange, "_"));
 
     myTaskManager.getState().branchNameFormat = "{id} {summary}";
 

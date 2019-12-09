@@ -1,4 +1,4 @@
-// "Add on demand static import for 'test.Foo.Bar'" "false"
+// "Add on-demand static import for 'test.Foo.Bar'" "false"
 package test;
 
 import java.util.List;

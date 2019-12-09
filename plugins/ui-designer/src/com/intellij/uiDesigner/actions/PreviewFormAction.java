@@ -33,9 +33,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -56,6 +59,7 @@ import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -76,7 +80,7 @@ public final class PreviewFormAction extends AnAction{
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
-  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
+  public static InstrumentationClassFinder createClassFinder(@Nullable URL[] platformUrls, @NotNull final String classPath) {
     final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -87,7 +91,8 @@ public final class PreviewFormAction extends AnAction{
         throw new RuntimeException(exc);
       }
     }
-    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
+    URL[] zero = new URL[0];
+    return new InstrumentationClassFinder(platformUrls == null ? zero : platformUrls, urls.toArray(zero));
   }
 
   @Override
@@ -132,11 +137,21 @@ public final class PreviewFormAction extends AnAction{
       return;
     }
 
+    URL[] platformUrls = null;
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk != null && sdk.getHomePath() != null && StringUtil.compareVersionNumbers(sdk.getVersionString(), "9") >= 0) {
+      try {
+        platformUrls = new URL[]{InstrumentationClassFinder.createJDKPlatformUrl(sdk.getHomePath())};
+      }
+      catch (MalformedURLException ignore) {
+      }
+    }
+
     final PathsList sources = OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().getSourcePathsList();
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final InstrumentationClassFinder finder = createClassFinder(classPath);
+    final InstrumentationClassFinder finder = createClassFinder(platformUrls, classPath);
 
     try {
       final Document doc = FileDocumentManager.getInstance().getDocument(formFile);

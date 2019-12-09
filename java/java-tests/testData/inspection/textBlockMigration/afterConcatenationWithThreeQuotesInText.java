@@ -4,10 +4,10 @@ class TextBlockMigration {
 
   void concatenationWithThreeQuotes() {
     String quotes = """
-                    this concatenation contains
-                     three quotes
-                    one after another
-                    "\"\"""";
+            this concatenation contains
+             three quotes
+            one after another
+            "\"\"""";
   }
 
 }

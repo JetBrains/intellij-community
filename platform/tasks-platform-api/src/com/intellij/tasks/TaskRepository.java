@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 /**
  * Describes bug-tracking server.
@@ -59,6 +60,8 @@ public abstract class TaskRepository {
    * be filtered internally in {@link TaskManager#getIssues}.
    */
   public static final int NATIVE_SEARCH = 0x0010;
+
+  public static final Pattern TIME_SPENT_PATTERN = Pattern.compile("([0-9]+)h ([0-9]+)m");
 
   /**
    * URL of the server to be used in requests. For more human-readable name of repository (e.g. some imaginary URL containing name of
@@ -346,6 +349,9 @@ public abstract class TaskRepository {
     return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
+  /**
+   * @param timeSpent time in {@link #TIME_SPENT_PATTERN} format
+   */
   public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
     throw new UnsupportedOperationException();
   }

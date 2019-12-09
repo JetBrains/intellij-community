@@ -640,4 +640,26 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     doTextTest(before, after);
   }
 
+  public void testTextBlock() {
+    String before = "class Formatting {\n" +
+                    "    void test() {\n" +
+                    "        String block = \"\"\"\n" +
+                    "                             \n" +
+                    " text\n" +
+                    "block\"\"\";\n" +
+                    "  " +
+                    "  }\n" +
+                    "}";
+
+    String after = "class Formatting {\n" +
+                   "    void test() {\n" +
+                   "        String block = \"\"\"\n" +
+                   "                                             \n" +
+                   "                 text\n" +
+                   "                block\"\"\";\n" +
+                   "    " +
+                   "}\n" +
+                   "}";
+    doTextTest(before, after);
+  }
 }

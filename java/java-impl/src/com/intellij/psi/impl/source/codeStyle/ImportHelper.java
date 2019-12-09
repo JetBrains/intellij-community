@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.lang.ASTNode;
@@ -129,8 +130,7 @@ public class ImportHelper{
       String ext = StdFileTypes.JAVA.getDefaultExtension();
       PsiFileFactory factory = PsiFileFactory.getInstance(file.getProject());
       final PsiJavaFile dummyFile = (PsiJavaFile)factory.createFileFromText("_Dummy_." + ext, StdFileTypes.JAVA, text);
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(file.getProject());
-      codeStyleManager.reformat(dummyFile);
+      CodeStyle.reformatWithFileContext(dummyFile, file);
 
       PsiImportList newImportList = dummyFile.getImportList();
       assert newImportList != null : dummyFile.getText();

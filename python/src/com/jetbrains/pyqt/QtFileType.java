@@ -62,11 +62,6 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-    return null;
-  }
-
-  @Override
   public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
     String qtTool = findQtTool(ModuleUtilCore.findModuleForFile(file, project), getToolName());
     if (qtTool == null) {

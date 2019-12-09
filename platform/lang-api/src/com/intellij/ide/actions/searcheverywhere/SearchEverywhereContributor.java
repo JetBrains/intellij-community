@@ -40,6 +40,12 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
     return false;
   }
 
+  /**
+   * @deprecated method is left for backward compatibility only. If you want to consider elements weight in your search contributor
+   * please use {@link WeightedSearchEverywhereContributor#fetchWeightedElements(String, ProgressIndicator, Processor)} method for fetching
+   * this elements
+   */
+  @Deprecated
   default int getElementPriority(@NotNull Item element, @NotNull String searchPattern) {
     return 0;
   }

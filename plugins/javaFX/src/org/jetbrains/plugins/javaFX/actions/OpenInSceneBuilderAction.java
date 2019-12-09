@@ -52,7 +52,7 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.addParameter(path);
       commandLine.createProcess();
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
     }
   }

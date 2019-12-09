@@ -1521,7 +1521,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testPostHighlightingPassRunsOnEveryPsiModification() throws Exception {
-    PsiFile x = createFile("X.java", "public class X { public static void ffffffffffffff(){} }");
+    @Language("JAVA")
+    String xText = "public class X { public static void ffffffffffffff(){} }";
+    PsiFile x = createFile("X.java", xText);
     PsiFile use = createFile("Use.java", "public class Use { { <caret>X.ffffffffffffff(); } }");
     configureByExistingFile(use.getVirtualFile());
 
@@ -1850,7 +1852,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testModificationInExcludedFileDoesNotCauseRehighlight() {
-    VirtualFile excluded = configureByText(JavaFileType.INSTANCE, "class EEE { void f(){} }").getVirtualFile();
+    @Language("JAVA")
+    String text = "class EEE { void f(){} }";
+    VirtualFile excluded = configureByText(JavaFileType.INSTANCE, text).getVirtualFile();
     PsiTestUtil.addExcludedRoot(myModule, excluded.getParent());
 
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
@@ -1992,11 +1996,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testCodeFoldingPassRestartsOnRegionUnfolding() {
     executeWithoutReparseDelay(() -> {
-      configureByText(StdFileTypes.JAVA, "class Foo {\n" +
-                                         "    void m() {\n" +
-                                         "\n" +
-                                         "    }\n" +
-                                         "}");
+      @Language("JAVA")
+      String text = "class Foo {\n" +
+                    "    void m() {\n" +
+                    "\n" +
+                    "    }\n" +
+                    "}";
+      configureByText(StdFileTypes.JAVA, text);
       CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
       waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
@@ -2111,7 +2117,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).tryGc();
       assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
-      document.insertString(0, "class X { void foo() {}}");
+      @Language("JAVA")
+      String text = "class X { void foo() {}}";
+      document.insertString(0, text);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL));
 
@@ -2130,12 +2138,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
       assertTrue(list.toString(), list.contains(annotator));
-      configureByText(StdFileTypes.JAVA, "class X {\n" +
-                                         "  int foo(Object param) {\n" +
-                                         "    if (param == this) return 1;\n" +
-                                         "    return 0;\n" +
-                                         "  }\n" +
-                                         "}\n");
+      @Language("JAVA")
+      String text = "class X {\n" +
+                    "  int foo(Object param) {\n" +
+                    "    if (param == this) return 1;\n" +
+                    "    return 0;\n" +
+                    "  }\n" +
+                    "}\n";
+      configureByText(StdFileTypes.JAVA, text);
       ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
       assertEquals(getFile().getTextRange(), VisibleHighlightingPassFactory.calculateVisibleRange(getEditor()));
 

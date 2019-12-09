@@ -318,7 +318,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     boolean runConfigurators = newProject || ModuleManager.getInstance(project).getModules().length == 0;
     Ref<Module> module = new Ref<>();
     if (runConfigurators) {
-      ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project)));
+      ApplicationManager.getApplication().invokeAndWait(() -> module.set(runDirectoryProjectConfigurators(baseDir, project, newProject)));
     }
 
     if (runConfigurators && dummyProject) {
@@ -371,19 +371,19 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   }
 
   /**
-   * @deprecated Use {@link #runDirectoryProjectConfigurators(Path, Project)}
+   * @deprecated Use {@link #runDirectoryProjectConfigurators(Path, Project, boolean)}
    */
   @Deprecated
   public static Module runDirectoryProjectConfigurators(@NotNull VirtualFile baseDir, @NotNull Project project) {
-    return runDirectoryProjectConfigurators(Paths.get(baseDir.getPath()), project);
+    return runDirectoryProjectConfigurators(Paths.get(baseDir.getPath()), project, false);
   }
 
-  public static Module runDirectoryProjectConfigurators(@NotNull Path baseDir, @NotNull Project project) {
+  public static Module runDirectoryProjectConfigurators(@NotNull Path baseDir, @NotNull Project project, boolean newProject) {
     final Ref<Module> moduleRef = new Ref<>();
     VirtualFile virtualFile = ProjectUtil.getFileAndRefresh(baseDir);
     LOG.assertTrue(virtualFile != null);
     DirectoryProjectConfigurator.EP_NAME.forEachExtensionSafe(configurator -> {
-      configurator.configureProject(project, virtualFile, moduleRef);
+      configurator.configureProject(project, virtualFile, moduleRef, newProject);
     });
     return moduleRef.get();
   }

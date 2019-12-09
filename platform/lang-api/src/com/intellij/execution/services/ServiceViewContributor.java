@@ -10,11 +10,11 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface ServiceViewContributor<T> {
   @NotNull
-  ServiceViewDescriptor getViewDescriptor();
+  ServiceViewDescriptor getViewDescriptor(@NotNull Project project);
 
   @NotNull
   List<T> getServices(@NotNull Project project);
 
   @NotNull
-  ServiceViewDescriptor getServiceDescriptor(@NotNull T service);
+  ServiceViewDescriptor getServiceDescriptor(@NotNull Project project, @NotNull T service);
 }

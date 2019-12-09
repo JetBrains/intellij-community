@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -1170,8 +1169,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     // avoid creating zillion of roots which are not actual roots
     String parentPath = fs instanceof LocalFileSystem ? PathUtilRt.getParentPath(rootPath) : "";
-    if (!parentPath.isEmpty() &&
-        !(SystemInfo.isWindows && rootPath.startsWith("//"))) { // Windows UNC
+    if (!parentPath.isEmpty()) {
       FileAttributes parentAttributes = fs.getAttributes(new StubVirtualFile() {
         @NotNull @Override public String getPath() { return parentPath; }
         @Nullable @Override public VirtualFile getParent() { return null; }

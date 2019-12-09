@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -852,6 +853,20 @@ public class PlatformTestUtil {
       }
     });
     return refs;
+  }
+
+  @NotNull
+  @SuppressWarnings("unchecked")
+  public static <T extends PsiReference> T getReferenceOfTypeWithAssertion(@Nullable PsiReference reference, Class<T> refType) {
+    if (refType.isInstance(reference)) return (T)reference;
+    if (reference instanceof PsiMultiReference) {
+      PsiReference[] psiReferences = ((PsiMultiReference)reference).getReferences();
+      for (PsiReference psiReference : psiReferences) {
+        if (refType.isInstance(psiReference)) return (T)psiReference;
+      }
+    }
+    throw new AssertionError(
+      "given reference should be " + refType + " but " + (reference != null ? reference.getClass() : null) + " was given");
   }
 
   public static void registerProjectCleanup(@NotNull Runnable cleanup) {

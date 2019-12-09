@@ -59,6 +59,7 @@ import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
@@ -884,6 +885,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public Promise<List<Module>> scheduleImportAndResolve(boolean fromAutoImport) {
     getSyncConsole().startImport(myProgressListener, fromAutoImport);
+    MavenServerManager.getInstance().showMavenNotifications(getSyncConsole());
     MavenSyncConsole console = getSyncConsole();
     AsyncPromise<List<Module>> promise = scheduleResolve();
     promise.onProcessed(m -> {

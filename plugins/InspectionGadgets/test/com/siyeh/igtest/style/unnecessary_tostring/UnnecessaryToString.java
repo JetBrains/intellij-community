@@ -59,4 +59,13 @@ public class UnnecessaryToString {
       org.slf4j.LoggerFactory.getLogger(UnnecessaryToString.class).info("this: {}", e.toString());
     }
   }
+
+  void format() {
+    Integer number = 1;
+    String example = String.format("prefix%s", number.<warning descr="Unnecessary 'toString()' call">toString</warning>());
+    System.out.printf("Hello %s", number.<warning descr="Unnecessary 'toString()' call">toString</warning>());
+    System.out.printf(number.toString(), "Hello %s");
+    System.out.printf(java.util.Locale.getDefault(), number.toString(), "Hello %s");
+    System.out.printf(java.util.Locale.getDefault(), "Hello %s", number.<warning descr="Unnecessary 'toString()' call">toString</warning>());
+  }
 }

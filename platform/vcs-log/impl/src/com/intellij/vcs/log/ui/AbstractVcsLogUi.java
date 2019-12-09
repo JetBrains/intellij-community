@@ -53,7 +53,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull protected final Collection<VcsLogListener> myLogListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull protected final VisiblePackChangeListener myVisiblePackChangeListener;
 
-  @NotNull protected VisiblePack myVisiblePack;
+  @NotNull protected VisiblePack myVisiblePack = VisiblePack.EMPTY;
 
   public AbstractVcsLogUi(@NotNull String id,
                           @NotNull VcsLogData logData,
@@ -68,8 +68,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     Disposer.register(this, myRefresher);
 
     myLog = new VcsLogImpl(logData, this);
-    myVisiblePack = VisiblePack.EMPTY;
-
     myVisiblePackChangeListener = visiblePack -> UIUtil.invokeLaterIfNeeded(() -> {
       if (!Disposer.isDisposed(this)) {
         setVisiblePack(visiblePack);
@@ -290,7 +288,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
-    LOG.debug("Disposing VcsLogUi \'" + myId + "\'");
+    LOG.debug("Disposing VcsLogUi '" + myId + "'");
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

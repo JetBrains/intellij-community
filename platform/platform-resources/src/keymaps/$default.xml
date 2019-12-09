@@ -1132,7 +1132,7 @@
     <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
 
-  <action id="RunDashboard.ShowConfigurations">
+  <action id="ServiceView.ShowServices">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
 
@@ -1184,6 +1184,9 @@
     <keyboard-shortcut first-keystroke="control alt C"/>
   </action>
 
+  <action id="ServiceView.GroupByContributor">
+    <keyboard-shortcut first-keystroke="control alt T"/>
+  </action>
   <action id="ServiceView.GroupByServiceGroups">
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>

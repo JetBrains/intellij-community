@@ -91,18 +91,43 @@ public class IfConditionalModel extends ConditionalModel {
     PsiExpression thenRhs = thenExpression.getRExpression();
     PsiExpression elseRhs = elseExpression.getRExpression();
     if (thenRhs == null || elseRhs == null) return null;
-    // Will be warned about equivalent if branches; no need to add ?: warning as well
-    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenRhs, elseRhs)) return null;
     IElementType thenTokenType = thenExpression.getOperationTokenType();
     IElementType elseTokenType = elseExpression.getOperationTokenType();
-    if (!thenTokenType.equals(elseTokenType)) return null;
+    final boolean operationIsOpposite = areOppositeAssignmentTokens(thenTokenType, elseTokenType);
+    // Will be warned about equivalent if branches; no need to add ?: warning as well
+    if (!operationIsOpposite && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenRhs, elseRhs)) return null;
+    if (!(thenTokenType.equals(elseTokenType) || operationIsOpposite)) return null;
 
     PsiExpression thenLhs = thenExpression.getLExpression();
     PsiExpression elseLhs = elseExpression.getLExpression();
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenLhs, elseLhs)) return null;
     PsiType type = thenLhs.getType();
     if (type == null) return null;
-    return new IfConditionalModel(condition, thenRhs, elseRhs, thenBranch, elseBranch, type);
+    final PsiExpression resultElseRhs = getResultElseRhs(ifStatement, elseRhs, operationIsOpposite);
+    return new IfConditionalModel(condition, thenRhs, resultElseRhs, thenBranch, elseBranch, type);
+  }
+
+  private static PsiExpression getResultElseRhs(@NotNull PsiIfStatement ifStatement,
+                                                PsiExpression elseRhs,
+                                                boolean operationIsOpposite) {
+    if (!operationIsOpposite) return elseRhs;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
+    final String elseRhsText;
+    if (elseRhs instanceof PsiPrefixExpression && ((PsiPrefixExpression)elseRhs).getOperationTokenType().equals(JavaTokenType.MINUS)) {
+      final PsiExpression operand = ((PsiPrefixExpression)elseRhs).getOperand();
+      if (operand != null) {
+        return operand;
+      }
+      elseRhsText = "-(" + elseRhs.getText() + ")";
+    } else {
+      elseRhsText = "-" + elseRhs.getText();
+    }
+    return factory.createExpressionFromText(elseRhsText, elseRhs);
+  }
+
+  static boolean areOppositeAssignmentTokens(IElementType thenTokenType, IElementType elseTokenType) {
+    return thenTokenType.equals(JavaTokenType.PLUSEQ) && elseTokenType.equals(JavaTokenType.MINUSEQ) ||
+                                        thenTokenType.equals(JavaTokenType.MINUSEQ) && elseTokenType.equals(JavaTokenType.PLUSEQ);
   }
 
   @Nullable

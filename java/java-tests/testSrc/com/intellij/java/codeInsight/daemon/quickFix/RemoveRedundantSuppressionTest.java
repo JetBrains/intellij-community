@@ -9,6 +9,8 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection;
+import com.siyeh.ig.inheritance.RefusedBequestInspection;
+import com.siyeh.ig.jdk.AutoBoxingInspection;
 
 public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -20,7 +22,9 @@ public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTe
                           new UncheckedWarningLocalInspection(),
                           new FallthruInSwitchStatementInspection(),
                           new UnusedDeclarationInspection(true),
-                          new RedundantLambdaCodeBlockInspection());
+                          new RedundantLambdaCodeBlockInspection(),
+                          new AutoBoxingInspection(),
+                          new RefusedBequestInspection());
   }
 
   @Override

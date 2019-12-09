@@ -59,6 +59,7 @@ public final class PerformanceWatcher implements Disposable {
   private volatile long myLastSampling = System.currentTimeMillis();
   private long myLastDumpTime;
   private long myFreezeStart;
+  private int myActiveEvents;
   private boolean myFreezeDuringStartup;
   private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
@@ -305,13 +306,26 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   public void edtEventStarted(long start) {
+    myActiveEvents++;
     if (PRECISE_MODE) {
-      edtEventFinished(); // finish previous event if any, this way we handle nested event dispatchers
-      myCurrentEDTEventChecker = new FreezeCheckerTask(start);
+      finishTracking();
+      startTracking(start);
     }
   }
 
   public void edtEventFinished() {
+    myActiveEvents--;
+    finishTracking();
+    if (PRECISE_MODE && myActiveEvents > 0) {
+      startTracking(System.currentTimeMillis());
+    }
+  }
+
+  private void startTracking(long start) {
+    myCurrentEDTEventChecker = new FreezeCheckerTask(start);
+  }
+
+  private void finishTracking() {
     FreezeCheckerTask currentChecker = myCurrentEDTEventChecker;
     if (currentChecker != null) {
       currentChecker.stop();

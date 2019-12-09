@@ -53,9 +53,14 @@ public class SpellCheckerSettingsPane implements Disposable {
   private ComboBox<String> myDictionariesComboBox;
   private JPanel myAdvancedSettingsPanel;
   private JPanel myAdvancedSettingsPlaceHolder;
-  private final OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
-  private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
+
+  //Dictionaries provided by plugins -- runtime and bundled
+  private final OptionalChooserComponent<String> myProvidedDictionariesChooserComponent;
+  private final Set<String> bundledDictionaries = new HashSet<>();
+  private final Set<String> runtimeDictionaries = new HashSet<>();
+  private final List<Pair<String, Boolean>> providedDictionaries = new ArrayList<>();
+
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
@@ -90,7 +95,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     linkContainer.add(link);
 
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
-    fillBundledDictionaries();
+    fillProvidedDictionaries();
 
     myDictionariesPanel = new CustomDictionariesPanel(settings, project, manager);
 
@@ -100,7 +105,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
-    myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(bundledDictionaries) {
+    myProvidedDictionariesChooserComponent = new OptionalChooserComponent<String>(providedDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
         return new JCheckBox(FileUtil.toSystemDependentName(path), checked);
@@ -109,27 +114,36 @@ public class SpellCheckerSettingsPane implements Disposable {
       @Override
       public void apply() {
         super.apply();
+
         final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
-        for (Pair<String, Boolean> pair : bundledDictionaries) {
-          if (!pair.second) {
+        final HashSet<String> runtimeDisabledDictionaries = new HashSet<>();
+
+        for (Pair<String, Boolean> pair : providedDictionaries) {
+          if (pair.second) continue;
+
+          if (bundledDictionaries.contains(pair.first)) {
             bundledDisabledDictionaries.add(pair.first);
+          }
+          else if (runtimeDictionaries.contains(pair.first)) {
+            runtimeDisabledDictionaries.add(pair.first);
           }
         }
         settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
+        settings.setRuntimeDisabledDictionariesNames(runtimeDisabledDictionaries);
       }
 
       @Override
       public void reset() {
         super.reset();
-        fillBundledDictionaries();
+        fillProvidedDictionaries();
       }
     };
 
     myPanelForBundledDictionaries.setBorder(
       IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("dictionaries.panel.description"), false, JBUI.insetsTop(8)).setShowLine(false));
     myPanelForBundledDictionaries.setLayout(new BorderLayout());
-    myPanelForBundledDictionaries.add(myBundledDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
-    myBundledDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
+    myPanelForBundledDictionaries.add(myProvidedDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
+    myProvidedDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
 
 
     wordsPanel = new WordsPanel(manager);
@@ -157,7 +171,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   public boolean isModified() {
     return wordsPanel.isModified() ||
-           myBundledDictionariesChooserComponent.isModified() ||
+           myProvidedDictionariesChooserComponent.isModified() ||
            myDictionariesPanel.isModified() ||
            settings.getCorrectionsLimit() != getLimit() ||
            settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected() ||
@@ -178,11 +192,11 @@ public class SpellCheckerSettingsPane implements Disposable {
       settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
     }
     SpellCheckerManager.restartInspections();
-    if (!myBundledDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
+    if (!myProvidedDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
       return;
     }
 
-    myBundledDictionariesChooserComponent.apply();
+    myProvidedDictionariesChooserComponent.apply();
     myDictionariesPanel.apply();
 
     manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
@@ -198,14 +212,23 @@ public class SpellCheckerSettingsPane implements Disposable {
     myDictionariesComboBox.setSelectedItem(settings.getDictionaryToSave());
     myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
     myDictionariesPanel.reset();
-    myBundledDictionariesChooserComponent.reset();
+    myProvidedDictionariesChooserComponent.reset();
   }
 
 
-  private void fillBundledDictionaries() {
+  private void fillProvidedDictionaries() {
+    providedDictionaries.clear();
+
     bundledDictionaries.clear();
     for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
-      bundledDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+      bundledDictionaries.add(dictionary);
+      providedDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+    }
+
+    runtimeDictionaries.clear();
+    for (String dictionary : ContainerUtil.map(SpellCheckerManager.getRuntimeDictionaries(), (it) -> it.getName())) {
+      runtimeDictionaries.add(dictionary);
+      providedDictionaries.add(Pair.create(dictionary, !settings.getRuntimeDisabledDictionariesNames().contains(dictionary)));
     }
   }
 

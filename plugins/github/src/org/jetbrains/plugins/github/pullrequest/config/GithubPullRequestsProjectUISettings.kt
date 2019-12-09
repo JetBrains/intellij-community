@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
 import com.intellij.openapi.Disposable
@@ -12,6 +12,7 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
   private var state: SettingsState = SettingsState()
 
   class SettingsState : BaseState() {
+    var hiddenUrls by stringSet()
     var zipChanges by property(false)
   }
 
@@ -23,6 +24,20 @@ class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModifica
         listener()
       }
     }, disposable)
+  }
+
+  fun getHiddenUrls(): Set<String> = state.hiddenUrls.toSet()
+
+  fun addHiddenUrl(url: String) {
+    if (state.hiddenUrls.add(url)) {
+      state.intIncrementModificationCount()
+    }
+  }
+
+  fun removeHiddenUrl(url: String) {
+    if (state.hiddenUrls.remove(url)) {
+      state.intIncrementModificationCount()
+    }
   }
 
   var zipChanges: Boolean

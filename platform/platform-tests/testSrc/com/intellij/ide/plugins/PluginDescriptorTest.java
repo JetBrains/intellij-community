@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.Functions;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,19 +18,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static org.junit.Assert.*;
+import static com.intellij.testFramework.UsefulTestCase.*;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PluginDescriptorTest {
   private static String getTestDataPath() {
-    return PathManagerEx.getTestDataPath() + "/ide/plugins/pluginDescriptor";
+    return PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor";
   }
 
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -66,6 +68,17 @@ public class PluginDescriptorTest {
   @Test
   public void testAnonymousDescriptor() {
     assertNull(loadDescriptor("anonymous"));
+  }
+
+  @Test
+  public void testCyclicOptionalDeps() {
+    IdeaPluginDescriptorImpl descriptor = loadDescriptor("cyclicOptionalDeps");
+    assertNotNull(descriptor);
+    List<IdeaPluginDescriptorImpl> allDescriptors = JBTreeTraverser.<IdeaPluginDescriptorImpl>from(
+      o -> JBIterable.from(o.getOptionalDescriptors().values()).flatten(Functions.id()))
+      .withRoot(descriptor)
+      .toList();
+    assertEquals(3, allDescriptors.size());
   }
 
   @Test
@@ -162,7 +175,7 @@ public class PluginDescriptorTest {
     IdeaPluginDescriptorImpl impl2 = loadDescriptor(tempDir.getRoot());
     assertEquals(impl1, impl2);
     assertEquals(impl1.hashCode(), impl2.hashCode());
-    assertNotEquals(impl1.getName(), impl2.getName());
+    assertNotSame(impl1.getName(), impl2.getName());
   }
 
   private static IdeaPluginDescriptorImpl loadDescriptor(String dirName) {

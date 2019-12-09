@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -436,5 +436,18 @@ public class MethodUtils {
       }
     }
     return best;
+  }
+
+  public static boolean isFactoryMethod(PsiMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    final PsiType returnType = method.getReturnType();
+    if (!(returnType instanceof PsiClassType)) {
+      return false;
+    }
+    final PsiClassType classType = (PsiClassType)returnType;
+    final PsiClass aClass = classType.resolve();
+    return aClass != null && aClass.equals(method.getContainingClass());
   }
 }

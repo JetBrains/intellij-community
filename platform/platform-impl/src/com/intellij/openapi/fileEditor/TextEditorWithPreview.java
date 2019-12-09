@@ -22,6 +22,8 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
+
 /**
  * Two panel editor with three states: Editor, Preview and Editor with Preview.
  * Based on SplitFileEditor by Valentin Fondaratov
@@ -320,7 +322,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   protected ActionToolbar createToolbar() {
     ActionGroup actionGroup = createLeftToolbarActionGroup();
     if (actionGroup != null) {
-      return ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", actionGroup, true);
+      return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, actionGroup, true);
     }
     else {
       return null;
@@ -339,7 +341,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     final ActionGroup rightToolbarActions = group == null
                                             ? viewActions
                                             : new DefaultActionGroup(group, Separator.create(), viewActions);
-    return ActionManager.getInstance().createActionToolbar("TextEditorWithPreview", rightToolbarActions, true);
+    return ActionManager.getInstance().createActionToolbar(TEXT_EDITOR_WITH_PREVIEW, rightToolbarActions, true);
   }
 
   @NotNull

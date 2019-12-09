@@ -48,6 +48,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
   private boolean myVisualPositionUpdateScheduled;
+  private boolean myEditorSizeValidationScheduled;
 
   int myDocumentUpdateCounter;
 
@@ -374,53 +375,56 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   private void mergeOverlappingCaretsAndSelections() {
     EditorImpl.assertIsDispatchThread();
-    if (myCarets.size() <= 1) {
-      return;
+    if (myCarets.size() > 1) {
+      LinkedList<CaretImpl> carets = new LinkedList<>(myCarets);
+      Collections.sort(carets, CARET_POSITION_COMPARATOR);
+      ListIterator<CaretImpl> it = carets.listIterator();
+      CaretImpl keepPrimary = getPrimaryCaret();
+      while (it.hasNext()) {
+        CaretImpl prevCaret = null;
+        if (it.hasPrevious()) {
+          prevCaret = it.previous();
+          it.next();
+        }
+        CaretImpl currCaret = it.next();
+        if (prevCaret != null && caretsOverlap(currCaret, prevCaret)) {
+          int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
+          int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
+          CaretImpl toRetain;
+          CaretImpl toRemove;
+          if (currCaret.getOffset() >= prevCaret.getSelectionStart() && currCaret.getOffset() <= prevCaret.getSelectionEnd()) {
+            toRetain = prevCaret;
+            toRemove = currCaret;
+            it.remove();
+            it.previous();
+          }
+          else {
+            toRetain = currCaret;
+            toRemove = prevCaret;
+            it.previous();
+            it.previous();
+            it.remove();
+          }
+          if (toRemove == keepPrimary) {
+            keepPrimary = toRetain;
+          }
+          removeCaret(toRemove);
+          if (newSelectionStart < newSelectionEnd) {
+            toRetain.setSelection(newSelectionStart, newSelectionEnd);
+          }
+        }
+      }
+      if (keepPrimary != getPrimaryCaret()) {
+        synchronized (myCarets) {
+          myCarets.remove(keepPrimary);
+          myCarets.add(keepPrimary);
+          myPrimaryCaret = keepPrimary;
+        }
+      }
     }
-    LinkedList<CaretImpl> carets = new LinkedList<>(myCarets);
-    Collections.sort(carets, CARET_POSITION_COMPARATOR);
-    ListIterator<CaretImpl> it = carets.listIterator();
-    CaretImpl keepPrimary = getPrimaryCaret();
-    while (it.hasNext()) {
-      CaretImpl prevCaret = null;
-      if (it.hasPrevious()) {
-        prevCaret = it.previous();
-        it.next();
-      }
-      CaretImpl currCaret = it.next();
-      if (prevCaret != null && caretsOverlap(currCaret, prevCaret)) {
-        int newSelectionStart = Math.min(currCaret.getSelectionStart(), prevCaret.getSelectionStart());
-        int newSelectionEnd = Math.max(currCaret.getSelectionEnd(), prevCaret.getSelectionEnd());
-        CaretImpl toRetain;
-        CaretImpl toRemove;
-        if (currCaret.getOffset() >= prevCaret.getSelectionStart() && currCaret.getOffset() <= prevCaret.getSelectionEnd()) {
-          toRetain = prevCaret;
-          toRemove = currCaret;
-          it.remove();
-          it.previous();
-        }
-        else {
-          toRetain = currCaret;
-          toRemove = prevCaret;
-          it.previous();
-          it.previous();
-          it.remove();
-        }
-        if (toRemove == keepPrimary) {
-          keepPrimary = toRetain;
-        }
-        removeCaret(toRemove);
-        if (newSelectionStart < newSelectionEnd) {
-          toRetain.setSelection(newSelectionStart, newSelectionEnd);
-        }
-      }
-    }
-    if (keepPrimary != getPrimaryCaret()) {
-      synchronized (myCarets) {
-        myCarets.remove(keepPrimary);
-        myCarets.add(keepPrimary);
-        myPrimaryCaret = keepPrimary;
-      }
+    if (myEditorSizeValidationScheduled) {
+      myEditorSizeValidationScheduled = false;
+      myEditor.validateSize();
     }
   }
 
@@ -567,6 +571,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   void fireCaretPositionChanged(@NotNull CaretEvent caretEvent) {
     myCaretListeners.getMulticaster().caretPositionChanged(caretEvent);
+  }
+
+  void validateEditorSize() {
+    if (myEditor.getSettings().isVirtualSpace()) {
+      if (myPerformCaretMergingAfterCurrentOperation) {
+        myEditorSizeValidationScheduled = true;
+      }
+      else {
+        myEditor.validateSize();
+      }
+    }
   }
 
   private void fireCaretAdded(@NotNull Caret caret) {

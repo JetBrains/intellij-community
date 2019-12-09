@@ -324,6 +324,36 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-4537
+  public void testReferencedAfterDeletion() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionByIndex() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionBySlice() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionGlobal() {
+    doTest();
+  }
+
+  // PY-4537
+  public void testAfterDeletionNonLocal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
+  // PY-4537
+  public void testConditionallyDeleted() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
@@ -81,11 +81,11 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     VcsLogStructureFilterImpl filter = (VcsLogStructureFilterImpl)o;
-    return getFiles().equals(filter.getFiles());
+    return Comparing.haveEqualElements(getFiles(), filter.getFiles());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getFiles());
+    return Comparing.unorderedHashcode(getFiles());
   }
 }

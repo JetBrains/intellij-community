@@ -65,6 +65,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
     checkAnnotations("data.TestNonStable");
     checkAnnotations("data.TestConflict");
     checkAnnotations("data.TestEnum");
+    checkAnnotations("data.TestField");
   }
 
   public void testJava9Inference() {
@@ -149,10 +150,15 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
       String inferredText = contractText(actualContract);
       assertEquals(displayName(method) + ":" + expectedText + " <> " + inferredText, expectedText, inferredText);
     }
+    for (PsiField field : psiClass.getFields()) {
+      boolean expectNotNull = AnnotationUtil.isAnnotated(field, EXPECT_NOT_NULL, 0);
+      PsiAnnotation actualAnnotation = service.findInferredAnnotation(field, AnnotationUtil.NOT_NULL);
+      assertNullity(displayName(field), expectNotNull, actualAnnotation);
+    }
   }
 
-  private static String displayName(PsiMethod method) {
-    return method.getContainingClass().getQualifiedName() + "." + method.getName();
+  private static String displayName(PsiMember member) {
+    return member.getContainingClass().getQualifiedName() + "." + member.getName();
   }
 
   private static String contractText(PsiAnnotation contract) {

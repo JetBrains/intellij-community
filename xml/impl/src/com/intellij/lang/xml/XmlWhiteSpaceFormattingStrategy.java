@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.xml.IXmlTagElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
@@ -68,8 +69,7 @@ public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrateg
 
   protected boolean isInsideTagBody(@NotNull ASTNode place) {
     final ASTNode treeParent = place.getTreeParent();
-    if(treeParent.getElementType() != XmlElementType.XML_TAG
-       && treeParent.getElementType() != XmlElementType.HTML_TAG) return false;
+    if (!(treeParent.getElementType() instanceof IXmlTagElementType)) return false;
     while(place != null){
       if(place.getElementType() == XmlTokenType.XML_TAG_END) return true;
       place = place.getTreePrev();

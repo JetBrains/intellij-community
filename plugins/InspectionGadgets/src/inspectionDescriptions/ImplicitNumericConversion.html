@@ -5,12 +5,12 @@ Implicit numeric conversion is not a problem in itself, but if unexpected may be
 of difficult to trace bugs.
 <!-- tooltip end -->
 <p>
-Use the first checkbox below if you wish this inspection to ignore implicit conversions which
+Use the first checkbox below if you wish this inspection to ignore implicit conversion which
 can not result in loss of data (e.g.
 <b>int</b>-><b>long</b>).
-<p>Use the second checkbox to indicate that this inspection should ignore all conversions from
-and to <b>char</b>.
-<p>Use the third checkbox to let this inspection ignore all conversions from literals and
+<p>Use the second checkbox to indicate that this inspection should ignore conversion from
+and to <b>char</b>. Conversion from floating point to <b>char</b> and vice versa will still be reported.
+<p>Use the third checkbox to let this inspection ignore conversion from literals and
 compile time constants.
 <p>
 

@@ -149,8 +149,8 @@ private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Dispo
 
   private val changesBrowserLoadingPanel =
     JBLoadingPanel(BorderLayout(), disposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
-    add(changesBrowser, BorderLayout.CENTER)
-  }
+      add(changesBrowser, BorderLayout.CENTER)
+    }
 
   init {
     add(changesBrowserLoadingPanel)
@@ -178,7 +178,7 @@ private class ChangesLoadingController(
   private val modalityState: ModalityState,
   private val changesBrowser: ChangesBrowserWithLoadingPanel,
   private val loader: (List<VcsCommitMetadata>) -> List<Change>
-  ) : SingleTaskController<List<VcsCommitMetadata>, List<Change>>(
+) : SingleTaskController<List<VcsCommitMetadata>, List<Change>>(
   "Loading Commit Changes",
   Consumer { changes ->
     runInEdt(modalityState = modalityState) {

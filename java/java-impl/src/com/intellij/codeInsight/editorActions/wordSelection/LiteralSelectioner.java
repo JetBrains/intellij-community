@@ -19,6 +19,7 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
@@ -58,7 +59,9 @@ public class LiteralSelectioner extends BasicSelectioner {
     PsiLiteralExpressionImpl literalExpression = tryCast(e, PsiLiteralExpressionImpl.class);
     if (literalExpression == null) literalExpression = tryCast(e.getParent(), PsiLiteralExpressionImpl.class);
     if (literalExpression != null && literalExpression.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      result.add(new TextRange(range.getStartOffset() + 3, range.getEndOffset() - 3));
+      int start = StringUtil.indexOf(editorText, '\n', range.getStartOffset()) + 1;
+      int end = range.getEndOffset() - 3;
+      if (start < end) result.add(new TextRange(start, end));
     }
     else {
       result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));

@@ -995,7 +995,12 @@ public class ListUtils {
 
   void testMethodParameterAnnotationClass() throws Throwable { doTest() }
 
-  void testInnerAnnotation() { doTest('\n') }
+  void testInnerAnnotation() {
+    configure()
+    assert myFixture.lookupElementStrings == ['Dependency']
+    type '\t'
+    checkResult()
+  }
 
   void testPrimitiveCastOverwrite() throws Throwable { doTest() }
 
@@ -1501,8 +1506,22 @@ class XInternalError {}
 
   void testImplementViaOverrideCompletion() {
     configure()
-    myFixture.assertPreferredCompletionItems 0, 'Override', 'public void run'
-    lookup.currentItem = lookup.items[1]
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override', 'public void run'
+    lookup.currentItem = lookup.items[2]
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'Override/Implement methods...', 'Override'
     myFixture.type('\n')
     checkResult()
   }
@@ -1513,6 +1532,9 @@ class XInternalError {}
     assert !LookupElementPresentation.renderElement(lookup.items[0]).strikeout
     assert LookupElementPresentation.renderElement(lookup.items[1]).strikeout
   }
+
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
 
   void testAccessorViaCompletion() {
     configure()

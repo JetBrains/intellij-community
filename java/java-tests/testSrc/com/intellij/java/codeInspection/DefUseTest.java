@@ -61,6 +61,7 @@ public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   public void testFieldInitializer() { doTest(); }
   public void testChainedFieldInitializer() { doTest(); }
   public void testVarDeclaration() { doTest(); }
+  public void testSelfAssignment() { doTest(); }
   public void testFieldIgnoringRedundantInitializer() {
     DefUseInspection inspection = new DefUseInspection();
     inspection.REPORT_REDUNDANT_INITIALIZER = false;

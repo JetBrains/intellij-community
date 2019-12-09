@@ -100,6 +100,7 @@ class GitRewordOperation(private val repository: GitRepository,
     handler.addParameters("-F")
     handler.addAbsoluteFile(messageFile)
     handler.addParameters("--only") // without any files: to amend only the message
+    handler.addParameters("--no-verify") // to prevent unnecessary hooks execution
 
     val result = Git.getInstance().runCommand(handler)
     repository.update()
@@ -114,7 +115,7 @@ class GitRewordOperation(private val repository: GitRepository,
 
   internal fun undo() {
     val possibility = checkUndoPossibility()
-    val errorTitle = "Can't Undo Reword"
+    val errorTitle = "Can't Undo Commit Message Edit"
     when (possibility) {
       is UndoPossibility.HeadMoved -> notifier.notifyError(errorTitle, "Repository has already been changed")
       is UndoPossibility.PushedToProtectedBranch ->
@@ -128,7 +129,7 @@ class GitRewordOperation(private val repository: GitRepository,
     val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
     repository.update()
     if (!res.success()) {
-      notifier.notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
+      notifier.notifyError("Undo Commit Message Edit Failed", res.errorOutputAsHtmlString)
     }
   }
 
@@ -186,7 +187,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun notifySuccess() {
-    val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
+    val notification = STANDARD_NOTIFICATION.createNotification("Updated Commit Message Successfully", "", NotificationType.INFORMATION, null)
     notification.addAction(NotificationAction.createSimple("Undo") {
       notification.expire()
       undoInBackground()

@@ -43,6 +43,9 @@ public class PythonCodeStyleService {
   public void reparseOpenEditorFiles(@NotNull Project project) {
   }
 
+  public void setSpaceAroundEqInKeywordArgument(@NotNull Project project, boolean enabled) {
+  }
+
   public static PythonCodeStyleService getInstance() {
     return ServiceManager.getService(PythonCodeStyleService.class);
   }

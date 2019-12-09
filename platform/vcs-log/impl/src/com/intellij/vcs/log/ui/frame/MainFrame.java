@@ -2,10 +2,13 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.diff.editor.GraphViewVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
@@ -17,7 +20,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -166,7 +170,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   private void installGraphView(JComponent toolbarsAndTable) {
     if (Registry.is("show.log.as.editor.tab")) {
-      VirtualFile graphFile = myLogData.getOrCreateGraphViewVirtualFile(toolbarsAndTable);
+      VirtualFile graphFile = getOrCreateGraphViewVirtualFile(toolbarsAndTable);
       FileEditor[] editors = FileEditorManager.getInstance(myLogData.getProject()).openFile(graphFile, true);
       assert editors.length == 1 : "opened multiple log editors for " + graphFile;
       FileEditor editor = editors[0];
@@ -179,9 +183,29 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       EditorWindow editorWindow = holder.getEditorWindow();
       editorWindow.setFilePinned(graphFile, true);
 
-    } else {
+      DataManager.registerDataProvider(toolbarsAndTable, this);
+    }
+    else {
       myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
     }
+  }
+
+  private VirtualFile myGraphViewFile;
+
+  public VirtualFile tryGetGraphViewFile() {
+    return myGraphViewFile;
+  }
+
+  @NotNull
+  public VirtualFile getOrCreateGraphViewVirtualFile(JComponent logViewComponent) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myGraphViewFile == null) {
+      myGraphViewFile = new GraphViewVirtualFile(logViewComponent);
+      Disposer.register(this, () -> myGraphViewFile = null);
+    }
+
+    return myGraphViewFile;
   }
 
   public void setExplanationHtml(@Nullable String text) {
@@ -312,7 +336,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) {
       return VcsLogUtil.getAllVisibleRoots(roots, myFilterUi.getFilters());
     }
-    return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
+    return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRootAtRow(row));
   }
 
   @NotNull
@@ -367,8 +391,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
-      if (Registry.is("show.log.as.editor.tab"))
+      if (Registry.is("show.log.as.editor.tab")) {
         ChangesViewContentManager.getInstance(myLogData.getProject()).selectContent("Repository");
+      }
 
       myChangesBrowser.resetSelectedDetails();
     }
@@ -404,7 +429,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final Runnable myRefresh;
 
     MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
-      super(ui, logData, VisiblePack.EMPTY, ui::requestMore);
+      super(ui, logData, ui::requestMore);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 

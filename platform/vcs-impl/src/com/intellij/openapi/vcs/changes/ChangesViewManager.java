@@ -13,7 +13,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -77,8 +80,8 @@ import static java.util.Arrays.asList;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class ChangesViewManager implements ChangesViewEx,
-                                           ProjectComponent,
-                                           PersistentStateComponent<ChangesViewManager.State> {
+                                           PersistentStateComponent<ChangesViewManager.State>,
+                                           Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
@@ -91,7 +94,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
-    return project.getComponent(ChangesViewI.class);
+    return project.getService(ChangesViewI.class);
   }
 
   @NotNull
@@ -146,7 +149,7 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myToolWindowPanel = null;
   }
 
@@ -294,13 +297,16 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.getGroupingSupport().setGroupingKeysOrSkip(myChangesViewManager.myState.groupingKeys);
       myView.addTreeSelectionListener(e -> {
         boolean fromModelRefresh = myModelUpdateInProgress;
-        invokeLater(() -> updatePreview(fromModelRefresh));
+        triggerUpdatePreview(fromModelRefresh);
       });
       myView.addGroupingChangeListener(e -> {
         myChangesViewManager.myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
         scheduleRefresh();
       });
       ChangesDnDSupport.install(myProject, myView);
+      if (Registry.is("show.diff.as.editor.tab")) {
+        myView.setExpandableItemsEnabled(false);
+      }
 
       myChangesPanel.getToolbarActionGroup().addAll(createChangesToolbarActions(myView.getTreeExpander()));
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
@@ -393,6 +399,13 @@ public class ChangesViewManager implements ChangesViewEx,
       updatePreview(false);
     }
 
+    private void triggerUpdatePreview(boolean fromModelRefresh) {
+      if (Registry.is("show.diff.as.editor.tab"))
+        updatePreview(fromModelRefresh);
+      else
+        invokeLater(() -> updatePreview(fromModelRefresh));
+    }
+
     @Override
     public void dispose() {
       myDisposed = true;
@@ -420,6 +433,10 @@ public class ChangesViewManager implements ChangesViewEx,
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
           myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+          myCommitWorkflowHandler.addActivityListener(
+            () -> myDiffPreviewSplitter.setAllowExcludeFromCommit(isAllowExcludeFromCommit()),
+            myCommitWorkflowHandler
+          );
         }
       }
       else {
@@ -437,7 +454,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public boolean isAllowExcludeFromCommit() {
-      return myCommitWorkflowHandler != null;
+      return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
     private void setDiffPreviewVisible(boolean isDiffPreviewVisible) {

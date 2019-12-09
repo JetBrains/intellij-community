@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Restarter
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.lang.JavaVersion
 import java.io.File
@@ -23,7 +23,10 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.zip.ZipFile
+import javax.swing.JComponent
 import javax.swing.UIManager
+
+data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
 
 object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
@@ -68,7 +71,7 @@ object UpdateInstaller {
   }
 
   @JvmStatic
-  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+  fun downloadPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): List<PluginDownloader> {
     indicator.text = IdeBundle.message("update.downloading.plugins.progress")
 
     UpdateChecker.saveDisabledToUpdatePlugins()
@@ -87,22 +90,38 @@ object UpdateInstaller {
         Logger.getInstance(UpdateChecker::class.java).info(e)
       }
     }
+    return readyToInstall
+  }
 
-    var installed = false
+  @JvmStatic
+  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>, ownerComponent: JComponent?, allowInstallWithoutRestart: Boolean): PluginUpdateResult {
+    val pluginsInstalled = mutableListOf<IdeaPluginDescriptor>()
+    var restartRequired = false
 
-
-    ProgressManager.getInstance().executeNonCancelableSection {
-      for (downloader in readyToInstall) {
-        try {
+    for (downloader in downloaders) {
+      try {
+        if (!allowInstallWithoutRestart || !downloader.tryInstallWithoutRestart(ownerComponent)) {
           downloader.install()
-          installed = true
+          restartRequired = true
         }
-        catch (e: Exception) {
-          Logger.getInstance(UpdateChecker::class.java).info(e)
-        }
+
+        pluginsInstalled.add(downloader.descriptor)
+      }
+      catch (e: Exception) {
+        Logger.getInstance(UpdateChecker::class.java).info(e)
       }
     }
-    return installed
+    return PluginUpdateResult(pluginsInstalled, restartRequired)
+  }
+
+  @JvmStatic
+  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+    val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
+    var result: PluginUpdateResult? = null
+    ProgressManager.getInstance().executeNonCancelableSection {
+      result = installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
+    }
+    return result?.pluginsInstalled?.isNotEmpty() ?: false
   }
 
   @JvmStatic
@@ -151,8 +170,8 @@ object UpdateInstaller {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        args += Restarter.createTempExecutable(launcher).path
-        Restarter.createTempExecutable(elevator)
+        args += launcher.copyTo(File(tempDir, launcher.name), true).path
+        elevator.copyTo(File(tempDir, elevator.name), true)
       }
     }
 

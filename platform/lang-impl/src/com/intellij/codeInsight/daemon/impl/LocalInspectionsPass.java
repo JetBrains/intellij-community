@@ -55,7 +55,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -224,7 +223,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (toolWrappers.stream().anyMatch(LocalInspectionToolWrapper::runForWholeFile)) {
           return;
         }
-        Set<String> activeTools = toolWrappers.stream().filter(tool -> !tool.isUnfair()).map(tool -> tool.getID()).collect(Collectors.toSet());
+        Set<String> activeTools = new HashSet<>();
+        for (LocalInspectionToolWrapper tool : toolWrappers) {
+          if (!tool.isUnfair()) {
+            activeTools.add(tool.getID());
+            ContainerUtil.addIfNotNull(activeTools, tool.getAlternativeID());
+            InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
+            if (elementsMerger != null) {
+              activeTools.addAll(Arrays.asList(elementsMerger.getSuppressIds()));
+            }
+          }
+        }
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
         ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), true);
@@ -394,7 +403,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
                               .description(message)
                               .severity(severity)
-                              .inspectionGroupKey(tool.getGroupKey());
+                              .inspectionToolId(tool.getID());
     if (toolTip != null) b.escapedToolTip(toolTip);
     if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
       // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.

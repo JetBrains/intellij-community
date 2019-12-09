@@ -12,8 +12,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -24,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,14 +67,14 @@ public class Restarter {
           problem = "cannot find launcher script in " + PathManager.getBinPath();
         }
         else if (PathEnvironmentVariableUtil.findInPath("python") == null && PathEnvironmentVariableUtil.findInPath("python3") == null) {
-          problem = "cannot find neither 'python' nor 'python3' in PATH";
+          problem = "cannot find neither 'python' nor 'python3' in 'PATH'";
         }
         else {
           problem = checkRestarter("restart.py");
         }
       }
       else {
-        problem = "unknown platform: " + SystemInfo.OS_NAME;
+        problem = "Platform unsupported: " + SystemInfo.OS_NAME;
       }
 
       if (problem == null) {
@@ -147,7 +149,7 @@ public class Restarter {
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
-    // process which happened to have the same process ID.
+    // process that happened to have the same process ID.
     TimeoutUtil.sleep(500);
   }
 
@@ -208,7 +210,7 @@ public class Restarter {
 
     File python = PathEnvironmentVariableUtil.findInPath("python");
     if (python == null) python = PathEnvironmentVariableUtil.findInPath("python3");
-    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in PATH");
+    if (python == null) throw new IOException("Cannot find neither 'python' nor 'python3' in 'PATH'");
     File script = new File(PathManager.getBinPath(), "restart.py");
 
     List<String> args = new ArrayList<>();
@@ -228,34 +230,17 @@ public class Restarter {
   }
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
-    boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
-    File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
-    restarterArgs.add(0, restarter.getPath());
+    String restarter = restarterFile.getPath();
+    if (restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
+      Path tempDir = Paths.get(PathManager.getSystemPath(), "restart");
+      Files.createDirectories(tempDir);
+      Path copy = tempDir.resolve(restarterFile.getName());
+      Files.copy(restarterFile.toPath(), copy, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+      restarter = copy.toString();
+    }
+    restarterArgs.add(0, restarter);
     Logger.getInstance(Restarter.class).info("run restarter: " + restarterArgs);
-    Runtime.getRuntime().exec(ArrayUtilRt.toStringArray(restarterArgs));
-  }
-
-  @NotNull
-  public static File createTempExecutable(@NotNull File executable) throws IOException {
-    File tempDir = new File(PathManager.getSystemPath(), "restart");
-    if (!FileUtilRt.createDirectory(tempDir)) {
-      throw new IOException("Cannot create directory: " + tempDir);
-    }
-
-    File copy = new File(tempDir, executable.getName());
-    if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
-      String prefix = FileUtilRt.getNameWithoutExtension(copy.getName());
-      String ext = FileUtilRt.getExtension(executable.getName());
-      String suffix = StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext);
-      copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
-    }
-    FileUtilRt.copy(executable, copy);
-
-    if (executable.canExecute() && !copy.setExecutable(true)) {
-      throw new IOException("Cannot make file executable: " + copy);
-    }
-
-    return copy;
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
   }
 
   @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})

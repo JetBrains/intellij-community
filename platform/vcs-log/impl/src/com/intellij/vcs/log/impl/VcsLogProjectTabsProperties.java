@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,8 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
+public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
+                                                          VcsLogTabsProperties {
   public static final String MAIN_LOG_ID = "MAIN";
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   @NotNull private final VcsLogApplicationSettings myAppSettings;
@@ -116,12 +118,12 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       RecentGroup group = (RecentGroup)o;
-      return Objects.equals(FILTER_VALUES, group.FILTER_VALUES);
+      return Comparing.haveEqualElements(FILTER_VALUES, group.FILTER_VALUES);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(FILTER_VALUES);
+      return Comparing.unorderedHashcode(FILTER_VALUES);
     }
   }
 

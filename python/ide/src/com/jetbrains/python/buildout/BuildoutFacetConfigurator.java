@@ -21,7 +21,7 @@ import java.io.File;
  */
 public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
   @Override
-  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef) {
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Ref<Module> moduleRef, boolean newProject) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     if (modules.length > 0) {
       final Module module = modules[0];

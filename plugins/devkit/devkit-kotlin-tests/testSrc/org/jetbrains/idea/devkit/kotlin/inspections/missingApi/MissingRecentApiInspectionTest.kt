@@ -33,7 +33,7 @@ class MissingRecentApiInspectionTest : PluginModuleTestCase() {
       PsiTestUtil.addProjectLibrary(model, "kotlin-stdlib", listOf(PathUtil.getJarPathForClass(Function::class.java)))
     }
 
-    override fun getModuleType() = PluginModuleType.getInstance()
+    override fun getModuleTypeId() = PluginModuleType.ID
   }
 
   private var inspection = MissingRecentApiInspection()

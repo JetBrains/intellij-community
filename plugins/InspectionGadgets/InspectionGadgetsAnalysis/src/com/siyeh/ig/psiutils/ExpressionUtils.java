@@ -548,6 +548,10 @@ public class ExpressionUtils {
             }
           }
         }
+      }
+      else if (FormatUtils.isFormatCall(methodCallExpression)) {
+        PsiExpression formatArgument = FormatUtils.getFormatArgument(expressionList);
+        return PsiTreeUtil.isAncestor(formatArgument, expression, false);
       } else {
         return true;
       }

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("ForLoopReplaceableByForEach")
-public class CompositeFilter implements Filter, FilterMixin {
+public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   private static final Logger LOG = Logger.getInstance(CompositeFilter.class);
 
   private final List<Filter> myFilters;

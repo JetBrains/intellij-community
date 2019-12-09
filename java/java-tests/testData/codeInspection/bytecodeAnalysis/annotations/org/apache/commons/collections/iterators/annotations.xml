@@ -230,25 +230,40 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyIterator RESETTABLE_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyListIterator EmptyListIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyListIterator RESETTABLE_INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.iterators.EmptyMapIterator EmptyMapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyMapIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyOrderedIterator EmptyOrderedIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='org.apache.commons.collections.iterators.EmptyOrderedMapIterator EmptyOrderedMapIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.iterators.EmptyOrderedMapIterator INSTANCE'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.iterators.EntrySetMapIterator EntrySetMapIterator(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

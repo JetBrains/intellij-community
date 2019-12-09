@@ -22,13 +22,19 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   private static final String FOLDERS_ATTR_NAME = "Folders";
   private static final String FOLDER_ATTR_NAME = "Folder";
+
   private static final String CUSTOM_DICTIONARIES_ATTR_NAME = "CustomDictionaries";
   private static final String CUSTOM_DICTIONARY_ATTR_NAME = "CustomDictionary";
+
   private static final String DICTIONARIES_ATTR_NAME = "Dictionaries";
   private static final String DICTIONARY_ATTR_NAME = "Dictionary";
 
+  private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
+  private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
+
   private static final String BUNDLED_DICTIONARIES_ATTR_NAME = "BundledDictionaries";
   private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
+
   private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
   private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
@@ -42,6 +48,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
+  private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
@@ -100,6 +107,14 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
   }
 
+  public Set<String> getRuntimeDisabledDictionariesNames() {
+    return myRuntimeDisabledDictionariesNames;
+  }
+
+  public void setRuntimeDisabledDictionariesNames(Set<String> runtimeDisabledDictionariesNames) {
+    myRuntimeDisabledDictionariesNames = runtimeDisabledDictionariesNames;
+  }
+
   public boolean isDefaultAdvancedSettings(){
     return myCorrectionsLimit == DEFAULT_MAX_VALUE &&
            myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
@@ -109,6 +124,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @Override
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
+        myRuntimeDisabledDictionariesNames.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
         myDisabledDictionariesPaths.isEmpty() &&
@@ -125,6 +141,14 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     int i = 0;
     while (iterator.hasNext()) {
       element.setAttribute(BUNDLED_DICTIONARY_ATTR_NAME + i, iterator.next());
+      i++;
+    }
+    // runtime
+    element.setAttribute(RUNTIME_DICTIONARIES_ATTR_NAME, String.valueOf(myRuntimeDisabledDictionariesNames.size()));
+    iterator = myRuntimeDisabledDictionariesNames.iterator();
+    i = 0;
+    while (iterator.hasNext()) {
+      element.setAttribute(RUNTIME_DICTIONARY_ATTR_NAME + i, iterator.next());
       i++;
     }
     // user
@@ -155,6 +179,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   @Override
   public void loadState(@NotNull final Element element) {
     myBundledDisabledDictionariesPaths.clear();
+    myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();
     myDisabledDictionariesPaths.clear();
@@ -163,6 +188,11 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       final int bundledDictionariesSize = parseInt(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < bundledDictionariesSize; i++) {
         myBundledDisabledDictionariesPaths.add(element.getAttributeValue(BUNDLED_DICTIONARY_ATTR_NAME + i));
+      }
+      // runtime
+      final int runtimeDictionariesSize = parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
+      for (int i = 0; i < runtimeDictionariesSize; i++) {
+        myRuntimeDisabledDictionariesNames.add(element.getAttributeValue(RUNTIME_DICTIONARY_ATTR_NAME + i));
       }
       // user
       // cover old dictionary folders settings (if no new settings available)

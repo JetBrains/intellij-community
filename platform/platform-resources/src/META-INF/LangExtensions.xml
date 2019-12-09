@@ -122,6 +122,9 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.folding.impl.FoldingHintPostStartupActivity"/>
+    <projectService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingManager"
+                    serviceImplementation="com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.psi.statistics.StatisticsManager"
                         serviceImplementation="com.intellij.psi.statistics.impl.StatisticsManagerImpl"/>
@@ -520,8 +523,10 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresWithSpacesMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceSpacesWithUnderscoresMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileNameMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileNameWithoutExtensionMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FilePathMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FilePathMacroBase$FileRelativePathMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro$ReplaceUnderscoresToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConvertToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
@@ -850,9 +855,6 @@
                 factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
     <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
-    <toolWindow id="Run Dashboard" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowRun" canCloseContents="true"
-                factoryClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"
-                conditionClass="com.intellij.execution.dashboard.RunDashboardToolWindowFactory"/>
     <toolWindow id="Services" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowServices" canCloseContents="true"
                 factoryClass="com.intellij.execution.services.ServiceViewToolWindowFactory"
                 conditionClass="com.intellij.execution.services.ServiceViewToolWindowFactory"/>
@@ -1077,11 +1079,9 @@
                               id="status" order="after type"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"
                               id="folder" order="after status"/>
-    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"
-                              id="runConfiguration" order="after folder"/>
     <actionPromoter implementation="com.intellij.execution.dashboard.actions.RunDashboardActionPromoter"/>
     <actionPromoter implementation="com.intellij.execution.services.ServiceViewActionPromoter"/>
-    <serviceViewContributor implementation="com.intellij.execution.dashboard.RunConfigurationsServiceViewContributor"/>
+    <serviceViewContributor implementation="com.intellij.execution.dashboard.RunDashboardServiceViewContributor"/>
     <navbar implementation="com.intellij.execution.services.ServiceViewNavBarExtension"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
@@ -1251,9 +1251,6 @@
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.daemon.impl.EditorTracker$MyAppLevelEditorFactoryListener"/>
-
-    <projectService serviceInterface="com.intellij.openapi.wm.impl.status.TogglePopupHintsPanelFactory"
-                    serviceImplementation="com.intellij.openapi.wm.impl.status.TogglePopupHintsPanelFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.HectorComponentFactory"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.HectorComponentFactoryImpl"/>

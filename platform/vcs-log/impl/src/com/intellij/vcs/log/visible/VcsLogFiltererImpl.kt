@@ -336,7 +336,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         }
 
         if (resolvedRanges.isEmpty()) {
-          continue;
+          continue
         }
 
         actualFilterCollection = filterCollection

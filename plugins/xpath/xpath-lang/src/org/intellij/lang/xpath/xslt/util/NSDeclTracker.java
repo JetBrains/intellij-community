@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 
@@ -30,14 +29,14 @@ import java.util.List;
 public class NSDeclTracker implements ModificationTracker {
     private static final Key<Long> MOD_COUNT = Key.create("MOD_COUNT");
 
-    private final XmlTagImpl myRootTag;
+    private final XmlTag myRootTag;
     private final PsiFile myFile;
     private final List<XmlAttribute> myNSDecls;
     private long myRootCount;
     private int myCount;
 
     public NSDeclTracker(XmlTag rootTag) {
-        myRootTag = (XmlTagImpl)rootTag;
+        myRootTag = rootTag;
         myFile = rootTag.getContainingFile();
         myNSDecls = getNSDecls(false);
         myRootCount = myFile.getModificationStamp();

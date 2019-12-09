@@ -77,8 +77,8 @@ public class ThreadDumper {
     return isEDT(info.getThreadName());
   }
 
-  public static boolean isEDT(@NotNull String threadName) {
-    return threadName.startsWith("AWT-EventQueue");
+  public static boolean isEDT(@Nullable String threadName) {
+    return threadName != null && threadName.startsWith("AWT-EventQueue");
   }
 
   private static StackTraceElement[] dumpThreadInfos(@NotNull ThreadInfo[] threadInfo, @NotNull Writer f) {

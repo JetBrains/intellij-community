@@ -7,6 +7,7 @@ import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,13 @@ public interface ContextFeatureProvider {
   @NotNull
   String getName();
 
-  /**
-   * Will be invoked in EDT, should be fast enough
-   */
   @NotNull
-  Map<String, MLFeatureValue> calculateFeatures(Lookup lookup);
+  default Map<String, MLFeatureValue> calculateFeatures(@NotNull Lookup lookup) {
+    return Collections.emptyMap();
+  }
+
+  @NotNull
+  default Map<String, MLFeatureValue> calculateFeatures(@NotNull CompletionEnvironment environment) {
+    return calculateFeatures(environment.getLookup());
+  }
 }

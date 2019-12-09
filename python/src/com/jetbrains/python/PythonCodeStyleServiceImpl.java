@@ -50,4 +50,9 @@ public class PythonCodeStyleServiceImpl extends PythonCodeStyleService {
   public void reparseOpenEditorFiles(@NotNull Project project) {
     FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
   }
+
+  @Override
+  public void setSpaceAroundEqInKeywordArgument(@NotNull Project project, boolean enabled) {
+    CodeStyle.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = enabled;
+  }
 }

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -145,7 +144,7 @@ public class XDebuggerInlayUtil {
         int xEnd = editor.offsetToXY(value.refEndOffset, false, true).x;
         int width = g.getFontMetrics().stringWidth(value.value);
         curX = Math.max(curX, (xStart + xEnd - width) / 2);
-        g.drawString(value.value, curX, targetRegion.y + ((EditorImpl)editor).getAscent());
+        g.drawString(value.value, curX, targetRegion.y + editor.getAscent());
         g.drawLine(Math.min(xEnd, Math.max(xStart, curX + width / 2)), targetRegion.y, curX + width / 2, targetRegion.y + 2);
         g.drawLine(curX, targetRegion.y + 2, curX + width, targetRegion.y + 2);
         curX += width;
