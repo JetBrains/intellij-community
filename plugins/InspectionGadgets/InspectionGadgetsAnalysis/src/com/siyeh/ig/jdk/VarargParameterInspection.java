@@ -129,7 +129,7 @@ public class VarargParameterInspection extends BaseInspection {
       final PsiElement element = reference.getElement();
       final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
       JavaResolveResult result = call.resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
         return;
       }
       final PsiExpressionList argumentList = call.getArgumentList();
