@@ -16,7 +16,7 @@ import java.util.jar.Manifest;
  * Do not use this command-line method on Java 9+ - use @argfile instead.
  *
  * @author anna
- * @noinspection SSBasedInspection
+ * @noinspection SSBasedInspection, UseOfSystemOutOrSystemErr
  */
 public class CommandLineWrapper {
   private static class AppData {
@@ -34,7 +34,11 @@ public class CommandLineWrapper {
   public static void main(String[] args) throws Exception {
     try {
       Class.forName("java.lang.Module");
-      throw new IllegalStateException("`CommandLineWrapper` is ill-suited for launching apps on Java 9+. Please use @arg files instead.");
+      System.err.println(
+        "`CommandLineWrapper` is ill-suited for launching apps on Java 9+.\n" +
+        "If the run configuration uses \"classpath file\", please change it to \"@argfile\".\n" +
+        "Otherwise, please contact support.");
+      System.exit(1);
     }
     catch (ClassNotFoundException ignored) { }
 
