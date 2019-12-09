@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.EditorTextField
 import javax.swing.JComponent
+import javax.swing.LookAndFeel
 import javax.swing.UIDefaults
 import javax.swing.UIManager
 import javax.swing.text.JTextComponent
@@ -12,6 +13,8 @@ import javax.swing.text.JTextComponent
 abstract class PluggableLafInfo(name: String, className: String) : UIManager.LookAndFeelInfo(name, className) {
   class SearchAreaContext(val searchComponent: JComponent, val textComponent: JTextComponent,
                           val iconsPanel: JComponent, val scrollPane: JComponent)
+
+  abstract fun createLookAndFeel() : LookAndFeel
 
   /**
    * Creates paint context needed to render `SearchTextArea` with this look and feel.

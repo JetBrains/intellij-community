@@ -515,19 +515,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     else { // non default LAF
       try {
-        LookAndFeel laf = ((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
-        if (laf instanceof MetalLookAndFeel) {
-          MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+        LookAndFeel laf;
+        if (lookAndFeelInfo instanceof PluggableLafInfo) {
+          laf = ((PluggableLafInfo)lookAndFeelInfo).createLookAndFeel();
         }
-        if (laf instanceof UserDataHolder) {
-          UserDataHolder userDataHolder = (UserDataHolder)laf;
-          if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
-            userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+        else {
+          laf = ((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
+
+          if (laf instanceof MetalLookAndFeel) {
+            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
           }
-          else if (lookAndFeelInfo instanceof PluggableLafInfo) {
-            userDataHolder.putUserData(UIUtil.PLUGGABLE_LAF_KEY, lookAndFeelInfo.getName());
+          else if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+            if (laf instanceof UserDataHolder) {
+              UserDataHolder userDataHolder = (UserDataHolder)laf;
+              userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+            }
           }
         }
+
         UIManager.setLookAndFeel(laf);
       }
       catch (Exception e) {

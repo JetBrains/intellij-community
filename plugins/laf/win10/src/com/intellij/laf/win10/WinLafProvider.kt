@@ -7,7 +7,8 @@ import com.intellij.ide.ui.laf.SearchTextAreaPainter
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.EditorTextField
-import com.intellij.util.ui.LafIconLookup
+import com.intellij.util.ui.UIUtil
+import javax.swing.LookAndFeel
 import javax.swing.UIDefaults
 
 class WinLafProvider : LafProvider {
@@ -16,6 +17,12 @@ class WinLafProvider : LafProvider {
   }
 
   private class Win10LookAndFeelInfo : PluggableLafInfo(LAF_NAME, WinIntelliJLaf::class.java.name) {
+    override fun createLookAndFeel(): LookAndFeel {
+      val laf = WinIntelliJLaf()
+      laf.putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
+      return laf
+    }
+
     override fun createSearchAreaPainter(context: SearchAreaContext): SearchTextAreaPainter {
       return Win10SearchPainter(context)
     }
