@@ -160,23 +160,21 @@ public class Switcher extends AnAction implements DumbAware {
       if (SWITCHER == null) {
         isNewSwitcher = true;
         // Assigns SWITCHER field
-        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false);
+        boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
+        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false, !moveBack);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
 
     assert SWITCHER != null;
     if (!SWITCHER.isPinnedMode()) {
-      if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) {
-        SWITCHER.goBack();
+      if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
+        SWITCHER.files.setSelectedIndex(0);
       }
-      else {
-        if (isNewSwitcher && !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
-          SWITCHER.files.setSelectedIndex(0);
-        }
-        else {
-          SWITCHER.goForward();
-        }
+
+      if (!isNewSwitcher) {
+        if (e.getInputEvent() != null && e.getInputEvent().isShiftDown()) SWITCHER.goBack();
+        else SWITCHER.goForward();
       }
     }
   }
@@ -194,7 +192,8 @@ public class Switcher extends AnAction implements DumbAware {
     if (SWITCHER != null && Comparing.equal(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();
-    return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned);
+    boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
+    return project == null ? null : createAndShowSwitcher(project, title, actionId, onlyEdited, pinned, !moveBack);
   }
 
   @Nullable
@@ -202,12 +201,13 @@ public class Switcher extends AnAction implements DumbAware {
                                                      @NotNull String title,
                                                      @NotNull String actionId,
                                                      boolean onlyEdited,
-                                                     boolean pinned) {
+                                                     boolean pinned,
+                                                     boolean moveForward) {
     synchronized (Switcher.class) {
       if (SWITCHER != null) {
         SWITCHER.cancel();
       }
-      SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned);
+      SWITCHER = new SwitcherPanel(project, title, actionId, onlyEdited, pinned, moveForward);
       project.putUserData(SWITCHER_KEY, SWITCHER);
       return SWITCHER;
     }
@@ -367,7 +367,9 @@ public class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
+                  boolean moveForward)
+    {
       setLayout(new BorderLayout());
       this.project = project;
       myTitle = title;
@@ -446,11 +448,10 @@ public class Switcher extends AnAction implements DumbAware {
         }
       });
 
-      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(project, collectFiles(project, onlyEdited),
-                                                                                              toolWindows.getModel().getSize(), pinned);
-      final int selectionIndex = filesAndSelection.getSecond();
+      final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
+                                                        toolWindows.getModel().getSize(), pinned);
       final CollectionListModel<FileInfo> filesModel = new CollectionListModel<>();
-      for (FileInfo editor : filesAndSelection.getFirst()) {
+      for (FileInfo editor : filesToShow) {
         filesModel.add(editor);
       }
 
@@ -575,6 +576,7 @@ public class Switcher extends AnAction implements DumbAware {
         );
         pane.setBorder(border);
         this.add(pane, BorderLayout.CENTER);
+        int selectionIndex = getFilesSelectedIndex(project, files, moveForward);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }
@@ -741,11 +743,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     @NotNull
-    static Pair<List<FileInfo>, Integer> getFilesToShowAndSelectionIndex(@NotNull Project project,
-                                                                                 @NotNull List<VirtualFile> filesForInit,
-                                                                                 int toolWindowsCount,
-                                                                                 boolean pinned) {
-      int selectionIndex = -1;
+    static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<VirtualFile> filesForInit,
+                                         int toolWindowsCount, boolean pinned) {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<>();
       final ArrayList<FileInfo> editors = new ArrayList<>();
@@ -764,10 +763,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
         int maxFiles = Math.max(editors.size(), filesForInit.size());
         int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
-        boolean firstRecentMarked = false;
         List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
-        EditorWindow currentWindow = editorManager.getCurrentWindow();
-        VirtualFile currentFile = currentWindow != null ? currentWindow.getSelectedFile() : null;
         for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
           if (pinned
               && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
@@ -788,14 +784,9 @@ public class Switcher extends AnAction implements DumbAware {
           if (add) {
             if (addedFiles.add(info.first)) {
               filesData.add(info);
-              if (!firstRecentMarked && !info.first.equals(currentFile)) {
-                selectionIndex = filesData.size() - 1;
-                firstRecentMarked = true;
-              }
             }
           }
         }
-        //if (editors.size() == 1) selectionIndex++;
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           if (addedFiles.add(editors.get(0).first)) {
             filesData.add(0, editors.get(0));
@@ -809,7 +800,33 @@ public class Switcher extends AnAction implements DumbAware {
         }
       }
 
-      return Pair.create(filesData, selectionIndex);
+      return filesData;
+    }
+
+    static int getFilesSelectedIndex(Project project, JList<FileInfo> filesList, boolean forward) {
+      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      EditorWindow currentWindow = editorManager.getCurrentWindow();
+      VirtualFile currentFile = currentWindow != null ? currentWindow.getSelectedFile() : null;
+
+      ListModel<FileInfo> model = filesList.getModel();
+      if (forward) {
+        for (int i = 0; i < model.getSize(); i++) {
+          FileInfo fileInfo = model.getElementAt(i);
+          if (!fileInfo.first.equals(currentFile)) {
+            return i;
+          }
+        }
+      }
+      else {
+        for (int i = model.getSize() - 1; i >= 0; i--) {
+          FileInfo fileInfo = model.getElementAt(i);
+          if (!fileInfo.first.equals(currentFile)) {
+            return i;
+          }
+        }
+      }
+
+      return -1;
     }
 
     @NotNull
@@ -1111,14 +1128,14 @@ public class Switcher extends AnAction implements DumbAware {
 
       final boolean listWasSelected = files.getSelectedIndex() != -1;
 
-      final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(
-        project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
-      final int selectionIndex = filesAndSelection.getSecond();
+      final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
+                                                        toolWindows.getModel().getSize(), isPinnedMode());
 
       ListModel<FileInfo> model = files.getModel();
       ListUtil.removeAllItems(model);
-      ListUtil.addAllItems(model, filesAndSelection.getFirst());
+      ListUtil.addAllItems(model, filesToShow);
 
+      int selectionIndex = getFilesSelectedIndex(project, files, true);
       if (selectionIndex > -1 && listWasSelected) {
         files.setSelectedIndex(selectionIndex);
       }
