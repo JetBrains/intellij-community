@@ -21,13 +21,13 @@
 
     <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
-    <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension"/>
+    <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
     <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
     <extensionPoint name="xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
     <extensionPoint name="xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
-    
+
     <extensionPoint name="xml.xmlSuppressionProvider"
                     interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
     <extensionPoint name="xml.nsColorProvider"
@@ -87,7 +87,7 @@
     <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP"/>
 
     <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler"/>
-    
+
     <!--dead code-->
     <extensionPoint name="xml.util.htmlDoctypeProvider" interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
 
