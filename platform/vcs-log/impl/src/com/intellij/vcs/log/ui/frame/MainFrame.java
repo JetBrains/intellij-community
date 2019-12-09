@@ -181,6 +181,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
     myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
     myPreviewDiffSplitter.setFirstComponent(myChangesBrowserSplitter);
+    initPreviewInEditor(myLogData.getProject());
     showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
 
     setLayout(new BorderLayout());
@@ -190,9 +191,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
-
-    final Project project = myLogData.getProject();
-    initPreviewInEditor(project);
   }
 
   @NotNull
@@ -452,21 +450,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public void showDiffPreview(boolean state) {
     myPreviewDiff.updatePreview(state);
-    if (Registry.is("show.diff.preview.as.editor.tab")) {
-      if (myDiffPreviewProvider != null) {
-        if (!state) {
-          //'equals' for such files is overridden and means the equality of its owner
-          FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
-        }
-        else {
-          openPreviewInEditor(myLogData.getProject(), myDiffPreviewProvider);
-        }
+    if (myDiffPreviewProvider != null) {
+      if (!state) {
+        //'equals' for such files is overridden and means the equality of its owner
+        FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
       }
-
-      return;
+      else {
+        openPreviewInEditor(myLogData.getProject(), myDiffPreviewProvider);
+      }
     }
-
-    myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
+    else {
+      myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
+    }
   }
 
   private void openPreviewInEditor(@NotNull Project project, @NotNull DiffPreviewProvider provider) {
