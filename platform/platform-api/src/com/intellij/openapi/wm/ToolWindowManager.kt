@@ -64,18 +64,6 @@ abstract class ToolWindowManager {
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
-  fun registerToolWindow(id: String,
-                         component: JComponent,
-                         anchor: ToolWindowAnchor,
-                         @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable,
-                         canWorkInDumbMode: Boolean,
-                         canCloseContents: Boolean): ToolWindow {
-    return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor,
-                                                     canCloseContent = canCloseContents, canWorkInDumbMode = canWorkInDumbMode))
-  }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("use {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}")
   fun registerToolWindow(id: String, canCloseContent: Boolean, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor,
                                                      canCloseContent = canCloseContent, canWorkInDumbMode = false))
@@ -122,7 +110,6 @@ abstract class ToolWindowManager {
                          @Suppress("UNUSED_PARAMETER") parentDisposable: Disposable): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, component = null, anchor = anchor, sideTool = false,
                                                      canCloseContent = canCloseContent, canWorkInDumbMode = false))
-
   }
 
   protected abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow

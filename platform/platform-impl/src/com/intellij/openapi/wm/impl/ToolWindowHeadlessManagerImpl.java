@@ -48,10 +48,11 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void notifyByBalloon(@NotNull String toolWindowId, @NotNull MessageType type, @NotNull String htmlBody) {
   }
 
-  private ToolWindow doRegisterToolWindow(final String id) {
-    MockToolWindow tw = new MockToolWindow(myProject);
-    myToolWindows.put(id, tw);
-    return tw;
+  @NotNull
+  public ToolWindow doRegisterToolWindow(@NotNull String id) {
+    MockToolWindow toolWindow = new MockToolWindow(myProject);
+    myToolWindows.put(id, toolWindow);
+    return toolWindow;
   }
 
   @NotNull
