@@ -4,20 +4,18 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
-import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface OverrideText extends DomElement {
+
   @NotNull
-  @Stubbed
   @Required
   GenericAttributeValue<String> getPlace();
 
   @NotNull
-  @Stubbed
   @Required(value = false)
   GenericAttributeValue<String> getText();
 }
