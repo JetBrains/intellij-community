@@ -3,14 +3,13 @@
   <id>Git4Idea</id>
   <description>
       <![CDATA[
-      Allows working with <a href="http://git-scm.com/">Git version control system</a>.
-      The following features are available:
+      Provides integration with <a href="http://git-scm.com/">Git</a>.
         <ul>
-        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
-        <li>Ability to browse, check out sources from and import into the available Git repositories, when Git is not enabled.</li>
-        <li>When Git is enabled, the Git node appears on the VCS menu, and on the context menu of the editor.</li>
+        <li>Check out your source code from a Git repository</li>
+        <li>Browse, commit, push, pull, merge, view log, review pull requests, and much more</li>
+        <li>Dedicated item in the VCS menu and in the context menu</li>
         </ul>
-         <p>Numerous plugins depend on the Git Integration plugin.</p>
+         <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
       ]]>
    </description>
   <category>VCS Integration</category>
