@@ -81,8 +81,8 @@ interface JpsFileSerializerFactory<E : TypedEntity> {
   val entityClass: Class<E>
   
   /** Returns serializers for individual configuration files referenced from [fileUrl] */
-  fun createSerializers(reader: JpsFileContentReader,
-                        sourceFactory: (VirtualFileUrl, String) -> JpsFileEntitySource.FileInDirectory): List<JpsFileEntitiesSerializer<E>>
+  fun loadFileList(reader: JpsFileContentReader): List<VirtualFileUrl>
+
   fun createSerializer(source: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<E>
   fun saveEntitiesList(entities: Sequence<E>, writer: JpsFileContentWriter)
   fun getFileName(entity: E): String
@@ -112,14 +112,17 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
   internal val serializerToFileFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsFileSerializerFactory<*>>()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   internal val fileSerializersByUrl = MultiMap.create<String, JpsFileEntitiesSerializer<*>>()
-  private val fileIdToFileName = TIntObjectHashMap<String>()
+  internal val fileIdToFileName = TIntObjectHashMap<String>()
 
   init {
     for (factory in directorySerializersFactories) {
       createDirectorySerializers(factory).associateWithTo(serializerToDirectoryFactory) { factory }
     }
     for (factory in fileSerializerFactories) {
-      factory.createSerializers(reader, ::createFileInDirectorySource).associateWithTo(serializerToFileFactory) { factory }
+      val fileList = factory.loadFileList(reader)
+      fileList
+        .map { factory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it) }
+        .associateWithTo(serializerToFileFactory) { factory }
     }
 
     val allFileSerializers = entityTypeSerializers + serializerToDirectoryFactory.keys + serializerToFileFactory.keys
@@ -161,12 +164,18 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
     for (changedUrl in change.changedFileUrls) {
       val serializerFactory = fileSerializerFactoriesByUrl[changedUrl]
       if (serializerFactory != null) {
-        val newSerializers = serializerFactory.createSerializers(reader, ::createFileInDirectorySource)
+        val newFileUrls = serializerFactory.loadFileList(reader)
         val oldSerializers: List<JpsFileEntitiesSerializer<*>> = serializerToFileFactory.getKeysByValue(serializerFactory) ?: emptyList()
-        serializerToFileFactory.removeValue(serializerFactory)
-        newSerializers.associateWithTo(serializerToFileFactory) { serializerFactory }
-        obsoleteSerializers.addAll(oldSerializers - newSerializers)
-        newFileSerializers.addAll(newSerializers - oldSerializers)
+        val oldFileUrls = oldSerializers.mapTo(HashSet()) { it.fileUrl }
+        val newFileUrlsSet = newFileUrls.toSet()
+        val obsoleteSerializersForFactory = oldSerializers.filter { it.fileUrl !in newFileUrlsSet }
+        obsoleteSerializersForFactory.forEach { serializerToFileFactory.remove(it, serializerFactory) }
+        val newFileSerializersForFactory = newFileUrls.filter { it !in oldFileUrls}.map {
+          serializerFactory.createSerializer(createFileInDirectorySource(it.parent!!, it.file!!.name), it)
+        }
+        newFileSerializersForFactory.associateWithTo(serializerToFileFactory) { serializerFactory }
+        obsoleteSerializers.addAll(obsoleteSerializersForFactory)
+        newFileSerializers.addAll(newFileSerializersForFactory)
       }
     }
 
@@ -189,6 +198,9 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
       }
     }
     obsoleteSerializers.mapTo(changedSources) { it.entitySource }
+    obsoleteSerializers.asSequence().map { it.entitySource }.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).forEach {
+      fileIdToFileName.remove(it.fileNameId)
+    }
 
     val builder = TypedEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
@@ -251,6 +263,9 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
         val fileUrl = getActualFileUrl(source)
         if (fileUrl != null) {
           processObsoleteSource(fileUrl, false)
+          if (source is JpsFileEntitySource.FileInDirectory) {
+            fileIdToFileName.remove(source.fileNameId)
+          }
         }
       }
     }
@@ -348,7 +363,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
   private fun <E : TypedEntity> getDefaultFileNameForEntity(directoryFactory: JpsDirectoryEntitiesSerializerFactory<E>,
                                                             entities: Map<Class<out TypedEntity>, List<TypedEntity>>): String? {
     @Suppress("UNCHECKED_CAST") val entity = entities[directoryFactory.entityClass]?.singleOrNull() as? E ?: return null
-    return FileUtil.sanitizeFileName(directoryFactory.getDefaultFileName(entity))
+    return FileUtil.sanitizeFileName(directoryFactory.getDefaultFileName(entity)) + ".xml"
   }
 
   private fun <E : TypedEntity> getFileNameForEntity(fileFactory: JpsFileSerializerFactory<E>,
@@ -380,7 +395,10 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
         @Suppress("UNCHECKED_CAST")
         val fileName = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(factory.getDefaultFileName(it as E)), "", ".xml")
         val entityMap = mapOf<Class<out TypedEntity>, List<TypedEntity>>(factory.entityClass to listOf(it))
-        val source = createFileInDirectorySource(VirtualFileUrlManager.fromUrl(factory.directoryUrl), fileName)
+        val currentSource = it.entitySource as? JpsFileEntitySource.FileInDirectory
+        val source =
+          if (currentSource != null && fileIdToFileName[currentSource.fileNameId] == fileName) currentSource
+          else createFileInDirectorySource(VirtualFileUrlManager.fromUrl(factory.directoryUrl), fileName)
         Pair(factory.createSerializer("${factory.directoryUrl}/$fileName", source), entityMap)
       }
   }

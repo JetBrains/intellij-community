@@ -361,14 +361,11 @@ internal class ModuleSerializersFactory(override val fileUrl: String) : JpsFileS
     return ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl,  source)
   }
 
-  override fun createSerializers(reader: JpsFileContentReader,
-                                 sourceFactory: (VirtualFileUrl, String) -> JpsFileEntitySource.FileInDirectory): List<JpsFileEntitiesSerializer<ModuleEntity>> {
+  override fun loadFileList(reader: JpsFileContentReader): List<VirtualFileUrl> {
     val moduleManagerTag = reader.loadComponent(fileUrl, MODULE_MANAGER_COMPONENT_NAME) ?: return emptyList()
     return ModuleManagerImpl.getPathsToModuleFiles(moduleManagerTag).map {
       //todo load module groups
-      val moduleFile = File(it.path)
-      val url = moduleFile.toVirtualFileUrl()
-      ModuleImlFileEntitiesSerializer(it, url, sourceFactory(moduleFile.parentFile.toVirtualFileUrl(), moduleFile.name))
+      File(it.path).toVirtualFileUrl()
     }
   }
 

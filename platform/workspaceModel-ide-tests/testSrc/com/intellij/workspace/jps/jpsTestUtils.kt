@@ -147,8 +147,8 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
   fileSerializerFactoriesByUrl.forEach { (url, fileSerializer) ->
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = serializerToFileFactory.getKeysByValue(fileSerializer)!!
-    val serializersFromFactory = fileSerializer.createSerializers(CachingJpsFileContentReader(projectBaseDirUrl), ::createFileInDirectorySource)
-    assertEquals(serializersFromFactory.map {getNonNullActualFileUrl(it.entitySource)}.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
+    val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl))
+    assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.entitySource) }.sorted())
   }
 
   fileSerializersByUrl.entrySet().forEach { (url, serializers) ->
@@ -168,6 +168,12 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
   val allSources = storage.entitiesBySource { true }
   assertNull(allSources[IdeUiEntitySource])
   assertEquals(allSources.keys.filterIsInstance<JpsFileEntitySource>().map { getNonNullActualFileUrl(it) }.sorted(), fileSerializersByUrl.keySet().sorted())
+
+  val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
+  val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys().toSet()
+  assertTrue("Some fileNameId aren't registered: ${unregisteredIds}", unregisteredIds.isEmpty())
+  val staleIds = fileIdToFileName.keys().toSet() - fileIdFromEntities
+  assertTrue("There are stale mapping for some fileNameId: ${staleIds.joinToString { "$it -> ${fileIdToFileName.get(it)}" }}", staleIds.isEmpty())
 }
 
 internal fun File.asStoragePlace(): JpsProjectStoragePlace =
