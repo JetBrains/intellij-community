@@ -35,7 +35,8 @@
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
-                        serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>
+                        serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.codeInspection.actions.CleanupInspectionUtil"
                         serviceImplementation="com.intellij.codeInspection.actions.CleanupInspectionUtilImpl"/>

@@ -65,7 +65,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return false;
   }
 
-  boolean isTypoTolerant() {
+  @ApiStatus.Internal
+  public boolean isTypoTolerant() {
     return myTypoTolerant;
   }
 
