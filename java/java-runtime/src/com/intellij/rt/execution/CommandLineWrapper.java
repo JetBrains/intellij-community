@@ -96,7 +96,7 @@ public class CommandLineWrapper {
   }
 
   /**
-   * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
+   * The implementation is copied from com.intellij.util.execution.ParametersListUtil#parse and adapted to old Java versions.
    */
   private static List splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
@@ -194,7 +194,7 @@ public class CommandLineWrapper {
     return new AppData(properties, mainClass, mainArgs);
   }
 
-  /** @noinspection ResultOfMethodCallIgnored*/
+  /** @noinspection ResultOfMethodCallIgnored */
   private static List readLinesAndDeleteFile(File file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
