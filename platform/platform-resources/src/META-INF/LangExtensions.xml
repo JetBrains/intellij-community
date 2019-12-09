@@ -579,17 +579,12 @@
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SdkOrLibraryWeigher" id="sdkOrLibrary"
              order="after inResolveScope"/>
 
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
-             order="after priority"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.StatisticsWeigher" id="stats"
              order="after prefix"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.ExplicitProximityWeigher" id="explicitProximity"
              order="after stats"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity"
              order="after explicitProximity"/>
-    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
-             order="last"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor"
                             id="default"

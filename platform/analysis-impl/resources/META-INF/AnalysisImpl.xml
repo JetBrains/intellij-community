@@ -17,5 +17,11 @@
     <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
                         serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
+
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
+             order="after priority"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
+             order="last"/>
   </extensions>
 </idea-plugin>

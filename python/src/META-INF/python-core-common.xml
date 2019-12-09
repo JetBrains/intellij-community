@@ -449,7 +449,6 @@
     <applicationService serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
-    <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher" order="first"/>
     <completion.ml.contextFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyLocationFeatures"/>
     <completion.ml.elementFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyElementFeatures"/>
     <completion.confidence language="Python" implementationClass="com.jetbrains.python.codeInsight.completion.PyCompletionConfidence"/>
