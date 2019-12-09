@@ -17,6 +17,7 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <statistics.counterUsagesCollector groupId="terminalShell" version="1"/>
+    <statistics.validation.customWhiteListRule implementation="org.jetbrains.plugins.terminal.TerminalCommandUsageRule"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>

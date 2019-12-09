@@ -3,10 +3,12 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalFileCustomWhiteListRule
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PathUtil
+import com.intellij.util.execution.ParametersListUtil
 import java.util.*
 
 class TerminalUsageTriggerCollector {
@@ -14,6 +16,14 @@ class TerminalUsageTriggerCollector {
     @JvmStatic
     fun triggerSshShellStarted(project: Project) {
       FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "ssh.exec", FeatureUsageData().addOS())
+    }
+
+    @JvmStatic
+    fun triggerCommandExecuted(project: Project, shellCommand: String) {
+      val command = ParametersListUtil.parse(shellCommand).ifEmpty { return }[0].ifBlank { return }
+      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "terminal.command",
+                                                  FeatureUsageData().addData("command", command)
+      )
     }
 
     @JvmStatic
@@ -73,3 +83,5 @@ private val KNOWN_SHELLS = setOf("activate",
                                  "wsl",
                                  "zsh")
 private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
+
+class TerminalCommandUsageRule : LocalFileCustomWhiteListRule("terminal_commands", TerminalUsageTriggerCollector::class.java, "/commands.txt")

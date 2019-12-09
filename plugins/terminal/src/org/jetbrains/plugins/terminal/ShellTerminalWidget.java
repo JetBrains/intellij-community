@@ -74,9 +74,13 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }, 50);
 
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        String command = getTypedShellCommand();
         if ((e.getModifiers() & InputEvent.CTRL_MASK) != 0) {
-          executeMatchedCommand(getTypedShellCommand(), e);
+          executeMatchedCommand(command, e);
         }
+
+        TerminalUsageTriggerCollector.Companion.triggerCommandExecuted(myProject, command);
+
         if (!e.isConsumed()) {
           myPromptUpdateNeeded = true;
           myEscapePressed = false;
