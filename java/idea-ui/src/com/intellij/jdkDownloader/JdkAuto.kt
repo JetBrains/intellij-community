@@ -4,119 +4,106 @@ package com.intellij.jdkDownloader
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.SdkUsagesCollector
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver
+import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.*
+import com.intellij.openapi.roots.ui.configuration.SdkDetector
+import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector
 
-class JdkAuto(
-  private val project: Project
-) {
+class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   private val LOG = logger<JdkAuto>()
 
-  fun lookupFor(sdkTypeName: String, name: String) {
-    //filter incompatible SdkTypes
-    val sdkType = SdkType.getAllTypes().first { it.name == sdkTypeName }
-    if (sdkType !is JavaSdkType) return
+  override fun createResolver(project: Project, indicator: ProgressIndicator): UnknownSdkLookup? {
+    return object : UnknownSdkLookup {
+      val sdkType = JavaSdk.getInstance()
 
-    //only user creatable SDKs are possible here
-    if (!sdkType.allowCreationByUser()) return
+      val lazyDownloadModel by lazy {
+        indicator.text = "Downloading JDK list..."
+        JdkListDownloader.downloadModel(indicator)
+      }
 
-    // make sure SDK does not exists
-    if (runReadAction { ProjectJdkTable.getInstance().findJdk(name, sdkTypeName) } != null) return
+      override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): DownloadSdkFix? {
+        if (sdk.sdkType != sdkType) return null
 
-    ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, "Configuring JDKs", true, ALWAYS_BACKGROUND) {
-        override fun run(indicator: ProgressIndicator) {
-          val req = JdkRequirements.parseRequirement(name) ?: return
-          LOG.info("Automatically configuring ${sdkType.presentableName} with name $name")
+        val req = JdkRequirements.parseRequirement(sdk.sdkName) ?: return null
+        LOG.info("Looking for a possible download for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
 
-          indicator.text = "Searching for an JDK for $name..."
-          val selected = sequence{
-            yield(tryUsingExistingSdk(req, sdkType))
-            yield(tryUsingDetectedSdk(req, sdkType))
-            yield(tryDownloadNewJdk(req, indicator))
-          }.mapNotNull { it.minWith(Comparator { o1, o2 -> o1.version.compareTo(o2.version) }) }
-           .firstOrNull()
+        //we select the newest matching version for a possible fix
+        val jdkToDownload = lazyDownloadModel
+                              .filter { req.matches(it) }
+                              .mapNotNull {
+                                val v = JavaVersion.tryParse(it.versionString)
+                                if (v != null) {
+                                  it to v
+                                }
+                                else null
+                              }.maxBy { it.second }
+                              ?.first ?: return null
 
-          if (selected == null) {
-            LOG.info("Automatic configuring of ${sdkType.presentableName} with name $name failed")
-            return
+        return object: DownloadSdkFix {
+          override fun getDownloadDescription() = jdkToDownload.fullPresentationText
+
+          override fun createTask(indicator: ProgressIndicator): SdkDownloadTask {
+            val homeDir = JdkInstaller.defaultInstallDir(jdkToDownload)
+            val request = JdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
+            return newDownloadTask(request)
           }
-
-          LOG.info("Automatic configuring of ${sdkType.presentableName} with name $name selected $selected")
-
-          indicator.text = "Preparing $name..."
-          selected.prepare(indicator)
-
-          val newSdk = ProjectJdkTable.getInstance().createSdk(name, sdkType)
-
-          newSdk.sdkModificator.apply {
-            this.homePath = selected.homeDir
-            this.versionString = selected.version.toString()
-          }.commitChanges()
-
-          sdkType.setupSdkPaths(newSdk)
-          ProjectJdkTable.getInstance().addJdk(newSdk)
         }
       }
-    )
-  }
 
-  private open class InstallableSdk(val homeDir: String,
-                                    val version: JavaVersion) {
-    open fun prepare(indicator: ProgressIndicator?) { }
-  }
+      val lazyLocalJdks by lazy {
+        indicator.text = "Detecting local JDKs..."
+        val result = mutableListOf<JavaLocalSdkFix>()
 
-  private fun tryUsingExistingSdk(req: JdkRequirement, sdkType: SdkType): List<InstallableSdk> {
-    return runReadAction { ProjectJdkTable.getInstance().allJdks }
-      .filter { it.sdkType == sdkType }
-      .filter { runCatching { req.matches(it) }.getOrNull() == true }
-      .filter { runCatching { sdkType.isValidSdkHome(it.homePath) }.getOrNull() == true }
-      .filter { runCatching { it.versionString != null }.getOrNull() == true }
-      .mapNotNull {
-        val homeDir = it.homePath ?: return@mapNotNull null
-        val versionString = it.versionString ?: return@mapNotNull null
-        val version = JavaVersion.tryParse(versionString) ?: return@mapNotNull null
-        InstallableSdk(homeDir, version)
+        SdkDetector.getInstance().detectSdks(sdkType, indicator, object : DetectedSdkListener {
+          override fun onSdkDetected(type: SdkType, version: String?, home: String) {
+            val javaVersion = JavaVersion.tryParse(version)
+            if (javaVersion != null) {
+              result += JavaLocalSdkFix(home, javaVersion)
+            }
+          }
+        })
+
+        result
       }
-  }
 
-  private fun tryUsingDetectedSdk(req: JdkRequirement, sdkType: SdkType): List<InstallableSdk> {
-    val result = mutableListOf<InstallableSdk>()
-    for (homePath in sdkType.suggestHomePaths()) {
+      override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): LocalSdkFix? {
+        if (sdk.sdkType != sdkType) return null
 
-      val versionString = runCatching {
-        sdkType.getVersionString(homePath)
-      }.getOrNull() ?: continue
+        val req = JdkRequirements.parseRequirement(sdk.sdkName) ?: return null
+        LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk.sdkName}")
 
-      if (!req.matches(versionString)) continue
-      val version = JavaVersion.tryParse(versionString) ?: continue
+        fun List<JavaLocalSdkFix>.pickBestMatch() = this.minBy { it.version }
 
-      result += InstallableSdk(homePath, version)
+        return tryUsingExistingSdk(req, sdk.sdkType, indicator).pickBestMatch()
+               ?: lazyLocalJdks.filter { req.matches(it.versionString) }.pickBestMatch()
+      }
+
+      private fun tryUsingExistingSdk(req: JdkRequirement, sdkType: SdkType, indicator: ProgressIndicator): List<JavaLocalSdkFix> {
+        indicator.text = "Checking existing SDKs..."
+        return runReadAction { ProjectJdkTable.getInstance().allJdks }
+          .filter { it.sdkType == sdkType }
+          .filter { runCatching { req.matches(it) }.getOrNull() == true }
+          .filter { runCatching { sdkType.isValidSdkHome(it.homePath) }.getOrNull() == true }
+          .filter { runCatching { it.versionString != null }.getOrNull() == true }
+          .mapNotNull {
+            val homeDir = it.homePath ?: return@mapNotNull null
+            val versionString = it.versionString ?: return@mapNotNull null
+            val version = JavaVersion.tryParse(versionString) ?: return@mapNotNull null
+            JavaLocalSdkFix(homeDir, version)
+          }
+      }
     }
-
-    return result
   }
 
-  private fun tryDownloadNewJdk(req: JdkRequirement, indicator: ProgressIndicator?): List<InstallableSdk> {
-    return JdkListDownloader.downloadModel(indicator)
-      .filter { req.matches(it) }
-      .mapNotNull { jdkToDownload ->
-        val homeDir = JdkInstaller.defaultInstallDir(jdkToDownload)
-        val version = JavaVersion.tryParse(jdkToDownload.versionString) ?: return@mapNotNull null
-
-        object: InstallableSdk(homeDir, version) {
-          override fun prepare(indicator: ProgressIndicator?) {
-            val request = JdkInstaller.prepareJdkInstallation(jdkToDownload, targetPath = homeDir)
-            JdkInstaller.installJdk(request, indicator)
-          }
-        }
-      }
+  private class JavaLocalSdkFix(val homeDir: String,
+                                val version: JavaVersion) : LocalSdkFix {
+    override fun getExistingSdkHome() = homeDir
+    override fun getVersionString() = JdkVersionDetector.formatVersionString(version)
   }
 }
