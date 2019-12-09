@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -25,6 +26,7 @@ import java.lang.reflect.Modifier;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
@@ -43,21 +45,26 @@ public final class EventsWatcher implements Disposable {
   private static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
 
   private static final long ourStartTimestamp = System.currentTimeMillis();
-  private static Integer ourThreshold = null;
+  @NotNull
+  private static final NotNullLazyValue<Boolean> ourIsEnabled =
+    NotNullLazyValue.createValue(() -> Registry.is("ide.event.queue.dispatch.enabled", false));
+  @NotNull
+  private static final NotNullLazyValue<Field> ourRunnableField =
+    NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
 
   @Nullable
   public static EventsWatcher getInstance() {
-    if (ourThreshold == null) {
-      ourThreshold = Registry.intValue("ide.event.queue.dispatch.threshold", 0);
+    if (!ourIsEnabled.getValue()) {
+      return null;
     }
-    // do not measure a time if a threshold is too small
-    if (ourThreshold <= 10) return null;
 
     Application application = ApplicationManager.getApplication();
-    if (application == null ||
-        application.isDisposed() ||
-        !application.isDispatchThread()) { // do not measure a time of a background task
+    if (application == null || application.isDisposed()) {
       return null;
+    }
+
+    if (!application.isDispatchThread()) {
+      throw new AssertionError("Do not measure background task running time");
     }
 
     return ServiceManager.getService(EventsWatcher.class);
@@ -92,6 +99,8 @@ public final class EventsWatcher implements Disposable {
 
   @Nullable
   private Object myCurrentInstance = null;
+  @Nullable
+  private MatchResult myCurrentResult = null;
 
   public void logTimeMillis(@NotNull String processId, long startedAt) {
     Duration duration = new Duration(startedAt);
@@ -101,13 +110,14 @@ public final class EventsWatcher implements Disposable {
   }
 
   public void logTimeMillis(@NotNull AWTEvent event, long startedAt) {
+    if ("LaterInvocator.FlushQueue".equals(findGroupByName("runnable"))) return;
+
     Duration duration = new Duration(startedAt);
     if (!duration.shouldLog()) return;
 
     Runnable runnable = event instanceof InvocationEvent ?
-                        getRunnable((InvocationEvent)event) :
+                        (Runnable)getValue(event, ourRunnableField.getValue()) :
                         null;
-
     duration.log(runnable != null ? runnable : event);
   }
 
@@ -134,6 +144,7 @@ public final class EventsWatcher implements Disposable {
                                long startedAt) {
     Duration duration = new Duration(startedAt);
     String representation = Objects.requireNonNull(myCurrentInstance).getClass().getName();
+    myCurrentInstance = null;
 
     myDurationsByFqn.compute(
       representation,
@@ -146,16 +157,22 @@ public final class EventsWatcher implements Disposable {
     duration.log(runnable);
   }
 
+  public void edtEventStarted(@NotNull AWTEvent event) {
+    Matcher matcher = DESCRIPTION_BY_EVENT.matcher(event.toString());
+    //noinspection ResultOfMethodCallIgnored
+    matcher.find();
+    myCurrentResult = matcher.toMatchResult();
+  }
+
   public void edtEventFinished(@NotNull AWTEvent event,
                                long startedAt) {
-    String representation = event.toString();
-    Matcher matcher = DESCRIPTION_BY_EVENT.matcher(representation);
-    boolean found = matcher.find();
+    String representation = findGroupByName("description");
+    myCurrentResult = null;
 
     String description = String.format(
       "%dms %s%n",
       System.currentTimeMillis() - startedAt,
-      found ? matcher.group("description") : representation
+      representation != null ? representation : event.toString()
     );
 
     Class<? extends AWTEvent> eventClass = event.getClass();
@@ -170,6 +187,13 @@ public final class EventsWatcher implements Disposable {
 
     appendToLogFile("Timing", joinSorted(myDurationsByFqn));
     appendToLogFile("Wrapper", join(myWrappers));
+  }
+
+  @Nullable
+  private String findGroupByName(@NotNull String groupName) {
+    return myCurrentResult instanceof Matcher ?
+           ((Matcher)myCurrentResult).group(groupName) :
+           null;
   }
 
   private void dumpDescriptions() {
@@ -233,25 +257,6 @@ public final class EventsWatcher implements Disposable {
     }
   }
 
-  @Nullable
-  private static Runnable getRunnable(@NotNull InvocationEvent event) {
-    try {
-      Runnable runnable = (Runnable)getValue(
-        event,
-        InvocationEvent.class.getDeclaredField("runnable")
-      );
-
-      // joined sub-tasks are measured and logged in the LaterInvocator separately
-      return runnable == null ||
-             !runnable.getClass().getName().equals("com.intellij.openapi.application.impl.LaterInvocator$FlushQueue") ?
-             runnable :
-             null;
-    }
-    catch (NoSuchFieldException ignored) {
-      return null;
-    }
-  }
-
   @NotNull
   private static <T extends Comparable<T>> String joinSorted(@NotNull Map<String, T> map) {
     return map
@@ -292,8 +297,10 @@ public final class EventsWatcher implements Disposable {
       return myDuration;
     }
 
+    // do not measure a time if the threshold is too small
     public boolean shouldLog() {
-      return myDuration > ourThreshold;
+      int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
+      return myDuration >= threshold && threshold >= 0;
     }
 
     public void log(@NotNull Object process) {

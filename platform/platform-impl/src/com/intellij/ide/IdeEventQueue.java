@@ -374,6 +374,10 @@ public final class IdeEventQueue extends EventQueue {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
       }
+      if (eventsWatcher != null) {
+        eventsWatcher.edtEventStarted(e);
+      }
+
       fixNestedSequenceEvent(e);
       // Add code below if you need
 
