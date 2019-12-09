@@ -36,7 +36,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
     val items = runTaskAndReportError(project,
                                       "Downloading the list of available JDKs...",
                                       "Failed to download the list of installable JDKs") {
-      JdkListDownloader.downloadModel(it)
+      JdkListDownloader.downloadForUI(it)
     } ?: return
 
     if (project?.isDisposed == true) return

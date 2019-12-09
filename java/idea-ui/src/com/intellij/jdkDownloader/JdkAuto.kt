@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.*
 import com.intellij.openapi.roots.ui.configuration.SdkDetector
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
@@ -24,7 +23,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
       val lazyDownloadModel by lazy {
         indicator.text = "Downloading JDK list..."
-        JdkListDownloader.downloadModel(indicator)
+        JdkListDownloader.downloadModelForJdkInstaller(indicator)
       }
 
       override fun proposeDownload(sdk: UnknownSdk, indicator: ProgressIndicator): DownloadSdkFix? {

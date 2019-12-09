@@ -294,8 +294,19 @@ object JdkListDownloader {
       //timeouts are handled inside
       .readBytes(progress)
 
+  /**
+   * Returns a list of entries for JDK automatic installation. That set of entries normally
+   * contains few more entries than the result of the [downloadForUI] call.
+   * Entries are sorter from the best suggested to the worst suggested items.
+   */
+  fun downloadModelForJdkInstaller(progress: ProgressIndicator): List<JdkItem> {
+    return downloadForUI(progress)
+  }
 
-  fun downloadModel(progress: ProgressIndicator?, feedUrl: String = JdkListDownloader.feedUrl): List<JdkItem> {
+  /**
+   * Lists all entries suitable for UI download, there can be some unlisted entries that are ignored here by intent
+   */
+  fun downloadForUI(progress: ProgressIndicator?, feedUrl: String = JdkListDownloader.feedUrl): List<JdkItem> {
     // download XZ packed version of the data (several KBs packed, several dozen KBs unpacked) and process it in-memory
     val rawDataXZ = try {
       downloadJdkList(feedUrl, progress)
