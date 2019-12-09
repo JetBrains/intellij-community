@@ -449,7 +449,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   public void showDiffPreview(boolean state) {
-    myPreviewDiff.updatePreview(state);
     if (myDiffPreviewProvider != null) {
       if (!state) {
         //'equals' for such files is overridden and means the equality of its owner
@@ -460,6 +459,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       }
     }
     else {
+      myPreviewDiff.updatePreview(state);
       myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
     }
   }
