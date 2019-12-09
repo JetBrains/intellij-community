@@ -39,8 +39,7 @@
     <extensionPoint name="xmlStructureViewBuilderProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"/>
 
-    <extensionPoint name="webBrowserUrlProvider"
-                    interface="com.intellij.ide.browsers.WebBrowserUrlProvider"/>
+    <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint name="remoteFileUpdater"
                     interface="com.intellij.ide.browsers.RemoteFileUpdater"/>
 
