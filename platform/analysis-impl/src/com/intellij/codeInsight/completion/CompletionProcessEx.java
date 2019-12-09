@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,8 @@ import java.util.function.Supplier;
 /**
  * @author yole
  */
-interface CompletionProcessEx extends CompletionProcess {
+@ApiStatus.Internal
+public interface CompletionProcessEx extends CompletionProcess {
   @NotNull
   Project getProject();
 
