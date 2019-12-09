@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 1/13/2017.
  */
 public class JsonSchemaReader {
-  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.MEGABYTE;
+  private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
   public static final Logger LOG = Logger.getInstance(JsonSchemaReader.class);
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
 
