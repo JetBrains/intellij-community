@@ -161,5 +161,5 @@ abstract class ToolWindowManager {
 
   abstract fun isMaximized(wnd: ToolWindow): Boolean
 
-  abstract fun setMaximized(wnd: ToolWindow, maximized: Boolean)
+  abstract fun setMaximized(window: ToolWindow, maximized: Boolean)
 }

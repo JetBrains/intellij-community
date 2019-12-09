@@ -415,7 +415,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
 
         override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-          unregisterToolWindow(extension.id)
+          doUnregisterToolWindow(extension.id)
         }
       }, project)
     }, project.disposed)

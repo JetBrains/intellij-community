@@ -123,7 +123,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+  public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
   }
 
   @Override
