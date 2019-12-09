@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class VcsLogTabsWatcher implements Disposable {
+public final class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
   private static final Logger LOG = Logger.getInstance(VcsLogTabsWatcher.class);
 
@@ -183,7 +183,7 @@ public class VcsLogTabsWatcher implements Disposable {
 
   private class VcsLogEditorTab extends VcsLogWindow {
     private final boolean myIsClosedOnDispose;
-    
+
     private VcsLogEditorTab(@NotNull String id, @NotNull VisiblePackRefresher refresher, boolean isClosedOnDispose) {
       super(id, refresher);
       myIsClosedOnDispose = isClosedOnDispose;

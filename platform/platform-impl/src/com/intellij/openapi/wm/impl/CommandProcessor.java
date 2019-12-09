@@ -15,7 +15,7 @@ public final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(CommandProcessor.class);
   private final Object myLock = new Object();
 
-  private final List<CommandGroup> myCommandGroupList = new ArrayList<>();
+  private final List<CommandGroup> commandGroups = new ArrayList<>();
   private int myCommandCount;
   private boolean myFlushed;
 
@@ -42,7 +42,7 @@ public final class CommandProcessor implements Runnable {
       boolean isBusy = myCommandCount > 0 || !myFlushed;
 
       CommandGroup commandGroup = new CommandGroup(commandList, expired);
-      myCommandGroupList.add(commandGroup);
+      commandGroups.add(commandGroup);
       myCommandCount += commandList.size();
 
       if (!isBusy) {
@@ -84,12 +84,12 @@ public final class CommandProcessor implements Runnable {
 
   @Nullable
   private CommandGroup getNextCommandGroup() {
-    while (!myCommandGroupList.isEmpty()) {
-      CommandGroup candidate = myCommandGroupList.get(0);
+    while (!commandGroups.isEmpty()) {
+      CommandGroup candidate = commandGroups.get(0);
       if (!candidate.isEmpty()) {
         return candidate;
       }
-      myCommandGroupList.remove(candidate);
+      commandGroups.remove(candidate);
     }
     return null;
   }

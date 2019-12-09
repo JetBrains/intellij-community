@@ -21,8 +21,7 @@ internal class GHPREditorContentSynchronizer {
     fun getInstance(project: Project): GHPREditorContentSynchronizer = project.service()
   }
 
-  private fun addContentManagerListener(window: ToolWindowImpl,
-                                        listener: ContentManagerListener) {
+  private fun addContentManagerListener(window: ToolWindowImpl, listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
     Disposer.register(window.contentManager, Disposable {
       if (!window.isDisposed) {
@@ -33,14 +32,12 @@ internal class GHPREditorContentSynchronizer {
 
   internal class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
     override fun toolWindowRegistered(id: String) {
-
-      if (!Registry.`is`("show.log.as.editor.tab")) return
-      if (id != ChangesViewContentManager.TOOLWINDOW_ID) return
-
-      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id) as? ToolWindowImpl
-      if (toolwindow != null) {
-        getInstance(project).addContentManagerListener(toolwindow, MyLogEditorListener(project))
+      if (id != ChangesViewContentManager.TOOLWINDOW_ID || !Registry.`is`("show.log.as.editor.tab")) {
+        return
       }
+
+      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id) as? ToolWindowImpl ?: return
+      getInstance(project).addContentManagerListener(toolwindow, MyLogEditorListener(project))
     }
   }
 

@@ -433,12 +433,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val visible = before != null && before.isVisible
     val label = createInitializingLabel()
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
-    val window = registerToolWindow(
-      RegisterToolWindowTask(id = bean.id, component = label, anchor = toolWindowAnchor,
-                                                                        sideTool = false,
-                                                                        canCloseContent = bean.canCloseContents,
-                                                                        canWorkInDumbMode = DumbService.isDumbAware(factory),
-                                                                        shouldBeAvailable = factory.shouldBeAvailable(project)))
+    val window = registerToolWindow(RegisterToolWindowTask(id = bean.id, component = label, anchor = toolWindowAnchor,
+                                                           sideTool = false,
+                                                           canCloseContent = bean.canCloseContents,
+                                                           canWorkInDumbMode = DumbService.isDumbAware(factory),
+                                                           shouldBeAvailable = factory.shouldBeAvailable(project)))
     window.setContentFactory(factory)
     if (bean.icon != null && window.icon == null) {
       var icon = IconLoader.findIcon(bean.icon, factory.javaClass)
@@ -464,11 +463,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       UiNotifyConnector.doWhenFirstShown(label, object : Activatable {
         override fun showNotify() {
-          ApplicationManager.getApplication().invokeLater {
+          ApplicationManager.getApplication().invokeLater(Runnable {
             if (!window.isDisposed) {
               window.ensureContentInitialized()
             }
-          }
+          }, project.disposed)
         }
       })
     }
@@ -1253,7 +1252,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     activateToolWindow(id, false, false)
   }
 
-  private fun setSplitModeImpl(id: String, isSplit: Boolean, commandList: MutableList<FinalizableCommand>) {
+  private fun setSplitModeImpl(id: String, isSplit: Boolean, commands: MutableList<FinalizableCommand>) {
     val info = getRegisteredInfoOrLogError(id)
     if (isSplit == info.isSplit) {
       return
@@ -1266,16 +1265,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (wasActive || wasVisible) {
       hideToolWindow(id, false)
     }
-    for (info1: WindowInfoImpl in layout.infos) {
-      appendApplyWindowInfoCmd(info1, commandList)
+    for (otherInfo in layout.infos) {
+      appendApplyWindowInfoCmd(otherInfo, commands)
     }
     if (wasVisible || wasActive) {
-      showToolWindowImpl(id, true, commandList)
+      showToolWindowImpl(id, true, commands)
     }
     if (wasActive) {
-      activateToolWindowImpl(id, commandList, true, true)
+      activateToolWindowImpl(id, commands, true, true)
     }
-    commandList.add(toolWindowPane!!.createUpdateButtonPositionCmd(id, commandProcessor))
+    commands.add(toolWindowPane!!.createUpdateButtonPositionCmd(id, commandProcessor))
   }
 
   fun getToolWindowInternalType(id: String): ToolWindowType {

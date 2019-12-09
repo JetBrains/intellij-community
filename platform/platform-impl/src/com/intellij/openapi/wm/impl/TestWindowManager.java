@@ -143,7 +143,7 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public final void setLayout(final DesktopLayout layout) {
+  public final void setLayout(@NotNull DesktopLayout layout) {
     throw new UnsupportedOperationException();
   }
 

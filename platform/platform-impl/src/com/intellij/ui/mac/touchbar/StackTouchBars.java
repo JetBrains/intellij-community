@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.application.Application;
@@ -11,7 +11,7 @@ import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Collection;
 
-public class StackTouchBars {
+final class StackTouchBars {
   private final ArrayDeque<BarContainer> myContainersStack = new ArrayDeque<>();
   private final TouchBarHolder myTouchBarHolder = new TouchBarHolder();
 
@@ -27,42 +27,43 @@ public class StackTouchBars {
   }
 
   synchronized
-  @Nullable TouchBar getTopTouchBar() {
+  @Nullable
+  TouchBar getTopTouchBar() {
     final BarContainer topContainer = myContainersStack.peek();
     return topContainer == null ? null : topContainer.get();
   }
 
-  synchronized
-  void pop(@Nullable Condition<? super BarContainer> condition) {
+  synchronized void pop(@Nullable Condition<? super BarContainer> condition) {
     final BarContainer top = myContainersStack.peek();
-    if (top == null)
+    if (top == null) {
       return;
+    }
 
-    if (condition != null && !condition.value(top))
+    if (condition != null && !condition.value(top)) {
       return;
+    }
 
     // System.out.println("removeContainer [POP]: " + top);
     myContainersStack.pop();
     _setTouchBarFromTopContainer();
   }
 
-  synchronized
-  void removeAll(@NotNull Collection<BarContainer> toErase) {
+  synchronized void removeAll(@NotNull Collection<BarContainer> toErase) {
     myContainersStack.removeAll(toErase);
     _setTouchBarFromTopContainer();
   }
 
-  synchronized
-  void setTouchBarFromTopContainer() { _setTouchBarFromTopContainer(); }
+  synchronized void setTouchBarFromTopContainer() { _setTouchBarFromTopContainer(); }
 
-  synchronized
-  void showContainer(BarContainer bar) {
-    if (bar == null)
+  synchronized void showContainer(BarContainer bar) {
+    if (bar == null) {
       return;
+    }
 
     final BarContainer top = myContainersStack.peek();
-    if (top == bar)
+    if (top == bar) {
       return;
+    }
 
     // System.out.println("showContainer: " + bar);
     myContainersStack.remove(bar);
@@ -70,10 +71,10 @@ public class StackTouchBars {
     _setTouchBarFromTopContainer();
   }
 
-  synchronized
-  void removeContainer(BarContainer tb) {
-    if (tb == null || myContainersStack.isEmpty())
+  synchronized void removeContainer(BarContainer tb) {
+    if (tb == null || myContainersStack.isEmpty()) {
       return;
+    }
 
     // System.out.println("removeContainer: " + tb);
     tb.onHide();
@@ -82,7 +83,8 @@ public class StackTouchBars {
     if (top == tb) {
       myContainersStack.pop();
       _setTouchBarFromTopContainer();
-    } else {
+    }
+    else {
       myContainersStack.remove(tb);
     }
   }
@@ -121,7 +123,7 @@ public class StackTouchBars {
       // changeReason = null;
 
       myNextBar = bar;
-      final Timer timer = new Timer(100, (event)-> _setNextTouchBar());
+      final Timer timer = new Timer(100, (event) -> _setNextTouchBar());
       timer.setRepeats(false);
       timer.start();
     }
@@ -132,11 +134,13 @@ public class StackTouchBars {
       }
 
       // System.out.println("set next: " + myNextBar);
-      if (myCurrentBar != null)
+      if (myCurrentBar != null) {
         myCurrentBar.onHide();
+      }
       myCurrentBar = myNextBar;
-      if (myCurrentBar != null)
+      if (myCurrentBar != null) {
         myCurrentBar.onBeforeShow();
+      }
       NST.setTouchBar(myCurrentBar);
     }
   }

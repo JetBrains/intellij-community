@@ -61,6 +61,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   private final CommandProcessor myCommandProcessor = new CommandProcessor();
   private final WindowWatcher myWindowWatcher = new WindowWatcher();
+
   /**
    * That is the default layout.
    */
@@ -668,7 +669,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public void loadState(@NotNull Element state) {
-    final Element frameElement = state.getChild(FRAME_ELEMENT);
+    Element frameElement = state.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
       FrameInfo info = new FrameInfo();
       XmlSerializer.deserializeInto(frameElement, info);
@@ -687,7 +688,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       defaultFrameInfoHelper.copyFrom(info);
     }
 
-    final Element desktopElement = state.getChild(DesktopLayout.TAG);
+    Element desktopElement = state.getChild(DesktopLayout.TAG);
     if (desktopElement != null) {
       myLayout.readExternal(desktopElement);
     }
@@ -727,7 +728,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final void setLayout(final DesktopLayout layout) {
+  public final void setLayout(@NotNull DesktopLayout layout) {
     myLayout.copyFrom(layout);
   }
 

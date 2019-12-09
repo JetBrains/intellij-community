@@ -96,16 +96,16 @@ public final class TouchBarsManager {
         ApplicationManager.getApplication().assertIsDispatchThread();
         // System.out.println("closed project: " + project);
 
-        final ProjectData pd;
+        ProjectData projectData;
         synchronized (ourProjectData) {
-          pd = ourProjectData.remove(project);
-          if (pd == null) {
+          projectData = ourProjectData.remove(project);
+          if (projectData == null) {
             LOG.error("project data already was removed: " + project);
             return;
           }
 
-          ourStack.removeAll(pd.getAllContainers());
-          pd.releaseAll();
+          ourStack.removeAll(projectData.getAllContainers());
+          projectData.releaseAll();
         }
       }
     });
@@ -120,7 +120,7 @@ public final class TouchBarsManager {
 
     // System.out.println("opened project " + project + ", set default touchbar");
 
-    final ProjectData projectData = new ProjectData(project);
+    ProjectData projectData = new ProjectData(project);
     synchronized (ourProjectData) {
       final ProjectData prev = ourProjectData.put(project, projectData);
       if (prev != null) {
