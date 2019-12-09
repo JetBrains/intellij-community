@@ -32,7 +32,11 @@ class ChangesViewCommitWorkflowHandler(
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: AmendCommitHandler = AmendCommitHandlerImpl(this)
 
-  private fun getCommitState() = CommitState(getIncludedChanges(), getCommitMessage())
+  private fun getCommitState(): ChangeListCommitState {
+    val changes = getIncludedChanges()
+    val changeList = workflow.getAffectedChangeList(changes)
+    return ChangeListCommitState(changeList, changes, getCommitMessage())
+  }
 
   private val activityEventDispatcher = EventDispatcher.create(ActivityListener::class.java)
 

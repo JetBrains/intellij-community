@@ -10,18 +10,13 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
-internal class CommitState(val changes: List<Change>, val commitMessage: String) {
-  fun copy(commitMessage: String): CommitState =
-    if (this.commitMessage == commitMessage) this else CommitState(changes, commitMessage)
-}
-
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project)
+  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
-  internal lateinit var commitState: CommitState
+  internal lateinit var commitState: ChangeListCommitState
 
   init {
     updateVcses(vcsManager.allActiveVcss.toSet())
@@ -42,13 +37,16 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
   }
 
   override fun doRunBeforeCommitChecks(checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, getAffectedChangeList(commitState.changes), checks)
+    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
 
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
     with(object : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
-      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
+      override fun afterRefreshChanges() = endExecution {
+        if (isSuccess) clearChangeListData()
+        super.afterRefreshChanges()
+      }
     }) {
       addResultHandler(CommitHandlersNotifier(commitHandlers))
       addResultHandler(getCommitEventDispatcher())
@@ -66,4 +64,8 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
 
       runCommit(executor.actionText)
     }
+
+  private fun clearChangeListData() {
+    changeListManager.editChangeListData(commitState.changeList.name, null)
+  }
 }
