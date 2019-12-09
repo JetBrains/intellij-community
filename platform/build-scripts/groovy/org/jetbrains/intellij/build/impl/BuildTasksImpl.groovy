@@ -825,10 +825,12 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory)
+      /* Android Studio: Don't include JBR to unpacked distribution.
       def jbrTargetDir = buildContext.bundledJreManager.extractJre(currentOs)
       buildContext.ant.move(todir: targetDirectory) {
         fileset(dir: jbrTargetDir)
       }
+      Android Studio: Don't include JBR to unpacked distribution. */
       def executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       buildContext.ant.chmod(perm: "755") {
         fileset(dir: targetDirectory) {
