@@ -815,6 +815,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    if (editor instanceof EditorWindow) return;
     int inlaysBeforeCaretWithComma = getInlaysBeforeCaretWithComma(editor);
     if (inlaysBeforeCaretWithComma == 0) return;
 
