@@ -1080,6 +1080,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:netty-codec-http",
         "//tools/idea/.idea/libraries:javax.annotation-api",
+        "//tools/idea/.idea/libraries:qdox-java-parser",
         "//tools/idea/java/openapi:intellij.java[module]",
         "//tools/idea/java/compiler/openapi:intellij.java.compiler[module]",
         "//tools/idea:intellij.java.impl[module]",

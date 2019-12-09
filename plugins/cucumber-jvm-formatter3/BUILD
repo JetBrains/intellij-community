@@ -8,7 +8,13 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:cucumber-core_3.0.2",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/3.0.2:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/5.0.19:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.0.3:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
         "//tools/idea/plugins/cucumber-jvm-formatter:intellij.cucumber.jvmFormatter[module]",
     ],
 )

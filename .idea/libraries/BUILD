@@ -568,12 +568,12 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.6:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.5:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.9.6:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
 )
@@ -1610,32 +1610,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "cucumber-core_3.0.2",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/3.0.2:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/5.0.19:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.0.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.0.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.0.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/3.0.2:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/5.0.19:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.0.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.0.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.0.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
-    ],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "kotlin-plugin-test",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1734,32 +1708,6 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/javax/annotation/javax.annotation-api/1.3.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/javax/annotation/javax.annotation-api/1.3.2:jar"],
-)
-
-# managed by go/iml_to_build
-java_library(
-    name = "cucumber-core_4.0.1",
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/4.0.1:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/6.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-core/4.0.1:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-expressions/6.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/cucumber-html/0.2.7:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable-dependencies/1.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/datatable/1.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/gherkin/5.1.0:jar",
-        "//prebuilts/tools/common/m2/repository/io/cucumber/tag-expressions/1.1.1:jar",
-    ],
 )
 
 # managed by go/iml_to_build
@@ -1912,4 +1860,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
     runtime_deps = ["//tools/base/experimental/live-sql-inspector:live_sql_java_proto"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "qdox-java-parser",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar"],
 )
