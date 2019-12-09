@@ -16,15 +16,22 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,6 +39,8 @@ import java.io.*;
 public class ID<K, V> extends IndexId<K,V> {
   private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<>();
+
+  private static final Map<ID, PluginId> ourIdToPluginId = Collections.synchronizedMap(new THashMap<>());
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final short myUniqueId;
@@ -70,12 +79,16 @@ public class ID<K, V> extends IndexId<K,V> {
     return new File(indexFolder, "indices.enum");
   }
 
-  protected ID(@NotNull String name) {
+  @ApiStatus.Internal
+  protected ID(@NotNull String name, @Nullable PluginId pluginId) {
     super(name);
     myUniqueId = stringToId(name);
 
     final ID old = ourRegistry.put(myUniqueId, this);
     assert old == null : "ID with name '" + name + "' is already registered";
+
+    PluginId oldPluginId = ourIdToPluginId.put(this, pluginId);
+    assert oldPluginId == null : "ID with name '" + name + "' is already registered in " + oldPluginId + " but current caller is " + pluginId;
   }
 
   private static short stringToId(@NotNull String name) {
@@ -122,14 +135,35 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @NotNull
-  public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
-    final ID<K, V> found = findByName(name);
-    return found == null ? new ID<>(name) : found;
+  public static synchronized <K, V> ID<K, V> create(@NonNls @NotNull String name) {
+    PluginId pluginId = getCallerPluginId();
+    final ID<K, V> found = findByName(name, true, pluginId);
+    return found == null ? new ID<>(name, pluginId) : found;
   }
 
   @Nullable
   public static <K, V> ID<K, V> findByName(@NotNull String name) {
-    return (ID<K, V>)findById(stringToId(name));
+    return findByName(name, false, null);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  protected static <K, V> ID<K, V> findByName(@NotNull String name,
+                                              boolean checkCallerPlugin,
+                                              @Nullable PluginId requiredPluginId) {
+    ID<K, V> id = (ID<K, V>)findById(stringToId(name));
+    if (checkCallerPlugin && id != null) {
+      PluginId actualPluginId = ourIdToPluginId.get(id);
+
+      String actualPluginIdStr = actualPluginId == null ? null : actualPluginId.getIdString();
+      String requiredPluginIdStr = requiredPluginId == null ? null : requiredPluginId.getIdString();
+
+
+      if (!Comparing.equal(actualPluginIdStr, requiredPluginIdStr)) {
+        throw new AssertionError("ID with name '" + name + "' requested for plugin " + requiredPluginIdStr + " but registered for " + actualPluginIdStr);
+      }
+    }
+    return id;
   }
 
   @Override
@@ -143,5 +177,11 @@ public class ID<K, V> extends IndexId<K,V> {
 
   public static ID<?, ?> findById(int id) {
     return ourRegistry.get(id);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  protected static PluginId getCallerPluginId() {
+    return PluginUtil.getInstance().getCallerPlugin(4);
   }
 }

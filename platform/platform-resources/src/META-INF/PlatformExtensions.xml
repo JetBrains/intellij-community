@@ -320,6 +320,9 @@
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
+                        serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
