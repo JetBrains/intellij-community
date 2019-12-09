@@ -130,8 +130,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       layout.infos.forEach { layout.unregister(it.id!!) }
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
         override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(
-            project) {
+          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
             override fun run() {
               if (FileEditorManager.getInstance(project).hasOpenFiles()) {
                 focusToolWindowByDefault(null)
@@ -482,15 +481,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     frame!!.releaseFrame()
-    val commandList = mutableListOf<FinalizableCommand>()
-    appendUpdateRootPane(commandList)
+    val commands = mutableListOf<FinalizableCommand>()
+    appendUpdateRootPane(commands)
     // hide all tool windows
-    for (info: WindowInfoImpl in layout.infos) {
-      deactivateToolWindowImpl(info, true, commandList)
+    for (info in layout.infos) {
+      deactivateToolWindowImpl(info, true, commands)
     }
-    appendSetEditorComponent(null, commandList)
+    appendSetEditorComponent(null, commands)
     // do not notify - project is disposed
-    execute(commandList,  /* isFireStateChangedEvent */false)
+    execute(commands,  /* isFireStateChangedEvent */false)
     frame = null
   }
 
@@ -694,7 +693,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    */
   fun getStripeButton(id: String) = idToEntry.get(id)!!.stripeButton
 
-  override fun getIdsOn(anchor: ToolWindowAnchor): List<String> = layout.getVisibleIdsOn(anchor, this)
+  override fun getIdsOn(anchor: ToolWindowAnchor) = layout.getVisibleIdsOn(anchor, this)
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
     val window = getToolWindow(id)

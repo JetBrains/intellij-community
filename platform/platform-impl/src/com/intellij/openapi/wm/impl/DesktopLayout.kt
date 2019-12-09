@@ -1,374 +1,337 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.serialize
+import com.intellij.ide.ui.UISettings.Companion.instance
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.wm.RegisterToolWindowTask
+import com.intellij.openapi.wm.ToolWindowAnchor
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import org.jdom.Element
+import java.util.*
+import javax.swing.SwingConstants
 
-import javax.swing.*;
-import java.util.*;
-
-import static com.intellij.configurationStore.XmlSerializer.serialize;
-
-public final class DesktopLayout {
-  private static final Logger LOG = Logger.getInstance(DesktopLayout.class);
-
-  private static int getAnchorWeight(@NotNull ToolWindowAnchor anchor) {
-    if (anchor == ToolWindowAnchor.TOP) {
-      return SwingConstants.TOP;
-    }
-    if (anchor == ToolWindowAnchor.LEFT) {
-      return SwingConstants.LEFT;
-    }
-    if (anchor == ToolWindowAnchor.BOTTOM) {
-      return SwingConstants.BOTTOM;
-    }
-    if (anchor == ToolWindowAnchor.RIGHT) {
-      return SwingConstants.RIGHT;
-    }
-    return 0;
+class DesktopLayout {
+  companion object {
+    const val TAG = "layout"
   }
 
-  private static final Comparator<WindowInfoImpl> ourWindowInfoComparator = (o1, o2) -> {
-    int d = getAnchorWeight(o1.getAnchor()) - getAnchorWeight(o2.getAnchor());
-    return d == 0 ? o1.getOrder() - o2.getOrder() : d;
-  };
-
-  static final String TAG = "layout";
-
   /**
-   * Map between {@code id}s {@code WindowInfo}s.
+   * Map between `id`s `WindowInfo`s.
    */
-  private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
+  private val idToInfo: MutableMap<String, WindowInfoImpl> = THashMap()
 
-  private final ClearableLazyValue<List<WindowInfoImpl>> myRegisteredInfos = new ClearableLazyValue<List<WindowInfoImpl>>() {
-    @NotNull
-    @Override
-    protected List<WindowInfoImpl> compute() {
-      if (myIdToInfo.isEmpty()) {
-        return Collections.emptyList();
+  private val registeredInfos = object : ClearableLazyValue<List<WindowInfoImpl>>() {
+    override fun compute(): List<WindowInfoImpl> {
+      if (idToInfo.isEmpty()) {
+        return emptyList()
       }
 
-      List<WindowInfoImpl> result = new ArrayList<>();
-      for (WindowInfoImpl value : myIdToInfo.values()) {
-        if (value.isRegistered()) {
-          result.add(value);
+      val result = mutableListOf<WindowInfoImpl>()
+      for (value in idToInfo.values) {
+        if (value.isRegistered) {
+          result.add(value)
         }
       }
-      result.sort(ourWindowInfoComparator);
-      return result;
+      result.sortWith(windowInfoComparator)
+      return result
     }
-  };
+  }
 
   /**
    * Copies itself from the passed
    * @param layout to be copied.
    */
-  public final void copyFrom(@NotNull DesktopLayout layout) {
-    Map<String, WindowInfoImpl> old = new THashMap<>(myIdToInfo);
-    myIdToInfo.clear();
-    for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
-      WindowInfoImpl oldInfo = old.get(otherInfo.getId());
+  fun copyFrom(layout: DesktopLayout) {
+    val old = THashMap(idToInfo)
+    idToInfo.clear()
+    for (otherInfo in layout.idToInfo.values) {
+      val oldInfo = old.get(otherInfo.id)
       if (oldInfo == null) {
-        WindowInfoImpl newInfo = otherInfo.copy();
-        newInfo.setRegistered(otherInfo.isRegistered());
-        myIdToInfo.put(otherInfo.getId(), newInfo);
+        val newInfo = otherInfo.copy()
+        newInfo.isRegistered = otherInfo.isRegistered
+        idToInfo.put(otherInfo.id!!, newInfo)
       }
       else {
-        oldInfo.copyFrom(otherInfo);
-        oldInfo.setRegistered(otherInfo.isRegistered());
-        myIdToInfo.put(otherInfo.getId(), oldInfo);
+        oldInfo.copyFrom(otherInfo)
+        oldInfo.isRegistered = otherInfo.isRegistered
+        idToInfo.put(otherInfo.id!!, oldInfo)
       }
     }
-
-    normalizeOrders();
+    normalizeOrders()
   }
 
   /**
    * Copy information about non-registered tool windows from the supplied layout
    * @param layout layout to copy from
    */
-  void copyNotRegisteredFrom(@NotNull DesktopLayout layout) {
-    Map<String, WindowInfoImpl> old = new THashMap<>(myIdToInfo);
-    for (WindowInfoImpl otherInfo : layout.myIdToInfo.values()) {
-      WindowInfoImpl oldInfo = old.get(otherInfo.getId());
-      if ((oldInfo == null || !oldInfo.isRegistered()) && !otherInfo.isRegistered()) {
-        myIdToInfo.put(otherInfo.getId(), otherInfo.copy());
+  fun copyNotRegisteredFrom(layout: DesktopLayout) {
+    val old = THashMap(idToInfo)
+    for (otherInfo in layout.idToInfo.values) {
+      val oldInfo = old.get(otherInfo.id)
+      if ((oldInfo == null || !oldInfo.isRegistered) && !otherInfo.isRegistered) {
+        idToInfo.put(otherInfo.id!!, otherInfo.copy())
       }
     }
-
-    normalizeOrders();
+    normalizeOrders()
   }
 
-  private void normalizeOrders() {
-    normalizeOrder(getAllInfos(ToolWindowAnchor.TOP));
-    normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT));
-    normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM));
-    normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT));
-
-    myRegisteredInfos.drop();
+  private fun normalizeOrders() {
+    normalizeOrder(getAllInfos(ToolWindowAnchor.TOP))
+    normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT))
+    normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM))
+    normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT))
+    registeredInfos.drop()
   }
 
   /**
-   * Creates or gets {@code WindowInfo} for the specified {@code id}. If tool
-   * window is being registered first time the method uses {@code anchor}.
-   *
-   * @param id     {@code id} of tool window to be registered.
-   * @param anchor the default tool window anchor.
+   * Creates or gets `WindowInfo` for the specified `id`. If tool
+   * window is being registered first time the method uses `anchor`.
    */
-  WindowInfoImpl register(@NotNull RegisterToolWindowTask task) {
-    WindowInfoImpl info = myIdToInfo.get(task.getId());
+  fun register(task: RegisterToolWindowTask): WindowInfoImpl {
+    var info = idToInfo.get(task.id)
     if (info == null) {
-      info = new WindowInfoImpl();
-      info.setId(task.getId());
-      info.setAnchor(task.getAnchor());
-      info.setSplit(task.getSideTool());
-      myIdToInfo.put(task.getId(), info);
+      info = WindowInfoImpl()
+      info.id = task.id
+      info.anchor = task.anchor
+      info.isSplit = task.sideTool
+      idToInfo.put(task.id, info)
     }
-    if (!info.isRegistered()) {
-      info.setRegistered(true);
-      myRegisteredInfos.drop();
+    if (!info.isRegistered) {
+      info.isRegistered = true
+      registeredInfos.drop()
     }
-    return info;
+    return info
   }
 
-  final void unregister(@NotNull String id) {
-    WindowInfoImpl info = myIdToInfo.get(id);
-    if (info.isRegistered()) {
-      info.setRegistered(false);
-      myRegisteredInfos.drop();
+  fun unregister(id: String) {
+    val info = idToInfo.get(id)
+    if (info!!.isRegistered) {
+      info.isRegistered = false
+      registeredInfos.drop()
     }
   }
 
   /**
-   * @return {@code WindowInfo} for the window with specified {@code id}.
-   *         If {@code onlyRegistered} is {@code true} then returns not {@code null}
-   *         value if and only if window with {@code id} is registered one.
+   * @return `WindowInfo` for the window with specified `id`.
+   * If `onlyRegistered` is `true` then returns not `null`
+   * value if and only if window with `id` is registered one.
    */
-  final WindowInfoImpl getInfo(@NotNull String id, final boolean onlyRegistered) {
-    WindowInfoImpl info = myIdToInfo.get(id);
-    if (onlyRegistered && info != null && !info.isRegistered()) {
-      return null;
+  fun getInfo(id: String, onlyRegistered: Boolean): WindowInfoImpl? {
+    val info = idToInfo.get(id)
+    if (onlyRegistered && info != null && !info.isRegistered) {
+      return null
     }
-    return info;
+    else {
+      return info
+    }
   }
 
-  @Nullable
-  final String getActiveId() {
-    for (WindowInfoImpl info : getInfos()) {
-      if (info.isActive()) {
-        return info.getId();
+  val activeId: String?
+    get() = infos.firstOrNull { it.isActive }?.id
+
+  /**
+   * @return `WindowInfo`s for all registered tool windows.
+   */
+  val infos: List<WindowInfoImpl>
+    get() = registeredInfos.value
+
+  /**
+   * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
+   * Returned infos are sorted by order.
+   */
+  private fun getAllInfos(anchor: ToolWindowAnchor): List<WindowInfoImpl> {
+    val result = mutableListOf<WindowInfoImpl>()
+    for (info in idToInfo.values) {
+      if (anchor == info.anchor) {
+        result.add(info)
       }
     }
-    return null;
+    result.sortWith(windowInfoComparator)
+    return result
+  }
+
+  fun isToolWindowRegistered(id: String): Boolean {
+    return idToInfo.get(id)?.isRegistered == true
   }
 
   /**
-   * @return {@code WindowInfo}s for all registered tool windows.
+   * @return comparator which compares `StripeButtons` in the stripe with specified `anchor`.
    */
-  @NotNull
-  final List<WindowInfoImpl> getInfos() {
-    return myRegisteredInfos.getValue();
-  }
-
-  /**
-   * @return all (registered and not unregistered) {@code WindowInfos} for the specified {@code anchor}.
-   *         Returned infos are sorted by order.
-   */
-  @NotNull
-  private List<WindowInfoImpl> getAllInfos(@NotNull ToolWindowAnchor anchor) {
-    List<WindowInfoImpl> result = new ArrayList<>();
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      if (anchor == info.getAnchor()) {
-        result.add(info);
-      }
-    }
-    result.sort(ourWindowInfoComparator);
-    return result;
-  }
-
-  /**
-   * Normalizes order of windows in the passed array. Note, that array should be
-   * sorted by order (by ascending). Order of first window will be {@code 0}.
-   */
-  private static void normalizeOrder(@NotNull List<WindowInfoImpl> infos) {
-    for (int i = 0; i < infos.size(); i++) {
-      infos.get(i).setOrder(i);
-    }
-  }
-
-  final boolean isToolWindowRegistered(@NotNull String id) {
-    WindowInfoImpl info = myIdToInfo.get(id);
-    return info != null && info.isRegistered();
-  }
-
-  /**
-   * @return comparator which compares {@code StripeButtons} in the stripe with specified {@code anchor}.
-   */
-  @NotNull
-  final Comparator<StripeButton> comparator(@NotNull ToolWindowAnchor anchor) {
-    return new MyStripeButtonComparator(anchor);
+  fun comparator(anchor: ToolWindowAnchor): Comparator<StripeButton> {
+    return MyStripeButtonComparator(anchor)
   }
 
   /**
    * @param anchor anchor of the stripe.
-   * @return maximum ordinal number in the specified stripe. Returns {@code -1}
-   *         if there is no any tool window with the specified anchor.
+   * @return maximum ordinal number in the specified stripe. Returns `-1`
+   * if there is no any tool window with the specified anchor.
    */
-  private int getMaxOrder(@NotNull ToolWindowAnchor anchor) {
-    int res = -1;
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      if (anchor == info.getAnchor() && res < info.getOrder()) {
-        res = info.getOrder();
+  private fun getMaxOrder(anchor: ToolWindowAnchor): Int {
+    var res = -1
+    for (info in idToInfo.values) {
+      if (anchor == info.anchor && res < info.order) {
+        res = info.order
       }
     }
-    return res;
+    return res
   }
 
   /**
-   * Sets new {@code anchor} and {@code id} for the specified tool window.
+   * Sets new `anchor` and `id` for the specified tool window.
    * Also the method properly updates order of all other tool windows.
-   *
-   * @param newAnchor new anchor
-   * @param newOrder  new order
    */
-  final void setAnchor(@NotNull String id, @NotNull ToolWindowAnchor newAnchor, int newOrder) {
+  fun setAnchor(id: String, newAnchor: ToolWindowAnchor, suppliedNewOrder: Int) {
+    var newOrder = suppliedNewOrder
+    // if order isn't defined then the window will the last in the stripe
     if (newOrder == -1) {
-      // if order isn't defined then the window will the last in the stripe
-      newOrder = getMaxOrder(newAnchor) + 1;
+      newOrder = getMaxOrder(newAnchor) + 1
     }
-    final WindowInfoImpl info = getInfo(id, true);
-    final ToolWindowAnchor oldAnchor = info.getAnchor();
+
+    val info = getInfo(id, true)
+    val oldAnchor = info!!.anchor
     // shift order to the right in the target stripe
-    final List<WindowInfoImpl> infos = getAllInfos(newAnchor);
-    for (int i = infos.size() - 1; i > -1; i--) {
-      final WindowInfoImpl info2 = infos.get(i);
-      if (newOrder <= info2.getOrder()) {
-        info2.setOrder(info2.getOrder() + 1);
+    val infos = getAllInfos(newAnchor)
+    for (i in infos.size - 1 downTo -1 + 1) {
+      val info2 = infos[i]
+      if (newOrder <= info2.order) {
+        info2.order = info2.order + 1
       }
     }
+
     // "move" window into the target position
-    info.setAnchor(newAnchor);
-    info.setOrder(newOrder);
+    info.anchor = newAnchor
+    info.order = newOrder
     // normalize orders in the source and target stripes
-    normalizeOrder(getAllInfos(oldAnchor));
+    normalizeOrder(getAllInfos(oldAnchor))
     if (oldAnchor != newAnchor) {
-      normalizeOrder(getAllInfos(newAnchor));
+      normalizeOrder(getAllInfos(newAnchor))
     }
-
-    myRegisteredInfos.drop();
+    registeredInfos.drop()
   }
 
-  final void setSplitMode(@NotNull String id, boolean split) {
-    getInfo(id, true).setSplit(split);
+  fun setSplitMode(id: String, split: Boolean) {
+    getInfo(id, true)!!.isSplit = split
   }
 
-  public final void readExternal(@NotNull Element layoutElement) {
-    Set<String> registered = new THashSet<>();
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      if (info.isRegistered()) {
-        registered.add(info.getId());
+  fun readExternal(layoutElement: Element) {
+    val registered = THashSet<String?>()
+    for (info in idToInfo.values) {
+      if (info.isRegistered) {
+        registered.add(info.id)
       }
     }
-
-    for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
-      WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
-      info.normalizeAfterRead();
-      if (info.getId() == null) {
-        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e));
-        continue;
+    for (e in layoutElement.getChildren(WindowInfoImpl.TAG)) {
+      val info = e.deserialize(WindowInfoImpl::class.java)
+      info.normalizeAfterRead()
+      val id = info.id
+      if (id == null) {
+        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e))
+        continue
       }
-
-      if (registered.contains(info.getId())) {
-        info.setRegistered(true);
+      if (registered.contains(id)) {
+        info.isRegistered = true
       }
-
-      myIdToInfo.put(info.getId(), info);
+      idToInfo.put(id, info)
     }
 
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      if (info.getOrder() == -1) {
-        // if order isn't defined then window's button will be the last one in the stripe
-        info.setOrder(getMaxOrder(info.getAnchor()) + 1);
+    for (info in idToInfo.values) {
+      // if order isn't defined then window's button will be the last one in the stripe
+      if (info.order == -1) {
+        info.order = getMaxOrder(info.anchor) + 1
       }
     }
-
-    normalizeOrders();
+    normalizeOrders()
   }
 
-  public long getStateModificationCount() {
-    if (myIdToInfo.isEmpty()) {
-      return 0;
+  val stateModificationCount: Long
+    get() {
+      if (idToInfo.isEmpty()) {
+        return 0
+      }
+
+      var result = 0L
+      for (info in idToInfo.values) {
+        result += info.modificationCount
+      }
+      return result
     }
 
-    long result = 0;
-    for (WindowInfoImpl info : myIdToInfo.values()) {
-      result += info.getModificationCount();
-    }
-    return result;
-  }
-
-  @Nullable
-  public final Element writeExternal(@NotNull String tagName) {
-    if (myIdToInfo.isEmpty()) {
-      return null;
+  fun writeExternal(tagName: String): Element? {
+    if (idToInfo.isEmpty()) {
+      return null
     }
 
-    List<WindowInfoImpl> list = new ArrayList<>(myIdToInfo.values());
-    list.sort(ourWindowInfoComparator);
-    Element state = new Element(tagName);
-    for (WindowInfoImpl info : list) {
-      Element element = serialize(info);
+    val list = idToInfo.values.toMutableList()
+    list.sortedWith(windowInfoComparator)
+    val state = Element(tagName)
+    for (info in list) {
+      val element = serialize(info)
       if (element != null) {
-        state.addContent(element);
+        state.addContent(element)
       }
     }
-    return state;
+    return state
   }
 
-  @NotNull
-  List<String> getVisibleIdsOn(@NotNull ToolWindowAnchor anchor, @NotNull ToolWindowManagerImpl manager) {
-    List<String> ids = new ArrayList<>();
-    for (WindowInfoImpl each : getAllInfos(anchor)) {
-      final ToolWindow window = manager.getToolWindow(each.getId());
-      if (window == null) continue;
-      if (window.isAvailable() || UISettings.getInstance().getAlwaysShowWindowsButton()) {
-        ids.add(each.getId());
+  fun getVisibleIdsOn(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl): List<String> {
+    val ids = mutableListOf<String>()
+    for (each in getAllInfos(anchor)) {
+      val window = manager.getToolWindow(each.id) ?: continue
+      if (window.isAvailable || instance.alwaysShowWindowsButton) {
+        ids.add(each.id!!)
       }
     }
-    return ids;
+    return ids
   }
 
-  private final class MyStripeButtonComparator implements Comparator<StripeButton> {
-    private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
+  private inner class MyStripeButtonComparator(anchor: ToolWindowAnchor) : Comparator<StripeButton> {
+    private val idToInfo: MutableMap<String?, WindowInfoImpl> = THashMap()
 
-    MyStripeButtonComparator(@NotNull ToolWindowAnchor anchor) {
-      for (WindowInfoImpl info : getInfos()) {
-        if (anchor == info.getAnchor()) {
-          myIdToInfo.put(info.getId(), info.copy());
+    override fun compare(obj1: StripeButton, obj2: StripeButton): Int {
+      val info1 = idToInfo.get(obj1.windowInfo.id)
+      val order1 = info1?.order ?: 0
+      val info2 = idToInfo.get(obj2.windowInfo.id)
+      val order2 = info2?.order ?: 0
+      return order1 - order2
+    }
+
+    init {
+      for (info in infos) {
+        if (anchor == info.anchor) {
+          idToInfo.put(info.id, info.copy())
         }
       }
     }
+  }
+}
 
-    @Override
-    public final int compare(final StripeButton obj1, final StripeButton obj2) {
-      final WindowInfoImpl info1 = myIdToInfo.get(obj1.getWindowInfo().getId());
-      final int order1 = info1 != null ? info1.getOrder() : 0;
+private val LOG = logger<DesktopLayout>()
 
-      final WindowInfoImpl info2 = myIdToInfo.get(obj2.getWindowInfo().getId());
-      final int order2 = info2 != null ? info2.getOrder() : 0;
+private fun getAnchorWeight(anchor: ToolWindowAnchor): Int {
+  return when (anchor) {
+    ToolWindowAnchor.TOP -> SwingConstants.TOP
+    ToolWindowAnchor.LEFT -> SwingConstants.LEFT
+    ToolWindowAnchor.BOTTOM -> SwingConstants.BOTTOM
+    else -> if (anchor == ToolWindowAnchor.RIGHT) SwingConstants.RIGHT else 0
+  }
+}
 
-      return order1 - order2;
-    }
+private val windowInfoComparator = Comparator { o1: WindowInfoImpl, o2: WindowInfoImpl ->
+  val d = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
+  if (d == 0) o1.order - o2.order else d
+}
+
+/**
+ * Normalizes order of windows in the passed array. Note, that array should be
+ * sorted by order (by ascending). Order of first window will be `0`.
+ */
+private fun normalizeOrder(infos: List<WindowInfoImpl>) {
+  for (i in infos.indices) {
+    infos[i].order = i
   }
 }
