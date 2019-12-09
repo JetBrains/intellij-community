@@ -500,6 +500,15 @@ public class VfsUtil extends VfsUtilCore {
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
   }
 
+  /**
+   * @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
+   */
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull File... files) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile[] virtualFiles = ContainerUtil.map(files, fileSystem::refreshAndFindFileByIoFile, new VirtualFile[files.length]);
+    markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
+  }
+
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
     if (file.isValid()) {
