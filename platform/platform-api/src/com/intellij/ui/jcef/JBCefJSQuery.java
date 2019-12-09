@@ -32,7 +32,7 @@ public class JBCefJSQuery implements Disposable {
 
   @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
-  private @NotNull static final AtomicInteger UNIQUE_ID_COUNTER = new AtomicInteger(0);
+  @NotNull private static final AtomicInteger UNIQUE_ID_COUNTER = new AtomicInteger(0);
 
   private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull String jsCallID) {
     myJSCallID = jsCallID;
