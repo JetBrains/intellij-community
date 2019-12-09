@@ -12,8 +12,12 @@ public class PluginSearchableOptionContributor extends SearchableOptionContribut
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
+    boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (applicationInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
+        continue;
+      }
+      if (hideImplDetails && plugin.isImplementationDetail()) {
         continue;
       }
       final String pluginName = plugin.getName();

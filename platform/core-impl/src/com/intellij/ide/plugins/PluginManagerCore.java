@@ -20,6 +20,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.reference.SoftReference;
@@ -689,6 +690,10 @@ public final class PluginManagerCore {
     if (disabled.length() > 0) {
       logger.info("Disabled plugins: " + disabled);
     }
+  }
+
+  public static boolean hideImplementationDetails() {
+    return !Registry.is("plugins.show.implementation.details");
   }
 
   public static boolean isRunningFromSources() {

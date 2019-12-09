@@ -21,8 +21,13 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     List<OptionDescription> options = new ArrayList<>(plugins.length);
+    boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
+
     for (IdeaPluginDescriptor descriptor : plugins) {
       if (applicationInfo.isEssentialPlugin(descriptor.getPluginId())) {
+        continue;
+      }
+      if (hideImplDetails && descriptor.isImplementationDetail()) {
         continue;
       }
 

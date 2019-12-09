@@ -34,7 +34,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -805,7 +804,7 @@ public class PluginManagerConfigurable
         int bundledEnabled = 0;
         int downloadedEnabled = 0;
 
-        boolean hideImplDetails = !Registry.is("plugins.show.implementation.details");
+        boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId())) {
@@ -1463,7 +1462,7 @@ public class PluginManagerConfigurable
   }
 
   @NotNull
-  private static JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
+  public static JComponent createScrollPane(@NotNull PluginsGroupComponent panel, boolean initSelection) {
     JBScrollPane pane =
       new JBScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pane.setBorder(JBUI.Borders.empty());
