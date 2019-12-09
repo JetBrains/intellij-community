@@ -744,32 +744,6 @@ public class ResolveUtil {
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
   }
 
-  @Nullable
-  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
-    final PsiElement element = candidate.getElement();
-    if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return TypesUtil.substituteAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element),
-                                                  candidate.getSubstitutor(), candidate.getSpreadState(), expression);
-    }
-
-    final PsiType type;
-    if (element instanceof GrField) {
-      type = ((GrField)element).getTypeGroovy();
-    }
-    else if (element instanceof PsiMethod) {
-      type = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element);
-    }
-    else {
-      return null;
-    }
-    if (type instanceof GrClosureType) {
-      final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
-      PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
-      return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
-    }
-    return null;
-  }
-
   public static boolean isEnumConstant(PsiReference ref, String name, String qName) {
     PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiEnumConstant)) return false;

@@ -1361,13 +1361,14 @@ public class PsiUtil {
   }
 
   public static boolean isVoidMethodCall(@Nullable GrExpression expression) {
-    if (expression instanceof GrMethodCall && PsiType.NULL.equals(expression.getType())) {
-      final GroovyResolveResult resolveResult = ((GrMethodCall)expression).advancedResolve();
-      final PsiType[] args = getArgumentTypes(((GrMethodCall)expression).getInvokedExpression(), true);
-      return PsiType.VOID.equals(ResolveUtil.extractReturnTypeFromCandidate(resolveResult, expression, args));
+    if (!(expression instanceof GrMethodCall)) {
+      return false;
     }
-
-    return false;
+    final PsiElement element = ((GrMethodCall)expression).advancedResolve().getElement();
+    if (!(element instanceof PsiMethod)) {
+      return false;
+    }
+    return PsiType.VOID.equals(((PsiMethod)element).getReturnType());
   }
 
   public static boolean isVoidMethod(@NotNull PsiMethod method) {
