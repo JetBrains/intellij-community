@@ -34,7 +34,7 @@ import static com.intellij.task.ProjectTaskManager.EMPTY_TASKS_ARRAY;
 
 /**
  * {@link ProjectTaskRunner} provides an extension point to run any IDE tasks using {@link ProjectTaskManager} api.
- * Typical usecase is delegation of common IDE activities(e.g. (re)build project) to external tools/plugins.
+ * Typical use case is delegation of common IDE activities(e.g. (re)build project) to external tools/plugins.
  * But it can be used for any other IDE activity which is described by some inheritor of {@link ProjectTask}.
  *
  * @see ProjectTaskManager
