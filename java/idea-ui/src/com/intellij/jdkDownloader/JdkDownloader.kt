@@ -17,12 +17,10 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.lang.JavaVersion
-import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-internal class JdkDownloader : SdkDownload {
+internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
   private val LOG = logger<JdkDownloader>()
 
   override fun supportsDownload(sdkTypeId: SdkTypeId) = sdkTypeId is JavaSdkImpl
@@ -49,14 +47,7 @@ internal class JdkDownloader : SdkDownload {
       JdkInstaller.prepareJdkInstallation(jdkItem, jdkHome)
     } ?: return
 
-    sdkCreatedCallback.accept(object : SdkDownloadTask {
-      override fun getSuggestedSdkName() = request.item.suggestedSdkName
-      override fun getPlannedHomeDir() = request.targetDir.absolutePath
-      override fun getPlannedVersion() = request.item.versionString
-      override fun doDownload(indicator: ProgressIndicator) {
-        JdkInstaller.installJdk(request, indicator)
-      }
-    })
+    sdkCreatedCallback.accept(newDownloadTask(request))
   }
 
   private inline fun <T : Any> runTaskAndReportError(project: Project?,
@@ -87,5 +78,18 @@ internal class JdkDownloader : SdkDownload {
     }
 
     return ProgressManager.getInstance().run(task)
+  }
+}
+
+internal interface JdkDownloaderBase {
+  fun newDownloadTask(request: JdkInstallRequest): SdkDownloadTask {
+    return object : SdkDownloadTask {
+      override fun getSuggestedSdkName() = request.item.suggestedSdkName
+      override fun getPlannedHomeDir() = request.targetDir.absolutePath
+      override fun getPlannedVersion() = request.item.versionString
+      override fun doDownload(indicator: ProgressIndicator) {
+        JdkInstaller.installJdk(request, indicator)
+      }
+    }
   }
 }
