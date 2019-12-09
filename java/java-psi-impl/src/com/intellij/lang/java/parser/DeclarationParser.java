@@ -234,7 +234,10 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null;
     }
-    else if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT && !isRecordToken(builder, tokenType)) {
+    else if (isRecordToken(builder, tokenType)) {
+      if (context == Context.CODE_BLOCK) return null;
+    }
+    else if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
       if (context == Context.FILE) return null;
     }
     else if (tokenType instanceof ILazyParseableElementType) {
@@ -244,8 +247,7 @@ public class DeclarationParser {
     else if (!ElementType.MODIFIER_BIT_SET.contains(tokenType) &&
              !ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
              tokenType != JavaTokenType.AT &&
-             (context == Context.CODE_BLOCK || tokenType != JavaTokenType.LT) &&
-             !isRecordToken(builder, tokenType)) {
+             (context == Context.CODE_BLOCK || tokenType != JavaTokenType.LT)) {
       return null;
     }
 
