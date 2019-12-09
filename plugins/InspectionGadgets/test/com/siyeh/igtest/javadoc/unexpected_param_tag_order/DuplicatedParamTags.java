@@ -1,5 +1,5 @@
 class DuplicatedParamTags {
-  <warning descr="'@param' tags are not in the right order">/**</warning>
+  <warning descr="'@param' tags doesn't match parameter-declaration order">/**</warning>
    * @param a
    * @param b
    * @param b
@@ -10,7 +10,7 @@ class DuplicatedParamTags {
    */
   <X, Y, Z> Z foo1(X a, Y b, Z c) {return null;}
 
-  <warning descr="'@param' tags are not in the right order">/**</warning>
+  <warning descr="'@param' tags doesn't match parameter-declaration order">/**</warning>
    * @param a
    * @param b
    * @param c
@@ -33,7 +33,7 @@ class DuplicatedParamTags {
   <X, Y, Z> Z foo3(X a, Y b, Z c) {return null;}
 }
 
-<warning descr="'@param' tags are not in the right order">/**</warning>
+<warning descr="'@param' tags doesn't match parameter-declaration order">/**</warning>
  * @param <X>
  * @param <X>
  * @param <Y>

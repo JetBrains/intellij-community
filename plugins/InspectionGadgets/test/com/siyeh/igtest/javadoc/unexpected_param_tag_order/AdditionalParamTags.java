@@ -11,7 +11,7 @@ class AdditionalParamTags {
    */
   <X, Y, Z> Z foo1(X a, Y b, Z c) {return null;}
 
-  <warning descr="'@param' tags are not in the right order">/**</warning>
+  <warning descr="'@param' tags doesn't match parameter-declaration order">/**</warning>
    * @param a
    * @param b
    * @param c
@@ -42,7 +42,7 @@ class AdditionalParamTags {
  */
 class Foo1<X, Y, Z> {}
 
-<warning descr="'@param' tags are not in the right order">/**</warning>
+<warning descr="'@param' tags doesn't match parameter-declaration order">/**</warning>
  * @param <NON_EXISTING_GENERIC_PARAMETER>
  * @param <X>
  * @param <Y>
