@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -76,7 +77,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private final Disposable myDisposable = Disposer.newDisposable();
 
   private boolean myIsDisposed = false;
-  private final Runnable myResetCallback = () -> {
+  private final Consumer<Boolean> myResetCallback = __ -> {
     if (!myIsDisposed) reset();
   };
 
