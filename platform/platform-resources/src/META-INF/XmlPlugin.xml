@@ -44,18 +44,15 @@
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
     <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
 
-    <extensionPoint name="xml.idContributor"
-                    interface="com.intellij.xml.util.XmlIdContributor"/>
-
-    <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
-                    interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
+    <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
+    <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
 
     <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator" dynamic="true"/>
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter" dynamic="true"/>
 
-    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
+    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
 
-    <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
+    <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider" dynamic="true"/>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
     <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
