@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 
 class AndroidStudioBundledJreManager extends BundledJreManager {
   BuildContext buildContext
@@ -36,6 +37,11 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   @Override
   String extractJre(String osName) {
     return "$baseDirectoryForJdk/$osName"
+  }
+
+  @Override
+  String extractJre(OsFamily os) {
+    return extractJre(os.jbrArchiveSuffix)
   }
 
   @Override
