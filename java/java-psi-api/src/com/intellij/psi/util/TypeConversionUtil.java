@@ -1501,7 +1501,9 @@ public class TypeConversionUtil {
   }
 
   private static Object cast(@NotNull Object operand, @TypeRank int rankTo) {
-    Number number = operand instanceof Character ? Integer.valueOf((Character)operand) : (Number)operand;
+    Number number = operand instanceof Character ? Integer.valueOf((Character)operand) 
+                                                 : operand instanceof Number ? (Number)operand : null;
+    if (number == null) return null;
     switch (rankTo) {
       case BYTE_RANK:
         return number.byteValue();
