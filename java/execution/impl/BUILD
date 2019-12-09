@@ -70,5 +70,6 @@ iml_module(
         "//tools/idea/platform/vcs-impl:intellij.platform.vcs.impl[module]",
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:jackson-databind",
+        "//tools/idea:intellij.platform.debugger.impl_and_others[module]",
     ],
 )

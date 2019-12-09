@@ -42,6 +42,7 @@ iml_module(
         "//tools/idea/.idea/libraries:kotlin-reflect",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+        "//tools/idea/platform/xdebugger-api:intellij.platform.debugger[module]",
     ],
 )
 
