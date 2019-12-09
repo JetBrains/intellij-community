@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
+import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
@@ -15,6 +16,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
@@ -106,6 +108,8 @@ internal class LegacyBridgeLibraryImpl(
   // null to update project model via ProjectModelUpdater
   var modifiableModelFactory: ((LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
 
+  private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
+
   private val libraryEntityValue = CachedValueWithParameter { storage, id: LibraryId ->
     storage.resolve(id)
   }
@@ -182,17 +186,11 @@ internal class LegacyBridgeLibraryImpl(
   override fun readExternal(element: Element?) = throw NotImplementedError()
   override fun writeExternal(element: Element) = snapshot.writeExternal(element)
 
-  override fun addRootSetChangedListener(listener: RootProvider.RootSetChangedListener) {
-    TODO()
+  override fun addRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.addListener(listener)
+  override fun addRootSetChangedListener(listener: RootSetChangedListener, parentDisposable: Disposable) {
+    dispatcher.addListener(listener, parentDisposable)
   }
-
-  override fun addRootSetChangedListener(listener: RootProvider.RootSetChangedListener, parentDisposable: Disposable) {
-    TODO()
-  }
-
-  override fun removeRootSetChangedListener(listener: RootProvider.RootSetChangedListener) {
-    TODO()
-  }
+  override fun removeRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.removeListener(listener)
 
   override fun isDisposed(): Boolean = disposed
   override fun dispose() {
