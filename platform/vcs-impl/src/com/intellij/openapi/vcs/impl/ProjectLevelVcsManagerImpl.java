@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -111,21 +112,33 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     }
     else {
       myInitialization = new VcsInitialization(myProject);
-      // wait for the thread spawned in VcsInitialization to terminate
-      Disposer.register(this, myInitialization);
+    }
 
-      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMappings = new NewMappings(myProject, this);
+    Disposer.register(this, myMappings);
+  }
+
+  static final class MyStartUpActivity implements StartupActivity.DumbAware {
+    MyStartUpActivity() {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          if (project == myProject) {
-            Disposer.dispose(myInitialization);
+          ProjectLevelVcsManagerImpl manager = (ProjectLevelVcsManagerImpl)project.getServiceIfCreated(ProjectLevelVcsManager.class);
+          if (manager != null && manager.myInitialization != null) {
+            // wait for the thread spawned in VcsInitialization to terminate
+            manager.myInitialization.cancelBackgroundInitialization();
           }
         }
       });
     }
 
-    myMappings = new NewMappings(myProject, this);
-    Disposer.register(this, myMappings);
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ProjectLevelVcsManagerImpl manager = getInstanceImpl(project);
+      if (manager.myInitialization != null) {
+        manager.myInitialization.startInitialization();
+      }
+    }
   }
 
   public static ProjectLevelVcsManagerImpl getInstanceImpl(@NotNull Project project) {

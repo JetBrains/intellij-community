@@ -47,6 +47,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.ProjectLevelVcsManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$MyStartUpActivity"/>
+
     <projectService serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
