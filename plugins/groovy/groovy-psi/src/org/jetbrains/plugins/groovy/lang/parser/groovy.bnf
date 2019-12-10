@@ -700,6 +700,9 @@ statement ::= if_statement
 private branch ::= <<extendedStatement>> | statement
 
 block_statement ::= !<<isParameterizedClosure>> lazy_block
+{
+  extraRoot = true
+}
 
 private expression_statement ::= expression_or_application_except_zero_params_closure
 

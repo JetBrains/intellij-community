@@ -757,13 +757,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrBlockStatement createBlockStatementFromText(@NotNull String text, @Nullable PsiElement context) {
-    GroovyFile file = createGroovyFileChecked("if(true)" + text, false, context);
-    GrStatement[] statements = file.getStatements();
-    LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrIfStatement, text);
-
-    GrStatement branch = ((GrIfStatement)statements[0]).getThenBranch();
-    LOG.assertTrue(branch instanceof GrBlockStatement);
-    return (GrBlockStatement)branch;
+    return createElementFromText(text, context, BLOCK_STATEMENT, GrBlockStatement.class);
   }
 
   @NotNull
