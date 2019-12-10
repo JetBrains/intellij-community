@@ -25,6 +25,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -32,14 +33,15 @@ import java.util.Objects;
 /**
  * @author yole
  */
+@ApiStatus.Internal
 public class CompletionInitializationUtil {
   private static final Logger LOG = Logger.getInstance(CompletionInitializationUtil.class);
 
-  static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
-                                                                               @NotNull Editor editor,
-                                                                               @NotNull Caret caret,
-                                                                               int invocationCount,
-                                                                               CompletionType completionType) {
+  public static CompletionInitializationContextImpl createCompletionInitializationContext(@NotNull Project project,
+                                                                                          @NotNull Editor editor,
+                                                                                          @NotNull Caret caret,
+                                                                                          int invocationCount,
+                                                                                          CompletionType completionType) {
     return WriteAction.compute(() -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CompletionAssertions.checkEditorValid(editor);
@@ -54,10 +56,10 @@ public class CompletionInitializationUtil {
   }
 
   private static CompletionInitializationContextImpl runContributorsBeforeCompletion(Editor editor,
-                                                                          PsiFile psiFile,
-                                                                          int invocationCount,
-                                                                          @NotNull Caret caret,
-                                                                          CompletionType completionType) {
+                                                                                     PsiFile psiFile,
+                                                                                     int invocationCount,
+                                                                                     @NotNull Caret caret,
+                                                                                     CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
     Language language = psiFile.getLanguage();
     CompletionInitializationContextImpl context =
@@ -79,25 +81,27 @@ public class CompletionInitializationUtil {
       current.set(contributor);
       contributor.beforeCompletion(context);
       CompletionAssertions.checkEditorValid(editor);
-      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " + contributor + " left the document uncommitted";
+      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
+                                                                                           contributor +
+                                                                                           " left the document uncommitted";
     }
     return context;
   }
 
   @NotNull
-  static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                 CompletionProcessEx indicator, OffsetsInFile finalOffsets) {
+  public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
+                                                                CompletionProcessEx indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
     PsiElement insertedElement = findCompletionPositionLeaf(finalOffsets, offset, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, finalOffsets.getOffsets()));
-    return new CompletionParameters(insertedElement, originalFile, initContext.getCompletionType(), offset, initContext.getInvocationCount(),
+    return new CompletionParameters(insertedElement, originalFile, initContext.getCompletionType(), offset,
+                                    initContext.getInvocationCount(),
                                     initContext.getEditor(), indicator);
   }
 
-
-  static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
+  public static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext, CompletionProcessEx indicator) {
     OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     if (initContext.getDummyIdentifier().isEmpty()) {
@@ -127,7 +131,7 @@ public class CompletionInitializationUtil {
     return new OffsetsInFile(hostCopy, copyOffsets);
   }
 
-  static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
+  public static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
     CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
     int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
@@ -180,7 +184,12 @@ public class CompletionInitializationUtil {
 
     final PsiFile copy = (PsiFile)file.copy();
     if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
-      LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" + file.getLanguage() + "; file=" + file + " of " + file.getClass());
+      LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" +
+                file.getLanguage() +
+                "; file=" +
+                file +
+                " of " +
+                file.getClass());
     }
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
@@ -212,7 +221,6 @@ public class CompletionInitializationUtil {
       return;
     }
 
-    ((DocumentImpl) documentCopy).setAcceptSlashR(((DocumentImpl) originalDocument).acceptsSlashR());
+    ((DocumentImpl)documentCopy).setAcceptSlashR(((DocumentImpl)originalDocument).acceptsSlashR());
   }
-
 }

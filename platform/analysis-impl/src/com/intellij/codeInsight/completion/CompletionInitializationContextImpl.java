@@ -5,12 +5,14 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-class CompletionInitializationContextImpl extends CompletionInitializationContext {
+@ApiStatus.Internal
+public class CompletionInitializationContextImpl extends CompletionInitializationContext {
   private final OffsetsInFile myHostOffsets;
 
   CompletionInitializationContextImpl(Editor editor,
@@ -23,7 +25,7 @@ class CompletionInitializationContextImpl extends CompletionInitializationContex
   }
 
   @NotNull
-  OffsetsInFile getHostOffsets() {
+  public OffsetsInFile getHostOffsets() {
     return myHostOffsets;
   }
 }
