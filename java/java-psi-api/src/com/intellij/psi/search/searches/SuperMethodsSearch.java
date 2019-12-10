@@ -40,15 +40,22 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
     @Nullable private final PsiClass myClass;
     private final boolean myCheckBases;
     private final boolean myAllowStaticMethod;
+    private final boolean myJlsOnly;
 
     public SearchParameters(@NotNull PsiMethod method,
                             @Nullable PsiClass aClass,
                             final boolean checkBases,
                             final boolean allowStaticMethod) {
+      this(method, aClass, checkBases, allowStaticMethod, false);
+    }
+
+    public SearchParameters(@NotNull PsiMethod method, @Nullable PsiClass aClass, boolean checkBases, boolean allowStaticMethod,
+                            boolean jlsOnly) {
       myCheckBases = checkBases;
       myClass = aClass;
       myMethod = method;
       myAllowStaticMethod = allowStaticMethod;
+      myJlsOnly = jlsOnly;
     }
 
     @Nullable
@@ -79,6 +86,14 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
     public final boolean isAllowStaticMethod() {
       return myAllowStaticMethod;
     }
+
+    /**
+     * @return whether only Java Language Specification-compliant supers are needed, not EJB-like "logical" inheritance hierarchy
+     */
+    public boolean isJlsOnly() {
+      return myJlsOnly;
+    }
+
   }
 
   private SuperMethodsSearch() {
@@ -89,8 +104,11 @@ public class SuperMethodsSearch extends ExtensibleQueryFactory<MethodSignatureBa
                                                                @Nullable final PsiClass psiClass,
                                                                boolean checkBases,
                                                                boolean allowStaticMethod) {
-    final SearchParameters parameters = new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod);
-    return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
+    return search(new SearchParameters(derivedMethod, psiClass, checkBases, allowStaticMethod));
   }
 
+  @NotNull
+  public static Query<MethodSignatureBackedByPsiMethod> search(@NotNull SearchParameters parameters) {
+    return SUPER_METHODS_SEARCH_INSTANCE.createUniqueResultsQuery(parameters, MethodSignatureUtil.METHOD_BASED_HASHING_STRATEGY);
+  }
 }
