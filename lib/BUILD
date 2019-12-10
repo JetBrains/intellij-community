@@ -53,13 +53,6 @@ filegroup(
 
 # managed by go/iml_to_build
 java_import(
-    name = "wadl-core",
-    jars = ["wadl-core.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "jshell-frontend",
     jars = ["jshell-frontend.jar"],
     visibility = ["//visibility:public"],

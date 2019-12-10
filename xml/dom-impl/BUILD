@@ -7,8 +7,8 @@ iml_module(
     iml_files = ["intellij.xml.dom.impl.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+        "//tools/idea/images:intellij.platform.images",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

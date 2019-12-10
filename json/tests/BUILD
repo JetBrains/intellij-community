@@ -9,8 +9,8 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",

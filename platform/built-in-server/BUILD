@@ -9,8 +9,8 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+        "//tools/idea/images:intellij.platform.images",
     ],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/built-in-server-api:intellij.platform.builtInServer"],
@@ -55,8 +55,8 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
+        "//tools/idea/images:intellij.platform.images",
     ],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
