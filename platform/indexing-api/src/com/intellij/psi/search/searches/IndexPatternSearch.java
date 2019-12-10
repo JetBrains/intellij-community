@@ -2,13 +2,14 @@
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.Query;
-import com.intellij.util.QueryFactory;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,8 +20,13 @@ import org.jetbrains.annotations.NotNull;
  * @see IndexPatternProvider
  * @see com.intellij.psi.search.PsiTodoSearchHelper#findFilesWithTodoItems()
  */
-public abstract class IndexPatternSearch extends QueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+public abstract class IndexPatternSearch extends ExtensibleQueryFactory<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+  public static final ExtensionPointName<QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternSearch");
   private static IndexPatternSearch ourInstance;
+
+  protected IndexPatternSearch() {
+    super(EP_NAME);
+  }
 
   private static IndexPatternSearch getInstance() {
     IndexPatternSearch result = ourInstance;

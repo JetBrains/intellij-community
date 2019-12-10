@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 final class IndexPatternSearchImpl extends IndexPatternSearch {
-  IndexPatternSearchImpl() {
-    registerExecutor(new IndexPatternSearcher());
-  }
 
   @Override
   protected int getOccurrencesCountImpl(@NotNull PsiFile file, @NotNull IndexPatternProvider provider) {
