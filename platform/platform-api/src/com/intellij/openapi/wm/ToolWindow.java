@@ -190,6 +190,11 @@ public interface ToolWindow extends BusyObject {
     return null;
   }
 
+  /**
+   * Delete tool window.
+   */
+  void remove();
+
   class Border extends EmptyBorder {
     public Border() {
       this(true, true, true, true);

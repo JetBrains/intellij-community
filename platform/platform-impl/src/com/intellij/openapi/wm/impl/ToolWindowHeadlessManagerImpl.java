@@ -191,6 +191,10 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void remove() {
+    }
+
+    @Override
     public boolean isActive() {
       return false;
     }
