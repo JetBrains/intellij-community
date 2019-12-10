@@ -228,7 +228,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Override
     public String getUnresolvedMessagePattern() {
       ExtensionPoint ep = myExtension.getExtensionPoint();
-      return "Cannot resolve ''{0}'' " + (ep != null ? ep.getEffectiveName() + " " : "") + "extension";
+      return "Cannot resolve ''{0}'' " + (ep != null ? ep.getEffectiveQualifiedName() + " " : "") + "extension";
     }
 
     @Override
