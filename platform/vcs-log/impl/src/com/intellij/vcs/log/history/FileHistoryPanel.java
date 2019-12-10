@@ -64,7 +64,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final JBSplitter myDetailsSplitter;
 
-  @NotNull private final FileHistoryDiffPreview myDiffPreview;
+  @NotNull private final FileHistoryDiffProcessor myDiffPreview;
   @NotNull private final OnePixelSplitter myDiffPreviewSplitter;
   @NotNull private final DiffPreviewProvider myDiffPreviewProvider;
 
@@ -148,7 +148,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @NotNull
       @Override
       public DiffRequestProcessor createDiffRequestProcessor() {
-        FileHistoryDiffPreview preview = notNull(createDiffPreview(true));
+        FileHistoryDiffProcessor preview = notNull(createDiffPreview(true));
         preview.updatePreview(true);
         return preview;
       }
@@ -236,8 +236,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   }
 
   @NotNull
-  private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
-    FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myProject, () -> getSelectedChange(), isInEditor, this);
+  private FileHistoryDiffProcessor createDiffPreview(boolean isInEditor) {
+    FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),

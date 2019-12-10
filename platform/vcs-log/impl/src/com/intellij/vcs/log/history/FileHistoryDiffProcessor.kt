@@ -14,10 +14,10 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 
-internal class FileHistoryDiffPreview(project: Project,
-                                      private val changeGetter: () -> Change?,
-                                      isInEditor: Boolean,
-                                      disposable: Disposable
+internal class FileHistoryDiffProcessor(project: Project,
+                                        private val changeGetter: () -> Change?,
+                                        isInEditor: Boolean,
+                                        disposable: Disposable
 ) : CacheDiffRequestProcessor.Simple(project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW),
     DiffPreviewUpdateProcessor {
 
