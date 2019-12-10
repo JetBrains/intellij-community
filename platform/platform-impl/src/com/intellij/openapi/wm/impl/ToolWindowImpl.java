@@ -47,6 +47,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
+  @NotNull
+  private final Disposable parentDisposable;
   private final JComponent myComponent;
   private boolean myAvailable = true;
   private final ContentManager myContentManager;
@@ -77,6 +79,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
                  @NotNull Disposable parentDisposable) {
     myToolWindowManager = toolWindowManager;
     myId = id;
+    this.parentDisposable = parentDisposable;
 
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     myContentUI = new ToolWindowContentUi(this);
@@ -99,6 +102,17 @@ public final class ToolWindowImpl implements ToolWindowEx {
         myShowing.onReady();
       }
     }));
+  }
+
+  @NotNull
+  @Override
+  public Disposable getDisposable() {
+    return parentDisposable;
+  }
+
+  @Override
+  public void remove() {
+    myToolWindowManager.unregisterToolWindow(myId);
   }
 
   @Override

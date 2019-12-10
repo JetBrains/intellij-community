@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
@@ -181,6 +182,9 @@ public interface ToolWindow extends BusyObject {
   boolean isDisposed();
 
   void showContentPopup(InputEvent inputEvent);
+
+  @NotNull
+  Disposable getDisposable();
 
   default void setHelpId(@NonNls String helpId) {
   }
