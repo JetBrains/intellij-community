@@ -1,5 +1,5 @@
 <x <warning descr="MyAnnotator">aaa="dddd"</warning>>
     <l>
-      <warning desr="ENTITY">&nbsp;</warning>
+      <warning descr="ENTITY">&nbsp;</warning>
     </l>
 </x>

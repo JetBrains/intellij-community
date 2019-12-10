@@ -2134,8 +2134,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddRemoveHighlighterRaceInIncorrectAnnotatorsWhichUseFileRecursiveVisit() {
-    Annotator annotator = new MyIncorrectlyRecursiveAnnotator();
-    useAnnotatorsIn(new Annotator[]{annotator}, () -> {
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyIncorrectlyRecursiveAnnotator()}, () -> {
       @Language("JAVA")
       String text1 = "class X {\n" +
                      "  int foo(Object param) {\n" +
@@ -2158,30 +2157,35 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public static void useAnnotatorsIn(@NotNull Annotator[] annotators, @NotNull Runnable runnable) {
-    com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
+  public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
+                                     @NotNull MyRecordingAnnotator[] annotators,
+                                     @NotNull Runnable runnable) {
+    MyRecordingAnnotator.clearAll();
     for (Annotator annotator : annotators) {
-      LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
+      LanguageAnnotators.INSTANCE.addExplicitExtension(language, annotator);
     }
     try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
       assertTrue(list.toString(), list.containsAll(Arrays.asList(annotators)));
       runnable.run();
+      for (MyRecordingAnnotator annotator : annotators) {
+        assertTrue(annotator +" must have done something but didn't", annotator.didIDoIt());
+      }
     }
     finally {
       for (int i = annotators.length - 1; i >= 0; i--) {
         Annotator annotator = annotators[i];
-        LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
+        LanguageAnnotators.INSTANCE.removeExplicitExtension(language, annotator);
       }
     }
 
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
+    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(language);
     for (Annotator annotator : annotators) {
       assertFalse(list.toString(), list.contains(annotator));
     }
   }
 
-  public static class MyIncorrectlyRecursiveAnnotator implements Annotator {
+  public static class MyIncorrectlyRecursiveAnnotator extends MyRecordingAnnotator {
     Random random = new Random();
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
@@ -2192,6 +2196,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
             if (Objects.equals(keyword.getText(), "this")) {
               holder.createAnnotation(HighlightSeverity.WARNING, keyword.getTextRange(), "XXX");
               TimeoutUtil.sleep(random.nextInt(100));
+              iDidIt();
             }
           }
         });
@@ -2383,7 +2388,23 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
-  public static class MySleepyAnnotator implements Annotator {
+  public abstract static class MyRecordingAnnotator implements Annotator {
+    protected static final Set<Class<?>> done = ContainerUtil.newConcurrentSet();
+    protected void iDidIt() {
+      done.add(getClass());
+    }
+    boolean didIDoIt() {
+      return done.contains(getClass());
+    }
+    static void clearAll() {
+      done.clear();
+    }
+  }
+  public static class MySleepyAnnotator extends MyRecordingAnnotator {
+    public MySleepyAnnotator() {
+      iDidIt(); // is not supposed to ever do anything
+    }
+
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiClass) { // must be after MyFastAnnotator annotated the comment
@@ -2394,33 +2415,39 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     }
   }
-  public static class MyFastAnnotator implements Annotator {
+  public static class MyFastAnnotator extends MyRecordingAnnotator {
     private static final String SWEARING = "No swearing";
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         holder.createErrorAnnotation(element.getTextRange(), SWEARING);
+        iDidIt();
       }
     }
   }
 
-  public static class MyInfoAnnotator implements Annotator {
+  public static class MyInfoAnnotator extends MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && ((PsiComment)element).getTokenType().equals(JavaTokenType.C_STYLE_COMMENT)) {
         holder.createInfoAnnotation(element.getTextRange(), "comment");
+        iDidIt();
       }
     }
   }
 
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(new Annotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
-    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
-    useAnnotatorsIn(new Annotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
+    );
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
+    );
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
+    );
     // also check in the opposite order in case the order of annotators is important
-    useAnnotatorsIn(new Annotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
+    );
   }
 
   private void checkSwearingAnnotationIsVisibleImmediately() {
@@ -2472,7 +2499,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  public static class MyNewBuilderAnnotator implements Annotator {
+  public static class MyNewBuilderAnnotator extends MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
@@ -2483,6 +2510,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (toSleepMs.addAndGet(-100) > 0) {
           TimeoutUtil.sleep(100);
         }
+        iDidIt();
       }
     }
   }
@@ -2497,7 +2525,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(new Annotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
+    );
   }
 }
 

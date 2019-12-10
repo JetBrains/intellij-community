@@ -3,7 +3,6 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author cdr
  */
 public class JobLauncherImpl extends JobLauncher {
-  private static final Logger LOG = Logger.getInstance(JobLauncherImpl.class);
   static final int CORES_FORK_THRESHOLD = 1;
 
   @Override
@@ -215,22 +213,25 @@ public class JobLauncherImpl extends JobLauncher {
 
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException {
+    public void waitForCompletion(int millis) throws InterruptedException, TimeoutException {
+      long timeout = System.currentTimeMillis() + millis;
       while (!isDone()) {
+        long toWait = timeout - System.currentTimeMillis();
+        if (toWait < 0) {
+          throw new TimeoutException();
+        }
         try {
-          myForkJoinTask.get(millis, TimeUnit.MILLISECONDS);
-          break;
+          myForkJoinTask.get(toWait, TimeUnit.MILLISECONDS);
         }
         catch (CancellationException e) {
           // was canceled in the middle of execution
-          // can't do anything but wait. help other tasks in the meantime
-          if (!isDone()) {
-            ForkJoinPool.commonPool().awaitQuiescence(millis, TimeUnit.MILLISECONDS);
-            if (!isDone()) throw new TimeoutException();
-          }
         }
         catch (ExecutionException e) {
           ExceptionUtil.rethrow(e.getCause());
+        }
+        // can't do anything but wait. help other tasks in the meantime
+        if (!isDone()) {
+          ForkJoinPool.commonPool().awaitQuiescence(toWait, TimeUnit.MILLISECONDS);
         }
       }
     }

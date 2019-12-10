@@ -11,9 +11,10 @@ import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -44,29 +45,13 @@ import java.util.function.Function;
 
 public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInjectedAnnotator() {
-    Annotator annotator = new MyAnnotator();
-    Language xml = StdFileTypes.XML.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(xml, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-      assertTrue(list.toString(), list.contains(annotator));
+    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.XML.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyAnnotator()}, () -> {
       doTest(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".xml",true,false);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(xml, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(xml);
-    assertFalse(list.toString(), list.contains(annotator));
+    });
   }
 
   public void testAnnotatorWorksWithFileLevel() {
-    Annotator annotator = new MyTopFileAnnotator();
-    Language java = StdFileTypes.JAVA.getLanguage();
-    LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
-    try {
-      List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-      assertTrue(list.toString(), list.contains(annotator));
+    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyTopFileAnnotator()}, () -> {
       configureByFile(LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(false) + ".java");
       ((EditorEx)getEditor()).getScrollPane().getViewport().setSize(new Dimension(1000,1000)); // whole file fit onscreen
       doHighlighting();
@@ -87,30 +72,28 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       assertEmpty(warnings);
       fileLevel = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).getFileLevelHighlights(getProject(), getFile());
       assertEmpty(fileLevel);
-    }
-    finally {
-      LanguageAnnotators.INSTANCE.removeExplicitExtension(java, annotator);
-    }
-
-    List<Annotator> list = LanguageAnnotators.INSTANCE.allForLanguage(java);
-    assertFalse(list.toString(), list.contains(annotator));
+    });
   }
 
   // must stay public for PicoContainer to work
-  public static class MyAnnotator implements Annotator {
+  public static final class MyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       psiElement.accept(new XmlElementVisitor() {
-        @Override public void visitXmlTag(XmlTag tag) {
+        @Override
+        public void visitXmlTag(XmlTag tag) {
           XmlAttribute attribute = tag.getAttribute("aaa", "");
           if (attribute != null) {
             holder.createWarningAnnotation(attribute, "MyAnnotator");
+            iDidIt();
           }
         }
 
-        @Override public void visitXmlToken(XmlToken token) {
-          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+        @Override
+        public void visitXmlToken(XmlToken token) {
+          if (token.getTokenType() == XmlTokenType.XML_CHAR_ENTITY_REF) {
             holder.createWarningAnnotation(token, "ENTITY");
+            iDidIt();
           }
         }
       });
@@ -118,18 +101,20 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   // must stay public for PicoContainer to work
-  public static class MyTopFileAnnotator implements Annotator {
+  public static class MyTopFileAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
       if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
         Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
         annotation.setFileLevelAnnotation(true);
+        iDidIt();
       }
     }
   }
 
   public void testAnnotatorMustNotSpecifyCrazyRangeForCreatedAnnotation() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(new Annotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators());
+    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyCrazyAnnotator()}, () -> runMyAnnotators()
+    );
   }
   private void runMyAnnotators() {
     @org.intellij.lang.annotations.Language("JAVA")
@@ -147,11 +132,12 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
       .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, null);
   }
 
-  public static class MyCrazyAnnotator implements Annotator {
+  public static class MyCrazyAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         try {
+          iDidIt();
           holder.newAnnotation(HighlightSeverity.ERROR, "xxx")
             .range(new TextRange(0,1))
             .create();
@@ -224,7 +210,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     assertSame(newBuilder, builder);
     builder.registerFix().create();
   }
-  public static class MyStupidRepetitiveAnnotator implements Annotator {
+  public static class MyStupidRepetitiveAnnotator extends DaemonRespondToChangesTest.MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
@@ -258,11 +244,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         HighlightDisplayKey myDeadCodeKey = HighlightDisplayKey.findOrRegister(UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.DISPLAY_NAME, UnusedDeclarationInspectionBase.SHORT_NAME);
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, fixBuilder -> fixBuilder.key(myDeadCodeKey));
         checkThrowsWhenCalledTwiceOnFixBuilder(holder, fixBuilder -> fixBuilder.range(new TextRange(0,0)));
+        iDidIt();
       }
     }
   }
 
   public void testAnnotationBuilderMethodsAllowedToBeCalledOnlyOnce() {
-    DaemonRespondToChangesTest.useAnnotatorsIn(new Annotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators());
+    DaemonRespondToChangesTest.useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new MyStupidRepetitiveAnnotator()}, () -> runMyAnnotators()
+    );
   }
 }
