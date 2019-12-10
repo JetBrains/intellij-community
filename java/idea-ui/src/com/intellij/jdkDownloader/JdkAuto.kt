@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jdkDownloader
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -20,6 +21,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
 
   override fun createResolver(project: Project, indicator: ProgressIndicator): UnknownSdkLookup? {
     if (!Registry.`is`("jdk.auto.setup")) return null
+    if (ApplicationManager.getApplication().isUnitTestMode) return null
+
     return object : UnknownSdkLookup {
       val sdkType = JavaSdk.getInstance()
 
