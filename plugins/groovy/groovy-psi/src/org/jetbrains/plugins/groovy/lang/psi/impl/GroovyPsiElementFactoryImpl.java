@@ -354,12 +354,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrClosableBlock createClosureFromText(@NotNull String closureText, PsiElement context) throws IncorrectOperationException {
-    GroovyFile psiFile = createGroovyFileChecked("def __hdsjfghk_sdhjfshglk_foo  = " + closureText, false, context);
-    final GrStatement st = psiFile.getStatements()[0];
-    LOG.assertTrue(st instanceof GrVariableDeclaration, closureText);
-    final GrExpression initializer = ((GrVariableDeclaration)st).getVariables()[0].getInitializerGroovy();
-    LOG.assertTrue(initializer instanceof GrClosableBlock, closureText);
-    return ((GrClosableBlock)initializer);
+    return createElementFromText(closureText, context, CLOSURE, GrClosableBlock.class);
   }
 
   @NotNull
