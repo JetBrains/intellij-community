@@ -7,10 +7,10 @@ import com.intellij.model.search.impl.LanguageInfo
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
-import com.intellij.util.component1
-import com.intellij.util.component2
 import com.intellij.util.text.StringSearcher
 import gnu.trove.THashSet
 
