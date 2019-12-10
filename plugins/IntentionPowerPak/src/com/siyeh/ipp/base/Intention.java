@@ -42,6 +42,11 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     processIntention(editor, matchingElement);
   }
 
+  /**
+   * @deprecated Intention can be invoked on a non EDT thread with a mock editor.
+   * Please use {@link #processIntention(Editor, PsiElement)} instead.
+   */
+  @Deprecated
   protected abstract void processIntention(@NotNull PsiElement element);
 
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
