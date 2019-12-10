@@ -42,31 +42,34 @@ class GHPRToolWindowsTabsContentManager(private val project: Project,
   }
 
   private fun createContent(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable): Content {
-    val disposable = Disposer.newDisposable().also {
-      Disposer.register(it, Disposable { updateTabNames() })
-      Disposer.register(it, onDispose)
-    }
+    val disposable = Disposer.newDisposable()
+    Disposer.register(disposable, Disposable { updateTabNames() })
+    Disposer.register(disposable, onDispose)
 
-    return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false).apply {
-      isCloseable = true
-      disposer = disposable
-      description = remoteUrl.url
-      this.remoteUrl = remoteUrl
-      putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
-      putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
-        object : ChangesViewContentProvider {
-          override fun initContent() =
-            GHPRAccountsComponent(GithubAuthenticationManager.getInstance(), project, remoteUrl, disposable)
-
-          override fun disposeContent() = Disposer.dispose(disposable)
+    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(null), GROUP_PREFIX, false)
+    content.isCloseable = true
+    content.disposer = disposable
+    content.description = remoteUrl.url
+    content.remoteUrl = remoteUrl
+    content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY, ChangesViewContentManager.TabOrderWeight.LAST.weight)
+    content.putUserData(ChangesViewContentManager.CONTENT_PROVIDER_SUPPLIER_KEY) {
+      object : ChangesViewContentProvider {
+        override fun initContent(): GHPRAccountsComponent {
+          return GHPRAccountsComponent(GithubAuthenticationManager.getInstance(), project, remoteUrl, disposable)
         }
+
+        override fun disposeContent() = Disposer.dispose(disposable)
       }
     }
+    return content
   }
 
   private fun updateTabNames() {
     val contents = viewContentManager.findContents { it.remoteUrl != null }
-    if (contents.size == 1) contents.single().displayName = GROUP_PREFIX
+    // prefix with root name if there are duplicate remote names
+    if (contents.size == 1) {
+      contents.single().displayName = GROUP_PREFIX
+    }
     else {
       // prefix with root name if there are duplicate remote names
       val prefixRoot = contents.map { it.remoteUrl!!.remote }.groupBy { it.name }.values.any { it.size > 1 }
