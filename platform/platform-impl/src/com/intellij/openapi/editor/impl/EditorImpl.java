@@ -119,7 +119,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
-                                                                    CodeStyleSettingsListener {
+                                                                    CodeStyleSettingsListener, FocusListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
@@ -554,6 +554,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public FocusModeModel getFocusModeModel() {
     return myFocusModeModel;
+  }
+
+  @Override
+  public void focusGained(@NotNull FocusEvent e) {
+    myCaretCursor.activate();
+    for (Caret caret : myCaretModel.getAllCarets()) {
+      int caretLine = caret.getLogicalPosition().line;
+      repaintLines(caretLine, caretLine);
+    }
+    fireFocusGained(e);
+  }
+
+  @Override
+  public void focusLost(@NotNull FocusEvent e) {
+    clearCaretThread();
+    for (Caret caret : myCaretModel.getAllCarets()) {
+      int caretLine = caret.getLogicalPosition().line;
+      repaintLines(caretLine, caretLine);
+    }
+    fireFocusLost(e);
   }
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
@@ -1014,6 +1034,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
 
+    myEditorComponent.removeFocusListener(this);
+
     myEditorComponent.removeMouseListener(myMouseListener);
     myGutterComponent.removeMouseListener(myMouseListener);
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
@@ -1112,27 +1134,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.addMouseMotionListener(myMouseMotionListener);
     myGutterComponent.addMouseMotionListener(myMouseMotionListener);
 
-    myEditorComponent.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(@NotNull FocusEvent e) {
-        myCaretCursor.activate();
-        for (Caret caret : myCaretModel.getAllCarets()) {
-          int caretLine = caret.getLogicalPosition().line;
-          repaintLines(caretLine, caretLine);
-        }
-        fireFocusGained(e);
-      }
-
-      @Override
-      public void focusLost(@NotNull FocusEvent e) {
-        clearCaretThread();
-        for (Caret caret : myCaretModel.getAllCarets()) {
-          int caretLine = caret.getLogicalPosition().line;
-          repaintLines(caretLine, caretLine);
-        }
-        fireFocusLost(e);
-      }
-    });
+    myEditorComponent.addFocusListener(this);
 
     UiNotifyConnector connector = new UiNotifyConnector(myEditorComponent, new Activatable() {
       @Override
