@@ -199,7 +199,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return MavenUtil.isPomFile(project, file.getVirtualFile()) &&
-             MavenProjectIndicesManager.getInstance(project).hasNonScannedRemotes();
+             MavenProjectIndicesManager.getInstance(project).hasRemotesExceptCentral();
 
     }
   }
