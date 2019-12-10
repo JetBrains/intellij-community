@@ -179,6 +179,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
     assertEmpty(processOutput.out);
+    //ensure warning is ignored if started on java 11
+    processOutput.err.remove("Warning: Nashorn engine is planned to be removed from a future JDK release\n");
     assertEmpty(processOutput.err);
     List<TestIgnored> ignoredTests = processOutput.messages.stream()
       .filter(TestIgnored.class::isInstance)

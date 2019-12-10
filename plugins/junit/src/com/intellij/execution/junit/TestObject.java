@@ -306,9 +306,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
 
-    final PathsList pathsList = isModularized ? javaParameters.getModulePath() : javaParameters.getClassPath();
+    final List<String> additionalDependencies = new ArrayList<>();
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
-      downloadDependenciesWhenRequired(project, pathsList,
+      downloadDependenciesWhenRequired(project, additionalDependencies,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
     }
 
@@ -320,7 +320,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       if (hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
         String moduleNameToMove = "org.junit.jupiter.api";
         if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope)) {
-          downloadDependenciesWhenRequired(project, pathsList,
+          downloadDependenciesWhenRequired(project, additionalDependencies,
                                            new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
         }
         else {
@@ -330,7 +330,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         if (isModularized) {
           //put engine and dependencies or api only (when engine is attached to the module path above) on the module path
           for (PsiJavaModule module : JavaModuleNameIndex.getInstance().get(moduleNameToMove, project, globalSearchScope)) {
-            putDependenciesOnModulePath(pathsList, javaParameters.getClassPath(), module);
+            putDependenciesOnModulePath(javaParameters.getModulePath(), javaParameters.getClassPath(), module);
           }
         }
       }
@@ -340,9 +340,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         String version = VersionComparatorUtil.compare(launcherVersion, "1.1.0") >= 0
                          ? jupiterVersion
                          : "4.12." + StringUtil.getShortName(launcherVersion);
-        downloadDependenciesWhenRequired(project, pathsList,
+        downloadDependenciesWhenRequired(project, additionalDependencies,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
+    }
+
+    //add downloaded dependencies before everything else to avoid dependencies conflicts on org.junit.platform.common e.g. with spring boot test
+    final PathsList targetList = isModularized ? javaParameters.getModulePath() : javaParameters.getClassPath();
+    for (int i = additionalDependencies.size() - 1; i >= 0; i--) {
+      targetList.addFirst(additionalDependencies.get(i));
     }
   }
 
@@ -370,7 +376,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private static void downloadDependenciesWhenRequired(Project project,
-                                                       PathsList classPath,
+                                                       List<String> classPath,
                                                        RepositoryLibraryProperties properties) throws CantRunException {
     Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
     if (roots.isEmpty()) {
@@ -378,9 +384,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
     for (OrderRoot root : roots) {
       if (root.getType() == OrderRootType.CLASSES) {
-        VirtualFile file = root.getFile();
-        if (!classPath.getPathList().contains(PathUtil.getLocalPath(file))) {
-          classPath.add(file);
+        String path = PathUtil.getLocalPath(root.getFile());
+        if (!classPath.contains(path)) {
+          classPath.add(path);
         }
       }
     }
