@@ -85,7 +85,7 @@ interface BreakpointManager {
 
   interface SetBreakpointResult
   data class BreakpointExist(val existingBreakpoint: Breakpoint) : SetBreakpointResult
-  data class BreakpointCreated(val breakpoint: Breakpoint, val isResolved: Promise<out Breakpoint>) : SetBreakpointResult
+  data class BreakpointCreated(val breakpoint: Breakpoint, val isRegistered: Promise<out Breakpoint>) : SetBreakpointResult
 }
 
 interface BreakpointListener : EventListener {
