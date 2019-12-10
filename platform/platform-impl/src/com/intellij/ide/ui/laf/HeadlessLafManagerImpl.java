@@ -26,8 +26,18 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public CollectionComboBoxModel<UIManager.LookAndFeelInfo> getLafComboBoxModel() {
+  public LafReference getCurrentLookAndFeelReference() {
+    return null;
+  }
+
+  @Override
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return new CollectionComboBoxModel<>();
+  }
+
+  @Override
+  public UIManager.LookAndFeelInfo findLaf(LafReference reference) {
+    return null;
   }
 
   @Override
