@@ -41,10 +41,6 @@
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
       <headless-implementation-class/>
     </component>
-
-    <component>
-      <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
@@ -61,10 +57,6 @@
     <component>
       <interface-class>com.intellij.ui.EditorNotifications</interface-class>
       <implementation-class>com.intellij.ui.EditorNotificationsImpl</implementation-class>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent</implementation-class>
     </component>
 
     <component>

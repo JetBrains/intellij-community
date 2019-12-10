@@ -990,12 +990,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static boolean isDummyEnvironment() {
-    final Application application = ApplicationManager.getApplication();
-    return application.isUnitTestMode() || application.isCommandLine();
+    Application app = ApplicationManager.getApplication();
+    return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  public static class ProjectNotificationsComponent {
-    public ProjectNotificationsComponent(@NotNull final Project project) {
+  static final class ProjectNotificationsComponent {
+    ProjectNotificationsComponent(@NotNull Project project) {
       if (isDummyEnvironment()) {
         return;
       }

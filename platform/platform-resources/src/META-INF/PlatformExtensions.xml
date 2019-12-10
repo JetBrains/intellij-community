@@ -57,7 +57,10 @@
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.diagnostic.LowMemoryNotifier" preload="true"/>
+
     <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
+    <projectService serviceImplementation="com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent" preload="notHeadless"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
