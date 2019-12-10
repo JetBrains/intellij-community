@@ -15,20 +15,30 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointChangeListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableWithEPDependency;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.ui.DialogPanel;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Sergey.Malenkov
@@ -36,6 +46,8 @@ import java.awt.*;
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
 
+  private final Map<Configurable, Disposable> myListeners = new ConcurrentHashMap<>();
+  
   @Override
   protected Configurable prepare(Configurable key) {
     long time = System.currentTimeMillis();
@@ -53,7 +65,31 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   @Override
   protected JComponent create(Configurable configurable) {
-    return createConfigurableComponent(configurable);
+    JComponent component = createConfigurableComponent(configurable);
+    if (configurable instanceof ConfigurableWrapper && component != null) {
+      addEPChangesListener((ConfigurableWrapper)configurable);
+    }
+    return component;
+  }
+  
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
+    ConfigurableWithEPDependency configurable = ConfigurableWrapper.cast(ConfigurableWithEPDependency.class, wrapper);
+    if (configurable != null && !myListeners.containsKey(wrapper)) {
+      ExtensionPointName<?> dependency = configurable.getDependency();
+      Disposable disposable = Disposer.newDisposable();
+      
+      dependency.addExtensionPointListener((ExtensionPointChangeListener)(e, pd) -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (configurable.updateOnExtensionChanged(e, pd)) return;
+
+          //dispose resources -> reset nested component
+          wrapper.disposeUIResources();
+          resetValue(wrapper);
+        }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
+      }, disposable);
+      myListeners.put(wrapper, disposable);
+    }
   }
 
   /**
@@ -108,6 +144,10 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
       long time = System.currentTimeMillis();
       try {
         configurable.disposeUIResources();
+        Disposable disposer = myListeners.remove(configurable);
+        if (disposer != null) {
+          Disposer.dispose(disposer);
+        }
       }
       catch (Exception unexpected) {
         LOG.error("cannot dispose configurable", unexpected);
@@ -143,5 +183,14 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
         LOG.warn(time + " ms to " + action + " '" + name + "' id=" + id);
       }
     }
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    for (Disposable value : myListeners.values()) {
+      Disposer.dispose(value);
+    }
+    myListeners.clear();
   }
 }

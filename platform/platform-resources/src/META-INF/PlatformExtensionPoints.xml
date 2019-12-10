@@ -259,6 +259,7 @@
     <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler"/>
 
     <extensionPoint name="codeInsight.template.postfixTemplateProvider"
+                    dynamic="true"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider"/>
     </extensionPoint>

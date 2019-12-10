@@ -178,6 +178,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     UnnamedConfigurable configurable = myConfigurable;
     if (configurable != null) {
       configurable.disposeUIResources();
+      myConfigurable = null;
     }
   }
 
