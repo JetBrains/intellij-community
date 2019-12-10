@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.fqnames;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -43,7 +44,12 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element) {
+    throw new UnsupportedOperationException("The only 'processIntention(Editor, PsiElement)' is allowed to be invoked.");
+  }
+
+  @Override
+  public void processIntention(Editor editor, @NotNull PsiElement element) {
     PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element;
     PsiElement target = reference.resolve();
     if (!(target instanceof PsiClass)) {
@@ -87,6 +93,6 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
         "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
         Integer.valueOf(elementCount));
     }
-    HighlightUtils.highlightElements(shortenedElements, text);
+    HighlightUtils.highlightElements(shortenedElements, text, editor);
   }
 }

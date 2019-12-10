@@ -48,7 +48,12 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  protected void processIntention(@NotNull PsiElement element) {
+    throw new UnsupportedOperationException("The only 'processIntention(Editor, PsiElement)' is allowed to be invoked.");
+  }
+
+  @Override
+  public void processIntention(Editor editor, @NotNull PsiElement element) {
     final PsiField field = (PsiField)element.getParent();
     final PsiExpression initializer = field.getInitializer();
     if (initializer == null) {
@@ -106,6 +111,6 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     }
     initializer.delete();
     CodeStyleManager.getInstance(manager.getProject()).reformat(classInitializer);
-    HighlightUtils.highlightElement(addedElement);
+    HighlightUtils.highlightElement(addedElement, editor);
   }
 }

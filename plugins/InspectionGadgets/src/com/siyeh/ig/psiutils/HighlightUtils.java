@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -22,13 +23,12 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +42,14 @@ public class HighlightUtils {
     highlightElements(Collections.singleton(element));
   }
 
+  public static void highlightElement(@NotNull PsiElement element, Editor editor) {
+    highlightElements(Collections.singleton(element), editor);
+  }
+
+  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, Editor editor) {
+    highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), editor);
+  }
+
   public static void highlightElement(@NotNull PsiElement element, String statusBarText) {
     highlightElements(Collections.singleton(element), statusBarText);
   }
@@ -51,9 +59,18 @@ public class HighlightUtils {
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, String statusBarText) {
+    highlightElements(elementCollection, statusBarText, null);
+  }
+
+  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,
+                                       String statusBarText,
+                                       @Nullable Editor editor) {
     if (elementCollection.isEmpty()) {
       return;
     }
+
+    if (!checkEditor(editor)) return;
+
     if (elementCollection.contains(null)) {
       throw new IllegalArgumentException("Nulls passed in collection: " + elementCollection);
     }
@@ -66,13 +83,13 @@ public class HighlightUtils {
       final PsiElement firstElement = elements[0];
       final Project project = firstElement.getProject();
       if (project.isDisposed()) return;
-      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) {
+      final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (selectedTextEditor == null) {
         return;
       }
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, elements, textattributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(selectedTextEditor, elements, textattributes, true, null);
       WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
       final FindManager findmanager = FindManager.getInstance(project);
       FindModel findmodel = findmanager.getFindNextModel();
@@ -83,6 +100,19 @@ public class HighlightUtils {
       findmanager.setFindWasPerformed();
       findmanager.setFindNextModel(findmodel);
     });
+  }
+
+  private static boolean checkEditor(@Nullable Editor editor) {
+    //don't need to highlight occurrences in the intention preview editor
+    if (editor != null) {
+      try {
+        editor.getMarkupModel();
+      }
+      catch (IntentionPreviewUnsupportedOperationException e) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static void showRenameTemplate(PsiElement context,
