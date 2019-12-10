@@ -52,7 +52,7 @@ public class MouseWheelSmoothScroll {
     }
 
     int value = bar.getValue();
-    int delta = (int)round(getDelta(bar, e));
+    int delta = getRoundedAtLeastToOne(getDelta(bar, e));
     int targetValue = value + delta;
 
     if (TouchScrollUtil.isUpdate(e)) {
@@ -62,7 +62,7 @@ public class MouseWheelSmoothScroll {
     } else if (TouchScrollUtil.isEnd(e)) {
       startFling(getEventVerticalScrollBar(e), verticalFling, vertical);
       startFling(getEventHorizontalScrollBar(e), horizontalFling, horizontal);
-    } else if (abs(delta) != 0) { // ignore small delta event
+    } else {
       InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
       animator.start(value, targetValue, bar::setValue, shouldStop(bar), DefaultAnimationSettings.SCROLL);
     }
@@ -122,6 +122,15 @@ public class MouseWheelSmoothScroll {
     int increment = settings == null ? -1 : settings.getAnimatedScrollingUnitIncrement();
     int unitIncrement = max(increment < 0 ? bar.getUnitIncrement(direction) : increment, 0);
     return unitIncrement * rotation * event.getScrollAmount();
+  }
+
+  private static int getRoundedAtLeastToOne(double value) {
+    if (abs(value) < 1) {
+      return value > 0 ? 1 : -1;
+    }
+    else {
+      return (int) round(value);
+    }
   }
 
   private static class InertialAnimator implements ActionListener {
