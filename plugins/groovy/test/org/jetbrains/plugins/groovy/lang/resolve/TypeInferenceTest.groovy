@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
@@ -74,6 +75,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testCircular1() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").element
     assertNull(ref.type)
   }
@@ -84,11 +86,13 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testClosure1() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").element
     assertTrue(ref.type.equalsToText("java.lang.Integer"))
   }
 
   void testClosure2() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
     assertTrue(ref.type.equalsToText("int"))
   }
@@ -861,6 +865,7 @@ class Any {
   }
 
   void testRecursionWithMaps() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     allowNestedContext(2, testRootDisposable)
     doTest('''
 def foo(Map map) {
@@ -988,6 +993,7 @@ def foo() {
   }
 
   void 'test recursive literal types'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
     doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
     doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
