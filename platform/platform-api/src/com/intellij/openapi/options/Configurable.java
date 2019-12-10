@@ -201,9 +201,8 @@ public interface Configurable extends UnnamedConfigurable {
     /**
      * @return EPName-s that affect the configurable
      */
-    @SuppressWarnings("rawtypes")
     @NotNull
-    Collection<BaseExtensionPointName> getDependencies();
+    Collection<BaseExtensionPointName<?>> getDependencies();
   }
 
   default boolean isModified(@NotNull JTextField textField, @NotNull String value) {

@@ -20,10 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.BaseExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -76,16 +76,35 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     Configurable.WithEpDependencies configurable = ConfigurableWrapper.cast(Configurable.WithEpDependencies.class, wrapper);
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
-      Collection<BaseExtensionPointName> dependencies = configurable.getDependencies();
+      Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
+      ExtensionPointListener listener = new ExtensionPointListener() {
+        @Override
+        public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extensionChanged();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
+          extensionChanged();
+        }
+        
+        public void extensionChanged() {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            //dispose resources -> reset nested component
+            wrapper.disposeUIResources();
+            resetValue(wrapper);
+          }, ModalityState.stateForComponent(ConfigurableCardPanel.this), (__) -> ConfigurableCardPanel.this.isDisposed());
+        }
+      };
+
       for (BaseExtensionPointName dependency : dependencies) {
         if (dependency instanceof ExtensionPointName) {
-          ((ExtensionPointName)dependency).addExtensionPointListener((e, pd) -> {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              //dispose resources -> reset nested component
-              wrapper.disposeUIResources();
-              resetValue(wrapper);
-            }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
-          }, disposable);
+          Extensions.getRootArea().getExtensionPoint(dependency.getName()).addExtensionPointListener(listener, false, disposable);
+        }
+        else if (dependency instanceof ProjectExtensionPointName) {
+          Project project = wrapper.getProject();
+          assert project != null;
+          ((ProjectExtensionPointName)dependency).getPoint(project).addExtensionPointListener(listener, false, disposable);
         }
       }
 

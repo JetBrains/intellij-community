@@ -144,6 +144,11 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   public String getProviderClass() {
     return myEp.providerClass;
   }
+  
+  @Nullable
+  public Project getProject() {
+    return myEp.getProject();
+  }
 
   @Nullable
   @Override

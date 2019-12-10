@@ -19,7 +19,7 @@
     <extensionPoint name="generalCodeStyleOptionsProvider" beanClass="com.intellij.application.options.GeneralCodeStyleOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.GeneralCodeStyleOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
+    <extensionPoint dynamic="true" name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
