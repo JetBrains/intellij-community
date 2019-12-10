@@ -6,6 +6,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -110,6 +111,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   @Override
   public boolean match(PsiElement el1, PsiElement el2) {
+    ProgressManager.checkCanceled();
     if (el1 == el2) return true;
     if (el1 == null) {
       // absence of pattern element is match
