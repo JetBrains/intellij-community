@@ -474,16 +474,29 @@ public final class EventLog {
     void initDefaultContent() {
       createNewContent(DEFAULT_CATEGORY);
 
-      for (Notification notification : myInitial) {
-        doPrintNotification(notification, ObjectUtils.assertNotNull(getConsole(notification)));
+      if (myInitial.isEmpty()) {
+        return;
       }
+
+      List<Notification> notifications = new ArrayList<>(myInitial);
       myInitial.clear();
+      StartupManager.getInstance(myProject).runAfterOpened(() -> {
+        for (Notification notification : notifications) {
+          if (!ShutDownTracker.isShutdownHookRunning()) {
+            return;
+          }
+
+          EventLogConsole console = ObjectUtils.assertNotNull(getConsole(notification));
+          ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
+        }
+      });
     }
 
     private void printNotification(Notification notification) {
       if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
         return;
       }
+
       myProjectModel.addNotification(notification);
 
       EventLogConsole console = getConsole(notification);
@@ -491,16 +504,12 @@ public final class EventLog {
         myInitial.add(notification);
       }
       else {
-        doPrintNotification(notification, console);
+        StartupManager.getInstance(myProject).runAfterOpened(() -> {
+          if (!ShutDownTracker.isShutdownHookRunning()) {
+            ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
+          }
+        });
       }
-    }
-
-    private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
-      StartupManager.getInstance(myProject).runAfterOpened(() -> {
-        if (!ShutDownTracker.isShutdownHookRunning()) {
-          ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
-        }
-      });
     }
 
     private void showNotification(@NotNull final String groupId, @NotNull final List<String> ids) {
@@ -531,11 +540,14 @@ public final class EventLog {
 
     @Nullable
     private EventLogConsole getConsole(@NotNull String groupId) {
-      if (myCategoryMap.get(DEFAULT_CATEGORY) == null) return null; // still not initialized
+      if (myCategoryMap.get(DEFAULT_CATEGORY) == null) {
+        // still not initialized
+        return null;
+      }
 
       String name = getContentName(groupId);
       EventLogConsole console = myCategoryMap.get(name);
-      return console != null ? console : createNewContent(name);
+      return console == null ? createNewContent(name) : console;
     }
 
     @NotNull
