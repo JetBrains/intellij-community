@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
@@ -63,13 +64,18 @@ public class VcsImplUtil {
 
   @Nullable
   public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull AbstractVcs vcs) {
-    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(vcs.getProject())
-      .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
+    return findIgnoredFileContentProvider(vcs.getProject(), vcs.getKeyInstanceMethod());
+  }
+
+  @Nullable
+  public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
+    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
+      .filter((provider) -> provider.getSupportedVcs().equals(vcsKey))
       .findFirst()
       .orElse(null);
 
     if (ignoreContentProvider == null) {
-      LOG.debug("Cannot get ignore content provider for vcs " + vcs.getName());
+      LOG.debug("Cannot get ignore content provider for vcs " + vcsKey.getName());
       return null;
     }
     return ignoreContentProvider;

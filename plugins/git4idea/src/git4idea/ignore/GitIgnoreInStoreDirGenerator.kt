@@ -99,10 +99,10 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : SettingsSavin
   private fun doGenerate(project: Project,
                          projectConfigDirPath: String,
                          projectConfigDirVFile: VirtualFile) {
-    val gitVcs = GitVcs.getInstance(project)
-    val gitIgnoreContentProvider = VcsImplUtil.findIgnoredFileContentProvider(gitVcs) ?: return
+    val gitVcsKey = GitVcs.getKey()
+    val gitIgnoreContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, gitVcsKey) ?: return
 
-    LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcs.name}")
+    LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcsKey.name}")
     val gitIgnoreFile = createGitignore(projectConfigDirVFile)
     for (ignoredFileProvider in IgnoredFileProvider.IGNORE_FILE.extensions) {
       val ignoresInStoreDir =
@@ -110,7 +110,7 @@ class GitIgnoreInStoreDirGenerator(private val project: Project) : SettingsSavin
       if (ignoresInStoreDir.isEmpty()) continue
 
       val ignoredGroupDescription = gitIgnoreContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
-      addNewElementsToIgnoreBlock(project, gitIgnoreFile, ignoredGroupDescription, gitVcs, *ignoresInStoreDir)
+      addNewElementsToIgnoreBlock(project, gitIgnoreFile, ignoredGroupDescription, gitVcsKey, *ignoresInStoreDir)
     }
 
     markGenerated(project, projectConfigDirVFile)
