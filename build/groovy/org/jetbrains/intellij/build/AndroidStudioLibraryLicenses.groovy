@@ -34,7 +34,7 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Apache Commons Lang", libraryName: "commons-lang", version: "2.6", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "http://commons.apache.org/proper/commons-lang/"),
     // for bouncycastle module library in android.sdktools.sdk-common
-    new LibraryLicense(name: "bouncycastle", license: "MIT License", url: "http://bouncycastle.org",
+    new LibraryLicense(name: "Bouncy Castle", libraryName: "bouncycastle", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CDT", libraryName: "org.eclipse.cdt", license: "Eclipse Public License 1.0"),
     // for eclipse-layout-kernel module library in intellij.android.designer
