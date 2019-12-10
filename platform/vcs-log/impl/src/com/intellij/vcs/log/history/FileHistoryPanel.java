@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -212,7 +213,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permanentGraphChanged) {
     myGraphTable.updateDataPack(visiblePack, permanentGraphChanged);
-    myDiffPreview.updatePreview(myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
   }
 
   public void showDetails(boolean show) {
@@ -245,6 +245,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
     Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
+
+    TableModelListener modelListener = e -> diffPreview.updatePreview(diffPreview.getComponent().isShowing());
+    myGraphTable.getModel().addTableModelListener(modelListener);
+    Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
+
     return diffPreview;
   }
 
