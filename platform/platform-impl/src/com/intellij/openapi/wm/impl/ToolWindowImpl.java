@@ -68,8 +68,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
       return myComponent != null && myComponent.isShowing();
     }
   };
-  private boolean myUseLastFocused = true;
-
   private String myHelpId;
 
   ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager,
@@ -530,15 +528,5 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public void showContentPopup(InputEvent inputEvent) {
     myContentUI.toggleContentPopup();
-  }
-
-  @Override
-  public void setUseLastFocusedOnActivation(boolean focus) {
-    myUseLastFocused = focus;
-  }
-
-  @Override
-  public boolean isUseLastFocusedOnActivation() {
-    return myUseLastFocused;
   }
 }

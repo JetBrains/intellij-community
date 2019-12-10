@@ -20,7 +20,6 @@ import java.awt.event.InputEvent;
  * @see ToolWindowEP
  */
 public interface ToolWindow extends BusyObject {
-
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
   /**

@@ -390,15 +390,6 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public void setTabActions(AnAction... actions) {
     }
-
-    @Override
-    public void setUseLastFocusedOnActivation(boolean focus) {
-    }
-
-    @Override
-    public boolean isUseLastFocusedOnActivation() {
-      return false;
-    }
   }
 
   private static class MockContentManager implements ContentManager {

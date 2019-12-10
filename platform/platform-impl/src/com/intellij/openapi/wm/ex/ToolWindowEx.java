@@ -34,8 +34,10 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setTabActions(AnAction... actions);
 
-  void setUseLastFocusedOnActivation(boolean focus);
-
-  boolean isUseLastFocusedOnActivation();
-
+  /**
+   * @deprecated Not used.
+   */
+  @Deprecated
+  default void setUseLastFocusedOnActivation(@SuppressWarnings("unused") boolean focus) {
+  }
 }
