@@ -2,13 +2,12 @@
 package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -98,13 +97,7 @@ public class DialogAppender extends AppenderSkeleton {
           myDialogRunnable = null;
         }
       };
-      Application app = ApplicationManager.getApplication();
-      if (app == null) {
-        new Thread(myDialogRunnable, "dialog appender logger").start();
-      }
-      else {
-        app.executeOnPooledThread(myDialogRunnable);
-      }
+      AppExecutorUtil.getAppExecutorService().execute(myDialogRunnable);
       break;
     }
   }

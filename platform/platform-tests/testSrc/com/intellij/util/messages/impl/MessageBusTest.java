@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
@@ -314,12 +314,10 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
     MessageBusImpl parentBus = (MessageBusImpl)MessageBusFactory.newMessageBus(createSimpleMessageBusOwner("parent"));
     Disposer.register(myParentDisposable, parentBus);
-    List<Thread> threads = new ArrayList<>();
+    List<Future<?>> threads = new ArrayList<>();
     final int iterationsNumber = 100;
     for (int i = 0; i < threadsNumber; i++) {
-      Thread thread = new Thread(String.valueOf(i)) {
-        @Override
-        public void run() {
+      Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           try {
             int remains = iterationsNumber;
             while (remains-- > 0) {
@@ -335,9 +333,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
           finally {
             latch.countDown();
           }
-        }
-      };
-      thread.start();
+        });
       threads.add(thread);
     }
     latch.await();
@@ -345,7 +341,9 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     if (e != null) {
       throw e;
     }
-    ConcurrencyUtil.joinAll(threads);
+    for (Future<?> thread : threads) {
+      thread.get();
+    }
   }
 
 

@@ -25,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
@@ -305,25 +306,22 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     });
   }
 
-  public void testDeadLock() throws InterruptedException {
+  public void testDeadLock() throws InterruptedException, ExecutionException {
     final Object lock = new Object();
     final boolean[] started = { false };
-    final Thread thread = new Thread("later invokator test") {
-      @Override
-      public void run() {
-        synchronized (lock) {
-          started[0] = true;
-          ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
-          lock.notifyAll();
-        }
-      }
-    };
+    final AtomicReference<Future<?>> thread = new AtomicReference<>();
 
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       synchronized (this) {
         blockSwingThread();
         ApplicationManager.getApplication().invokeLater(() -> {
-          thread.start();
+          thread.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            synchronized (lock) {
+              started[0] = true;
+              ApplicationManager.getApplication().invokeLater(new MyRunnable("1"), ModalityState.NON_MODAL);
+              lock.notifyAll();
+            }
+          }));
           while (!started[0]) {
             try {
               //noinspection BusyWait
@@ -342,7 +340,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
       flushSwingQueue();
       checkOrder(1);
     });
-    thread.join();
+    thread.get().get();
   }
 
   static void flushSwingQueue() {

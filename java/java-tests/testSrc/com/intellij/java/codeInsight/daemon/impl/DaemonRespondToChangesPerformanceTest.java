@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -114,9 +116,15 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       final long start = System.currentTimeMillis();
       final AtomicLong typingStart = new AtomicLong();
       final AtomicReference<RuntimeException> exception = new AtomicReference<>();
-      Thread watcher = new Thread("reactivity watcher") {
-        @Override
-        public void run() {
+      Future<?> watcher = null;
+      try {
+        PsiFile file = getFile();
+        Editor editor = getEditor();
+        Project project = file.getProject();
+        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        watcher = ApplicationManager.getApplication().executeOnPooledThread(() -> {
           while (true) {
             final long start1 = typingStart.get();
             if (start1 == -1) break;
@@ -140,16 +148,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
               throw exception.get();
             }
           }
-        }
-      };
-      try {
-        PsiFile file = getFile();
-        Editor editor = getEditor();
-        Project project = file.getProject();
-        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project);
-        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        watcher.start();
+        });
         Runnable interrupt = () -> {
           long now = System.currentTimeMillis();
           if (now - start < 100) {
@@ -178,7 +177,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       }
       finally {
         typingStart.set(-1); // cancel watcher
-        watcher.join();
+        watcher.get();
         if (exception.get() != null) {
           throw exception.get();
         }

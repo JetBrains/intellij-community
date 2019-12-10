@@ -112,7 +112,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertNotNull(FindInProjectUtil.getDirectory(findModel));
   }
 
-  public void testFindString() throws InterruptedException {
+  public void testFindString() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
     @Language("JAVA")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
@@ -162,7 +162,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    Thread thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Future<?> thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -171,23 +171,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.assertCompleted();
 
     assertFalse(findResultArr[0].isStringFound());
-    thread.join();
+    thread.get();
   }
 
-  private static Thread findInNewThread(final FindModel model,
-                                  final FindManager findManager,
-                                  final CharSequence text,
-                                  final int offset,
-                                  final FindResult[] op_result){
+  private static Future<?> findInNewThread(final FindModel model,
+                                           final FindManager findManager,
+                                           final CharSequence text,
+                                           final int offset,
+                                           final FindResult[] op_result){
     op_result[0] = null;
-    Thread findThread = new Thread("find man test"){
-      @Override
-      public void run(){
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
         op_result[0] = findManager.findString(text, offset, model);
       }
-    };
-    findThread.start();
-    return findThread;
+    );
   }
 
   public void testFindUsages() {
