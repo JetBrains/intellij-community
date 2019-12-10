@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.*
 import com.intellij.openapi.roots.ui.configuration.SdkDetector
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
@@ -18,6 +19,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   private val LOG = logger<JdkAuto>()
 
   override fun createResolver(project: Project, indicator: ProgressIndicator): UnknownSdkLookup? {
+    if (!Registry.`is`("jdk.auto.setup")) return null
     return object : UnknownSdkLookup {
       val sdkType = JavaSdk.getInstance()
 
