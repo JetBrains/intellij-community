@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -401,7 +402,8 @@ final class Stripe extends JPanel implements UISettingsListener {
     repaint();
   }
 
-  public StripeButton getButtonFor(final String toolWindowId) {
+  @Nullable
+  public StripeButton getButtonFor(@NotNull String toolWindowId) {
     for (StripeButton each : myButtons) {
       if (each.getWindowInfo().getId().equals(toolWindowId)) return each;
     }

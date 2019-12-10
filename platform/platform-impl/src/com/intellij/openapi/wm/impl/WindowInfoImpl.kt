@@ -24,9 +24,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     const val DEFAULT_WEIGHT = 0.33f
   }
 
-  @get:Transient
-  var isRegistered = false
-
   override var isActive by property(false)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
@@ -94,7 +91,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.copyFrom(this)
-    info.isRegistered = isRegistered
     return info
   }
 

@@ -450,7 +450,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       return null;
     }
 
-    ToolWindowAnchor anchor = Objects.requireNonNull(myManager.getToolWindow(id)).getAnchor();
+    ToolWindowAnchor anchor = window.getAnchor();
     if (ToolWindowAnchor.TOP == anchor) {
       return myTopStripe;
     }

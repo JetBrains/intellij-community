@@ -301,6 +301,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
+  @NotNull
   public InternalDecorator getDecorator() {
     return myDecorator;
   }

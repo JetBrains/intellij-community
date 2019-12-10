@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -13,7 +12,6 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import javax.swing.SwingConstants
-import kotlin.collections.HashSet
 
 class DesktopLayout {
   companion object {
@@ -24,23 +22,6 @@ class DesktopLayout {
    * Map between `id`s `WindowInfo`s.
    */
   private val idToInfo = THashMap<String, WindowInfoImpl>()
-
-  private val registeredInfos = object : ClearableLazyValue<List<WindowInfoImpl>>() {
-    override fun compute(): List<WindowInfoImpl> {
-      if (idToInfo.isEmpty) {
-        return emptyList()
-      }
-
-      val result = mutableListOf<WindowInfoImpl>()
-      for (value in idToInfo.values) {
-        if (value.isRegistered) {
-          result.add(value)
-        }
-      }
-      result.sortWith(windowInfoComparator)
-      return result
-    }
-  }
 
   fun copy(): DesktopLayout {
     val result = DesktopLayout()
@@ -58,7 +39,6 @@ class DesktopLayout {
     normalizeOrder(getAllInfos(ToolWindowAnchor.LEFT))
     normalizeOrder(getAllInfos(ToolWindowAnchor.BOTTOM))
     normalizeOrder(getAllInfos(ToolWindowAnchor.RIGHT))
-    registeredInfos.drop()
   }
 
   /**
@@ -74,19 +54,7 @@ class DesktopLayout {
       info.isSplit = task.sideTool
       idToInfo.put(task.id, info)
     }
-    if (!info.isRegistered) {
-      info.isRegistered = true
-      registeredInfos.drop()
-    }
     return info
-  }
-
-  fun unregister(id: String) {
-    val info = idToInfo.get(id)!!
-    if (info.isRegistered) {
-      info.isRegistered = false
-      registeredInfos.drop()
-    }
   }
 
   /**
@@ -96,17 +64,13 @@ class DesktopLayout {
    */
   fun getInfo(id: String, onlyRegistered: Boolean): WindowInfoImpl? {
     val info = idToInfo.get(id) ?: return null
-    return if (onlyRegistered && !info.isRegistered) null else info
+    return if (onlyRegistered) null else info
   }
 
-  val activeId: String?
-    get() = infos.firstOrNull { it.isActive }?.id
+  fun getInfo(id: String) = idToInfo.get(id)
 
-  /**
-   * @return `WindowInfo`s for all registered tool windows.
-   */
-  val infos: List<WindowInfoImpl>
-    get() = registeredInfos.value
+  val activeId: String?
+    get() = idToInfo.values.firstOrNull { it.isActive }?.id
 
   /**
    * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
@@ -121,17 +85,6 @@ class DesktopLayout {
     }
     result.sortWith(windowInfoComparator)
     return result
-  }
-
-  fun isToolWindowRegistered(id: String): Boolean {
-    return idToInfo.get(id)?.isRegistered == true
-  }
-
-  /**
-   * @return comparator which compares `StripeButtons` in the stripe with specified `anchor`.
-   */
-  internal fun comparator(anchor: ToolWindowAnchor): Comparator<StripeButton> {
-    return MyStripeButtonComparator(anchor)
   }
 
   /**
@@ -160,7 +113,7 @@ class DesktopLayout {
       newOrder = getMaxOrder(newAnchor) + 1
     }
 
-    val info = getInfo(id, true)
+    val info = getInfo(id)
     val oldAnchor = info!!.anchor
     // shift order to the right in the target stripe
     val infos = getAllInfos(newAnchor)
@@ -179,15 +132,13 @@ class DesktopLayout {
     if (oldAnchor != newAnchor) {
       normalizeOrder(getAllInfos(newAnchor))
     }
-    registeredInfos.drop()
   }
 
   fun setSplitMode(id: String, split: Boolean) {
-    getInfo(id, true)!!.isSplit = split
+    getInfo(id)!!.isSplit = split
   }
 
   fun readExternal(layoutElement: Element) {
-    val registered = idToInfo.values.mapNotNullTo(HashSet()) { if (it.isRegistered) it.id else null }
     val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
     for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
@@ -198,9 +149,6 @@ class DesktopLayout {
       if (id == null) {
         LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(element))
         continue
-      }
-      if (registered.contains(id)) {
-        info.isRegistered = true
       }
       idToInfo.put(id, info)
     }
@@ -252,7 +200,7 @@ class DesktopLayout {
     }
   }
 
-  private inner class MyStripeButtonComparator(anchor: ToolWindowAnchor) : Comparator<StripeButton> {
+  internal inner class MyStripeButtonComparator(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl) : Comparator<StripeButton> {
     private val idToInfo: MutableMap<String?, WindowInfoImpl> = THashMap()
 
     override fun compare(obj1: StripeButton, obj2: StripeButton): Int {
@@ -264,8 +212,8 @@ class DesktopLayout {
     }
 
     init {
-      for (info in infos) {
-        if (anchor == info.anchor) {
+      for (info in idToInfo.values) {
+        if (anchor == info.anchor && manager.isToolWindowRegistered(info.id ?: continue)) {
           idToInfo.put(info.id, info.copy())
         }
       }

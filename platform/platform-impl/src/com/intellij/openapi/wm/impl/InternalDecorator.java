@@ -465,6 +465,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   /**
    * @return tool window associated with the decorator.
    */
+  @NotNull
   final ToolWindowImpl getToolWindow() {
     return myToolWindow;
   }
