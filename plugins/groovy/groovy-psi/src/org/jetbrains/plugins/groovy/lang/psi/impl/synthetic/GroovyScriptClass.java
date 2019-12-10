@@ -27,6 +27,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import javax.swing.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessMethods;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessProperties;
+
 public final class GroovyScriptClass extends GrLightTypeDefinitionBase implements SyntheticElement {
   private final GroovyFile myFile;
   private final GrTypeDefinitionMembersCache<GroovyScriptClass> myCache;
@@ -174,7 +177,12 @@ public final class GroovyScriptClass extends GrLightTypeDefinitionBase implement
                                      @NotNull final ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
+    if (shouldProcessMethods(processor) || shouldProcessProperties(processor)) {
+      return GrClassImplUtil.processDeclarations(this, processor, state, lastParent, place);
+    }
+    else {
+      return true;
+    }
   }
 
   @Override
