@@ -141,8 +141,25 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       lines[i] = line;
     }
     // IDEA-226395
-    if (PsiLiteralUtil.getTextBlockIndent(lines) != 0) return null;
+    String[] textBlockLines = getTextBlockLines(lines);
+    if (textBlockLines == null) return null;
+    if (PsiLiteralUtil.getTextBlockIndent(textBlockLines, true) != 0) return null;
+
     return StringUtil.join(lines);
+  }
+
+  @Nullable
+  private static String[] getTextBlockLines(@NotNull String[] lines) {
+    String[] blockLines = new String[lines.length];
+    boolean escapeStartQuote = false;
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      boolean isLastLine = i == lines.length - 1;
+      line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
+      escapeStartQuote = line.endsWith("\"");
+      blockLines[i] = line;
+    }
+    return blockLines;
   }
 
   private static <T extends PsiElement> void invokeIntention(@NotNull T element,

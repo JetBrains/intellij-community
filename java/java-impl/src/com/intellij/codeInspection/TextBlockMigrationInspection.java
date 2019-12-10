@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -114,26 +117,30 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @NotNull
     private static String getTextBlock(@NotNull String[] lines) {
-      int indent = PsiLiteralUtil.getTextBlockIndent(lines);
+      lines = getTextBlockLines(lines);
+      int indent = PsiLiteralUtil.getTextBlockIndent(lines, true);
       // we need additional indent call only when significant trailing line is missing
       if (indent > 0 && lines.length > 0 && lines[lines.length - 1].endsWith("\n")) indent = 0;
-      String content = getTextBlockContent(lines, indent);
-      return "\"\"\"\n" + content + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
+      return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
     }
 
     @NotNull
-    private static String getTextBlockContent(@NotNull String[] lines, int indent) {
-      StringBuilder content = new StringBuilder();
+    private static String[] getTextBlockLines(@NotNull String[] lines) {
+      String[] blockLines = new String[lines.length];
       boolean escapeStartQuote = false;
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
         boolean isLastLine = i == lines.length - 1;
-        if (indent < line.length()) line = line.substring(indent);
         line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
         escapeStartQuote = line.endsWith("\"");
-        content.append(line);
+        blockLines[i] = line;
       }
-      return content.toString();
+      return blockLines;
+    }
+
+    private static String concatenateTextBlockLines(@NotNull String[] lines, int indent) {
+      if (indent <= 0) return StringUtil.join(lines);
+      return Arrays.stream(lines).map(line -> indent < line.length() ? line.substring(indent) : line).collect(Collectors.joining());
     }
 
     @Nullable
