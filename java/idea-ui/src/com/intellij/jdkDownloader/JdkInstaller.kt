@@ -104,6 +104,8 @@ object JdkInstaller {
         decompressor.removePrefixPath(fullMatchPath)
       }
       decompressor.extract(targetDir)
+
+      writeMarkerFile(request)
     }
     catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up
@@ -129,10 +131,14 @@ object JdkInstaller {
       throw IOException("Failed to create home directory: $home")
     }
 
-    val markerFile = File(home, "intellij-downloader-info.json")
-    markerFile.writeText("Download started on ${Date()}\n$jdkItem")
+    val request = JdkInstallRequest(jdkItem, home)
+    writeMarkerFile(request)
+    return request
+  }
 
-    return JdkInstallRequest(jdkItem, home)
+  private fun writeMarkerFile(request: JdkInstallRequest) {
+    val markerFile = File(request.targetDir, "intellij-downloader-info.txt")
+    markerFile.writeText("Download started on ${Date()}\n${request.item}")
   }
 }
 

@@ -30,7 +30,9 @@ public abstract class SdkTracker {
   /**
    * Checks if a given SDK is fully ready.
    * @return @{code true} iff a given {@param sdk} if ready, {@code false} otherwise
+   * @deprecated use the callback version of that function to avoid race conditions
    */
+  @Deprecated
   public abstract boolean isSdkReady(@NotNull Sdk sdk);
 
   /**
