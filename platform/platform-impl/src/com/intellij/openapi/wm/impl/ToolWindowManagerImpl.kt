@@ -747,15 +747,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     deactivateToolWindowImpl(info, true, commandList)
     if (hideSide && !info.isFloating && !info.isWindowed) {
       val ids = layout.getVisibleIdsOn(info.anchor, this)
-      for (each: String? in ids) {
-        activeStack.remove((each)!!, true)
+      for (each in ids) {
+        activeStack.remove(each, true)
       }
       if (isStackEnabled) {
         while (!sideStack.isEmpty(info.anchor)) {
           sideStack.pop(info.anchor)
         }
       }
-      for (eachInfo: WindowInfoImpl in layout.infos) {
+      for (eachInfo in layout.infos) {
         if (eachInfo.isVisible && eachInfo.anchor == info.anchor) {
           deactivateToolWindowImpl(eachInfo, true, commandList)
         }
@@ -773,8 +773,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           val currentInfo = getRegisteredInfoOrLogError(storedInfo.id!!)
           // SideStack contains copies of real WindowInfos. It means that
           // these stored infos can be invalid. The following loop removes invalid WindowInfos.
-          if ((storedInfo.anchor == currentInfo.anchor) && (
-              storedInfo.type == currentInfo.type) && (storedInfo.isAutoHide == currentInfo.isAutoHide)) {
+          if (storedInfo.anchor == currentInfo.anchor && storedInfo.type == currentInfo.type && storedInfo.isAutoHide == currentInfo.isAutoHide) {
             info2 = storedInfo
             break
           }
@@ -1287,7 +1286,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun isToolWindowActive(id: String): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return getRegisteredInfoOrLogError(id).isActive
+    return layout.getInfo(id, false)?.isActive ?: false
   }
 
   fun isToolWindowAutoHide(id: String): Boolean {

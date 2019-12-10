@@ -95,13 +95,8 @@ class DesktopLayout {
    * value if and only if window with `id` is registered one.
    */
   fun getInfo(id: String, onlyRegistered: Boolean): WindowInfoImpl? {
-    val info = idToInfo.get(id)
-    if (onlyRegistered && info != null && !info.isRegistered) {
-      return null
-    }
-    else {
-      return info
-    }
+    val info = idToInfo.get(id) ?: return null
+    return if (onlyRegistered && !info.isRegistered) null else info
   }
 
   val activeId: String?
