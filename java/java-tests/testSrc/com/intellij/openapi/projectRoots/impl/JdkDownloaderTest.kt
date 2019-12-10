@@ -63,7 +63,7 @@ class JdkDownloaderTest {
     run {
       repeat(5) {
         val result = runCatching {
-          val data = JdkListDownloader.downloadForUI(null)
+          val data = JdkListDownloader.downloadModel(null)
           Assert.assertTrue(data.isNotEmpty())
         }
         if (result.isSuccess) return

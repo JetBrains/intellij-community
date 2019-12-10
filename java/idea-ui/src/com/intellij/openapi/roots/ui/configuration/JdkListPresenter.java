@@ -134,7 +134,11 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
       if (icon1 == null) icon1 = IconUtil.getAddIcon();
       Icon icon = icon1;
       setIcon(icon);
-      append(presentDetectedSdkPath(home));
+      //for macOS, let's try removing Bundle internals
+      home = StringUtil.trimEnd(home, "/Contents/Home");
+      home = StringUtil.trimEnd(home, "/Contents/MacOS");
+      home = StringUtil.shortenTextWithEllipsis(home, 50, 30);
+      append(home);
       if (version == null) version = type.getPresentableName();
       append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
@@ -191,14 +195,5 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
     else {
       customizeCellRenderer(list, new NoneJdkComboBoxItem(), index, selected, hasFocus);
     }
-  }
-
-  @NotNull
-  public static String presentDetectedSdkPath(@NotNull String home) {
-    //for macOS, let's try removing Bundle internals
-    home = StringUtil.trimEnd(home, "/Contents/Home");
-    home = StringUtil.trimEnd(home, "/Contents/MacOS");
-    home = StringUtil.shortenTextWithEllipsis(home, 50, 30);
-    return home;
   }
 }

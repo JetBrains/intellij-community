@@ -47,10 +47,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTracker"
                     serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTrackerImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector"/>
-    <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ProjectSdkUsages"/>
-    <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ModuleSdkUsages"/>
-    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker$ActivityTracker"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"

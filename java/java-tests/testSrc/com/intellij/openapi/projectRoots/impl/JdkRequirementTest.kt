@@ -24,16 +24,6 @@ class JdkRequirementTest {
                                                     jdkItem(Corretto, "12.0.5"),
                                                     jdkItem(Zulu, "11.0.4")
                                                   ))
-  @Test
-  fun test_corretto_sp_jdk_11_0_4() = doTestJdkItems("corretto 11.0.4",
-                                                  matches = listOf(
-                                                    jdkItem(Corretto, "11.0.5"),
-                                                    jdkItem(Corretto, "11.0.6")
-                                                  ),
-                                                  fails = listOf(
-                                                    jdkItem(Corretto, "12.0.5"),
-                                                    jdkItem(Zulu, "11.0.4")
-                                                  ))
 
   @Test
   fun test_amazon_jdk_11_0_4() = doTestJdkItems("amazon-11.0.4",
@@ -44,18 +34,6 @@ class JdkRequirementTest {
                                                   fails = listOf(
                                                     jdkItem(Corretto, "12.0.5"),
                                                     jdkItem(Zulu, "11.0.4")
-                                                  ))
-  @Test
-  fun test_exact_amazon_jdk_11_0_4() = doTestJdkItems("==amazon-11.0.4",
-                                                  matches = listOf(
-                                                    jdkItem(Corretto, "11.0.4")
-                                                  ),
-                                                  fails = listOf(
-                                                    jdkItem(Corretto, "12.0.5"),
-                                                    jdkItem(Zulu, "11.0.4"),
-                                                    jdkItem(Corretto, "11.0"),
-                                                    jdkItem(Corretto, "11.0.3"),
-                                                    jdkItem(Corretto, "11.0.5")
                                                   ))
   @Test
   fun test_qqq_jdk_11_0_4() = doTestJdkItems("qqq-11.0.4",
@@ -73,9 +51,6 @@ class JdkRequirementTest {
   fun test_11() = doTest("11", matches = listOf("11", "11.0", "11.1", "11.0.4"), fails = listOf("12", "1.8", "6", "19", "8"))
 
   @Test
-  fun test_exact_11_0_4() = doTest("=11.0.4", matches = listOf("11.0.4"), fails = listOf("12", "1.8", "6", "19", "8", "11", "11.0", "11.0.3", "11.0.5"))
-
-  @Test
   fun test_8() = doTest("1.8", matches = listOf("1.8", "1.8.2333", "1.8.0_232"), fails = listOf("1.7", "1.9", "9", "11"))
 
   @Test
@@ -89,9 +64,6 @@ class JdkRequirementTest {
 
   @Test
   fun test_custom() = doFailedTest("idea jdk")
-
-  @Test
-  fun test_custom2() = doFailedTest("myjava sdk")
 
   private fun doFailedTest(text: String) {
     Assert.assertNull(JdkRequirements.parseRequirement(text))

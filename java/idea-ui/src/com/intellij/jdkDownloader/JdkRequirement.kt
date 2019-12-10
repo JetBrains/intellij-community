@@ -13,68 +13,48 @@ interface JdkRequirement {
 }
 
 object JdkRequirements {
-  private val LOG = logger<JdkRequirements>()
+  private val LOG = logger<JdkAuto>()
 
-  private interface VersionMatcher {
-    fun matchVersion(versionString: String) : Boolean
-    override fun toString(): String
+  private fun String.isVersionAtLeast(parsed: JavaVersion): Boolean {
+    val it = JavaVersion.tryParse(this) ?: return false
+    return it >= parsed && it.feature == parsed.feature
   }
 
-  private fun sameMajorVersionMatcher(parsed: JavaVersion): VersionMatcher {
-    return object: VersionMatcher {
-      override fun toString() = "it >= $parsed && same major version"
-      override fun matchVersion(versionString: String): Boolean {
-        val it = JavaVersion.tryParse(versionString) ?: return false
-        return it >= parsed && it.feature == parsed.feature
-      }
-    }
-  }
-
-  private fun strictVersionMatcher(parsed: JavaVersion): VersionMatcher {
-    return object: VersionMatcher {
-      override fun toString() = "it == $parsed"
-      override fun matchVersion(versionString: String): Boolean {
-        val it = JavaVersion.tryParse(versionString) ?: return false
-        return it == parsed
-      }
-    }
-  }
-
-  fun parseRequirement(request: String): JdkRequirement? {
+  fun parseRequirement(text: String): JdkRequirement? {
     try {
-      val versionMatcher = if (request.trim().startsWith("=")) ::strictVersionMatcher else ::sameMajorVersionMatcher
-      val text = request.trimStart('=').trim()
-
       //case 1. <vendor>-<version>
       run {
-        val parts = text.split("-", " ").map(String::trim).filterNot(String::isBlank)
+        val parts = text.split("-").map(String::trim).filterNot(String::isBlank)
         if (parts.size != 2) return@run
         val (vendor, version) = parts
         val javaVersion = JavaVersion.tryParse(version) ?: return null
-        val matcher = versionMatcher(javaVersion)
 
         return object : JdkRequirement {
           override fun matches(sdk: Sdk) = false /*TODO[jo]*/
           override fun matches(version: String) = false /*TODO[jo]*/
-          override fun matches(sdk: JdkItem) = matcher.matchVersion(sdk.versionString) && sdk.product.matchesVendor(vendor)
-          override fun toString() = "JdkRequirement { $vendor && $matcher }"
+          override fun matches(sdk: JdkItem) = sdk.versionString.isVersionAtLeast(javaVersion)
+                                               && sdk.product.matchesVendor(vendor)
+          override fun toString() = "JdkRequirement { $vendor && it >= $javaVersion }"
         }
       }
 
       //case 2. It is just a version
       run {
-        val javaVersion = JavaVersion.tryParse(text) ?: return null
-        val matcher = versionMatcher(javaVersion)
-        return object : JdkRequirement {
-          override fun matches(sdk: Sdk) = sdk.versionString?.let { matches(it) } == true
-          override fun matches(sdk: JdkItem) = matches(sdk.versionString)
-          override fun matches(version: String) = matcher.matchVersion(version)
-          override fun toString() = "JdkRequirement { $matcher }"
+        val parsed = JavaVersion.tryParse(text)
+        if (parsed != null) {
+          return object : JdkRequirement {
+            override fun matches(sdk: Sdk) = sdk.versionString?.let { matches(it) } == true
+            override fun matches(sdk: JdkItem) = matches(sdk.versionString)
+            override fun matches(version: String) = version.isVersionAtLeast(parsed)
+            override fun toString() = "JdkRequirement { it >= $parsed }"
+          }
         }
       }
+
+      return null
     }
     catch (t: Throwable) {
-      LOG.warn("Failed to parse requirement $request. ${t.message}", t)
+      LOG.warn("Failed to parse requirement $text. ${t.message}", t)
       return null
     }
   }

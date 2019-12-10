@@ -17,10 +17,12 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.lang.JavaVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
+internal class JdkDownloader : SdkDownload {
   private val LOG = logger<JdkDownloader>()
 
   override fun supportsDownload(sdkTypeId: SdkTypeId) = sdkTypeId is JavaSdkImpl
@@ -36,7 +38,7 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
     val items = runTaskAndReportError(project,
                                       "Downloading the list of available JDKs...",
                                       "Failed to download the list of installable JDKs") {
-      JdkListDownloader.downloadForUI(it)
+      JdkListDownloader.downloadModel(it)
     } ?: return
 
     if (project?.isDisposed == true) return
@@ -47,7 +49,14 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
       JdkInstaller.prepareJdkInstallation(jdkItem, jdkHome)
     } ?: return
 
-    sdkCreatedCallback.accept(newDownloadTask(request))
+    sdkCreatedCallback.accept(object : SdkDownloadTask {
+      override fun getSuggestedSdkName() = request.item.suggestedSdkName
+      override fun getPlannedHomeDir() = request.targetDir.absolutePath
+      override fun getPlannedVersion() = request.item.versionString
+      override fun doDownload(indicator: ProgressIndicator) {
+        JdkInstaller.installJdk(request, indicator)
+      }
+    })
   }
 
   private inline fun <T : Any> runTaskAndReportError(project: Project?,
@@ -78,18 +87,5 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
     }
 
     return ProgressManager.getInstance().run(task)
-  }
-}
-
-internal interface JdkDownloaderBase {
-  fun newDownloadTask(request: JdkInstallRequest): SdkDownloadTask {
-    return object : SdkDownloadTask {
-      override fun getSuggestedSdkName() = request.item.suggestedSdkName
-      override fun getPlannedHomeDir() = request.targetDir.absolutePath
-      override fun getPlannedVersion() = request.item.versionString
-      override fun doDownload(indicator: ProgressIndicator) {
-        JdkInstaller.installJdk(request, indicator)
-      }
-    }
   }
 }
