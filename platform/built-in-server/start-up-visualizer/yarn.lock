@@ -2,14 +2,14 @@
 # yarn lockfile v1
 
 
-"@amcharts/amcharts4@4.7.13":
-  version "4.7.13"
-  resolved "https://registry.yarnpkg.com/@amcharts/amcharts4/-/amcharts4-4.7.13.tgz#5783d4ca50b279e6457c57c20e962f766d010004"
-  integrity sha512-QM3oNVgnNPhbHwRoBiuQz+/rkeRv6d4U1Ds0YCKuPm5h6gN9ZxFYNCEl0l4T4p8f2t+MMZYca3uG7BM0ZPbCPg==
+"@amcharts/amcharts4@4.7.14":
+  version "4.7.14"
+  resolved "https://registry.yarnpkg.com/@amcharts/amcharts4/-/amcharts4-4.7.14.tgz#9b3735a9180f816a2926e051e237156ba6e231cc"
+  integrity sha512-oHkc1//aaEq6iiATbpE4Y8ojco/iDFm4Rd1bfTGElto5/0cyfCMMwTXoukjkKlKsJoGUYpm14Z2nicT6V0fxlw==
   dependencies:
     "@types/regression" "^2.0.0"
     canvg "^2.0.0"
-    css-element-queries "^1.0.5"
+    css-element-queries "1.2.1"
     d3-force "^2.0.1"
     d3-geo "^1.11.3"
     d3-geo-projection "^2.6.0"
@@ -128,9 +128,9 @@
   integrity sha512-tHq6qdbT9U1IRSGf14CL0pUlULksvY9OZ+5eEgl1N7t+OA3tGvNpxJCzuKQlsNgCVwbAs670L1vcVQi8j9HjnA==
 
 "@types/node@*":
-  version "12.12.14"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.14.tgz#1c1d6e3c75dba466e0326948d56e8bd72a1903d2"
-  integrity sha512-u/SJDyXwuihpwjXy7hOOghagLEV1KdAST6syfnOk6QZAMzZuWZqXy5aYYZbh8Jdpd4escVFP0MvftHNDb9pruA==
+  version "12.12.16"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.16.tgz#3ebcbd7bf978fa4c5120fee8be57083271a8b3ac"
+  integrity sha512-vRuMyoOr5yfNf8QWxXegOjeyjpWJxFePzHzmBOIzDIzo+rSqF94RW0PkS6y4T2+VjAWLXHWrfbIJY3E3aS7lUw==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -1630,9 +1630,9 @@ copy-descriptor@^0.1.0:
   integrity sha1-Z29us8OZl8LuGsOpJP1hJHSPV40=
 
 copy-webpack-plugin@^5.0.5:
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/copy-webpack-plugin/-/copy-webpack-plugin-5.0.5.tgz#731df6a837a2ef0f8f8e2345bdfe9b7c62a2da68"
-  integrity sha512-7N68eIoQTyudAuxkfPT7HzGoQ+TsmArN/I3HFwG+lVE3FNzqvZKIiaxtYh4o3BIznioxUvx9j26+Rtsc9htQUQ==
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/copy-webpack-plugin/-/copy-webpack-plugin-5.1.0.tgz#cd6bb506ffbbe830bf9ecb3d15cc4946b2edd011"
+  integrity sha512-0sNrj/Sx7/cWA0k7CVQa0sdA/dzCybqSb0+GbhKuQdOlAvnAwgC2osmbAFOAfha7ZXnreoQmCq5oDjG3gP4VHw==
   dependencies:
     cacache "^12.0.3"
     find-cache-dir "^2.1.0"
@@ -1644,7 +1644,7 @@ copy-webpack-plugin@^5.0.5:
     normalize-path "^3.0.0"
     p-limit "^2.2.1"
     schema-utils "^1.0.0"
-    serialize-javascript "^2.1.0"
+    serialize-javascript "^2.1.2"
     webpack-log "^2.0.0"
 
 core-js@^2.4.0:
@@ -1770,15 +1770,15 @@ css-declaration-sorter@^4.0.1:
     postcss "^7.0.1"
     timsort "^0.3.0"
 
-css-element-queries@^1.0.5:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/css-element-queries/-/css-element-queries-1.2.2.tgz#e80ce4c523e41079152b1a3a8ec5b7afb0b45c96"
-  integrity sha512-mpzx/1w9qqu5WLrxvX/wRP+ZwU2ZZ0yRiBkQ9jf4QjStaNuiDbejw9KcvfW3me5f4MZRAnAsctGRECrSf1PBYw==
+css-element-queries@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/css-element-queries/-/css-element-queries-1.2.1.tgz#70d1a0f676fc0bd0a3306522a5b2d3bcc55c9fe6"
+  integrity sha512-hiI1tSzf+U/gE13qhfwnCvN90Ay0THnE+mT3pjN/c/mvFmEUHZVNrvMJrrkw2ppOzkl69FdgH2ZGZENYQUaN2A==
 
 css-loader@^3.1.0:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-3.2.1.tgz#62849b45a414b7bde0bfba17325a026471040eae"
-  integrity sha512-q40kYdcBNzMvkIImCL2O+wk8dh+RGwPPV9Dfz3n7XtOYPXqe2Z6VgtvoxjkLHz02gmhepG9sOAJOUlx+3hHsBg==
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/css-loader/-/css-loader-3.3.0.tgz#65f889807baec3197313965d6cda9899f936734d"
+  integrity sha512-x9Y1vvHe5RR+4tzwFdWExPueK00uqFTCw7mZy+9aE/X1SKWOArm5luaOrtJ4d05IpOwJ6S86b/tVcIdhw1Bu4A==
   dependencies:
     camelcase "^5.3.1"
     cssesc "^3.0.0"
@@ -2934,7 +2934,7 @@ follow-redirects@^1.0.0:
   dependencies:
     debug "^3.0.0"
 
-fontkit@^1.0.0:
+fontkit@^1.0.0, fontkit@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/fontkit/-/fontkit-1.8.0.tgz#deb9351619e90ddc91707b6156a9f14c8ab11554"
   integrity sha512-EFDRCca7khfQWYu1iFhsqeABpi87f03MBdkT93ZE6YhqCdMzb5Eojb6c4dlJikGv5liuhByyzA7ikpIPTSBWbQ==
@@ -5112,7 +5112,17 @@ pbkdf2@^3.0.3:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
-pdfkit@>=0.8.1, pdfkit@^0.10.0:
+pdfkit@>=0.8.1:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.11.0.tgz#9cdb2fc42bd2913587fe3ddf48cc5bbb3c36f7de"
+  integrity sha512-1s9gaumXkYxcVF1iRtSmLiISF2r4nHtsTgpwXiK8Swe+xwk/1pm8FJjYqN7L3x13NsWnGyUFntWcO8vfqq+wwA==
+  dependencies:
+    crypto-js "^3.1.9-1"
+    fontkit "^1.8.0"
+    linebreak "^1.0.2"
+    png-js "^1.0.0"
+
+pdfkit@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/pdfkit/-/pdfkit-0.10.0.tgz#88f2aa8e3cf9e1cc2caff6447b68dd4e435cb284"
   integrity sha512-mRJ6iuDzpIQ4ftKp5GvijLXNVRK86xjnyIPBraYSPrUPubNqWM5/oYmc7FZKUWz3wusRTj3PLR9HJ1X5ooqfsg==
@@ -5183,7 +5193,7 @@ pkg-dir@^4.1.0:
   dependencies:
     find-up "^4.0.0"
 
-png-js@>=0.1.0:
+png-js@>=0.1.0, png-js@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/png-js/-/png-js-1.0.0.tgz#e5484f1e8156996e383aceebb3789fd75df1874d"
   integrity sha512-k+YsbhpA9e+EFfKjTCH3VW6aoKlyNYI6NYdTfDL4CIvFnvsuO84ttonmZE7rc+v23SLTH8XX+5w/Ak9v0xGY4g==
@@ -6099,10 +6109,10 @@ send@0.17.1:
     range-parser "~1.2.1"
     statuses "~1.5.0"
 
-serialize-javascript@^2.1.0, serialize-javascript@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-2.1.1.tgz#952907a04a3e3a75af7f73d92d15e233862048b2"
-  integrity sha512-MPLPRpD4FNqWq9tTIjYG5LesFouDhdyH0EPY3gVK4DRD5+g4aDqdNSzLIwceulo3Yj+PL1bPh6laE5+H6LTcrQ==
+serialize-javascript@^2.1.1, serialize-javascript@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-2.1.2.tgz#ecec53b0e0317bdc95ef76ab7074b7384785fa61"
+  integrity sha512-rs9OggEUF0V4jUSecXazOYsLfu7OGK2qIn3c7IPBiffz32XniEp/TX9Xmc9LQfK2nQ2QKHvZ2oygKUGU0lG4jQ==
 
 serve-index@^1.9.1:
   version "1.9.1"
