@@ -11,6 +11,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.sun.tools.internal.jxc.ConfigReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +82,8 @@ public interface PsiResolveHelper {
    */
   @NotNull
   CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
+  
+  boolean hasOverloads(@NotNull PsiCallExpression call);
 
   /**
    * Resolves a reference to a class, given the text of the reference and the context

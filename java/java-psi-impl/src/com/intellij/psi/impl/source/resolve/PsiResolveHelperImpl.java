@@ -11,11 +11,13 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelp
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,6 +160,24 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return CandidateInfo.EMPTY_ARRAY;
     }
     return processor.getCandidates();
+  }
+
+  @Override
+  public boolean hasOverloads(@NotNull PsiCallExpression call) {
+    PsiFile containingFile = call.getContainingFile();
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(call, containingFile, new PsiConflictResolver[0], new SmartList<>()) {
+      @Override
+      protected boolean acceptVarargs() {
+        return true;
+      }
+    };
+    try {
+      PsiScopesUtil.setupAndRunProcessor(processor, call, true);
+    }
+    catch (MethodProcessorSetupFailedException e) {
+      return true;
+    }
+    return processor.getCandidates().length > 1;
   }
 
   @NotNull

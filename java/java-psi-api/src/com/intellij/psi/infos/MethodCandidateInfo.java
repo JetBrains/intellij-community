@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -178,9 +179,18 @@ public class MethodCandidateInfo extends CandidateInfo{
   private <T> T computeWithKnownTargetType(final Computable<T> computable, PsiSubstitutor substitutor) {
     if (myArgumentList instanceof PsiExpressionList) {
       PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
+      boolean prohibitCaching = true;
+      PsiElement parent = argumentList.getParent();
+      if (parent instanceof PsiMethodCallExpression) {
+        prohibitCaching = JavaPsiFacade.getInstance(myArgumentList.getProject())
+          .getResolveHelper()
+          .hasOverloads((PsiMethodCallExpression)parent);
+      }
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-        .filter(expression -> expression != null && !(expression instanceof PsiFunctionalExpression))
+        .filter(expression -> expression != null && 
+                              !(expression instanceof PsiFunctionalExpression) && 
+                              PsiPolyExpressionUtil.isPolyExpression(expression))
         .toArray(PsiExpression[]::new);
       return ThreadLocalTypes.performWithTypes(expressionTypes -> {
         PsiMethod method = getElement();
@@ -190,7 +200,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                                     PsiTypesUtil.getTypeByMethod(context, argumentList, method, varargs, substitutor, false));
         }
         return computable.compute();
-      });
+      }, prohibitCaching);
     }
     else {
       return computable.compute();
