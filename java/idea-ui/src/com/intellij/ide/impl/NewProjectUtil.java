@@ -208,12 +208,4 @@ public final class NewProjectUtil {
       }
     }
   }
-
-  /**
-   * @deprecated use {@link ProjectUtil#closePreviousProject(Project)} instead
-   */
-  @Deprecated
-  public static void closePreviousProject(Project projectToClose) {
-    ProjectUtil.closePreviousProject(projectToClose);
-  }
 }

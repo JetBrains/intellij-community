@@ -54,9 +54,6 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 
-/**
- * @author Eugene Belyaev
- */
 public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
@@ -67,18 +64,24 @@ public final class ProjectUtil {
 
   private ProjectUtil() { }
 
-  public static void updateLastProjectLocation(final String projectFilePath) {
+  public static void updateLastProjectLocation(@NotNull String projectFilePath) {
     File lastProjectLocation = new File(projectFilePath);
     if (lastProjectLocation.isFile()) {
-      lastProjectLocation = lastProjectLocation.getParentFile(); // for directory-based project storage
+      // for directory-based project storage
+      lastProjectLocation = lastProjectLocation.getParentFile();
     }
-    if (lastProjectLocation == null) { // the immediate parent of the ipr file
+
+    if (lastProjectLocation == null) {
+      // the immediate parent of the ipr file
       return;
     }
-    lastProjectLocation = lastProjectLocation.getParentFile(); // the candidate directory to be saved
+
+    // the candidate directory to be saved
+    lastProjectLocation = lastProjectLocation.getParentFile();
     if (lastProjectLocation == null) {
       return;
     }
+
     String path = lastProjectLocation.getPath();
     try {
       path = FileUtil.resolveShortWindowsName(path);
@@ -88,17 +91,6 @@ public final class ProjectUtil {
       return;
     }
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
-  }
-
-  public static void closePreviousProject(Project projectToClose) {
-    Project[] openProjects = getOpenProjects();
-    if (openProjects.length > 0) {
-      int exitCode = confirmOpenNewProject(true);
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        Project project = projectToClose != null ? projectToClose : openProjects[openProjects.length - 1];
-        closeAndDispose(project);
-      }
-    }
   }
 
   public static boolean closeAndDispose(@NotNull Project project) {
@@ -421,21 +413,23 @@ public final class ProjectUtil {
     }
 
     for (File file : list) {
-      if (file.exists()) {
-        LOG.debug(location + ": open file ", file);
-        String path = file.getAbsolutePath();
-        if (project != null) {
-          OpenFileAction.openFile(path, project);
-          result = project;
-        }
-        else {
-          CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
-          if (processor != null) {
-            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-            if (virtualFile != null && virtualFile.isValid()) {
-              Project opened = processor.openProjectAndFile(virtualFile, -1, false);
-              if (opened != null && result == null) result = opened;
-            }
+      if (!file.exists()) {
+        continue;
+      }
+
+      LOG.debug(location + ": open file ", file);
+      String path = file.getAbsolutePath();
+      if (project != null) {
+        OpenFileAction.openFile(path, project);
+        result = project;
+      }
+      else {
+        CommandLineProjectOpenProcessor processor = CommandLineProjectOpenProcessor.getInstanceIfExists();
+        if (processor != null) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          if (virtualFile != null && virtualFile.isValid()) {
+            Project opened = processor.openProjectAndFile(virtualFile, -1, false);
+            if (opened != null && result == null) result = opened;
           }
         }
       }
