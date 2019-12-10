@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
@@ -437,11 +439,13 @@ public final class EventLog {
     }, true);
   }
 
+  @Service
   static final class ProjectTracker implements Disposable {
     private final Map<String, EventLogConsole> myCategoryMap = ContainerUtil.newConcurrentMap();
     private final List<Notification> myInitial = ContainerUtil.createLockFreeCopyOnWriteList();
     private final LogModel myProjectModel;
-    @NotNull private final Project myProject;
+    @NotNull
+    private final Project myProject;
 
     ProjectTracker(@NotNull Project project) {
       myProjectModel = new LogModel(project, project);
@@ -487,7 +491,7 @@ public final class EventLog {
           }
 
           EventLogConsole console = ObjectUtils.assertNotNull(getConsole(notification));
-          ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
+          GuiUtils.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
         }
       });
     }
@@ -506,7 +510,7 @@ public final class EventLog {
       else {
         StartupManager.getInstance(myProject).runAfterOpened(() -> {
           if (!ShutDownTracker.isShutdownHookRunning()) {
-            ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
+            GuiUtils.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
           }
         });
       }
@@ -571,11 +575,12 @@ public final class EventLog {
     return DEFAULT_CATEGORY;
   }
 
+  @NotNull
   static ProjectTracker getProjectComponent(@NotNull Project project) {
-    return project.getComponent(ProjectTracker.class);
+    return project.getService(ProjectTracker.class);
   }
 
-  private static class NotificationHyperlinkInfo implements HyperlinkInfo {
+  private static final class NotificationHyperlinkInfo implements HyperlinkInfo {
     private final Notification myNotification;
     private final String myHref;
 
@@ -595,7 +600,7 @@ public final class EventLog {
     }
   }
 
-  static class ShowBalloon implements HyperlinkInfo {
+  static final class ShowBalloon implements HyperlinkInfo {
     private final Notification myNotification;
     private RangeHighlighter myRangeHighlighter;
 

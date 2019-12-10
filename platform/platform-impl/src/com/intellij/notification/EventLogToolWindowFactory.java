@@ -31,14 +31,14 @@ import java.awt.*;
 /**
 * @author peter
 */
-public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
+public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
-  public void createToolWindowContent(@NotNull final Project project, @NotNull ToolWindow toolWindow) {
+  public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     EventLog.getProjectComponent(project).initDefaultContent();
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
 
-  static void createContent(Project project, ToolWindow toolWindow, EventLogConsole console, String title) {
+  static void createContent(@NotNull Project project, @NotNull ToolWindow toolWindow, EventLogConsole console, String title) {
     // update default Event Log tab title
     ContentManager contentManager = toolWindow.getContentManager();
     Content generalContent = contentManager.getContent(0);
@@ -46,7 +46,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
       generalContent.setDisplayName("General");
     }
 
-    final Editor editor = console.getConsoleEditor();
+    Editor editor = console.getConsoleEditor();
     JPanel editorPanel = new JPanel(new AbstractLayoutManager() {
       private int getOffset() {
         return JBUIScale.scale(4);
@@ -127,7 +127,7 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     }
   }
 
-  private static class LogShownTracker extends AncestorListenerAdapter {
+  private static final class LogShownTracker extends AncestorListenerAdapter {
     private final Project myProject;
 
     LogShownTracker(Project project) {

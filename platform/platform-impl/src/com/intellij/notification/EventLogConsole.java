@@ -48,7 +48,7 @@ import java.util.List;
 /**
  * @author peter
  */
-class EventLogConsole {
+final class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
   private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
 
@@ -238,7 +238,7 @@ class EventLogConsole {
     }
   }
 
-  void doPrintNotification(final Notification notification) {
+  void doPrintNotification(@NotNull Notification notification) {
     Editor editor = getConsoleEditor();
     if (editor.isDisposed()) {
       return;
@@ -453,11 +453,11 @@ class EventLogConsole {
     return null;
   }
 
-  private static void append(Document document, String s) {
+  private static void append(@NotNull Document document, @NotNull String s) {
     document.insertString(document.getTextLength(), s);
   }
 
-  public static class ClearLogAction extends DumbAwareAction {
+  public static final class ClearLogAction extends DumbAwareAction {
     private final EventLogConsole myConsole;
 
     public ClearLogAction(EventLogConsole console) {

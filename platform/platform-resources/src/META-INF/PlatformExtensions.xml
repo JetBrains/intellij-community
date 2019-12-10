@@ -57,6 +57,8 @@
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
                         serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
+    <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
+
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
     <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
       <description>Forces closing of WSL process input stream to prevent process zombification. See
