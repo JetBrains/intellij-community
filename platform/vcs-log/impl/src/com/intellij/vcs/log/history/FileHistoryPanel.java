@@ -239,9 +239,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private FileHistoryDiffPreview createDiffPreview(boolean isInEditor) {
     FileHistoryDiffPreview diffPreview = new FileHistoryDiffPreview(myProject, () -> getSelectedChange(), isInEditor, this);
     ListSelectionListener selectionListener = e -> {
-      if (!myProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
-        return;
-      }
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
                                                       o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()));
