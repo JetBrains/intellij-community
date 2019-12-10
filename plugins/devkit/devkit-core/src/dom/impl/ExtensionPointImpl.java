@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.With;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +32,30 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   @Override
   public PsiClass getEffectiveClass() {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
+  }
+
+  @Nullable
+  @Override
+  public PsiClass getExtensionPointClass() {
+    if (DomUtil.hasXml(getInterface())) {
+      return getInterface().getValue();
+    }
+
+    final List<With> elements = getWithElements();
+    if (elements.size() == 1) {
+      return elements.get(0).getImplements().getValue();
+    }
+
+    for (With element : elements) {
+      final String attributeName = element.getAttribute().getStringValue();
+      if ("implementationClass".equals(attributeName) ||
+          "implementation".equals(attributeName) ||
+          "instance".equals(attributeName)) {
+        return element.getImplements().getValue();
+      }
+    }
+
+    return null;
   }
 
   @Nullable

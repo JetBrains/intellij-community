@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -42,9 +28,6 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
   @Override
@@ -53,27 +36,23 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     if (extensionPoint == null) return null;
 
     final XmlFile epDeclarationFile = DomUtil.getFile(extensionPoint);
+
+    StringBuilder epClassesText = new StringBuilder();
+    if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
+      generateClassLink(epClassesText, extensionPoint.getBeanClass().getValue());
+      epClassesText.append("<br/>");
+    }
+
+    final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
+    generateClassLink(epClassesText, extensionPointClass);
+
     final Module epModule = ModuleUtilCore.findModuleForFile(epDeclarationFile.getVirtualFile(), element.getProject());
-    final String epPrefix = extensionPoint.getNamePrefix();
+    String moduleName = (epModule == null ? "" : "[" + epModule.getName() + "]<br/>");
 
-    final PsiClass epClass = extensionPoint.getEffectiveClass();
-    StringBuilder epClassText = new StringBuilder();
-    if (epClass != null) {
-      generateClassLink(epClassText, epClass);
-    }
-    else {
-      epClassText.append("<unknown>");
-    }
-
-    String moduleAndPrefix = (epModule == null ? "" : "[" + epModule.getName() + "]") +
-                             (epPrefix == null ? "" : " " + epPrefix);
-    if (!moduleAndPrefix.isEmpty()) {
-      moduleAndPrefix += "<br/>";
-    }
-    return moduleAndPrefix +
-           "<b>" + extensionPoint.getEffectiveName() + "</b>" +
+    return moduleName +
+           "<b>" + extensionPoint.getEffectiveQualifiedName() + "</b>" +
            " (" + epDeclarationFile.getName() + ")<br/>" +
-           epClassText.toString();
+           epClassesText.toString();
   }
 
   @Override
@@ -81,18 +60,13 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     ExtensionPoint extensionPoint = findExtensionPoint(originalElement);
     if (extensionPoint == null) return null;
 
-    final PsiClass epClass = extensionPoint.getEffectiveClass();
-    if (epClass == null) return null;
-    
     StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
-    sb.append("<b>").append(extensionPoint.getEffectiveName()).append("</b>");
-    String namePrefix = extensionPoint.getNamePrefix();
-    if (StringUtil.isNotEmpty(namePrefix)) {
-      sb.append(" [").append(namePrefix).append("]");
-    }
-    sb.append("<br>");
-    generateClassLink(sb, epClass);
+    sb.append("<b>").append(extensionPoint.getEffectiveQualifiedName()).append("</b>");
     sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
+
+    if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
+      generateJavadoc(sb, extensionPoint.getBeanClass().getValue());
+    }
 
     List<With> withElements = extensionPoint.getWithElements();
     if (!withElements.isEmpty()) {
@@ -110,13 +84,17 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
       }
       sb.append(DocumentationMarkup.SECTIONS_END);
     }
+
     sb.append(DocumentationMarkup.DEFINITION_END);
 
-    sb.append(DocumentationMarkup.CONTENT_START);
-    String epDocumentationType = DomUtil.hasXml(extensionPoint.getBeanClass()) ? "Bean Class" : "Implementation Class";
-    sb.append("<em>Extension Point ").append(epDocumentationType).append("</em>");
-    sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
-    sb.append(DocumentationMarkup.CONTENT_END);
+
+    final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
+    if (extensionPointClass != null) { // e.g. ServiceDescriptor
+      sb.append(DocumentationMarkup.CONTENT_START);
+      sb.append("<h2>Extension Point Implementation</h2>");
+      generateJavadoc(sb, extensionPointClass);
+      sb.append(DocumentationMarkup.CONTENT_END);
+    }
 
     return sb.toString();
   }
@@ -129,6 +107,14 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
   private static void generateClassLink(StringBuilder epClassText, @Nullable PsiClass epClass) {
     if (epClass == null) return;
     JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
+  }
+
+  private static void generateJavadoc(StringBuilder sb, @Nullable PsiElement element) {
+    if (element == null) {
+      sb.append("??? not found ???");
+      return;
+    }
+    sb.append(JavaDocumentationProvider.generateExternalJavadoc(element));
   }
 
   private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
@@ -152,5 +138,4 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     }
     return null;
   }
-
 }

@@ -25,7 +25,7 @@ public interface ExtensionPoint extends DomElement {
   XmlTag getXmlTag();
 
   /**
-   * @see #getEffectiveName()
+   * Use {@link #getEffectiveQualifiedName()} for presentation.
    */
   @NotNull
   @Stubbed
@@ -33,7 +33,7 @@ public interface ExtensionPoint extends DomElement {
   GenericAttributeValue<String> getName();
 
   /**
-   * @see #getEffectiveName()
+   * Use {@link #getEffectiveQualifiedName()} for presentation.
    */
   @Attribute("qualifiedName")
   @Stubbed
@@ -82,7 +82,9 @@ public interface ExtensionPoint extends DomElement {
    * Returns the actually defined name.
    *
    * @return {@link #getName()} if defined, {@link #getQualifiedName()} otherwise.
+   * @deprecated Use {@link #getEffectiveQualifiedName()} for presentation.
    */
+  @Deprecated
   @NotNull
   String getEffectiveName();
 
@@ -93,6 +95,20 @@ public interface ExtensionPoint extends DomElement {
    */
   @Nullable
   PsiClass getEffectiveClass();
+
+  /**
+   * Returns the actual EP class to implement/override.
+   *
+   * @return Determined in the following order:
+   * <ol>
+   *   <li>{@link #getInterface()} if defined</li>
+   *   <li>first {@code <with> "implements"} class if exactly one {@code <with>} element defined</li>
+   *   <li>first {@code <with> "implements"} class where attribute name matching common naming rules ({@code "implementationClass"} etc.)</li>
+   *   <li>{@code null} if none of above rules apply</li>
+   * </ol>
+   */
+  @Nullable
+  PsiClass getExtensionPointClass();
 
   /**
    * Returns EP name prefix (Plugin ID).
