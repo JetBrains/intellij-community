@@ -250,14 +250,11 @@ class DesktopLayout {
   }
 
   fun getVisibleIdsOn(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl): List<String> {
-    val ids = mutableListOf<String>()
-    for (each in getAllInfos(anchor)) {
-      val window = manager.getToolWindow(each.id) ?: continue
-      if (window.isAvailable || instance.alwaysShowWindowsButton) {
-        ids.add(each.id!!)
-      }
+    return getAllInfos(anchor).mapNotNull { each ->
+      val id = each.id ?: return@mapNotNull null
+      val window = manager.getToolWindow(id) ?: return@mapNotNull null
+      if (window.isAvailable || instance.alwaysShowWindowsButton) id else null
     }
-    return ids
   }
 
   private inner class MyStripeButtonComparator(anchor: ToolWindowAnchor) : Comparator<StripeButton> {

@@ -24,7 +24,7 @@ abstract class ToolWindowManager {
       val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
       val project = if (frame == null) ProjectManager.getInstance().defaultProject else frame.project
       if (project != null && !project.isDisposed) {
-        return getInstance(project).getToolWindow(getActiveId())
+        return getActiveId()?.let { getInstance(project).getToolWindow(it) }
       }
       return null
     }
@@ -146,7 +146,7 @@ abstract class ToolWindowManager {
    * tool window with specified `id` then the method returns `null`.
    * @see ToolWindowId
    */
-  abstract fun getToolWindow(id: String?): ToolWindow?
+  abstract fun getToolWindow(id: String): ToolWindow?
 
   /**
    * Puts specified runnable to the tail of current command queue.

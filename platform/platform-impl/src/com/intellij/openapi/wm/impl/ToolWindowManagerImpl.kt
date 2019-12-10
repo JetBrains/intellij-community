@@ -225,10 +225,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun updateToolWindowHeaders() {
     focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
       override fun run() {
-        for (info: WindowInfoImpl in layout.infos) {
+        for (info in layout.infos) {
           if (info.isVisible) {
-            val window = getToolWindow(info.id) as? ToolWindowImpl ?: continue
-            window.decorator?.repaint()
+            (getToolWindow(info.id ?: continue) as? ToolWindowImpl)?.decorator?.repaint()
           }
         }
       }
@@ -721,13 +720,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   // cannot be ToolWindowEx because of backward compatibility
-  override fun getToolWindow(id: String?): ToolWindow? {
-    if (id == null || !layout.isToolWindowRegistered(id)) {
-      return null
-    }
-    else {
-      return getInternalDecorator(id).toolWindow
-    }
+  override fun getToolWindow(id: String): ToolWindow? {
+    return idToEntry.get(id)?.internalDecorator?.toolWindow
   }
 
   fun showToolWindow(id: String) {
@@ -924,10 +918,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   @Suppress("OverridingDeprecatedMember")
   override fun unregisterToolWindow(id: String) {
-    val window = getToolWindow(id) as ToolWindowImpl?
-    if (window != null) {
-      doUnregisterToolWindow(window.id)
-    }
+    doUnregisterToolWindow(id)
   }
 
   private fun doUnregisterToolWindow(id: String) {
