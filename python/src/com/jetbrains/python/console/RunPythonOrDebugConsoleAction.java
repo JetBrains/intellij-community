@@ -17,9 +17,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class RunPythonConsoleAction extends AnAction implements DumbAware {
+public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware {
 
-  public RunPythonConsoleAction() {
+  public RunPythonOrDebugConsoleAction() {
     super();
     getTemplatePresentation().setIcon(PythonIcons.Python.PythonConsole);
   }

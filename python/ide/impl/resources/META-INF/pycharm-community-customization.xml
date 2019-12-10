@@ -7,12 +7,6 @@
     </component>
   </project-components>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
-    </component>
-  </project-components>
-
   <application-components>
     <component>
       <implementation-class>com.jetbrains.python.PythonSdkConfigurator</implementation-class>

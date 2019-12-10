@@ -719,9 +719,9 @@
             icon="PlatformDebuggerImplIcons.Actions.Force_step_into" description="Step into, ignore stepping filters for libraries, constructors, etc."/>
 
     <!-- Console -->
-    <action id="com.jetbrains.python.console.RunPythonConsoleAction"
-            class="com.jetbrains.python.console.RunPythonConsoleAction"
-            text="Python Console..." description="Allows to quickly run Python console">
+    <action id="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
+            class="com.jetbrains.python.console.RunPythonOrDebugConsoleAction"
+            text="Python or Debug Console" description="Allows to quickly run Python Console or Debug Console if debug session is running">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
@@ -823,6 +823,12 @@
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcherComponent</implementation-class>
+    </component>
+  </project-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
     </component>
   </project-components>
 </idea-plugin>
