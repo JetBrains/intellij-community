@@ -38,6 +38,10 @@ public class HighlightUtils {
   private HighlightUtils() {
   }
 
+  /**
+   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
+   * Please use {@link #highlightElement(PsiElement, Editor)} instead.
+   */
   public static void highlightElement(@NotNull PsiElement element) {
     highlightElements(Collections.singleton(element));
   }
@@ -50,16 +54,36 @@ public class HighlightUtils {
     highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), editor);
   }
 
+  /**
+   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
+   * Please use {@link #highlightElement(PsiElement, Editor)} instead.
+   */
   public static void highlightElement(@NotNull PsiElement element, String statusBarText) {
     highlightElements(Collections.singleton(element), statusBarText);
   }
 
+  /**
+   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
+   * Please use {@link #highlightElements(Collection, Editor)} instead.
+   */
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection) {
     highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"));
   }
 
+  /**
+   * @deprecated Intention can be invoked on a non EDT thread with a mock editor, so usages highlighting in the selected editor is incorrect.
+   * Please use {@link #highlightElements(Collection, String, Editor)} instead.
+   */
+  @Deprecated
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, String statusBarText) {
-    highlightElements(elementCollection, statusBarText, null);
+    if (elementCollection.isEmpty()) {
+      return;
+    }
+
+    Editor selectedTextEditor =
+      FileEditorManager.getInstance(ContainerUtil.getFirstItem(elementCollection).getProject()).getSelectedTextEditor();
+
+    highlightElements(elementCollection, statusBarText, selectedTextEditor);
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,
@@ -83,13 +107,10 @@ public class HighlightUtils {
       final PsiElement firstElement = elements[0];
       final Project project = firstElement.getProject();
       if (project.isDisposed()) return;
-      final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (selectedTextEditor == null) {
-        return;
-      }
+      if (editor == null || editor.isDisposed()) return;
       final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes textattributes = globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      HighlightManager.getInstance(project).addOccurrenceHighlights(selectedTextEditor, elements, textattributes, true, null);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, elements, textattributes, true, null);
       WindowManager.getInstance().getStatusBar(project).setInfo(statusBarText);
       final FindManager findmanager = FindManager.getInstance(project);
       FindModel findmodel = findmanager.getFindNextModel();
