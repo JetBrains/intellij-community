@@ -114,6 +114,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     final String fieldName = field.getName();
     final PsiAnnotation attrAnno = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
+    final PsiType fieldType = field.getType();
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", fieldName);
       if (attrName != null) {
@@ -121,29 +122,35 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         if (withElement != null || Extension.isClassField(fieldName)) {
           clazz = PsiClass.class;
         }
-        else if (PsiType.BOOLEAN.equals(field.getType())) {
+        else if (PsiType.BOOLEAN.equals(fieldType)) {
           clazz = Boolean.class;
+        }
+        else if (PsiType.INT.equals(fieldType) ||
+                 fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
+          clazz = Integer.class;
         }
         final DomExtension extension =
           registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
         if (PsiUtil.findAnnotation(RequiredElement.class, field) != null) {
           extension.addCustomAnnotation(MyRequired.INSTANCE);
         }
+
         if (clazz == String.class) {
           if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
             extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
           }
-          else {
-            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(field.getType());
+          else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
             if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
               extension.setConverter(createEnumConverter(fieldPsiClass));
+              return;
             }
           }
-        }
 
-        markAsClass(extension, fieldName, withElement);
-        if (clazz.equals(String.class)) {
           markAsLanguage(extension, fieldName);
+        }
+        else if (clazz == PsiClass.class) {
+          markAsClass(extension, true, withElement);
         }
       }
       return;
@@ -160,7 +167,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class)
             .setDeclaringElement(field);
-        markAsClass(extension, fieldName, withElement);
+        markAsClass(extension, Extension.isClassField(fieldName), withElement);
         if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
           extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
         }
@@ -169,13 +176,13 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
+            registerCollectionBinding(fieldType, registrar, collectionAnnotation);
           }
         });
       }
     }
     else if (collectionAnnotation != null) {
-      registerCollectionBinding(field.getType(), registrar, collectionAnnotation);
+      registerCollectionBinding(fieldType, registrar, collectionAnnotation);
     }
   }
 
@@ -185,7 +192,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void markAsClass(DomExtension extension, String fieldName, @Nullable With withElement) {
+  private static void markAsClass(DomExtension extension, boolean isClassField, @Nullable With withElement) {
     if (withElement != null) {
       final String withClassName = withElement.getImplements().getStringValue();
       extension.addCustomAnnotation(new ExtendClassImpl() {
@@ -195,7 +202,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         }
       });
     }
-    if (withElement != null || Extension.isClassField(fieldName)) {
+    if (withElement != null || isClassField) {
       extension.setConverter(CLASS_CONVERTER);
     }
   }

@@ -161,7 +161,9 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
                        "public class MyServiceDescriptor { " +
                        "  @Attribute public String serviceImplementation; " +
-                       "  @Attribute public java.util.concurrent.TimeUnit timeUnit;" +
+                       "  @Attribute public java.util.concurrent.TimeUnit timeUnit; " +
+                       "  @Attribute public java.lang.Integer integerNullable; " +
+                       "  @Attribute public int intProperty; " +
                        "}")
 
     configureByFile()
