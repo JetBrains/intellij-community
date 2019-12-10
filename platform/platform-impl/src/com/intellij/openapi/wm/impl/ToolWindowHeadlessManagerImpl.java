@@ -57,7 +57,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @NotNull
   @Override
-  protected ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
+  public ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
     return doRegisterToolWindow(task.getId());
   }
 

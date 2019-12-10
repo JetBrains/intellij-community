@@ -3,10 +3,12 @@ package com.intellij.openapi.wm
 
 import javax.swing.JComponent
 
-data class RegisterToolWindowTask @JvmOverloads constructor(val id: String,
-                                                            val component: JComponent?,
-                                                            val anchor: ToolWindowAnchor,
-                                                            val sideTool: Boolean = false,
-                                                            val canCloseContent: Boolean = true,
-                                                            val canWorkInDumbMode: Boolean = true,
-                                                            val shouldBeAvailable: Boolean = true)
+data class RegisterToolWindowTask @JvmOverloads constructor(
+  val id: String,
+  val anchor: ToolWindowAnchor,
+  val component: JComponent? = null,
+  val sideTool: Boolean = false,
+  val canCloseContent: Boolean = true,
+  val canWorkInDumbMode: Boolean = true,
+  val shouldBeAvailable: Boolean = true
+)
