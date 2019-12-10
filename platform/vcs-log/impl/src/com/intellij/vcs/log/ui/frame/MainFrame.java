@@ -181,8 +181,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
     myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
     myPreviewDiffSplitter.setFirstComponent(myChangesBrowserSplitter);
-    initPreviewInEditor(myLogData.getProject());
-    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+    if (Registry.is("show.diff.preview.as.editor.tab")) {
+      initPreviewInEditor(myLogData.getProject());
+    } else {
+      showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+    }
 
     setLayout(new BorderLayout());
     add(myPreviewDiffSplitter);
@@ -201,10 +204,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private void initPreviewInEditor(Project project) {
-    if (!Registry.is("show.diff.preview.as.editor.tab")) {
-      return;
-    }
-
     myDiffPreviewProvider = new DiffPreviewProvider() {
       @NotNull
       @Override
