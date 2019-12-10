@@ -181,10 +181,10 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiExpressionList argumentList = (PsiExpressionList)myArgumentList;
       boolean prohibitCaching = true;
       PsiElement parent = argumentList.getParent();
-      if (parent instanceof PsiMethodCallExpression) {
+      if (parent instanceof PsiCallExpression) {
         prohibitCaching = JavaPsiFacade.getInstance(myArgumentList.getProject())
           .getResolveHelper()
-          .hasOverloads((PsiMethodCallExpression)parent);
+          .hasOverloads((PsiCallExpression)parent);
       }
       PsiExpression[] expressions = Arrays.stream(argumentList.getExpressions())
         .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))

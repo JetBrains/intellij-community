@@ -171,11 +171,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         return true;
       }
     };
-    try {
-      PsiScopesUtil.setupAndRunProcessor(processor, call, true);
+    if (call instanceof PsiMethodCallExpression) {
+      try {
+        PsiScopesUtil.setupAndRunProcessor(processor, call, true);
+      }
+      catch (MethodProcessorSetupFailedException e) {
+        return true;
+      }
     }
-    catch (MethodProcessorSetupFailedException e) {
-      return true;
+    else if (call instanceof PsiNewExpression) {
+      PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassOrAnonymousClassReference();
+      if (classReference != null) {
+        processor.setIsConstructor(true);
+        PsiScopesUtil.resolveAndWalk(processor, classReference, null);
+      }
     }
     return processor.getCandidates().length > 1;
   }
