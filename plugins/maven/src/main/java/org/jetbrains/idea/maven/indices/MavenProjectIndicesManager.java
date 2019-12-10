@@ -165,7 +165,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   }
 
   @ApiStatus.Experimental
-  public boolean hasNonScannedRemotes() {
+  public boolean hasRemotesExceptCentral() {
     return myProjectIndices.stream()
       .filter(i -> i.getKind() == MavenSearchIndex.Kind.REMOTE)
       .anyMatch(i -> !"central".equals(i.getRepositoryId()));
