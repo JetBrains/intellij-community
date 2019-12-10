@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -40,8 +41,22 @@ public class FileTypeUsageCounterCollector {
     trigger(project, file, "edit");
   }
 
+  public static void triggerSelect(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file != null) {
+      trigger(project, file, "select");
+    }
+    else {
+      final FeatureUsageData data = new FeatureUsageData().addAnonymizedPath(null);
+      FUCounterUsageLogger.getInstance().logEvent(project, "file.types.usage", "select", data);
+    }
+  }
+
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
     trigger(project, file, "open");
+  }
+
+  public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
+    trigger(project, file, "close");
   }
 
   private static void trigger(@NotNull Project project,
@@ -141,6 +156,16 @@ public class FileTypeUsageCounterCollector {
     @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       triggerOpen(source.getProject(), file);
+    }
+
+    @Override
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+      triggerClosed(source.getProject(), file);
+    }
+
+    @Override
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+      triggerSelect(event.getManager().getProject(), event.getNewFile());
     }
   }
 }

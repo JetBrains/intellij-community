@@ -194,8 +194,8 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])
-  fun addAnonymizedPath(path: String): FeatureUsageData {
-    data["file_path"] = EventLogConfiguration.anonymize(path)
+  fun addAnonymizedPath(path: String?): FeatureUsageData {
+    data["file_path"] = path?.let { EventLogConfiguration.anonymize(path) } ?: "undefined"
     return this
   }
 
