@@ -31,13 +31,10 @@ public interface ToolWindowFactory {
   }
 
   /**
-   * Tool window saves its state on project close and restore on when project opens.
-   * In some cases, it is useful to postpone its activation until the user explicitly activates it.
-   * Example: Tool Window initialization takes a huge amount of time and makes project loading slower.
-   *
-   * @return {@code true} if Tool Window should not be activated on start even if was opened previously.
-   * {@code false} otherwise. Please note that active (visible and focused) tool window would be activated on start in any case.
+   * @deprecated Use {@link ToolWindowEP#isDoNotActivateOnStart}
+   * @return
    */
+  @Deprecated
   default boolean isDoNotActivateOnStart() {
     return false;
   }

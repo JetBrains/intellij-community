@@ -162,7 +162,7 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
 private fun canActivateOnStart(id: String): Boolean {
   for (ep in ToolWindowEP.EP_NAME.extensionList) {
     if (id == ep.id) {
-      return !ep.toolWindowFactory!!.isDoNotActivateOnStart
+      return !ep.isDoNotActivateOnStart
     }
   }
   return true

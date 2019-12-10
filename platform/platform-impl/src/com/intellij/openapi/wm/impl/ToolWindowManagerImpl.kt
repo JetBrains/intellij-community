@@ -115,7 +115,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       layout = DesktopLayout()
     }
     else {
-      layout = WindowManagerEx.getInstanceEx().layout.copy(markAllAsUnregistered = true)
+      layout = DesktopLayout()
     }
   }
 
@@ -1463,7 +1463,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     // update size of all open floating windows. See SCR #18439
-    for (info: WindowInfoImpl in layout.infos) {
+    for (info in layout.infos) {
       if (info.isVisible) {
         getInternalDecorator(info.id!!).fireResized()
       }
@@ -1503,25 +1503,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return element
   }
 
+  override fun noStateLoaded() {
+    val newLayout = WindowManagerEx.getInstanceEx().layout.copy()
+    scheduleSetLayout(Runnable {
+      layout = newLayout
+    })
+  }
+
   override fun loadState(state: Element) {
     for (element in state.children) {
       if (DesktopLayout.TAG == element.name) {
         val layout = DesktopLayout()
         layout.readExternal(element)
-        val task = Runnable {
+        scheduleSetLayout(Runnable {
           setLayout(layout)
-        }
-        val app = ApplicationManager.getApplication()
-        if (app.isDispatchThread) {
-          pendingSetLayoutTask.set(null)
-          task.run()
-        }
-        else {
-          pendingSetLayoutTask.set(task)
-          app.invokeLater(Runnable {
-            pendingSetLayoutTask.getAndSet(null)?.run()
-          }, project.disposed)
-        }
+        })
       }
       else if (LAYOUT_TO_RESTORE == element.name) {
         layoutToRestoreLater = DesktopLayout()
@@ -1529,6 +1525,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
     checkInvariants("")
+  }
+
+  private fun scheduleSetLayout(task: Runnable) {
+    val app = ApplicationManager.getApplication()
+    if (app.isDispatchThread) {
+      pendingSetLayoutTask.set(null)
+      task.run()
+    }
+    else {
+      pendingSetLayoutTask.set(task)
+      app.invokeLater(Runnable {
+        pendingSetLayoutTask.getAndSet(null)?.run()
+      }, project.disposed)
+    }
   }
 
   fun setDefaultState(toolWindow: ToolWindowImpl, anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {

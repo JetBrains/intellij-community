@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.diagnostic.logger
@@ -9,11 +8,12 @@ import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashMap
-import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.*
 import javax.swing.SwingConstants
+import kotlin.collections.HashSet
 
 class DesktopLayout {
   companion object {
@@ -27,7 +27,7 @@ class DesktopLayout {
 
   private val registeredInfos = object : ClearableLazyValue<List<WindowInfoImpl>>() {
     override fun compute(): List<WindowInfoImpl> {
-      if (idToInfo.isEmpty()) {
+      if (idToInfo.isEmpty) {
         return emptyList()
       }
 
@@ -42,15 +42,11 @@ class DesktopLayout {
     }
   }
 
-  @JvmOverloads
-  fun copy(markAllAsUnregistered: Boolean = false): DesktopLayout {
+  fun copy(): DesktopLayout {
     val result = DesktopLayout()
     result.idToInfo.ensureCapacity(idToInfo.size)
     idToInfo.forEachEntry { id, info ->
       val newInfo = info.copy()
-      if (markAllAsUnregistered) {
-        newInfo.isRegistered = false
-      }
       result.idToInfo.put(id, newInfo)
       true
     }
@@ -196,18 +192,16 @@ class DesktopLayout {
   }
 
   fun readExternal(layoutElement: Element) {
-    val registered = THashSet<String?>()
-    for (info in idToInfo.values) {
-      if (info.isRegistered) {
-        registered.add(info.id)
-      }
-    }
-    for (e in layoutElement.getChildren(WindowInfoImpl.TAG)) {
-      val info = e.deserialize(WindowInfoImpl::class.java)
+    val registered = idToInfo.values.mapNotNullTo(HashSet()) { if (it.isRegistered) it.id else null }
+    val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
+
+    for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
+      val info = WindowInfoImpl()
+      infoBinding.deserializeInto(info, element)
       info.normalizeAfterRead()
       val id = info.id
       if (id == null) {
-        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e))
+        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(element))
         continue
       }
       if (registered.contains(id)) {
@@ -227,7 +221,7 @@ class DesktopLayout {
 
   val stateModificationCount: Long
     get() {
-      if (idToInfo.isEmpty()) {
+      if (idToInfo.isEmpty) {
         return 0
       }
 
@@ -239,7 +233,7 @@ class DesktopLayout {
     }
 
   fun writeExternal(tagName: String): Element? {
-    if (idToInfo.isEmpty()) {
+    if (idToInfo.isEmpty) {
       return null
     }
 
