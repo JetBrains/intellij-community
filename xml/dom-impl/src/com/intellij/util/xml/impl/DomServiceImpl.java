@@ -19,7 +19,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -39,7 +38,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
 import com.intellij.util.xml.stubs.FileStub;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,9 +110,8 @@ public class DomServiceImpl extends DomService {
         return XmlFileHeader.EMPTY;
       }
 
-      String psiNs = tag.getNamespace();
-      return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
-                               systemId);
+      String psiNs = tag.getLocalNamespaceDeclarations().get(tag.getNamespacePrefix());
+      return new XmlFileHeader(localName, psiNs, publicId, systemId);
     }
     return XmlFileHeader.EMPTY;
   }
