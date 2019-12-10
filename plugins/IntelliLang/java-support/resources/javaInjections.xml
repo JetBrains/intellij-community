@@ -23,13 +23,6 @@
     <display-name>Node.selectSingleNode (org.dom4j)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("selectSingleNode").withParameters("java.lang.String").definedInClass("org.dom4j.Node"))]]></place>
   </injection>
-
-  <!-- todo move to JAX-RS plugin -->
-  <injection language="RegExp" injector-id="java">
-    <display-name>Path.value (javax.ws.rs)</display-name>
-    <value-pattern>[^:]*:[\s]*([^\}]*)</value-pattern>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("value").withParameters().definedInClass("javax.ws.rs.Path"))]]></place>
-  </injection>
   <injection language="RegExp" injector-id="java">
     <display-name>Pattern (java.util.regex)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("java.util.regex.Pattern"))]]></place>
