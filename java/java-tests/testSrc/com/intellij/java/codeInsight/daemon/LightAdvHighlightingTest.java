@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -188,7 +189,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testSynchronizedExpression() { doTest(false); }
   public void testExtendMultipleClasses() { doTest(false); }
-  public void testRecursiveConstructorInvocation() { doTest(false); }
+
+  public void testRecursiveConstructorInvocation() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // mutual recursion is prevented in contract inference
+    doTest(false);
+  }
+
   public void testMethodCalls() { doTest(false); }
   public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
