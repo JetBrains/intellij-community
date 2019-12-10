@@ -41,6 +41,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -451,7 +453,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
         PsiType lType = variable.getType();
         if (PsiType.NULL.equals(lType)) {
-          String message = JavaErrorMessages.message("lvti.null");
+          boolean isSelfReferencing = ReferencesSearch.search(variable, new LocalSearchScope(initializer)).findFirst() != null;
+          String message = JavaErrorMessages.message(isSelfReferencing ? "lvti.selfReferenced" : "lvti.null");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
         }
         if (PsiType.VOID.equals(lType)) {
@@ -497,6 +500,9 @@ public class HighlightUtil extends HighlightUtilBase {
     }
     if (rType == null) {
       rType = expression.getType();
+    }
+    if (lType == PsiType.NULL) {
+      return null;
     }
     HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
     if (rType != null && expression != null && isCastIntentionApplicable(expression, lType)) {
@@ -2731,6 +2737,13 @@ public class HighlightUtil extends HighlightUtilBase {
   interface IncompatibleTypesTooltipComposer {
     @NotNull
     String consume(@NotNull String lRawType, @NotNull String lTypeArguments, @NotNull String rRawType, @NotNull String rTypeArguments);
+
+    /**
+     * Override if expected/actual pair layout is a row
+     */
+    default boolean skipTypeArgsColumns() {
+      return false;
+    }
   }
 
   @NotNull
@@ -2741,6 +2754,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiTypeParameter[] rTypeParams = rTypeData.second;
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
+    boolean skipColumns = consumer.skipTypeArgsColumns();
     StringBuilder requiredRow = new StringBuilder();
     StringBuilder foundRow = new StringBuilder();
     for (int i = 0; i < typeParamColumns; i++) {
@@ -2755,10 +2769,23 @@ public class HighlightUtil extends HighlightUtilBase {
       String openBrace = i == 0 ? "&lt;" : "";
       String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
-      requiredRow.append("<td style='padding: 0px 0px 8px 0px;'>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, true, showShortType))
-        .append(i < lTypeParams.length ? closeBrace : "").append("</td>");
-      foundRow.append("<td style='padding: 0px 0px 0px 0px;'>").append(rTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(rSubstitutedType, matches, showShortType))
-        .append(i < rTypeParams.length ? closeBrace : "").append("</td>");
+
+      requiredRow.append(skipColumns ? "" 
+                                     : "<td style='padding: 0px 0px 8px 0px;'>")
+        .append(lTypeParams.length == 0 ? "" : openBrace)
+        .append(redIfNotMatch(lSubstitutedType, true, showShortType))
+        .append(i < lTypeParams.length ? closeBrace : "")
+        .append(skipColumns ? "" 
+                            : "</td>");
+
+      foundRow.append(skipColumns ? "" 
+                                  : "<td style='padding: 0px 0px 0px 0px;'>")
+        .append(rTypeParams.length == 0 ? "" : openBrace)
+        .append(redIfNotMatch(rSubstitutedType, matches, showShortType))
+        .append(i < rTypeParams.length ? closeBrace : "")
+        .append(skipColumns ? "" 
+                            : "</td>");
+
     }
     PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
     PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;

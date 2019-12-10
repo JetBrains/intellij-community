@@ -23,6 +23,6 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(viewer: SimpleOnesideDiffV
   }
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
-    editorThreads.update(mappings.filter { it.side == viewer.side }.groupBy { it.fileLine })
+    editorThreads.update(mappings.filter { it.side == viewer.side }.groupBy { it.fileLineIndex })
   }
 }

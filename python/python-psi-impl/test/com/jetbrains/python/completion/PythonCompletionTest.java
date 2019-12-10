@@ -1440,6 +1440,41 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(suggested, "'k1'", "'k2'");
   }
 
+  // PY-33254
+  public void testMultipartStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testRbStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testKeywordArgumentPatternStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testBuiltinOpenStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testPandasReadCsvStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testAssignmentPatternStringPath() {
+    doMultiFileTest();
+  }
+
+  // PY-33254
+  public void testQualifiedAssignmentPatternStringPath() {
+    doMultiFileTest();
+  }
+
   // PY-8302
   public void testUndeclaredFunction() {
     myFixture.configureByFile("uninitialized/fun.py");
@@ -1578,6 +1613,32 @@ public class PythonCompletionTest extends PyTestCase {
         myFixture.checkResult(text + "inue");
       }
     );
+  }
+
+  // PY-36008
+  public void testTypedDictHasDictMethods() {
+    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
+                                                "class A(TypedDict):\n" +
+                                                "    pass\n" +
+                                                "A().<caret>");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "update", "clear", "pop", "popitem", "setdefault");
+  }
+
+  // PY-36008
+  public void testTypedDictDefinition() {
+    final List<String> suggested = doTestByText("from typing import TypedDict\n" +
+                                                "class A(TypedDict, total=<caret>):\n");
+
+    final List<String> suggestedInAlternativeSyntax = doTestByText("from typing import TypedDict\n" +
+                                                                   "A = TypedDict('A', {}, total=<caret>):\n");
+
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "True", "False");
+
+    assertNotNull(suggestedInAlternativeSyntax);
+    assertContainsElements(suggestedInAlternativeSyntax, "True", "False");
   }
 
   private void assertNoVariantsInExtendedCompletion() {

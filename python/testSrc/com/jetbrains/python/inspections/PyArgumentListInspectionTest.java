@@ -190,11 +190,6 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-19716
-  public void testMethodsForLoggingExceptions() {
-    doMultiFileTest("b.py");
-  }
-
   // PY-19522
   public void testCsvRegisterDialect() {
     doMultiFileTest("b.py");
@@ -379,6 +374,11 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-35512
   public void testPositionalOnlyParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDict() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
 }

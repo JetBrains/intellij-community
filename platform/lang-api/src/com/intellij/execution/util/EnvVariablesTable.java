@@ -253,12 +253,15 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
           column = view.getSelectedColumn();
         }
         if (row >= 0 && column >= 0) {
-          JTextField textField = (JTextField)((DefaultCellEditor)view.getCellEditor()).getComponent();
-          try {
-            textField.getDocument().insertString(textField.getCaretPosition(), content, null);
-          }
-          catch (BadLocationException e) {
-            //just ignore, paste failed
+          TableCellEditor editor = view.getCellEditor();
+          if (editor != null) {
+            JTextField textField = (JTextField)((DefaultCellEditor)editor).getComponent();
+            try {
+              textField.getDocument().insertString(textField.getCaretPosition(), content, null);
+            }
+            catch (BadLocationException e) {
+              //just ignore, paste failed
+            }
           }
         }
         return;

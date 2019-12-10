@@ -135,7 +135,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     Project project = field.getProject();
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 
-    if (scope instanceof GlobalSearchScope && name != null &&
+    if (scope instanceof GlobalSearchScope &&
         searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, null, null) == FEW_OCCURRENCES) {
       return scope;
     }

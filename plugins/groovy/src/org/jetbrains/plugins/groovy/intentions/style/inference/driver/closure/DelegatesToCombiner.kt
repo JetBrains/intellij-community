@@ -72,7 +72,7 @@ class DelegatesToCombiner {
   }
 
   private fun getName(parameter: PsiParameter): String =
-    parameter.name ?: parameter.parentOfType<GrParameterList>()?.getParameterIndex(parameter)?.toString() ?: "self"
+    parameter.name
 
 
   fun instantiateAnnotation(outerParameters: PsiParameterList): Pair<String?, AnnotatingResult?> {

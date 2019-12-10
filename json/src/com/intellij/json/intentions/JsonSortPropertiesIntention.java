@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public class JsonSortPropertiesIntention implements IntentionAction, LowPriorityAction {
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -98,7 +99,7 @@ public class JsonSortPropertiesIntention implements IntentionAction, LowPriority
       if (properties.get(i).getName().compareTo(itemName) < 0) pos++;
     }
     if (pos == cycleStart) return -1;
-    while (item == properties.get(pos)) pos++;
+    while (Objects.equals(itemName, properties.get(pos).getName())) pos++;
     return pos;
   }
 

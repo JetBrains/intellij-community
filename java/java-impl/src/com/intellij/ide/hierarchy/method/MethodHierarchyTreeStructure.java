@@ -58,7 +58,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     while (true) {
       PsiMethod superMethod = ArrayUtil.getFirstElement(method.findSuperMethods());
       if (superMethod == null || superClasses.contains(superMethod.getContainingClass())) break;
-      superClasses.addAll(findInheritanceChain(method.getContainingClass(), superMethod.getContainingClass()));
+      superClasses.addAll(0, findInheritanceChain(method.getContainingClass(), superMethod.getContainingClass()));
       method = superMethod;
     }
     return superClasses;

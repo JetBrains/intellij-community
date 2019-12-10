@@ -96,9 +96,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         for (int i = 0; i < parameters.length; i++) {
           final PsiParameter parameter = parameters[i];
           final String lambdaParamName = paramListCopy[i].getName();
-          if (lambdaParamName != null) {
-            parameter.setName(lambdaParamName);
-          }
+          parameter.setName(lambdaParamName);
         }
       }
       PsiCodeBlock codeBlock = member.getBody();

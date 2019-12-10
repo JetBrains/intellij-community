@@ -388,11 +388,9 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       VariableNameGenerator generator = new VariableNameGenerator(value, VariableKind.PARAMETER);
       if (!loopCondition.isEntrySet()) {
         String origName = loopCondition.getIterParam().getName();
-        if (origName != null) {
-          String nameCandidate = getNameCandidate(origName);
-          if (origName.equals(nameCandidate)) return nameCandidate;
-          generator.byName(nameCandidate);
-        }
+        String nameCandidate = getNameCandidate(origName);
+        if (origName.equals(nameCandidate)) return nameCandidate;
+        generator.byName(nameCandidate);
       }
       return generator.byName("k", "key").generate(true);
     }

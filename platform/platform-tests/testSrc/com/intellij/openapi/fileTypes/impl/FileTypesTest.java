@@ -648,6 +648,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.drainReDetectQueue();
       myFileTypeManager.clearCaches();
       file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+      getPsiManager().dropPsiCaches();
 
       ensureRedetected(file, detectorCalled);
       assertSame(file.getFileType().toString(), file.getFileType(), stuffType);

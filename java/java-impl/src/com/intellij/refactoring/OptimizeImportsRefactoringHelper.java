@@ -112,10 +112,6 @@ class OptimizeImportsTask implements SequentialTask {
   }
 
   @Override
-  public void prepare() {
-  }
-
-  @Override
   public boolean isDone() {
     return !myPointers.hasNext();
   }
@@ -156,9 +152,5 @@ class OptimizeImportsTask implements SequentialTask {
     }
 
     return isDone();
-  }
-
-  @Override
-  public void stop() {
   }
 }

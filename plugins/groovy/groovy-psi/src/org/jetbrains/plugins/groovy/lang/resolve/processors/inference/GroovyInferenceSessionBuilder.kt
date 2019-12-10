@@ -72,8 +72,8 @@ class GroovyInferenceSessionBuilder constructor(
   }
 }
 
-fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
-  val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
+fun buildTopLevelSession(place: PsiElement,
+                         session: GroovyInferenceSession = constructDefaultInferenceSession(place)): GroovyInferenceSession {
   val expression = findExpression(place) ?: return session
   val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
     OperatorExpressionConstraint(expression as GrOperatorExpression)
@@ -87,7 +87,11 @@ fun buildTopLevelSession(place: PsiElement): GroovyInferenceSession {
   return session
 }
 
-private fun findExpression(place: PsiElement): GrExpression? {
+private fun constructDefaultInferenceSession(place: PsiElement): GroovyInferenceSession {
+  return GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, place, false)
+}
+
+fun findExpression(place: PsiElement): GrExpression? {
   val parent = place.parent
   return when {
     parent is GrAssignmentExpression && parent.lValue === place -> parent

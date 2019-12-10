@@ -190,7 +190,6 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
 
           String name = var.getName();
-          assert name != null : child.getText();
           PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, var.getType(), null);
           PsiUtil.setModifierProperty((PsiLocalVariable)declarationStatement.getDeclaredElements()[0], PsiModifier.FINAL, var.hasModifierProperty(PsiModifier.FINAL));
           toFormat.add(parent.addBefore(declarationStatement, statement));

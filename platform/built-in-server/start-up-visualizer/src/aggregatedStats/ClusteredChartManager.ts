@@ -92,6 +92,8 @@ export class ClusteredChartManager {
     data
       .then(data => {
         if (data != null) {
+          // https://stackoverflow.com/questions/56996968/prevent-an-object-from-being-converted-to-a-reactive-object-when-assigned-to-a-c
+          data.data.map(it => Object.freeze(it))
           this.render(data)
         }
       })

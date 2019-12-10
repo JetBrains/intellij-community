@@ -165,7 +165,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
         final PsiParameter[] parameters =
           superMethod.getParameterList().getParameters();
         final PsiParameter overriddenParameter = parameters[index];
-        if (variableName.equals(overriddenParameter.getName())) {
+        if (overriddenParameter.getName().equals(variableName)) {
           return true;
         }
       }

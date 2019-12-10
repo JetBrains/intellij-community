@@ -229,6 +229,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
+    if (PsiTreeUtil.getParentOfType(myElements[0], PsiAnnotation.class) != null) {
+      throw new PrepareFailedException("Unable to extract method from annotation value", myElements[0]);
+    }
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);
     myCodeFragmentMember = codeFragment.getUserData(ElementToWorkOn.PARENT);
     if (myCodeFragmentMember == null) {
@@ -1864,7 +1867,10 @@ public class ExtractMethodProcessor implements MatchProvider {
                     ? ((PsiMember)myCodeFragmentMember).getContainingClass()
                     : PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiClass.class);
     if (myTargetClass == null) {
-      LOG.error(myElements[0].getContainingFile());
+      LOG.error("Unable to find target class. Parents are: "+
+                StreamEx.iterate(myCodeFragmentMember, PsiElement::getParent)
+                  .takeWhileInclusive(e -> e != null && !(e instanceof PsiFileSystemItem))
+                  .map(e -> e.getClass().getSimpleName()).joining(","));
     }
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
@@ -2033,8 +2039,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final Set<PsiField> fields = new LinkedHashSet<>();
     myCanBeStatic = canBeStatic(myTargetClass, myCodeFragmentMember, myElements, fields);
 
-    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable());
-    myInputVariables.setUsedInstanceFields(fields);
+    myInputVariables = new InputVariables(inputVariables, myProject, new LocalSearchScope(myElements), isFoldingApplicable(), fields);
 
     if (!checkExitPoints()){
       return false;

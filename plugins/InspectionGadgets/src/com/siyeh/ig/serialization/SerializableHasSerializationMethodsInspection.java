@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (!superClassList.isEmpty()) superClassString = formatString(superClassList);
     defaultWriteSettings(node, "ignoreClassWithoutFields");
     writeBooleanOption(node, "ignoreClassWithoutFields", false);
   }
@@ -74,31 +75,25 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
     return new SerializableHasSerializationMethodsVisitor();
   }
 
-  private class SerializableHasSerializationMethodsVisitor
-    extends BaseInspectionVisitor {
+  private class SerializableHasSerializationMethodsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
       // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType() ||
-          aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiEnumConstantInitializer) {
+      if (aClass instanceof PsiTypeParameter || aClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      if (ignoreAnonymousInnerClasses &&
-          aClass instanceof PsiAnonymousClass) {
+      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
         return;
       }
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      final boolean hasReadObject =
-        SerializationUtils.hasReadObject(aClass);
-      final boolean hasWriteObject =
-        SerializationUtils.hasWriteObject(aClass);
+      final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
       if (hasWriteObject && hasReadObject) {
         return;
       }
@@ -119,8 +114,7 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
           return;
         }
       }
-      registerClassError(aClass, Boolean.valueOf(hasReadObject),
-                         Boolean.valueOf(hasWriteObject));
+      registerClassError(aClass, Boolean.valueOf(hasReadObject), Boolean.valueOf(hasWriteObject));
     }
   }
 }

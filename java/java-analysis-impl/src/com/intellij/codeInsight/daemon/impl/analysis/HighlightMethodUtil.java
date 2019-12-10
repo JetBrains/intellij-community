@@ -527,9 +527,14 @@ public class HighlightMethodUtil {
       boolean varargs = candidateInfo.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       int idx = ArrayUtil.find(expressions, wrongArg);
       PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, varargs));
+      String errorMessage = candidateInfo.getInferenceErrorMessage();
+      String reason = errorMessage != null ? "<table><tr><td style='padding-left: 4px; padding-top: 10;'>" +
+                                             "reason: " + XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>") +
+                                             "</td></tr></table>" 
+                                           : "";
       return HighlightUtil.createIncompatibleTypesTooltip(paramType, argType,
                                                           (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-                                                               JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, "", "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
+                                                               JavaErrorMessages.message("incompatible.types.html.tooltip", lRawType, lTypeArguments, rRawType, rTypeArguments, reason, "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())));
     }
     return null;
   }
@@ -1032,7 +1037,9 @@ public class HighlightMethodUtil {
       PsiParameter parameter = i < parameters.length ? parameters[i] : null;
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       if (assignmentCompatible(i, parameters, expressions, substitutor)) continue;
-      boolean showShortType = HighlightUtil.showShortType(parameter != null ? substitutor.substitute(parameter.getType()) : null,
+      boolean varargs = info != null && info.getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+      PsiType parameterType = substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
+      boolean showShortType = HighlightUtil.showShortType(parameterType,
                                                           expression != null ? expression.getType() : null);
       s.append("<tr>");
       if (parameter != null) {
@@ -1048,7 +1055,7 @@ public class HighlightMethodUtil {
 
       if (expression != null) {
         s.append("<td style='padding-right: 28px;'>")
-          .append(HighlightUtil.redIfNotMatch(expression.getType(), false, showShortType))
+          .append(mismatchedExpressionType(parameterType, expression))
           .append("</td>");
       }
       else {
@@ -1067,6 +1074,25 @@ public class HighlightMethodUtil {
     s.append("</body></html>");
 
     return s.toString();
+  }
+
+  @NotNull
+  static String mismatchedExpressionType(PsiType parameterType, PsiExpression expression) {
+    return HighlightUtil.createIncompatibleTypesTooltip(parameterType, expression.getType(), new HighlightUtil.IncompatibleTypesTooltipComposer() {
+      @NotNull
+      @Override
+      public String consume(@NotNull String lRawType,
+                            @NotNull String lTypeArguments,
+                            @NotNull String rRawType,
+                            @NotNull String rTypeArguments) {
+        return rRawType + rTypeArguments;
+      }
+
+      @Override
+      public boolean skipTypeArgsColumns() {
+        return true;
+      }
+    });
   }
 
   private static boolean assignmentCompatible(int i,

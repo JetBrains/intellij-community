@@ -36,7 +36,7 @@ class AutoImplementTransformation : AstTransformationSupport {
         }
 
         for ((index, value) in signature.parameterTypes.withIndex()) {
-          addParameter(toImplementMethod.parameterList.parameters[index].name ?: "p$index", value)
+          addParameter(toImplementMethod.parameterList.parameters[index].name, value)
         }
       }
     }

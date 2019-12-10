@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -32,7 +31,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
@@ -234,10 +232,10 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
               @Override
               public void processTerminated(@NotNull ProcessEvent event) {
                 if (event.getExitCode() == 0) {
-                  callback.finished(context, new ProjectTaskResult(false, 0, 0));
+                  callback.finished(new ProjectTaskResult(false, 0, 0));
                 }
                 else {
-                  callback.finished(context, new ProjectTaskResult(true, 0, 0));
+                  callback.finished(new ProjectTaskResult(true, 0, 0));
                 }
               }
             });

@@ -9,7 +9,7 @@ class A {
     <error descr="Missing return statement">}</error>);
 
 
-    Map<Integer, Integer> map = Stream.iterate(5, <error descr="Incompatible types. Found: 'java.util.stream.Stream<java.lang.Integer>', required: 'java.util.Map<java.lang.Integer,java.lang.Integer>'">t -> t + 5</error>);
+    Map<Integer, Integer> map = <error descr="Incompatible types. Found: 'java.util.stream.Stream<java.lang.Integer>', required: 'java.util.Map<java.lang.Integer,java.lang.Integer>'">Stream.iterate(5, t -> t + 5);</error>
   }
 
 

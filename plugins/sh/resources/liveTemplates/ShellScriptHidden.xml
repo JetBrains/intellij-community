@@ -119,7 +119,7 @@
       <option name="OTHER" value="false"/>
     </context>
   </template>
-  <template id="shell_number not equal" name="shell_number not equal" value="$VAR_1$ -nq $VAR_2$" description="Numbers not equal"
+  <template id="shell_number not equal" name="shell_number not equal" value="$VAR_1$ -ne $VAR_2$" description="Numbers not equal"
             toShortenFQNames="false">
     <variable name="VAR_1" expression="" defaultValue="&quot;$a&quot;" alwaysStopAt="true"/>
     <variable name="VAR_2" expression="" defaultValue="&quot;$b&quot;" alwaysStopAt="true"/>

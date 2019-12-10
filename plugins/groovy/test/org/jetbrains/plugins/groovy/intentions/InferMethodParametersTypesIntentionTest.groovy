@@ -513,4 +513,23 @@ class AA { static void fo<caret>o(Integer a) {} }
     doTest(true)
   }
 
+  void testUnresolvedCode() {
+    doTest(true)
+  }
+
+  void testUnresolvedCode2() {
+    doTest(true)
+  }
+
+  void testCallWithInnerTypeParameter() {
+    doTest(true)
+  }
+
+  void testUnresolvedCode3() {
+    doTest(true)
+  }
+
+  void testPassClosureInClosure() {
+    doTest(true)
+  }
 }

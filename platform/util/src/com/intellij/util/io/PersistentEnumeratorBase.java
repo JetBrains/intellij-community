@@ -226,7 +226,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       unlockStorage();
     }
 
-    if (myDataDescriptor instanceof InlineKeyDescriptor) {
+    if (inlineKeyStorage(dataDescriptor)) {
       myKeyStorage = null;
     }
     else {
@@ -244,6 +244,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
+  }
+
+  public static boolean inlineKeyStorage(@NotNull KeyDescriptor<?> descriptor) {
+    return descriptor instanceof InlineKeyDescriptor;
   }
 
   void lockStorage() {

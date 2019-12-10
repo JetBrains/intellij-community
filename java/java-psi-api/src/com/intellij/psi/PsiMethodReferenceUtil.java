@@ -152,7 +152,7 @@ public class PsiMethodReferenceUtil {
       }
 
       PsiType methodReturnType = getMethodReferenceReturnType(expression, result);
-      if (methodReturnType == null || PsiType.VOID.equals(methodReturnType)) {
+      if (methodReturnType == null) {
         return false;
       }
 

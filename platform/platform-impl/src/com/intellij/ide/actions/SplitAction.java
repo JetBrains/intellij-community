@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware {
+  public static final Key<Object> FORBID_TAB_SPLIT = new Key<Object>("FORBID_TAB_SPLIT");
   private final int myOrientation;
   private final boolean myCloseSource;
 
@@ -46,11 +48,22 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   public void update(@NotNull final AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    final int minimum = myCloseSource ? 2 : 1;
-    final boolean enabled = project != null
-                            && window != null
-                            && window.getTabCount() >= minimum
-                            && !window.getOwner().isPreview();
-    event.getPresentation().setEnabledAndVisible(enabled);
+    boolean isForbidden = window != null && isProhibitionAllowed() && window.getSelectedFile().getUserData(FORBID_TAB_SPLIT) != null;
+
+    if (isForbidden) {
+      event.getPresentation().setEnabledAndVisible(false);
+    }
+    else {
+      final int minimum = myCloseSource ? 2 : 1;
+      final boolean enabled = project != null
+                              && window != null
+                              && window.getTabCount() >= minimum
+                              && !window.getOwner().isPreview();
+      event.getPresentation().setEnabledAndVisible(enabled);
+    }
+  }
+
+  protected boolean isProhibitionAllowed() {
+    return false;
   }
 }

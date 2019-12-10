@@ -56,9 +56,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     getterBody.getStatements()[0].replace(factory.createStatementFromText("return " + fieldName + ".get();", field));
 
     final PsiMethod propertyGetter = PropertyUtilBase.generateGetterPrototype(field);
-    if (propertyGetter != null && fieldName != null) {
-      propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
-    }
+    propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
     return new PsiMethod[] {getter, GenerateMembersUtil.annotateOnOverrideImplement(field.getContainingClass(), propertyGetter)};
   }
 

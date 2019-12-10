@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 class Test {
   {
-    valueOf(processFirst(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char[]'">x -> x</error>));
+    valueOf(<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char[]'">processFirst(x -> x)</error>);
   }
 
   public static <V> V processFirst(Function<Integer,V> f){

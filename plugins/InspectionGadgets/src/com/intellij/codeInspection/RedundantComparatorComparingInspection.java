@@ -11,6 +11,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,9 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     staticCall(JAVA_UTIL_COLLECTIONS, "reverseOrder").parameterCount(0));
   private static final CallMatcher COMPARATOR_COMPARING_WITH_DOWNSTREAM =
     staticCall(JAVA_UTIL_COMPARATOR, "comparing").parameterTypes(JAVA_UTIL_FUNCTION_FUNCTION, JAVA_UTIL_COMPARATOR);
+  private static final CallMatcher COMPARATOR_COMPARING = anyOf(
+    staticCall(JAVA_UTIL_COMPARATOR, "comparing").parameterTypes(JAVA_UTIL_FUNCTION_FUNCTION),
+    COMPARATOR_COMPARING_WITH_DOWNSTREAM);
 
   private static final CallMatcher MIN_MAX = anyOf(
     staticCall(JAVA_UTIL_COLLECTIONS, "min", "max").parameterTypes(JAVA_UTIL_COLLECTION, JAVA_UTIL_COMPARATOR),
@@ -43,8 +47,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
   );
 
   private static final CallMapper<String> REPLACEMENTS = new CallMapper<String>()
-    .register(staticCall(JAVA_UTIL_COMPARATOR, "comparing").parameterTypes(JAVA_UTIL_FUNCTION_FUNCTION), "thenComparing")
-    .register(COMPARATOR_COMPARING_WITH_DOWNSTREAM, "thenComparing")
+    .register(COMPARATOR_COMPARING, "thenComparing")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingInt").parameterCount(1), "thenComparingInt")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingLong").parameterCount(1), "thenComparingLong")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingDouble").parameterCount(1), "thenComparingDouble");
@@ -60,6 +63,19 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         if (THEN_COMPARING_COMPARATOR.test(call)) {
           checkThenComparing(call);
+        }
+        if (COMPARATOR_COMPARING.test(call)) {
+          PsiExpression arg = call.getArgumentList().getExpressions()[0];
+          PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+          for (String suffix : new String[]{"Key", "Value"}) {
+            if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "get"+suffix, PsiType.EMPTY_ARRAY)) {
+              String replacementMethod = "comparingBy" + suffix;
+              holder.registerProblem(nameElement,
+                                     InspectionsBundle.message("inspection.simplifiable.comparator.entry.comparator.message",
+                                                               "Entry." + replacementMethod + "()"),
+                                     new ReplaceWithEntryComparatorFix(replacementMethod));
+            }
+          }
         }
         if (MIN_MAX.test(call)) {
           PsiExpression arg = ArrayUtil.getLastElement(call.getArgumentList().getExpressions());
@@ -199,6 +215,53 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
       if (reversed == null) return;
       ct.replaceAndRestoreComments(comparator, reversed);
       ExpressionUtils.bindCallTo(call, myReplacement);
+    }
+  }
+
+  private static class ReplaceWithEntryComparatorFix implements LocalQuickFix {
+    private final String myReplacementMethod;
+
+    ReplaceWithEntryComparatorFix(String replacementMethod) {
+      myReplacementMethod = replacementMethod;
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "Entry."+myReplacementMethod+"()");
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.simplifiable.comparator.fix.entry.comparator.family.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      if (call == null) return;
+      String params = getGenericParameters(call);
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      CommentTracker ct = new CommentTracker();
+      String replacement = JAVA_UTIL_MAP_ENTRY + "." + params + myReplacementMethod + "(" + (args.length == 2 ? ct.text(args[1]) : "") + ")";
+      PsiElement result = ct.replaceAndRestoreComments(call, replacement);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+    }
+
+    @NotNull
+    private static String getGenericParameters(PsiMethodCallExpression call) {
+      PsiClassType callType = tryCast(call.getType(), PsiClassType.class);
+      if (callType == null || !callType.rawType().equalsToText(JAVA_UTIL_COMPARATOR)) return "";
+      PsiType[] parameters = callType.getParameters();
+      if (parameters.length != 1) return "";
+      PsiClassType entryClass = tryCast(parameters[0], PsiClassType.class);
+      if (entryClass == null || !entryClass.rawType().equalsToText(JAVA_UTIL_MAP_ENTRY)) return "";
+      PsiType[] entryClassParameters = entryClass.getParameters();
+      if (entryClassParameters.length != 2) return "";
+      return "<" + entryClassParameters[0].getCanonicalText() + "," + entryClassParameters[1].getCanonicalText() + ">";
     }
   }
 }

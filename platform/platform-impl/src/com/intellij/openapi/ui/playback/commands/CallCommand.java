@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -51,7 +52,9 @@ public class CallCommand extends AbstractCommand {
     try {
       Pair<Method, Class> methodClass = findMethod(context, methodName, types);
       if (methodClass == null) {
-        context.error("No method \"" + methodName + "\" found in facade classes: " + context.getCallClasses(), getLine());
+        context.error("No method \"" + methodName + "\" with parameters ["
+                      + StringUtil.join(types, type -> type.getName(), ", ")
+                      + "] found in facade classes: " + context.getCallClasses(), getLine());
         return Promises.rejectedPromise();
       }
 

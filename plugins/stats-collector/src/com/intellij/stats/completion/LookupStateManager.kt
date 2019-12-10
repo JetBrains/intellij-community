@@ -23,6 +23,8 @@ import com.intellij.stats.storage.factors.LookupStorage
 class LookupStateManager {
     private val elementToId = mutableMapOf<String, Int>()
     private val idToEntryInfo = mutableMapOf<Int, LookupEntryInfo>()
+    private val lookupStringToHash = mutableMapOf<String, Int>()
+    private var currentSessionFactors: Map<String, String> = emptyMap()
 
     fun update(lookup: LookupImpl, factorsUpdated: Boolean): LookupState {
         val ids = mutableListOf<Int>()
@@ -43,25 +45,34 @@ class LookupStateManager {
             ids.add(id)
         }
 
+        val storage = LookupStorage.get(lookup)
+        val commonSessionFactors = storage?.sessionFactors?.getLastUsedCommonFactors() ?: emptyMap()
+        val sessionFactorsToLog = computeSessionFactorsToLog(commonSessionFactors)
+
         if (factorsUpdated) {
             val infos = items.toLookupInfos(lookup, elementToId)
             val newInfos = infos.filter { it.id in newIds }
 
             val itemsDiff = infos.mapNotNull { idToEntryInfo[it.id]?.calculateDiff(it) }
             infos.forEach { idToEntryInfo[it.id] = it }
-            return LookupState(ids, newInfos, itemsDiff, currentPosition)
+            return LookupState(ids, newInfos, itemsDiff, currentPosition, sessionFactorsToLog)
         }
         else {
             val newItems = items.filter { getElementId(it) in newIds }.toLookupInfos(lookup, elementToId)
             newItems.forEach { idToEntryInfo[it.id] = it }
-            return LookupState(ids, newItems, emptyList(), currentPosition)
+            return LookupState(ids, newItems, emptyList(), currentPosition, sessionFactorsToLog)
         }
     }
-
 
     fun getElementId(item: LookupElement): Int? {
         val itemString = item.idString()
         return elementToId[itemString]
+    }
+
+    private fun computeSessionFactorsToLog(factors: Map<String, String>): Map<String, String> {
+        if (factors == currentSessionFactors) return emptyMap()
+        currentSessionFactors = factors
+        return factors
     }
 
     private fun registerElement(item: LookupElement): Int {
@@ -74,7 +85,9 @@ class LookupStateManager {
     private fun List<LookupElement>.toLookupInfos(lookup: LookupImpl, elementToId: Map<LookupElement, Int>): List<LookupEntryInfo> {
         val item2relevance = calculateRelevance(lookup, this)
         return this.map { lookupElement ->
-            LookupEntryInfo(elementToId.getValue(lookupElement), lookupElement.lookupString.length, item2relevance.getValue(lookupElement))
+            val lookupString = lookupElement.lookupString
+            val itemHash = getLookupStringHash(lookupString)
+            LookupEntryInfo(elementToId.getValue(lookupElement), lookupString.length, itemHash, item2relevance.getValue(lookupElement))
         }
     }
 
@@ -107,5 +120,9 @@ class LookupStateManager {
         }
 
         return result
+    }
+
+    private fun getLookupStringHash(lookupString: String): Int {
+        return lookupStringToHash.computeIfAbsent(lookupString) { lookupStringToHash.size }
     }
 }

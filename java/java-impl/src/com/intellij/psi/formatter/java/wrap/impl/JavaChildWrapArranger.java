@@ -249,6 +249,7 @@ public class JavaChildWrapArranger {
 
   private static boolean isTypeAnnotationOrFalseIfDumb(@NotNull ASTNode child) {
     PsiElement node = child.getPsi();
+    if (node.getProject().isDefault()) return false;
     PsiElement next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace.class, PsiAnnotation.class);
     if (next instanceof PsiKeyword) return false;
     return !DumbService.isDumb(node.getProject()) && isTypeAnnotation(node);

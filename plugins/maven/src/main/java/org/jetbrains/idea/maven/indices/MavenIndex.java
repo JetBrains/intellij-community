@@ -364,10 +364,13 @@ public class MavenIndex implements MavenSearchIndex {
 
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    if (myFailureMessage.contains("nexus-maven-repository-index.properties") && myFailureMessage.contains("FileNotFoundException")) {
+    if (myFailureMessage != null &&
+        myFailureMessage.contains("nexus-maven-repository-index.properties") &&
+        myFailureMessage.contains("FileNotFoundException")) {
       myFailureMessage = "Repository is non-nexus repo, or does not indexed";
       MavenLog.LOG.debug("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
-    } else {
+    }
+    else {
       MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId.getValue() + "] " + myRepositoryPathOrUrl, e);
     }
 

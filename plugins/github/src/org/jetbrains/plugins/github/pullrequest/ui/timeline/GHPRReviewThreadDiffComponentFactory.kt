@@ -37,8 +37,8 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
       isOpaque = false
 
       icon = fileType.icon
-      append(name).appendTextPadding(5)
-      append(path, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(name)
+      if (!path.isBlank()) append(" ").append(path, SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
   }
 

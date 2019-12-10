@@ -26,6 +26,15 @@ public class PsiProvidesStatementImpl extends JavaStubPsiElement<PsiProvidesStat
 
   @Nullable
   @Override
+  public PsiClassType getInterfaceType() {
+    PsiProvidesStatementStub stub = getStub();
+    PsiJavaCodeReferenceElement ref =
+      stub != null ? JavaPsiFacade.getElementFactory(getProject()).createReferenceFromText(stub.getInterface(), this) : getInterfaceReference();
+    return ref != null ? new PsiClassReferenceType(ref, null, PsiAnnotation.EMPTY_ARRAY) : null;
+  }
+
+  @Nullable
+  @Override
   public PsiReferenceList getImplementationList() {
     return getStubOrPsiChild(JavaStubElementTypes.PROVIDES_WITH_LIST);
   }

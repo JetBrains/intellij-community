@@ -3,8 +3,8 @@ import java.util.*;
 class Main {
 
     void foo(List<Integer> list) {
-        bar(list, <error descr="Failed to resolve argument">i -> i.intValue()</error>, i -> i.<error descr="Cannot resolve method 'unknown' in 'Integer'">unknown</error>());
-        bar1(list, <error descr="Failed to resolve argument">i -> i.intValue()</error>, i -> i.<error descr="Cannot resolve method 'unknown' in 'Integer'">unknown</error>());
+        bar(list, i -> i.intValue(), i -> i.<error descr="Cannot resolve method 'unknown' in 'Integer'">unknown</error>());
+        bar1(list, i -> i.intValue(), i -> i.<error descr="Cannot resolve method 'unknown' in 'Integer'">unknown</error>());
     }
 
     <U, S_IN, S_OUT, R> R bar(List<S_IN> list,

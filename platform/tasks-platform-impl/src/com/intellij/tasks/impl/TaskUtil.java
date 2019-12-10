@@ -56,7 +56,7 @@ public class TaskUtil {
 
   public static String formatTask(@NotNull Task task, String format) {
 
-    Map map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
     format = updateToVelocity(format);
     try {
       return FileTemplateUtil.mergeTemplate(map, format, false);
@@ -66,8 +66,8 @@ public class TaskUtil {
     }
   }
 
-  private static Map formatFromExtensions(@NotNull LocalTask task) {
-    HashMap map = new HashMap();
+  private static Map<String, String> formatFromExtensions(@NotNull LocalTask task) {
+    HashMap<String, String> map = new HashMap<>();
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {

@@ -2,6 +2,7 @@
 package com.intellij.diff.editor;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FileColorManager;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class VcsEditorTabColorProvider implements EditorTabColorProvider {
+public class VcsEditorTabColorProvider implements EditorTabColorProvider, DumbAware {
 
   @Nullable
   @Override
@@ -22,6 +23,7 @@ public class VcsEditorTabColorProvider implements EditorTabColorProvider {
     if (file instanceof DiffVirtualFile) {
       return FileColorManager.getInstance(project).getColor("Green");
     }
+
 
     return null;
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
@@ -215,11 +216,16 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
   private fun runBeforeCommitHandlersChecks(executor: CommitExecutor?): CheckinHandler.ReturnResult {
     commitHandlers.forEachLoggingErrors(LOG) { handler ->
-      if (handler.acceptExecutor(executor)) {
-        LOG.debug("CheckinHandler.beforeCheckin: $handler")
+      try {
+        if (handler.acceptExecutor(executor)) {
+          LOG.debug("CheckinHandler.beforeCheckin: $handler")
 
-        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-        if (result != CheckinHandler.ReturnResult.COMMIT) return result
+          val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
+          if (result != CheckinHandler.ReturnResult.COMMIT) return result
+        }
+      }
+      catch (e: ProcessCanceledException) {
+        return CheckinHandler.ReturnResult.CANCEL
       }
     }
 

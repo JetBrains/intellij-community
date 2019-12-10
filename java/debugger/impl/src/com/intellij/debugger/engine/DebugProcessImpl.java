@@ -456,7 +456,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw new IOException(DebuggerBundle.message("error.debugger.already.listening"));
       }
 
-      final String address = myConnection.getAddress();
+      final String port = myConnection.getDebuggerPort();
 
       if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
@@ -474,7 +474,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           return attachConnector((AttachingConnector)connector);
         }
         else {
-          return connectorListen(address, (ListeningConnector)connector);
+          return connectorListen(port, (ListeningConnector)connector);
         }
       }
       else if (myConnection.isServerMode()) {
@@ -483,31 +483,31 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (myArguments == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-        return connectorListen(address, connector);
+        return connectorListen(port, connector);
       }
       else { // is client mode, should attach to already running process
         AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
           final Connector.Argument hostnameArg = myArguments.get("hostname");
-          if (hostnameArg != null && myConnection.getHostName() != null) {
-            hostnameArg.setValue(myConnection.getHostName());
+          if (hostnameArg != null && myConnection.getDebuggerHostName() != null) {
+            hostnameArg.setValue(myConnection.getDebuggerHostName());
           }
-          if (address == null) {
+          if (port == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
           final Connector.Argument portArg = myArguments.get("port");
           if (portArg != null) {
-            portArg.setValue(address);
+            portArg.setValue(port);
           }
         }
         else {
-          if (address == null) {
+          if (port == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
           final Connector.Argument nameArg = myArguments.get("name");
           if (nameArg != null) {
-            nameArg.setValue(address);
+            nameArg.setValue(port);
           }
         }
         final Connector.Argument timeoutArg = myArguments.get("timeout");
@@ -555,7 +555,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (port != null) {
         listeningAddress = port;
       }
-      myConnection.setAddress(listeningAddress);
+      myConnection.setApplicationPort(listeningAddress);
 
       myDebugProcessDispatcher.getMulticaster().connectorIsReady();
 

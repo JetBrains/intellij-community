@@ -63,7 +63,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   }
 
   private void updateIndicators(boolean start) {
-    // wrapping in invokeLater here reduces the number of events posted to EDT in case of multiple IDE frames
+    // wrapping in invokeLater here reduces a number of events posted to EDT in case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
       if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
         return;

@@ -124,12 +124,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
     if (references.isEmpty()) return Collections.emptyList();
 
-    return Collections.singletonList(moveDeclaration(project, variable, references, true));
+    return Collections.singletonList(ObjectUtils.notNull(moveDeclaration(project, variable, references, true)));
   }
 
   protected PsiElement moveDeclaration(Project project, V variable, final Collection<? extends PsiReference> references, boolean delete) {
     final PsiCodeBlock anchorBlock = findAnchorBlock(references);
-    if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
+    if (anchorBlock == null) {
+      return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
+    }
 
     final PsiElement firstElement = getLowestOffsetElement(references);
     final String localName = suggestLocalName(project, variable, anchorBlock);
@@ -281,6 +283,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     PsiCodeBlock result = null;
     for (PsiReference psiReference : refs) {
       final PsiElement element = psiReference.getElement();
+      if (PsiUtil.isInsideJavadocComment(element)) continue;
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
       if (result == null || block == null) {
         result = block;
@@ -288,6 +291,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       else {
         final PsiElement commonParent = PsiTreeUtil.findCommonParent(result, block);
         result = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, false);
+        if (result == null) return null;
       }
     }
     return result;

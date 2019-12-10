@@ -533,7 +533,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     sb.append("class SOE_test {\n BigInteger BIG = new BigInteger(\n");
     int i;
     for (i = 0; i < 100000; i++) {
-      sb.append("  \"").append(Math.abs(random.nextInt())).append("\" +\n");
+      sb.append("  \"").append(random.nextInt(Integer.MAX_VALUE)).append("\" +\n");
     }
     sb.append("  \"\");\n}");
 

@@ -108,7 +108,6 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
 
     final String fieldName = field.getName();
-    assert fieldName != null;
     final PsiAnnotation attrAnno = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", fieldName);

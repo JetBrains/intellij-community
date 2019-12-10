@@ -7,7 +7,6 @@ class InferenceUnitGraphBuilder {
 
   private val relations: MutableList<Pair<InferenceUnit, InferenceUnit>> = mutableListOf()
   private val registered: MutableSet<InferenceUnit> = mutableSetOf()
-  private val fixedUnits: MutableSet<InferenceUnit> = mutableSetOf()
   private val fixedInstantiations: MutableMap<InferenceUnit, PsiType> = mutableMapOf()
   private val directUnits: MutableSet<InferenceUnit> = mutableSetOf()
 
@@ -31,18 +30,10 @@ class InferenceUnitGraphBuilder {
     if (unitNode.direct) {
       setDirect(unitNode.core)
     }
-    if (unitNode.forbiddenToInstantiate) {
-      forbidInstantiation(unitNode.core)
-    }
     setType(unitNode.core, unitNode.typeInstantiation)
     return this
   }
 
-  fun forbidInstantiation(unit: InferenceUnit): InferenceUnitGraphBuilder {
-    register(unit)
-    fixedUnits.add(unit)
-    return this
-  }
 
   fun setDirect(unit: InferenceUnit): InferenceUnitGraphBuilder {
     register(unit)
@@ -74,7 +65,6 @@ class InferenceUnitGraphBuilder {
     for ((unit, index) in unitIndexMap) {
       inferenceNodes.add(InferenceUnitNode(unit, superTypesMap[index], subTypesMap[index],
                                            fixedInstantiations[unit] ?: PsiType.NULL,
-                                           forbiddenToInstantiate = unit in fixedUnits,
                                            direct = unit in directUnits))
     }
     return InferenceUnitGraph(inferenceNodes)

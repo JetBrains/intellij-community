@@ -128,24 +128,6 @@ int smthPure2() { return 42; }
 """
   }
 
-  void "test don't analyze void methods"() {
-    assertPure false, """
-void method() {
-  smthPure();
-}
-int smthPure() { return 3; }
-"""
-  }
-
-  void "test don't analyze methods without returns"() {
-    assertPure false, """
-Object method() {
-    smthPure();
-}
-int smthPure() { return 3; }
-"""
-  }
-
   void "test empty constructor"() {
     assertPure true, """
 public Foo() {
@@ -394,7 +376,14 @@ int get() {
 }
 """
   }
-  
+
+  void "test assertNotNull is pure"() {
+    assertPure true, """
+static void assertNotNull(Object val) {
+  if(val == null) throw new AssertionError();
+}"""
+  }
+
   void "test recursive factorial"() {
     assertPure true, """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
   }

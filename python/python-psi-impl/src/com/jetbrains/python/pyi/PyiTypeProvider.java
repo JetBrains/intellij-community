@@ -17,6 +17,7 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -104,13 +105,22 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         final PyType returnType = PyUtil.getReturnTypeToAnalyzeAsCallType(overload, context);
         allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
 
-        final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
-        if (!mapping.getUnmappedArguments().isEmpty() || !mapping.getUnmappedParameters().isEmpty()) {
+        final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
+        if (!fullMapping.getUnmappedArguments().isEmpty() || !fullMapping.getUnmappedParameters().isEmpty()) {
           continue;
         }
 
         final PyExpression receiver = callSite.getReceiver(overload);
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping.getMappedParameters(), context);
+        final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
+
+        final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
+        final PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
+        if (receiver != null && firstImplicit != null) {
+          allMappedParameters.put(receiver, firstImplicit);
+        }
+        allMappedParameters.putAll(mappedExplicitParameters);
+
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, allMappedParameters, context);
         if (substitutions == null) {
           continue;
         }

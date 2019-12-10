@@ -24,6 +24,20 @@ class JavaMethodReferenceElement extends LookupElement {
     myRefPlace = refPlace;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof JavaMethodReferenceElement)) return false;
+    JavaMethodReferenceElement element = (JavaMethodReferenceElement)o;
+    return getLookupString().equals(element.getLookupString()) &&
+           myRefPlace.equals(element.myRefPlace);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getLookupString(), myRefPlace);
+  }
+
   @NotNull
   @Override
   public Object getObject() {

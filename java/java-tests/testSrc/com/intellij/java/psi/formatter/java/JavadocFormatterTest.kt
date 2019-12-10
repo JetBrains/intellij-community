@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightPlatformTestCase
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
   fun testRIGHT_MARGIN() {
@@ -546,35 +545,34 @@ public int method(int parameter) {
   }
 
   fun testReturnTagAlignmentWithPreTagOnFirstLine() {
-    getSettings().apply {
+    settings.apply {
       RIGHT_MARGIN = 80
       WRAP_COMMENTS = true
       WRAP_LONG_LINES = true
     }
-    getJavaSettings().apply {
+    javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_LEADING_ASTERISKS_ARE_ENABLED = true
     }
 
     doClassTest(
       """
-    /**
-     * @return <pre>this is a return value documentation with a very long description
-     * that is longer than the right margin.</pre>
-     */
-    public int method(int parameter) {
-        return 0;
-    }""",
+      /**
+       * @return <pre>this is a return value documentation with a very long description
+       * that is longer than the right margin.</pre>
+       */
+      public int method(int parameter) {
+          return 0;
+      }""".trimIndent(),
 
-"\n/**\n" +
-" * @return <pre>this is a return value documentation with a very long " +
-"""
- * description
- * that is longer than the right margin.</pre>
- */
-public int method(int parameter) {
-    return 0;
-}""")
+      """
+      /**
+       * @return <pre>this is a return value documentation with a very long description
+       * that is longer than the right margin.</pre>
+       */
+      public int method(int parameter) {
+          return 0;
+      }""".trimIndent())
   }
 
   fun testDoNotMergeCommentLines() {
@@ -1422,6 +1420,34 @@ public class Test {
            */
           void docTest() {
           }
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testIdea221827() {
+    settings.apply {
+      RIGHT_MARGIN = 40;
+      WRAP_LONG_LINES = true;
+    }
+
+    doTextTest(
+      """
+      /**
+       * <pre>
+       *     ScheduledFuture<?> future = executor.scheduleAtFixedRate(runnable, interval + delta, interval + delta, MILLISECONDS);
+       * </pre>
+       */
+      final class Temp { }
+      """.trimIndent(),
+
+      """
+      /**
+       * <pre>
+       *     ScheduledFuture<?> future = executor.scheduleAtFixedRate(runnable, interval + delta, interval + delta, MILLISECONDS);
+       * </pre>
+       */
+      final class Temp {
       }
       """.trimIndent()
     )

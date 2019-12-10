@@ -62,6 +62,8 @@ public class TabLabel extends JPanel implements Accessible, Disposable {
     setLayout(new DominantCenterBorderLayout());
 
     myLabelPlaceholder.setOpaque(false);
+    myLabelPlaceholder.setFocusable(false);
+    myLabel.setFocusable(false);
     add(myLabelPlaceholder, BorderLayout.CENTER);
 
     setAlignmentToCenter(true);

@@ -445,10 +445,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType paramType = substitutor.substitute(t);
       buffer.append(paramType.getPresentableText());
       String name = param.getName();
-      if (name != null) {
-        buffer.append(" ");
-        buffer.append(name);
-      }
+      buffer.append(" ");
+      buffer.append(name);
     }
   }
 

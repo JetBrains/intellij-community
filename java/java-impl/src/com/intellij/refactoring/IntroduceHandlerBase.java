@@ -55,7 +55,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
     if (dataContext != null) {
       final Editor editorFromDC = CommonDataKeys.EDITOR.getData(dataContext);
       final PsiFile cachedPsiFile = editorFromDC != null ? PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument()) : null;
-      if (cachedPsiFile != null && PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
+      if (PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
         editor = editorFromDC;
       }
       else {
@@ -81,22 +81,14 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   }
 
   /**
-   * @param project
-   * @param tempExpr
    * @param editor editor to highlight stuff in. Should accept {@code null}
-   * @return
    */
-  protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr,
-                                        Editor editor);
+  protected abstract boolean invokeImpl(Project project, PsiExpression tempExpr, @Nullable Editor editor);
 
   /**
-   * @param project
-   * @param localVariable
    * @param editor editor to highlight stuff in. Should accept {@code null}
-   * @return
    */
-  protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable,
-                                        Editor editor);
+  protected abstract boolean invokeImpl(Project project, PsiLocalVariable localVariable, @Nullable Editor editor);
 
   @TestOnly
   public abstract AbstractInplaceIntroducer getInplaceIntroducer();

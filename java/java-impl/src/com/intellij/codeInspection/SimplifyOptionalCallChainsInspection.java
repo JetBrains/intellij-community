@@ -852,7 +852,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiParameter outerParameter = outerIfPresentArgument.getParameterList().getParameters()[0];
       if (outerParameter == null) return null;
       String outerIfPresentParameterName = outerParameter.getName();
-      if (outerIfPresentParameterName == null) return null;
       PsiExpression outerIfPresentBodyExpr = LambdaUtil.extractSingleExpressionFromBody(outerIfPresentArgument.getBody());
       PsiMethodCallExpression outerIfPresentBody = tryCast(outerIfPresentBodyExpr, PsiMethodCallExpression.class);
       if (!OPTIONAL_IF_PRESENT.test(outerIfPresentBody)) return null;

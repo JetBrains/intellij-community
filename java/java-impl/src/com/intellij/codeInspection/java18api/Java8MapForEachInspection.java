@@ -16,16 +16,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -150,9 +147,9 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiType entryType = entryParameter.getType();
       ParameterCandidate key = new ParameterCandidate(entryType, true);
       ParameterCandidate value = new ParameterCandidate(entryType, false);
-      Collection<PsiReference> references = ReferencesSearch.search(entryParameter).findAll();
-      for (PsiReference ref : references) {
-        PsiMethodCallExpression entryCall = ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(ref.getElement(), PsiExpression.class));
+      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(entryParameter, body);
+      for (PsiReferenceExpression ref : references) {
+        PsiMethodCallExpression entryCall = ExpressionUtils.getCallForQualifier(ref);
         if (ENTRY_GETTER.test(entryCall)) {
           ParameterCandidate.select(entryCall, key, value).accept(entryCall);
         }
@@ -160,9 +157,8 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       key.createName(body, ct);
       value.createName(body, ct);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(entrySetCall.getProject());
-      for (PsiReference ref : references) {
-        PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null || !expression.isValid()) continue;
+      for (PsiExpression expression : references) {
+        if (!expression.isValid()) continue;
         PsiMethodCallExpression entryCall = ExpressionUtils.getCallForQualifier(expression);
         if (ENTRY_GETTER.test(entryCall)) {
           ct.replace(entryCall, factory.createIdentifier(ParameterCandidate.select(entryCall, key, value).myName));

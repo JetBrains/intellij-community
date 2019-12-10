@@ -35,7 +35,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 
-  @NonNls String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
+  @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
   @NonNls private static final String GOT_IT = "got_it";
 
   private final Project myProject;
@@ -96,14 +96,12 @@ public class ShellTerminalWidget extends JBTerminalWidget {
 
     if (result != null) {
       String content =
-        "Commands that have particular highlighting can be interpreted and launched by IDE in a smart way.<br>" +
-        "Press <b>Ctrl+Enter</b> to try it or <b>Enter</b> to execute it in the console as usual.<br>" +
-        "Any time you can turn it on/off on Preferences | Tools | Terminal.<br>" +
-        "<a href=\"" + GOT_IT + "\"/>Got it!</a>";
+        "Highlighted commands can be interpreted and executed by the IDE in a smart way.<br>" +
+        "Press <b>Ctrl+Enter</b> to try this, or <b>Enter</b> to run the command in the console as usual.<br>" +
+        "You can turn this behavior on/off in Preferences | Tools | Terminal. <a href=\"" + GOT_IT + "\"/>Got it!</a>";
 
       new SingletonNotificationManager(
-        NotificationGroup.toolWindowGroup("TerminalCustomCommandsHandling", TerminalToolWindowFactory.TOOL_WINDOW_ID),
-        NotificationType.INFORMATION, null)
+        NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID), NotificationType.INFORMATION, null)
         .notify("Smart commands execution", content, project,
                 new NotificationListener.Adapter() {
                   @Override

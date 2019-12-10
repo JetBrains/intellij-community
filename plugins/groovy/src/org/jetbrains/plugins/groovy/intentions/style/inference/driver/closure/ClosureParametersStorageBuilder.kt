@@ -53,7 +53,7 @@ internal class ClosureParametersStorageBuilder(private val generator: NameGenera
 
   fun extractClosuresFromCallInvocation(callUsages: Iterable<GrCall>,
                                         parameter: GrParameter): Boolean {
-    val directClosureCall = callUsages.firstOrNull { it.isClosureCall() } ?: return false
+    val directClosureCall = callUsages.firstOrNull { it.isClosureCall(parameter) } ?: return false
     val argumentAmount = directClosureCall.argumentList?.allArguments?.size ?: return false
     acceptParameter(parameter, argumentAmount, emptyList())
     return true

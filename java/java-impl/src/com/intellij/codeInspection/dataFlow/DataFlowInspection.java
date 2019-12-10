@@ -136,15 +136,36 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   @NotNull
-  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression, boolean onTheFly) {
+  protected List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                PsiType realType,
+                                                boolean onTheFly,
+                                                boolean alwaysFails) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     PsiExpression operand = castExpression.getOperand();
     PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && !SideEffectChecker.mayHaveSideEffects(operand)) {
-      String suffix = " instanceof " + typeElement.getText();
-      fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
-      if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
-        fixes.add(new SurroundWithIfFix(operand, suffix));
+    if (typeElement != null && operand != null) {
+      if (!alwaysFails && !SideEffectChecker.mayHaveSideEffects(operand)) {
+        String suffix = " instanceof " + typeElement.getText();
+        fixes.add(new AddAssertStatementFix(ParenthesesUtils.getText(operand, PsiPrecedenceUtil.RELATIONAL_PRECEDENCE) + suffix));
+        if (onTheFly && SurroundWithIfFix.isAvailable(operand)) {
+          fixes.add(new SurroundWithIfFix(operand, suffix));
+        }
+      }
+      if (realType != null) {
+        PsiType operandType = operand.getType();
+        if (operandType != null) {
+          PsiType type = typeElement.getType();
+          PsiType[] types = {realType};
+          if (realType instanceof PsiIntersectionType) {
+            types = ((PsiIntersectionType)realType).getConjuncts();
+          }
+          for (PsiType psiType : types) {
+            if (!psiType.isAssignableFrom(operandType)) {
+              psiType = DfaPsiUtil.tryGenerify(operand, psiType);
+              fixes.add(new ReplaceTypeInCastFix(type, psiType));
+            }
+          }
+        }
       }
     }
     return fixes;
@@ -251,6 +272,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         "Report nullable methods that always return a non-null value",
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
+      JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
+        "Report problems that happen only on some code paths",
+        REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
+
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(suggestNullables, gc);
@@ -282,6 +307,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(reportNullableMethodsReturningNotNull, gc);
+
+      gc.gridy++;
+      add(reportUnsoundWarnings, gc);
     }
 
     @Override

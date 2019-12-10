@@ -12,4 +12,8 @@ public class JsonIntentionActionTest extends JsonTestCase {
   public void testSortProperties() {
     doTest("json.intention.sort.properties");
   }
+
+  public void testSortMalformedJson() {
+    doTest("json.intention.sort.properties");
+  }
 }

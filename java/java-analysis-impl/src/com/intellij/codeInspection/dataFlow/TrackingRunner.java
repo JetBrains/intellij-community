@@ -828,8 +828,8 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
     }
     if (relationType == RelationType.NE) {
-      SpecialField leftField = SpecialField.fromQualifierType(leftValue.getType());
-      SpecialField rightField = SpecialField.fromQualifierType(leftValue.getType());
+      SpecialField leftField = SpecialField.fromQualifier(leftValue);
+      SpecialField rightField = SpecialField.fromQualifier(rightValue);
       if (leftField != null && leftField == rightField) {
         DfaValue leftSpecial = leftField.createValue(getFactory(), leftValue);
         DfaValue rightSpecial = rightField.createValue(getFactory(), rightValue);

@@ -104,9 +104,6 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
       else {
         return;
       }
-      if (fieldName == null) {
-        return;
-      }
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
       final String computedFieldName = codeStyleManager.propertyNameToVariableName(extractedFieldName, VariableKind.FIELD);
       final String computedStaticFieldName = codeStyleManager.propertyNameToVariableName(extractedFieldName, VariableKind.STATIC_FINAL_FIELD);

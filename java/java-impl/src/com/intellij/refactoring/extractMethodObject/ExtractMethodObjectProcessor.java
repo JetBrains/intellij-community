@@ -246,7 +246,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiVariable var = outputVariables[i];
       final PsiField outputField = myOutputFields[i];
       final String name = getPureName(var);
-      LOG.assertTrue(name != null);
       final PsiField field;
       if (outputField != null) {
         var2FieldNames.put(var.getName(), outputField.getName());
@@ -438,7 +437,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private String getPureName(PsiVariable var) {
+  @NotNull
+  private String getPureName(@NotNull PsiVariable var) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     return styleManager.variableNameToPropertyName(var.getName(), styleManager.getVariableKind(var));
   }
@@ -608,7 +608,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiModifierList parameterModifierList = parameter.getModifierList();
       LOG.assertTrue(parameterModifierList != null);
       final String parameterName = parameter.getName();
-      LOG.assertTrue(parameterName != null);
       PsiParameter parm = myElementFactory.createParameter(parameterName, parameter.getType());
       if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         final PsiModifierList modifierList = parm.getModifierList();

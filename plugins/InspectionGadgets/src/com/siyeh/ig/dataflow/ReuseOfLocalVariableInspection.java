@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,8 +129,7 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
   private static class ReuseOfLocalVariableVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
       final PsiElement assignmentParent = assignment.getParent();
       if (!(assignmentParent instanceof PsiExpressionStatement)) {
@@ -140,15 +139,12 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)lhs;
+      final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;
       final PsiElement referent = reference.resolve();
       if (!(referent instanceof PsiLocalVariable)) {
         return;
       }
       final PsiVariable variable = (PsiVariable)referent;
-
-      //TODO: this is safe, but can be weakened
       if (variable.getInitializer() == null) {
         return;
       }
@@ -160,16 +156,11 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       if (VariableAccessUtils.variableIsUsed(variable, rhs)) {
         return;
       }
-      final PsiCodeBlock variableBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock variableBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (variableBlock == null) {
         return;
       }
-
-      if (loopExistsBetween(assignment, variableBlock)) {
-        return;
-      }
-      if (tryExistsBetween(assignment, variableBlock)) {
+      if (hasParentOfTypeBeforeAncestor(assignment, variableBlock, PsiLoopStatement.class, PsiTryStatement.class)) {
         // this could be weakened, slightly, if it could be verified
         // that a variable is used in only one branch of a try statement
         return;
@@ -180,72 +171,62 @@ public class ReuseOfLocalVariableInspection extends BaseInspection {
       }
       if (variableBlock.equals(assignmentBlock)) {
         registerError(lhs);
-      }
-      final PsiStatement[] statements = variableBlock.getStatements();
-      final PsiElement containingStatement =
-        getChildWhichContainsElement(variableBlock, assignment);
-      int statementPosition = -1;
-      for (int i = 0; i < statements.length; i++) {
-        if (statements[i].equals(containingStatement)) {
-          statementPosition = i;
-          break;
-        }
-      }
-      if (statementPosition == -1) {
         return;
       }
-      for (int i = statementPosition + 1; i < statements.length; i++) {
-        if (VariableAccessUtils.variableIsUsed(variable, statements[i])) {
-          return;
+      if (assignmentBlock instanceof PsiCodeBlock) {
+        final PsiCodeBlock block = (PsiCodeBlock)assignmentBlock;
+        boolean before = true;
+        for (PsiStatement statement : block.getStatements()) {
+          if (statement.equals(assignmentParent)) before = false;
+          if (before) continue;
+          if (statement instanceof PsiBreakStatement) break;
+          if (statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) {
+            registerError(lhs);
+            return;
+          }
         }
+      }
+      PsiElement child = assignmentBlock;
+      PsiElement parent = child.getParent();
+      outer:
+      while (parent != null) {
+        boolean before = true;
+        if (child instanceof PsiSwitchLabeledRuleStatement) {
+          final PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)child;
+          parent = ruleStatement.getEnclosingSwitchBlock();
+        }
+        else if (child instanceof PsiBreakStatement) {
+          // in switch statement
+          final PsiBreakStatement breakStatement = (PsiBreakStatement)child;
+          parent = breakStatement.findExitedStatement();
+        }
+        else if (parent instanceof PsiCodeBlock) {
+          for (PsiStatement statement : ((PsiCodeBlock)parent).getStatements()) {
+            if (statement.equals(child)) {
+              before = false;
+              continue;
+            }
+            if (before) continue;
+            if (VariableAccessUtils.variableIsUsed(variable, statement)) return;
+            if (statement instanceof PsiReturnStatement || statement instanceof PsiThrowStatement) break outer;
+          }
+        }
+        if (parent == variableBlock || parent == null) break;
+        child = parent;
+        parent = child.getParent();
       }
       registerError(lhs);
     }
 
-    private static boolean loopExistsBetween(PsiAssignmentExpression assignment, PsiCodeBlock block) {
-      PsiElement elementToTest = assignment;
+    private static <T extends PsiElement> boolean hasParentOfTypeBeforeAncestor(@NotNull PsiElement descendant, @NotNull PsiElement ancestor,
+                                                                                @NotNull final Class<? extends T>... classes) {
+      PsiElement elementToTest = descendant.getParent();
       while (elementToTest != null) {
-        if (elementToTest.equals(block)) {
-          return false;
-        }
-        if (elementToTest instanceof PsiLoopStatement) {
-          return true;
-        }
+        if (elementToTest.equals(ancestor)) return false;
+        if (PsiTreeUtil.instanceOf(elementToTest, classes)) return true;
         elementToTest = elementToTest.getParent();
       }
       return false;
-    }
-
-    private static boolean tryExistsBetween(PsiAssignmentExpression assignment, PsiCodeBlock block) {
-      PsiElement elementToTest = assignment;
-      while (elementToTest != null) {
-        if (elementToTest.equals(block)) {
-          return false;
-        }
-        if (elementToTest instanceof PsiTryStatement) {
-          return true;
-        }
-        elementToTest = elementToTest.getParent();
-      }
-      return false;
-    }
-
-    /**
-     * @noinspection AssignmentToMethodParameter
-     */
-    @Nullable
-    public static PsiElement getChildWhichContainsElement(
-      @NotNull PsiCodeBlock ancestor,
-      @NotNull PsiElement descendant) {
-      PsiElement element = descendant;
-      while (!element.equals(ancestor)) {
-        descendant = element;
-        element = descendant.getParent();
-        if (element == null) {
-          return null;
-        }
-      }
-      return descendant;
     }
   }
 }

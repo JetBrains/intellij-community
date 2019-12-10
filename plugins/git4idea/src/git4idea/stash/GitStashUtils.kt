@@ -18,28 +18,31 @@
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
+import com.intellij.vcs.log.Hash
+import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
+import git4idea.history.GitCommitRequirements
+import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
+import git4idea.history.GitCommitRequirements.DiffRenameLimit.NO_RENAMES
+import git4idea.history.GitLogUtil
 import git4idea.merge.GitConflictResolver
 import git4idea.ui.StashInfo
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
 import java.nio.charset.Charset
 
-/**
- * Unstash the given root, handling common error scenarios.
- */
-fun unstash(project: Project, root: VirtualFile, handler: GitLineHandler, conflictResolver: GitConflictResolver) {
-  unstash(project, listOf(root), { handler }, conflictResolver)
-}
+private val LOG : Logger = logger("#git4idea.stash.GitStashUtils")
 
 /**
  * Unstash the given roots one by one, handling common error scenarios.
@@ -48,11 +51,11 @@ fun unstash(project: Project, root: VirtualFile, handler: GitLineHandler, confli
  * If there's a conflict, show the merge dialog, and if the conflicts get resolved, continue with other roots.
  */
 fun unstash(project: Project,
-            roots: Collection<VirtualFile>,
+            rootAndRevisions: Map<VirtualFile, Hash?>,
             handlerProvider: (VirtualFile) -> GitLineHandler,
             conflictResolver: GitConflictResolver) {
   DvcsUtil.workingTreeChangeStarted(project, "Unstash").use {
-    for (root in roots) {
+    for ((root, hash) in rootAndRevisions) {
       val handler = handlerProvider(root)
 
       val conflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH)
@@ -64,7 +67,8 @@ fun unstash(project: Project,
 
       val result = Git.getInstance().runCommand { handler }
 
-      VfsUtil.markDirtyAndRefresh(false, true, false, root)
+      val changesInStash = hash?.run { loadChangesInStash(project, root, hash) }
+      GitUtil.refreshVfs(root, changesInStash)
 
       if (conflictDetector.hasHappened()) {
         val conflictsResolved = conflictResolver.merge()
@@ -83,6 +87,19 @@ fun unstash(project: Project,
         return
       }
     }
+  }
+}
+
+private fun loadChangesInStash(project: Project, root: VirtualFile, hash: Hash): Collection<Change>? {
+  return try {
+    val consumer = CollectConsumer<GitCommit>()
+    GitLogUtil.readFullDetailsForHashes(project, root, listOf(hash.asString()),
+                                        GitCommitRequirements(false, NO_RENAMES, DIFF_TO_PARENTS), consumer)
+    return consumer.result.first().changes
+  }
+  catch (e: Exception) {
+    LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]" , e)
+    null
   }
 }
 

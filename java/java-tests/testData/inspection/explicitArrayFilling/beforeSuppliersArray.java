@@ -1,4 +1,5 @@
 // "Replace loop with 'Arrays.fill()' method call" "true"
+import java.util.function.*;
 
 class Test {
 

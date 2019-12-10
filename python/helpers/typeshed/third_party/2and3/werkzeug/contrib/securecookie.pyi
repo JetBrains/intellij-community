@@ -5,7 +5,7 @@ from werkzeug.contrib.sessions import ModificationTrackingDict
 
 class UnquoteError(Exception): ...
 
-class SecureCookie(ModificationTrackingDict):
+class SecureCookie(ModificationTrackingDict[Any, Any]):
     hash_method: Any
     serialization_method: Any
     quote_base64: Any

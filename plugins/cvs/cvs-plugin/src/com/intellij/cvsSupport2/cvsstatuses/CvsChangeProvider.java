@@ -50,6 +50,8 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import java.text.ParseException;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.map;
+
 /**
  * @author max
  */
@@ -219,7 +221,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private void showBranchImOn(final ChangelistBuilder builder, final VcsDirtyScope scope, HashSet<VirtualFile> cvsRoots) {
-    final List<VirtualFile> dirs = ObjectsConvertor.fp2vf(scope.getRecursivelyDirtyDirectories());
+    final List<VirtualFile> dirs = map(scope.getRecursivelyDirtyDirectories(), FilePath::getVirtualFile);
     for (VirtualFile root : cvsRoots) {
       if (dirs.contains(root)) {
         checkTopLevelForBeingSwitched(root, builder);

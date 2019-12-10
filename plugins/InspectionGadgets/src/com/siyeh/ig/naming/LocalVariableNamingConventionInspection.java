@@ -95,9 +95,6 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         }
       }
       final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
       if (isValid(name)) {
         return;
       }
@@ -119,9 +116,6 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         return;
       }
       final String name = variable.getName();
-      if (name == null) {
-        return;
-      }
       if (isValid(name)) {
         return;
       }

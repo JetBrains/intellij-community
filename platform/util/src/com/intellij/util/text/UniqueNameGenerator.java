@@ -41,7 +41,7 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   @Override
-  public final boolean value(String candidate) {
+  public final boolean value(@NotNull String candidate) {
     return isUnique(candidate);
   }
 
@@ -49,34 +49,34 @@ public class UniqueNameGenerator implements Condition<String> {
     return !myExistingNames.contains(candidate);
   }
 
-  public final boolean isUnique(String name, String prefix, String suffix) {
+  public final boolean isUnique(@NotNull String name, @NotNull String prefix, @NotNull String suffix) {
     return value(prefix + name + suffix);
   }
 
   @NotNull
-  public static String generateUniqueName(String defaultName, Collection<String> existingNames) {
+  public static String generateUniqueName(@NotNull String defaultName, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, "", "", existingNames);
   }
 
   @NotNull
-  public static String generateUniqueName(String defaultName, String prefix, String suffix, final Collection<String> existingNames) {
+  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 
   @NotNull
-  public static String generateUniqueName(String defaultName, Condition<? super String> validator) {
+  public static String generateUniqueName(@NotNull String defaultName, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, "", "", validator);
   }
 
   @NotNull
-  public static String generateUniqueName(String defaultName, String prefix, String suffix, Condition<? super String> validator) {
+  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, prefix, suffix, "", "", validator);
   }
 
   @NotNull
-  public static String generateUniqueName(String defaultName, String prefix, String suffix,
-                                          String beforeNumber, String afterNumber,
-                                          Condition<? super String> validator) {
+  public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix,
+                                          @NotNull String beforeNumber, @NotNull String afterNumber,
+                                          @NotNull Condition<? super String> validator) {
     String defaultFullName = (prefix + defaultName + suffix).trim();
     if (validator.value(defaultFullName)) {
       return defaultFullName;
@@ -91,12 +91,12 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   @NotNull
-  public String generateUniqueName(String defaultName, String prefix, String suffix) {
+  public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix) {
     return generateUniqueName(defaultName, prefix, suffix, "", "");
   }
 
   @NotNull
-  public String generateUniqueName(String defaultName, String prefix, String suffix, String beforeNumber, String afterNumber) {
+  public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull String beforeNumber, @NotNull String afterNumber) {
     String result = generateUniqueName(defaultName, prefix, suffix, beforeNumber, afterNumber, this);
     addExistingName(result);
     return result;
@@ -106,7 +106,8 @@ public class UniqueNameGenerator implements Condition<String> {
     myExistingNames.add(result);
   }
 
-  public String generateUniqueName(String defaultName) {
+  @NotNull
+  public String generateUniqueName(@NotNull String defaultName) {
     return generateUniqueName(defaultName, "", "");
   }
 }

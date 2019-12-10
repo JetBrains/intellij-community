@@ -356,7 +356,7 @@ public class EquivalenceChecker {
     final PsiParameter parameter2 = statement1.getIterationParameter();
     final String name1 = parameter1.getName();
     final String name2 = parameter2.getName();
-    if (name1 == null || name2 == null || !name1.equals(name2)) {
+    if (!name1.equals(name2)) {
       return EXACT_MISMATCH;
     }
     final PsiType type1 = parameter1.getType();

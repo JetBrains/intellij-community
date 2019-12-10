@@ -117,7 +117,6 @@ public class PluginGroups {
       "com.intellij.appengine",
       "org.intellij.grails",
       "com.intellij.gwt",
-      "com.intellij.vaadin",
       "JBoss Seam:com.intellij.seam,com.intellij.seam.pages,com.intellij.seam.pageflow",
       "JBoss jBPM:JBPM",
       "Struts:com.intellij.struts2",
@@ -132,7 +131,10 @@ public class PluginGroups {
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
 
-      "Microservices:com.intellij.micronaut,com.intellij.helidon",
+      "Microservices:" +
+      "com.intellij.micronaut," +
+      "com.intellij.quarkus," +
+      "com.intellij.helidon",
 
       "Java EE:com.intellij.javaee.batch," +
       "com.intellij.beanValidation," +

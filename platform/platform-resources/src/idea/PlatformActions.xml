@@ -827,6 +827,7 @@
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
+        <separator/>
       </group>
 
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
@@ -1155,6 +1156,13 @@
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
               text="Show Editor Highlighter Tokens"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+      <separator/>
+
+      <group id="Internal.CDS" popup="true" text="CDS">
+        <action id="installCDS" class="com.intellij.ide.cds.CDSEnableAction"/>
+        <action id="disableCDS" class="com.intellij.ide.cds.CDSDisableAction"/>
+      </group>
     </group>
 
     <group id="EditorContextBarMenu">

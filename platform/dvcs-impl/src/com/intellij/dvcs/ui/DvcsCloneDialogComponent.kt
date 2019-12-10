@@ -72,4 +72,6 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   fun getDirectory() = directoryField.text
   fun getUrl() = urlEditor.text
+
+  override fun dispose() {}
 }

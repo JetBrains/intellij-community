@@ -990,6 +990,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon SeparatorH = load("/general/separatorH.svg");
     /** 16x16 */ public static final Icon Settings = load("/general/settings.svg");
     /** 16x16 */ public static final Icon Show_to_implement = load("/general/show_to_implement.svg");
+    /** 16x16 */ public static final Icon ShowInfos = load("/general/showInfos.svg");
     /** 16x16 */ public static final Icon ShowWarning = load("/general/showWarning.svg");
     /** 16x16 */ public static final Icon TbHidden = load("/general/tbHidden.svg");
     /** 16x16 */ public static final Icon TbShown = load("/general/tbShown.svg");

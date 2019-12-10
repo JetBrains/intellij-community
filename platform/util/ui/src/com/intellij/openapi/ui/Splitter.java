@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,16 @@ public class Splitter extends JPanel implements Splittable {
     HONOR_THE_FIRST_MIN_SIZE,
     HONOR_THE_SECOND_MIN_SIZE
   }
+  @NotNull
   private LackOfSpaceStrategy myLackOfSpaceStrategy = LackOfSpaceStrategy.SIMPLE_RATIO;
+
+  public enum DividerPositionStrategy {
+    KEEP_PROPORTION, //default
+    KEEP_FIRST_SIZE,
+    KEEP_SECOND_SIZE
+  }
+  @NotNull
+  private DividerPositionStrategy myDividerPositionStrategy = DividerPositionStrategy.KEEP_PROPORTION;
 
 
   /**
@@ -144,12 +154,20 @@ public class Splitter extends JPanel implements Splittable {
     myHonorMinimumSize = honorMinimumSize;
   }
 
-  public void setLackOfSpaceStrategy(LackOfSpaceStrategy strategy) {
+  public void setLackOfSpaceStrategy(@NotNull LackOfSpaceStrategy strategy) {
     myLackOfSpaceStrategy = strategy;
   }
-
+  @NotNull
   public LackOfSpaceStrategy getLackOfSpaceStrategy() {
     return myLackOfSpaceStrategy;
+  }
+  public void setDividerPositionStrategy(@NotNull DividerPositionStrategy dividerPositionStrategy) {
+    myDividerPositionStrategy = dividerPositionStrategy;
+  }
+
+  @NotNull
+  public DividerPositionStrategy getDividerPositionStrategy() {
+    return myDividerPositionStrategy;
   }
 
   /**
@@ -239,6 +257,47 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   @Override
+  public void reshape(int x, int y, int w, int h) {
+    if (myDividerPositionStrategy != DividerPositionStrategy.KEEP_PROPORTION
+        && !isNull(myFirstComponent) && myFirstComponent.isVisible()
+        && !isNull(mySecondComponent) && mySecondComponent.isVisible()
+        && ((myVerticalSplit && h > 2 * getDividerWidth()) || (!myVerticalSplit && w > 2 * getDividerWidth()))
+      && ((myVerticalSplit && h != getHeight()) || (!myVerticalSplit && w != getWidth()))) {
+      int total = myVerticalSplit ? h : w;
+      if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_FIRST_SIZE) {
+        myProportion = getProportionForFirstSize(myVerticalSplit ? myFirstComponent.getHeight() : myFirstComponent.getWidth(), total);
+      }
+      else if (myDividerPositionStrategy == DividerPositionStrategy.KEEP_SECOND_SIZE) {
+        myProportion = getProportionForSecondSize(myVerticalSplit ? mySecondComponent.getHeight() : mySecondComponent.getWidth(), total);
+      }
+    }
+    super.reshape(x, y, w, h);
+  }
+
+  @ApiStatus.Internal
+  protected final float getProportionForFirstSize(int firstSize, int totalSize) {
+    checkSize(firstSize);
+    checkTotalSize(totalSize);
+    return (float)firstSize / (totalSize - getDividerWidth());
+  }
+
+  @ApiStatus.Internal
+  protected final float getProportionForSecondSize(int secondSize, int totalSize) {
+    checkSize(secondSize);
+    checkTotalSize(totalSize);
+    return (float)(totalSize - getDividerWidth() - secondSize) / (totalSize - getDividerWidth());
+  }
+
+  private static void checkSize(int size) {
+    if (size < 0) throw new IllegalArgumentException("size is negative: " + size);
+  }
+
+  private void checkTotalSize(int totalSize) {
+    int d = getDividerWidth();
+    if (totalSize <= d) throw new IllegalArgumentException("divider width >= total size: " + d + " >= " + totalSize);
+  }
+
+  @Override
   public void doLayout() {
     if (mySkipNextLayout) {
       mySkipNextLayout = false;
@@ -298,7 +357,7 @@ public class Splitter extends JPanel implements Splittable {
         }
       }
 
-      int iSize1 = (int)Math.round(Math.floor(size1));
+      int iSize1 = (int)Math.round(size1);
       int iSize2 = total - iSize1 - d;
 
       if (isVertical()) {

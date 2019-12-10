@@ -9,22 +9,30 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.DiffPreviewProvider;
+import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.navigation.History;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
@@ -32,14 +40,17 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
 import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -49,6 +60,7 @@ import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +77,8 @@ import java.util.List;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG;
+import static com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
@@ -88,6 +102,11 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
+  @NotNull private final AbstractVcsLogUi myLogUi;
+
+  @Nullable DiffPreviewProvider myDiffPreviewProvider;
+  @Nullable private GraphViewVirtualFile myGraphViewFile;
+  @NotNull private final JComponent myToolbarsAndTable;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
@@ -97,6 +116,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myUiProperties = uiProperties;
 
     myFilterUi = filterUi;
+    myLogUi = logUi;
 
     myGraphTable = new MyVcsLogGraphTable(logUi, logData);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
@@ -141,17 +161,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
     toolbars.add(myNotificationLabel, BorderLayout.CENTER);
-    JComponent toolbarsAndTable = new JPanel(new BorderLayout());
-    toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
-    toolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
-                                                      myLogData, logUi.getId(), this), BorderLayout.CENTER);
+    myToolbarsAndTable = new JPanel(new BorderLayout());
+    myToolbarsAndTable.add(toolbars, BorderLayout.NORTH);
+    myToolbarsAndTable.add(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.TOP),
+                                                        myLogData, logUi.getId(), this), BorderLayout.CENTER);
 
     myDetailsSplitter = new OnePixelSplitter(true, DETAILS_SPLITTER_PROPORTION, 0.7f);
     myDetailsSplitter.setFirstComponent(changesLoadingPane);
     showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
 
     myChangesBrowserSplitter = new OnePixelSplitter(false, CHANGES_SPLITTER_PROPORTION, 0.7f);
-    installGraphView(toolbarsAndTable);
+    installGraphView();
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
@@ -166,46 +186,109 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
+
+    final Project project = myLogData.getProject();
+    initPreviewInEditor(project);
   }
 
-  private void installGraphView(JComponent toolbarsAndTable) {
-    if (Registry.is("show.log.as.editor.tab")) {
-      VirtualFile graphFile = getOrCreateGraphViewVirtualFile(toolbarsAndTable);
-      FileEditor[] editors = FileEditorManager.getInstance(myLogData.getProject()).openFile(graphFile, true);
-      assert editors.length == 1 : "opened multiple log editors for " + graphFile;
-      FileEditor editor = editors[0];
-      final JComponent component = editor.getComponent();
-      final EditorWindowHolder holder =
-        ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
-      if (holder == null) {
-        return;
-      }
-      EditorWindow editorWindow = holder.getEditorWindow();
-      editorWindow.setFilePinned(graphFile, true);
+  private void initPreviewInEditor(Project project) {
+    if (!Registry.is("show.diff.preview.as.editor.tab")) {
+      return;
+    }
 
-      DataManager.registerDataProvider(toolbarsAndTable, this);
+    myDiffPreviewProvider = new DiffPreviewProvider() {
+      @NotNull
+      @Override
+      public DiffRequestProcessor createDiffRequestProcessor() {
+        VcsLogChangeProcessor preview = new VcsLogChangeProcessor(project, myChangesBrowser, true,
+                                                                  myChangesBrowser);
+        preview.updatePreview(true);
+        return preview;
+      }
+
+      @NotNull
+      @Override
+      public Object getOwner() {
+        return MainFrame.this;
+      }
+
+      @Override
+      public String getEditorTabName() {
+        return "Repository Diff";
+      }
+    };
+
+    myChangesBrowser.getViewer().addSelectionListener(() -> {
+      if (myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myChangesBrowser.getSelectedChanges().isEmpty()) {
+        FileEditorManager instance = FileEditorManager.getInstance(project);
+        PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(myDiffPreviewProvider);
+        instance.openFile(file, false, true);
+      }
+    }, this);
+  }
+
+  private void installGraphView() {
+    if (Registry.is("show.log.as.editor.tab")) {
+      DataManager.registerDataProvider(myToolbarsAndTable, this);
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        openLogEditorTab();
+      }, ModalityState.NON_MODAL);
     }
     else {
-      myChangesBrowserSplitter.setFirstComponent(toolbarsAndTable);
+      myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);
     }
   }
 
-  private VirtualFile myGraphViewFile;
+  public void openLogEditorTab() {
+    VirtualFile file = getOrCreateGraphViewFile();
 
-  public VirtualFile tryGetGraphViewFile() {
-    return myGraphViewFile;
+    FileEditor[] editors = FileEditorManager.getInstance(myLogData.getProject()).openFile(file, true);
+    assert editors.length == 1 : "opened multiple log editors for " + file;
+    FileEditor editor = editors[0];
+    final JComponent component = editor.getComponent();
+    final EditorWindowHolder holder =
+      ComponentUtil.getParentOfType((Class<? extends EditorWindowHolder>)EditorWindowHolder.class, (Component)component);
+    if (holder == null) {
+      return;
+    }
+    EditorWindow editorWindow = holder.getEditorWindow();
+    editorWindow.setFilePinned(file, true);
   }
 
-  @NotNull
-  public VirtualFile getOrCreateGraphViewVirtualFile(JComponent logViewComponent) {
+  private VirtualFile getOrCreateGraphViewFile() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myGraphViewFile == null) {
-      myGraphViewFile = new GraphViewVirtualFile(logViewComponent);
-      Disposer.register(this, () -> myGraphViewFile = null);
+    if (myGraphViewFile == null || !myGraphViewFile.isValid()) {
+      myGraphViewFile = new GraphViewVirtualFile(myToolbarsAndTable, () -> {
+        return getTabName();
+      });
+
+      myGraphViewFile.putUserData(GraphViewVirtualFile.TabContentId, myLogUi.getId());
     }
 
+    Disposer.register(this, () -> myGraphViewFile = null);
+
     return myGraphViewFile;
+  }
+
+  //todo move it out from MainFrame
+  private String getTabName() {
+    VcsLogContentProvider instance = VcsLogContentProvider.getInstance(myLogData.getProject());
+    if (instance != null) {
+      VcsLogUiImpl ui = instance.getUi();
+      if (ui != null && ui.getMainFrame() == this) {
+        return VcsLogContentProvider.TAB_NAME;
+      }
+    }
+
+    String name = "all";
+    VcsLogFilterCollection filters = myFilterUi.getFilters();
+    if (!filters.isEmpty()) {
+      name = StringUtil.shortenTextWithEllipsis(VcsLogFiltersKt.getPresentation(filters), 150, 20);
+    }
+
+    return ContentUtilEx.getFullName(VcsLogContentProvider.TAB_NAME, name);
   }
 
   public void setExplanationHtml(@Nullable String text) {
@@ -308,23 +391,32 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myLogData.getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
     else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
-      return new ShowPreviewEditorAction.DiffPreviewProvider() {
-        @NotNull
-        @Override
-        public DiffRequestProcessor createDiffRequestProcessor() {
-          VcsLogChangeProcessor preview = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, true,
-                                                                    myChangesBrowser);
-          preview.updatePreview(true);
-          return preview;
-        }
-
-        @NotNull
-        @Override
-        public Object getOwner() {
-          return MainFrame.this;
-        }
-      };
+      return myDiffPreviewProvider;
     }
+    else if (VCS_LOG.is(dataId)) {
+      return myLogUi.getVcsLog();
+    }
+    else if (VCS_LOG_UI.is(dataId)) {
+      return myLogUi;
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBER.is(dataId)) {
+      List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();
+      if (hashes.isEmpty()) return null;
+      return VcsLogUtil.convertToRevisionNumber(notNull(getFirstItem(hashes)).getHash());
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(dataId)) {
+      List<CommitId> hashes = myLogUi.getVcsLog().getSelectedCommits();
+      if (hashes.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+      return ContainerUtil.map(hashes,
+                               commitId -> VcsLogUtil.convertToRevisionNumber(commitId.getHash())).toArray(new VcsRevisionNumber[0]);
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myLogUi.getHelpId();
+    }
+    else if (History.KEY.is(dataId)) {
+      return myLogUi.getNavigationHistory();
+    }
+
     return null;
   }
 
@@ -350,6 +442,20 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   public void showDiffPreview(boolean state) {
     myPreviewDiff.updatePreview(state);
+    if (Registry.is("show.diff.preview.as.editor.tab")) {
+      if (myDiffPreviewProvider != null) {
+        if (!state) {
+          //'equals' for such files is overridden and means the equality of its owner
+          FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
+        }
+        else {
+          FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
+        }
+      }
+
+      return;
+    }
+
     myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
   }
 

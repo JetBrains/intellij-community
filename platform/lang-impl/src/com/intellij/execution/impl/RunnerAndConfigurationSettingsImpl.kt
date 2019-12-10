@@ -14,6 +14,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -50,10 +51,13 @@ enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
 }
 
-class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
-                                                                   private var _configuration: RunConfiguration? = null,
-                                                                   private var isTemplate: Boolean = false,
-                                                                   var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
+  val manager: RunManagerImpl,
+  private var _configuration: RunConfiguration? = null,
+  private var isTemplate: Boolean = false,
+  var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
+) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+
   @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
   @Suppress("UNUSED_PARAMETER")
   constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
@@ -114,6 +118,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   }
 
   override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
+
+  fun setConfiguration(configuration: RunConfiguration?) {
+    _configuration = configuration
+  }
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
@@ -311,7 +319,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     val configuration = configuration
     var warning: RuntimeConfigurationWarning?
 
-    warning = doCheck { configuration.checkConfiguration() }
+    warning = doCheck { runReadAction { configuration.checkConfiguration() } }
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
         throw warning

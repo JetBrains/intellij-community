@@ -124,7 +124,6 @@ public class JavaSourceInference {
   }
   
   private static boolean findPurity(@NotNull PsiMethodImpl method, @NotNull MethodData data) {
-    if (PsiType.VOID.equals(method.getReturnType())) return false;
     PurityInferenceResult result = data.getPurity();
     if (result == null) return false;
     return Boolean.TRUE.equals(RecursionManager.doPreventingRecursion(method, true, () -> result.isPure(method, data.methodBody(method))));

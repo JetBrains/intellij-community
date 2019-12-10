@@ -36,6 +36,8 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.impl.*;
@@ -228,7 +230,7 @@ public class PyUtil {
             return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
           }
         }
-        else if (PyNames.DICT.equals(attr_name)) {
+        else if (PyNames.DUNDER_DICT.equals(attr_name)) {
           PyType qualifierType = context.getType(qualifier);
           if (qualifierType instanceof PyClassType && ((PyClassType)qualifierType).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
@@ -1138,6 +1140,7 @@ public class PyUtil {
     }
     LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
+    lookupElementBuilder.putUserData(PyCompletionMlElementInfo.Companion.getKey(), PyCompletionMlElementKind.NAMED_ARG.asInfo());
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);
   }
 

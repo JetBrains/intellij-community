@@ -52,4 +52,8 @@ public interface PsiParameter extends PsiVariable, JvmParameter, PsiJvmModifiers
   default PsiAnnotation[] getAnnotations() {
     return PsiJvmModifiersOwner.super.getAnnotations();
   }
+
+  @NotNull
+  @Override
+  String getName();
 }

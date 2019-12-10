@@ -4,7 +4,6 @@ from typing import (
 import builtins
 import codecs
 from mmap import mmap
-import sys
 from types import TracebackType
 from typing import TypeVar
 
@@ -45,6 +44,7 @@ class IOBase:
     def __del__(self) -> None: ...
     @property
     def closed(self) -> bool: ...
+    def _checkClosed(self, msg: Optional[str] = ...) -> None: ...  # undocumented
 
 class RawIOBase(IOBase):
     def readall(self) -> bytes: ...
@@ -205,4 +205,6 @@ class StringIO(TextIOWrapper):
     def __enter__(self) -> StringIO: ...
 
 class IncrementalNewlineDecoder(codecs.IncrementalDecoder):
-    def decode(self, input: bytes, final: bool = ...) -> str: ...
+    def __init__(self, decoder: Optional[codecs.IncrementalDecoder],
+                 translate: bool, errors: str = ...) -> None: ...
+    def decode(self, input: Union[bytes, str], final: bool = ...) -> str: ...

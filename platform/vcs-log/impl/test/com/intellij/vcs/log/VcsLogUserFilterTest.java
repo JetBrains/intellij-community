@@ -195,7 +195,8 @@ public abstract class VcsLogUserFilterTest {
   private void checkFilter(VcsLogUserFilter userFilter,
                            String filterDescription,
                            @NotNull Collection<String> expectedHashes,
-                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder) throws VcsException {
+                           @NotNull List<? extends VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
+    throws VcsException {
     // filter by vcs
     List<String> actualHashes = getFilteredHashes(userFilter);
 

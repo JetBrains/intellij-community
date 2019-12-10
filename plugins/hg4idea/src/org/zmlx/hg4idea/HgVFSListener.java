@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -335,10 +335,7 @@ public class HgVFSListener extends VcsVFSListener {
           dialog.setTitle("Failed to Rename");
           dialog.show();
         });
-        NotificationAction retryAction = NotificationAction.create("Retry", (e, notification) -> {
-          notification.expire();
-          performMoveRename(failedToMove);
-        });
+        NotificationAction retryAction = NotificationAction.createSimpleExpiring("Retry", () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
           .notifyError("Rename Failed", "Couldn't mark some files as renamed", viewFilesAction, retryAction);
       }

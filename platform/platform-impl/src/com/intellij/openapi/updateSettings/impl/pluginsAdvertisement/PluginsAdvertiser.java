@@ -11,12 +11,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,7 +41,6 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -53,11 +50,12 @@ public final class PluginsAdvertiser {
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 
   public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
-  public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate Edition";
-  public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate Edition";
-  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Check " + IDEA_ULTIMATE_EDITION;
+  public static final String IDEA_ULTIMATE_EDITION = "IntelliJ IDEA Ultimate";
+  public static final String ULTIMATE_EDITION_SUGGESTION = "Do not suggest Ultimate";
+  public static final String CHECK_ULTIMATE_EDITION_TITLE = "Try " + IDEA_ULTIMATE_EDITION;
   public static final String DISPLAY_ID = "Plugins Suggestion";
   public static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup(DISPLAY_ID, NotificationDisplayType.STICKY_BALLOON, true);
+  public static final String FUS_GROUP_ID = "plugins.advertiser";
 
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
 
@@ -176,7 +174,7 @@ public final class PluginsAdvertiser {
   }
 
   public static void openDownloadPage() {
-    BrowserUtil.browse(ApplicationInfo.getInstance().getCompanyURL());
+    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"));
   }
 
   static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
@@ -319,57 +317,6 @@ public final class PluginsAdvertiser {
       if (myBundled && !other.myBundled) return -1;
       if (!myBundled && other.myBundled) return 1;
       return Comparing.compare(myPluginId, other.myPluginId);
-    }
-  }
-
-  static class ConfigurePluginsListener implements NotificationListener {
-    private final Set<? extends UnknownFeature> myUnknownFeatures;
-    private final Project myProject;
-    private final List<? extends IdeaPluginDescriptor> myAllPlugins;
-    private final Set<PluginDownloader> myPlugins;
-    private final Map<Plugin, IdeaPluginDescriptor> myDisabledPlugins;
-
-    ConfigurePluginsListener(Set<? extends UnknownFeature> unknownFeatures,
-                             Project project,
-                             List<? extends IdeaPluginDescriptor> allPlugins,
-                             Set<PluginDownloader> plugins,
-                             Map<Plugin, IdeaPluginDescriptor> disabledPlugins) {
-      myUnknownFeatures = unknownFeatures;
-      myProject = project;
-      myAllPlugins = allPlugins;
-      myPlugins = plugins;
-      myDisabledPlugins = disabledPlugins;
-    }
-
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        final String description = event.getDescription();
-        if ("ignore".equals(description)) {
-          UnknownFeaturesCollector featuresCollector = UnknownFeaturesCollector.getInstance(myProject);
-          for (UnknownFeature feature : myUnknownFeatures) {
-            featuresCollector.ignoreFeature(feature);
-          }
-          notification.expire();
-        }
-        else if ("configure".equals(description)) {
-          LOG.assertTrue(myAllPlugins != null);
-          notification.expire();
-          new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[0]), myAllPlugins).show();
-        }
-        else if ("enable".equals(description)) {
-          enablePlugins(myProject, myDisabledPlugins.values());
-          notification.expire();
-        }
-        else if ("ignoreUltimate".equals(description)) {
-          PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, "true");
-          notification.expire();
-        }
-        else if ("open".equals(description)) {
-          openDownloadPage();
-          notification.expire();
-        }
-      }
     }
   }
 }

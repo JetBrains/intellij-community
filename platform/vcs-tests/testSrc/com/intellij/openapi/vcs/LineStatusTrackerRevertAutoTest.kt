@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.diff.DiffTestCase
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.UIUtil
 import java.util.*
@@ -42,7 +44,11 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
     doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, true)
   }
 
-  fun doTest(seed: Long, testRuns: Int, modifications: Int, textLength: Int, changeLength: Int, iterations: Int, smart: Boolean) {
+  fun testUnfreeze() {
+    doTestUnfreeze(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH)
+  }
+
+  private fun doTest(seed: Long, testRuns: Int, modifications: Int, textLength: Int, changeLength: Int, iterations: Int, smart: Boolean) {
     myRng = Random(seed)
     for (i in 0 until testRuns) {
       val currentSeed = getCurrentSeed()
@@ -103,6 +109,44 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
         UIUtil.dispatchAllInvocationEvents()
       }
       catch (e: Throwable) {
+        println("Seed: " + seed)
+        println("TestRuns: " + testRuns)
+        println("TextLength: " + textLength)
+        println("I: " + i)
+        println("Current seed: " + currentSeed)
+        throw e
+      }
+
+    }
+  }
+
+  fun doTestUnfreeze(seed: Long, testRuns: Int, textLength: Int) {
+    myRng = Random(seed)
+    for (i in 0 until testRuns) {
+      if (i % 1000 == 0) LOG.debug(i.toString())
+      val currentSeed = getCurrentSeed()
+
+      val initial = generateText(textLength)
+      val initialVcs = generateText(textLength)
+      val newText = generateText(textLength)
+      val newTextVcs = generateText(textLength)
+      try {
+        lightTest(initial, initialVcs, true) {
+          tracker.doFrozen(Runnable {
+            runWriteAction {
+              tracker.document.setText(newText)
+              tracker.setBaseRevision(newTextVcs)
+            }
+          })
+        }
+
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      catch (e: Throwable) {
+        println("Text: " + DiffTestCase.textToReadableFormat(initial))
+        println("Vcs: " + DiffTestCase.textToReadableFormat(initialVcs))
+        println("New Text: " + DiffTestCase.textToReadableFormat(newText))
+        println("New Vcs: " + DiffTestCase.textToReadableFormat(newTextVcs))
         println("Seed: " + seed)
         println("TestRuns: " + testRuns)
         println("TextLength: " + textLength)

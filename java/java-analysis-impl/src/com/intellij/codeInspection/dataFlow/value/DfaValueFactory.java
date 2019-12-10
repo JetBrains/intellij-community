@@ -194,6 +194,20 @@ public class DfaValueFactory {
         }
       }
     }
+    if (relationType == RelationType.EQ || relationType == RelationType.NE) {
+      SpecialField leftSpecialField = SpecialField.fromQualifier(dfaLeft);
+      if (leftSpecialField != null) {
+        SpecialField rightSpecialField = SpecialField.fromQualifier(dfaRight);
+        if (rightSpecialField == leftSpecialField) {
+          DfaValue leftValue = leftSpecialField.createValue(this, dfaLeft);
+          DfaValue rightValue = leftSpecialField.createValue(this, dfaRight);
+          DfaConstValue specialFieldComparison = tryEvaluate(leftValue, RelationType.EQ, rightValue);
+          if (specialFieldComparison != null && Boolean.FALSE.equals(specialFieldComparison.getValue())) {
+            return getBoolean(relationType == RelationType.NE);
+          }
+        }
+      }
+    }
 
     LongRangeSet leftRange = LongRangeSet.fromDfaValue(dfaLeft);
     LongRangeSet rightRange = LongRangeSet.fromDfaValue(dfaRight);

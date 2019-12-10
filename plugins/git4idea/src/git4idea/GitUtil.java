@@ -65,7 +65,6 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static java.util.Arrays.stream;
 
 /**
  * Git utility/helper methods
@@ -1038,18 +1037,20 @@ public class GitUtil {
     }
   }
 
-  public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<? extends Change> changes) {
+  public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
     repository.update();
-    refreshVfs(repository.getRoot(), changes);
+    refreshChangedVfs(repository, startHash);
   }
 
-  public static void updateAndRefreshVfs(GitRepository... repositories) {
-    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
-    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
-    stream(repositories).forEach(GitRepository::update);
-    for (GitRepository repository : repositories) {
-      refreshVfs(repository.getRoot(), null);
+  public static void refreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
+    Collection<Change> changes = null;
+    if (startHash != null) {
+      Hash currentHash = getHead(repository);
+      if (currentHash != null) {
+        changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false);
+      }
     }
+    refreshVfs(repository.getRoot(), changes);
   }
 
   public static boolean isGitRoot(@NotNull String rootDir) {
@@ -1116,10 +1117,14 @@ public class GitUtil {
     return handler;
   }
 
-  @NotNull
-  public static Hash getHead(@NotNull GitRepository repository) throws VcsException {
+  @Nullable
+  public static Hash getHead(@NotNull GitRepository repository) {
     GitCommandResult result = Git.getInstance().tip(repository, HEAD);
-    String head = result.getOutputOrThrow();
+    if (!result.success()) {
+      LOG.warn("Couldn't identify the HEAD for " + repository + ": " + result.getErrorOutputAsJoinedString());
+      return null;
+    }
+    String head = result.getOutputAsJoinedString();
     return HashImpl.build(head);
   }
 }

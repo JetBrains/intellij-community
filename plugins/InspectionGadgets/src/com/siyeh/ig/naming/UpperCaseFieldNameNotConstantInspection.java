@@ -73,9 +73,6 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
         return;
       }
       final String fieldName = field.getName();
-      if (fieldName == null) {
-        return;
-      }
       if (!fieldName.equals(StringUtil.toUpperCase(fieldName))) {
         return;
       }

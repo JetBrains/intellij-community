@@ -158,7 +158,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return Arrays.stream(ownerClass.getPsiClass().getAllFields())
       .filter(field -> field != null &&
                        (field.getContainingClass() == ownerClass.getPsiClass() || !field.hasModifierProperty(PsiModifier.PRIVATE)) &&
-                       field.getName() != null && uniqueNames.add(field.getName()))
+                       uniqueNames.add(field.getName()))
       .filter(filter)
       .sorted(Comparator.comparing((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
       .map(field -> withPriority(JavaLookupElementBuilder.forField(field).withInsertHandler(this), isPublic(field)))

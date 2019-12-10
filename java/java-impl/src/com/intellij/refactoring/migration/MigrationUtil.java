@@ -19,7 +19,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,6 +30,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public class MigrationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationUtil");
@@ -61,11 +65,18 @@ public class MigrationUtil {
   }
 
   private static UsageInfo[] findRefs(final PsiElement aClass, GlobalSearchScope searchScope) {
-    final ArrayList<UsageInfo> results = new ArrayList<>();
+    List<UsageInfo> results = new ArrayList<>();
     for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false)) {
       results.add(new UsageInfo(usage));
     }
 
+    results.sort(Comparator.<UsageInfo, String>comparing(u -> {
+      VirtualFile file = u.getVirtualFile();
+      return file == null ? null : file.getName();
+    }).thenComparingInt(u->{
+      Segment range = u.getNavigationRange();
+      return range == null ? 0 : range.getStartOffset();
+    }));
     return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 

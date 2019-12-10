@@ -40,6 +40,8 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction implements UpdateInBackground {
+  private static final long MANY_CHANGES_THRESHOLD = 1000;
+
   @Override
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
     Project project = context.getProject();
@@ -52,18 +54,27 @@ public class TabbedShowHistoryAction extends AbstractVcsAction implements Update
     Project project = context.getProject();
     if (project == null) return false;
 
-    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().collect(Collectors.toList());
+    List<FilePath> selectedFiles = context.getSelectedFilePathsStream().limit(MANY_CHANGES_THRESHOLD)
+      .collect(Collectors.toList());
+
     if (selectedFiles.isEmpty()) return false;
-    if (!ContainerUtil.all(selectedFiles, path -> AbstractVcs.fileInVcsByFileStatus(project, path))) return false;
 
-    if (canShowNewFileHistory(project, selectedFiles)) return true;
-    if (selectedFiles.size() > 1) return false;
+    if (canShowNewFileHistory(project, selectedFiles)) {
+      return ContainerUtil.all(selectedFiles, path -> AbstractVcs.fileInVcsByFileStatus(project, path));
+    }
 
-    FilePath selectedPath = ContainerUtil.getFirstItem(selectedFiles);
-    if (selectedPath == null) return false;
-    VirtualFile fileOrParent = getExistingFileOrParent(selectedPath);
-    if (fileOrParent == null) return false;
-    return canShowOldFileHistory(project, selectedPath, fileOrParent);
+    if (selectedFiles.size() == 1) {
+      FilePath selectedPath = ContainerUtil.getFirstItem(selectedFiles);
+      if (selectedPath == null) return false;
+      VirtualFile fileOrParent = getExistingFileOrParent(selectedPath);
+      if (fileOrParent == null) return false;
+
+      if (canShowOldFileHistory(project, selectedPath, fileOrParent)) {
+        return AbstractVcs.fileInVcsByFileStatus(project, selectedPath);
+      }
+    }
+
+    return false;
   }
 
   private static boolean canShowOldFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {

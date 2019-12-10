@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
@@ -29,18 +27,6 @@ public class TreeUtil {
     if (node != null) {
       node.getFirstChildNode();
     }
-  }
-
-  public static void ensureParsedRecursively(@NotNull ASTNode node) {
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() { });
-  }
-  public static void ensureParsedRecursivelyCheckingProgress(@NotNull ASTNode node, @NotNull final ProgressIndicator indicator) {
-    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      public void visitLeaf(LeafElement leaf) {
-        indicator.checkCanceled();
-      }
-    });
   }
 
   public static boolean isCollapsedChameleon(ASTNode node) {

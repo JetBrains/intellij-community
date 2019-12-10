@@ -165,7 +165,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
       baseDir = file.getParent();
-      while (baseDir != null && !Files.exists(baseDir)) {
+      while (baseDir != null && !Files.exists(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER))) {
         baseDir = baseDir.getParent();
       }
 

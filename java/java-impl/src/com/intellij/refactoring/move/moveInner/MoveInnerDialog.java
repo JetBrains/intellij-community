@@ -283,7 +283,6 @@ public class MoveInnerDialog extends MoveDialogBase {
     PsiElement target = null;
 
     if (message == null) {
-      JavaRefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
       if (myCbPassOuterClass.isSelected() && mySuggestedNameInfo != null) {
         mySuggestedNameInfo.nameChosen(getParameterName());
       }

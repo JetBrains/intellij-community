@@ -130,10 +130,6 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
     }
   }
 
-  public Map<Key, Value> getMap() {
-    return myMap;
-  }
-
   private static final AtomicInteger requests = new AtomicInteger();
   private static final AtomicInteger totalRemovals = new AtomicInteger();
   private static final AtomicInteger totalAdditions = new AtomicInteger();

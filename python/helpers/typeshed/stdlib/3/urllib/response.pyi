@@ -1,6 +1,7 @@
 # private module, we only expose what's needed
 
 from typing import BinaryIO, Iterable, List, Mapping, Optional, Type, TypeVar
+from email.message import Message
 from types import TracebackType
 
 _AIUT = TypeVar("_AIUT", bound=addbase)
@@ -31,8 +32,8 @@ class addbase(BinaryIO):
     def writelines(self, lines: Iterable[bytes]) -> None: ...
 
 class addinfo(addbase):
-    headers: Mapping[str, str]
-    def info(self) -> Mapping[str, str]: ...
+    headers: Message
+    def info(self) -> Message: ...
 
 class addinfourl(addinfo):
     url: str

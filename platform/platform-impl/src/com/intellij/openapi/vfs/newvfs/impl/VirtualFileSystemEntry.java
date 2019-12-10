@@ -50,6 +50,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
   final int myId;
+  private volatile CachedFileType myFileType;
 
   static {
     //noinspection ConstantConditions
@@ -439,6 +440,18 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       }
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  public FileType getFileType() {
+    CachedFileType cache = myFileType;
+    FileType type = cache == null ? null : cache.getUpToDateOrNull();
+    if (type == null) {
+      type = super.getFileType();
+      myFileType = CachedFileType.forType(type);
+    }
+    return type;
   }
 
   static final VirtualFileSystemEntry NULL_VIRTUAL_FILE =

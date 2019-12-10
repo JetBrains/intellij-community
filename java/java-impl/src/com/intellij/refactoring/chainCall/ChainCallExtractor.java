@@ -113,8 +113,6 @@ public interface ChainCallExtractor {
 
   static PsiLambdaExpression extractMappingStep(@NotNull Project project, PsiLocalVariable variable) {
     if (variable == null) return null;
-    String name = variable.getName();
-    if (name == null) return null;
     PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return null;
     PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(variable, PsiLambdaExpression.class);

@@ -72,6 +72,10 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
     doTest("D", "foo", "X.java");
   }
 
+  public void testExtendsImplementsChain() throws Exception {
+    doTest("C", "foo", "X.java");
+  }
+
   private void doTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {
     doHierarchyTest(() -> {
       final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(classFqn, ProjectScope.getProjectScope(getProject()));

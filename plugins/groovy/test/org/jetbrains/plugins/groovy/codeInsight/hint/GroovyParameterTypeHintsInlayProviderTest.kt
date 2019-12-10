@@ -64,7 +64,7 @@ foo(['q'], ['q'])
 
   fun testClosure() {
     val text = """
-def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < Object >]  ] #>c) {
+def<# [< [T extends  A] >] #> foo(<# [T  ] #>a, <# [[Closure < [?  ] >]  ] #>c) {
   c(a)
 }
 
@@ -80,11 +80,33 @@ foo(null as A) {
 
   fun testInsideClosure() {
     val text = """
-def foo(<# [Integer  ] #>arg, <# [[Closure < Byte >]  ] #>closure) {
+def foo(<# [Integer  ] #>arg, <# [[Closure < [?  ] >]  ] #>closure) {
   closure(arg)
 }
 
 foo(1) { <# [Integer  ] #>a -> a.byteValue() }
+    """.trimIndent()
+    testTypeHints(text)
+  }
+
+  fun testNoTypeHintsWithoutTypeInformation() {
+    val text = """
+def foo(x) {}
+    """.trimIndent()
+    testTypeHints(text)
+  }
+
+  fun testNestedClosureBlockWithUnresolvableVariables() {
+    val text = """
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+def foo(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure a) {}
+def bar(@ClosureParams(value=SimpleType, options=['java.lang.Integer'])Closure b) {}
+foo { <# [Integer  ] #>a ->
+  bar { <# [Integer  ] #>b ->
+    for (x in y){}
+  }
+}
     """.trimIndent()
     testTypeHints(text)
   }

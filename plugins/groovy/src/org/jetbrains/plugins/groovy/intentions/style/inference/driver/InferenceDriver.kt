@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver
 
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeMapper
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
@@ -22,8 +21,6 @@ interface InferenceDriver {
   fun instantiate(resultMethod: GrMethod)
 
   fun acceptTypeVisitor(visitor: PsiTypeMapper, resultMethod: GrMethod): InferenceDriver
-
-  fun forbiddingTypes(): List<PsiType> = emptyList()
 
   fun typeParameters(): Collection<PsiTypeParameter>
 

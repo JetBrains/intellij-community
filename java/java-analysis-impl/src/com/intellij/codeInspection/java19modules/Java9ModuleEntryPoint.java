@@ -172,11 +172,11 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
       Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
         .map(PsiProvidesStatement::getImplementationList)
         .nonNull()
-        .flatMap(list -> StreamEx.of(list.getReferenceElements()))
-        .append(StreamEx.of(javaModule.getUses().spliterator())
-          .map(PsiUsesStatement::getClassReference)
-          .nonNull())
-        .map(PsiJavaCodeReferenceElement::getQualifiedName)
+        .flatMap(list -> StreamEx.of(list.getReferencedTypes()))
+        .append(StreamEx.of(javaModule.getUses().spliterator()).map(PsiUsesStatement::getClassType).nonNull())
+        .map(PsiClassType::resolve)
+        .nonNull()
+        .map(PsiClass::getQualifiedName)
         .nonNull()
         .toCollection(THashSet::new);
       return CachedValueProvider.Result.create(classes, javaModule);
@@ -199,6 +199,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void writeExternal(Element element) throws WriteExternalException {
     XmlSerializer.serializeInto(this, element, new SkipDefaultValuesSerializationFilters());
   }

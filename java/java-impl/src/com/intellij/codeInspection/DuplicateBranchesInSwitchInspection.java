@@ -540,7 +540,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     @NotNull
     private static DuplicatesFinder createFinder(@NotNull PsiStatement[] statements) {
       Project project = statements[0].getProject();
-      InputVariables noVariables = new InputVariables(Collections.emptyList(), project, new LocalSearchScope(statements), false);
+      InputVariables noVariables = new InputVariables(Collections.emptyList(), project, new LocalSearchScope(statements), false, Collections.emptySet());
       return new DuplicatesFinder(statements, noVariables, null, Collections.emptyList());
     }
 

@@ -111,7 +111,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     if (cached == null) {
       List<T> list = buildExtensions(stringKey, key);
       // tiny optimisations to save memory
-      cached = ContainerUtil.optimize(list);
+      cached = ContainerUtil.freeze(list);
       cached = ConcurrencyUtil.cacheOrGet(myCache, stringKey, cached);
     }
     return cached;

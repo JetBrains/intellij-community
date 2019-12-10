@@ -2,12 +2,18 @@ package com.siyeh.igtest.abstraction;
 
 public class StaticMethodOnlyUsedInOneClass {
     public static final String <warning descr="Static field 'CLOG' is only used from class 'OneClass'">CLOG</warning> = "";
+    public static final StaticMethodOnlyUsedInOneClass INSTANCE = new StaticMethodOnlyUsedInOneClass();
 
     public static void <warning descr="Static method 'methodWithSomePrettyUniqueName()' is only used from class 'OneClass'">methodWithSomePrettyUniqueName</warning>() {
 
     }
 
     public void noUtilityClass() {}
+
+    public static void x(int i) {}
+    public static void x() {
+        x(1);
+    }
 
 }
 class UtilityClass {
@@ -24,8 +30,11 @@ class OneClass {
         StaticMethodOnlyUsedInOneClass.methodWithSomePrettyUniqueName();
         StaticMethodOnlyUsedInOneClass.methodWithSomePrettyUniqueName();
         System.out.println(StaticMethodOnlyUsedInOneClass.CLOG);
+        System.out.println(StaticMethodOnlyUsedInOneClass.INSTANCE);
         UtilityClass.x();
         UtilityClass.x(2);
+        StaticMethodOnlyUsedInOneClass.x();
+        StaticMethodOnlyUsedInOneClass.x();
     }
 }
 class Main {
@@ -89,5 +98,10 @@ class Bar {
         return new Bar();
     }
 
-    public void noUtilityClass() {}
+    public void noUtilityClass() {
+        System.out.println(State.SLEEPING);
+    }
+}
+enum State {
+    SLEEPING, AWAKE;
 }

@@ -9,7 +9,6 @@ public abstract class AccessToken implements AutoCloseable {
 
   public abstract void finish();
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static final AccessToken EMPTY_ACCESS_TOKEN = new AccessToken() {
     @Override
     public void finish() {}

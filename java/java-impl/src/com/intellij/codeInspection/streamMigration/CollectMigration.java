@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -184,7 +183,8 @@ class CollectMigration extends BaseStreamApiMigration {
     StreamEx<? extends PsiExpression> targetReferences() {
       if (myTargetVariable == null) return StreamEx.empty();
       List<PsiElement> usedElements = usedElements().toList();
-      return StreamEx.of(ReferencesSearch.search(myTargetVariable).findAll()).select(PsiReferenceExpression.class)
+      PsiElement block = PsiUtil.getVariableCodeBlock(myTargetVariable, null);
+      return StreamEx.of(VariableAccessUtils.getVariableReferences(myTargetVariable, block))
         .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
     }
 

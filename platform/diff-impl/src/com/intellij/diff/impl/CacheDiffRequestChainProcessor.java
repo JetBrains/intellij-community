@@ -5,15 +5,11 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.AsyncDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
-import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<DiffRequestProducer> {
+public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Simple {
   @NotNull private final DiffRequestChain myRequestChain;
   private int myIndex;
 
@@ -51,25 +47,11 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   // Update
   //
 
-
-  @NotNull
-  @Override
-  protected String getRequestName(@NotNull DiffRequestProducer producer) {
-    return producer.getName();
-  }
-
   @Override
   protected DiffRequestProducer getCurrentRequestProvider() {
     List<? extends DiffRequestProducer> requests = myRequestChain.getRequests();
     if (myIndex < 0 || myIndex >= requests.size()) return null;
     return requests.get(myIndex);
-  }
-
-  @NotNull
-  @Override
-  protected DiffRequest loadRequest(@NotNull DiffRequestProducer producer, @NotNull ProgressIndicator indicator)
-    throws ProcessCanceledException, DiffRequestProducerException {
-    return producer.process(getContext(), indicator);
   }
 
   //
@@ -98,12 +80,12 @@ public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor<Di
   }
 
   @Override
-  protected boolean hasNextChange() {
+  protected boolean hasNextChange(boolean fromUpdate) {
     return myIndex < myRequestChain.getRequests().size() - 1;
   }
 
   @Override
-  protected boolean hasPrevChange() {
+  protected boolean hasPrevChange(boolean fromUpdate) {
     return myIndex > 0;
   }
 

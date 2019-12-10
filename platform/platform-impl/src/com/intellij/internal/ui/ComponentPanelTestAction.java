@@ -4,6 +4,7 @@ package com.intellij.internal.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -29,6 +30,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import net.miginfocom.swing.MigLayout;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +49,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -122,6 +125,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.addTab("Progress Grid", createProgressGridPanel());
       pane.addTab("Validators", createValidatorsPanel());
       pane.addTab("Multilines", createMultilinePanel());
+      pane.addTab("JSliderUI", createJSliderTab());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -784,6 +788,66 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JComponent toolbarComponent = toolbar.getComponent();
       toolbarComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       return toolbarComponent;
+    }
+
+    private JComponent createJSliderTab() {
+      JPanel panel = new JPanel(new MigLayout("ins 0, gap 10, flowy"));
+      JSlider hSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 0){
+        @Override
+        public void updateUI() {
+          setUI(DarculaSliderUI.createUI(this));
+          updateLabelUIs();
+        }
+      };
+
+      JSlider vSlider = new JSlider(JSlider.VERTICAL){
+        @Override
+        public void updateUI() {
+          setUI(DarculaSliderUI.createUI(this));
+          updateLabelUIs();
+        }
+      };
+
+      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
+
+      JPanel pane1 = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
+      pane1.add(hSliderBase, "baseline");
+
+      setupSlider(hSlider);
+      setupSlider(vSlider);
+      setupSlider(hSliderBase);
+
+      panel.add(wrap((hSlider)));
+      panel.add(wrap(hSliderBase));
+      panel.add(wrap(vSlider));
+
+      return panel;
+    }
+
+    private JComponent wrap(JComponent component) {
+      JPanel pane = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      pane.add(new JLabel("A color key and IntelliJ: "), "baseline");
+      pane.add(component, "baseline");
+      return pane;
+    }
+
+    private void setupSlider(JSlider slider) {
+      slider.setMajorTickSpacing(25);
+      slider.setMinorTickSpacing(5);
+      slider.setPaintTicks(true);
+      slider.setPaintLabels(true);
+
+      slider.setSnapToTicks(true);
+
+      Hashtable position = new Hashtable();
+      position.put(0, new JLabel("Hashtable"));
+      position.put(25, new JLabel("Hash"));
+      position.put(50, new JLabel("Ha"));
+      position.put(75, new JLabel("HashtableHashtable"));
+      position.put(100, new JLabel("100"));
+
+      slider.setLabelTable(position);
     }
   }
 

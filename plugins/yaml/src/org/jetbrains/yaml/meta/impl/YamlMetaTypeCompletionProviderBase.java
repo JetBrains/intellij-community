@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -36,7 +37,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters params, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters params,
+                                @NotNull ProcessingContext context,
+                                @NotNull CompletionResultSet result) {
     final YamlMetaTypeProvider metaTypeProvider = getMetaTypeProvider(params);
     if (metaTypeProvider == null) {
       return;
@@ -49,7 +52,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    YAMLScalar insertedScalar = (YAMLScalar)position.getParent();
+    final YAMLScalar insertedScalar = (YAMLScalar)position.getParent();
 
     /*
     trace("Position: " + getDebugInfo(position));
@@ -78,16 +81,17 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
     YamlMetaType metaType = meta.getMetaType();
-    if (params.getCompletionType().equals(CompletionType.BASIC) && metaType instanceof YamlScalarType) {
-      YamlScalarType scalarType = (YamlScalarType)metaType;
+    if (params.getCompletionType().equals(CompletionType.BASIC)) {
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
         if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
           prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
         }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
-          addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap(), params);
-          return;
+          boolean hadScalarLookups = addValueCompletions(insertedScalar, metaType, result, Collections.emptyMap(), params);
+          if (hadScalarLookups) {
+            return;
+          }
         }
       }
 
@@ -110,11 +114,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
             .map(YAMLScalar.class::cast)
             .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
-        addValueCompletions(insertedScalar, scalarType, result, siblingValues, params);
-        return;
+        boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
+        if (hadScalarInSequenceLookups) {
+          return;
+        }
       }
     }
-    if (metaType instanceof YamlMetaClass) {
+    if (!(metaType instanceof YamlScalarType)) {
       addKeyCompletions(params, metaTypeProvider, meta, result, insertedScalar);
     }
   }
@@ -124,10 +130,10 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
                                  @NotNull YamlMetaTypeProvider.MetaTypeProxy meta,
                                  @NotNull CompletionResultSet result,
                                  @NotNull PsiElement insertedScalar) {
-    if (!(meta.getMetaType() instanceof YamlMetaClass)) {
+    final YamlMetaType metaType = meta.getMetaType();
+    if (metaType instanceof YamlScalarType) {
       return;
     }
-    YamlMetaClass metaClass = (YamlMetaClass)meta.getMetaType();
 
     YAMLValue metaOwner = metaTypeProvider.getMetaOwner(insertedScalar);
     if (metaOwner instanceof YAMLScalar && metaOwner.getParent() instanceof YAMLMapping) {
@@ -135,17 +141,18 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       // in the correct YAML mappings should not directly contain scalars, so it is supposedly safe (?)
       metaOwner = (YAMLValue)metaOwner.getParent();
     }
-    Collection<YAMLKeyValue> existingPairs = Optional.ofNullable(metaOwner)
-      .filter(YAMLMapping.class::isInstance)
-      .map(YAMLMapping.class::cast)
+
+    YAMLMapping existingMapping = ObjectUtils.tryCast(metaOwner, YAMLMapping.class);
+    Collection<YAMLKeyValue> existingPairs = Optional.ofNullable(existingMapping)
       .map(YAMLMapping::getKeyValues)
       .orElse(Collections.emptyList());
 
     Map<String, YAMLKeyValue> existingByKey = existingPairs.stream().collect(
       Collectors.toMap(kv -> kv.getKeyText().trim(), kv -> kv, (oldValue, newValue) -> oldValue));
 
-    final List<Field> fieldList = ContainerUtil
-      .filter(metaClass.getFeatures(), childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable());
+    final List<Field> suggestedFields = metaType.computeKeyCompletions(existingMapping);
+    final List<Field> filteredList = ContainerUtil
+      .filter(suggestedFields, childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable());
 
     final boolean needsSequenceItemMark = existingPairs.isEmpty() && needsSequenceItem(meta.getField());
 
@@ -154,7 +161,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       final int caretPos = text.indexOf(DUMMY_IDENTIFIER_TRIMMED);
       String pattern = StringUtil.toLowerCase((caretPos >= 0 ? text.substring(0, caretPos) : text));
 
-      final Collection<List<Field>> paths = collectPaths(fieldList, pattern.length() > 0 ? 10 : 1);
+      final Collection<List<Field>> paths = collectPaths(filteredList, pattern.length() > 0 ? 10 : 1);
 
       for (List<Field> pathToInsert : paths) {
         final Field lastField = pathToInsert.get(pathToInsert.size() - 1);
@@ -171,9 +178,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       }
     }
     else {
-      fieldList.stream()
-               .filter(childField -> !existingByKey.containsKey(childField.getName()))
-               .forEach(childField -> registerBasicKeyCompletion(metaClass, childField, result, insertedScalar, needsSequenceItemMark));
+      filteredList.stream()
+        .filter(childField -> !existingByKey.containsKey(childField.getName()))
+        .forEach(childField -> registerBasicKeyCompletion(metaType, childField, result, insertedScalar, needsSequenceItemMark));
     }
   }
 
@@ -182,12 +189,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  protected void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
+  protected void registerBasicKeyCompletion(@NotNull YamlMetaType ownerClass,
                                             @NotNull Field toBeInserted,
                                             @NotNull CompletionResultSet result,
                                             @NotNull PsiElement insertedScalar,
                                             boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(metaClass, insertedScalar);
+    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(ownerClass, insertedScalar);
     if (!lookups.isEmpty()) {
       InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
       lookups.stream()
@@ -211,26 +218,28 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
 
     fields.stream()
-          .filter(field -> !field.isAnyNameAllowed())
-          .forEach(field -> {
-      final List<Field> fieldPath = StreamEx.<Field>of(currentPath).append(field).toList();
-      result.add(fieldPath);
-      final YamlMetaType metaType = field.getType(field.getDefaultRelation());
-            if (metaType instanceof YamlMetaClass) {
-        doCollectPathsRec(ContainerUtil.filter(((YamlMetaClass)metaType).getFeatures(), Field::isEditable),
-                          fieldPath, result, deepness);
-      }
-    });
+      .filter(field -> !field.isAnyNameAllowed())
+      .forEach(field -> {
+        final List<Field> fieldPath = StreamEx.<Field>of(currentPath).append(field).toList();
+        result.add(fieldPath);
+        final YamlMetaType metaType = field.getType(field.getDefaultRelation());
+        if (metaType instanceof YamlMetaClass) {
+          doCollectPathsRec(ContainerUtil.filter(((YamlMetaClass)metaType).getFeatures(), Field::isEditable),
+                            fieldPath, result, deepness);
+        }
+      });
   }
 
-  private static void addValueCompletions(@NotNull YAMLScalar insertedScalar,
-                                          @NotNull YamlScalarType meta,
-                                          @NotNull CompletionResultSet result,
-                                          @NotNull Map<String, YAMLScalar> siblings,
-                                          @NotNull CompletionParameters completionParameters) {
-    meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters)).stream()
+  private static boolean addValueCompletions(@NotNull YAMLScalar insertedScalar,
+                                             @NotNull YamlMetaType meta,
+                                             @NotNull CompletionResultSet result,
+                                             @NotNull Map<String, YAMLScalar> siblings,
+                                             @NotNull CompletionParameters completionParameters) {
+    List<? extends LookupElement> lookups = meta.getValueLookups(insertedScalar, new CompletionContextImpl(completionParameters));
+    lookups.stream()
       .filter(lookup -> !siblings.containsKey(lookup.getLookupString()))
       .forEach(result::addElement);
+    return !lookups.isEmpty();
   }
 
   private static void trace(String text) {

@@ -59,7 +59,6 @@ public class ResolveVariableTest extends LightResolveTestCase {
   public void testVisibility4() {
     PsiElement target = configureAndResolve();
     assertEquals("a", ((PsiLocalVariable)target).getName());
-    assertTrue(target instanceof PsiLocalVariable);
   }
 
   public void testQualified1() {

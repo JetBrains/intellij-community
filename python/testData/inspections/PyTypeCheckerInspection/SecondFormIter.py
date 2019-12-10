@@ -7,7 +7,7 @@ def test_second_form():
 
 
 def test_second_form_fail():
-    for chunk in iter(<weak_warning descr="Expected type '() -> Any' (matched generic type '() -> _T'), got 'int' instead">10</weak_warning>, ''):
+    for chunk in iter<warning descr="Unexpected type(s):(int, str)Possible types:(() -> Any, Any)(() -> Optional[Any], None)">(10, '')</warning>:
         pass
 
 

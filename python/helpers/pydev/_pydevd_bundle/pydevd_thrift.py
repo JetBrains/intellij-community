@@ -14,10 +14,10 @@ from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K,
     BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT, \
     NUMPY_NUMERIC_TYPES
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, pandas_to_str, is_string
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE
 from pydev_console.protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
 
 try:
     import types
@@ -312,11 +312,11 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
 
                 elif v.__class__ in (list, tuple):
                     if len(v) > pydevd_resolver.MAX_ITEMS_TO_HANDLE:
-                        value = '%s: %s' % (str(v.__class__),  take_first_n_coll_elements(
-                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE))
+                        value = '%s' % take_first_n_coll_elements(
+                            v, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
                         value = value.rstrip(')]}') + '...'
                     else:
-                        value = '%s: %s' % (str(v.__class__, v))
+                        value = '%s' % str(v)
                 else:
                     value = format % v
             else:
@@ -333,24 +333,33 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     if type_qualifier:
         debug_value.qualifier = type_qualifier
 
-    if value:
-        # cannot be too big... communication may not handle it.
-        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and do_trim:
-            value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
-            value += '...'
+    # cannot be too big... communication may not handle it.
+    if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and do_trim:
+        value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
+        value += '...'
 
-        # fix to work with unicode values
+    # fix to work with unicode values
+    try:
+        if not IS_PY3K:
+            if value.__class__ == unicode:  # @UndefinedVariable
+                value = value.encode('utf-8')
+        else:
+            if value.__class__ == bytes:
+                value = value.encode('utf-8')
+    except TypeError:  # in java, unicode is a function
+        pass
+
+    if is_pandas_container(type_qualifier, typeName, v):
+        value = pandas_to_str(v, typeName, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
+    debug_value.value = value
+
+    if is_numeric_container(type_qualifier, typeName, v):
+        debug_value.shape = str(v.shape)
+    elif hasattr(v, '__len__') and not is_string(v):
         try:
-            if not IS_PY3K:
-                if value.__class__ == unicode:  # @UndefinedVariable
-                    value = value.encode('utf-8')
-            else:
-                if value.__class__ == bytes:
-                    value = value.encode('utf-8')
-        except TypeError:  # in java, unicode is a function
+            debug_value.shape = str(len(v))
+        except:
             pass
-
-        debug_value.value = value
 
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True

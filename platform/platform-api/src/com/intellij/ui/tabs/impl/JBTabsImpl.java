@@ -1473,6 +1473,7 @@ public class JBTabsImpl extends JComponent
           add(side, BorderLayout.CENTER);
         }
       }
+      UIUtil.uiTraverser(this).forEach(c -> c.setFocusable(false));
     }
 
     public boolean isEmpty() {

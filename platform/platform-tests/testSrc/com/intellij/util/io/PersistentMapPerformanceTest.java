@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.MathUtil;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
 import gnu.trove.THashSet;
@@ -182,10 +183,10 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       if (checkMap.size() == 0) {
         checkMap.put(r.nextInt(), 0);
         checkMap.put(r.nextInt(), 0);
-        checkMap.put(0, Math.abs(r.nextInt()));
+        checkMap.put(0, r.nextInt(Integer.MAX_VALUE));
       }
       else {
-        checkMap.put(r.nextInt(), Math.abs(r.nextInt()));
+        checkMap.put(r.nextInt(), r.nextInt(Integer.MAX_VALUE));
       }
     }
 

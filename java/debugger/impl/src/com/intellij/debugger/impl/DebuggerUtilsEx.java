@@ -551,7 +551,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     try {
       return location.sourceName();
     }
-    catch (InternalError | AbsentInformationException e) {
+    catch (InternalError | AbsentInformationException | IllegalArgumentException e) {
       return defaultName.apply(e);
     }
   }

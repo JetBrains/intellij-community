@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author mike
@@ -77,7 +76,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         if(!(element instanceof PsiParameter)) {
           throw new IncorrectOperationException("Unsupported operation");
         }
-        return handleElementRename(Objects.requireNonNull(((PsiParameter)element).getName()));
+        return handleElementRename(((PsiParameter)element).getName());
       }
     };
   }

@@ -173,6 +173,7 @@ public class LineMarkerInfo<T extends PsiElement> {
       myInfo = info;
     }
 
+    @NotNull
     public LineMarkerInfo<T> getLineMarkerInfo() {
       return myInfo;
     }

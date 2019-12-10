@@ -99,7 +99,7 @@ abstract class CallReferenceHighlighter(val reference: GroovyCallReference, val 
     return false
   }
 
-  private fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+  open fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
     return results.flatMap(::generateFixes).toTypedArray()
   }
 

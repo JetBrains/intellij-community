@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class DiffEditorProvider : FileEditorProvider, DumbAware {
   companion object {
-      const val DiffEditorProviderId = "DiffEditor"
+    const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
@@ -43,6 +43,6 @@ class DiffEditorProvider : FileEditorProvider, DumbAware {
     Disposer.dispose(editor)
   }
 
-  override fun getEditorTypeId(): String = DiffEditorProviderId
+  override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }

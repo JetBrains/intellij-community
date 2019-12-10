@@ -118,7 +118,7 @@ public class JavaBreadcrumbsInfoProvider implements BreadcrumbsProvider {
       else {
         typeStr = getTypeText(parameters[i].getType(), false);
       }
-      String str = isEmpty(typeStr)? notNullize(parameters[i].getName()) : getShortClassName(typeStr);
+      String str = isEmpty(typeStr)? parameters[i].getName() : getShortClassName(typeStr);
       sb.append(htmlEmphasize(str));
     }
     sb.append(")");

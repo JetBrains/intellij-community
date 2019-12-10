@@ -105,7 +105,7 @@ public class FieldDescriptor implements ItemToReplaceDescriptor {
     PsiClass containingClass = myField.getContainingClass();
     String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String fieldName = myField.getName();
-    if (className == null || fieldName == null) {
+    if (className == null) {
       LOG.warn("Code is incomplete. Class name or field name not found");
       return null;
     }

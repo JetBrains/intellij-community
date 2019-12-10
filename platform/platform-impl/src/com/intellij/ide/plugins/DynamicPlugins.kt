@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
@@ -14,14 +15,18 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.keymap.impl.BundledKeymapProvider
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ArrayUtil
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.xmlb.BeanBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -75,7 +80,10 @@ object DynamicPlugins {
   @JvmStatic
   fun allowLoadUnloadSynchronously(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
     val extensions = pluginDescriptor.extensions
-    if (extensions != null && !extensions.all { it.key == UIThemeProvider.EP_NAME.name }) {
+    if (extensions != null && !extensions.all {
+        it.key == UIThemeProvider.EP_NAME.name ||
+        it.key == BundledKeymapProvider.EP_NAME.name
+      }) {
       return false
     }
     return hasNoComponents(pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
@@ -153,6 +161,13 @@ object DynamicPlugins {
       }
     }
 
+    jdomSerializer.clearSerializationCaches()
+    BeanBinding.clearSerializationCaches()
+
+    PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+
+    UIUtil.dispatchAllInvocationEvents()
+
     val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
     if (!classLoaderUnloaded && Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable()) {
       val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
@@ -161,6 +176,7 @@ object DynamicPlugins {
       MemoryDumpHelper.captureMemoryDump(snapshotPath)
       GROUP.createNotification("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING).notify(null)
     }
+
     return classLoaderUnloaded
   }
 
@@ -179,6 +195,7 @@ object DynamicPlugins {
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
+    PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 

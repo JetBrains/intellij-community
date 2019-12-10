@@ -84,7 +84,6 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
           break;
         case MODIFICATION:
           // note that changes are also removed from index, if they got into index somehow
-          registerFile(toUnindex, c.getBeforeRevision().getFile(), exceptions);
           registerFile(toRevert, c.getBeforeRevision().getFile(), exceptions);
           break;
         case DELETED:

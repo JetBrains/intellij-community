@@ -98,7 +98,7 @@ class BuildTasksImpl extends BuildTasks {
     })
   }
   
-  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = null) {
+  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments, Map<String, Object> systemProperties = [:]) {
     def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
@@ -127,11 +127,9 @@ class BuildTasksImpl extends BuildTasks {
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
       sysproperty(key: "idea.config.path", value: configPath)
-      
-      if (systemProperties != null) {
-        systemProperties.each {
-          sysproperty(key: it.key, value: it.value)
-        }
+
+      systemProperties.each {
+        sysproperty(key: it.key, value: it.value)
       }
       
       if (buildContext.productProperties.platformPrefix != null) {

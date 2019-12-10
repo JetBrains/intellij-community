@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitRebaseParams;
 import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
@@ -124,6 +125,14 @@ public interface Git {
                             @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
+   GitCommandResult checkout(@NotNull GitRepository repository,
+                                    @NotNull String reference,
+                                    @Nullable String newBranch,
+                                    boolean force,
+                                    boolean detach,
+                                    boolean withReset,
+                                    @NotNull GitLineHandlerListener... listeners);
+  @NotNull
   GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                      @Nullable GitLineHandlerListener listener);
 
@@ -145,6 +154,10 @@ public interface Git {
    */
   @NotNull
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint);
+
+
+  @NotNull
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint, boolean force);
 
   @NotNull
   GitCommandResult renameBranch(@NotNull GitRepository repository,
@@ -258,6 +271,9 @@ public interface Git {
                           @NotNull String commit,
                           boolean autoCommit,
                           @NotNull GitLineHandlerListener... listeners);
+
+  @Nullable
+  Hash resolveReference(@NotNull GitRepository repository, @NotNull String reference);
 
   @NotNull
   GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);

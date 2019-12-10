@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -51,6 +50,7 @@ import java.util.*;
 
 /**
  * @author max
+ * To generate apiXXX.txt uncomment and run {@link com.intellij.java.codeInspection.JavaAPIUsagesInspectionTest#testCollectSinceApiUsages}
  */
 public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final String SHORT_NAME = "Since15";
@@ -58,10 +58,10 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
   private static final String EFFECTIVE_LL = "effectiveLL";
 
   private static final Map<LanguageLevel, Reference<Set<String>>> ourForbiddenAPI = new EnumMap<>(LanguageLevel.class);
-  private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
+  private static final Set<String> ourIgnored16ClassesAPI = loadForbiddenApi("ignore16List.txt");
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = new EnumMap<>(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_10;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_12;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -73,8 +73,8 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
     ourPresentableShortMessage.put(LanguageLevel.JDK_10, "11");
     ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
 
-    loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
 
   private static final Set<String> ourGenerifiedClasses = new HashSet<>();
@@ -144,24 +144,26 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = SoftReference.dereference(ref);
     if (result == null) {
-      result = new THashSet<>(1000);
-      loadForbiddenApi("api" + getShortName(languageLevel) + ".txt", result);
+      result = loadForbiddenApi("api" + getShortName(languageLevel) + ".txt");
       ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
     }
     return result;
   }
 
-  private static void loadForbiddenApi(String fileName, Set<? super String> set) {
+  private static Set<String> loadForbiddenApi(String fileName) {
     URL resource = Java15APIUsageInspection.class.getResource(fileName);
     if (resource == null) {
       Logger.getInstance(Java15APIUsageInspection.class).warn("not found: " + fileName);
-      return;
+      return Collections.emptySet();
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8))) {
-      set.addAll(FileUtil.loadLines(reader));
+      return new THashSet<>(FileUtil.loadLines(reader));
     }
-    catch (IOException ignored) { }
+    catch (IOException ex) {
+      Logger.getInstance(Java15APIUsageInspection.class).warn("cannot load: " + fileName, ex);
+      return Collections.emptySet();
+    }
   }
 
   @Override

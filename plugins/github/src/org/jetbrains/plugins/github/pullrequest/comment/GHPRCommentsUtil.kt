@@ -72,12 +72,12 @@ object GHPRCommentsUtil {
 
       val mappings = mutableListOf<GHPRDiffReviewThreadMapping>()
       for (thread in threads) {
-        val diffLineNumber = thread.position!! + 1
-        val mapping = calculateLineLocation(diff, diffLineNumber)?.let { (side, line) ->
-          GHPRDiffReviewThreadMapping(side, line, thread)
+        val diffLineIndex = thread.position!!
+        val mapping = calculateLineLocation(diff, diffLineIndex)?.let { (side, lineIndex) ->
+          GHPRDiffReviewThreadMapping(side, lineIndex, thread)
         }
         if (mapping == null) {
-          LOG.debug("Invalid position $diffLineNumber\nin diff $diff")
+          LOG.debug("Invalid position $diffLineIndex\nin diff $diff")
           continue
         }
         mappings.add(mapping)
@@ -98,27 +98,26 @@ object GHPRCommentsUtil {
     }
   }
 
-  private fun calculateLineLocation(diff: TextFilePatch, diffLineNumber: Int): Pair<Side, Int>? {
+  private fun calculateLineLocation(diff: TextFilePatch, diffLineIndex: Int): Pair<Side, Int>? {
     var diffLineCounter = 0
     for (hunk in diff.hunks) {
       // +1 for header
       val hunkLinesCount = hunk.lines.size + hunk.lines.count { it.isSuppressNewLine } + 1
       diffLineCounter += hunkLinesCount
 
-      if (diffLineNumber <= diffLineCounter) {
+      if (diffLineIndex < diffLineCounter) {
         // -1 for missing header
-        // -1 to convert to index
-        val hunkLineIndex = diffLineNumber - (diffLineCounter - hunkLinesCount) - 1 - 1
+        val hunkLineIndex = diffLineIndex - (diffLineCounter - hunkLinesCount) - 1
 
         val line = hunk.lines[hunkLineIndex] ?: return null
         return when (line.type!!) {
           PatchLine.Type.CONTEXT, PatchLine.Type.REMOVE -> {
             val addedLinesBefore = hunk.lines.subList(0, hunkLineIndex).count { it.type == PatchLine.Type.ADD }
-            Side.LEFT to hunk.startLineBefore + (hunkLineIndex - addedLinesBefore) + 1
+            Side.LEFT to hunk.startLineBefore + (hunkLineIndex - addedLinesBefore)
           }
           PatchLine.Type.ADD -> {
             val removedLinesBefore = hunk.lines.subList(0, hunkLineIndex).count { it.type == PatchLine.Type.REMOVE }
-            Side.RIGHT to hunk.startLineAfter + (hunkLineIndex - removedLinesBefore) + 1
+            Side.RIGHT to hunk.startLineAfter + (hunkLineIndex - removedLinesBefore)
           }
         }
       }

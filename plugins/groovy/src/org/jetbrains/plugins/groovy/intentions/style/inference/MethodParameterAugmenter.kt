@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
@@ -23,14 +24,23 @@ class MethodParameterAugmenter : TypeAugmenter() {
       if (!Registry.`is`(GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE, false)) {
         return null
       }
-      val originalMethod = getOriginalMethod(method)
-      val scope = with(originalMethod.containingFile?.virtualFile) {
-        if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
+      val scope = getFileScope(method) ?: return null
+      return computeInferredMethod(method, scope)
+    }
+
+    private fun computeInferredMethod(method: GrMethod, scope: GlobalSearchScope): InferenceResult? =
+      RecursionManager.doPreventingRecursion(method, true) {
+        CachedValuesManager.getCachedValue(method) {
+          val typedMethod = runInferenceProcess(method, scope)
+          val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
+          CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
+        }
       }
-      return CachedValuesManager.getCachedValue(method) {
-        val typedMethod = runInferenceProcess(method, scope)
-        val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
-        CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
+
+    private fun getFileScope(method: GrMethod): GlobalSearchScope? {
+      val originalMethod = getOriginalMethod(method)
+      return with(originalMethod.containingFile?.virtualFile) {
+        if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
       }
     }
 

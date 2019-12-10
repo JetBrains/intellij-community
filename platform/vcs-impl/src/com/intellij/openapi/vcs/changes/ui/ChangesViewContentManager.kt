@@ -7,7 +7,10 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.content.*
+import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerAdapter
+import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
@@ -70,13 +73,6 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
     val contentManager = contentManager ?: return
     contentManager.setSelectedContent(content, requestFocus)
-  }
-
-  fun adviseSelectionChanged(listener: ContentManagerListener) {
-    contentManager?.let {
-      it.addContentManagerListener(listener)
-      Disposer.register(this, Disposable { it.removeContentManagerListener(listener) })
-    }
   }
 
   override fun <T> getActiveComponent(aClass: Class<T>): T? {

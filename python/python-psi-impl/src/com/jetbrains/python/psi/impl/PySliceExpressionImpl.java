@@ -59,7 +59,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   private PyType getSliceType(@Nullable PyType operandType, @NotNull TypeEvalContext context) {
     // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
     if (operandType instanceof PyTupleType) {
-      return PyBuiltinCache.getInstance(this).getTupleType();
+      return ((PyTupleType)operandType).isHomogeneous() ? operandType : PyBuiltinCache.getInstance(this).getTupleType();
     }
 
     if (operandType instanceof PyCollectionType) {

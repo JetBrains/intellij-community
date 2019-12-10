@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void concatenation() {
-    String foobarbaz = "foo\n" <caret>+
+    String foobarbaz = "foo<caret>\n" +
                        "bar\n" +
                        "baz";
   }

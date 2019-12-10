@@ -28,7 +28,7 @@ class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   class TerminalCommandHandlerConfigurable(project: Project) :
     BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)), Configurable {
     init {
-      checkBox("Smart commands handling",
+      checkBox("Smart command handling",
                Getter<Boolean> { instance!!.enabled },
                Setter<Boolean> { instance!!.enabled = it })
     }

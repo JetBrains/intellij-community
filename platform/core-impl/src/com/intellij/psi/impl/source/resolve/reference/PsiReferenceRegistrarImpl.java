@@ -1,8 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
@@ -14,6 +16,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +60,14 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
                                                                @NotNull PsiReferenceProvider provider,
                                                                double priority) {
-    if (myInitialized && !ApplicationManager.getApplication().isUnitTestMode()) {
+    registerReferenceProvider(pattern, provider, priority, null);
+  }
+
+  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
+                                                               @NotNull PsiReferenceProvider provider,
+                                                               double priority,
+                                                               @Nullable Disposable parentDisposable) {
+    if (myInitialized && !ApplicationManager.getApplication().isUnitTestMode() && parentDisposable == null) {
       LOG.error("Reference provider registration is only allowed from PsiReferenceContributor");
     }
 
@@ -72,12 +82,12 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
           final Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
-          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
+          registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern, parentDisposable);
           return;
         }
         if (condition1 instanceof CaseInsensitiveValuePatternCondition) {
           final String[] strings = ((CaseInsensitiveValuePatternCondition)condition1).getValues();
-          registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern);
+          registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern, parentDisposable);
           return;
         }
       }
@@ -89,14 +99,22 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       myBindingsMap.put(scope, providerBinding = new SimpleProviderBinding());
     }
     providerBinding.registerProvider(provider, pattern, priority);
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, () -> unregisterReferenceProvider(scope, provider));
+    }
 
     myBindingCache.clear();
   }
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    myBindingsMap.get(scope).unregisterProvider(provider);
+    final SimpleProviderBinding binding = myBindingsMap.get(scope);
+    if (binding != null) {
+      binding.unregisterProvider(provider);
+      if (binding.isEmpty()) {
+        myBindingsMap.remove(scope);
+      }
+    }
   }
-
 
   private void registerNamedReferenceProvider(@NotNull String[] names,
                                               final PsiNamePatternCondition<?> nameCondition,
@@ -104,7 +122,8 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
                                               final boolean caseSensitive,
                                               @NotNull PsiReferenceProvider provider,
                                               final double priority,
-                                              @NotNull ElementPattern pattern) {
+                                              @NotNull ElementPattern pattern,
+                                              @Nullable Disposable parentDisposable) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
@@ -116,6 +135,15 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       });
     }
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
+    if (parentDisposable != null) {
+      NamedObjectProviderBinding finalProviderBinding = providerBinding;
+      Disposer.register(parentDisposable, () -> {
+        finalProviderBinding.unregisterProvider(provider);
+        if (finalProviderBinding.isEmpty()) {
+          myNamedBindingsMap.remove(scopeClass);
+        }
+      });
+    }
   }
 
   @NotNull

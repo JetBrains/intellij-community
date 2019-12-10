@@ -16,8 +16,9 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
-import com.jetbrains.python.psi.PyReturnStatement;
+import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyStarExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
@@ -40,10 +41,13 @@ public class StarAnnotator extends PyAnnotator {
       return false;
     }
 
-    final PsiElement parent = starExpression.getParent();
-    if (parent instanceof PyTupleExpression && (parent.getParent() instanceof PyReturnStatement ||
-                                                parent.getParent() instanceof PyYieldExpression)) {
-      return false;
+    // Additional contexts where unpacking is prohibited depending on the language version are covered in CompatibilityVisitor.
+    final PsiElement parent = PsiTreeUtil.skipParentsOfType(starExpression, PyParenthesizedExpression.class);
+    if (parent instanceof PyTupleExpression) {
+      final PsiElement tupleParent = parent.getParent();
+      if (tupleParent instanceof PyYieldExpression && ((PyYieldExpression)tupleParent).isDelegating()) {
+        return false;
+      }
     }
     return true;
   }

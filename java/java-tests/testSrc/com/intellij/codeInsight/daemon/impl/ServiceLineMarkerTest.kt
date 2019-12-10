@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -21,60 +20,60 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
-
-    myFixture.addFileToProject("foo/bar/MyService.java",
-                               "package foo.bar; public class MyService { void doWork(); }")
+    myFixture.addFileToProject("foo/bar/MyService.java", "package foo.bar;\npublic class MyService { void doWork(); }")
   }
 
   fun testProvidesAsSubclass() =
-    doTestImplementer("public class <caret>MyServiceImpl implements MyService {\n" +
-                      "    @Override public void doWork() {}\n" +
-                      "}")
+    doTestImplementer("""
+        public class <caret>MyServiceImpl implements MyService {
+            @Override public void doWork() {}
+        }""".trimIndent())
 
   fun testProvidesWithMethod() =
-    doTestImplementer("public class MyServiceImpl {\n" +
-                      "public static MyService <caret>provider() {\n" +
-                      "    return new MyService() { @Override public void doWork() {} };\n" +
-                      "}")
+    doTestImplementer("""
+        public class MyServiceImpl {
+            public static MyService <caret>provider() {
+                return new MyService() { @Override public void doWork() {} };
+            }
+        }""".trimIndent())
 
   fun testLoadWithLiteral() =
-    doTestLoader("void foo() {\n" +
-                 "    ServiceLoader<MyService> loader = <caret>ServiceLoader.load(MyService.class);\n" +
-                 "}")
+    doTestLoader("""
+        void foo() {
+            ServiceLoader<MyService> loader = <caret>ServiceLoader.load(MyService.class);
+        }""".trimIndent())
 
   fun testLoadWithVariable() =
-    doTestLoader("void foo() {\n" +
-                 "    Class<MyService> service = MyService.class;\n" +
-                 "    ServiceLoader<MyService> loader = <caret>ServiceLoader.load(service);\n" +
-                 "}")
+    doTestLoader("""
+        void foo() {
+            Class<MyService> service = MyService.class;
+            ServiceLoader<MyService> loader = <caret>ServiceLoader.load(service);
+        }""".trimIndent())
 
   fun testLoadWithClassForName() =
-    doTestLoader("void foo() throws ClassNotFoundException {\n" +
-                 "    ServiceLoader<MyService> loader = \n" +
-                 "        <caret>ServiceLoader.load(Class.forName(\"foo.bar.MyService\"), Main.class.getClassLoader());\n" +
-                 "}")
+    doTestLoader("""
+        void foo() throws ClassNotFoundException {
+            ServiceLoader<MyService> loader = 
+                <caret>ServiceLoader.load(Class.forName("foo.bar.MyService"), Main.class.getClassLoader());
+        }""".trimIndent())
 
   fun testLoadWithConstant() =
-    doTestLoader("static final Class<MyService> SERVICE = MyService.class;\n" +
-                 "void foo() {\n" +
-                 "    ServiceLoader<MyService> loader = <caret>ServiceLoader.load(SERVICE);\n" +
-                 "}")
+    doTestLoader("""
+        static final Class<MyService> SERVICE = MyService.class;
+        void foo() {
+            ServiceLoader<MyService> loader = <caret>ServiceLoader.load(SERVICE);
+        }""".trimIndent())
 
   private fun doTestLoader(text: String) {
     val module = addModule("module foo.bar { uses foo.bar.MyService; provides foo.bar.MyService with foo.bar.impl.MyServiceImpl; }")
-
-    addImplementer("public class <caret>MyServiceImpl implements MyService {\n" +
-                   "    @Override public void doWork() {}\n" +
-                   "}")
-
+    addImplementer("public class <caret>MyServiceImpl implements MyService {\n    @Override public void doWork() {}\n}")
     val file = addMain(text)
     doTest(file, module, DaemonBundle.message("service.uses", "foo.bar.MyService"),
            "foo.bar.MyService", PsiUsesStatement::class.java)
   }
 
   private fun doTestImplementer(text: String) {
-    val module = addModule("module foo.bar { provides foo.bar.MyService with foo.bar.impl.MyServiceImpl; }")
-
+    val module = addModule("module foo.bar {\n  provides foo.bar.MyService with foo.bar.impl.MyServiceImpl;\n}")
     val file = addImplementer(text)
     doTest(file, module, DaemonBundle.message("service.provides", "foo.bar.MyService"),
            "foo.bar.impl.MyServiceImpl", PsiProvidesStatement::class.java)
@@ -94,10 +93,7 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
     val handler = (mark as LineMarkerInfo.LineMarkerGutterIconRenderer<*>).lineMarkerInfo.navigationHandler as ServiceNavigationHandler
     val targetReference = handler.findTargetReference(module)
     assertNotNull("targetReference", targetReference)
-
-    val parent = PsiTreeUtil.getParentOfType(targetReference, parentType)
-    UsefulTestCase.assertInstanceOf(parent, parentType)
-
+    assertNotNull(PsiTreeUtil.getParentOfType(targetReference, parentType))
     assertTrue("isAncestor", PsiTreeUtil.isAncestor(module, targetReference, true))
     assertEquals(fqn, targetReference.qualifiedName)
   }
@@ -105,12 +101,15 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
   private fun addModule(text: String): PsiJavaModule =
     (myFixture.addFileToProject("module-info.java", text) as PsiJavaFile).moduleDeclaration!!
 
-  private fun addImplementer(text: String) = myFixture.addFileToProject("foo/bar/impl/MyServiceImpl.java",
-                                                                        "package foo.bar.impl; import foo.bar.MyService; $text")
+  private fun addImplementer(text: String) =
+    myFixture.addFileToProject("foo/bar/impl/MyServiceImpl.java", "package foo.bar.impl;\nimport foo.bar.MyService;\n${text}")
 
-  private fun addMain(method: String) = myFixture.addFileToProject("foo/bar/main/Main.java",
-                                                                   "package foo.bar.main;\n" +
-                                                                   "import foo.bar.MyService;\n" +
-                                                                   "import java.util.ServiceLoader;\n" +
-                                                                   "public class Main { $method }")
+  private fun addMain(method: String) =
+    myFixture.addFileToProject("foo/bar/main/Main.java", """
+        package foo.bar.main;
+        import foo.bar.MyService;
+        import java.util.ServiceLoader;
+        public class Main {
+        [METHOD]
+        }""".trimIndent().replace("[METHOD]", method.prependIndent("    ")))
 }

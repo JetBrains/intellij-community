@@ -113,6 +113,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       return null;
     }
     if (ignoreUtilityClasses && containingClass.isUtilityClass()) {
+      // RefClass.isUtilityClass() is also true for enums
       return null;
     }
     final PsiClass psiClass = ObjectUtils.tryCast(usageClass.getPsiElement(), PsiClass.class);
@@ -121,7 +122,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     if (element instanceof RefMethod) {
       final PsiMethod method = ObjectUtils.tryCast(element.getPsiElement(), PsiMethod.class);
-      if (method == null || MethodUtils.isFactoryMethod(method)) {
+      if (method == null || MethodUtils.isFactoryMethod(method) || MethodUtils.isConvenienceOverload(method)) {
         return null;
       }
       if (ignoreOnConflicts) {
@@ -135,7 +136,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     }
     else {
       final PsiField field = ObjectUtils.tryCast(element.getPsiElement(), PsiField.class);
-      if (field == null) {
+      if (field == null || field instanceof PsiEnumConstant || isSingletonField(field)) {
         return null;
       }
       if (ignoreOnConflicts) {
@@ -213,6 +214,12 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     });
 
     return false;
+  }
+
+  static boolean isSingletonField(PsiField field) {
+    return field.hasModifierProperty(PsiModifier.FINAL) &&
+           field.hasModifierProperty(PsiModifier.STATIC) &&
+           field.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(field.getType());
   }
 
   static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
@@ -342,23 +349,26 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
+      final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
-      return new StaticMethodOnlyUsedInOneClassFix(usageClass);
+      return new StaticMethodOnlyUsedInOneClassFix(usageClass, member instanceof PsiMethod);
     }
 
     private static class StaticMethodOnlyUsedInOneClassFix extends RefactoringInspectionGadgetsFix {
 
-      private final SmartPsiElementPointer<PsiClass> usageClass;
+      private final SmartPsiElementPointer<PsiClass> myUsageClass;
+      private final boolean myMethod;
 
-      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
+      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass, boolean method) {
+        myMethod = method;
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(usageClass.getProject());
-        this.usageClass = pointerManager.createSmartPsiElementPointer(usageClass);
+        myUsageClass = pointerManager.createSmartPsiElementPointer(usageClass);
       }
 
       @Override
       @NotNull
       public String getFamilyName() {
-        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
+        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myMethod ? 1 : 2);
       }
 
       @NotNull
@@ -370,7 +380,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       @NotNull
       @Override
       public DataContext enhanceDataContext(DataContext context) {
-        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), usageClass.getElement(), context);
+        return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), myUsageClass.getElement(), context);
       }
     }
 
@@ -385,6 +395,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       public void visitField(PsiField field) {
         super.visitField(field);
         if (!field.hasModifierProperty(PsiModifier.STATIC) || field.hasModifierProperty(PsiModifier.PRIVATE)) return;
+        if (field instanceof PsiEnumConstant || isSingletonField(field)) return;
         if (DeclarationSearchUtils.isTooExpensiveToSearch(field, true)) return;
         final PsiClass usageClass = getUsageClass(field);
         if (usageClass == null) return;
@@ -399,7 +410,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
             method.getNameIdentifier() == null) {
           return;
         }
-        if (MethodUtils.isFactoryMethod(method)) {
+        if (MethodUtils.isFactoryMethod(method) || MethodUtils.isConvenienceOverload(method)) {
           return;
         }
         if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) return;

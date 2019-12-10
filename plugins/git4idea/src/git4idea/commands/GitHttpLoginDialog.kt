@@ -31,7 +31,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
                                                    username: String? = null,
                                                    editableUsername: Boolean = true,
                                                    private val showActionForCredHelper: Boolean = false) : DialogWrapper(project, true) {
-  private val usernameField = JBTextField(username).apply { isEditable = editableUsername }
+  private val usernameField = JBTextField(username, 20).apply { isEditable = editableUsername }
   private val passwordField = JBPasswordField()
   private val rememberCheckbox = JBCheckBox(UIBundle.message("auth.remember.cb"), rememberPassword)
   private val additionalProvidersButton = JBOptionButton(null, null).apply { isVisible = false }

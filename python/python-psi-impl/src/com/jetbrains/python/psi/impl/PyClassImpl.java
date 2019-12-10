@@ -271,7 +271,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       if (!cls.isNewStyleClass(contextToUse)) return null;
 
       final List<String> ownSlots = cls.getOwnSlots();
-      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
+      if (ownSlots == null || ownSlots.contains(PyNames.DUNDER_DICT)) {
         return null;
       }
 

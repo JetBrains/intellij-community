@@ -157,7 +157,9 @@ object UpdateInstaller {
     val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
 
     var java = System.getProperty("java.home")
-    if (FileUtil.isAncestor(PathManager.getHomePath(), java, true)) {
+    val jrePath = Paths.get(java)
+    val idePath = Paths.get(PathManager.getHomePath()).toRealPath()
+    if (jrePath.startsWith(idePath)) {
       val javaCopy = File(tempDir, "jre")
       if (javaCopy.exists()) FileUtil.delete(javaCopy)
       FileUtil.copyDir(File(java), javaCopy)

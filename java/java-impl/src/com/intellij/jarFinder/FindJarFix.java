@@ -4,6 +4,7 @@ package com.intellij.jarFinder;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +47,7 @@ import java.util.regex.Matcher;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class FindJarFix<T extends PsiElement> implements IntentionAction, Iconable {
+public abstract class FindJarFix<T extends PsiElement> implements IntentionAction, Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(FindJarFix.class);
 
   private static final String CLASS_ROOT_URL = "http://findjar.com/class/";

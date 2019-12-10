@@ -66,7 +66,7 @@ class InferredClosureParamsEnhancer : AbstractClosureParameterEnhancer() {
     val session = CollectingGroovyInferenceSession(virtualMethod.typeParameters, virtualMethod, resolveResult.contextSubstitutor,
                                                    proxyMapping)
     session.addConstraint(MethodCallConstraint(null, resolveResult, virtualMethod))
-    return session.inferSubst(resolveResult)
+    return session.inferSubst()
   }
 
 }

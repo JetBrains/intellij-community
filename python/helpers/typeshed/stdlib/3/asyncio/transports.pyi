@@ -1,8 +1,6 @@
 import sys
-from typing import Dict, Any, TypeVar, Mapping, List, Optional, Tuple
+from typing import Any, Mapping, List, Optional, Tuple
 from asyncio.protocols import BaseProtocol
-
-__all__: List[str]
 
 class BaseTransport:
     def __init__(self, extra: Mapping[Any, Any] = ...) -> None: ...

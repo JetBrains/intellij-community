@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -63,7 +62,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     if (declarationStatement == null) return false;
     if (declarationStatement.getDeclaredElements().length != 1) return false;
     String name = variable.getName();
-    if (name == null) return false;
 
     PsiType type = variable.getType();
     if (!PsiTypesUtil.isDenotableType(type, variable)) {
@@ -206,7 +204,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       PsiLocalVariable localVariable = tryCast(declaredElements[0], PsiLocalVariable.class);
       if (localVariable == null) return null;
       String boxName = localVariable.getName();
-      if (boxName == null) return null;
       PsiNewExpression newExpression = tryCast(localVariable.getInitializer(), PsiNewExpression.class);
       if (newExpression == null) return null;
       PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
@@ -216,7 +213,6 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       if (!TypeUtils.isJavaLangObject(anonymousClass.getBaseClassType())) return null;
       if (Arrays.stream(anonymousClass.getFields())
         .map(field -> field.getName())
-        .filter(Objects::nonNull)
         .anyMatch(name -> name.equals(variableName))) {
         return null;
       }

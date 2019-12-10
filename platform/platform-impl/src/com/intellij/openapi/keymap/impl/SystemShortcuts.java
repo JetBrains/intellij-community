@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
+import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
@@ -44,6 +45,7 @@ public final class SystemShortcuts {
   private @NotNull final Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
   private @NotNull final MuteConflictsSettings myMutedConflicts = new MuteConflictsSettings();
   private @NotNull final Set<String> myNotifiedActions = new HashSet<>();
+  private int myNotifyCount = 0;
 
   private @Nullable Keymap myKeymap;
 
@@ -181,7 +183,7 @@ public final class SystemShortcuts {
   }
 
   public void onUserPressedShortcut(@NotNull Keymap keymap, @NotNull String[] actionIds, @NotNull KeyboardShortcut ksc) {
-    if (actionIds.length == 0)
+    if (myNotifyCount > 0 || actionIds.length == 0)
       return;
 
     KeyStroke ks = ksc.getFirstKeyStroke();
@@ -204,7 +206,10 @@ public final class SystemShortcuts {
     if (unmutedActId == null)
       return;
 
-    final @Nullable String macOsShortcutAction = getDescription(sysKs);
+    @Nullable String macOsShortcutAction = getDescription(sysKs);
+    if (macOsShortcutAction == ourUnknownSysAction) {
+      macOsShortcutAction = null;
+    }
     //System.out.println(actionId + " shortcut '" + sysKS + "' "
     //                   + Arrays.toString(actionShortcuts) + " conflicts with macOS shortcut"
     //                   + (macOsShortcutAction == null ? "." : " '" + macOsShortcutAction + "'."));
@@ -220,26 +225,45 @@ public final class SystemShortcuts {
         true);
     }
 
+    updateKeymapConflicts(keymap);
+    final int unmutedConflicts = getUnmutedConflictsCount();
+    final boolean hasOtherConflicts = unmutedConflicts > 1;
+
     final AnAction act = ActionManager.getInstance().getAction(actionId);
-    final String actText = act == null ? actionId : act.getTemplateText();
-    final String message = "The " + actText + " shortcut conflicts with macOS shortcut" + (macOsShortcutAction == null ? "" : " '" + macOsShortcutAction + "'") + ". Modify this shortcut or change macOS system settings.";
+    final String actText = act == null ? actionId : act.getTemplateText(); // TODO: fix action ids from services domain
+    final String message;
+    if (hasOtherConflicts) {
+      message = actText + " and " + (unmutedConflicts - 1) + " more shortcut conflict with macOS shortcuts. Modify these shortcuts or change macOS system settings.";
+    } else {
+      message = "The " + actText + " shortcut conflicts with macOS shortcut" + (macOsShortcutAction == null ? "" : " '" + macOsShortcutAction + "'") + ". Modify this shortcut or change macOS system settings.";
+    }
+
     final Notification notification = new Notification(ourNotificationGroupId, "Shortcuts conflicts", message, NotificationType.WARNING, null);
 
-    final AnAction configureShortcut = DumbAwareAction.create("Modify shortcut",  e -> {
-      Component component = e.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT);
-      if (component == null) {
-        Window[] frames = Window.getWindows();
-        component = frames == null || frames.length == 0 ? null : frames[0];
-        if (component == null) {
-          LOG.error("can't show KeyboardShortcutDialog (parent component wasn't found)");
-          return;
+    if (hasOtherConflicts) {
+      final AnAction showKeymapPanelAction = DumbAwareAction.create("Modify shortcuts", e -> {
+          new EditKeymapsDialog(null, actionId, true).show();
+          updateKeymapConflicts(myKeymap);
         }
-      }
+      );
+      notification.addAction(showKeymapPanelAction);
+    } else {
+      final AnAction configureShortcut = DumbAwareAction.create("Modify shortcut",  e -> {
+        Component component = e.getDataContext().getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        if (component == null) {
+          Window[] frames = Window.getWindows();
+          component = frames == null || frames.length == 0 ? null : frames[0];
+          if (component == null) {
+            LOG.error("can't show KeyboardShortcutDialog (parent component wasn't found)");
+            return;
+          }
+        }
 
-      KeymapPanel.addKeyboardShortcut(actionId, ActionShortcutRestrictions.getInstance().getForActionId(actionId), keymap, component, conflicted, SystemShortcuts.this);
-      notification.expire();
-    });
-    notification.addAction(configureShortcut);
+        KeymapPanel.addKeyboardShortcut(actionId, ActionShortcutRestrictions.getInstance().getForActionId(actionId), keymap, component, conflicted, SystemShortcuts.this);
+        notification.expire();
+      });
+      notification.addAction(configureShortcut);
+    }
 
     final AnAction muteAction = DumbAwareAction.create("Don't show again", e -> {
       myMutedConflicts.addMutedAction(actionId);
@@ -247,8 +271,8 @@ public final class SystemShortcuts {
     });
     notification.addAction(muteAction);
 
-    if (SystemInfo.isMac) {
-      final AnAction changeSystemSettings = DumbAwareAction.create("Change system settings", e -> {
+    if (SystemInfo.isMac && !hasOtherConflicts) {
+      final AnAction changeSystemSettings = DumbAwareAction.create("Change system shortcuts", e -> {
         ApplicationManager.getApplication().executeOnPooledThread(()->{
           final GeneralCommandLine cmdLine = new GeneralCommandLine(
             "osascript",
@@ -270,6 +294,7 @@ public final class SystemShortcuts {
     }
 
     myNotifiedActions.add(actionId);
+    ++myNotifyCount;
     notification.notify(null);
   }
 
@@ -291,7 +316,21 @@ public final class SystemShortcuts {
     } catch (Throwable e) {
       Logger.getInstance(SystemShortcuts.class).error(e);
     }
-    return result == null ? ourUnknownSysAction : result;
+
+    if (result == null)
+      return ourUnknownSysAction;
+
+    // shorten description when the result string looks like:
+    // "com.apple.Safari - Search With %WebSearchProvider@ - searchWithWebSearchProvider"
+    final String delimiter = " - ";
+    final int pos0 = result.indexOf(delimiter);
+    if (pos0 < 0)
+      return result;
+    final int pos1 = result.indexOf(delimiter, pos0 + delimiter.length());
+    if (pos1 < 0)
+      return result;
+
+    return result.substring(pos0 + delimiter.length(), pos1).replace("%", "").replace("@", "");
   }
 
   private static final boolean DEBUG_SYSTEM_SHORTCUTS = Boolean.getBoolean("debug.system.shortcuts");
@@ -315,6 +354,7 @@ public final class SystemShortcuts {
       if (ourMethodReadSystemHotkeys == null)
         return;
 
+      @SuppressWarnings("unchecked")
       List<AWTKeyStroke> all = (List<AWTKeyStroke>)ourMethodReadSystemHotkeys.invoke(ourShkClass);
       if (all == null || all.isEmpty())
         return;

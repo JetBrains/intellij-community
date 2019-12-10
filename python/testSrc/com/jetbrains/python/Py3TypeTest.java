@@ -974,6 +974,16 @@ public class Py3TypeTest extends PyTestCase {
                "\n" +
                "    def __post_init__(self, a, b):\n" +
                "        expr = a");
+      }
+    );
+  }
+
+  // PY-28506
+  public void testDataclassPostInitInheritedParameter2() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
 
         // both are dataclasses, base with enabled `init`
         doTest("Any",
@@ -989,6 +999,16 @@ public class Py3TypeTest extends PyTestCase {
                "\n" +
                "    def __post_init__(self, a, b):\n" +
                "        expr = a");
+      }
+    );
+  }
+
+  // PY-28506
+  public void testDataclassPostInitInheritedParameter3() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
 
         // both are dataclasses, derived with enabled `init`
         doTest("int",
@@ -1004,6 +1024,16 @@ public class Py3TypeTest extends PyTestCase {
                "\n" +
                "    def __post_init__(self, a, b):\n" +
                "        expr = a");
+      }
+    );
+  }
+
+  // PY-28506
+  public void testDataclassPostInitInheritedParameter4() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        myFixture.copyDirectoryToProject(TEST_DIRECTORY + "DataclassPostInitParameter", "");
 
         // both are dataclasses with disabled `init`
         doTest("Any",

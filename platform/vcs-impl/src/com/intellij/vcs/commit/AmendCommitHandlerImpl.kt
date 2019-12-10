@@ -112,7 +112,7 @@ class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflow
         result
       }
       catch (e: VcsException) {
-        showErrorDialog(project, "Couldn't load commit message of the commit to amend.\n${e.message}", "Commit Message not Loaded")
+        showErrorDialog(project, "Couldn't load commit message of the commit to amend.\n${e.message.capitalize()}", "Commit Message Not Loaded")
         LOG.info(e)
         null
       }

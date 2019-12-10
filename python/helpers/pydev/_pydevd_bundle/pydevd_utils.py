@@ -1,7 +1,9 @@
 from __future__ import nested_scopes
-import traceback
+
 import os
+import traceback
 import warnings
+
 import pydevd_file_utils
 
 try:
@@ -440,3 +442,65 @@ def get_var_and_offset(var):
     if isinstance(var, VariableWithOffset):
         return var.data, var.offset
     return var, 0
+
+
+def is_pandas_container(type_qualifier, var_type, var):
+    return var_type in ("DataFrame", "Series") and type_qualifier.startswith("pandas") and hasattr(var, "shape")
+
+
+def is_numpy_container(type_qualifier, var_type, var):
+    return var_type == "ndarray" and type_qualifier == "numpy" and hasattr(var, "shape")
+
+
+def is_numeric_container(type_qualifier, var_type, var):
+    return is_numpy_container(type_qualifier, var_type, var) or is_pandas_container(type_qualifier, var_type, var)
+
+
+def _series_to_str(s, max_items, show_index=True):
+    res = []
+    i = 0
+    for item in s.iteritems():
+        # item: (index, value)
+        if show_index:
+            res.append(str(item))
+        else:
+            res.append(str(item[1]))
+        i += 1
+        if i > max_items:
+            break
+    return ' '.join(res)
+
+
+def _df_to_str(df, max_items, rows_sep=', '):
+    res = []
+    for c in df.columns:
+        res.append(str(c))
+    rows = []
+    i = 0
+    for item in df.iterrows():
+        # item: (index, Series)
+        ind = "[%s: " % item[0]
+        values = _series_to_str(item[1], max_items, show_index=False)
+        rows.append(ind + values + "]")
+        i += item[1].size
+        if i > max_items:
+            break
+    res.append(rows_sep.join(rows))
+    return ' '.join(res)
+
+
+def pandas_to_str(df, type_name, max_items):
+    try:
+        if type_name == "Series":
+            return _series_to_str(df, max_items)
+        elif type_name == "DataFrame":
+            return _df_to_str(df, max_items)
+        else:
+            return str(df)
+    except Exception as e:
+        pydev_log.warn("Failed to format pandas variable: " + str(e))
+        return str(df)
+
+
+def format_numpy_array(num_array, max_items):
+    return str(num_array[:max_items]).replace('\n', ',').strip()

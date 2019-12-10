@@ -107,8 +107,7 @@ class TouchBarStats {
     }
 
     void onUpdate(long updateDurationNs) {
-      if (ApplicationManager.getApplication() != null)
-        isBackgroundThread |= !ApplicationManager.getApplication().isDispatchThread();
+      isBackgroundThread |= !ApplicationManager.getApplication().isDispatchThread();
       totalUpdateDurationNs += updateDurationNs;
       maxUpdateDurationNs = Math.max(maxUpdateDurationNs, updateDurationNs);
     }

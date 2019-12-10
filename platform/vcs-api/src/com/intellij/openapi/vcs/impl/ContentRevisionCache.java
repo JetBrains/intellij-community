@@ -41,14 +41,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
+  private final Map<Key, byte[]> myConstantCache = new HashMap<>();
   private long myCounter;
 
   public ContentRevisionCache() {
@@ -195,6 +194,10 @@ public class ContentRevisionCache {
     if (bytes != null) {
       return bytes;
     }
+    bytes = cache.getFromConstantCache(path, number, vcsKey, type);
+    if (bytes != null) {
+      return bytes;
+    }
 
     checkLocalFileSize(path);
     bytes = loader.compute();
@@ -236,8 +239,31 @@ public class ContentRevisionCache {
     }
   }
 
+  public void putIntoConstantCache(@NotNull FilePath path,
+                                   @NotNull VcsRevisionNumber revisionNumber,
+                                   @NotNull VcsKey vcsKey,
+                                   byte[] content) {
+    synchronized (myConstantCache) {
+      myConstantCache.put(new Key(path, revisionNumber, vcsKey, UniqueType.REPOSITORY_CONTENT), content);
+    }
+  }
+
+  public byte[] getFromConstantCache(@NotNull FilePath path,
+                                     @NotNull VcsRevisionNumber revisionNumber,
+                                     @NotNull VcsKey vcsKey,
+                                     @NotNull UniqueType type) {
+    synchronized (myConstantCache) {
+      return myConstantCache.get(new Key(path, revisionNumber, vcsKey, type));
+    }
+  }
+
+  public void clearConstantCache() {
+    myConstantCache.clear();
+  }
+
   public static Pair<VcsRevisionNumber, byte[]> getOrLoadCurrentAsBytes(final Project project, FilePath path, @NotNull VcsKey vcsKey,
-      final CurrentRevisionProvider loader) throws VcsException, IOException {
+                                                                        final CurrentRevisionProvider loader)
+    throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
 
     VcsRevisionNumber currentRevision;
@@ -346,6 +372,7 @@ public class ContentRevisionCache {
       ++ myCounter;
       myCurrentRevisionsCache.clear();
       myCache.clear();
+      myConstantCache.clear();
     }
   }
 }

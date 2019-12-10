@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.HeavyPlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.HeavyPlatformTestCase.assertTrue
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
@@ -20,7 +21,6 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import java.io.File
 import java.util.*
 
@@ -66,7 +66,7 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
     HeavyPlatformTestCase.assertNotNull("The change [$change] is not staged", found)
     actualChanges.remove(found)
   }
-  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
+  assertTrue(actualChanges.isEmpty())
 }
 
 fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
@@ -80,7 +80,7 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
     HeavyPlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
     actualChanges.remove(found)
   }
-  HeavyPlatformTestCase.assertTrue(actualChanges.isEmpty())
+  assertTrue(actualChanges.isEmpty())
 }
 
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
@@ -148,15 +148,19 @@ fun ChangeListManager.assertChanges(changes: ChangesBuilder.() -> Unit): List<Ch
 }
 
 class ChangesBuilder {
+
+
   data class AChange(val type: FileStatus,
                      val nameBefore: String?,
-                     val nameAfter: String,
-                     val matcher: (FileStatus, FilePath?, FilePath?) -> Boolean) {
-    val changeMatcher: (Change) -> Boolean = { it -> matcher(it.fileStatus, it.beforeRevision?.file, it.afterRevision?.file) }
+                     val nameAfter: String?,
+                     val matcher: (FileStatus, FilePath?, FilePath?) -> Boolean,
+                     val changeMatcher: (Change) -> Boolean) {
+
     val gitDiffChangeMatcher: (GitChangeUtils.GitDiffChange) -> Boolean = { it -> matcher(it.status, it.beforePath, it.afterPath) }
 
-    constructor(type: FileStatus, nameAfter: String, matcher: (FileStatus, FilePath?, FilePath?) -> Boolean)
-      : this(type, null, nameAfter, matcher)
+    constructor(type: FileStatus, nameBefore: String?, nameAfter: String?, matcher: (FileStatus, FilePath?, FilePath?) -> Boolean)
+      : this(type, nameBefore, nameAfter, matcher,
+             changeMatcher = { matcher(it.fileStatus, it.beforeRevision?.file, it.afterRevision?.file) })
 
     override fun toString(): String {
       when {
@@ -171,25 +175,50 @@ class ChangesBuilder {
   val changes = linkedSetOf<AChange>()
 
   fun deleted(name: String) {
-    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) { status, beforePath, afterPath ->
-      status == FileStatus.DELETED && beforePath.relativePath == name && afterPath == null
-    }))
+    assertTrue(changes.add(AChange(FileStatus.DELETED, nameBefore = name, nameAfter = null)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.DELETED && beforePath.relativePath == name && afterPath == null
+                           }))
+  }
+
+  fun added(name: String, newContent: String) {
+    val addition = AChange(FileStatus.ADDED, nameBefore = null, nameAfter = name,
+                           matcher = { status, beforePath, afterPath ->
+                             status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name },
+                           changeMatcher = { change ->
+                             change.afterRevision!!.content == newContent
+                           })
+    assertTrue(changes.add(addition))
   }
 
   fun added(name: String) {
-    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) { status, beforePath, afterPath ->
-      status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name
-    }))
+    assertTrue(changes.add(AChange(FileStatus.ADDED, nameBefore = null, nameAfter = name)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.ADDED && beforePath == null && afterPath.relativePath == name
+                           }))
+  }
+
+  fun modified(name: String, oldContent: String, newContent: String) {
+    val modification = AChange(FileStatus.MODIFIED, nameBefore = name, nameAfter = name,
+                               matcher = { status, beforePath, afterPath ->
+                                status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
+                              },
+                               changeMatcher = { change ->
+                                change.beforeRevision!!.content == oldContent &&
+                                change.afterRevision!!.content == newContent
+                              })
+    assertTrue(changes.add(modification))
   }
 
   fun modified(name: String) {
-    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, name) { status, beforePath, afterPath ->
-      status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
-    }))
+    assertTrue(changes.add(AChange(FileStatus.MODIFIED, nameBefore = name, nameAfter = name)
+                           { status, beforePath, afterPath ->
+                             status == FileStatus.MODIFIED && beforePath.relativePath == name && afterPath.relativePath == name
+                           }))
   }
 
   fun rename(from: String, to: String) {
-    HeavyPlatformTestCase.assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) { status, beforePath, afterPath ->
+    assertTrue(changes.add(AChange(FileStatus.MODIFIED, from, to) { status, beforePath, afterPath ->
       beforePath != null && afterPath != null && beforePath.path != afterPath.path &&
       from == beforePath.relativePath && to == afterPath.relativePath
     }))

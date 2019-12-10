@@ -173,8 +173,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
 
       override val cases: List<ImmediateConfigurable.Case>
         get() = listOf(
-          ImmediateConfigurable.Case("Inferred annotations", settings::showInferred),
-          ImmediateConfigurable.Case("External annotations", settings::showExternal)
+          ImmediateConfigurable.Case("Inferred annotations", "inferred.annotations", settings::showInferred),
+          ImmediateConfigurable.Case("External annotations", "external.annotations", settings::showExternal)
         )
     }
   }

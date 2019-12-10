@@ -37,7 +37,8 @@ public class UriUtil {
   @Nullable
   public static VirtualFile findRelative(String uri, @NotNull PsiFileSystemItem base) {
     String location = ExternalResourceManager.getInstance().getResourceLocation(uri, base.getProject());
-    return VfsUtilCore.findRelativeFile(location, base.getVirtualFile());
+    VirtualFile file = base.getVirtualFile();
+    return VfsUtilCore.findRelativeFile(location, file != null && file.isValid() ? file : null);
   }
 
   // cannot use UriUtil.SLASH_MATCHER.trimFrom - we don't depend on guava

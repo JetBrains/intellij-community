@@ -118,12 +118,12 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
   //
 
   @Override
-  protected boolean hasNextChange() {
+  protected boolean hasNextChange(boolean fromUpdate) {
     return myIndex + 1 < myRequests.size();
   }
 
   @Override
-  protected boolean hasPrevChange() {
+  protected boolean hasPrevChange(boolean fromUpdate) {
     return myIndex > 0;
   }
 

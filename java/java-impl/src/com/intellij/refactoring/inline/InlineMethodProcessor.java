@@ -671,7 +671,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiLocalVariable var = tryCast(ArrayUtil.getFirstElement(elements), PsiLocalVariable.class);
           if (var != null) {
             String name = var.getName();
-            LOG.assertTrue(name != null);
             if (blockData.resultVar != null && name.equals(blockData.resultVar.getName())) {
               resultVar = var;
             }
@@ -708,7 +707,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
     PsiReferenceExpression resultUsage = null;
     if (blockData.resultVar != null) {
-      PsiExpression expr = myFactory.createExpressionFromText(Objects.requireNonNull(blockData.resultVar.getName()), null);
+      PsiExpression expr = myFactory.createExpressionFromText(blockData.resultVar.getName(), null);
       resultUsage = (PsiReferenceExpression)new CommentTracker().replaceAndRestoreComments(methodCall, expr);
     }
     else {
@@ -1248,7 +1247,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiLocalVariable target = tryCast(PsiUtil.skipParenthesizedExprUp(usage.getParent()), PsiLocalVariable.class);
     if (target == null) return;
     String name = target.getName();
-    if (name == null || !target.getType().equals(variable.getType())) return;
+    if (!target.getType().equals(variable.getType())) return;
     PsiDeclarationStatement declaration = tryCast(target.getParent(), PsiDeclarationStatement.class);
     if (declaration == null || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();

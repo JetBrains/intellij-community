@@ -61,10 +61,7 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
   public String getAlphaSortKey() {
     final PsiField field = getElement();
     if (field != null) {
-      String name = field.getName();
-      if (name != null) {
-        return name;
-      }
+      return field.getName();
     }
     return "";
   }

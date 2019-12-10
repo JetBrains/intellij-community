@@ -414,7 +414,10 @@ public class UpdateHighlightersUtil {
       layer = HighlighterLayer.ERROR;
     }
     else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) {
-      layer = HighlighterLayer.CARET_ROW-1;
+      layer = HighlighterLayer.CARET_ROW - 1;
+    }
+    else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SYNTAX_SEVERITY) {
+      layer = HighlighterLayer.CARET_ROW - 2;
     }
     else if (severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
       layer = HighlighterLayer.ELEMENT_UNDER_CARET;

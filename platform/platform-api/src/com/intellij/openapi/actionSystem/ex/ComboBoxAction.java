@@ -152,7 +152,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
+
+      setIcon(myPresentation.getIcon());
+      setText(myPresentation.getText());
+
       myTooltipText = myPresentation.getDescription();
+      updateTooltipText();
 
       setModel(new MyButtonModel());
       getModel().setEnabled(myPresentation.isEnabled());
@@ -254,15 +259,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         myButtonSynchronizer = new MyButtonSynchronizer();
         myPresentation.addPropertyChangeListener(myButtonSynchronizer);
       }
-      initButton();
-    }
-
-    private void initButton() {
-      setIcon(myPresentation.getIcon());
-      setText(myPresentation.getText());
-      myTooltipText = myPresentation.getDescription();
-      updateTooltipText();
-      updateButtonSize();
     }
 
     private void updateTooltipText() {
@@ -293,7 +289,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         String propertyName = evt.getPropertyName();
         if (Presentation.PROP_TEXT.equals(propertyName)) {
           setText((String)evt.getNewValue());
-          updateButtonSize();
         }
         else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
           myTooltipText = (String)evt.getNewValue();
@@ -301,7 +296,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
         else if (Presentation.PROP_ICON.equals(propertyName)) {
           setIcon((Icon)evt.getNewValue());
-          updateButtonSize();
         }
         else if (Presentation.PROP_ENABLED.equals(propertyName)) {
           setEnabled(((Boolean)evt.getNewValue()).booleanValue());
@@ -389,16 +383,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override public void updateUI() {
       super.updateUI();
       setMargin(JBUI.insets(0, 5, 0, 2));
-      updateButtonSize();
-      updateTooltipText();
     }
 
-    protected void updateButtonSize() {
-      invalidate();
-      repaint();
-      setSize(getPreferredSize());
-      repaint();
-    }
+    /**
+     * @deprecated This method is noop. Set icon, text and tooltip in the constructor
+     * or property change listener for proper computation of preferred size.
+     * Other updates happen in Swing.
+     */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021")
+    protected void updateButtonSize() {}
 
     @ApiStatus.Experimental
     protected void doShiftClick() {

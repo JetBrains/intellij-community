@@ -353,7 +353,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     @NotNull
     private static DuplicatesFinder buildDuplicatesFinder(@NotNull PsiCodeBlock catchBlock, @NotNull PsiParameter parameter) {
       final InputVariables inputVariables =
-        new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false);
+        new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false, Collections.emptySet());
       return new DuplicatesFinder(new PsiElement[]{catchBlock}, inputVariables, null, Collections.emptyList());
     }
   }

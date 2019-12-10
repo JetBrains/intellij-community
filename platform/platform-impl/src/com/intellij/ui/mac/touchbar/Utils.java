@@ -7,13 +7,11 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -50,8 +48,8 @@ public class Utils {
   }
 
   public static String getAppId() {
-    Application app = ApplicationManager.getApplication();
-    if (app == null || app.isUnitTestMode()) return null;
+    final @NotNull Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) return null;
 
     String appId;
     try (@SuppressWarnings("unused") NSAutoreleaseLock lock = new NSAutoreleaseLock()) {

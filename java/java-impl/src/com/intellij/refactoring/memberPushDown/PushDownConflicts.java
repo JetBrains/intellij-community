@@ -29,9 +29,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class PushDownConflicts {
   private final PsiClass myClass;
@@ -118,8 +116,10 @@ public class PushDownConflicts {
           if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
             unrelatedDefaults.add(superMethod.getContainingClass());
             if (unrelatedDefaults.size() > 1) {
+              List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
+              supers.sort(Comparator.comparing(PsiClass::getName));
               myConflicts.putValue(member, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
-                                                                            StringUtil.join(unrelatedDefaults, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
+                                                                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
               break;
             }
           }

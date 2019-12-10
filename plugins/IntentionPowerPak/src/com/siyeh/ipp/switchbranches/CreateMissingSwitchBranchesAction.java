@@ -192,7 +192,6 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     @Nullable
     static Value fromField(@NotNull PsiField field) {
       String name = field.getName();
-      if (name == null) return null;
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
       String className = aClass.getQualifiedName();

@@ -56,7 +56,7 @@ public class StepIntersection {
         }
       }
 
-      break outerLoop;
+      break;
     }
   }
 

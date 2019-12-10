@@ -107,7 +107,6 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
           case GET_DECLARED_FIELD:
             return Arrays.stream(ownerClass.getPsiClass().getFields())
-              .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
               .map(field -> JavaLookupElementBuilder.forField(field))
               .toArray();
@@ -115,7 +114,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
           case GET_FIELD: {
             final Set<String> uniqueNames = new THashSet<>();
             return Arrays.stream(ownerClass.getPsiClass().getAllFields())
-              .filter(field -> isPotentiallyAccessible(field, ownerClass) && field.getName() != null && uniqueNames.add(field.getName()))
+              .filter(field -> isPotentiallyAccessible(field, ownerClass) && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
               .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isPublic(field)))
               .toArray();
@@ -142,7 +141,6 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
           case NEW_UPDATER: {
             return Arrays.stream(ownerClass.getPsiClass().getFields())
-              .filter(field -> field.getName() != null)
               .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
               .map(field -> withPriority(JavaLookupElementBuilder.forField(field), isAtomicallyUpdateable(field)))
               .toArray();

@@ -8,6 +8,9 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 
 /**
  * @author yole
@@ -225,7 +228,17 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyArgumentEqualDefaultInspection() {    //PY-3125
-    doHighlightingTest(PyArgumentEqualDefaultInspection.class);
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+
+    runWithAdditionalFileInLibDir(
+      PyBuiltinCache.getBuiltinsFileName(languageLevel),
+      "class property(object):\n" +
+      "  def __init__(self, fget=None, fset=None, fdel=None, doc=None):\n" +
+      "    pass\n" +
+      "def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True):\n" +
+      "  pass",
+      (__) -> doHighlightingTest(PyArgumentEqualDefaultInspection.class)
+    );
   }
 
   public void testPyArgumentEqualDefaultInspectionPy3() {

@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void concatenationWithOneNewLine() {
-    String code = "<<caret>html>\n" +
+    String code = "<html><caret>\n" +
                   "</html>";
   }
 

@@ -58,12 +58,14 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private static boolean isUrgentInvocationEvent(AWTEvent event) {
-    // LWCToolkit does invokeAndWait which blocks native event processing until finished. The OS considers that blockage to be
+    // LWCToolkit does 'invokeAndWait', which blocks native event processing until finished. The OS considers that blockage to be
     // app freeze, stops rendering UI and shows beach-ball cursor. We want the UI to act (almost) normally in write-action progresses,
     // so we let these specific events to be dispatched, hoping they wouldn't access project/code model.
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
+
+    //noinspection SpellCheckingInspection
     return event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
            event instanceof MyInvocationEvent;
   }
@@ -171,7 +173,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   /**
    * Repaint just the dialog panel. We must not call custom paint methods during write action,
-   * because they might access the model which might be inconsistent at that moment.
+   * because they might access the model, which might be inconsistent at that moment.
    */
   private void paintProgress() {
     getDialog().myRepaintRunnable.run();
@@ -228,7 +230,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private static class MyInvocationEvent extends InvocationEvent {
-    public MyInvocationEvent(Object source, Runnable runnable) {
+    MyInvocationEvent(Object source, Runnable runnable) {
       super(source, runnable);
     }
   }

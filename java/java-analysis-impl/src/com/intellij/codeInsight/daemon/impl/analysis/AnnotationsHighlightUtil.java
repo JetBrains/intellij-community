@@ -727,7 +727,6 @@ public class AnnotationsHighlightUtil {
         if (field instanceof PsiEnumConstant) {
           String name = ((PsiEnumConstant)field).getName();
           try {
-            //noinspection ConstantConditions
             return Enum.valueOf(RetentionPolicy.class, name);
           }
           catch (Exception e) {

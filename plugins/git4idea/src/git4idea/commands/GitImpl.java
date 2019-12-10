@@ -12,6 +12,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -290,6 +293,24 @@ public class GitImpl extends GitImplBase {
                                    boolean force,
                                    boolean detach,
                                    @NotNull GitLineHandlerListener... listeners) {
+    return checkout(repository, reference, newBranch, force, detach, false, listeners);
+  }
+
+  /**
+   * {@code git checkout <reference>} <br/>
+   * {@code git checkout -b <newBranch> <reference>} <br/>
+   * or withReset<br/>
+   * {@code git checkout -B <newBranch> <reference>}
+   */
+  @NotNull
+  @Override
+  public GitCommandResult checkout(@NotNull GitRepository repository,
+                                   @NotNull String reference,
+                                   @Nullable String newBranch,
+                                   boolean force,
+                                   boolean detach,
+                                   boolean withReset,
+                                   @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -300,7 +321,7 @@ public class GitImpl extends GitImplBase {
       h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
     }
     else { // checkout reference as new branch
-      h.addParameters("-b", newBranch, reference);
+      h.addParameters(withReset ? "-B" : "-b", newBranch, reference);
     }
     h.endOptions();
     for (GitLineHandlerListener listener : listeners) {
@@ -381,8 +402,20 @@ public class GitImpl extends GitImplBase {
   @Override
   @NotNull
   public GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint) {
+    return branchCreate(repository, branchName, startPoint, false);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult branchCreate(@NotNull GitRepository repository,
+                                       @NotNull String branchName,
+                                       @NotNull String startPoint,
+                                       boolean force) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
     h.setStdoutSuppressed(false);
+    if (force) {
+      h.addParameters("-f");
+    }
     h.addParameters(branchName);
     h.addParameters(startPoint);
     return runCommand(h);
@@ -758,6 +791,30 @@ public class GitImpl extends GitImplBase {
     }
     addListeners(handler, listeners);
     return runCommand(handler);
+  }
+
+  @Nullable
+  @Override
+  public Hash resolveReference(@NotNull GitRepository repository, @NotNull String ref) {
+    VirtualFile root = repository.getRoot();
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), root, GitCommand.REV_PARSE);
+    handler.addParameters("--verify");
+    handler.addParameters(ref + "^{commit}");
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    String output = result.getOutputAsJoinedString();
+    if (result.success()) {
+      if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+        return HashImpl.build(output);
+      }
+      else {
+        LOG.error("Invalid output for git rev-parse " + ref + " in " + root + ": " + output);
+        return null;
+      }
+    }
+    else {
+      LOG.debug("Reference [" + ref + "] is unknown to Git in " + root);
+      return null;
+    }
   }
 
   @NotNull

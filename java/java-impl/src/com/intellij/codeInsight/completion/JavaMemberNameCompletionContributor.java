@@ -203,7 +203,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     for (PsiField field : psiClass.getFields()) {
       String name = field.getName();
-      if (field.getType().isAssignableFrom(var.getType()) && name != null) {
+      if (field.getType().isAssignableFrom(var.getType())) {
         String prop = codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD);
         addLookupItems(set, null, matcher, project, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
       }

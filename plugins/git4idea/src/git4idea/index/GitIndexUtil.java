@@ -91,15 +91,26 @@ public class GitIndexUtil {
 
   @NotNull
   public static List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
-                                                     @NotNull Collection<? extends FilePath> filePath,
+                                                     @NotNull Collection<? extends FilePath> filePaths,
                                                      @NotNull VcsRevisionNumber revision) throws VcsException {
+    List<StagedFileOrDirectory> result = new ArrayList<>();
+    for (List<String> paths : VcsFileUtil.chunkPaths(repository.getRoot(), filePaths)) {
+      result.addAll(listTreeForRawPaths(repository, paths, revision));
+    }
+    return result;
+  }
+
+  @NotNull
+  public static List<StagedFileOrDirectory> listTreeForRawPaths(@NotNull GitRepository repository,
+                                                                @NotNull List<String> filePaths,
+                                                                @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), root, GitCommand.LS_TREE);
     h.addParameters(revision.asString());
     h.endOptions();
-    h.addRelativePaths(filePath);
+    h.addParameters(filePaths);
 
     h.addLineListener(new GitLineHandlerListener() {
       @Override

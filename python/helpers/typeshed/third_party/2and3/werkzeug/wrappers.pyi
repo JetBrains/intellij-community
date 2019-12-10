@@ -22,10 +22,10 @@ class BaseRequest:
     encoding_errors: str
     max_content_length: Optional[int]
     max_form_memory_size: int
-    parameter_storage_class: Type
-    list_storage_class: Type
-    dict_storage_class: Type
-    form_data_parser_class: Type
+    parameter_storage_class: Type[Any]
+    list_storage_class: Type[Any]
+    dict_storage_class: Type[Any]
+    form_data_parser_class: Type[Any]
     trusted_hosts: Optional[Sequence[Text]]
     disable_data_descriptor: Any
     environ: WSGIEnvironment = ...
@@ -46,7 +46,7 @@ class BaseRequest:
     @property
     def stream(self) -> InputStream: ...
     input_stream: InputStream
-    args: ImmutableMultiDict
+    args: ImmutableMultiDict[Any, Any]
     @property
     def data(self) -> bytes: ...
     @overload
@@ -59,9 +59,9 @@ class BaseRequest:
     def get_data(self, cache: bool, as_text: bool, parse_form_data: bool = ...) -> Any: ...
     @overload
     def get_data(self, *, as_text: bool, parse_form_data: bool = ...) -> Any: ...
-    form: ImmutableMultiDict
-    values: CombinedMultiDict
-    files: MultiDict
+    form: ImmutableMultiDict[Any, Any]
+    values: CombinedMultiDict[Any, Any]
+    files: MultiDict[Any, Any]
     @property
     def cookies(self) -> ImmutableTypeConversionDict[str, str]: ...
     headers: EnvironHeaders

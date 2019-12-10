@@ -31,11 +31,11 @@ class VcsCloneDialogExtensionList(listModel: ListModel<VcsCloneDialogExtension>)
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
       setTitle(extension.getName())
-      setTitleForeground(ListUiUtil.WithTallRow.foreground(list, isSelected))
+      setTitleForeground(ListUiUtil.WithTallRow.foreground(isSelected, true))
       setIcon(extension.getIcon())
       toolTipText = extension.getTooltip()
       setAdditionalStatusLines(extension.getAdditionalStatusLines())
-      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected))
+      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, true))
       return this
     }
   }

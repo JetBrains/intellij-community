@@ -42,7 +42,7 @@ public class ListPluginComponent extends JPanel {
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
-  public final IdeaPluginDescriptor myPlugin;
+  public IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
   private boolean myUninstalledWithoutRestart;
   public IdeaPluginDescriptor myUpdateDescriptor;
@@ -271,7 +271,7 @@ public class ListPluginComponent extends JPanel {
     }
 
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (instance == null || instance.registerCallback == null) {
+    if (instance == null) {
       setTagTooltip("No license in EAP build");
       return;
     }
@@ -289,7 +289,7 @@ public class ListPluginComponent extends JPanel {
 
     if (licensePanel.isNotification()) {
       licensePanel.setBorder(JBUI.Borders.emptyTop(3));
-      licensePanel.setLink("Manage licenses", () -> LicensingFacade.getInstance().register(), false);
+      //licensePanel.setLink("Manage licenses", () -> { XXX }, false);
       myLayout.addLineComponent(licensePanel);
     }
   }
@@ -442,7 +442,7 @@ public class ListPluginComponent extends JPanel {
 
   private void showProgress(boolean repaint) {
     myIndicator = new OneLineProgressIndicator(false);
-    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false, true));
+    myIndicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, null, false, false, true));
     myLayout.setProgressComponent(myIndicator.createBaselineWrapper());
 
     MyPluginModel.addProgress(myPlugin, myIndicator);

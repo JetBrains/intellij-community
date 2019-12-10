@@ -181,8 +181,8 @@ if sys.version_info < (3,):
 else:
     class _ASN1Object(NamedTuple('_ASN1Object', [('nid', int), ('shortname', str), ('longname', str), ('oid', str)])): ...
     class Purpose(_ASN1Object, enum.Enum):
-        SERVER_AUTH = ...
-        CLIENT_AUTH = ...
+        SERVER_AUTH: _ASN1Object
+        CLIENT_AUTH: _ASN1Object
 
 class SSLSocket(socket.socket):
     context: SSLContext
@@ -207,22 +207,24 @@ class SSLSocket(socket.socket):
     def unwrap(self) -> socket.socket: ...
     def version(self) -> Optional[str]: ...
     def pending(self) -> int: ...
-
+    if sys.version_info >= (3, 8):
+        def verify_client_post_handshake(self) -> None: ...
 
 if sys.version_info >= (3, 7):
     class TLSVersion(enum.IntEnum):
-        MINIMUM_SUPPORTED = ...
-        MAXIMUM_SUPPORTED = ...
-        SSLv3 = ...
-        TLSv1 = ...
-        TLSv1_1 = ...
-        TLSv1_2 = ...
-        TLSv1_3 = ...
-
+        MINIMUM_SUPPORTED: int
+        MAXIMUM_SUPPORTED: int
+        SSLv3: int
+        TLSv1: int
+        TLSv1_1: int
+        TLSv1_2: int
+        TLSv1_3: int
 
 class SSLContext:
     check_hostname: bool
     options: int
+    if sys.version_info >= (3, 8):
+        post_handshake_auth: bool
     @property
     def protocol(self) -> int: ...
     verify_flags: int
@@ -287,6 +289,8 @@ if sys.version_info >= (3, 5):
         def do_handshake(self) -> None: ...
         def unwrap(self) -> None: ...
         def get_channel_binding(self, cb_type: str = ...) -> Optional[bytes]: ...
+        if sys.version_info >= (3, 8):
+            def verify_client_post_handshake(self) -> None: ...
 
     class MemoryBIO:
         pending: int
@@ -303,6 +307,17 @@ if sys.version_info >= (3, 6):
         ticket_lifetime_hint: int
         has_ticket: bool
 
+    class VerifyFlags(enum.IntFlag):
+        VERIFY_DEFAULT: int
+        VERIFY_CRL_CHECK_LEAF: int
+        VERIFY_CRL_CHECK_CHAIN: int
+        VERIFY_X509_STRICT: int
+        VERIFY_X509_TRUSTED_FIRST: int
+
+    class VerifyMode(enum.IntEnum):
+        CERT_NONE: int
+        CERT_OPTIONAL: int
+        CERT_REQUIRED: int
 
 # TODO below documented in cpython but not in docs.python.org
 # taken from python 3.4

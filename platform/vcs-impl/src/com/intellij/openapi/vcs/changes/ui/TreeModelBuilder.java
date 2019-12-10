@@ -76,7 +76,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
    */
   @Deprecated
   public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
-    this(project, ChangesGroupingSupport.getFactory(project, showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
+    this(project, ChangesGroupingSupport.getFactory(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
   }
 
   /**

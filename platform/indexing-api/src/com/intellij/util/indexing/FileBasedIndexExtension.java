@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.PersistentFSConstants;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,13 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   @Override
   public abstract ID<K, V> getName();
 
+  /**
+   * @return filter for file are supposed being indexed by the {@link IndexExtension#getIndexer()}.
+   *
+   * Usually {@link DefaultFileTypeSpecificInputFilter} can be used here to index only files with given file-type.
+   * Note that check only file's extension is usually error-prone way and prefer to check {@link VirtualFile#getFileType()}:
+   * for example user can enforce language file as plain text one.
+   */
   @NotNull
   public abstract FileBasedIndex.InputFilter getInputFilter();
 

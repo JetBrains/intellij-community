@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.openapi.externalSystem.importing.ImportSpec
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Test
@@ -9,9 +12,27 @@ import org.junit.Test
 open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImportingTestCase() {
   val itemLinePrefix by lazy { if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-" }
   val isPerTaskOutputSupported by lazy { currentGradleVersion >= GradleVersion.version("4.7") }
+  private var enableStackTraceImportingOption = false
 
   // do not inject repository
   override fun injectRepo(config: String): String = config
+
+  override fun createImportSpec(): ImportSpec {
+    val baseImportSpec = super.createImportSpec()
+    val baseArguments = baseImportSpec.arguments
+    val importSpecBuilder = ImportSpecBuilder(baseImportSpec)
+    if (enableStackTraceImportingOption) {
+      if (baseArguments == null || !baseArguments.contains("--stacktrace")) {
+        importSpecBuilder.withArguments("${baseArguments} --stacktrace")
+      }
+    }
+    else {
+      if (baseArguments != null) {
+        importSpecBuilder.withArguments(baseArguments.replace("--stacktrace", ""))
+      }
+    }
+    return importSpecBuilder.build()
+  }
 
   @Test
   fun `test build script errors on Sync`() {
@@ -36,6 +57,57 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
         "   Could not find method ghostConf() for arguments [project ':api'] on object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler"
     }
     assertSyncViewTreeEquals(expectedExecutionTree)
+  }
+
+  @Test
+  fun `test build script plugins errors on Sync`() {
+    createProjectSubFile("buildSrc/src/main/java/example/SomePlugin.java",
+                         "package example;\n" +
+                         "\n" +
+                         "import org.gradle.api.Plugin;\n" +
+                         "import org.gradle.api.Project;\n" +
+                         "\n" +
+                         "public class SomePlugin implements Plugin<Project> {\n" +
+                         "    public void apply(Project project) {\n" +
+                         "        throw new IllegalArgumentException(\"Something's wrong!\");\n" +
+                         "    }\n" +
+                         "}\n")
+    importProject("apply plugin: example.SomePlugin")
+
+    var expectedExecutionTree: String = "-\n" +
+                                        " -failed\n"
+    if (currentGradleVersion >= GradleVersion.version("3.3") &&
+        currentGradleVersion < GradleVersion.version("4.5")) {
+      expectedExecutionTree += "  :buildSrc:clean\n"
+    }
+
+    if (currentGradleVersion >= GradleVersion.version("3.3")) {
+      expectedExecutionTree += "  :buildSrc:compileJava\n" +
+                               "  :buildSrc:compileGroovy\n" +
+                               "  :buildSrc:processResources\n" +
+                               "  :buildSrc:classes\n" +
+                               "  :buildSrc:jar\n" +
+                               "  :buildSrc:assemble\n" +
+                               "  :buildSrc:compileTestJava\n" +
+                               "  :buildSrc:compileTestGroovy\n" +
+                               "  :buildSrc:processTestResources\n" +
+                               "  :buildSrc:testClasses\n" +
+                               "  :buildSrc:test\n" +
+                               "  :buildSrc:check\n" +
+                               "  :buildSrc:build\n"
+    }
+
+    expectedExecutionTree += "  -build.gradle\n" +
+                             "   Something's wrong!"
+    assertSyncViewTreeEquals(expectedExecutionTree)
+
+    val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
+    assertSyncViewSelectedNode("Something's wrong!",
+                               "Build file '$filePath' line: 1\n\n" +
+                               "A problem occurred evaluating root project 'project'.\n" +
+                               "> Failed to apply plugin [class 'example.SomePlugin']\n" +
+                               "   > Something's wrong!\n")
+
   }
 
   @Test
@@ -197,7 +269,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test startup build script errors with column info`() {
-    importProject("apply plugin: 'java'" +
+    importProject("apply plugin: 'java'\n" +
                   "dependencies { \n" +
                   "  testCompile group: 'junit', name: 'junit', version: '4.12\n" +
                   "}")
@@ -217,5 +289,22 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              " -failed\n" +
                              "  -build.gradle\n" +
                              "   only buildscript {} and other plugins {} script blocks are allowed before plugins {} blocks, no other statements are allowed")
+  }
+
+  @Test
+  fun `test build script errors with stacktrace info`() {
+    enableStackTraceImportingOption = true
+    importProject("apply plugin: 'java'foo")
+
+    assertSyncViewTreeEquals("-\n" +
+                             " -failed\n" +
+                             "  -build.gradle\n" +
+                             "   Cannot get property 'foo' on null object")
+
+    val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
+    assertSyncViewSelectedNode("Cannot get property 'foo' on null object",
+                               "Build file '$filePath' line: 1\n\n" +
+                               "A problem occurred evaluating root project 'project'.\n" +
+                               "> Cannot get property 'foo' on null object\n")
   }
 }

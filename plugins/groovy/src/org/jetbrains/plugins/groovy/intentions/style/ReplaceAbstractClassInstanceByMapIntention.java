@@ -38,8 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import java.util.*;
 
@@ -155,10 +153,6 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
 
   private static String createName(final Set<String> generatedNames, final PsiParameter param, final PsiType type, GroovyPsiElement context) {
     String name = param.getName();
-    if (name == null) {
-      name = GroovyNameSuggestionUtil.suggestVariableNameByType(type, new DefaultGroovyVariableNameValidator(context, generatedNames))[0];
-      assert name != null;
-    }
     generatedNames.add(name);
     return name;
   }

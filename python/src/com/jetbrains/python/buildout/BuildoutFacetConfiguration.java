@@ -73,7 +73,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
    * Sets the paths to be prepended to pythonpath, taken from a buildout script.
    * @param paths what to store; the list will be copied. 
    */
-  void setPaths(@Nullable List<String> paths) {
+  public void setPaths(@Nullable List<String> paths) {
     myPaths = paths == null ? null : new ArrayList<>(paths);
   }
 

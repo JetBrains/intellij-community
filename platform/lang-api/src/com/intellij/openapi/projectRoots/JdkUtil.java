@@ -226,7 +226,7 @@ public class JdkUtil {
                                        boolean dynamicVMOptions,
                                        boolean dynamicParameters) throws CantRunException {
     try {
-      File argFile = FileUtil.createTempFile("idea_arg_file" + + Math.abs(new Random().nextInt()), null);
+      File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
 
       try (PrintWriter writer = createOutputWriter(argFile)) {
         if (dynamicVMOptions) {
@@ -307,7 +307,7 @@ public class JdkUtil {
                                                   boolean dynamicVMOptions,
                                                   boolean dynamicParameters) throws CantRunException {
     try {
-      int pseudoUniquePrefix = Math.abs(new Random().nextInt());
+      int pseudoUniquePrefix = new Random().nextInt(Integer.MAX_VALUE);
       File vmParamsFile = null;
       if (dynamicVMOptions) {
         vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);

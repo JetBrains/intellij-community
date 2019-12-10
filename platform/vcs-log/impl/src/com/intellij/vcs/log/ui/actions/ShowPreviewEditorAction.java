@@ -18,9 +18,10 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
+//not used currently
+@SuppressWarnings("ComponentNotRegistered")
 public class ShowPreviewEditorAction extends DumbAwareAction {
-  public static final DataKey<DiffPreviewProvider> DATA_KEY =
-    DataKey.create("com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction.DiffPreviewProvider");
+  public static final DataKey<DiffPreviewProvider> DATA_KEY = DataKey.create("com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction.DiffPreviewProvider");
 
   public ShowPreviewEditorAction() {
     super("Show Diff Preview in Editor", null, AllIcons.Actions.ChangeView);

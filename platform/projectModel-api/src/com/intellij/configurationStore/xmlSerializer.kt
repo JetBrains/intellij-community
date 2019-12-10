@@ -56,4 +56,6 @@ interface JdomSerializer {
 
   @ApiStatus.Internal
   fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter
+
+  fun clearSerializationCaches()
 }

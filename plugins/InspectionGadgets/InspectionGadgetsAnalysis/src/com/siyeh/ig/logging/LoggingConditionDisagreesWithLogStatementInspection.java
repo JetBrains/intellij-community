@@ -265,7 +265,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
         }
         final PsiField field = (PsiField)target;
         final String fieldName = field.getName();
-        return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+        return !StringUtil.toLowerCase(fieldName).equals(priority);
       }
       else if ("isEnabledFor".equals(methodName)) {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
@@ -290,7 +290,7 @@ public class LoggingConditionDisagreesWithLogStatementInspection extends BaseIns
           }
           final PsiField field = (PsiField)argumentTarget;
           final String fieldName = field.getName();
-          return fieldName != null && !StringUtil.toLowerCase(fieldName).equals(priority);
+          return !StringUtil.toLowerCase(fieldName).equals(priority);
         }
       }
       return false;

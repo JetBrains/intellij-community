@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
+import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.convertToList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -61,6 +62,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   public PyConsoleTask() {
     super(null);
+  }
+
+  public PyConsoleTask(String relativeTestDataPath) {
+    super(relativeTestDataPath);
   }
 
   @Nullable
@@ -400,6 +405,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       result.add(((PyDebugValue)list.getValue(i)).getValue());
     }
     return result;
+  }
+
+  protected List<PyDebugValue> loadFrame() throws PyDebuggerException {
+    return convertToList(myCommunication.loadFrame());
   }
 
   protected void input(String text) {

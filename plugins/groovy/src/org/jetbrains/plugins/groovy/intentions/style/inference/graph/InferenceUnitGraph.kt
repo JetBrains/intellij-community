@@ -49,6 +49,10 @@ data class InferenceUnitGraph(val units: List<InferenceUnitNode>) {
     }.forEach { parameter ->
       units.find { it.type == parameter }?.run { visitTypes(this, visited, order) }
     }
+    val parent = unit.parent
+    if (parent != null) {
+      visitTypes(parent, visited, order)
+    }
     order.add(unit)
   }
 }
@@ -95,9 +99,6 @@ private fun condense(graph: InferenceUnitGraph): InferenceUnitGraph {
         typeMap[representative.core] = mergeTypes(representativeType, it.typeInstantiation)
         builder.setType(it.core, representative.core.type).setDirect(it.core)
       }
-    }
-    if (component.any(InferenceUnitNode::forbiddenToInstantiate)) {
-      builder.forbidInstantiation(representative.core)
     }
   }
   graph.units.filter { representativeMap[it.core] == it.core }.forEach { unit ->

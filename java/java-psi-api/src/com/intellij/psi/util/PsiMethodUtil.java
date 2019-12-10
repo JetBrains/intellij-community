@@ -67,11 +67,6 @@ public class PsiMethodUtil {
   @Nullable
   public static PsiMethod findMainInClass(final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
-    for (JavaMainMethodProvider provider : myProviders) {
-      if (provider.isApplicable(aClass)) {
-        return provider.findMainInClass(aClass);
-      }
-    }
     return findMainMethod(aClass);
   }
 }

@@ -80,9 +80,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
         return inputVariables.stream()
           .allMatch(variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
       }
-      catch (PrepareFailedException ignored) {
-      }
-      catch (ControlFlowWrapper.ExitStatementsNotSameException ignored) {
+      catch (PrepareFailedException | ControlFlowWrapper.ExitStatementsNotSameException ignored) {
       }
     }
     return false;

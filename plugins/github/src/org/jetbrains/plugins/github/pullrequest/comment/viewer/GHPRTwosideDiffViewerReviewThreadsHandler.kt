@@ -32,7 +32,7 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(viewer: TwosideTextDiffViewer,
 
   override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
     mappings.groupBy { it.side }.forEach { (side, mappings) ->
-      editorsThreads[side]?.update(mappings.groupBy { it.fileLine })
+      editorsThreads[side]?.update(mappings.groupBy { it.fileLineIndex })
     }
   }
 }

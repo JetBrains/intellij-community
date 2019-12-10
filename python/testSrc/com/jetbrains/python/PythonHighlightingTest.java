@@ -263,6 +263,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, false, false);
   }
 
+  // PY-35961
+  public void testUnpackingInNonParenthesizedTuplesInReturnAndYieldBefore38() {
+    doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-35961
+  public void testUnpackingInNonParenthesizedTuplesInReturnAndYield() {
+    doTest(LanguageLevel.PYTHON38, false, false);
+  }
+
   // PY-19927
   public void testMagicMethods() {
     EditorColorsScheme scheme = createTemporaryColorScheme();

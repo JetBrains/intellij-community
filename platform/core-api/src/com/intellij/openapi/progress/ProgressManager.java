@@ -207,6 +207,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     getInstance().indicatorCanceled(indicator);
   }
 
+  /**
+   * @throws ProcessCanceledException if the progress indicator associated with the current thread has been canceled.
+   * @see ProgressIndicator#checkCanceled()
+   */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void checkCanceled() throws ProcessCanceledException {
     ProgressManager instance = ourInstance;

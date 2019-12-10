@@ -34,10 +34,6 @@ public abstract class SimpleSchemesPanel<T extends Scheme> extends AbstractSchem
     super(vGap);
   }
 
-  public SimpleSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
-    super(vGap, rightCustomComponent);
-  }
-
   public SimpleSchemesPanel() {
     super();
   }

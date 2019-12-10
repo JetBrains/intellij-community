@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -25,6 +26,7 @@ import javax.swing.*;
 public interface MemberChooserObject {
   void renderTreeNode(SimpleColoredComponent component, JTree tree);
 
+  @NotNull
   String getText();
 
   boolean equals(Object o);

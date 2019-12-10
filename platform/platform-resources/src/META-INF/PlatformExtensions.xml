@@ -567,6 +567,8 @@
     <statistics.counterUsagesCollector groupId="vcs" version="1"/>
     <statistics.counterUsagesCollector groupId="build" version="1"/>
     <statistics.counterUsagesCollector groupId="project.import" version="1"/>
+    <statistics.counterUsagesCollector groupId="ui.event" version="2"/>
+    <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
@@ -624,6 +626,7 @@
     <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
+    <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.HTMLEditorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
     <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
@@ -824,5 +827,8 @@
     <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
                         serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
     <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
+
+    <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
+    <registryKey key="appcds.enabled" defaultValue="false" restartRequired="true" description="Whether IDE should use AppCDS (JRP 310) for faster startup"/>
   </extensions>
 </idea-plugin>

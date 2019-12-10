@@ -26,13 +26,25 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
+/**
+ * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map(Collection, Function)}
+ */
+@Deprecated
 public class ObjectsConvertor {
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map(Collection, Function)}
+   */
+  @Deprecated
   @NotNull
   public static List<VirtualFile> fp2vf(@NotNull Collection<? extends FilePath> in) {
     return map(in, FilePath::getVirtualFile);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map(Collection, Function)}
+   */
+  @Deprecated
   @NotNull
   public static List<FilePath> vf2fp(@NotNull List<? extends VirtualFile> in) {
     return map(in, VcsUtil::getFilePath);
@@ -41,7 +53,6 @@ public class ObjectsConvertor {
   /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map(Collection, Function)}
    */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
   @NotNull
   public static <T, S> List<S> convert(@NotNull Collection<? extends T> in, @NotNull Convertor<? super T, ? extends S> convertor) {

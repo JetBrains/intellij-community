@@ -23,7 +23,7 @@ import kotlin.collections.HashMap
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 11, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 12, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -110,8 +110,8 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val clsData = classData[tree.getParent(method)]
     val fieldMap = clsData?.fieldModifiers ?: emptyMap()
     // Constructor which has super classes may implicitly call impure super constructor, so don't infer purity for subclasses
-    val ctor = clsData != null && !clsData.hasSuper && clsData.hasPureInitializer && 
-               LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
+    val ctor = LightTreeUtil.firstChildOfType(tree, method, TYPE) == null
+    val maybeImpureCtor = ctor && (clsData == null || clsData.hasSuper || !clsData.hasPureInitializer)
     val statements = ContractInferenceInterpreter.getStatements(body, tree)
 
     val contractInference = ContractInferenceInterpreter(tree, method, body)
@@ -120,11 +120,16 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
     val nullityVisitor = MethodReturnInferenceVisitor(tree, contractInference.getParameters(), body)
     val purityVisitor = PurityInferenceVisitor(tree, body, fieldMap, ctor)
     for (statement in statements) {
-      walkMethodBody(statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
+      walkMethodBody(statement) {
+        nullityVisitor.visitNode(it)
+        if (!maybeImpureCtor) {
+          purityVisitor.visitNode(it)
+        }
+      }
     }
     val notNullParams = inferNotNullParameters(tree, method, statements)
 
-    return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
+    return createData(body, contracts, nullityVisitor.result, if (maybeImpureCtor) null else purityVisitor.result, notNullParams)
   }
 
   private fun walkMethodBody(root: LighterASTNode, processor: (LighterASTNode) -> Unit) {

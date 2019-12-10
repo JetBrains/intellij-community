@@ -1,6 +1,6 @@
 <html>
 <body>
-<p>This inspection warns about Optional call chains which could be simplified. Here are some examples of possible simplifications:</p>
+Warns about <b>Optional</b> call chains which could be simplified. Here are some examples of possible simplifications:
 <ul>
   <li><code>optional.map(x -> true).orElse(false)</code> &rarr; <code>optional.isPresent()</code></li>
   <li><code>optional.map(x -> Optional.of(x.trim())).orElseGet(Optional::empty)</code> &rarr; <code>optional.map(String::trim)</code></li>

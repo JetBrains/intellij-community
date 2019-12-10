@@ -38,7 +38,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
   private fun PsiMethod.getMethodInfo(): MethodInfo? {
     val clazzName = containingClass?.qualifiedName ?: return null
     val fullMethodName = StringUtil.getQualifiedName(clazzName, name)
-    val paramNames: List<String> = parameterList.parameters.map { it.name ?: "" }
+    val paramNames: List<String> = parameterList.parameters.map { it.name }
     return MethodInfo(fullMethodName, paramNames, if (language == blackListDependencyLanguage) language else null)
   }
 
@@ -68,7 +68,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
 
       val inlays = ArrayList<InlayInfo>(map.size)
       for ((parameter, expressions) in map) {
-        val name = parameter.name ?: continue
+        val name = parameter.name
         if (expressions.none(::shouldShowHint)) continue
         val inlayText = if (mapping.isVararg(parameter)) "...$name" else name
         inlays += InlayInfo(inlayText, expressions.first().textRange.startOffset)

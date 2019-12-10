@@ -45,7 +45,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
   private final boolean myReadOnly;
-  @Nullable private final IntIntFunction myInputRemapping;
+  @NotNull private final IntIntFunction myInputRemapping;
 
   protected MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -116,7 +116,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
             return map.getDataAccessLock();
           }
 
-          @Nullable
+          @NotNull
           @Override
           public ValueContainer<Value> compute() {
             ValueContainer<Value> value;

@@ -1,20 +1,16 @@
-from typing import Any, Optional, List, Type
+from typing import Any, Optional, List
 
 import array
-import sys
 import threading
 import weakref
 
-from .connection import Pipe
-from threading import Lock, RLock, Semaphore, BoundedSemaphore
-from threading import Event, Condition, Barrier
 from queue import Queue
 
 JoinableQueue = Queue
 
 
 class DummyProcess(threading.Thread):
-    _children: weakref.WeakKeyDictionary
+    _children: weakref.WeakKeyDictionary[Any, Any]
     _parent: threading.Thread
     _pid: None
     _start_called: int
@@ -33,10 +29,10 @@ class Value(object):
     def __init__(self, typecode, value, lock=...) -> None: ...
 
 
-def Array(typecode, sequence, lock=...) -> array.array: ...
+def Array(typecode, sequence, lock=...) -> array.array[Any]: ...
 def Manager() -> Any: ...
 def Pool(processes=..., initializer=..., initargs=...) -> Any: ...
-def active_children() -> List: ...
+def active_children() -> List[Any]: ...
 def current_process() -> threading.Thread: ...
 def freeze_support() -> None: ...
 def shutdown() -> None: ...

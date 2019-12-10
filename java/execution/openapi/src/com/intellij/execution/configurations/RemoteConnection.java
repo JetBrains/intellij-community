@@ -2,6 +2,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.net.InetAddress;
@@ -10,16 +11,22 @@ import java.net.UnknownHostException;
 public class RemoteConnection {
   private boolean myUseSockets;
   private boolean myServerMode;
-  private String myHostName;
-  private String myAddress;
+
+  private String myApplicationHostName;
+  private String myApplicationPort;
+  private String myDebuggerHostName;
+  private String myDebuggerPort;
+
   public static final String ONTHROW = ",onthrow=<FQ exception class name>";
   public static final String ONUNCAUGHT = ",onuncaught=<y/n>";
 
   public RemoteConnection(boolean useSockets, String hostName, String address, boolean serverMode) {
     myUseSockets = useSockets;
     myServerMode = serverMode;
-    myHostName = hostName;
-    myAddress = address;
+    myApplicationHostName = hostName;
+    myDebuggerHostName = hostName;
+    myApplicationPort = address;
+    myDebuggerPort = address;
   }
 
   public boolean isUseSockets() {
@@ -30,15 +37,6 @@ public class RemoteConnection {
     return myServerMode;
   }
 
-  public String getHostName() {
-    return myHostName;
-  }
-
-  public String getAddress() {
-    return myAddress;
-  }
-
-
   public void setUseSockets(boolean useSockets) {
     myUseSockets = useSockets;
   }
@@ -47,16 +45,78 @@ public class RemoteConnection {
     myServerMode = serverMode;
   }
 
-  public void setHostName(String hostName) {
-    myHostName = hostName;
+  /**
+   * @deprecated use {@link #getApplicationHostName()} or {@link #getDebuggerHostName()} instead depending on your needs
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public String getHostName() {
+    return myApplicationHostName;
   }
 
+  /**
+   * @deprecated use {@link #getApplicationPort()} or {@link #getDebuggerPort()} instead depending on your needs
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public String getAddress() {
+    return myApplicationPort;
+  }
+
+  /**
+   * @deprecated use {@link #setApplicationHostName(String)} or {@link #setDebuggerHostName(String)} instead depending on your needs
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
+  public void setHostName(String hostName) {
+    myApplicationHostName = hostName;
+    myDebuggerHostName = hostName;
+  }
+
+  /**
+   * @deprecated use {@link #setApplicationPort(String)} or {@link #setDebuggerPort(String)} instead depending on your needs
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public void setAddress(String address) {
-    myAddress = address;
+    myApplicationPort = address;
+    myDebuggerPort = address;
+  }
+
+  public String getApplicationHostName() {
+    return myApplicationHostName;
+  }
+
+  public void setApplicationHostName(String hostName) {
+    myApplicationHostName = hostName;
+  }
+
+  public String getDebuggerHostName() {
+    return myDebuggerHostName;
+  }
+
+  public void setDebuggerHostName(String debuggerHostName) {
+    myDebuggerHostName = debuggerHostName;
+  }
+
+  public String getApplicationPort() {
+    return myApplicationPort;
+  }
+
+  public void setApplicationPort(String applicationPort) {
+    myApplicationPort = applicationPort;
+  }
+
+  public String getDebuggerPort() {
+    return myDebuggerPort;
+  }
+
+  public void setDebuggerPort(String debuggerPort) {
+    myDebuggerPort = debuggerPort;
   }
 
   public String getLaunchCommandLine() {
-    final String address = getAddress();
+    final String address = getApplicationPort();
     final boolean shmem = !isUseSockets();
     final boolean serverMode = isServerMode();
 
@@ -64,11 +124,11 @@ public class RemoteConnection {
     if (shmem) {
       if (serverMode) {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=n,address=" +
-                 ((address.length() > 0)? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
+                 ((address.length() > 0) ? address : "...") + ",suspend=y" + ONTHROW + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xrunjdwp:transport=dt_shmem,server=y,suspend=n,address=" +
-                 ((address.length() > 0)? address : "...");
+                 ((address.length() > 0) ? address : "...");
       }
     }
     else { // socket transport
@@ -85,11 +145,11 @@ public class RemoteConnection {
         catch (UnknownHostException ignored) {
         }
         result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=" + localHostName +
-                 ((port == -1)? "<port>" : Integer.toString(port)) + ",suspend=y" + ONTHROW + ONUNCAUGHT;
+                 ((port == -1) ? "<port>" : Integer.toString(port)) + ",suspend=y" + ONTHROW + ONUNCAUGHT;
       }
       else {
         result = "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=" +
-                 ((port == -1)? "..." : Integer.toString(port));
+                 ((port == -1) ? "..." : Integer.toString(port));
       }
     }
     return result;

@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -42,6 +43,7 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg == null) return;
+
 
     configureJdk(cfg, module);
 
@@ -122,7 +124,9 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
         }
       }
 
-      model.commit();
+      WriteAction.run(() ->
+                        model.commit()
+      );
     }
   }
 }

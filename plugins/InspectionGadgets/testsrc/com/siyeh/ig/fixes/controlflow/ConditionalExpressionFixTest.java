@@ -34,6 +34,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   public void testParentheses() { doTest(); }
   public void testNestedConditional() { doTest(); }
   public void testInsideSwitchExpression() { doTest(); }
+  public void testInsideThrow() { doTest(); }
   public void testNestedConditionalChangesSemantics() { doTest(InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")); }
 
   public void testSimpleOption() {

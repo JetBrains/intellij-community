@@ -27,6 +27,26 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 public class JavaEnterInStringLiteralTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/stringLiteral/";
 
+  public void testNonIndentedTextBlockContent() {
+    doTest();
+  }
+
+  public void testContentAtTheStartOfTextBlock() {
+    doTest();
+  }
+
+  public void testOnlyWhitespacesTextBlock() {
+    doTest();
+  }
+
+  public void testContentAtTheEndOfTextBlock() {
+    doTest();
+  }
+
+  public void testEmptyTextBlock() {
+    doTest();
+  }
+
   public void testEnter() {
     doTest();
   }

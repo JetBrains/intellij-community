@@ -18,6 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine {
@@ -56,7 +57,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
-    return javaParameters.toCommandLine();
+    boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
+    return javaParameters.toCommandLine().withRedirectErrorStream(redirectErrorStream);
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {

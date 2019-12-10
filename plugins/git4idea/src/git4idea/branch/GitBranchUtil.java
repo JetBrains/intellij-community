@@ -20,7 +20,6 @@ import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
-import git4idea.validators.GitNewBranchNameValidator;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.StreamEx;
@@ -240,7 +239,7 @@ public class GitBranchUtil {
                                                              @NotNull Collection<? extends GitRepository> repositories,
                                                              @NotNull String dialogTitle,
                                                              @Nullable String initialName) {
-    return new GitNewBranchDialog(project, dialogTitle, initialName, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();
+    return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true, false).showAndGetOptions();
   }
 
   /**

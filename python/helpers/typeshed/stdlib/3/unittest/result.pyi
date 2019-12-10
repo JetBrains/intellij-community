@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type
 from types import TracebackType
 import unittest.case
 

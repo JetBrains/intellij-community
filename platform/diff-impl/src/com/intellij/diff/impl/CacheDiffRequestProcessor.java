@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.impl;
 
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.*;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
@@ -54,8 +55,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     super(project, place);
   }
 
-  public CacheDiffRequestProcessor(@Nullable Project project,
-                                   @NotNull UserDataHolder context) {
+  public CacheDiffRequestProcessor(@Nullable Project project, @NotNull UserDataHolder context) {
     super(project, context);
   }
 
@@ -176,6 +176,33 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     public void actionPerformed(@NotNull AnActionEvent e) {
       myRequestCache.remove(myProducer);
       updateRequest(true);
+    }
+  }
+
+  public static abstract class Simple extends CacheDiffRequestProcessor<DiffRequestProducer> {
+    protected Simple(@Nullable Project project) {
+      super(project);
+    }
+
+    protected Simple(@Nullable Project project, @NotNull String place) {
+      super(project, place);
+    }
+
+    protected Simple(@Nullable Project project, @NotNull UserDataHolder context) {
+      super(project, context);
+    }
+
+    @Nullable
+    @Override
+    protected String getRequestName(@NotNull DiffRequestProducer provider) {
+      return provider.getName();
+    }
+
+    @NotNull
+    @Override
+    protected DiffRequest loadRequest(@NotNull DiffRequestProducer provider, @NotNull ProgressIndicator indicator)
+      throws ProcessCanceledException, DiffRequestProducerException {
+      return provider.process(getContext(), indicator);
     }
   }
 }

@@ -31,9 +31,6 @@ class DiffRequestProcessorEditor(
   private val processor: DiffRequestProcessor
 ) : FileEditorBase() {
   init {
-    Disposer.register(this, Disposable {
-      Disposer.dispose(processor)
-    })
     Disposer.register(processor, Disposable {
       propertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, true, false)
     })

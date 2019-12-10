@@ -2,6 +2,8 @@
 package com.intellij.sh.parser;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShTypes;
@@ -42,7 +44,8 @@ public class ShShebangParserUtil {
 
   @NotNull
   public static String getInterpreter(@NotNull ShFile file, @NotNull List<String> knownShells, @NotNull String defaultShell) {
-    String shebang = file.findShebang();
+    String shebang = ApplicationManager.getApplication().isDispatchThread() ? file.findShebang()
+                                                                            : ReadAction.compute(() -> file.findShebang());
     String detectedInterpreter = shebang != null ? detectInterpreter(shebang) : null;
     return detectedInterpreter != null && knownShells.contains(detectedInterpreter) ? detectedInterpreter : defaultShell;
   }

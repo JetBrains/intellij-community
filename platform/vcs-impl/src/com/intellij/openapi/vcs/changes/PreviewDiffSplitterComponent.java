@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.impl.DiffRequestProcessor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.OnePixelSplitter;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,11 +24,6 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   public void updatePreview(boolean fromModelRefresh) {
-    if (Registry.is("show.log.as.editor.tab") && myProcessor instanceof ChangeViewDiffRequestProcessor && myDetailsOn) {
-      ((ChangeViewDiffRequestProcessor) myProcessor).updatePreview(false, fromModelRefresh);
-      return;
-    }
-
     if (isDetailsOn()) {
       myProcessor.refresh(fromModelRefresh);
     }
@@ -48,9 +42,6 @@ public class PreviewDiffSplitterComponent extends OnePixelSplitter {
   }
 
   private void updateVisibility() {
-    if (Registry.is("show.log.as.editor.tab"))
-      return;
-
     setSecondComponent(myDetailsOn ? myProcessor.getComponent() : null);
     JComponent secondComponent = getSecondComponent();
     if (secondComponent != null) {

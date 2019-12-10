@@ -10,7 +10,9 @@ import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
+import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -89,5 +91,23 @@ public class PluginRepositoryRequests {
       offsetParameters.put("offset", Integer.toString(offset));
       offsetUrl = baseUrl.addParameters(offsetParameters);
     }
+  }
+
+  @Nullable
+  public static Object getPluginPricesJsonObject() throws IOException {
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    Url url = Urls.newFromEncoded(instance.getPluginManagerUrl() + "/geo/files/prices");
+
+    return HttpRequests.request(url).throwStatusCodeException(false).productNameAsUserAgent().connect(request -> {
+      URLConnection connection = request.getConnection();
+
+      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getResponseCode() != HttpURLConnection.HTTP_OK) {
+        return null;
+      }
+
+      try (JsonReaderEx json = new JsonReaderEx(FileUtil.loadTextAndClose(request.getReader()))) {
+        return JsonUtil.nextAny(json);
+      }
+    });
   }
 }

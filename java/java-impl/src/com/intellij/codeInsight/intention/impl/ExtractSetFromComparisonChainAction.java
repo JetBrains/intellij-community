@@ -290,7 +290,6 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) return null;
       String name = field.getName();
-      if (name == null) return null;
       PsiExpression expression = myExpressionPtr.getElement();
       PsiExpression firstComparison = myFirstComparisonPtr.getElement();
       PsiExpression lastComparison = myLastComparisonPtr.getElement();
@@ -365,7 +364,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(constant), PsiReferenceExpression.class);
       if (ref != null) {
         PsiEnumConstant enumConstant = tryCast(ref.resolve(), PsiEnumConstant.class);
-        if (enumConstant != null && enumConstant.getName() != null) {
+        if (enumConstant != null) {
           return new ExpressionToConstantComparison(candidate, nonConstant, ref, enumConstant.getName());
         }
       }

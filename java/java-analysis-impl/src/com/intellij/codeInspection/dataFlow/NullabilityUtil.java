@@ -103,7 +103,7 @@ public class NullabilityUtil {
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
     String name = field.getName();
-    if (name == null || field.getInitializer() != null) return false;
+    if (field.getInitializer() != null) return false;
 
     if (!isCheapEnoughToSearch(field, name)) return false;
 

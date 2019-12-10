@@ -38,11 +38,11 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return true
   }
 
-  fun getMethodInfo(method: PsiMethod): MethodInfo? {
+  private fun getMethodInfo(method: PsiMethod): MethodInfo? {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)
 
-    val paramNames: List<String> = method.parameterList.parameters.map { it.name ?: "" }
+    val paramNames: List<String> = method.parameterList.parameters.map { it.name }
     return MethodInfo(fullMethodName, paramNames)
   }
 
@@ -125,7 +125,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
                                                            true)
 
   val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    "'new' expressions",
+                                                    "'New' expressions",
                                                     true)
 
   override fun getSupportedOptions(): List<Option> {

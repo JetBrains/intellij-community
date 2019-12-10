@@ -16,33 +16,101 @@
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
-import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
-import git4idea.validators.GitNewBranchNameValidator
-import java.awt.BorderLayout
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.layout.*
+import git4idea.repo.GitRepository
+import git4idea.validators.checkRefName
+import git4idea.validators.conflictsWithLocalBranch
+import git4idea.validators.conflictsWithRemoteBranch
 import java.awt.event.KeyEvent
-import javax.swing.JComponent
+import javax.swing.JCheckBox
+import javax.swing.JTextField
+import javax.swing.event.DocumentEvent
 
-data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
+data class GitNewBranchOptions(val name: String,
+                               @get:JvmName("shouldCheckout") val checkout: Boolean = true,
+                               @get:JvmName("shouldReset") val reset: Boolean = false)
 
-internal class GitNewBranchDialog(project: Project, dialogTitle: String, initialName: String?, validator: GitNewBranchNameValidator) :
-  Messages.InputDialog(project, "New branch name:", dialogTitle, null, initialName, validator) {
 
-  private lateinit var checkoutCheckbox : JBCheckBox
+internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
+                                                            private val repositories: Collection<GitRepository>,
+                                                            dialogTitle: String,
+                                                            initialName: String?,
+                                                            private val showCheckOutOption: Boolean,
+                                                            private val showResetOption: Boolean = false,
+                                                            private val localConflictsAllowed: Boolean = false) : DialogWrapper(project,
+                                                                                                                                true) {
 
-  fun showAndGetOptions(): GitNewBranchOptions? {
-    return if (showAndGet()) GitNewBranchOptions(inputString!!.trim(), checkoutCheckbox.isSelected) else null
+  private var checkout = true
+  private var reset = false
+  private var branchName = initialName.orEmpty()
+  private var overwriteCheckbox: JCheckBox? = null
+
+  init {
+    title = dialogTitle
+    setOKButtonText(if (showCheckOutOption) "Create" else "Checkout")
+    init()
   }
 
-  override fun createCenterPanel(): JComponent? {
-    checkoutCheckbox = JBCheckBox("Checkout branch", true)
-    checkoutCheckbox.mnemonic = KeyEvent.VK_C
+  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(branchName.trim(), checkout, reset) else null
 
-    val panel = JBUI.Panels.simplePanel(DEFAULT_HGAP, DEFAULT_VGAP)
-    panel.add(checkoutCheckbox, BorderLayout.WEST)
-    return panel
+  override fun createCenterPanel() = panel {
+    row {
+      label("New branch name:")
+    }
+    row {
+      textField(::branchName, { branchName = it }).focused().withValidationOnApply(
+        validateBranchName()).apply { startTrackingValidationIfNeeded() }
+    }
+    row {
+      if (showCheckOutOption) {
+        checkBox("Checkout branch", ::checkout).component.apply {
+          mnemonic = KeyEvent.VK_C
+        }
+      }
+      if (showResetOption) {
+        overwriteCheckbox = checkBox("Overwrite existing branch", ::reset).component.apply {
+          mnemonic = KeyEvent.VK_R
+          isEnabled = false
+        }
+      }
+    }
+  }
+
+  private fun validateBranchName(): ValidationInfoBuilder.(JTextField) -> ValidationInfo? = {
+    val errorInfo = checkRefName(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
+    if (errorInfo != null) error(errorInfo.message)
+    else {
+      val localBranchConflict = conflictsWithLocalBranch(repositories, it.text)
+      overwriteCheckbox?.isEnabled = localBranchConflict != null
+
+      if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
+      else if (localBranchConflict.warning && localConflictsAllowed) warning(localBranchConflict.message + getAdditionalDescription())
+      else error(localBranchConflict.message + if (showResetOption) ". Change the name or overwrite existing branch" else "")
+    }
+  }
+
+  private fun getAdditionalDescription() =
+    when {
+      repositories.size == 1 -> ""
+      showCheckOutOption -> ". Create new branches in other repositories."
+      else -> ". Checkout existing branches, and create new branches in other repositories."
+    }
+
+
+  private fun CellBuilder<JTextField>.startTrackingValidationIfNeeded() {
+    if (branchName.isEmpty()) {
+      component.document.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          startTrackingValidation()
+          component.document.removeDocumentListener(this)
+        }
+      })
+    }
+    else {
+      startTrackingValidation()
+    }
   }
 }

@@ -72,7 +72,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
           for (PsiParameter parameter : parameters) {
             if (aClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
               final String parameterName = parameter.getName();
-              if (parameterName != null && StringUtil.containsIgnoreCase(parameterName, oldClassName)) {
+              if (StringUtil.containsIgnoreCase(parameterName, oldClassName)) {
                 myElements.add(parameter);
               }
             }

@@ -438,16 +438,56 @@ public class MethodUtils {
     return best;
   }
 
+  /**
+   * Returns true if the supplied method is a static factory method,
+   * that is a static method which returns an instance of the containing class
+   */
   public static boolean isFactoryMethod(PsiMethod method) {
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
+    return aClass != null && aClass.equals(method.getContainingClass());
+  }
+
+  public static boolean isConvenienceOverload(PsiMethod method) {
     final PsiType returnType = method.getReturnType();
-    if (!(returnType instanceof PsiClassType)) {
+    final PsiCodeBlock body = method.getBody();
+    final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
+    if (statement == null) {
       return false;
     }
-    final PsiClassType classType = (PsiClassType)returnType;
-    final PsiClass aClass = classType.resolve();
-    return aClass != null && aClass.equals(method.getContainingClass());
+    if (PsiType.VOID.equals(returnType)) {
+      if (!(statement instanceof PsiExpressionStatement)) {
+        return false;
+      }
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+      final PsiExpression expression = expressionStatement.getExpression();
+      return isCallToOverloadedMethod(expression, method);
+    }
+    else {
+      if (!(statement instanceof PsiReturnStatement)) {
+        return false;
+      }
+      final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      return isCallToOverloadedMethod(returnValue, method);
+    }
+  }
+
+  private static boolean isCallToOverloadedMethod(PsiExpression expression, PsiMethod method) {
+    if (!(expression instanceof PsiMethodCallExpression)) {
+      return false;
+    }
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+    final String name = methodCallExpression.getMethodExpression().getReferenceName();
+    if (!method.getName().equals(name)) {
+      return false;
+    }
+    final PsiMethod calledMethod = methodCallExpression.resolveMethod();
+    if (calledMethod == null || calledMethod.getParameterList().getParametersCount() <= method.getParameterList().getParametersCount()) {
+      return false;
+    }
+    return calledMethod.getContainingClass() == method.getContainingClass();
   }
 }

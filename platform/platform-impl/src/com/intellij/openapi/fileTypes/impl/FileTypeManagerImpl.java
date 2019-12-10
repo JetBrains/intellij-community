@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
@@ -301,7 +300,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (fileType instanceof LanguageFileType) {
           final LanguageFileType languageFileType = (LanguageFileType)fileType;
           if (!languageFileType.isSecondary()) {
-            IElementType.unregisterElementTypes(languageFileType.getLanguage());
             Language.unregisterLanguage(languageFileType.getLanguage());
           }
         }
@@ -471,6 +469,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private FileType instantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
     FileType fileType;
+    PluginId pluginId = fileTypeBean.getPluginDescriptor().getPluginId();
     try {
       @SuppressWarnings("unchecked")
       Class<FileType> beanClass = (Class<FileType>)Class.forName(fileTypeBean.implementationClass, true, fileTypeBean.getPluginDescriptor().getPluginClassLoader());
@@ -485,18 +484,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-      LOG.error(new PluginException(e, fileTypeBean.getPluginDescriptor().getPluginId()));
+      LOG.error(new PluginException(e, pluginId));
       return null;
     }
 
     if (!fileType.getName().equals(fileTypeBean.name)) {
-      LOG.error("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeBean.name);
+      LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeBean.name, pluginId));
     }
     if (fileType instanceof LanguageFileType) {
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       String expectedLanguage = languageFileType.isSecondary() ? null : languageFileType.getLanguage().getID();
       if (!Comparing.equal(fileTypeBean.language, expectedLanguage)) {
-        LOG.error("Incorrect language specified in <fileType> for " + fileType.getName() + ", should be " + expectedLanguage + ", actual " + fileTypeBean.language);
+        LOG.error(new PluginException("Incorrect language specified in <fileType> for " + fileType.getName() + ", should be " + expectedLanguage + ", actual " + fileTypeBean.language, pluginId));
       }
     }
 
@@ -1123,7 +1122,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           else {
             myUntypedFileTypeDetectors.add(detector);
             if (ApplicationManager.getApplication().isInternal()) {
-              LOG.error("File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.");
+              LOG.error(PluginException.createByClass(
+                "File type detector " + detector + " does not implement getDetectedFileTypes(), leading to suboptimal performance. Please implement the method.",
+                null, detector.getClass()));
             }
           }
         }

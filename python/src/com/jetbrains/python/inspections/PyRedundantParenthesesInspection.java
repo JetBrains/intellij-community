@@ -22,7 +22,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.jetbrains.python.PyBundle;
@@ -34,8 +33,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
@@ -75,6 +72,15 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     mySerializer.readExternal(this, node);
   }
 
+  private static boolean isTupleWithUnpacking(@NotNull PyExpression expression) {
+    return expression instanceof PyTupleExpression &&
+           ContainerUtil.or(((PyTupleExpression)expression).getElements(), PyStarExpression.class::isInstance);
+  }
+
+  private static boolean isYieldFrom(@NotNull PsiElement element) {
+    return element instanceof PyYieldExpression && ((PyYieldExpression)element).isDelegating();
+  }
+
   private class Visitor extends PyInspectionVisitor {
     Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
@@ -83,17 +89,16 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
       if (node.textContains('\n')) return;
-      if (node.getParent() instanceof PyParenthesizedExpression) return;
+      final PsiElement parent = node.getParent();
+      if (parent instanceof PyParenthesizedExpression) return;
       final PyExpression expression = node.getContainedExpression();
-      if (expression == null) return;
-      final PyYieldExpression yieldExpression = PsiTreeUtil.getParentOfType(expression, PyYieldExpression.class, false);
-      if (yieldExpression != null) return;
+      if (expression == null || expression instanceof PyYieldExpression) return;
       if (expression instanceof PyTupleExpression && myIgnoreTupleInReturn) {
         return;
       }
+      final LanguageLevel languageLevel = LanguageLevel.forElement(node);
       if (expression instanceof PyReferenceExpression || expression instanceof PyLiteralExpression) {
         if (myIgnorePercOperator) {
-          final PsiElement parent = node.getParent();
           if (parent instanceof PyBinaryExpression) {
             if (((PyBinaryExpression)parent).getOperator() == PyTokenTypes.PERC) return;
           }
@@ -101,29 +106,28 @@ public class PyRedundantParenthesesInspection extends PyInspection {
 
         if (expression instanceof PyNumericLiteralExpression &&
             ((PyNumericLiteralExpression)expression).isIntegerLiteral() &&
-            node.getParent() instanceof PyReferenceExpression) {
+            parent instanceof PyReferenceExpression) {
           return;
         }
 
-        if (node.getParent() instanceof PyPrintStatement) {
+        if (parent instanceof PyPrintStatement) {
           return;
         }
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyIfPart ||
-               node.getParent() instanceof PyWhilePart) {
+      else if (parent instanceof PyIfPart ||
+               parent instanceof PyWhilePart) {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
-      else if (node.getParent() instanceof PyReturnStatement) {
-        final PyTupleExpression tuple = as(expression, PyTupleExpression.class);
-        if (!(tuple != null && ContainerUtil.or(tuple.getElements(), PyStarExpression.class::isInstance))) {
+      else if (parent instanceof PyReturnStatement || parent instanceof PyYieldExpression) {
+        if (!isTupleWithUnpacking(expression) || (languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent))) {
           registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
       else if (expression instanceof PyBinaryExpression) {
         final PyBinaryExpression binaryExpression = (PyBinaryExpression)expression;
 
-        if (node.getParent() instanceof PyPrefixExpression) {
+        if (parent instanceof PyPrefixExpression) {
           return;
         }
         if (binaryExpression.getOperator() == PyTokenTypes.AND_KEYWORD ||

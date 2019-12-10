@@ -11,6 +11,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider;
+import com.jetbrains.python.psi.types.PyTypedDictType;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -112,12 +114,19 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyExpression value = node.findAssignedValue();
       if (value == null) return;
       final PyType expected = myTypeEvalContext.getType(node);
-      final PyType actual = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext);
+      final PyType actual = tryPromotingType(value, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         registerProblem(value, String.format("Expected type '%s', got '%s' instead",
                                              PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
                                              PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
       }
+    }
+
+    @Nullable
+    private PyType tryPromotingType(@NotNull PyExpression value, @Nullable PyType expected) {
+      final PyType promotedToLiteral = PyLiteralType.Companion.promoteToLiteral(value, expected, myTypeEvalContext);
+      if (promotedToLiteral instanceof PyLiteralType) return promotedToLiteral;
+      return PyTypedDictTypeProvider.Companion.promoteToTypedDict(value, expected, myTypeEvalContext);
     }
 
     @Override
@@ -215,7 +224,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = PyLiteralType.Companion.promoteToLiteral(argument, expected, myTypeEvalContext);
-        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
       final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
@@ -238,7 +247,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
         return ContainerUtil.map(arguments,
                                  argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
@@ -247,7 +256,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           arguments,
           argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, argument, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           }
         );
@@ -256,9 +265,12 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,
                                               @Nullable PyType argumentType,
+                                              @Nullable PyExpression argument,
                                               @NotNull Map<PyGenericType, PyType> substitutions) {
-      return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
-             !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
+      return parameterType instanceof PyTypedDictType && argument instanceof PyDictLiteralExpression
+             ? PyTypedDictType.Companion.match((PyTypedDictType)parameterType, (PyDictLiteralExpression)argument, myTypeEvalContext)
+             : (PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
+                !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext));
     }
 
     @Nullable

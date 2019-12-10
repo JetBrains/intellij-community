@@ -1171,7 +1171,6 @@ public class PsiClassImplUtil {
   public static boolean isFieldEquivalentTo(@NotNull PsiField field, PsiElement another) {
     if (!(another instanceof PsiField)) return false;
     String name1 = field.getName();
-    if (name1 == null) return false;
     if (!another.isValid()) return false;
 
     String name2 = ((PsiField)another).getName();

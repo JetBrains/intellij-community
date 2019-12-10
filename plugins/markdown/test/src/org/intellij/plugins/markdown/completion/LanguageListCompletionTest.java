@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider;
-import org.intellij.plugins.markdown.injection.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,35 +85,28 @@ public class LanguageListCompletionTest extends BasePlatformTestCase {
   }
 
   public void testCustomCompletionProvider() {
-    try {
-      CodeFenceLanguageProvider.EP_NAME.getPoint(null).registerExtension(new CodeFenceLanguageProvider() {
-          @Nullable
-          @Override
-          public Language getLanguageByInfoString(@NotNull String infoString) {
-            return null;
-          }
+    CodeFenceLanguageProvider.EP_NAME.getPoint(null).registerExtension(new CodeFenceLanguageProvider() {
+        @Nullable
+        @Override
+        public Language getLanguageByInfoString(@NotNull String infoString) {
+          return null;
+        }
 
-          @NotNull
-          @Override
-          public List<LookupElement> getCompletionVariantsForInfoString(@NotNull CompletionParameters parameters) {
-            return Collections.singletonList(LookupElementBuilder.create("{json is a great lang}")
-            .withInsertHandler((context, item) -> {
-              context.getDocument().insertString(context.getEditor().getCaretModel().getOffset(), "Customized insertion");
-              context.getEditor().getCaretModel().moveCaretRelatively("Customized insertion".length(), 0, true, false, true);
-            }));
-          }
-        }, myFixture.getTestRootDisposable());
-
-      LanguageGuesser.INSTANCE.resetCodeFenceLanguageProviders();
-      configure();
-      myFixture.completeBasic();
-      assertContainsElements(myFixture.getLookupElementStrings(), "json", "{json is a great lang}");
-      myFixture.type("g\t");
-      checkResult();
-    }
-    finally {
-      LanguageGuesser.INSTANCE.resetCodeFenceLanguageProviders();
-    }
+        @NotNull
+        @Override
+        public List<LookupElement> getCompletionVariantsForInfoString(@NotNull CompletionParameters parameters) {
+          return Collections.singletonList(LookupElementBuilder.create("{json is a great lang}")
+          .withInsertHandler((context, item) -> {
+            context.getDocument().insertString(context.getEditor().getCaretModel().getOffset(), "Customized insertion");
+            context.getEditor().getCaretModel().moveCaretRelatively("Customized insertion".length(), 0, true, false, true);
+          }));
+        }
+      }, myFixture.getTestRootDisposable());
+    configure();
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "json", "{json is a great lang}");
+    myFixture.type("g\t");
+    checkResult();
   }
 
   public static class AutopopupTest extends CompletionAutoPopupTestCase {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing.configurers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -33,10 +34,16 @@ public class MavenEncodingConfigurer extends MavenModuleConfigurer {
   public void configure(@NotNull MavenProject mavenProject, @NotNull Project project, @NotNull Module module) {
     String encoding = mavenProject.getEncoding();
     if (encoding != null) {
-      try {
-        EncodingProjectManager.getInstance(project).setEncoding(mavenProject.getDirectoryFile(), Charset.forName(encoding));
-      }
-      catch (UnsupportedCharsetException | IllegalCharsetNameException ignored) {/**/}
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+                                                        try {
+                                                          EncodingProjectManager.getInstance(project)
+                                                            .setEncoding(mavenProject.getDirectoryFile(), Charset.forName(encoding));
+                                                        }
+                                                        catch (UnsupportedCharsetException | IllegalCharsetNameException ignored) {/**/}
+                                                      }
+
+      );
     }
   }
 }

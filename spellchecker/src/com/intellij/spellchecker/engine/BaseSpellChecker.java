@@ -3,7 +3,7 @@
  */
 package com.intellij.spellchecker.engine;
 
-import com.google.common.collect.*;
+import com.google.common.collect.MinMaxPriorityQueue;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.spellchecker.SpellcheckerCorrectionsFilter;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 public class BaseSpellChecker implements SpellCheckerEngine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
+  private static final SpellcheckerCorrectionsFilter CORRECTIONS_FILTER = SpellcheckerCorrectionsFilter.getInstance();
   private final Transformation transform = new Transformation();
   private final Set<EditableDictionary> dictionaries = new HashSet<>();
   private final List<Dictionary> bundledDictionaries = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -160,7 +162,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     for (Dictionary dict : ContainerUtil.concat(bundledDictionaries, dictionaries)) {
       dict.consumeSuggestions(transformed, s -> {
         ProgressManager.checkCanceled();
-        suggestions.add(new Suggestion(s, EditDistance.optimalAlignment(transformed, s, true)));
+        if (!CORRECTIONS_FILTER.isFiltered(s)) {
+          suggestions.add(new Suggestion(s, EditDistance.optimalAlignment(transformed, s, true)));
+        }
       });
     }
     if (suggestions.isEmpty()) {

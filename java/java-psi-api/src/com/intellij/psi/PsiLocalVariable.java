@@ -25,4 +25,8 @@ public interface PsiLocalVariable extends PsiVariable {
   @Override
   @NotNull
   PsiTypeElement getTypeElement();
+
+  @NotNull
+  @Override
+  String getName();
 }

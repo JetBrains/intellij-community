@@ -39,8 +39,8 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
     return nextPolicyParent
   }
 
-  class Factory : ChangesGroupingPolicyFactory() {
-    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ModuleChangesGroupingPolicy = ModuleChangesGroupingPolicy(project, model)
+  internal class Factory : ChangesGroupingPolicyFactory() {
+    override fun createGroupingPolicy(project: Project, model: DefaultTreeModel) = ModuleChangesGroupingPolicy(project, model)
   }
 
   companion object {

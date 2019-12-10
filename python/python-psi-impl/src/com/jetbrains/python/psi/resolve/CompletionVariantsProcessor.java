@@ -16,6 +16,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -122,6 +123,8 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       }
     }
 
+    PyCompletionMlElementInfo info = PyCompletionMlElementInfo.Companion.fromElement(element);
+    item.putUserData(PyCompletionMlElementInfo.Companion.getKey(), info);
     return item;
   }
 

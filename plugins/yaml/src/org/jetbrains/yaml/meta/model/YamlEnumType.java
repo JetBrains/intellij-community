@@ -88,7 +88,7 @@ public class YamlEnumType extends YamlScalarType {
 
   @NotNull
   @Override
-  public List<LookupElement> getValueLookups(@NotNull YAMLScalar context) {
+  public List<LookupElement> getValueLookups(@NotNull YAMLScalar insertedScalar, @Nullable CompletionContext completionContext) {
     return Stream.concat(
       Arrays.stream(myLiterals).map((String literal) -> createValueLookup(literal, false)),
       Arrays.stream(myDeprecatedLiterals).map((String literal) -> createValueLookup(literal, true))

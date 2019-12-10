@@ -198,6 +198,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         return null;
       }
       else if (registerErrorOnFailure) {
+        //keep a sign that an inference failed
         session.registerIncompatibleErrorMessage("Failed to resolve argument");
         return null;
       }

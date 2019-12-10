@@ -1218,6 +1218,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myFrameListeners.add(listener);
   }
 
+  @Override
+  public boolean isSimplifiedView() {
+    return PyDebuggerSettings.getInstance().isSimplifiedView();
+  }
+
   @Nullable
   private static XSourcePosition typeToPosition(PyType pyType) {
     final PyClassType classType = PyUtil.as(pyType, PyClassType.class);

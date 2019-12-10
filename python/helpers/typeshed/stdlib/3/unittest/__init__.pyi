@@ -3,6 +3,7 @@
 from typing import Iterable, List, Optional, Type, Union
 from types import ModuleType
 
+from unittest.async_case import *
 from unittest.case import *
 from unittest.loader import *
 from unittest.result import *

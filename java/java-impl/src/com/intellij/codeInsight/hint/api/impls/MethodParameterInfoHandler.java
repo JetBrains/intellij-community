@@ -697,7 +697,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           String type = paramType.getPresentableText(true);
           buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
           String name = param.getName();
-          if (name != null && !context.isSingleParameterInfo()) {
+          if (!context.isSingleParameterInfo()) {
             buffer.append(" ");
             buffer.append(name);
           }

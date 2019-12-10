@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -25,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class GitStashChangesSaver extends GitChangesSaver {
 
@@ -36,8 +34,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Set<VirtualFile> myStashedRoots = new HashSet<>(); // save stashed roots to unstash only them
-
+  @NotNull private final Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -63,7 +60,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       else {
         GitCommandResult result = myGit.stashSave(repository, myStashMessage);
         if (result.success() && somethingWasStashed(result)) {
-          myStashedRoots.add(root);
+          myStashedRoots.put(root, myGit.resolveReference(repository, "stash@{0}"));
         }
         else {
           if (!result.success()) {
@@ -92,7 +89,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
       handler.addParameters("pop");
       return handler;
-    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams));
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
     myProgressIndicator.setText(oldProgressTitle);
   }
 
@@ -114,7 +111,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
   }
 
   @Override

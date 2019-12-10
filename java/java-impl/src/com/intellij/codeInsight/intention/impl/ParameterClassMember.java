@@ -23,6 +23,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -46,6 +47,7 @@ public class ParameterClassMember implements ClassMember {
   }
 
   @Override
+  @NotNull
   public String getText() {
     return myParameter.getName();
   }

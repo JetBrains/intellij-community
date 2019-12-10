@@ -1942,4 +1942,6 @@ class Abc {
   void testRemoveParenthesesWhenReplacingEmptyCallWithConstant() {
     doTest('\t')
   }
+
+  void testNoCallsAfterAnnotationInCodeBlock() { doTest() }
 }

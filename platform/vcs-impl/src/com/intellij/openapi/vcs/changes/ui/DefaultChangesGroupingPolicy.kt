@@ -41,7 +41,7 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
     val CONFLICTS_NODE_CACHE = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
   }
 
-  class Factory @JvmOverloads constructor(private val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
+  internal class Factory @JvmOverloads constructor(private val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
       return when {
         forLocalChanges -> DefaultChangesGroupingPolicy(project, model)

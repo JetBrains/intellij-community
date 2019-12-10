@@ -38,9 +38,7 @@ public class FieldNamingConventionInspection extends AbstractNamingConventionIns
       @Override
       public void visitField(PsiField field) {
         String name = field.getName();
-        if (name != null) {
-          checkName(field, name, holder);
-        }
+        checkName(field, name, holder);
       }
     };
   }

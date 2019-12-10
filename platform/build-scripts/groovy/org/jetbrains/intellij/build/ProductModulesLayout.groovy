@@ -200,9 +200,12 @@ class ProductModulesLayout {
   List<String> compatiblePluginsToIgnore = []
 
   /**
+   * @deprecated we generate the order file automatically based on the application startup statistics
+   * 
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
    * will be reordered accordingly to reduct IDE startup time. If {@code null} no reordering will be performed.
    */
+  @Deprecated
   String classesLoadingOrderFilePath = null
 
   /**

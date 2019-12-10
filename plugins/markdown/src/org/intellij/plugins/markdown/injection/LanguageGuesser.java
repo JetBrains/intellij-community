@@ -1,14 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.lexer.EmbeddedTokenTypesProvider;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,15 +22,6 @@ public enum LanguageGuesser {
       @Override
       protected List<EmbeddedTokenTypesProvider> compute() {
         return EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList();
-      }
-    };
-
-  private final ClearableLazyValue<List<CodeFenceLanguageProvider>> codeFenceLanguageProviders =
-    new ClearableLazyValue<List<CodeFenceLanguageProvider>>() {
-      @NotNull
-      @Override
-      protected List<CodeFenceLanguageProvider> compute() {
-        return CodeFenceLanguageProvider.EP_NAME.getExtensionList();
       }
     };
 
@@ -64,17 +53,12 @@ public enum LanguageGuesser {
 
   @NotNull
   public List<CodeFenceLanguageProvider> getCodeFenceLanguageProviders() {
-    return codeFenceLanguageProviders.getValue();
-  }
-
-  @TestOnly
-  public void resetCodeFenceLanguageProviders() {
-    codeFenceLanguageProviders.drop();
+    return CodeFenceLanguageProvider.EP_NAME.getExtensionList();
   }
 
   @Nullable
   public Language guessLanguage(@NotNull String languageName) {
-    for (CodeFenceLanguageProvider provider : codeFenceLanguageProviders.getValue()) {
+    for (CodeFenceLanguageProvider provider : getCodeFenceLanguageProviders()) {
       final Language languageByProvider = provider.getLanguageByInfoString(languageName);
       if (languageByProvider != null) {
         return languageByProvider;

@@ -125,7 +125,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         for (PsiParameter parameter : parameters) {
-          if (name.equals(parameter.getName())) {
+          if (parameter.getName().equals(name)) {
             call.append("this.");
             break;
           }

@@ -83,7 +83,8 @@ public class UnusedSymbolUtil {
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element,
                                                      @NotNull String message,
                                                      @NotNull final HighlightInfoType highlightInfoType) {
-    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
+    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).group(
+      GeneralHighlightingPass.POST_UPDATE_ALL).create();
     if (info == null) {
       return null; //filtered out
     }

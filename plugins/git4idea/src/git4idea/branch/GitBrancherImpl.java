@@ -56,10 +56,15 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    createBranch(name, startPoints, false);
+  }
+
+  @Override
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints, boolean force) {
     new CommonBackgroundTask(myProject, "Creating branch " + name, null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).createBranch(name, startPoints);
+        newWorker(indicator).createBranch(name, startPoints, force);
       }
     }.runInBackground();
   }
@@ -94,10 +99,18 @@ class GitBrancherImpl implements GitBrancher {
                                             @NotNull String startPoint,
                                             @NotNull List<? extends GitRepository> repositories,
                                             @Nullable Runnable callInAwtLater) {
+    checkoutNewBranchStartingFrom(newBranchName, startPoint, false, repositories, callInAwtLater);
+  }
+
+  @Override
+  public void checkoutNewBranchStartingFrom(@NotNull String newBranchName,
+                                            @NotNull String startPoint, boolean overwriteIfNeeded,
+                                            @NotNull List<? extends GitRepository> repositories,
+                                            @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, String.format("Checking out %s from %s", newBranchName, startPoint), callInAwtLater) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, repositories);
+        newWorker(indicator).checkoutNewBranchStartingFrom(newBranchName, startPoint, overwriteIfNeeded, repositories);
       }
     }.runInBackground();
   }
@@ -155,13 +168,19 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    rebase(repositories, "HEAD", branchName);
+  }
+
+  @Override
+  public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName) {
     new CommonBackgroundTask(myProject, "Rebasing " + branchName + "...", null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).rebaseOnCurrent(repositories, branchName);
+        newWorker(indicator).rebase(repositories, upstream, branchName);
       }
     }.runInBackground();
   }
+
 
   @Override
   public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends GitRepository> repositories) {

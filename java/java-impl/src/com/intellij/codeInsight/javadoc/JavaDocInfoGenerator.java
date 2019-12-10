@@ -1064,7 +1064,7 @@ public class JavaDocInfoGenerator {
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false);
       generateType(buffer, parm.getType(), method, generateLink, isTooltip);
-      if (parm.getName() != null && !isTooltip) {
+      if (!isTooltip) {
         buffer.append(NBSP);
         buffer.append(parm.getName());
       }
@@ -1648,6 +1648,10 @@ public class JavaDocInfoGenerator {
     if (parentClass == null) return;
     if (parentClass.isInterface() && !overrides) return;
     PsiMethod[] supers = method.findSuperMethods();
+    Arrays.sort(supers, Comparator.comparing(m-> {
+      PsiClass aClass = m.getContainingClass();
+      return aClass == null ? null : aClass.getName();
+    }));
     if (supers.length == 0) return;
     boolean headerGenerated = false;
     for (PsiMethod superMethod : supers) {

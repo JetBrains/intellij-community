@@ -5,7 +5,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "RefactoringSettings", storages = {
@@ -15,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
-  //public boolean RENAME_PREVIEW_USAGES = true;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = false;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = false;
   public boolean RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = false;
@@ -28,25 +29,20 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_FIELD = false;
   public boolean RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = true;
 
-  //public boolean ENCAPSULATE_FIELDS_PREVIEW_USAGES = true;
   public boolean ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = true;
 
   public boolean EXTRACT_INTERFACE_PREVIEW_USAGES = true;
 
+  /**
+   * @deprecated no read usages
+   */
+  @Deprecated 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public boolean MOVE_PREVIEW_USAGES = true;
+
   public boolean MOVE_SEARCH_IN_COMMENTS = true;
   public boolean MOVE_SEARCH_FOR_TEXT = true;
 
-
-  //public boolean INLINE_METHOD_PREVIEW_USAGES = true;
-  //public boolean INLINE_FIELD_PREVIEW_USAGES = true;
-
-  //public boolean CHANGE_SIGNATURE_PREVIEW_USAGES = true;
-  public boolean CHANGE_CLASS_SIGNATURE_PREVIEW_USAGES = true;
-
-  public boolean MOVE_INNER_PREVIEW_USAGES = true;
-
-  //public boolean TYPE_COOK_PREVIEW_USAGES = true;
   public boolean TYPE_COOK_DROP_CASTS = true;
   public boolean TYPE_COOK_PRESERVE_RAW_ARRAYS = true;
   public boolean TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = true;
@@ -54,29 +50,30 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public boolean TYPE_COOK_COOK_OBJECTS;
   public boolean TYPE_COOK_PRODUCE_WILDCARDS;
 
-  public boolean TYPE_MIGRATION_PREVIEW_USAGES = true;
-
-  //public boolean MAKE_METHOD_STATIC_PREVIEW_USAGES;
-  //public boolean INTRODUCE_PARAMETER_PREVIEW_USAGES;
   public int INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
   public int EXTRACT_INTERFACE_JAVADOC;
   public int EXTRACT_SUPERCLASS_JAVADOC;
-  public boolean TURN_REFS_TO_SUPER_PREVIEW_USAGES;
+  
   public boolean INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE;
   public boolean INTRODUCE_PARAMETER_USE_INITIALIZER;
+
   public String INTRODUCE_FIELD_VISIBILITY;
   public int PULL_UP_MEMBERS_JAVADOC;
+  /**
+   * @deprecated no read usages of preview option
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public boolean PUSH_DOWN_PREVIEW_USAGES;
+
   public boolean INLINE_METHOD_THIS;
   public boolean INLINE_SUPER_CLASS_THIS;
   public boolean INLINE_FIELD_THIS;
   public boolean INLINE_LOCAL_THIS;
-  //public boolean INHERITANCE_TO_DELEGATION_PREVIEW_USAGES;
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
-  //public boolean REPLACE_CONSTRUCTOR_WITH_FACTORY_PREVIEW_USAGES;
+
   public String INTRODUCE_CONSTANT_VISIBILITY;
   public boolean INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS;
-  public boolean CONVERT_TO_INSTANCE_METHOD_PREVIEW_USAGES = true;
 
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS;
   public Boolean INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;

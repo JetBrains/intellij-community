@@ -54,16 +54,27 @@ public final class MacOSApplicationProvider {
     static void initMacApplication() {
       Application application = Application.getApplication();
 
-      application.setAboutHandler(event -> AboutAction.perform(getProject(false)));
+      application.setAboutHandler(event -> {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          AboutAction.perform(getProject(false));
+        }
+      });
 
       application.setPreferencesHandler(event -> {
-        Project project = getProject(true);
-        submit("Preferences", () -> ShowSettingsAction.perform(project));
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          Project project = getProject(true);
+          submit("Preferences", () -> ShowSettingsAction.perform(project));
+        }
       });
 
       application.setQuitHandler((event, response) -> {
-        submit("Quit", () -> ApplicationManager.getApplication().exit());
-        response.cancelQuit();
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          submit("Quit", () -> ApplicationManager.getApplication().exit());
+          response.cancelQuit();
+        }
+        else {
+          response.performQuit();
+        }
       });
 
       application.setOpenFileHandler(event -> {

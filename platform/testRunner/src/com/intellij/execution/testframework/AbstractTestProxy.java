@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,27 +116,6 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     super.dispose();
     for (AbstractTestProxy proxy : getChildren()) {
       Disposer.dispose(proxy);
-    }
-  }
-
-  /**
-   * @deprecated to be deleted in 2017.1
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017.1")
-  public static void flushOutput(AbstractTestProxy testProxy) {
-    testProxy.flush();
-
-    AbstractTestProxy parent = testProxy.getParent();
-    while (parent != null) {
-      final List<? extends AbstractTestProxy> children = parent.getChildren();
-      if (!testProxy.isInProgress() && testProxy.equals(children.get(children.size() - 1))) {
-        parent.flush();
-      } else {
-        break;
-      }
-      testProxy = parent;
-      parent = parent.getParent();
     }
   }
 

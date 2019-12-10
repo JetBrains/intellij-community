@@ -21,7 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.task.*;
+import com.intellij.task.ProjectTask;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.ApiStatus;
@@ -160,17 +162,14 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         if (!myProject.isDisposed()) {
           ProjectTaskContext context = new ProjectTaskContext(sessionId, configuration);
           env.copyUserDataTo(context);
-          projectTaskManager.run(context, projectTask,
-                                 new ProjectTaskNotification() {
-                                   @Override
-                                   public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
-                                     if ((executionResult.getErrors() == 0 || ignoreErrors) && !executionResult.isAborted()) {
-                                       result.set(Boolean.TRUE);
-                                     }
-                                     done.up();
-                                   }
-                                 }
-          );
+          projectTaskManager
+            .run(context, projectTask)
+            .onSuccess(taskResult -> {
+              if ((!taskResult.hasErrors() || ignoreErrors) && !taskResult.isAborted()) {
+                result.set(Boolean.TRUE);
+              }
+            })
+            .onProcessed(taskResult -> done.up());
         }
         else {
           done.up();

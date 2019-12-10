@@ -9,7 +9,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.actionSystem.impl.Utils.ActionGroupVisitor;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -43,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  private static final boolean ALWAYS_UPDATE_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.always.update.slow.actions");
+  private static final boolean SKIP_UPDATE_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.skip.update.slow.actions");
   private static final boolean PERSISTENT_LIST_OF_SLOW_ACTIONS = Boolean.getBoolean("mac.touchbar.remember.slow.actions");
   private static final String DIALOG_ACTIONS_CONTEXT = "DialogWrapper.touchbar.actions";
 
@@ -93,7 +92,7 @@ class BuildUtils {
   }
 
   static void addActionGroup(@NotNull TouchBar result, @NotNull ActionGroup actions) {
-    final @Nullable ModalityState ms = getCurrentModalityState();
+    final @NotNull ModalityState ms = LaterInvocator.getCurrentModalityState();
     final @Nullable TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
     final Customizer customizer = new Customizer(groupDesc, ms);
     addActionGroup(result, actions, customizer);
@@ -105,7 +104,6 @@ class BuildUtils {
   }
 
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
-    out.softClear();
     GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats(), false);
 
     final DataContext dctx = DataManager.getInstance().getDataContext(getCurrentFocusComponent());
@@ -113,8 +111,6 @@ class BuildUtils {
     if (customizer != null)
       customizer.finish();
   }
-
-  static @Nullable ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
 
   static @Nullable Component getCurrentFocusComponent() {
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -161,7 +157,7 @@ class BuildUtils {
   }
 
   static void addDialogButtons(@NotNull TouchBar out, @Nullable Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons, @Nullable Map<Component, ActionGroup> actions) {
-    final ModalityState ms = getCurrentModalityState();
+    final @NotNull ModalityState ms = LaterInvocator.getCurrentModalityState();
     final boolean hasSouthPanelButtons = unorderedButtons != null && !unorderedButtons.isEmpty();
     final byte[] prio = {-1};
 
@@ -305,8 +301,7 @@ class BuildUtils {
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
     final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true, null, null);
 
-    final Application app = ApplicationManager.getApplication();
-    final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
     final TBItemScrubber scrub = result.addScrubber();
     final @NotNull ListPopupStep<Object> listPopupStep = listPopup.getListStep();
@@ -334,10 +329,7 @@ class BuildUtils {
       };
 
       final Runnable action = () -> {
-        if (app == null)
-          SwingUtilities.invokeLater(edtAction);
-        else
-          app.invokeLater(edtAction, ms);
+          ApplicationManager.getApplication().invokeLater(edtAction, ms);
       };
       scrub.addItem(ic, txt, action);
       if (!listPopupStep.isSelectable(obj)) {
@@ -417,6 +409,11 @@ class BuildUtils {
     }
 
     @Override
+    public void begin() {
+      myOut.softClear();
+    }
+
+    @Override
     public boolean enterNode(@NotNull ActionGroup groupNode) {
       final @NotNull String groupId = getActionId(groupNode);
       if (myFilterByPrefix != null && groupId.startsWith(myFilterByPrefix))
@@ -486,7 +483,7 @@ class BuildUtils {
 
     @Override
     public boolean beginUpdate(@NotNull AnAction action, AnActionEvent e) {
-      if (!ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
+      if (SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
         // make such action always enabled and visible
         e.getPresentation().setEnabledAndVisible(true);
         if (action instanceof Toggleable)
@@ -502,7 +499,7 @@ class BuildUtils {
       // check whether update is too slow
       final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0L);
       final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
-      if (isEDT && !ALWAYS_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
+      if (isEDT && SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
         // disable update for this action
         addSlowUpdateAction(action);
       }
@@ -637,8 +634,6 @@ class BuildUtils {
   }
 
   static @NotNull String getActionId(@NotNull AnAction act) {
-    if (ApplicationManager.getApplication() == null)
-      return act.toString();
     final String actId = ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
     return actId == null ? act.toString() : actId;
   }

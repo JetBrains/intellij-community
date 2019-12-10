@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -35,7 +35,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
       contentManager.addTab(item, Disposable {
         //means that tab closed by user
         if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
-        updateRemoteUrls()
+        ApplicationManager.getApplication().invokeLater(::updateRemoteUrls) { project.isDisposedOrDisposeInProgress }
       })
     }
   }
@@ -61,8 +61,12 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
     override fun repositoryChanged(repository: GitRepository) = updateRemotes()
 
     private fun updateRemotes() {
-      runInEdt {
+      val application = ApplicationManager.getApplication()
+      if (application.isDispatchThread) {
         project.service<GHPRToolWindowTabsManager>().updateRemoteUrls()
+      }
+      else {
+        application.invokeLater(::updateRemotes) { project.isDisposedOrDisposeInProgress }
       }
     }
   }

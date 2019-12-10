@@ -1,7 +1,6 @@
 # Stubs for email (Python 3.4)
 
-from typing import Callable, Optional, IO
-import sys
+from typing import Callable, IO
 from email.message import Message
 from email.policy import Policy
 

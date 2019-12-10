@@ -3,16 +3,17 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.ui.cloneDialog.SearchableListItem
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import javax.swing.JList
 
-internal sealed class GHRepositoryListItem(
+sealed class GHRepositoryListItem(
   val account: GithubAccount
-) {
-  open val stringToSearch: String?
-    get() = null
+) : SearchableListItem {
+  override val stringToSearch: String?
+    get() = ""
 
   abstract fun customizeRenderer(renderer: ColoredListCellRenderer<GHRepositoryListItem>,
                                  list: JList<out GHRepositoryListItem>)

@@ -4,6 +4,7 @@ package com.intellij.lang.annotation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  * @see Annotator#annotate(PsiElement, AnnotationHolder)
  */
+@ApiStatus.NonExtendable
 public interface AnnotationHolder {
   /**
    * Creates an error annotation with the specified message over the specified PSI element.

@@ -117,9 +117,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         final PsiParameter parameter = parameters[i];
         final String parameterName = parameter.getName();
         final String superParameterName = superParameters[i].getName();
-        if (superParameterName == null) {
-          continue;
-        }
         if (superParameterName.equals(parameterName)) {
           continue;
         }

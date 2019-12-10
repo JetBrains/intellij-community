@@ -73,8 +73,7 @@ internal class GHPRAccountsComponent(private val authManager: GithubAuthenticati
   }
 
   private fun requestNewAccount() {
-    val account = authManager.requestNewAccount(project) ?: return
-    setActualContent(account)
+    authManager.requestNewAccount(project)
     IdeFocusManager.getInstance(project).requestFocusInProject(this@GHPRAccountsComponent, project)
   }
 

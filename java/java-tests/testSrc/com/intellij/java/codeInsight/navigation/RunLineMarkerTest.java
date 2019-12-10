@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -29,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Date;
@@ -42,13 +44,24 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n " +
                                                "    public static void main(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n" +
                                                "}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
     assertEquals(0, myFixture.findGuttersAtCaret().size());
     List<GutterMark> gutters = myFixture.findAllGutters();
     assertEquals(2, gutters.size());
+    assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+  }
+
+  public void testNoRunLineMarker() {
+    myFixture.configureByText("MainTest.java", "public class MainTest {}");
+    assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
+    assertEmpty(myFixture.findAllGutters());
+    assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.getFile().getVirtualFile()));
   }
 
   public void testTestClassWithMain() {
@@ -143,6 +156,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTooltip() {
     myFixture.configureByText("Main.java", "public class Main {\n" +
                                            "    public static void m<caret>ain(String[] args) {\n" +
+                                           "      someCode();\n" +
                                            "    }\n" +
                                            "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
@@ -157,6 +171,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testTooltipWithUnderscores() {
     myFixture.configureByText("Main_class_test.java", "public class Main_class_test {\n" +
                                                       "    public static void m<caret>ain(String[] args) {\n" +
+                                                      "      someCode();\n" +
                                                       "    }\n" +
                                                       "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
@@ -171,6 +186,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   public void testEditConfigurationAction() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void ma<caret>in(String[] args) {\n" +
+                                               "      someCode();\n" +
                                                "    }\n" +
                                                "}");
     List<GutterMark> marks = myFixture.findGuttersAtCaret();

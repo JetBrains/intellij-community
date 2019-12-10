@@ -273,7 +273,6 @@ public class TailRecursionInspection extends BaseInspection {
         for (Integer index : sortedNodes) {
           final PsiParameter parameter = parameters[index];
           final String parameterName = parameter.getName();
-          assert parameterName != null;
           final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[index]);
           assert argument != null;
           if (argument instanceof PsiReferenceExpression) {

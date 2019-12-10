@@ -34,18 +34,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class SignatureSuggesterPreviewDialog extends DialogWrapper {
+class SignatureSuggesterPreviewDialog extends DialogWrapper {
   private final PsiMethod myOldMethod;
   private final PsiMethod myNewMethod;
   private final PsiMethodCallExpression myOldCall;
   private final PsiMethodCallExpression myNewCall;
   private final int myDuplicatesNumber;
 
-  public SignatureSuggesterPreviewDialog(PsiMethod oldMethod,
-                                         PsiMethod newMethod,
-                                         PsiMethodCallExpression oldMethodCall,
-                                         PsiMethodCallExpression newMethodCall,
-                                         int duplicatesNumber) {
+  SignatureSuggesterPreviewDialog(PsiMethod oldMethod,
+                                  PsiMethod newMethod,
+                                  PsiMethodCallExpression oldMethodCall,
+                                  PsiMethodCallExpression newMethodCall,
+                                  int duplicatesNumber) {
     super(oldMethod.getProject());
     myOldMethod = oldMethod;
     myNewMethod = newMethod;

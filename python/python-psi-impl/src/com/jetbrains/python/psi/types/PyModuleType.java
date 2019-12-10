@@ -21,6 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -517,6 +519,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (item != location.getContainingFile().getOriginalFile()) {
         final LookupElement lookupElement = buildFileLookupElement(location.getContainingFile(), item, namesAlready);
         if (lookupElement != null) {
+          lookupElement.putUserData(PyCompletionMlElementInfo.Companion.getKey(), PyCompletionMlElementKind.PACKAGE_OR_MODULE.asInfo());
           result.add(lookupElement);
         }
       }

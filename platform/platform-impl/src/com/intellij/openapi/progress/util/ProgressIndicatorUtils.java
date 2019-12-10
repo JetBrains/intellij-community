@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -249,16 +252,32 @@ public class ProgressIndicatorUtils {
     application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
 
+  /**
+   * Run the given computation with its execution time restricted to the given amount of time in milliseconds.<p></p>
+   *
+   * Internally, it creates a new {@link ProgressIndicator}, runs the computation with that indicator and cancels it after the the timeout.
+   * The computation should call {@link ProgressManager#checkCanceled()} frequently enough, so that after the timeout has been exceeded
+   * it can stop the execution by throwing {@link ProcessCanceledException}, which will be caught by this {@code withTimeout}.<p></p>
+   *
+   * If a {@link ProcessCanceledException} happens due to any other reason (e.g. a thread's progress indicator got canceled),
+   * it'll be thrown out of this method.
+   * @return the computation result or {@code null} if timeout has been exceeded.
+   */
   @Nullable
-  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computable) {
+  public static <T> T withTimeout(long timeoutMs, @NotNull Computable<T> computation) {
     ProgressManager.checkCanceled();
-    ProgressIndicatorBase progress = new ProgressIndicatorBase(false, false);
-    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(progress::cancel, timeoutMs, TimeUnit.MILLISECONDS);
+    ProgressIndicator outer = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator inner = outer != null ? new SensitiveProgressWrapper(outer) : new ProgressIndicatorBase(false, false);
+    AtomicBoolean canceledByTimeout = new AtomicBoolean();
+    ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      canceledByTimeout.set(true);
+      inner.cancel();
+    }, timeoutMs, TimeUnit.MILLISECONDS);
     try {
-      return ProgressManager.getInstance().runProcess(computable, progress);
+      return ProgressManager.getInstance().runProcess(computation, inner);
     }
     catch (ProcessCanceledException e) {
-      if (progress.isCanceled()) {
+      if (canceledByTimeout.get()) {
         return null;
       }
       throw e; // canceled not by timeout

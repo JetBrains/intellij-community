@@ -66,7 +66,6 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     final List<PsiField> result = new SmartList<>();
     for (PsiField field : beanClass.getAllFields()) {
       final String fieldName = field.getName();
-      if (fieldName == null) continue;
 
       if (Extension.isClassField(fieldName) &&
           ExtensionDomExtender.findWithElement(getWithElements(), field) == null) {

@@ -545,7 +545,6 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     PsiElement resolvedExpression = expression.resolve();
     if (resolvedExpression instanceof PsiEnumConstant) {
       String constant = ((PsiEnumConstant)resolvedExpression).getName();
-      if (constant == null) return;
       PsiReferenceExpression qualifier = (PsiReferenceExpression)expression.getQualifier();
       if (qualifier == null) return;
       PsiElement element = qualifier.resolve();

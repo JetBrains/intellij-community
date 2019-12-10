@@ -1,8 +1,23 @@
 package com.intellij.diff.editor
 
+import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.util.Key
 import com.intellij.testFramework.LightVirtualFile
 import javax.swing.JComponent
 
-class GraphViewVirtualFile(val toolbarsAndTable: JComponent) : LightVirtualFile("Repository",
-    GraphViewFileType.INSTANCE, "") {
+class GraphViewVirtualFile(val toolbarsAndTable: JComponent, val getTabNameFunc: () -> String)
+  : LightVirtualFile(getTabNameFunc(), GraphViewFileType.INSTANCE, "") {
+  companion object {
+    @JvmField
+    val TabContentId: Key<String> = Key("TabContentId")
+
+  }
+
+  init {
+    this.putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+  }
+
+  fun getTabName(): String {
+    return getTabNameFunc()
+  }
 }

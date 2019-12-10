@@ -11,12 +11,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +31,12 @@ import java.util.stream.Stream;
 
 class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
-  private static final boolean doReadSavedPersistentData = SystemProperties.getBooleanProperty("idea.read.saved.persistent.index", true);
+
+  private static final boolean USE_MANUAL_COMPRESSION = SystemProperties.getBooleanProperty("snapshots.use.manual.compression", false);
 
   private final ID<Key, Value> myIndexId;
-  private final InputMapExternalizer<Key, Value> myMapExternalizer;
+  private final DataExternalizer<Map<Key, Value>> myMapExternalizer;
+  private final DataExternalizer<Value> myValueExternalizer;
   private final DataIndexer<Key, Value, Input> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
@@ -44,7 +48,11 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
   SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = FileBasedIndexImpl.isPsiDependentIndex(indexExtension);
-    myMapExternalizer = new InputMapExternalizer<>(indexExtension);
+
+    boolean storeOnlySingleValue = indexExtension instanceof SingleEntryFileBasedIndexExtension;
+    myMapExternalizer = storeOnlySingleValue ? null : new InputMapExternalizer<>(indexExtension);
+    myValueExternalizer = storeOnlySingleValue ? indexExtension.getValueExternalizer() : null;
+
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
     myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
@@ -62,43 +70,64 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
   @NotNull
   @Override
   public Map<Key, Value> readData(int hashId) throws IOException {
-    ByteArraySequence byteSequence = readContents(hashId);
-    if (byteSequence != null) {
-      return AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myMapExternalizer);
-    }
-    return Collections.emptyMap();
+    return ObjectUtils.notNull(doReadData(hashId), Collections.emptyMap());
   }
 
   @Nullable
   @Override
   public InputData<Key, Value> readData(@NotNull Input content) throws IOException {
-    Map<Key, Value> data = null;
-    int hashId = 0;
+    int hashId = getHashId(content);
 
-    if (doReadSavedPersistentData) {
-      if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
-        hashId = getHashId(content);
-        ByteArraySequence bytes = readContents(hashId);
-
-        if (bytes != null) {
-          data = AbstractForwardIndexAccessor.deserializeFromByteSeq(bytes, myMapExternalizer);
-          if (DebugAssertions.EXTRA_SANITY_CHECKS) {
-            Map<Key, Value> contentData = myIndexer.map(content);
-            boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
-            if (!sameValueForSavedIndexedResultAndCurrentOne) {
-              DebugAssertions.error(
-                "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
-                getContentDebugData(content),
-                myIndexId,
-                buildDiff(data, contentData),
-                myIndexingTrace.get(hashId)
-              );
-            }
-          }
-        }
+    Map<Key, Value> data = doReadData(hashId);
+    if (data != null && DebugAssertions.EXTRA_SANITY_CHECKS) {
+      Map<Key, Value> contentData = myIndexer.map(content);
+      boolean sameValueForSavedIndexedResultAndCurrentOne = contentData.equals(data);
+      if (!sameValueForSavedIndexedResultAndCurrentOne) {
+        data = contentData;
+        DebugAssertions.error(
+          "Unexpected difference in indexing of %s by index %s\ndiff %s\nprevious indexed info %s",
+          getContentDebugData(content),
+          myIndexId,
+          buildDiff(data, contentData),
+          myIndexingTrace.get(hashId)
+        );
       }
     }
     return data == null ? null : new HashedInputData<>(data, hashId);
+  }
+
+  @Nullable
+  private Map<Key, Value> doReadData(int hashId) throws IOException {
+    ByteArraySequence byteSequence = readContents(hashId);
+    if (byteSequence != null) {
+      if (USE_MANUAL_COMPRESSION) {
+        byteSequence = decompress(byteSequence);
+      }
+      return deserialize(byteSequence);
+    }
+    return null;
+  }
+
+  @NotNull
+  private Map<Key, Value> deserialize(@NotNull ByteArraySequence byteSequence) throws IOException {
+    if (myMapExternalizer != null) {
+      return AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myMapExternalizer);
+    } else {
+      assert myValueExternalizer != null;
+      Value value = AbstractForwardIndexAccessor.deserializeFromByteSeq(byteSequence, myValueExternalizer);
+      //noinspection unchecked
+      return Collections.singletonMap((Key)Long.valueOf(0), value);
+    }
+  }
+
+  @NotNull
+  private ByteArraySequence serializeData(@NotNull Map<Key, Value> data) throws IOException {
+    if (myMapExternalizer != null) {
+      return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
+    } else {
+      assert myValueExternalizer != null;
+      return AbstractForwardIndexAccessor.serializeToByteSeq(data.values().iterator().next(), myValueExternalizer, data.size());
+    }
   }
 
   @Override
@@ -169,7 +198,7 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     Stream.of(myContents, myIndexingTrace).filter(Objects::nonNull).forEach(index -> {
       try {
         index.close();
@@ -327,10 +356,11 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
     return moreInfo;
   }
 
-  private boolean savePersistentData(Map<Key, Value> data, int id) {
+  private boolean savePersistentData(@NotNull Map<Key, Value> data, int id) {
     try {
-      if (myContents != null && myContents.isBusyReading() && myContents.containsMapping(id)) return false;
-      saveContents(id, AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size()));
+      if (myContents != null && myContents.containsMapping(id)) return false;
+      ByteArraySequence bytes = serializeData(data);
+      saveContents(id, bytes);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -338,6 +368,9 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
   }
 
   private void saveContents(int id, ByteArraySequence byteSequence) throws IOException {
+    if (USE_MANUAL_COMPRESSION) {
+      byteSequence = compress(byteSequence);
+    }
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (SharedIndicesData.DO_CHECKS) {
         synchronized (myContents) {
@@ -350,5 +383,17 @@ class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInput
     } else {
       myContents.put(id, byteSequence);
     }
+  }
+
+  @NotNull
+  private static ByteArraySequence decompress(@NotNull ByteArraySequence seq) throws IOException {
+    return new ByteArraySequence(CompressionUtil.readCompressed(seq.toInputStream()));
+  }
+
+  @NotNull
+  private static ByteArraySequence compress(@NotNull ByteArraySequence seq) throws IOException {
+    UnsyncByteArrayOutputStream result = new UnsyncByteArrayOutputStream();
+    CompressionUtil.writeCompressed(new DataOutputStream(result), seq.getBytes(), seq.getOffset(), seq.length());
+    return result.toByteArraySequence();
   }
 }

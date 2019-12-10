@@ -223,7 +223,7 @@ public class ControlFlowWrapper {
   }
 
 
-  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(PsiElement element, Collection<? extends PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }
@@ -264,7 +264,7 @@ public class ControlFlowWrapper {
       myInputVariables = inputVariableList;
     }
     //varargs variables go last, otherwise order is induced by original ordering
-    Collections.sort(myInputVariables, (v1, v2) -> {
+    myInputVariables.sort((v1, v2) -> {
       if (v1.getType() instanceof PsiEllipsisType) {
         return 1;
       }

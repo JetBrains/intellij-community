@@ -1,12 +1,17 @@
 package com.intellij.diff.editor
 
-class DiffFileIconProvider : com.intellij.ide.FileIconProvider {
+import com.intellij.icons.AllIcons
+import com.intellij.ide.FileIconProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import javax.swing.Icon
 
-    override fun getIcon(file: com.intellij.openapi.vfs.VirtualFile, flags: Int, project: com.intellij.openapi.project.Project?): javax.swing.Icon? {
-        if(file is DiffVirtualFile)
-            return com.intellij.icons.AllIcons.Actions.Diff
-
-        return null
+class DiffFileIconProvider : FileIconProvider {
+  override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
+    if (file is DiffVirtualFile) {
+      return AllIcons.Actions.Diff
     }
 
+    return null
+  }
 }

@@ -35,7 +35,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
                                        searchScope: SearchScope? = null) : InferenceDriver {
   private val method = targetParameters.first().parentOfType<GrMethod>()!!
   private val scope: SearchScope = searchScope ?: with(originalMethod) { GlobalSearchScope.fileScope(project, containingFile.virtualFile) }
-  private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll() }
+  private val calls = lazy { ReferencesSearch.search(originalMethod, scope).findAll().sortedBy { it.element.textOffset } }
 
   companion object {
 
@@ -75,11 +75,11 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     }
 
     private fun GrParameter.setTypeWithoutFormatting(type: PsiType?) {
-      if (type == null || type == PsiType.NULL) {
+      if (type == null || type == PsiType.NULL || (type is PsiWildcardType && !type.isBounded)) {
         typeElementGroovy?.delete()
       }
       else try {
-        val desiredTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(type)
+        val desiredTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(removeWildcard(type))
         if (typeElementGroovy == null) addAfter(desiredTypeElement, modifierList) else typeElementGroovy?.replace(desiredTypeElement)
       }
       catch (e: IncorrectOperationException) {
@@ -173,7 +173,7 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
           if (properType == typeParameter.type()) {
             continue
           }
-          constraintCollector.add(TypeConstraint(resolveResult.substitutor.substitute(type), typeParameter.type(), method))
+          constraintCollector.add(TypeConstraint(properType, typeParameter.type(), method))
         }
       }
     })
@@ -249,9 +249,5 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
     val newTypeParameters = typeParameters.mapNotNull { param -> resultMethod.typeParameters.find { it.name == param.name } }
     val newTargetParameters = targetParameters.map { mapping.getValue(it) }.toSet()
     return CommonDriver(newTargetParameters, mapping[varargParameter], newClosureDriver, originalMethod, newTypeParameters)
-  }
-
-  override fun forbiddingTypes(): List<PsiType> {
-    return listOf(varargParameter?.type ?: return emptyList())
   }
 }

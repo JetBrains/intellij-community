@@ -24,4 +24,9 @@ public final class SplitHorizontallyAction extends SplitAction{
   public SplitHorizontallyAction() {
     super(SwingConstants.HORIZONTAL);
   }
+
+  @Override
+  protected boolean isProhibitionAllowed() {
+    return true;
+  }
 }

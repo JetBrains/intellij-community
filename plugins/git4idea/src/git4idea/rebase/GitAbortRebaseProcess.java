@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -21,8 +22,6 @@ import git4idea.util.GitFreezingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
@@ -30,9 +29,6 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.openapi.ui.Messages.canShowMacSheetPanel;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
-import static com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh;
-import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
-import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.rebase.GitRebaseUtils.mentionLocalChangesRemainingInStash;
 
 class GitAbortRebaseProcess {
@@ -139,13 +135,15 @@ class GitAbortRebaseProcess {
 
   private void doAbort(final boolean rollback) {
     new GitFreezingProcess(myProject, "rebase", () -> {
-      List<GitRepository> repositoriesToRefresh = new ArrayList<>();
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));
+          Hash startHash = GitUtil.getHead(myRepositoryToAbort);
           GitCommandResult result = myGit.rebaseAbort(myRepositoryToAbort);
-          repositoriesToRefresh.add(myRepositoryToAbort);
-          if (!result.success()) {
+          if (result.success()) {
+            GitUtil.updateAndRefreshChangedVfs(myRepositoryToAbort, startHash);
+          }
+          else {
             myNotifier.notifyError("Rebase Abort Failed",
                                    result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver));
             return;
@@ -155,8 +153,8 @@ class GitAbortRebaseProcess {
         if (rollback) {
           for (GitRepository repo : myRepositoriesToRollback.keySet()) {
             myIndicator.setText2("git reset --keep" + GitUtil.mention(repo));
+            Hash startHash = GitUtil.getHead(repo);
             GitCommandResult res = myGit.reset(repo, GitResetMode.KEEP, myRepositoriesToRollback.get(repo));
-            repositoriesToRefresh.add(repo);
 
             if (res.success()) {
               String initialBranchPosition = myInitialCurrentBranches.get(repo);
@@ -175,6 +173,8 @@ class GitAbortRebaseProcess {
               myNotifier.notifyImportantWarning("Rebase Rollback Failed", description);
               return;
             }
+
+            GitUtil.updateAndRefreshChangedVfs(repo, startHash);
           }
         }
 
@@ -185,16 +185,6 @@ class GitAbortRebaseProcess {
           myNotifier.notifySuccess("Rebase abort succeeded");
         }
       }
-      finally {
-        refresh(repositoriesToRefresh);
-      }
     }).execute();
-  }
-
-  private static void refresh(@NotNull List<? extends GitRepository> toRefresh) {
-    for (GitRepository repository : toRefresh) {
-      repository.update();
-    }
-    markDirtyAndRefresh(false, true, false, toVirtualFileArray(getRootsFromRepositories(toRefresh)));
   }
 }

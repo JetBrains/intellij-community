@@ -998,7 +998,7 @@ public class PluginManagerConfigurable
           @Override
           protected void setEmptyText() {
             myPanel.getEmptyText().setText("Nothing found.");
-            myPanel.getEmptyText().appendSecondaryText("Search in marketplace", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+            myPanel.getEmptyText().appendSecondaryText("Search in Marketplace", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                                        e -> myTabHeaderComponent.setSelectionWithEvents(MARKETPLACE_TAB));
           }
 
@@ -1611,6 +1611,7 @@ public class PluginManagerConfigurable
     }
 
     myPluginUpdatesService.dispose();
+    PluginPriceService.cancel();
 
     if (myShutdownCallback != null) {
       myShutdownCallback.run();

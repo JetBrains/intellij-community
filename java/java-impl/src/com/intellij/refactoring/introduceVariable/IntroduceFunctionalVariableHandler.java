@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
@@ -97,12 +96,9 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           assert returnType != null;
           final String title = "Choose Applicable Functional Interface: " + methodSignature + " -> " + returnType.getPresentableText();
           NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), title,
-                                            new PsiElementProcessor<PsiClass>() {
-                                              @Override
-                                              public boolean execute(@NotNull PsiClass psiClass) {
-                                                functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
-                                                return true;
-                                              }
+                                            psiClass -> {
+                                              functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
+                                              return true;
                                             }).showInBestPositionFor(editor);
         }
       }
@@ -311,7 +307,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       return false;
     }
 
-    public void copyParameters(MyExtractMethodProcessor processor) {
+    void copyParameters(MyExtractMethodProcessor processor) {
       myInputVariables.setPassFields(processor.myInputVariables.isPassFields());
       VariableData[] variables = processor.myVariableDatum;
       myVariableDatum = new VariableData[variables.length];

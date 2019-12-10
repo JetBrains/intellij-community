@@ -34,11 +34,6 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   @Override
-  public void documentChanged(@NotNull DocumentEvent event) {
-    updateMarkersOnChange(event);
-  }
-
-  @Override
   protected int compareEqualStartIntervals(@NotNull IntervalTreeImpl.IntervalNode<T> i1, @NotNull IntervalTreeImpl.IntervalNode<T> i2) {
     RMNode<?> o1 = (RMNode<?>)i1;
     RMNode<?> o2 = (RMNode<?>)i2;
@@ -158,29 +153,35 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     }
   }
 
-  private void updateMarkersOnChange(@NotNull DocumentEvent e) {
+  @Override
+  public void documentChanged(@NotNull DocumentEvent e) {
     try {
       l.writeLock().lock();
-      if (size() == 0) return;
-      checkMax(true);
-
-      incModCount();
-
-      List<IntervalNode<T>> affected = new SmartList<>();
-      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
-      checkMax(false);
-
-      if (!affected.isEmpty()) {
-        updateAffectedNodes(e, affected);
+      if (size() != 0) {
+        updateMarkersOnChange(e);
       }
-      checkMax(true);
-
-      IntervalNode<T> root = getRoot();
-      assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
     }
     finally {
       l.writeLock().unlock();
     }
+  }
+
+  private void updateMarkersOnChange(@NotNull DocumentEvent e) {
+    checkMax(true);
+
+    incModCount();
+
+    List<IntervalNode<T>> affected = new SmartList<>();
+    collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
+    checkMax(false);
+
+    if (!affected.isEmpty()) {
+      updateAffectedNodes(e, affected);
+    }
+    checkMax(true);
+
+    IntervalNode<T> root = getRoot();
+    assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
   }
 
   private void updateAffectedNodes(@NotNull DocumentEvent e, List<IntervalNode<T>> affected) {

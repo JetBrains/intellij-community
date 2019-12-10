@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
@@ -46,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -263,14 +261,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
       VirtualFile ignoreFileVcsRoot = VcsUtil.getVcsRootFor(context.getProject(), ignoreFileAffectedRoot);
       if (ignoreFileVcsRoot == null) return;
 
-      VirtualFile contextVirtualFile;
-      @SystemIndependent String basePath = getElement().getProject().getBasePath();
-      if (basePath != null && FileUtil.isAncestor(basePath, containingFile.getVirtualFile().getPath(), false)) {
-        contextVirtualFile = context.getVirtualFile();
-      }
-      else {
-        return;
-      }
+      VirtualFile contextVirtualFile = context.getVirtualFile();
 
       if (contextVirtualFile != null) {
         IgnoreEntry entry = (IgnoreEntry)getFileReferenceSet().getElement();

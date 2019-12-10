@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -155,7 +156,7 @@ public class JdkChooserPanel extends JPanel {
     myCurrentJdk = myList.getSelectedValue();
   }
 
-  public JList getPreferredFocusedComponent() {
+  public JList<Sdk> getPreferredFocusedComponent() {
     return myList;
   }
 
@@ -180,7 +181,14 @@ public class JdkChooserPanel extends JPanel {
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<String> suggestedPaths = JavaHomeFinder.suggestHomePaths();
-        suggestedPaths.removeAll(ContainerUtil.map(knownJdks, sdk -> sdk.getHomePath()));//remove all known path to avoid duplicates
+        //remove all known path to avoid duplicates
+        for (Sdk sdk : knownJdks) {
+          String homePath = sdk.getHomePath();
+          if (homePath != null) {
+            suggestedPaths.remove(FileUtil.toSystemDependentName(homePath));
+          }
+        }
+
         ApplicationManager.getApplication().invokeLater(() -> {
           for (String homePath : suggestedPaths) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(homePath);

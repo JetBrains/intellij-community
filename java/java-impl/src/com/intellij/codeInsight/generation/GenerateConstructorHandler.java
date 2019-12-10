@@ -239,7 +239,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         PsiParameter[] params = baseConstructor.getParameterList().getParameters();
         for (PsiParameter param : params) {
           String name = param.getName();
-          assert name != null : param;
           PsiParameter newParam = factory.createParameter(name, param.getType(), aClass);
           GenerateMembersUtil.copyOrReplaceModifierList(param, aClass, newParam);
           constructor.getParameterList().add(newParam);
@@ -254,7 +253,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     List<PsiParameter> fieldParams = new ArrayList<>();
     for (PsiField field : fields) {
       String fieldName = field.getName();
-      assert fieldName != null : field;
       String name = javaStyle.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = javaStyle.propertyNameToVariableName(name, VariableKind.PARAMETER);
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);

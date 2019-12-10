@@ -93,11 +93,14 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
                                     methodName: String,
                                     parameters: List<UExpression>,
                                     expectedReturnType: PsiType?,
-                                    kind: UastCallKind): UCallExpression? {
+                                    kind: UastCallKind,
+                                    context: PsiElement?): UCallExpression? {
     if (kind != UastCallKind.METHOD_CALL) return null
 
-    val methodCall = psiFactory.createExpressionFromText(if (receiver != null) "a.b()" else "a()", null) as? PsiMethodCallExpression
-                     ?: return null
+    val methodCall = psiFactory.createExpressionFromText(
+      if (receiver != null) "a.b()" else "a()",
+      receiver?.sourcePsi ?: context
+    ) as? PsiMethodCallExpression ?: return null
 
     val methodIdentifier = psiFactory.createIdentifier(methodName)
 
@@ -312,7 +315,8 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     block
       .takeIf { block.statementCount == 1 }
       ?.let { block.statements[0] as? PsiReturnStatement }
-      ?.let { it.returnValue } ?: block
+      ?.returnValue
+    ?: block
 
   override fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression? {
     val parenthesizedExpression = psiFactory.createExpressionFromText("()", null) as? PsiParenthesizedExpression ?: return null

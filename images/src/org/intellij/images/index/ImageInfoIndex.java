@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 
 public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo> {
   private static final long ourMaxImageSize = (long)(Registry.get("ide.index.image.max.size").asDouble() * 1024 * 1024);
@@ -58,8 +59,10 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
   }
 
   public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<? super ImageInfo> processor, Project project) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, getFileKey(virtualFile), virtualFile, processor, GlobalSearchScope
-        .fileScope(project, virtualFile));
+    Map<Integer, ImageInfo> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, virtualFile, project);
+    if (!data.isEmpty()) {
+      processor.process(virtualFile, data.values().iterator().next());
+    }
   }
 
   @NotNull

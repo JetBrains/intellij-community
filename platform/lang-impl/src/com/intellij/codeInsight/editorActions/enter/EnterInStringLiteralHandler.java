@@ -45,9 +45,9 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
+      Document document = editor.getDocument();
       if (quoteHandler.canBeConcatenated(psiAtOffset)) {
         ASTNode token = psiAtOffset.getNode();
-        Document document = editor.getDocument();
         CharSequence text = document.getText();
         
         TextRange range = token.getTextRange();

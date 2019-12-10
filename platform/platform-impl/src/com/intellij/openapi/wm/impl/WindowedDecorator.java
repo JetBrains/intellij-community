@@ -15,15 +15,19 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 final class WindowedDecorator extends FrameWrapper {
   private final Project myProject;
 
   WindowedDecorator(@NotNull Project project, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator) {
     super(project);
+    MnemonicHelper.init(((RootPaneContainer)getFrame()).getContentPane());
     myProject = project;
     setTitle(info.getId() + " - " + myProject.getName());
     setProject(project);

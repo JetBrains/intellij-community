@@ -73,9 +73,6 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     }
     final PsiParameter iterationParameter = myStatement.getIterationParameter();
     final String iterationParameterName = iterationParameter.getName();
-    if (iterationParameterName == null) {
-      return;
-    }
     final PsiStatement forEachBody = myStatement.getBody();
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

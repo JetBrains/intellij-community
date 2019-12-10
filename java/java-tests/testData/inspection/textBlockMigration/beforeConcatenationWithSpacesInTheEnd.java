@@ -3,7 +3,7 @@
 class TextBlockMigration {
 
   void concatenationWithExtraSpaces() {
-    String code = "<<caret>html>  \n" +
+    String code = "<html>  <caret>\n" +
                   "  <body>\n" +
                   "  </body>\n" +
                   "</html>  ";

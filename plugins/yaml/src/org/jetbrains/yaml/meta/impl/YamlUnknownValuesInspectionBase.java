@@ -31,6 +31,22 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
     }
 
     @Override
+    protected void visitYAMLSequenceItem(@NotNull YAMLSequenceItem item) {
+      YAMLValue value = item.getValue();
+      if (value == null) {
+        return;
+      }
+      if (value instanceof YAMLKeyValue || value instanceof YAMLMapping) {
+        // will be handled separately
+        return;
+      }
+      YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getValueMetaType(value);
+      if (meta != null && meta.getField().isMany()) {
+        meta.getMetaType().validateValue(value, myProblemsHolder);
+      }
+    }
+
+    @Override
     protected void visitYAMLKeyValue(@NotNull YAMLKeyValue keyValue) {
       if (keyValue.getKey() == null) {
         return;
@@ -47,8 +63,21 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
       }
 
       validateMultiplicity(meta, value);
+      meta.getMetaType().validateKey(keyValue, myProblemsHolder);
 
-      meta.getMetaType().validateKeyValue(keyValue, myProblemsHolder);
+      if (value instanceof YAMLMapping || value instanceof YAMLSequence) {
+        // will be handled separately
+        return;
+      }
+      meta.getMetaType().validateValue(value, myProblemsHolder);
+    }
+
+    @Override
+    protected void visitYAMLMapping(@NotNull YAMLMapping mapping) {
+      YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getValueMetaType(mapping);
+      if (meta != null) {
+        meta.getMetaType().validateValue(mapping, myProblemsHolder);
+      }
     }
 
     protected void validateMultiplicity(@NotNull YamlMetaTypeProvider.MetaTypeProxy meta, @NotNull YAMLValue value) {
@@ -68,8 +97,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
             continue;
           }
           myProblemsHolder.registerProblem(next.getValue(),
-                                           YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.not.allowed",
-                                                              ArrayUtil.EMPTY_OBJECT_ARRAY));
+                                           YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.not.allowed"));
         }
       }
     }
@@ -77,8 +105,7 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
     protected void requireMultiplicityMany(@NotNull YAMLValue value) {
       if (value instanceof YAMLScalar) {
         myProblemsHolder.registerProblem(value,
-                                         YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.is.required",
-                                                            ArrayUtil.EMPTY_OBJECT_ARRAY));
+                                         YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.is.required"));
       }
     }
 

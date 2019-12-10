@@ -520,7 +520,12 @@ public final class PerformanceWatcher implements Disposable {
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
           protected void dumpedThreads(ThreadInfo[] infos) {
-            dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos, true);
+            if (myState.get() == CheckerState.FINISHED) {
+              stop();
+            }
+            else {
+              dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, infos, true);
+            }
           }
         };
       }

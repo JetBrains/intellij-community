@@ -37,6 +37,8 @@ public class PythonCompletionWeigher extends CompletionWeigher {
 
   public static final int PRIORITY_WEIGHT = 5;
   private static final Logger LOG = Logger.getInstance(PythonCompletionWeigher.class);
+  public static final String COLLECTION_KEY = "dict key";
+  private static final int COLLECTION_KEY_WEIGHT = 10;
 
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
@@ -47,8 +49,8 @@ public class PythonCompletionWeigher extends CompletionWeigher {
     final String name = element.getLookupString();
     final LookupElementPresentation presentation = LookupElementPresentation.renderElement(element);
     // move dict keys to the top
-    if ("dict key".equals(presentation.getTypeText())) {
-      return element.getLookupString().length();
+    if (COLLECTION_KEY.equals(presentation.getTypeText())) {
+      return COLLECTION_KEY_WEIGHT;
     }
 
     PsiElement psiElement = element.getPsiElement();

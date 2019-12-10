@@ -108,4 +108,14 @@
   width: 100%;
   height: 340px;
 }
+
+table.chartTooltip td {
+  text-align: right;
+  font-family: monospace;
+}
+
+table.chartTooltip th {
+  text-align: left;
+  font-weight: normal;
+}
 </style>

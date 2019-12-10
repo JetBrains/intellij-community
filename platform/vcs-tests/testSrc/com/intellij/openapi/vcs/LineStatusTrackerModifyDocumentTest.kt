@@ -807,6 +807,16 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testFreeze5() {
+    test("__", "") {
+      tracker.doFrozen(Runnable {
+        tracker.setBaseRevision(parseInput(" 23"))
+      })
+
+      assertRanges(Range(0, 3, 0, 1))
+    }
+  }
+
   fun testCompensatedModifications() {
     test("X_X_X_X_X_X_X_X") {
       (1 th "X_").insertBefore("X_")

@@ -3,7 +3,8 @@
 Reports <b>static</b> methods and fields which
 are only used from a different class than the class containing the
 method. Such members could be moved into the using class.
-Factory methods an members accessed from an anonymous class inside the member's class are ignored by this inspection.
+Factory methods and members accessed from an anonymous class inside the member's class are ignored by this inspection.
+Convenience overloads, which call a method with the same name in the same class, but have fewer parameters, are also ignored.
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to have this inspection not report when the static member is only used from a test class.

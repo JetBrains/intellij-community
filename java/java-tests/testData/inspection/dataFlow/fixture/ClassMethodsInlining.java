@@ -94,4 +94,10 @@ class ClassMethodsInlining {
       System.out.println("String");
     }
   }
+
+  // IDEA-224224
+  public static <T> T tryCastAssert (@Nullable Object reference, Class<T> refType) {
+    if(refType.isInstance(reference)) return (T) reference;
+    throw new AssertionError("smth" + refType + "but" + reference.<warning descr="Method invocation 'getClass' may produce 'NullPointerException'">getClass</warning>() + "wasgiven");
+  }
 }

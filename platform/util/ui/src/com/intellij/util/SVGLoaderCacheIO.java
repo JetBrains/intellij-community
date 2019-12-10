@@ -4,6 +4,7 @@ package com.intellij.util;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -24,7 +25,7 @@ import java.util.Set;
 public class SVGLoaderCacheIO {
   private static final Set<OpenOption> OPEN_OPTION_SET = new THashSet<>(Arrays.asList(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING));
 
-  @NotNull
+  @Nullable
   @ApiStatus.Internal
   public static BufferedImage readImageFile(@NotNull byte[] bytes,
                                             @NotNull ImageLoader.Dimension2DDouble docSize) {
@@ -34,6 +35,9 @@ public class SVGLoaderCacheIO {
     double height = buff.getDouble();
     int actualWidth = buff.getInt();
     int actualHeight = buff.getInt();
+
+    //sanity check to make sure file is not corrupted
+    if (actualWidth <= 0 || actualHeight <= 0 || actualWidth * actualHeight <= 0) return null;
 
     @SuppressWarnings("UndesirableClassUsage")
     //we do not need a specific image here, it will be wrapped later

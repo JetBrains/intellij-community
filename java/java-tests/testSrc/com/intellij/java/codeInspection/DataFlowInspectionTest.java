@@ -669,4 +669,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testInstanceQualifiedStaticMember() { doTest(); }
   public void testClassEqualityCornerCase() { doTest(); }
   public void testCellsComplex() { doTest(); }
+  public void testArraysAsList() { doTest(); }
 }

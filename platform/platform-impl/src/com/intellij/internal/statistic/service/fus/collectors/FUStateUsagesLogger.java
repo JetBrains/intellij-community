@@ -19,9 +19,18 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LOCK;
 
+/**
+ * <p>Called by a scheduler once a day and records IDE/project state.</p> <br/>
+ *
+ * <p><b>Don't</b> use it directly unless absolutely necessary.
+ * Implement {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector} instead.</p>
+ *
+ * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link FUCounterUsageLogger}</p>
+ */
 public class FUStateUsagesLogger implements UsagesCollectorConsumer {
   /**
-   * System event which indicates that the collector was called, can be used to calculate the base line
+   * System event which indicates that the collector was called.
+   * Used to calculate metric baseline.
    */
   private static final String INVOKED = "invoked";
 
@@ -84,11 +93,35 @@ public class FUStateUsagesLogger implements UsagesCollectorConsumer {
     return newData;
   }
 
+  /**
+   * <p>
+   * Low-level API to record IDE/project state.
+   * Using it directly is error-prone because you'll need to think about metric baseline.
+   * <b>Don't</b> use it unless absolutely necessary.
+   * </p>
+   * <br/>
+   * <p>
+   * Consider using counter events {@link FUCounterUsageLogger} or
+   * state events recorded by a scheduler {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}
+   * </p>
+   */
   public static void logStateEvent(@NotNull EventLogGroup group, @NotNull String event, @NotNull FeatureUsageData data) {
     FeatureUsageLogger.INSTANCE.logState(group, event, data.build());
     FeatureUsageLogger.INSTANCE.logState(group, INVOKED);
   }
 
+  /**
+   * <p>
+   * Low-level API to record IDE/project state.
+   * Using it directly is error-prone because you'll need to think about metric baseline.
+   * <b>Don't</b> use it unless absolutely necessary.
+   * </p>
+   * <br/>
+   * <p>
+   * Consider using counter events {@link FUCounterUsageLogger} or
+   * state events recorded by a scheduler {@link ApplicationUsagesCollector} or {@link ProjectUsagesCollector}
+   * </p>
+   */
   public static void logStateEvents(@NotNull EventLogGroup group, @NotNull Collection<MetricEvent> events) {
     for (MetricEvent event : events) {
       FeatureUsageLogger.INSTANCE.logState(group, event.getEventId(), event.getData().build());

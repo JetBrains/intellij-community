@@ -175,6 +175,9 @@ class ActionUpdater {
   }
 
   private List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
+    if (myVisitor != null) {
+      myVisitor.begin();
+    }
     return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, strategy));
   }
 
@@ -183,8 +186,15 @@ class ActionUpdater {
    */
   @NotNull
   List<AnAction> expandActionGroupWithTimeout(ActionGroup group, boolean hideDisabled) {
-    List<AnAction> result = ProgressIndicatorUtils.withTimeout(Registry.intValue("actionSystem.update.timeout.ms"),
-                                                               () -> expandActionGroup(group, hideDisabled));
+    return expandActionGroupWithTimeout(group, hideDisabled, Registry.intValue("actionSystem.update.timeout.ms"));
+  }
+
+  /**
+   * @return actions from the given and nested non-popup groups that are visible after updating
+   */
+  @NotNull
+  List<AnAction> expandActionGroupWithTimeout(ActionGroup group, boolean hideDisabled, int timeoutMs) {
+    List<AnAction> result = ProgressIndicatorUtils.withTimeout(timeoutMs, () -> expandActionGroup(group, hideDisabled));
     try {
       return result != null ? result : expandActionGroup(group, hideDisabled, myCheapStrategy);
     }

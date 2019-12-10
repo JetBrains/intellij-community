@@ -292,11 +292,6 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
     return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
   }
 
-  @NotNull
-  public List<Change> getAllChanges() {
-    return VcsTreeModelData.all(myViewer).userObjects(Change.class);
-  }
-
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {

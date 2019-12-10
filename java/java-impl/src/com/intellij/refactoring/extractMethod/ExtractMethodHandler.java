@@ -151,7 +151,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  public static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
+  public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, @NotNull PsiElement[] elements) {
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -160,7 +160,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     });
   }
 
-  private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
+  private static boolean invokeOnElements(@NotNull Project project, @NotNull Editor editor, @NotNull ExtractMethodProcessor processor, final boolean directTypes) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
 
     processor.setPreviewSupported(true);
@@ -181,13 +181,13 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
   }
 
-  public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {
+  public static void extractMethod(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
     CommandProcessor.getInstance().executeCommand(project,
                                                   () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
                                                     () -> doRefactoring(project, processor)), REFACTORING_NAME, null);
   }
 
-  private static void doRefactoring(@NotNull Project project, ExtractMethodProcessor processor) {
+  private static void doRefactoring(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
     try {
       final RefactoringEventData beforeData = new RefactoringEventData();
       beforeData.addElements(processor.myElements);

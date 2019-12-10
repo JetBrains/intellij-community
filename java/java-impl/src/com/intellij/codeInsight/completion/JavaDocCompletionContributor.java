@@ -226,11 +226,13 @@ public class JavaDocCompletionContributor extends CompletionContributor {
                                            PsiElement position) {
     PrefixMatcher matcher = result.getPrefixMatcher();
     int prefixStart = parameters.getOffset() - matcher.getPrefix().length() - position.getTextRange().getStartOffset();
-    if (prefixStart > 0 && position.getText().charAt(prefixStart - 1) == '#') {
+    String text = position.getText();
+    if (prefixStart > 0 && text.charAt(prefixStart - 1) == '#') {
+      int classNameStart = findClassNameStart(text, prefixStart - 1);
       String mockCommentPrefix = "/** {@link ";
-      String mockText = mockCommentPrefix + position.getText().substring(prefixStart - 1) + "}*/";
+      String mockText = mockCommentPrefix + text.substring(classNameStart) + "}*/";
       PsiDocComment mockComment = JavaPsiFacade.getElementFactory(position.getProject()).createDocCommentFromText(mockText, position);
-      PsiJavaReference ref = (PsiJavaReference)mockComment.findReferenceAt(mockCommentPrefix.length() + 1);
+      PsiJavaReference ref = (PsiJavaReference)mockComment.findReferenceAt(mockCommentPrefix.length() + prefixStart - classNameStart);
       assert ref != null : mockText;
       for (LookupElement element : completeJavadocReference(ref.getElement(), ref)) {
         result.addElement(LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, item) -> element.handleInsert(context))));
@@ -243,6 +245,18 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static int findClassNameStart(CharSequence text, int sharpOffset) {
+    int offset = sharpOffset;
+    while (offset > 0 && isQualifiedNamePart(text.charAt(offset - 1))) {
+      offset--;
+    }
+    return offset;
+  }
+
+  private static boolean isQualifiedNamePart(char c) {
+    return c == '.' || Character.isJavaIdentifierPart(c);
+  }
+
   @NotNull
   private static <T extends LookupElement> InsertHandler<T> wrapIntoLinkTag(InsertHandler<T> delegate) {
     return (context, item) -> {
@@ -250,9 +264,11 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
       String link = "{@link ";
       int startOffset = context.getStartOffset();
-      int sharpLength = document.getCharsSequence().charAt(startOffset - 1) == '#' ? 1 : 0;
+      int qualifierStart = document.getCharsSequence().charAt(startOffset - 1) == '#'
+                            ? findClassNameStart(document.getCharsSequence(), startOffset - 1)
+                            : startOffset;
 
-      document.insertString(startOffset - sharpLength, link);
+      document.insertString(qualifierStart, link);
       document.insertString(context.getTailOffset(), "}");
       context.setTailOffset(context.getTailOffset() - 1);
       context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, startOffset + link.length());

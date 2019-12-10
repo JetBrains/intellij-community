@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.idea.Bombed;
@@ -36,7 +36,7 @@ public class TestFrameworkUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static boolean canRunTest(@NotNull Class testCaseClass) {
+  public static boolean canRunTest(@NotNull Class<?> testCaseClass) {
     if (!SKIP_SLOW && !SKIP_HEADLESS) {
       return true;
     }
@@ -56,7 +56,7 @@ public class TestFrameworkUtil {
   }
 
   @TestOnly
-  public static boolean isJUnit4TestClass(@NotNull Class aClass, boolean allowAbstract) {
+  public static boolean isJUnit4TestClass(@NotNull Class<?> aClass, boolean allowAbstract) {
     int modifiers = aClass.getModifiers();
     if (!allowAbstract && (modifiers & Modifier.ABSTRACT) != 0) return false;
     if ((modifiers & Modifier.PUBLIC) == 0) return false;

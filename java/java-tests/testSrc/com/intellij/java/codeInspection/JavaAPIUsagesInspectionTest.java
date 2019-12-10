@@ -69,7 +69,8 @@ public class JavaAPIUsagesInspectionTest extends LightJavaCodeInsightFixtureTest
   /*
   //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
-    final String version = "12";
+    VfsRootAccess.allowRootAccess("/");
+    final String version = "13";
     final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
     final ContentIterator contentIterator = new ContentIterator() {
       @Override

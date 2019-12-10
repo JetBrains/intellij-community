@@ -21,7 +21,6 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
                                              parents: Set<() -> InferenceUnitNode>,
                                              children: Set<() -> InferenceUnitNode>,
                                              val typeInstantiation: PsiType,
-                                             val forbiddenToInstantiate: Boolean = false,
                                              val direct: Boolean = false) {
 
   companion object {
@@ -58,18 +57,16 @@ class InferenceUnitNode internal constructor(val core: InferenceUnit,
       }
     }
 
-    if (parent == null && typeInstantiation.resolve()?.hasModifierProperty("final") == true) {
-      return typeInstantiation to REIFIED_AS_PROPER_TYPE
-    }
-
-    if (core.flexible) {
-      val fixedBound = removeWildcard(typeInstantiation)
-      when {
-        parent != null -> return parent!!.type to REIFIED_AS_PROPER_TYPE
-        subtypes.isNotEmpty() ||
-        fixedBound is PsiIntersectionType ||
-        (equivalenceClasses[type]?.size ?: 0) > 1 -> return fixedBound to NEW_TYPE_PARAMETER
-        else -> return fixedBound to REIFIED_AS_PROPER_TYPE
+    if (parent == null) {
+      if (typeInstantiation == PsiType.NULL) {
+        return PsiWildcardType.createUnbounded(core.initialTypeParameter.manager) to REIFIED_AS_PROPER_TYPE
+      }
+      if (typeInstantiation.resolve()?.hasModifierProperty("final") == true) {
+        return typeInstantiation to REIFIED_AS_PROPER_TYPE
+      }
+      val flushedTypeInstantiation = removeWildcard(typeInstantiation)
+      if (flushedTypeInstantiation is PsiIntersectionType) {
+        return flushedTypeInstantiation to NEW_TYPE_PARAMETER
       }
     }
 

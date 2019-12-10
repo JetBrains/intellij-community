@@ -63,7 +63,6 @@ public class ExtractParameterAsLocalVariableFix extends InspectionGadgetsFix {
     assert body instanceof PsiCodeBlock;
     final String parameterName = parameter.getName();
     final PsiExpression rhs = parameterReference.isValid() ? getRightSideIfLeftSideOfSimpleAssignment(parameterReference, body) : null;
-    assert parameterName != null;
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     final String variableName = javaCodeStyleManager.suggestUniqueVariableName(parameterName, body, true);
     final CommentTracker tracker = new CommentTracker();

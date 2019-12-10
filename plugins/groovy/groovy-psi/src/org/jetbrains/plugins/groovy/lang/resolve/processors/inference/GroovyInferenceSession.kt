@@ -23,7 +23,7 @@ open class GroovyInferenceSession(
 
   protected val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
 
-  private fun result(): PsiSubstitutor {
+  fun result(): PsiSubstitutor {
     resolveBounds(myInferenceVariables, contextSubstitutor)
     return prepareSubstitution()
   }
@@ -33,12 +33,12 @@ open class GroovyInferenceSession(
     return result()
   }
 
-  fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
+  open fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
     repeatInferencePhases()
     return findSession(result)?.result() ?: PsiSubstitutor.EMPTY
   }
 
-  private fun findSession(result: GroovyResolveResult): GroovyInferenceSession? {
+  protected fun findSession(result: GroovyResolveResult): GroovyInferenceSession? {
     nestedSessions[result]?.let {
       return it
     }

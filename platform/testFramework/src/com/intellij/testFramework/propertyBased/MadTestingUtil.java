@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -335,7 +335,8 @@ public class MadTestingUtil {
       new InsertString(file),
       new DeleteRange(file),
       new CommitDocumentAction(file),
-      new CheckPsiReadAccessors(file, skipCondition)
+      new CheckPsiReadAccessors(file, skipCondition),
+      new ResolveAllReferences(file)
     );
   }
 

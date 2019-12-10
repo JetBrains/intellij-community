@@ -294,7 +294,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
-        return ((IntForwardIndexAccessor)myForwardIndexAccessor).getDiffBuilderFromInt(inputId, ((IntForwardIndex)myForwardIndex).getInt(inputId));
+        return ((IntForwardIndexAccessor<Key, Value>)myForwardIndexAccessor).getDiffBuilderFromInt(inputId, ((IntForwardIndex)myForwardIndex).getInt(inputId));
       } else {
         return myForwardIndexAccessor.getDiffBuilder(inputId, myForwardIndex.get(inputId));
       }
@@ -362,7 +362,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       myIndexCounters.getWriteLockCounter().timeRunnable(() -> getWriteLock().lock());
     }
     try {
-      IndexId oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
+      IndexId<?, ?> oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
       try {
         DebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);

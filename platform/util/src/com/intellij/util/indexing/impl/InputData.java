@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class InputData<Key, Value> {
+  @SuppressWarnings("rawtypes")
   private static final InputData EMPTY = new InputData<>(Collections.emptyMap());
 
   @SuppressWarnings("unchecked")

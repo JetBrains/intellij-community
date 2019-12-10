@@ -319,28 +319,26 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
     }
 
-    Set<DfaMemoryState> finalStates = new LinkedHashSet<>(handleKnownMethods(instruction, runner, memState, callArguments));
+    Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
-    if (finalStates.isEmpty()) {
-      Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, factory);
-      if (callArguments.myArguments != null) {
-        for (MethodContract contract : instruction.getContracts()) {
-          currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, instruction.getExpression());
-          if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
-            }
-            finalStates.clear();
-            currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-            break;
+    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
+    DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory);
+    if (callArguments.myArguments != null && !(defaultResult instanceof DfaConstValue)) {
+      for (MethodContract contract : instruction.getContracts()) {
+        currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, instruction.getExpression());
+        if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
           }
+          finalStates.clear();
+          currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
+          break;
         }
       }
-      for (DfaCallState callState : currentStates) {
-        pushExpressionResult(defaultResult, instruction, callState.myMemoryState);
-        finalStates.add(callState.myMemoryState);
-      }
+    }
+    for (DfaCallState callState : currentStates) {
+      pushExpressionResult(defaultResult, instruction, callState.myMemoryState);
+      finalStates.add(callState.myMemoryState);
     }
 
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
@@ -352,23 +350,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }
     return result;
-  }
-
-  @NotNull
-  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction,
-                                                  DataFlowRunner runner,
-                                                  DfaMemoryState memState,
-                                                  DfaCallArguments callArguments) {
-    if (callArguments.myArguments == null) return Collections.emptyList();
-    PsiMethod method = instruction.getTargetMethod();
-    if (method == null) return Collections.emptyList();
-    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
-    if (handler == null) return Collections.emptyList();
-    DfaValue result = handler.getMethodResult(callArguments, memState, runner.getFactory());
-    if (result == null) return Collections.emptyList();
-
-    pushExpressionResult(result, instruction, memState);
-    return Collections.singletonList(memState);
   }
 
   @NotNull
@@ -396,7 +377,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] = factory.createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
+          DfaFactMap facts = DfaFactMap.EMPTY
+            .with(DfaFactType.TYPE_CONSTRAINT, factory.createDfaType(paramList.getParameters()[paramCount - 1].getType()).asConstraint())
+            .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+            .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(factory.getInt(argCount - paramCount + 1)));
+          argValues[paramCount - 1] = factory.getFactFactory().createValue(facts);
         }
       }
     }
@@ -542,8 +527,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private static DfaValue getMethodResultValue(MethodCallInstruction instruction,
-                                               @Nullable DfaValue qualifierValue,
+                                               @NotNull DfaCallArguments callArguments,
                                                DfaMemoryState state, DfaValueFactory factory) {
+    if (callArguments.myArguments != null) {
+      PsiMethod method = instruction.getTargetMethod();
+      if (method != null) {
+        CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
+        if (handler != null) {
+          DfaValue result = handler.getMethodResult(callArguments, state, factory, method);
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+    }
+    DfaValue qualifierValue = callArguments.myQualifier;
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
       return getPrecalculatedResult(qualifierValue, state, factory, precalculated);
@@ -897,10 +895,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (trueState.applyCondition(condition)) {
         states.add(makeBooleanResult(instruction, runner, trueState, unknownTargetType ? ThreeState.UNSURE : ThreeState.YES));
       }
-      if (memState.applyCondition(condition.createNegated())) {
-        if (unknownTargetType) {
-          memState.markEphemeral();
-        }
+      DfaValue negated = condition.createNegated();
+      if (unknownTargetType ? memState.applyContractCondition(negated) : memState.applyCondition(negated)) {
         states.add(makeBooleanResult(instruction, runner, memState, ThreeState.NO));
         useful |= !memState.isNull(dfaLeft);
       }

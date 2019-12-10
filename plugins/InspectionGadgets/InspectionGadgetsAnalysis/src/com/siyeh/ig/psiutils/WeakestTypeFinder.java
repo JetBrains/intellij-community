@@ -100,9 +100,6 @@ public class WeakestTypeFinder {
     boolean hasUsages = false;
     for (PsiReference reference : query) {
       ProgressManager.checkCanceled();
-      if (reference == null) {
-        continue;
-      }
       hasUsages = true;
       PsiElement referenceElement = reference.getElement();
       PsiElement referenceParent = PsiUtil.skipParenthesizedExprUp(referenceElement.getParent());
