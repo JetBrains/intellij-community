@@ -583,7 +583,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
                                      forced: Boolean,
                                      autoFocusContents: Boolean) {
     var effectiveAutoFocusContents = autoFocusContents
-    ToolWindowCollector.recordActivation(id)
+    ToolWindowCollector.recordActivation(id, layout.getInfo(id, true))
     effectiveAutoFocusContents = effectiveAutoFocusContents and forced
     if (LOG.isDebugEnabled) {
       LOG.debug("enter: activateToolWindowImpl($id)")

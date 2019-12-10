@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.facet.ui.FacetDependentToolWindow;
+import com.intellij.ide.actions.ToolWindowMoveAction;
+import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -15,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowWhitelistEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
+import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,21 +83,25 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static void recordActivation(String toolWindowId) {
-    record(toolWindowId, ACTIVATED);
+  public static void recordActivation(String toolWindowId, @Nullable WindowInfoImpl info) {
+    record(toolWindowId, ACTIVATED, info);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
-  public static void recordClick(String toolWindowId) {
-    record(toolWindowId, CLICKED);
+  public static void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
+    record(toolWindowId, CLICKED, info);
   }
 
-  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source) {
+  private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source, @Nullable WindowInfoImpl windowInfo) {
     if (StringUtil.isNotEmpty(toolWindowId)) {
       final ToolWindowInfo info = getToolWindowInfo(toolWindowId);
       final FeatureUsageData data = new FeatureUsageData().
         addData("id", info.myRecordedId).
         addPluginInfo(info.myPluginInfo);
+      if (windowInfo != null) {
+        data.addData("View Mode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
+        data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
+      }
       FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
     }
   }

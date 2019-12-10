@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.WindowInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,21 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
           return type == ToolWindowType.WINDOWED;
       }
       return false;
+    }
+
+    public static ViewMode fromWindowInfo(@NotNull WindowInfo info) {
+      switch (info.getType()) {
+        case DOCKED:
+          return info.isAutoHide() ? DockUnpinned : DockPinned;
+        case FLOATING:
+          return Float;
+        case SLIDING:
+          return Undock;
+        case WINDOWED:
+          return Window;
+      }
+
+      return DockPinned;
     }
 
     void applyTo(@NotNull ToolWindow window) {
