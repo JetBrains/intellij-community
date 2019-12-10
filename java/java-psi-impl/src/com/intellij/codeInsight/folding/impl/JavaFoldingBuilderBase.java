@@ -531,8 +531,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (body == null || document == null || nameIdentifier == null) {
       return false;
     }
-    if (document.getLineNumber(nameIdentifier.getTextRange().getStartOffset()) !=
-        document.getLineNumber(method.getParameterList().getTextRange().getEndOffset())) {
+    TextRange parameterListTextRange = method.getParameterList().getTextRange();
+    if (parameterListTextRange == null || document.getLineNumber(nameIdentifier.getTextRange().getStartOffset()) !=
+        document.getLineNumber(parameterListTextRange.getEndOffset())) {
       return false;
     }
 
@@ -553,7 +554,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return false;
     }
 
-    int leftStart = method.getParameterList().getTextRange().getEndOffset();
+    int leftStart = parameterListTextRange.getEndOffset();
     int bodyStart = body.getTextRange().getStartOffset();
     if (bodyStart > leftStart && !StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(leftStart + 1, bodyStart))) {
       return false;

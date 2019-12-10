@@ -15,6 +15,9 @@ class JavaFolding14Test : JavaFoldingTestCase() {
           String s, 
           int a
         ) {
+          A {
+            f();
+          }
           void f() {}
         }""".trimIndent()
     configure(text)
@@ -22,7 +25,8 @@ class JavaFolding14Test : JavaFoldingTestCase() {
     val regions = myFixture.editor.foldingModel.allFoldRegions
     assertEquals("""
         FoldRegion -(20:44), placeholder='(...)'
-        FoldRegion -(45:62), placeholder='{...}'
+        FoldRegion -(45:81), placeholder='{...}'
+        FoldRegion -(51:65), placeholder='{...}'
     """.trimIndent(), regions.joinToString("\n"))
   }
 }
