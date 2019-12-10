@@ -7,7 +7,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
@@ -16,16 +19,30 @@ import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class LightEditService implements Disposable, LightEditorListener {
+@State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
+public class LightEditService implements Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
   private WindowWrapper myWrapper;
   private boolean myWrapperIsStale;
   private final LightEditorManager myEditorManager;
+  private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
+
+  @Nullable
+  @Override
+  public LightEditConfiguration getState() {
+    return myConfiguration;
+  }
+
+  @Override
+  public void loadState(@NotNull LightEditConfiguration state) {
+    XmlSerializerUtil.copyBean(state, myConfiguration);
+  }
 
   public static LightEditService getInstance() {
     return ServiceManager.getService(LightEditService.class);
@@ -111,11 +128,20 @@ public class LightEditService implements Disposable, LightEditorListener {
 
   private boolean canClose() {
     return !myEditorManager.containsUnsavedDocuments() ||
+           autosaveDocuments() ||
            LightEditUtil.confirmClose(
              ApplicationBundle.message("light.edit.exit.message"),
              ApplicationBundle.message("light.edit.exit.title"),
              () -> FileDocumentManager.getInstance().saveAllDocuments()
            );
+  }
+
+  private boolean autosaveDocuments() {
+    if (isAutosaveMode()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      return true;
+    }
+    return false;
   }
 
   public LightEditPanel getEditPanel() {
@@ -164,5 +190,14 @@ public class LightEditService implements Disposable, LightEditorListener {
         getEditPanel().getTabs().replaceTab(editorInfo, newInfo);
       }
     }
+  }
+
+  public boolean isAutosaveMode() {
+    return myConfiguration.autosaveMode;
+  }
+
+  public void setAutosaveMode(boolean autosaveMode) {
+    myConfiguration.autosaveMode = true;
+    myEditorManager.fireAutosaveModeChanged(autosaveMode);
   }
 }

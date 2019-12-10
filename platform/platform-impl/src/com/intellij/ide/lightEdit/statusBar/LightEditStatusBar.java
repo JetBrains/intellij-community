@@ -43,15 +43,16 @@ public class LightEditStatusBar extends LightEditStatusBarBase implements Dispos
 
   private void createWidgets() {
     addWidgetImpl(new LightEditPositionWidget());
+    addWidgetImpl(new LightEditAutosaveWidget());
     myWidgets.keySet().forEach(id -> updateWidget(id));
   }
 
   private void addWidgetImpl(@NotNull StatusBarWidget widget) {
-    widget.install(this);
     JComponent wrapper = IdeStatusBarImpl.wrap(widget);
     myRightPanel.add(wrapper);
     myRightPanel.add(Box.createRigidArea(JBUI.size(10, 1)));
     myWidgets.put(widget.ID(), new WidgetData(widget, wrapper));
+    widget.install(this);
   }
 
   @Override
@@ -62,13 +63,19 @@ public class LightEditStatusBar extends LightEditStatusBarBase implements Dispos
 
   @Override
   public void updateWidget(@NotNull String id) {
-    WidgetData data = myWidgets.get(id);
-    if (data != null) {
-      if (data.component instanceof IdeStatusBarImpl.StatusBarWrapper) {
-        ((IdeStatusBarImpl.StatusBarWrapper)data.component).beforeUpdate();
+    JComponent widgetComponent = getWidgetComponent(id);
+    if (widgetComponent != null) {
+      if (widgetComponent instanceof IdeStatusBarImpl.StatusBarWrapper) {
+        ((IdeStatusBarImpl.StatusBarWrapper)widgetComponent).beforeUpdate();
       }
-      data.component.repaint();
+      widgetComponent.repaint();
     }
+  }
+
+  @Nullable
+  JComponent getWidgetComponent(@NotNull String id) {
+    WidgetData data = myWidgets.get(id);
+    return data != null ? data.component : null;
   }
 
   @Nullable

@@ -93,6 +93,10 @@ public class LightEditorManager implements Disposable {
     myEventDispatcher.getMulticaster().afterSelect(editorInfo);
   }
 
+  void fireAutosaveModeChanged(boolean autosaveMode) {
+    myEventDispatcher.getMulticaster().autosaveModeChanged(autosaveMode);
+  }
+
   @NotNull
   private static EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(file, editor.getColorsScheme(), null);
@@ -110,7 +114,7 @@ public class LightEditorManager implements Disposable {
   }
 
   boolean isImplicitSaveAllowed(@NotNull Document document) {
-    return !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
+    return LightEditService.getInstance().isAutosaveMode() || !ObjectUtils.notNull(document.getUserData(NO_IMPLICIT_SAVE), false);
   }
 
   boolean containsUnsavedDocuments() {
@@ -143,4 +147,5 @@ public class LightEditorManager implements Disposable {
   LightEditorInfo getEditorInfo(@NotNull Editor editor) {
     return myEditors.stream().filter(editorInfo -> editor == editorInfo.getEditor()).findFirst().orElse(null);
   }
+
 }

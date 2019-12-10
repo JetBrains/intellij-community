@@ -124,6 +124,7 @@ class LightEditTabs extends JBEditorTabs {
       if (data instanceof LightEditorInfo) {
         final LightEditorInfo editorInfo = (LightEditorInfo)data;
         if (!myEditorInfo.isUnsaved() ||
+            autosaveDocument(editorInfo) ||
             LightEditUtil.confirmClose(
               ApplicationBundle.message("light.edit.close.message"),
               ApplicationBundle.message("light.edit.close.title"),
@@ -131,6 +132,14 @@ class LightEditTabs extends JBEditorTabs {
           removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(myEditorInfo));
         }
       }
+    }
+
+    private boolean autosaveDocument(@NotNull LightEditorInfo editorInfo) {
+      if (LightEditService.getInstance().isAutosaveMode()) {
+        saveDocument(editorInfo);
+        return true;
+      }
+      return false;
     }
   }
 
