@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.idea.devkit.dom.With;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public abstract class ExtensionPointImpl implements ExtensionPoint {
 
@@ -34,6 +36,12 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
   }
 
+  private static final Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
+    "implementationClass", "implementation", "instance",
+    "factoryClass", // ToolWindowEP
+    "extenderClass" // DomExtenderEP
+  );
+
   @Nullable
   @Override
   public PsiClass getExtensionPointClass() {
@@ -48,9 +56,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
 
     for (With element : elements) {
       final String attributeName = element.getAttribute().getStringValue();
-      if ("implementationClass".equals(attributeName) ||
-          "implementation".equals(attributeName) ||
-          "instance".equals(attributeName)) {
+      if (EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES.contains(attributeName)) {
         return element.getImplements().getValue();
       }
     }
