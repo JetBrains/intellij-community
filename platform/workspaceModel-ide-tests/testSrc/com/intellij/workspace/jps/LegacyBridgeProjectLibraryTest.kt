@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.jps
 
+import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
@@ -11,6 +12,7 @@ import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -68,7 +70,6 @@ class LegacyBridgeProjectLibraryTest {
     val library = createProjectLibrary(libraryName)
     assertEquals(2, events.size)
     checkLibraryAddedEvent(events[0], libraryName)
-    checkLibraryReplacedEvent(events[1], libraryName, libraryName)
 
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     assertNotNull(projectLibraryTable.getLibraryByName(libraryName))
@@ -97,13 +98,11 @@ class LegacyBridgeProjectLibraryTest {
     // Check events from listener one event for create another for add roots
     assertEquals(2, events.size)
     checkLibraryAddedEvent(events[0], antLibraryName)
-    checkLibraryReplacedEvent(events[1], antLibraryName, antLibraryName)
 
     val mavenLibrary = createProjectLibrary(mavenLibraryName)
     // Check events from listener
     assertEquals(4, events.size)
     checkLibraryAddedEvent(events[2], mavenLibraryName)
-    checkLibraryReplacedEvent(events[3], mavenLibraryName, mavenLibraryName)
 
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     assertNotNull(projectLibraryTable.getLibraryByName(antLibraryName))
@@ -130,6 +129,43 @@ class LegacyBridgeProjectLibraryTest {
     assertSame(antLibrary, projectLibraryTable.getLibraryByName(mavenLibraryName))
     assertEquals(7, events.size)
     checkLibraryReplacedEvent(events[6], interimLibraryName, mavenLibraryName)
+  }
+
+  @Test
+  fun `test project libraries name swapping in one transaction`() = WriteCommandAction.runWriteCommandAction(project) {
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+
+    val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+    projectLibraryTable.modifiableModel.let { projectLibTableModel ->
+      val antLibraryModel = projectLibTableModel.createLibrary(antLibraryName).modifiableModel
+      val mavenLibraryModel = projectLibTableModel.createLibrary(mavenLibraryName).modifiableModel
+
+      antLibraryModel.addRoot(File(project.basePath, "$antLibraryName.jar").path, OrderRootType.CLASSES)
+      antLibraryModel.addRoot(File(project.basePath, "$antLibraryName-sources.jar").path, OrderRootType.SOURCES)
+      mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName.jar").path, OrderRootType.CLASSES)
+      mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName-sources.jar").path, OrderRootType.SOURCES)
+      antLibraryModel.name = mavenLibraryName
+      mavenLibraryModel.name = antLibraryName
+
+      antLibraryModel.commit()
+      mavenLibraryModel.commit()
+      projectLibTableModel.commit()
+    }
+
+    assertEquals(2, projectLibraryTable.libraries.size)
+    val antLibrary = projectLibraryTable.libraries.find { it.name == antLibraryName }!!
+    assertEquals(antLibraryName, antLibrary.name)
+    assertTrue(antLibrary.getUrls(OrderRootType.CLASSES)[0].contains(mavenLibraryName))
+
+    val mavenLibrary = projectLibraryTable.libraries.find { it.name == mavenLibraryName }!!
+    assertEquals(mavenLibraryName, mavenLibrary.name)
+    assertTrue(mavenLibrary.getUrls(OrderRootType.CLASSES)[0].contains(antLibraryName))
+
+    assertEquals(2, events.size)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertTrue(checkLibraryClassRootOnDisk(antLibraryName, "$mavenLibraryName.jar"))
+    assertTrue(checkLibraryClassRootOnDisk(mavenLibraryName, "$antLibraryName.jar"))
   }
 
   @Test
@@ -196,6 +232,7 @@ class LegacyBridgeProjectLibraryTest {
     assertEquals(libraryName, libraryEntity.name)
     assertTrue(libraryEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(0, libraryEntity.roots.size)
+    checkLibraryDiskState(libraryName)
   }
 
   private fun checkLibraryReplacedEvent(event: EntityChange<LibraryEntity>, oldLibraryName: String, newLibraryName: String) {
@@ -208,6 +245,23 @@ class LegacyBridgeProjectLibraryTest {
     assertEquals(newLibraryName, newEntity.name)
     assertTrue(newEntity.tableId is LibraryTableId.ProjectLibraryTableId)
     assertEquals(2, newEntity.roots.size)
+    checkLibraryDiskState(newLibraryName, oldLibraryName)
+  }
+
+  private fun checkLibraryDiskState(currentLibraryName: String, previousLibraryName: String = "") {
+    val iprFile = File(project.projectFilePath!!)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    val librariesList = JDOMUtil.load(iprFile).getChild("component")!!.getChildren("library")
+    assertTrue(librariesList.find { it.getAttribute("name")!!.value == currentLibraryName } != null)
+    assertTrue(librariesList.find { it.getAttribute("name")!!.value == previousLibraryName } == null)
+  }
+
+  private fun checkLibraryClassRootOnDisk(libraryName: String, classFileName: String): Boolean {
+    return JDOMUtil.load(File(project.projectFilePath!!)).getChild("component")
+             ?.getChildren("library")?.find { it.getAttribute("name")!!.value == libraryName }
+             ?.getChild(OrderRootType.CLASSES.name())
+             ?.getChild("root")
+             ?.getAttribute("url")?.value?.contains(classFileName) ?: false
   }
 
   private fun createProjectLibrary(libraryName: String): Library {
