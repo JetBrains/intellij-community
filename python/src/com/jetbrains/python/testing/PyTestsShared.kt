@@ -63,10 +63,10 @@ import java.util.regex.Matcher
  * New configuration factories
  */
 internal val pythonFactories get() = arrayOf<PythonConfigurationFactoryBase>(
-  PyUnitTestFactory(),
-  PyTestFactory(),
-  PyNoseTestFactory(),
-  PyTrialTestFactory())
+    PyUnitTestFactory(),
+    PyTestFactory(),
+    PyNoseTestFactory(),
+    PyTrialTestFactory())
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -110,7 +110,7 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
  * We just save its name and provide it again to rerun
- * @param metainfo additional info provided by test runner, in case of pytest it is test name that could be used as "-k" argument
+ * @param metainfo additional info provided by test runner, in case of pytest it is test name with parameters (if test is parametrized)
  */
 private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
                                        element: PsiElement,
@@ -483,8 +483,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(this)
   }
 
-  override fun getTestSpec(location: Location<*>,
-                           failedTest: AbstractTestProxy): String? {
+  final override fun getTestSpec(location: Location<*>,
+                                 failedTest: AbstractTestProxy): String? {
     val list = getPythonTestSpecByLocation(location)
     if (list.isEmpty()) {
       return null
@@ -504,7 +504,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return result + generateRawArguments(true)
   }
 
-  fun getTestSpec(): List<String> {
+  open fun getTestSpec(): List<String> {
     return target.generateArgumentsLine(this) + generateRawArguments()
   }
 
@@ -613,7 +613,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
   internal open fun shouldSeparateTargetPath(): Boolean = true
 
   /**
-   * @param metaInfo String "metainfo" field provided by test runner
+   * @param metaInfo String "metainfo" field provided by test runner.
+   * Pytest reports test name with parameters here
    */
   open fun setMetaInfo(metaInfo: String) {
 

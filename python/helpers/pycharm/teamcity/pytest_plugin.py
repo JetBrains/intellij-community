@@ -213,9 +213,8 @@ class EchoTeamCityMessages(object):
 
     def pytest_runtest_logstart(self, nodeid, location):
         # test name fetched from location passed as metainfo to PyCharm
-        # it will be used to run specific test using "-k"
-        # See IDEA-176950
-        # We only need method/function name because only it could be used as -k
+        # it will be used to run specific test
+        # See IDEA-176950, PY-31836
         test_name = location[2]
         if test_name:
             test_name = str(test_name).split(".")[-1]

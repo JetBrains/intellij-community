@@ -178,7 +178,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   /**
-   * Test name must be reported as meta info to be used as argument for "-k" for parametrized tests
+   * Test name must be reported as meta info to be used as parameter for for parametrized tests
    */
   @Test
   public void testMetaInfoForMethod() {
@@ -230,6 +230,44 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               "...(three plus file-8)(-)\n" +
                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+  /**
+   * Ensure that testName[param] is only launched for parametrized test if param provided
+   */
+  @Test
+  public void testParametrizedRunByParameter() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_pytest_parametrized.py", 1) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              configuration.getTarget().setTarget("test_pytest_parametrized.test_eval");
+              configuration.getTarget().setTargetType(PyRunTargetVariant.PYTHON);
+              configuration.setMetaInfo("test_eval[three plus file-8]");
+            }
+          };
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+          assertEquals("Only one test should be launched",
+                       "Test tree:\n" +
+                       "[root](-)\n" +
+                       ".test_pytest_parametrized(-)\n" +
+                       "..test_eval(-)\n" +
+                       "...(three plus file-8)(-)\n",
+                       runner.getFormattedTestTree());
         }
       });
   }
@@ -497,8 +535,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         configuration.setWorkingDirectory(myFixture.getTempDirPath());
 
         ReadAction.run(() -> Assert.assertThat("Failed to resolve qname",
-                                           configuration.getTarget().asPsiElement(configuration),
-                                           Matchers.instanceOf(PyFile.class)));
+                                               configuration.getTarget().asPsiElement(configuration),
+                                               Matchers.instanceOf(PyFile.class)));
       }
     });
   }
