@@ -44,13 +44,6 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
     return PyBundle.message("buildout");
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("buildout.unresolved.part.inspection");
-  }
-
   @NotNull
   @Override
   public String getShortName() {

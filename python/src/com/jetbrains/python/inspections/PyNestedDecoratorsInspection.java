@@ -22,12 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * User: dcheryasov
  */
 public class PyNestedDecoratorsInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.nested.decorators");
-  }
 
   @Override
   @NotNull

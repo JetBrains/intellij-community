@@ -82,13 +82,6 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
     return InspectionProfileEntry.GENERAL_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "XML highlighting";
-  }
-
   @NotNull
   @Override
   public String getShortName() {

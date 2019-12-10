@@ -33,12 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyCallingNonCallableInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Trying to call a non-callable object";
-  }
 
   @NotNull
   @Override

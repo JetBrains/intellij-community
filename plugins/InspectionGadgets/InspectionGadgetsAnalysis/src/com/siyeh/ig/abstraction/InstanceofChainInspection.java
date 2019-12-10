@@ -41,12 +41,6 @@ public class InstanceofChainInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("chain.of.instanceof.checks.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Check check = (Check)infos[0];
     if (check == Check.CLASS_EQUALITY) {

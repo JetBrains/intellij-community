@@ -41,12 +41,6 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.problem.descriptor");
   }

@@ -30,7 +30,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowsRuntimeExceptionInspection extends BaseInspection {
@@ -46,13 +45,6 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
       };
     }
     return new InspectionGadgetsFix[] {new ThrowsRuntimeExceptionFix(exceptionName)};
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.display.name");
   }
 
   @NotNull

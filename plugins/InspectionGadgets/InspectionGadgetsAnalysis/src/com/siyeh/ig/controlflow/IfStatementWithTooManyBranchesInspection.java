@@ -39,13 +39,6 @@ public class IfStatementWithTooManyBranchesInspection
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "if.statement.with.too.many.branches.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(
       InspectionGadgetsBundle.message(

@@ -73,12 +73,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }

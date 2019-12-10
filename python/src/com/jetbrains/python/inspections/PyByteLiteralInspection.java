@@ -37,12 +37,6 @@ import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
  * @author Alexey.Ivanov
  */
 public class PyByteLiteralInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.byte.literal");
-  }
 
   @NotNull
   @Override

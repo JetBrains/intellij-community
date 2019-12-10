@@ -27,7 +27,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -65,13 +64,6 @@ public class AbsoluteAlignmentInUserInterfaceInspection extends BaseInspection {
   static {
     boxLayoutConstants.put("X_AXIS", "LINE_AXIS");
     boxLayoutConstants.put("Y_AXIS", "PAGE_AXIS");
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("absolute.alignment.in.user.interface.display.name");
   }
 
   @NotNull

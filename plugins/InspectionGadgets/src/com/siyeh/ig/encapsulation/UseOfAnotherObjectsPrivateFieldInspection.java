@@ -54,13 +54,6 @@ public class UseOfAnotherObjectsPrivateFieldInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "accessing.non.public.field.of.another.object.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "accessing.non.public.field.of.another.object.problem.descriptor");

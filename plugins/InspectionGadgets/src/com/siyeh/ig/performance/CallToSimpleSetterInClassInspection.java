@@ -63,12 +63,6 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
   }

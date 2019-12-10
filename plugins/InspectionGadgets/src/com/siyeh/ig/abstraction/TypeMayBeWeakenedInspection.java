@@ -228,12 +228,6 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.display.name");
-  }
-
   private static String getClassName(@NotNull PsiClass aClass) {
     final String qualifiedName = aClass.getQualifiedName();
     return qualifiedName == null ? aClass.getName() : qualifiedName;

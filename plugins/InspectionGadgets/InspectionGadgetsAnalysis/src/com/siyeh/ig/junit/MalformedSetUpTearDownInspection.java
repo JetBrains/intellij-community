@@ -23,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Bas Leijdekkers
  */
 public class MalformedSetUpTearDownInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("malformed.set.up.tear.down.display.name");
-  }
 
   @NotNull
   @Override

@@ -60,12 +60,6 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("trivial.if.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

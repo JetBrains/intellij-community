@@ -35,12 +35,6 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("usage.of.obsolete.assert.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     String name = (String)infos[0];
     return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor", name);

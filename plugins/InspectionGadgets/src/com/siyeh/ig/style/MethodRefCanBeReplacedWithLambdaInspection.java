@@ -38,13 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

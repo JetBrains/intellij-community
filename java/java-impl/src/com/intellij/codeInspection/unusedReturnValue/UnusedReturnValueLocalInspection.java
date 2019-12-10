@@ -34,12 +34,6 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return myGlobal.getDisplayName();
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return myGlobal.getShortName();
   }

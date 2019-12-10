@@ -24,12 +24,6 @@ public class MultipleVariablesInDeclarationInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyWarnArrayDimensions = false;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("multiple.declaration.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

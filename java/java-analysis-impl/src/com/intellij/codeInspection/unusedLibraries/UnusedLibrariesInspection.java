@@ -227,12 +227,6 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("unused.library.display.name");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -57,12 +57,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static final NotificationGroup BALLOON_NOTIFICATIONS =
     new NotificationGroup("Package requirements", NotificationDisplayType.BALLOON, false);
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Package requirements";
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore packages", ignoredPackages);

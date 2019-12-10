@@ -34,12 +34,6 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return "'dependsOnMethods' problem";
-  }
-
-  @NotNull
-  @Override
   public String getShortName() {
     return "dependsOnMethodTestNG";
   }

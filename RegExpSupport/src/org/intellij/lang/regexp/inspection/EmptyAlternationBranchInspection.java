@@ -16,13 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EmptyAlternationBranchInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Empty branch in alternation";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

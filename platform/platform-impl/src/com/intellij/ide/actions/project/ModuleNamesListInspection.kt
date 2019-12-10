@@ -31,8 +31,6 @@ internal class ModuleNamesListInspection : LocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  override fun getDisplayName() = ProjectBundle.message("module.name.inspection.display.name")
-
   override fun getStaticDescription() = ""
 
   override fun isEnabledByDefault() = true

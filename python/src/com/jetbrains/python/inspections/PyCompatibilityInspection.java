@@ -119,13 +119,6 @@ public class PyCompatibilityInspection extends PyInspection {
     return result;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.compatibility");
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);

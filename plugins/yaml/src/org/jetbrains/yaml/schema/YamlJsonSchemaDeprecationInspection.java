@@ -19,12 +19,6 @@ import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 import java.util.Collection;
 
 public class YamlJsonSchemaDeprecationInspection extends YamlJsonSchemaInspectionBase {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return YAMLBundle.message("inspections.schema.deprecation.name");
-  }
 
   @Override
   protected PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder,

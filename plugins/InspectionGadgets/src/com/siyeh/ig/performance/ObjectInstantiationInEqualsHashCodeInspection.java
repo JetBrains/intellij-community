@@ -12,7 +12,6 @@ import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,13 +20,6 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("object.instantiation.inside.equals.or.hashcode.display.name");
-  }
 
   @NotNull
   @Override

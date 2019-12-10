@@ -24,13 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Declaration Problems";
-    }
-
-    @Override
+  @Override
     @NotNull
     public String getShortName() {
         return "XsltDeclarations";

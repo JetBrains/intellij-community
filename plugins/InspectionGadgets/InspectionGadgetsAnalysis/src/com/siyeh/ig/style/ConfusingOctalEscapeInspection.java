@@ -32,12 +32,6 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("confusing.octal.escape.sequence.problem.descriptor");
   }

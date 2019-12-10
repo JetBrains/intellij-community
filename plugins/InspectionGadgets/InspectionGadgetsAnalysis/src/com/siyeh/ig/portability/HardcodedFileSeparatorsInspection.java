@@ -117,13 +117,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "hardcoded.file.separator.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "hardcoded.file.separator.problem.descriptor");

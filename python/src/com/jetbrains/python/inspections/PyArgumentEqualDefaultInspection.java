@@ -34,12 +34,6 @@ import java.util.Set;
  * dict().get(x, None) --> None is default value for second param in dict().get function
  */
 public class PyArgumentEqualDefaultInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.argument.equal.default");
-  }
 
   @NotNull
   @Override

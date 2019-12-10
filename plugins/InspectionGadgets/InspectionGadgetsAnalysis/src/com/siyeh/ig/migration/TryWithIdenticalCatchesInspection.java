@@ -39,7 +39,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,13 +60,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return InspectionGadgetsBundle.message("try.with.identical.catches.problem.descriptor", type.getPresentableText());
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("try.with.identical.catches.display.name");
   }
 
   @Override

@@ -38,13 +38,6 @@ public class OverlyLargePrimitiveArrayInitializerInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "large.initializer.primitive.type.array.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Integer numElements = (Integer)infos[0];
     return InspectionGadgetsBundle.message(

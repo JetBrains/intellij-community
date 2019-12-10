@@ -41,13 +41,6 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Undeclared test";
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -23,13 +23,6 @@ import java.util.Collection;
 public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspectionBase {
   public boolean myCaseInsensitiveEnum = false;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return YAMLBundle.message("inspections.schema.validation.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

@@ -47,13 +47,6 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
    */
   public boolean m_ignoreLoopsWithoutConditions = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "for.loop.replaceable.by.while.display.name");
-  }
-
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull

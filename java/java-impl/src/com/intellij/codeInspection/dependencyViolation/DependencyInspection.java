@@ -65,12 +65,6 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("illegal.package.dependencies");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "Dependency";
   }

@@ -41,12 +41,6 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.to.array.call.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final PsiType foundType = (PsiType)infos[1];

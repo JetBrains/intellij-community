@@ -42,13 +42,6 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "three.negations.per.method.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("three.negations.per.method.ignore.option"), "m_ignoreInEquals");

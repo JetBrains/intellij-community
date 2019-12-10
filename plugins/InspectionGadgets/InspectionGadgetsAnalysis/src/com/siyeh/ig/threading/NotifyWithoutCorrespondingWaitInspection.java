@@ -26,13 +26,6 @@ public class NotifyWithoutCorrespondingWaitInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "notify.without.corresponding.wait.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "notify.without.corresponding.wait.problem.descriptor");

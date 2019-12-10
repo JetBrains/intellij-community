@@ -36,13 +36,6 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serialversionuid.private.static.final.long.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serialversionuid.private.static.final.long.problem.descriptor");

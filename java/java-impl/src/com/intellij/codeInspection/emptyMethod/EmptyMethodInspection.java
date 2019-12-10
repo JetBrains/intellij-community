@@ -232,13 +232,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
   @Override
   @NotNull
   public String getGroupDisplayName() {

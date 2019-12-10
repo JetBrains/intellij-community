@@ -29,12 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("array.creation.without.new.keyword.name");
-  }
 
   @NotNull
   @Override

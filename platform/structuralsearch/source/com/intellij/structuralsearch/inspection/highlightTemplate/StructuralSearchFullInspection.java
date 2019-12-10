@@ -44,13 +44,6 @@ public class StructuralSearchFullInspection extends LocalInspectionTool {
     myConfigurations.add(configuration);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return myName;
-  }
-
   @NotNull
   @Override
   public String getShortName() {

@@ -190,12 +190,6 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.unbound.prefix");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "XmlUnboundNsPrefix";

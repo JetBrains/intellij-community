@@ -1115,12 +1115,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.data.flow.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }

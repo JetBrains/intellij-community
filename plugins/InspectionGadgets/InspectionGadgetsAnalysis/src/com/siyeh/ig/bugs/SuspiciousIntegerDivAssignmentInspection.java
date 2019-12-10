@@ -29,13 +29,6 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean myReportPossiblyExactDivision = true;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.integer.div.assignment.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

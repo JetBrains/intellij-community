@@ -42,13 +42,6 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.simplify.foreach.display.name");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

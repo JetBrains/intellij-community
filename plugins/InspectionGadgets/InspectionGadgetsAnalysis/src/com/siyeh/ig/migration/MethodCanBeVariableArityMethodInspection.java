@@ -25,7 +25,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ConvertToVarargsMethodFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,13 +49,6 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreMultiDimensionalArrayParameters = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return message("method.can.be.variable.arity.method.display.name");
-  }
 
   @NotNull
   @Override

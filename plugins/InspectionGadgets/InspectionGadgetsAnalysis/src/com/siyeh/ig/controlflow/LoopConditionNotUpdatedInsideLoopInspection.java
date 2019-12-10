@@ -41,13 +41,6 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "loop.condition.not.updated.inside.loop.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final boolean entireCondition = ((Boolean)infos[0]).booleanValue();
     if (entireCondition) {

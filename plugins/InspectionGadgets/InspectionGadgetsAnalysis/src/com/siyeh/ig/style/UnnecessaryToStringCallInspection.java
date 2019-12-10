@@ -34,13 +34,6 @@ import org.jetbrains.annotations.*;
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.tostring.call.display.name");
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final String text = (String)infos[0];

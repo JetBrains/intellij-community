@@ -61,11 +61,6 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return m_shortName;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public abstract String getDisplayName();
-
   @Override
   @Nls
   @NotNull

@@ -29,13 +29,6 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "finalize.not.declared.protected.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finalize.not.declared.protected.problem.descriptor");

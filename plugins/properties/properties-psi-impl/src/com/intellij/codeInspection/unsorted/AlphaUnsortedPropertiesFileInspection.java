@@ -148,12 +148,6 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Alphabetically Unsorted Properties File or Resource Bundle";
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "AlphaUnsortedPropertiesFile";
   }

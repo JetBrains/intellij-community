@@ -48,12 +48,6 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.may.be.interface.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("class.may.be.interface.problem.descriptor");
   }

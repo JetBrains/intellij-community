@@ -36,13 +36,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PySingleQuotedDocstringInspection extends PyInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.single.quoted.docstring");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

@@ -29,13 +29,6 @@ public class SynchronizeOnNonFinalFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronize.on.non.final.field.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "synchronize.on.non.final.field.problem.descriptor");

@@ -361,12 +361,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.field.can.be.local.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

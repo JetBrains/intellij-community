@@ -36,12 +36,6 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.super.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.super.constructor.problem.descriptor");
   }

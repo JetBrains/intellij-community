@@ -161,12 +161,6 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.javadoc.ref.display.name");
-  }
-
-  @NotNull
-  @Override
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.javadoc.issues");
   }

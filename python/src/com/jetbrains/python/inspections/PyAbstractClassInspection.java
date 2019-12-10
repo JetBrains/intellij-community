@@ -24,12 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class PyAbstractClassInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.abstract.class");
-  }
 
   @NotNull
   @Override

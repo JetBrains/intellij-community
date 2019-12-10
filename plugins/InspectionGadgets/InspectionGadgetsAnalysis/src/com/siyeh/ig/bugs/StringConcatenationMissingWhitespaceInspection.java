@@ -11,7 +11,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,13 +24,6 @@ public class StringConcatenationMissingWhitespaceInspection extends BaseInspecti
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonStringLiterals = true;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.missing.whitespace.display.name");
-  }
 
   @NotNull
   @Override

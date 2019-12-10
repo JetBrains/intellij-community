@@ -41,13 +41,6 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.constructor.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
       InspectionGadgetsBundle.message(

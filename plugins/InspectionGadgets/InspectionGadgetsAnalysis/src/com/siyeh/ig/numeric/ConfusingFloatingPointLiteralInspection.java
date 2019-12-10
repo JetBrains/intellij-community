@@ -42,12 +42,6 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("confusing.floating.point.literal.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }

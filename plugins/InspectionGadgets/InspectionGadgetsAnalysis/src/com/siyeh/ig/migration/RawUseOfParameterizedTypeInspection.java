@@ -56,12 +56,6 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("raw.use.of.parameterized.type.problem.descriptor");
   }

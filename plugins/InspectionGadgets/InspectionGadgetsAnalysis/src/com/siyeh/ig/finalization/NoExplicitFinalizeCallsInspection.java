@@ -37,13 +37,6 @@ public class NoExplicitFinalizeCallsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "finalize.called.explicitly.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "finalize.called.explicitly.problem.descriptor");

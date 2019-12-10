@@ -19,7 +19,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,13 +69,6 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
       .addVerticalGap(-1)
       .getPanel();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.display.name");
   }
 
   @NotNull

@@ -39,13 +39,6 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   private static final String GUAVA_PRECONDITIONS = "com.google.common.base.Preconditions";
   private static final String GUAVA_CHECK_NON_NULL = "checkNotNull";
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("if.can.be.assertion.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

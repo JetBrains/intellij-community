@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PlatformUtils;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -20,7 +19,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PyInterpreterInspection extends PyInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.invalid.interpreter");
-  }
 
   @NotNull
   @Override

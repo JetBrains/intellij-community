@@ -36,13 +36,6 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "test.case.with.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     if (Boolean.TRUE.equals(infos[0])) {
       return InspectionGadgetsBundle.message(

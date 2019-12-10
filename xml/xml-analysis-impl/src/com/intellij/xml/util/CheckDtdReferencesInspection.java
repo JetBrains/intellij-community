@@ -79,10 +79,4 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.check.dtd.references");
-  }
 }

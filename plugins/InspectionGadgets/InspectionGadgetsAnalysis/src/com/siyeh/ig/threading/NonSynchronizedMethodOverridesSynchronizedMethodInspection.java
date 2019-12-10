@@ -28,13 +28,6 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.synchronized.method.overrides.synchronized.method.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.synchronized.method.overrides.synchronized.method.problem.descriptor");

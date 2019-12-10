@@ -37,11 +37,6 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     super("MissingMnemonic");
   }
 
-  @NotNull
-  @Override public String getDisplayName() {
-    return UIDesignerBundle.message("inspection.missing.mnemonics");
-  }
-
   @Override
   protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     String value = FormInspectionUtil.getText(module, component);

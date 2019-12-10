@@ -71,13 +71,6 @@ public class BadExceptionThrownInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "bad.exception.thrown.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final String exceptionName = type.getPresentableText();

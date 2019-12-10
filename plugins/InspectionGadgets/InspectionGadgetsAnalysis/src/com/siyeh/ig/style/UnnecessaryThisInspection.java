@@ -44,12 +44,6 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.this.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.this.problem.descriptor");
   }

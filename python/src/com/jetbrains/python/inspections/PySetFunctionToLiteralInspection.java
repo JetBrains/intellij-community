@@ -40,13 +40,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PySetFunctionToLiteralInspection extends PyInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.set.function.to.literal");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

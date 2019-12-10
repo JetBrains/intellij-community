@@ -60,13 +60,6 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.name.hides.in.superclass.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }

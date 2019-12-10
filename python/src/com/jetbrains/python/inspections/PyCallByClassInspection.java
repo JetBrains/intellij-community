@@ -34,12 +34,6 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
  * User: dcheryasov
  */
 public class PyCallByClassInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.different.class.call");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

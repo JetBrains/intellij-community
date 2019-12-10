@@ -50,13 +50,6 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cast.that.loses.precision.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType operandType = (PsiType)infos[0];
     boolean negativeOnly = (boolean)infos[1];

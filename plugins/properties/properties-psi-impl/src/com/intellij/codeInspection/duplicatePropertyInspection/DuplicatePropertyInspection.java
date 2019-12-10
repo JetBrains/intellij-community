@@ -308,12 +308,6 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("duplicate.property.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.properties.files");
   }

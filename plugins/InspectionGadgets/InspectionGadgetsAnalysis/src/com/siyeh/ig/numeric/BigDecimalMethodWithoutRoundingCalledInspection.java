@@ -6,7 +6,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,13 +15,6 @@ public class BigDecimalMethodWithoutRoundingCalledInspection extends BaseInspect
 
   static final CallMatcher JAVA_MATH_BIG_DECIMAL =
     CallMatcher.instanceCall("java.math.BigDecimal", "setScale", "divide").parameterCount(1);
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("big.decimal.method.without.rounding.called.display.name");
-  }
 
   @NotNull
   @Override

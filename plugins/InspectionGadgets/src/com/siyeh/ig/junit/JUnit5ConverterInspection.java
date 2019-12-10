@@ -45,13 +45,6 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 public class JUnit5ConverterInspection extends BaseInspection {
   private static final List<String> ruleAnnotations = Arrays.asList(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit5.converter.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

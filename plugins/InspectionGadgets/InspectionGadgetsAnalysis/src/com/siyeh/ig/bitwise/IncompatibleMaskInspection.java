@@ -36,13 +36,6 @@ public class IncompatibleMaskInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "incompatible.mask.operation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression binaryExpression =
       (PsiBinaryExpression)infos[0];

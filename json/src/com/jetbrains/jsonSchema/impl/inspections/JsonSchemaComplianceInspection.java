@@ -23,12 +23,6 @@ public class JsonSchemaComplianceInspection extends JsonSchemaBasedInspectionBas
   public boolean myCaseInsensitiveEnum = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return JsonBundle.message("json.schema.inspection.compliance.name");
-  }
-
-  @Override
   protected PsiElementVisitor doBuildVisitor(@NotNull JsonValue root, @Nullable JsonSchemaObject schema, @NotNull JsonSchemaService service,
                                              @NotNull ProblemsHolder holder,
                                              @NotNull LocalInspectionToolSession session) {

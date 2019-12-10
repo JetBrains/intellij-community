@@ -52,13 +52,6 @@ public class InnerClassVariableHidesOuterClassVariableInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.field.hides.outer.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "inner.class.field.hides.outer.problem.descriptor");

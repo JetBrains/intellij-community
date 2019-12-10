@@ -24,7 +24,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,13 +33,6 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class CallToSuspiciousStringMethodInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("call.to.suspicious.string.method.display.name");
-  }
 
   @NotNull
   @Override

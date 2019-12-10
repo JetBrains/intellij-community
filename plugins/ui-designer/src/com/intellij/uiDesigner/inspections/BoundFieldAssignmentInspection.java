@@ -25,12 +25,6 @@ public class BoundFieldAssignmentInspection extends AbstractBaseJavaLocalInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return UIDesignerBundle.message("inspection.bound.field.title");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "BoundFieldAssignment";

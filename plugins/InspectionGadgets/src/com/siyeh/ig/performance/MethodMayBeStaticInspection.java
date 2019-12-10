@@ -90,12 +90,6 @@ public class MethodMayBeStaticInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.may.be.static.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.may.be.static.problem.descriptor");
   }

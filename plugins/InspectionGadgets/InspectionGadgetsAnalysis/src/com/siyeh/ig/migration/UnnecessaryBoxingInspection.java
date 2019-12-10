@@ -43,12 +43,6 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   public boolean onlyReportSuperfluouslyBoxed = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.boxing.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

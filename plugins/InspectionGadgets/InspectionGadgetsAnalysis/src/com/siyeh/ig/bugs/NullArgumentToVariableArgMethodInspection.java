@@ -43,12 +43,6 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("null.argument.to.var.arg.method.problem.descriptor");
   }

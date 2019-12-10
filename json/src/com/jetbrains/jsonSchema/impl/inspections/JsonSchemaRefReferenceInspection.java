@@ -18,11 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JsonSchemaRefReferenceInspection extends JsonSchemaBasedInspectionBase {
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return JsonBundle.message("json.schema.ref.refs.inspection.name");
-  }
 
   @Override
   protected PsiElementVisitor doBuildVisitor(@NotNull JsonValue root,

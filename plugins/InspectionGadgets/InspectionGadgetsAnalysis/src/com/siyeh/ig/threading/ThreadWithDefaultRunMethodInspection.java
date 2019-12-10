@@ -27,13 +27,6 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "thread.with.default.run.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "InstantiatingAThreadWithDefaultRunMethod";
   }

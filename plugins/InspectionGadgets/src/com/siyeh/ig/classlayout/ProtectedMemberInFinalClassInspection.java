@@ -58,12 +58,6 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
   }

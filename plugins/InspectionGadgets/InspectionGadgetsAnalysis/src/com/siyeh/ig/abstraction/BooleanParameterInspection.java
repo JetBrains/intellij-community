@@ -23,7 +23,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +35,6 @@ public class BooleanParameterInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportMultiple = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("boolean.parameter.display.name");
-  }
 
   @NotNull
   @Override

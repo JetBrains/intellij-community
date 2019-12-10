@@ -37,13 +37,6 @@ public class StaticFieldReferenceOnSubclassInspection extends BaseInspection imp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "static.field.via.subclass.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass declaringClass = (PsiClass)infos[0];
     final PsiClass referencedClass = (PsiClass)infos[1];

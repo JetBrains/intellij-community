@@ -34,7 +34,6 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,13 +61,6 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     staticCall(JAVA_LANG_DOUBLE, "toString").parameterTypes("double"),
     staticCall(JAVA_UTIL_OBJECTS, "toString").parameterTypes(JAVA_LANG_OBJECT)
   );
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.conversion.to.string.display.name");
-  }
 
   @Override
   @NotNull

@@ -32,13 +32,6 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.constant.array.creation.expression.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.constant.array.creation.expression.problem.descriptor");

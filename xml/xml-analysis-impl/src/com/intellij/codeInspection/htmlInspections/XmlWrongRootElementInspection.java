@@ -46,13 +46,6 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspection.wrong.root.element");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

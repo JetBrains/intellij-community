@@ -58,12 +58,6 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
   public boolean worksInBatchModeOnly() {
     return false;
   }

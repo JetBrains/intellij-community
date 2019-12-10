@@ -37,13 +37,6 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "constant.value.variable.use.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.value.variable.use.problem.descriptor");

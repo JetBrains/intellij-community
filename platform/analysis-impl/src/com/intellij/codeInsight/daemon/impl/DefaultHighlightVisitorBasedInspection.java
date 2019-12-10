@@ -40,12 +40,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     public AnnotatorBasedInspection() {
       super(false, true);
     }
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-      return getShortName();
-    }
 
     @NotNull
     @Override
@@ -57,12 +51,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   public static class SyntaxErrorInspection extends DefaultHighlightVisitorBasedInspection {
     public SyntaxErrorInspection() {
       super(true, false);
-    }
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-      return "Syntax error";
     }
 
     @NotNull

@@ -119,12 +119,6 @@ public class MismatchedCollectionQueryUpdateInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("mismatched.update.collection.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean updated = ((Boolean)infos[0]).booleanValue();
     if (updated) {

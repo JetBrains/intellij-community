@@ -50,12 +50,6 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @NotNull
-  @Override
   public String getShortName() {
     return "JUnitTestNG";
   }

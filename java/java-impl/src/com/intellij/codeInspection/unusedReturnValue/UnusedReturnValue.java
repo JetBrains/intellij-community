@@ -134,12 +134,6 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.unused.return.value.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }

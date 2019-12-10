@@ -54,13 +54,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.attribute");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -36,12 +36,6 @@ public class DeprecationInspection extends DeprecationInspectionBase {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return "";
   }

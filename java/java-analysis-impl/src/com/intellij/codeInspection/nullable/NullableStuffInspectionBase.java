@@ -630,12 +630,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.nullable.problems.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }

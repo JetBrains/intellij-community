@@ -36,7 +36,6 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,13 +57,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
 
   private static boolean isAbstractDescriptor(XmlElementDescriptor descriptor) {
     return descriptor == null || descriptor instanceof AnyXmlElementDescriptor;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.tag");
   }
 
   @Override

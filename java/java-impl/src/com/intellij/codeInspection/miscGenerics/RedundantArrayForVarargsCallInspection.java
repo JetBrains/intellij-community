@@ -197,12 +197,6 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.array.creation.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "RedundantArrayCreation";

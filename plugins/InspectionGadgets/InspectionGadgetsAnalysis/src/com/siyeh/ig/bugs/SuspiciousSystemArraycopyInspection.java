@@ -35,12 +35,6 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.system.arraycopy.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return (String)infos[0];
   }

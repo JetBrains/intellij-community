@@ -28,20 +28,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("caught.exception.immediately.rethrown.display.name");
-  }
 
   @Override
   @NotNull

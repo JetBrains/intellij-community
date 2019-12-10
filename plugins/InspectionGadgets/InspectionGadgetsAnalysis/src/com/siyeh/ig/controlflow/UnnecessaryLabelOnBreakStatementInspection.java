@@ -30,13 +30,6 @@ public class UnnecessaryLabelOnBreakStatementInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.label.on.break.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.label.on.break.statement.problem.descriptor");

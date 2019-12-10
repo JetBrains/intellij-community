@@ -30,12 +30,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnqualifiedMethodAccessInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unqualified.method.access.display.name");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnqualifiedMethodAccessVisitor();
   }

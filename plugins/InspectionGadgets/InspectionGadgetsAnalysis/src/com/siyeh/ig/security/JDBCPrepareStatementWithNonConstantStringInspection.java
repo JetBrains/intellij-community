@@ -33,12 +33,6 @@ public class JDBCPrepareStatementWithNonConstantStringInspection extends BaseIns
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("jdbc.prepare.statement.with.non.constant.string.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("jdbc.prepare.statement.with.non.constant.string.problem.descriptor");
   }

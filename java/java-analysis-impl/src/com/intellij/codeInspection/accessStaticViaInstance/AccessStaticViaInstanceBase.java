@@ -21,11 +21,6 @@ public class AccessStaticViaInstanceBase extends AbstractBaseJavaLocalInspection
     return "";
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("access.static.via.instance");
-  }
 
   @Override
   @NotNull

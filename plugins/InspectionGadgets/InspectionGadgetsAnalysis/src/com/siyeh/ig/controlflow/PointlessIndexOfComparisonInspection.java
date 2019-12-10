@@ -29,13 +29,6 @@ public class PointlessIndexOfComparisonInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "pointless.indexof.comparison.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
     final PsiExpression lhs = expression.getLOperand();

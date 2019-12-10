@@ -47,13 +47,6 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.thread.safe.lazy.initialization.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "non.thread.safe.lazy.initialization.problem.descriptor");

@@ -65,12 +65,6 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return SSRBundle.message("SSRInspection.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;

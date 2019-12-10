@@ -30,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
 public class FinalMethodInFinalClassInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "final.method.in.final.class.display.name");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FinalMethodInFinalClassVisitor();
   }

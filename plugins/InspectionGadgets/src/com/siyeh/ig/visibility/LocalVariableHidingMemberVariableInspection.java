@@ -49,12 +49,6 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("local.variable.hides.member.variable.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }

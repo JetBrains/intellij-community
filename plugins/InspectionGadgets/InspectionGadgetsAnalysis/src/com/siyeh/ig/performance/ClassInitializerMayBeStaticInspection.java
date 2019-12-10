@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassInitializerMayBeStaticInspection extends BaseInspection {
@@ -47,14 +46,6 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new ChangeModifierFix(PsiModifier.STATIC);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.initializer.may.be.static.display.name");
   }
 
   @Override

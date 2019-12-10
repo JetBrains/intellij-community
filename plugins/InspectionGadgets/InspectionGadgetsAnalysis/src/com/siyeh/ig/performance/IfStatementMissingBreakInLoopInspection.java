@@ -26,13 +26,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.if.statement.missing.break.in.loop.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

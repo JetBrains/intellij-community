@@ -55,12 +55,6 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
   private JBCheckBox myReportPrivateMethodsCB;
   private JBCheckBox myReportInstanceMethodsCB;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("bounded.wildcard.display.name");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {

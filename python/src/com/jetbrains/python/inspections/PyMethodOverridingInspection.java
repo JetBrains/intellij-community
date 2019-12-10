@@ -21,12 +21,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PyMethodOverridingInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.method.over");
-  }
 
   @NotNull
   @Override

@@ -65,13 +65,6 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       "ignoreStringConstructor");
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.redundant.string.operation.display.name");
-  }
-
   @NotNull
   @Override
   public String getShortName() {

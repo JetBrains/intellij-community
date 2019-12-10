@@ -21,12 +21,6 @@ import java.util.List;
  * Detects unreachable code using control flow graph
  */
 public class PyUnreachableCodeInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.unreachable.code");
-  }
 
   @NotNull
   @Override

@@ -43,12 +43,6 @@ public class UnnecessaryReturnInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.return.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     if (((Boolean)infos[0]).booleanValue()) {
       return InspectionGadgetsBundle.message("unnecessary.return.constructor.problem.descriptor");

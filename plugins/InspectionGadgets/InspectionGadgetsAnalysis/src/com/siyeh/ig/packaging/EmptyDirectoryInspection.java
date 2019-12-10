@@ -45,13 +45,6 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.directory.display.name");
-  }
-
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(

@@ -37,12 +37,6 @@ import org.jetbrains.annotations.Nullable;
  * such as no exception class specified, or specified as 'Exception'
  */
 public class PyBroadExceptionInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.too.broad.exception.clauses");
-  }
 
   @NotNull
   @Override

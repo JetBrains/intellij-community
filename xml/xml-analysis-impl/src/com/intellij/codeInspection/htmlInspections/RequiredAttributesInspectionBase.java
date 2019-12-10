@@ -65,12 +65,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.required.attributes.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return REQUIRED_ATTRIBUTES_SHORT_NAME;

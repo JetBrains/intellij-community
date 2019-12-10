@@ -30,12 +30,6 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("constant.on.side.of.comparison.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return myConstantShouldGoLeft
            ? InspectionGadgetsBundle.message("constant.on.rhs.of.comparison.problem.descriptor")

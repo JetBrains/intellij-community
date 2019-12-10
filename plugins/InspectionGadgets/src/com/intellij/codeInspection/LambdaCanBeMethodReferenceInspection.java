@@ -38,13 +38,6 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Lambda can be replaced with method reference";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

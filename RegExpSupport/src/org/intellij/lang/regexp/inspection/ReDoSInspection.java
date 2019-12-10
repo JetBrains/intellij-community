@@ -30,13 +30,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReDoSInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Exponential backtracking";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

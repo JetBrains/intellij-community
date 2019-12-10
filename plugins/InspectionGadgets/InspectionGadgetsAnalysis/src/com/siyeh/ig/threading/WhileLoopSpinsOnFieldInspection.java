@@ -48,13 +48,6 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "while.loop.spins.on.field.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "while.loop.spins.on.field.problem.descriptor");

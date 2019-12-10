@@ -24,13 +24,6 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Statement lambda can be replaced with expression lambda";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

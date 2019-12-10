@@ -86,12 +86,6 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("utility.class.without.private.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
   }

@@ -37,12 +37,6 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     if (((Boolean)infos[0]).booleanValue()) {
       return InspectionGadgetsBundle.message("use.0index.in.jdbc.resultset.problem.descriptor");

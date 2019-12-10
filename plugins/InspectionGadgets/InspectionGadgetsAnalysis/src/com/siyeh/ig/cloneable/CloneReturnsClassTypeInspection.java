@@ -20,12 +20,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class CloneReturnsClassTypeInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("clone.returns.class.type.display.name");
-  }
 
   @NotNull
   @Override

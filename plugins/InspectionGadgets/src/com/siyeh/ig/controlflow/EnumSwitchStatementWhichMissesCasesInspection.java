@@ -43,12 +43,6 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   @SuppressWarnings("PublicField")
   public boolean ignoreSwitchStatementsWithDefault = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.display.name");
-  }
-
   @NotNull
   String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {

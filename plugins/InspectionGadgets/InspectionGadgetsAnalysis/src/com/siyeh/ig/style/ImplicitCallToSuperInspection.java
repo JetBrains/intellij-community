@@ -38,13 +38,6 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "implicit.call.to.super.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "implicit.call.to.super.problem.descriptor");

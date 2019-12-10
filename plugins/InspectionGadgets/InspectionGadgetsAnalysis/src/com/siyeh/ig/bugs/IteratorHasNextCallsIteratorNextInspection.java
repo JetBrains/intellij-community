@@ -31,13 +31,6 @@ public class IteratorHasNextCallsIteratorNextInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "iterator.hasnext.which.calls.next.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(

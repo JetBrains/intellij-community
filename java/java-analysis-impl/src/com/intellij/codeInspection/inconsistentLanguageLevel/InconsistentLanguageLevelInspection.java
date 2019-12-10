@@ -88,12 +88,6 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Inconsistent language level settings";
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

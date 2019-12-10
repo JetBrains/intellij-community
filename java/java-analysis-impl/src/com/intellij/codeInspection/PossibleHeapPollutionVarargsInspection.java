@@ -27,13 +27,6 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Possible heap pollution from parameterized vararg type";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

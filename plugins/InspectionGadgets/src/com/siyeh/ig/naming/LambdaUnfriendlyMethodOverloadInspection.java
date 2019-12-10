@@ -25,7 +25,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,13 +48,6 @@ public class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
   @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.unfriendly.method.overload.display.name");
   }
 
   @NotNull

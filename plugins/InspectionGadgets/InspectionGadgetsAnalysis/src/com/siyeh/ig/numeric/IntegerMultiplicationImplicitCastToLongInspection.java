@@ -64,13 +64,6 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
   @SuppressWarnings({"PublicField"})
   public boolean ignoreNonOverflowingCompileTimeConstants = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "integer.multiplication.implicit.cast.to.long.display.name");
-  }
-
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {

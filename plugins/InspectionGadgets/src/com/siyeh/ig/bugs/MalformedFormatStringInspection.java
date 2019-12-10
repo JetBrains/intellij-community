@@ -95,12 +95,6 @@ public class MalformedFormatStringInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("malformed.format.string.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Object value = infos[0];
     if (value instanceof Exception) {

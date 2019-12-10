@@ -41,12 +41,6 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     super("DuplicateMnemonic");
   }
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return UIDesignerBundle.message("inspection.duplicate.mnemonics");
-  }
-
   @Override public void startCheckForm(IRootContainer radRootContainer) {
     myContainerMnemonicMap.get().put(radRootContainer, new MnemonicMap());
   }

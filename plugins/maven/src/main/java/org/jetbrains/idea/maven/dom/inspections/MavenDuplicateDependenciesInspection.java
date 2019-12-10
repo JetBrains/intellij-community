@@ -169,12 +169,6 @@ public class MavenDuplicateDependenciesInspection extends DomElementsInspection<
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return MavenDomBundle.message("inspection.duplicate.dependencies.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "MavenDuplicateDependenciesInspection";
   }

@@ -37,12 +37,6 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("big.decimal.equals.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("big.decimal.equals.problem.descriptor");
   }

@@ -29,12 +29,6 @@ public class ThreadRunInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("thread.run.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "CallToThreadRun";
   }

@@ -48,13 +48,6 @@ public class IntegerDivisionInFloatingPointContextInspection extends BaseInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "integer.division.in.floating.point.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "integer.division.in.floating.point.context.problem.descriptor");

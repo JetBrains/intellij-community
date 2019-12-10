@@ -41,12 +41,6 @@ public class RedundantFieldInitializationInspection extends BaseInspection imple
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("redundant.field.initialization.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("redundant.field.initialization.problem.descriptor");
   }

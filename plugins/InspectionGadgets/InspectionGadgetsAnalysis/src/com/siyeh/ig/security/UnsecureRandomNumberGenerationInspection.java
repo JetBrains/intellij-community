@@ -28,13 +28,6 @@ public class UnsecureRandomNumberGenerationInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unsecure.random.number.generation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     @NonNls final String text = ((PsiElement)infos[0]).getText();
     if ("random".equals(text)) {

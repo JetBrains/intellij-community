@@ -93,11 +93,4 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
       }
     };
   }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Block marker comment";
-  }
 }

@@ -25,11 +25,6 @@ import java.util.List;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.test.only.problems.display.name");
-  }
 
   @Override
   @NotNull

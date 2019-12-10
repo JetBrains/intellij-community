@@ -62,12 +62,6 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("parameters.per.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Integer parameterCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message("parameters.per.constructor.problem.descriptor", parameterCount);

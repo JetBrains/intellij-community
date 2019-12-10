@@ -38,12 +38,6 @@ public class SerializableWithUnconstructableAncestorInspection extends BaseInspe
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("serializable.with.unconstructable.ancestor.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass ancestor = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("serializable.with.unconstructable.ancestor.problem.descriptor", ancestor.getName());

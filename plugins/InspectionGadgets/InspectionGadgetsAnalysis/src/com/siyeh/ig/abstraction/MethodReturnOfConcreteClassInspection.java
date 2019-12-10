@@ -32,13 +32,6 @@ public class MethodReturnOfConcreteClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.return.concrete.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.return.concrete.class.problem.descriptor");

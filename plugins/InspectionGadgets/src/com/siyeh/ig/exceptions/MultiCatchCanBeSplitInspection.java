@@ -31,13 +31,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class MultiCatchCanBeSplitInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("multi.catch.can.be.split.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

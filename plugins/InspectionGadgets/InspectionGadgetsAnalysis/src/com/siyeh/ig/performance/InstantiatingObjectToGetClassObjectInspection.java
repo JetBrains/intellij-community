@@ -33,13 +33,6 @@ public class InstantiatingObjectToGetClassObjectInspection
   extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instantiating.object.to.get.class.object.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

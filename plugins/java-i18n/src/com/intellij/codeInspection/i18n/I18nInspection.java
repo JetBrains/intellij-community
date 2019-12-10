@@ -127,12 +127,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return CodeInsightBundle.message("inspection.i18n.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "HardCodedStringLiteral";
   }

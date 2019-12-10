@@ -33,13 +33,6 @@ public class SynchronizeOnLockInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronize.on.lock.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
     return InspectionGadgetsBundle.message(

@@ -89,12 +89,6 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.equals.hashcode.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return "";
   }

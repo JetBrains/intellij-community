@@ -32,13 +32,7 @@ public class IndexZeroPredicate extends XPathInspection {
         return new MyVisitor(manager, isOnTheFly);
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Use of index 0 in XPath predicates";
-    }
-
-    @Override
+  @Override
     @NotNull
     @NonNls
     public String getShortName() {

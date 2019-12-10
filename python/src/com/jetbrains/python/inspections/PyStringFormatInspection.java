@@ -37,13 +37,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyStringFormatInspection extends PyInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.str.format");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,

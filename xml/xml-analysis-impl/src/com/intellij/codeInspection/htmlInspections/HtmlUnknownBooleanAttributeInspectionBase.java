@@ -49,13 +49,6 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.boolean.attribute");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

@@ -35,12 +35,6 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
 
   @Override
   @NotNull
-  public final String getDisplayName() {
-    return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.display.name");
-  }
-
-  @Override
-  @NotNull
   protected final String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.problem.descriptor");
   }

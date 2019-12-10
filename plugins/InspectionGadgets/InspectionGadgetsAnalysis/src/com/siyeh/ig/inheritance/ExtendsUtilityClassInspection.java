@@ -34,12 +34,6 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.extends.utility.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
     final String superClassName = superClass.getName();

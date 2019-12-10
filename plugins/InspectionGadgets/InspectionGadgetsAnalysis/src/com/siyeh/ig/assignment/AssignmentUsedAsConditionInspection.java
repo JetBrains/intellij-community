@@ -32,12 +32,6 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.used.as.condition.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.used.as.condition.problem.descriptor");
   }

@@ -32,13 +32,6 @@ public class NonCommentSourceStatementsInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.comment.source.statements.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return DEFAULT_LIMIT;
   }

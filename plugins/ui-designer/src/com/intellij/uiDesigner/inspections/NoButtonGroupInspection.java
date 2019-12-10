@@ -46,11 +46,6 @@ public class NoButtonGroupInspection extends BaseFormInspection {
     super("NoButtonGroup");
   }
 
-  @NotNull
-  @Override public String getDisplayName() {
-    return UIDesignerBundle.message("inspection.no.button.group");
-  }
-
   @Override
   protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, JRadioButton.class)) {

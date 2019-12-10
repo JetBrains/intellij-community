@@ -89,12 +89,6 @@ public class EmptyClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Object element = infos[0];
     if (element instanceof PsiAnonymousClass) {

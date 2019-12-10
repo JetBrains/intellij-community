@@ -36,13 +36,6 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "c.style.array.declaration.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiMethod) {

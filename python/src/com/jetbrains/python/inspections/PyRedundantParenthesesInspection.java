@@ -29,7 +29,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.RedundantParenthesesQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,13 +45,6 @@ public class PyRedundantParenthesesInspection extends PyInspection {
   public boolean myIgnorePercOperator = false;
   public boolean myIgnoreTupleInReturn = false;
   public boolean myIgnoreEmptyBaseClasses = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.redundant.parentheses");
-  }
 
   @NotNull
   @Override

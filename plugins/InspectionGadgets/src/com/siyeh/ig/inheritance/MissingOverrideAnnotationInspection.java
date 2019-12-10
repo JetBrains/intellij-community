@@ -50,12 +50,6 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
     return "override";
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("missing.override.annotation.display.name");
-  }
-
   /**
    * @deprecated
    * Use {@link AnnotateMethodFix}. To be removed in 2019.1.

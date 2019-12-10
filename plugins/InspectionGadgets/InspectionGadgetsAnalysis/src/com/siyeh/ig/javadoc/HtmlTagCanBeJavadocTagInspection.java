@@ -33,7 +33,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,13 +40,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.display.name");
-  }
 
   @NotNull
   @Override

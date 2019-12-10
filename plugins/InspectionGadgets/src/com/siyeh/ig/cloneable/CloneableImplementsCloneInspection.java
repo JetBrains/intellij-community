@@ -50,12 +50,6 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("cloneable.class.without.clone.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.without.clone.problem.descriptor");
   }

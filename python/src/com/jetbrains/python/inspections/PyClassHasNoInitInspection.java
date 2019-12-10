@@ -39,12 +39,6 @@ import java.util.List;
  * See pylint W0232
  */
 public class PyClassHasNoInitInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.class.has.no.init");
-  }
 
   @NotNull
   @Override

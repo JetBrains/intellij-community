@@ -70,12 +70,6 @@ public class IOResourceInspection extends ResourceInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("i.o.resource.opened.not.closed.display.name");
-  }
-
-  @Override
   public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(ignoredTypesString, ignoredTypes);

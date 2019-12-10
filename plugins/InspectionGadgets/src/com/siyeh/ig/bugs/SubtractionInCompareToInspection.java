@@ -86,12 +86,6 @@ public class SubtractionInCompareToInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("subtraction.in.compareto.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("subtraction.in.compareto.problem.descriptor");
   }

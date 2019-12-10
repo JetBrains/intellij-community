@@ -39,13 +39,6 @@ public class LongLiteralsEndingWithLowercaseLInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "long.literals.ending.with.lowercase.l.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "long.literals.ending.with.lowercase.l.problem.descriptor");

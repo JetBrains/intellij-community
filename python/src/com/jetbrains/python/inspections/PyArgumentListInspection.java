@@ -34,12 +34,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class PyArgumentListInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.incorrect.call.arguments");
-  }
 
   @NotNull
   @Override

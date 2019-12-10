@@ -124,12 +124,6 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.valid.script.tag");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckValidXmlInScriptTagBody";

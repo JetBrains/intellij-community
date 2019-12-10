@@ -42,12 +42,6 @@ public class SillyAssignmentInspection extends AbstractBaseJavaLocalInspectionTo
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.variable.assigned.to.itself.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "SillyAssignment";

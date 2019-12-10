@@ -22,10 +22,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +33,6 @@ import org.jetbrains.annotations.Nullable;
  * Inspection to highlight backslashes in places where line continuation is implicit (inside (), [], {}).
  */
 public class PyUnnecessaryBackslashInspection extends PyInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.unnecessary.backslash");
-  }
 
   @NotNull
   @Override

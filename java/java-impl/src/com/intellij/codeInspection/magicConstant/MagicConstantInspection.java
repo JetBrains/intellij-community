@@ -75,13 +75,6 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     return GroupNames.BUGS_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Magic Constant";
-  }
-
   @NotNull
   @Override
   public String getShortName() {

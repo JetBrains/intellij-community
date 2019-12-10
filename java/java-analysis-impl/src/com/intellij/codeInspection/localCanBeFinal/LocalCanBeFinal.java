@@ -302,12 +302,6 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.local.can.be.final.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.STYLE_GROUP_NAME;
   }

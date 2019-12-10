@@ -46,12 +46,6 @@ public class FeatureEnvyInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("feature.envy.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiNamedElement element = (PsiNamedElement)infos[0];
     final String className = element.getName();

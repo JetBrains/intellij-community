@@ -32,13 +32,6 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
                                           "DONT_WARN_ON_TERNARY");
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.simplifiable.if.statement.display.name");
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

@@ -42,13 +42,6 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "before.or.after.is.public.void.no.arg.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "before.or.after.is.public.void.no.arg.problem.descriptor");

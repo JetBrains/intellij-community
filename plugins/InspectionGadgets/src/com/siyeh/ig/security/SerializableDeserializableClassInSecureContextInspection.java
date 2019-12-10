@@ -29,12 +29,6 @@ public class SerializableDeserializableClassInSecureContextInspection extends Se
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("serializable.class.in.secure.context.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Boolean serializable = (Boolean)infos[0];
     final Boolean deserializable = (Boolean)infos[1];

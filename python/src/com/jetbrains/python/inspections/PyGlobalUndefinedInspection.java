@@ -36,12 +36,6 @@ import java.util.List;
  * pylint W0601
  */
 public class PyGlobalUndefinedInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.global.undefined");
-  }
 
   @NotNull
   @Override

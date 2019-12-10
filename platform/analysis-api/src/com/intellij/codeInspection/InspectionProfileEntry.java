@@ -7,6 +7,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -273,7 +274,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return name;
       }
     }
-    PluginException.logPluginError(LOG, getClass() + ": display name should be overridden or configured via XML ", null, getClass());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      PluginException.logPluginError(LOG, getClass() + ": display name should be overridden or configured via XML ", null, getClass());
+    }
     return "";
   }
 

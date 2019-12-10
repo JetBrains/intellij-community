@@ -59,12 +59,6 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
 
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("package.naming.convention.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,

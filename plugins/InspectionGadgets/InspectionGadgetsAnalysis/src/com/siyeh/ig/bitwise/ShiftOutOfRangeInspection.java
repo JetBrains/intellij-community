@@ -34,13 +34,6 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "shift.operation.by.inappropriate.constant.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     LongRangeSet range = (LongRangeSet)infos[0];
     Long val = range.getConstantValue();

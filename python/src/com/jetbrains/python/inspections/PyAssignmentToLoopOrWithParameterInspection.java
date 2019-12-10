@@ -35,12 +35,6 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return NAME;
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {

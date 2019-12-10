@@ -39,13 +39,6 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.throws.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

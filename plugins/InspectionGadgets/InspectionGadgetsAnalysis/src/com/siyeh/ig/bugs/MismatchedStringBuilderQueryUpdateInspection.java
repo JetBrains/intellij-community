@@ -26,7 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,14 +42,6 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
   @NotNull
   public String getID() {
     return "MismatchedQueryAndUpdateOfStringBuilder";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "mismatched.string.builder.query.update.display.name");
   }
 
   @NotNull

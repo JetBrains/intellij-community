@@ -44,12 +44,6 @@ public class DuplicateConditionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("duplicate.condition.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("duplicate.condition.problem.descriptor");
   }

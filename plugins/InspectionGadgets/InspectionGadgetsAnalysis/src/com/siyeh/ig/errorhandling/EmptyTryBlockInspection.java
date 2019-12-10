@@ -27,12 +27,6 @@ import org.jetbrains.annotations.NotNull;
 public class EmptyTryBlockInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("empty.try.block.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

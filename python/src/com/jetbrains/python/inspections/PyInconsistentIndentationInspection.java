@@ -36,12 +36,6 @@ import java.util.List;
  * @author yole
  */
 public class PyInconsistentIndentationInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Inconsistent indentation";
-  }
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {

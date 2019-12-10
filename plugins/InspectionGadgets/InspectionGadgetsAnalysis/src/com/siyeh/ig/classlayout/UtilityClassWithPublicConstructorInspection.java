@@ -28,13 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class UtilityClassWithPublicConstructorInspection
   extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "utility.class.with.public.constructor.display.name");
-  }
-
 
   @Override
   @NotNull

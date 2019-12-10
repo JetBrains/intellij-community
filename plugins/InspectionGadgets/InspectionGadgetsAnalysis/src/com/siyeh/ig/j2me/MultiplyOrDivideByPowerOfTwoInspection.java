@@ -42,13 +42,6 @@ public class MultiplyOrDivideByPowerOfTwoInspection
   public boolean checkDivision = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "multiply.or.divide.by.power.of.two.display.name");
-  }
-
-  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(

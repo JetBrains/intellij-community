@@ -45,12 +45,6 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
     ContainerUtil.set(PsiModifier.PUBLIC, PsiModifier.ABSTRACT);
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.interface.modifier.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

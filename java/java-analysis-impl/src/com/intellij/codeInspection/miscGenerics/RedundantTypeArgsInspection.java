@@ -45,12 +45,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.type.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

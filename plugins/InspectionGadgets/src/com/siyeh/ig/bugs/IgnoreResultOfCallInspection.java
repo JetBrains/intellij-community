@@ -135,12 +135,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("result.of.method.call.ignored.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass containingClass = (PsiClass)infos[0];
     final String className = containingClass.getName();

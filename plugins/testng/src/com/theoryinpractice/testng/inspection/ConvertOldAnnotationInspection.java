@@ -35,13 +35,6 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

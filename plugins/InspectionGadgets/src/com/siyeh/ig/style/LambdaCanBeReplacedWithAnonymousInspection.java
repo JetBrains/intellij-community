@@ -44,13 +44,6 @@ import java.util.Set;
 public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

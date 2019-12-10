@@ -33,13 +33,6 @@ import java.util.Set;
 
 public class CyclicPackageDependencyInspection extends BaseGlobalInspection {
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cyclic.package.dependency.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(

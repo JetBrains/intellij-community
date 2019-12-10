@@ -30,12 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * User :catherine
  */
 public class PyListCreationInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.list.creation");
-  }
 
   @NotNull
   @Override

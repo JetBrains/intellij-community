@@ -33,12 +33,6 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PyFromFutureImportInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.from.future.import");
-  }
 
   @NotNull
   @Override

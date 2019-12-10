@@ -27,13 +27,6 @@ public class TestMethodInProductCodeInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "test.method.in.product.code.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "JUnitTestMethodInProductSource";
   }

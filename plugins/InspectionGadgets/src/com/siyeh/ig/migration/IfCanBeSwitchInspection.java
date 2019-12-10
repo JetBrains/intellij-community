@@ -25,7 +25,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,13 +57,6 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("if.can.be.switch.display.name");
   }
 
   @NotNull
