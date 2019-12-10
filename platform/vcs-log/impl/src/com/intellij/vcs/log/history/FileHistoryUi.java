@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,8 +81,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
     };
 
+    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
+
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path);
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !isDiffPreviewAsEditor);
+
+    if (isDiffPreviewAsEditor) {
+      new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);
+    }
 
     myHighlighterIds = myRevision == null
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
@@ -230,9 +237,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
-      }
-      else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
-        myFileHistoryPanel.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
       }
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         getTable().rootColumnUpdated();

@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -50,7 +51,7 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
     previewDiffSplitter.firstComponent = mainComponent
 
     toggleDiffPreviewOnPropertyChange(uiProperties, previewDiff, this::showDiffPreview)
-    showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW))
+    invokeLater { showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) }
   }
 
   abstract fun updatePreview(state: Boolean)
