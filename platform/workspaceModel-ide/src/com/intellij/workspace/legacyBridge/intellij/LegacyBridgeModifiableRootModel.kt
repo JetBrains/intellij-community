@@ -137,7 +137,7 @@ class LegacyBridgeModifiableRootModel(
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
 
-    updateDependencies { it + listOf(libraryDependency) }
+    updateDependencies { it + libraryDependency }
 
     return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
            ?: error("Unable to find library orderEntry after adding")
@@ -150,7 +150,7 @@ class LegacyBridgeModifiableRootModel(
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
 
-    updateDependencies { it + listOf(libraryDependency) }
+    updateDependencies { it + libraryDependency }
 
     return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
            ?: error("Unable to find library orderEntry after adding")
@@ -164,7 +164,7 @@ class LegacyBridgeModifiableRootModel(
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
 
-    updateDependencies { it + listOf(moduleDependency) }
+    updateDependencies { it + moduleDependency }
 
     return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry
            ?: error("Unable to find module orderEntry after adding")
@@ -178,7 +178,7 @@ class LegacyBridgeModifiableRootModel(
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
 
-    updateDependencies { it + listOf(moduleDependency) }
+    updateDependencies { it + moduleDependency }
 
     return orderEntriesImpl.lastOrNull() as? ModuleOrderEntry
            ?: error("Unable to find module orderEntry after adding")
