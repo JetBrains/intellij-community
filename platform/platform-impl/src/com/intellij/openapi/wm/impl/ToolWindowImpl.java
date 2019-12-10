@@ -112,10 +112,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void activate(@Nullable final Runnable runnable, boolean autoFocusContents, boolean forced) {
+  public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final UiActivity activity = new UiActivity.Focus("toolWindow:" + myId);
+    UiActivity activity = new UiActivity.Focus("toolWindow:" + myId);
     UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);

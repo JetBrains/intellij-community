@@ -179,10 +179,7 @@ public final class NewProjectUtil {
 
       if (newProject != projectToClose) {
         ProjectUtil.updateLastProjectLocation(projectFilePath);
-
-        OpenProjectTask options = new OpenProjectTask();
-        options.setProject(newProject);
-        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, options);
+        PlatformProjectOpenProcessor.openExistingProject(projectFile, projectDir, new OpenProjectTask(newProject));
       }
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
