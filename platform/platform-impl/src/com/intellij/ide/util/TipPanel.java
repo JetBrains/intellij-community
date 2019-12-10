@@ -118,6 +118,7 @@ class TipPanel extends JPanel implements DoNotAskOption {
     TipUIUtil.openTipInBrowser(myCurrentTip, myBrowser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(myCurrentTip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
+    TipsOfTheDayUsagesCollector.triggerTipShown(tip);
 
     if (!mySeenIds.contains(myCurrentTip.fileName)) {
       mySeenIds.add(myCurrentTip.fileName);

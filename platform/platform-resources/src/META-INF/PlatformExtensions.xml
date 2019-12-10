@@ -537,6 +537,7 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoWhiteListRule"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.openapi.updateSettings.impl.UpdateDialogURLWhiteListRule"/>
+    <statistics.validation.customWhiteListRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoWhiteListRule"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
