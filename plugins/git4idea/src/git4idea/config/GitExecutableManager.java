@@ -2,11 +2,9 @@
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -17,10 +15,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.text.ParseException;
@@ -108,20 +103,21 @@ public class GitExecutableManager {
    * Get version of git executable used in project or tell user that it cannot be obtained and cancel the operation
    * Version identification is done under progress because it can hang in rare cases
    * Usually this takes milliseconds because version is cached
-   *
-   * @return git version
    */
-  @CalledInAny
+  @CalledInAwt
   @NotNull
-  public GitVersion getVersionOrCancel(@NotNull Project project) throws ProcessCanceledException {
-    return runUnderProgressIfNeeded(project, GitBundle.getString("git.executable.version.progress.title"), () -> {
+  public GitVersion getVersionUnderModalProgressOrCancel(@NotNull Project project) throws ProcessCanceledException {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       String pathToGit = getPathToGit(project);
-      GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
-      if (version == null) {
+      GitVersion version;
+      try {
+        version = identifyVersion(pathToGit);
+      }
+      catch (GitVersionIdentificationException e) {
         throw new ProcessCanceledException();
       }
       return version;
-    });
+    }, GitBundle.getString("git.executable.version.progress.title"), true, project);
   }
 
   @CalledInAny
@@ -197,21 +193,14 @@ public class GitExecutableManager {
     }
   }
 
+  @CalledInBackground
   @Nullable
-  private GitVersion identifyVersionOrDisplayError(@Nullable Project project, @NotNull String pathToGit) {
+  private GitVersion identifyVersionOrDisplayError(@NotNull Project project, @NotNull String pathToGit) {
     try {
       return identifyVersion(pathToGit);
     }
     catch (GitVersionIdentificationException e) {
-      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-      if (project != null
-          && progressIndicator != null
-          && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-        GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
-      }
-      else {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(e, project);
-      }
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       return null;
     }
   }

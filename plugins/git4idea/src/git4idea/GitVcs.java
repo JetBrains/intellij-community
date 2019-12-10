@@ -283,7 +283,6 @@ public final class GitVcs extends AbstractVcs {
 
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
-   * @see GitExecutableManager#getVersionOrCancel
    */
   @NotNull
   public GitVersion getVersion() {

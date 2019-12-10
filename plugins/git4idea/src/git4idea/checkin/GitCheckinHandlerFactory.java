@@ -158,7 +158,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private ReturnResult checkGitVersionAndEnv() {
-      GitVersion version = GitExecutableManager.getInstance().getVersionOrCancel(myProject);
+      GitVersion version = GitExecutableManager.getInstance().getVersionUnderModalProgressOrCancel(myProject);
       if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
         Messages.showErrorDialog(myProject,
                                  "You are using Git " +
