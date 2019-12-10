@@ -122,7 +122,7 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
       }
     });
 
-    myModel = new JdkListModelBuilder(project, sdkModel, notSimpleJavaSdkType(sdkTypeFilter), creationFilter, sdkFilter) {
+    myModel = new JdkListModelBuilder(project, sdkModel, sdkTypeFilter, creationFilter, sdkFilter) {
       @Override
       protected void syncModel(@NotNull JdkListModel model) {
         Object previousSelection = getSelectedItem();
