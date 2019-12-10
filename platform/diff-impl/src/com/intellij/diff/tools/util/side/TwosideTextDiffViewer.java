@@ -88,8 +88,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
       DiffUtil.installLineConvertor(getEditor(side), getContent(side));
     }
 
-    for (Side side : Side.values()) {
-      myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+    if (getProject() != null) {
+      for (Side side : Side.values()) {
+        myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+      }
     }
   }
 

@@ -48,7 +48,9 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
 
     DiffUtil.installLineConvertor(getEditor(), getContent());
 
-    myContentPanel.setBreadcrumbs(new SimpleDiffBreadcrumbsPanel(getEditor(), this), getTextSettings());
+    if (getProject() != null) {
+      myContentPanel.setBreadcrumbs(new SimpleDiffBreadcrumbsPanel(getEditor(), this), getTextSettings());
+    }
   }
 
   @Override

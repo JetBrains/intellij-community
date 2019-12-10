@@ -77,8 +77,10 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
       DiffUtil.installLineConvertor(getEditor(side), getContent(side));
     }
 
-    for (ThreeSide side : ThreeSide.values()) {
-      myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+    if (getProject() != null) {
+      for (ThreeSide side : ThreeSide.values()) {
+        myContentPanel.setBreadcrumbs(side, new SimpleDiffBreadcrumbsPanel(getEditor(side), this), getTextSettings());
+      }
     }
   }
 

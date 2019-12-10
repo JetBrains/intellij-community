@@ -120,7 +120,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
     contentPanel.setTitle(createTitles());
-    contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+    if (getProject() != null) {
+      contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+    }
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
