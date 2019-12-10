@@ -146,11 +146,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     JFrame frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
-    if (frame == null || !frame.isActive()) {
+    if (frame == null || !frame.isActive() || myToolWindowManager.isEditorComponentActive()) {
       return false;
     }
 
-    if (myToolWindowManager.isEditorComponentActive()) return false;
     ActionManager actionManager = ActionManager.getInstance();
     if (actionManager instanceof ActionManagerImpl
         && !((ActionManagerImpl)actionManager).isActionPopupStackEmpty()
@@ -158,7 +157,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
       return false;
     }
 
-    return myToolWindowManager.isToolWindowActive(myId) || myDecorator != null && myDecorator.isFocused();
+    return myToolWindowManager.isToolWindowActive(myId) || (myDecorator != null && myDecorator.isFocused());
   }
 
   @NotNull

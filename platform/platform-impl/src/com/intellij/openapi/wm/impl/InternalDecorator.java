@@ -122,12 +122,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   public boolean isFocused() {
-    IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-    Component component = fm.getFocusedDescendantFor(myToolWindow.getComponent());
-    if (component != null) return true;
+    IdeFocusManager focusManager = myToolWindow.getToolWindowManager().getFocusManager();
+    Component component = focusManager.getFocusedDescendantFor(myToolWindow.getComponent());
+    if (component != null) {
+      return true;
+    }
 
-    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
-
+    Component owner = focusManager.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
     return owner != null && SwingUtilities.isDescendingFrom(owner, myToolWindow.getComponent());
   }
 
