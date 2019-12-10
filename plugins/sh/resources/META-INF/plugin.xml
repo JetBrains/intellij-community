@@ -42,7 +42,9 @@ Adds support for working with shell script files
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
-    <defaultLiveTemplatesProvider implementation="com.intellij.sh.template.ShTemplateProvider"/>
+    <defaultLiveTemplates file="/liveTemplates/ShellScript"/>
+    <defaultLiveTemplates file="/liveTemplates/ShellScriptArray"/>
+    <defaultLiveTemplates file="/liveTemplates/ShellScriptHidden" hidden="true"/>
     <liveTemplateContext implementation="com.intellij.sh.template.ShContextType"/>
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
