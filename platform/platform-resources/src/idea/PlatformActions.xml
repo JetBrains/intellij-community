@@ -701,7 +701,9 @@
         <separator/>
         <reference ref="SearchEverywhere"/>
         <separator/>
-        <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
+        <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction">
+          <override-text place="MainMenu"/>
+        </action>
         <separator/>
 
         <group id="GoToErrorGroup">
