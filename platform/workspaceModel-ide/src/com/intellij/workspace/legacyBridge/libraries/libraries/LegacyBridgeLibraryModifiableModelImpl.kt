@@ -59,6 +59,9 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
 
     val entity = currentLibrary.libraryEntity
     if (entity.name == name) return
+    if (currentLibrary.libraryTable.getLibraryByName(name) != null) {
+      error("Library named $name already exists")
+    }
 
     entityId = entity.persistentId().copy(name = name)
     diff.modifyEntity(ModifiableLibraryEntity::class.java, entity) {
