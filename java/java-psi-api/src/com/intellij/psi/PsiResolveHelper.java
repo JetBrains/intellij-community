@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.sun.tools.internal.jxc.ConfigReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,13 @@ public interface PsiResolveHelper {
    */
   @NotNull
   CandidateInfo[] getReferencedMethodCandidates(@NotNull PsiCallExpression call, boolean dummyImplicitConstructor, boolean checkVarargs);
-  
+
+  /**
+   * Checks if there are method (or constructor) overloads. 
+   * 
+   * E.g. when no overloads exist, it's possible to cache types during inference even when they depend on top method call.
+   */
+  @ApiStatus.Experimental
   boolean hasOverloads(@NotNull PsiCallExpression call);
 
   /**

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
@@ -141,7 +140,6 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   private static final TypeEvaluator ourTypeEvaluator = new TypeEvaluator();
 
   private static class TypeEvaluator implements Function<PsiMethodCallExpression, PsiType> {
-    private static final AtomicBoolean ourAssertOnMissedCache = new AtomicBoolean();
     @Override
     @Nullable
     public PsiType fun(final PsiMethodCallExpression call) {

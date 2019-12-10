@@ -172,12 +172,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     };
     if (call instanceof PsiMethodCallExpression) {
-      try {
-        PsiScopesUtil.setupAndRunProcessor(processor, call, true);
-      }
-      catch (MethodProcessorSetupFailedException e) {
-        return true;
-      }
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
+      processor.setIsConstructor(true);
+      processor.setName(methodExpression.getReferenceName());
+      PsiScopesUtil.resolveAndWalk(processor, methodExpression, null);
     }
     else if (call instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassOrAnonymousClassReference();
