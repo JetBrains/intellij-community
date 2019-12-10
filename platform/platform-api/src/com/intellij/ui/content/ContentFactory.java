@@ -23,7 +23,7 @@ public interface ContentFactory {
   @NotNull
   ContentManager createContentManager(boolean canCloseContents, @NotNull Project project);
 
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() {
     }
 

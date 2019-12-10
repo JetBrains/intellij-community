@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -53,7 +54,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final JFrame myFrame;
 
-  private final Map<String, StripeButton> myIdToButton = new HashMap<>();
   private final Map<InternalDecorator, WindowInfoImpl> myDecoratorToInfo = new HashMap<>();
   private final TObjectFloatHashMap<String> myIdToSplitProportion = new TObjectFloatHashMap<>();
   private Pair<ToolWindow, Integer> myMaximizedProportion;
@@ -213,8 +213,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                               @NotNull WindowInfoImpl info,
                                               @NotNull Comparator<? super StripeButton> comparator,
                                               @NotNull Runnable finishCallBack) {
-    final WindowInfoImpl copiedInfo = info.copy();
-    myIdToButton.put(copiedInfo.getId(), button);
+    WindowInfoImpl copiedInfo = info.copy();
     return new AddToolStripeButtonCmd(button, copiedInfo, comparator, finishCallBack);
   }
 
@@ -252,13 +251,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *
    * @param id {@code ID} of the button to be removed.
    */
-  @Nullable
-  final FinalizableCommand createRemoveButtonCmd(@NotNull WindowInfoImpl info, @NotNull String id, @NotNull Runnable finishCallBack) {
-    StripeButton button = myIdToButton.remove(id);
-    if (button == null) {
-      return null;
-    }
-
+  @NotNull
+  final FinalizableCommand createRemoveButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull String id, @NotNull Runnable finishCallBack) {
     return new RemoveToolStripeButtonCmd(button, info, finishCallBack);
   }
 
@@ -306,8 +300,40 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @NotNull
-  final FinalizableCommand createUpdateButtonPositionCmd(@NotNull String id, @NotNull Runnable finishCallback) {
-    return new UpdateButtonPositionCmd(id, finishCallback);
+  final FinalizableCommand createUpdateButtonPositionCmd(@NotNull Supplier<StripeButton> buttonSupplier, @NotNull Runnable finishCallback) {
+    return new FinalizableCommand(finishCallback) {
+      @Override
+      public void run() {
+        try {
+          StripeButton stripeButton = buttonSupplier.get();
+          if (stripeButton == null) {
+            return;
+          }
+
+          WindowInfoImpl info = stripeButton.getWindowInfo();
+          ToolWindowAnchor anchor = info.getAnchor();
+
+          if (ToolWindowAnchor.TOP == anchor) {
+            myTopStripe.revalidate();
+          }
+          else if (ToolWindowAnchor.LEFT == anchor) {
+            myLeftStripe.revalidate();
+          }
+          else if (ToolWindowAnchor.BOTTOM == anchor) {
+            myBottomStripe.revalidate();
+          }
+          else if (ToolWindowAnchor.RIGHT == anchor) {
+            myRightStripe.revalidate();
+          }
+          else {
+            LOG.error("unknown anchor: " + anchor);
+          }
+        }
+        finally {
+          finish();
+        }
+      }
+    };
   }
 
   @NotNull
@@ -1177,47 +1203,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         setDocumentComponent(myComponent);
         myLayeredPane.validate();
         myLayeredPane.repaint();
-      }
-      finally {
-        finish();
-      }
-    }
-  }
-
-  private final class UpdateButtonPositionCmd extends FinalizableCommand {
-    private final String myId;
-
-    private UpdateButtonPositionCmd(@NotNull String id, @NotNull Runnable finishCallBack) {
-      super(finishCallBack);
-      myId = id;
-    }
-
-    @Override
-    public void run() {
-      try {
-        StripeButton stripeButton = myIdToButton.get(myId);
-        if (stripeButton == null) {
-          return;
-        }
-
-        WindowInfoImpl info = stripeButton.getWindowInfo();
-        ToolWindowAnchor anchor = info.getAnchor();
-
-        if (ToolWindowAnchor.TOP == anchor) {
-          myTopStripe.revalidate();
-        }
-        else if (ToolWindowAnchor.LEFT == anchor) {
-          myLeftStripe.revalidate();
-        }
-        else if (ToolWindowAnchor.BOTTOM == anchor) {
-          myBottomStripe.revalidate();
-        }
-        else if (ToolWindowAnchor.RIGHT == anchor) {
-          myRightStripe.revalidate();
-        }
-        else {
-          LOG.error("unknown anchor: " + anchor);
-        }
       }
       finally {
         finish();

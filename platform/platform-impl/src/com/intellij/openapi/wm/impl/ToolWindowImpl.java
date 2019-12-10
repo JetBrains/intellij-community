@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 
 /**
@@ -46,7 +43,8 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class ToolWindowImpl implements ToolWindowEx {
-  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
+
   private final ToolWindowManagerImpl myToolWindowManager;
   private final String myId;
   private final JComponent myComponent;
@@ -72,23 +70,23 @@ public final class ToolWindowImpl implements ToolWindowEx {
   };
   private boolean myUseLastFocused = true;
 
-  private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
   private String myHelpId;
 
   ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager,
-                 @NotNull String id, boolean canCloseContent,
+                 @NotNull String id,
+                 boolean canCloseContent,
                  @Nullable JComponent component,
                  @NotNull Disposable parentDisposable) {
     myToolWindowManager = toolWindowManager;
     myId = id;
 
-    final ContentFactory contentFactory = ServiceManager.getService(ContentFactory.class);
+    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     myContentUI = new ToolWindowContentUi(this);
     myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
     Disposer.register(parentDisposable, myContentManager);
 
     if (component != null) {
-      final Content content = contentFactory.createContent(component, "", false);
+      Content content = contentFactory.createContent(component, "", false);
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content, false);
     }
@@ -97,22 +95,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
 
-    UiNotifyConnector notifyConnector = new UiNotifyConnector(myComponent, new Activatable() {
+    Disposer.register(myContentManager, new UiNotifyConnector(myComponent, new Activatable() {
       @Override
       public void showNotify() {
         myShowing.onReady();
       }
-    });
-    Disposer.register(myContentManager, notifyConnector);
-  }
-
-  public final void addPropertyChangeListener(final PropertyChangeListener l) {
-    myChangeSupport.addPropertyChangeListener(l);
-  }
-
-  @Override
-  public final void removePropertyChangeListener(final PropertyChangeListener l) {
-    myChangeSupport.removePropertyChangeListener(l);
+    }));
   }
 
   @Override
@@ -326,11 +314,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setAvailable(final boolean available, final Runnable runnable) {
+  public final void setAvailable(boolean available, Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Boolean oldAvailable = myAvailable ? Boolean.TRUE : Boolean.FALSE;
     myAvailable = available;
-    myChangeSupport.firePropertyChange(PROP_AVAILABLE, oldAvailable, myAvailable ? Boolean.TRUE : Boolean.FALSE);
+    myToolWindowManager.toolWindowPropertyChanged(this, PROP_AVAILABLE);
     if (runnable != null) {
       myToolWindowManager.invokeLater(runnable);
     }
@@ -410,23 +397,21 @@ public final class ToolWindowImpl implements ToolWindowEx {
     //getSelectedContent().setIcon(icon);
 
     myIcon = new ToolWindowIcon(icon, getId());
-    myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);
+    myToolWindowManager.toolWindowPropertyChanged(this, PROP_ICON);
   }
 
   @Override
   public final void setTitle(String title) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String oldTitle = getTitle();
     getSelectedContent().setDisplayName(title);
-    myChangeSupport.firePropertyChange(PROP_TITLE, oldTitle, title);
+    myToolWindowManager.toolWindowPropertyChanged(this, PROP_TITLE);
   }
 
   @Override
   public final void setStripeTitle(@NotNull String stripeTitle) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String oldTitle = myStripeTitle;
     myStripeTitle = stripeTitle;
-    myChangeSupport.firePropertyChange(PROP_STRIPE_TITLE, oldTitle, stripeTitle);
+    myToolWindowManager.toolWindowPropertyChanged(this, PROP_STRIPE_TITLE);
   }
 
   private Content getSelectedContent() {
@@ -455,7 +440,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
       myDecorator.fireHiddenSide();
     }
   }
-
 
   public ToolWindowManagerImpl getToolWindowManager() {
     return myToolWindowManager;

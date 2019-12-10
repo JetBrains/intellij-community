@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
@@ -360,10 +359,6 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void showContentPopup(InputEvent inputEvent) {
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
     }
 
     @Override

@@ -82,8 +82,8 @@ class DesktopLayout {
   }
 
   fun unregister(id: String) {
-    val info = idToInfo.get(id)
-    if (info!!.isRegistered) {
+    val info = idToInfo.get(id)!!
+    if (info.isRegistered) {
       info.isRegistered = false
       registeredInfos.drop()
     }

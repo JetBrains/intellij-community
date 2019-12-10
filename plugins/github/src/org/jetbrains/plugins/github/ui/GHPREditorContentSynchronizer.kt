@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.vcs.log.impl.VcsLogEditorTabSelector
@@ -21,7 +21,7 @@ internal class GHPREditorContentSynchronizer {
     fun getInstance(project: Project): GHPREditorContentSynchronizer = project.service()
   }
 
-  private fun addContentManagerListener(window: ToolWindowImpl, listener: ContentManagerListener) {
+  private fun addContentManagerListener(window: ToolWindow, listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
     Disposer.register(window.contentManager, Disposable {
       if (!window.isDisposed) {
@@ -36,16 +36,15 @@ internal class GHPREditorContentSynchronizer {
         return
       }
 
-      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id) as? ToolWindowImpl ?: return
+      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id) ?: return
       getInstance(project).addContentManagerListener(toolwindow, MyLogEditorListener(project))
     }
   }
 
   private class MyLogEditorListener(private val project: Project) : VcsLogEditorTabSelector(project) {
     override fun selectEditorTab(content: Content) {
-      val component = content.component
-      val ghprAccountsComponent = component as? GHPRAccountsComponent
-      if (ghprAccountsComponent != null) {
+      val component = content.component as? GHPRAccountsComponent
+      if (component != null) {
         project.service<GHPRComponentFactory>().tryOpenGHPREditorTab()
       }
     }
