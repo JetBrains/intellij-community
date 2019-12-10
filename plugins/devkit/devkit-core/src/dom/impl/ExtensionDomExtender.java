@@ -5,6 +5,7 @@ import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.compiler.CompileTaskBean;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -379,11 +380,17 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       private String fromXmlName(@NotNull String name) {
+        if (doNotTransformName()) return name;
         return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
       }
 
       private String toXmlName(PsiEnumConstant constant) {
+        if (doNotTransformName()) return constant.getName();
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constant.getName());
+      }
+
+      private boolean doNotTransformName() {
+        return CompileTaskBean.CompileTaskExecutionPhase.class.getCanonicalName().equals(fieldPsiClass.getQualifiedName());
       }
     };
   }
