@@ -425,7 +425,7 @@ public final class EventLog {
     }
   }
 
-  private static void activate(@NotNull ToolWindow eventLog, @Nullable final String groupId, @Nullable final Runnable r) {
+  private static void activate(@NotNull ToolWindow eventLog, @Nullable String groupId, @Nullable Runnable runnable) {
     eventLog.activate(() -> {
       if (groupId == null) return;
       String contentName = getContentName(groupId);
@@ -433,8 +433,8 @@ public final class EventLog {
       if (content != null) {
         eventLog.getContentManager().setSelectedContent(content);
       }
-      if (r != null) {
-        r.run();
+      if (runnable != null) {
+        runnable.run();
       }
     }, true);
   }
@@ -555,10 +555,11 @@ public final class EventLog {
     }
 
     @NotNull
-    private EventLogConsole createNewContent(String name) {
+    private EventLogConsole createNewContent(@NotNull String name) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       EventLogConsole newConsole = new EventLogConsole(myProjectModel);
-      EventLogToolWindowFactory.createContent(myProject, getEventLog(myProject), newConsole, name);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(LOG_TOOL_WINDOW_ID);
+      EventLogToolWindowFactory.createContent(myProject, Objects.requireNonNull(toolWindow), newConsole, name);
       myCategoryMap.put(name, newConsole);
 
       return newConsole;
@@ -566,8 +567,8 @@ public final class EventLog {
   }
 
   @NotNull
-  private static String getContentName(String groupId) {
-    for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensions()) {
+  private static String getContentName(@NotNull String groupId) {
+    for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensionList()) {
       if (category.acceptsNotification(groupId)) {
         return category.getDisplayName();
       }

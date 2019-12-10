@@ -73,10 +73,11 @@ final class EventLogConsole {
 
   private List<RangeHighlighter> myNMoreHighlighters;
 
-  EventLogConsole(LogModel model) {
+  EventLogConsole(@NotNull LogModel model) {
     myProjectModel = model;
   }
 
+  @NotNull
   private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
     EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
@@ -370,6 +371,7 @@ final class EventLogConsole {
     }
   }
 
+  @NotNull
   public Editor getConsoleEditor() {
     return myLogEditor.getValue();
   }

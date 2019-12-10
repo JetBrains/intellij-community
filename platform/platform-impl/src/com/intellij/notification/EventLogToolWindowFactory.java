@@ -38,7 +38,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     toolWindow.setHelpId(EventLog.HELP_ID);
   }
 
-  static void createContent(@NotNull Project project, @NotNull ToolWindow toolWindow, EventLogConsole console, String title) {
+  static void createContent(@NotNull Project project, @NotNull ToolWindow toolWindow, @NotNull EventLogConsole console, @NotNull String title) {
     // update default Event Log tab title
     ContentManager contentManager = toolWindow.getContentManager();
     Content generalContent = contentManager.getContent(0);
@@ -80,7 +80,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     panel.setContent(editorPanel);
     panel.addAncestorListener(new LogShownTracker(project));
 
-    ActionToolbar toolbar = createToolbar(project, editor, console);
+    ActionToolbar toolbar = createToolbar(project, console);
     toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
@@ -89,7 +89,7 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     contentManager.setSelectedContent(content);
   }
 
-  private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
+  private static ActionToolbar createToolbar(Project project, EventLogConsole console) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_MARK_ALL_NOTIFICATIONS_AS_READ));
     group.add(new EventLogConsole.ClearLogAction(console));
