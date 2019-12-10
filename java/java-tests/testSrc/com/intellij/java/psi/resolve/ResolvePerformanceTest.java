@@ -17,6 +17,7 @@ package com.intellij.java.psi.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -112,6 +113,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
   }
 
   public void testStaticImportInTheSameClassPerformance() throws Exception {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     warmUpResolve();
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java");
@@ -132,6 +134,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
   }
 
   public void testStaticImportNetworkPerformance() throws Exception {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     warmUpResolve();
 
     VirtualFile dir = createTempVfsDirectory();
