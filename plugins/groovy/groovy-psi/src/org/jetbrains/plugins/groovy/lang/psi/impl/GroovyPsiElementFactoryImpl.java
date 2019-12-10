@@ -694,20 +694,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrBlockStatement createBlockStatement(@NonNls GrStatement... statements) {
-    StringBuilder text = new StringBuilder();
-    text.append("while (true) { \n");
-    for (GrStatement statement : statements) {
-      text.append(statement.getText()).append("\n");
-    }
-    text.append("}");
-    PsiFile file = createGroovyFileChecked(text);
-    LOG.assertTrue(file.getChildren()[0] != null && (file.getChildren()[0] instanceof GrWhileStatement), text);
-    return (GrBlockStatement) ((GrWhileStatement) file.getChildren()[0]).getBody();
-  }
-
-  @NotNull
-  @Override
   public GrMethodCallExpression createMethodCallByAppCall(@NotNull GrApplicationStatement callExpr) {
     StringBuilder text = new StringBuilder();
     text.append(callExpr.getInvokedExpression().getText());
