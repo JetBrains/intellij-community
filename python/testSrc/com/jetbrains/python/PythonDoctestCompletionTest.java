@@ -29,7 +29,7 @@ public class PythonDoctestCompletionTest extends PyTestCase {
     final LookupElement[] elements = myFixture.completeBasic();
     if (elements != null) {
       for (LookupElement lookup : elements) {
-        System.out.println(lookup.getLookupString());
+        LOG.debug(lookup.getLookupString());
         if (lookup.getLookupString().equals(expected))
           return;
       }

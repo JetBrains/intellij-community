@@ -4,6 +4,7 @@ package com.intellij.util;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.icons.ImageType;
 import com.intellij.util.ui.TestScaleHelper;
@@ -28,6 +29,7 @@ import static org.junit.Assume.assumeTrue;
  */
 @HardwareAgentRequired
 public class IconsLoadTimePerformanceTest {
+  private static final Logger LOG = Logger.getInstance(IconsLoadTimePerformanceTest.class);
   private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED = 30; // ms
   private static final int SVG_ICON_QUORUM_COUNT = 50;
 
@@ -58,7 +60,7 @@ public class IconsLoadTimePerformanceTest {
     StatData svgData = IconsLoadTime.getStatData(false, ImageType.SVG);
 
     assumeTrue("no SVG load statistics gathered", svgData != null);
-    System.out.println(svgData);
+    LOG.debug(String.valueOf(svgData));
 
     assumeTrue("too few icons loaded: " + svgData.count + "; expecting > " + SVG_ICON_QUORUM_COUNT,
                svgData.count >= SVG_ICON_QUORUM_COUNT);

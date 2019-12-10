@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import com.google.common.base.Charsets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
@@ -19,6 +20,7 @@ import java.util.Locale;
 import static org.junit.Assert.*;
 
 public class PagedFileStorageTest {
+  private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   private final PagedFileStorage.StorageLock lock = new PagedFileStorage.StorageLock();
@@ -72,7 +74,7 @@ public class PagedFileStorageTest {
     withLock(lock, () -> {
       ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock);
 
-      System.out.println("writing...");
+      LOG.debug("writing...");
       long t = System.currentTimeMillis();
       for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
         file.putInt(index, index);
@@ -83,20 +85,20 @@ public class PagedFileStorageTest {
       file.putInt(Integer.MAX_VALUE - 20, 1234);
       assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
       t = System.currentTimeMillis() - t;
-      System.out.println("done in " + t + " ms");
+      LOG.debug("done in " + t + " ms");
 
       file.putInt(Integer.MAX_VALUE + 20L, 5678);
       assertEquals(5678, file.getInt(Integer.MAX_VALUE + 20L));
 
       t = System.currentTimeMillis();
-      System.out.println("checking...");
+      LOG.debug("checking...");
       for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
         assertEquals(index, file.getInt(index));
         printPct(pct);
       }
       assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
       t = System.currentTimeMillis() - t;
-      System.out.println("done in " + t + " ms");
+      LOG.debug("done in " + t + " ms");
 
       file.close();
     });
@@ -134,7 +136,7 @@ public class PagedFileStorageTest {
 
   private static void printPct(int pct) {
     if (pct < 1000 && pct % 100 == 0) {
-      System.out.println("  [" + FORMATTER.format(new Date()) + "] " + pct / 10 + "%");
+      LOG.debug("  [" + FORMATTER.format(new Date()) + "] " + pct / 10 + "%");
     }
   }
 }

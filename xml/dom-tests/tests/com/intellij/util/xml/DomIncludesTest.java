@@ -102,7 +102,7 @@ public class DomIncludesTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiFile fileE = createFile("e.xml", textE);
     final int threadCount = 20;
     final int iterationCount = Timings.adjustAccordingToMySpeed(100, true);
-    System.out.println("iterationCount = " + iterationCount);
+    LOG.debug("iterationCount = " + iterationCount);
 
     final CountDownLatch finished = new CountDownLatch(threadCount);
     final AtomicReference<Exception> ex = new AtomicReference<>();

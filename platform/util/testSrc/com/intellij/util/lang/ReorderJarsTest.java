@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.zip.JBZipEntry;
@@ -36,6 +37,7 @@ import static org.junit.Assert.*;
  * @author Dmitry Avdeev
  */
 public class ReorderJarsTest {
+  private static final Logger LOG = Logger.getInstance(ReorderJarsTest.class);
   private File myTempDirectory;
 
   @Before
@@ -58,7 +60,7 @@ public class ReorderJarsTest {
 
     try (JBZipFile zipFile1 = new JBZipFile(path + "/annotations.jar")) {
       List<JBZipEntry> entries = zipFile1.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
     }
 
     ReorderJarsMain.main(new String[]{path + "/order.txt", path, myTempDirectory.getPath()});
@@ -72,7 +74,7 @@ public class ReorderJarsTest {
     byte[] data;
     try (JBZipFile zipFile2 = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile2.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
       JBZipEntry entry = entries.get(1);
       data = entry.getData();
@@ -106,7 +108,7 @@ public class ReorderJarsTest {
 
     try (JBZipFile zipFile = new JBZipFile(file)) {
       List<JBZipEntry> entries = zipFile.getEntries();
-      System.out.println(entries);
+      LOG.debug(String.valueOf(entries));
       assertEquals(JarMemoryLoader.SIZE_ENTRY, entries.get(0).getName());
       assertEquals("META-INF/plugin.xml", entries.get(1).getName());
     }
