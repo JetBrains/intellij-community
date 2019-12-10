@@ -43,7 +43,6 @@ public class MainMenuCollector {
       }
 
       if (!StringUtil.isEmpty(path)) {
-        final FeatureUsageData data = new FeatureUsageData().addOS().addPluginInfo(info);
       }
     }
     catch (Exception ignore) {
