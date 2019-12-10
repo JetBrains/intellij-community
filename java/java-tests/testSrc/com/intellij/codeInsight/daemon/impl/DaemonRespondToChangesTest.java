@@ -2460,11 +2460,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
       TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      long start = System.currentTimeMillis();
       myDaemonCodeAnalyzer
         .runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
       List<RangeHighlighter> h = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
+      long elapsed = System.currentTimeMillis() - start;
 
-      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + h + "; called: " + called);
+      fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + h + "; called: " + called+"; highlighted in "+elapsed+"ms");
     }
     catch (DebugException ignored) {
     }
