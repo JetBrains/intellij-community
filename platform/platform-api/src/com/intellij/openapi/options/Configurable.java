@@ -2,6 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * This interface represents a named configurable component that provides a Swing form
@@ -184,6 +186,24 @@ public interface Configurable extends UnnamedConfigurable {
      *         (IDE) settings.
      */
     boolean isProjectLevel();
+  }
+  
+  /**
+   * The interface is used for configurable that depends on some dynamic extension points.
+   * If a configurable implements the interface by default the configurable will re-created after adding / removing extensions for the EP.
+   *
+   * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
+   * (but only if the content of the configurable was loaded)
+   *
+   * @apiNote configurable must not initialize EP-depend resources in the constructor
+   */
+  interface WithEpDependencies {
+    /**
+     * @return EPName-s that affect the configurable
+     */
+    @SuppressWarnings("rawtypes")
+    @NotNull
+    Collection<BaseExtensionPointName> getDependencies();
   }
 
   default boolean isModified(@NotNull JTextField textField, @NotNull String value) {

@@ -20,13 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableWithEPDependency;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CardLayoutPanel;
@@ -37,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -74,20 +73,22 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   
   @SuppressWarnings({"unchecked", "rawtypes"})
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
-    ConfigurableWithEPDependency configurable = ConfigurableWrapper.cast(ConfigurableWithEPDependency.class, wrapper);
+    Configurable.WithEpDependencies configurable = ConfigurableWrapper.cast(Configurable.WithEpDependencies.class, wrapper);
     if (configurable != null && !myListeners.containsKey(wrapper)) {
-      ExtensionPointName<?> dependency = configurable.getDependency();
       Disposable disposable = Disposer.newDisposable();
-      
-      dependency.addExtensionPointListener((ExtensionPointChangeListener)(e, pd) -> {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (configurable.updateOnExtensionChanged(e, pd)) return;
+      Collection<BaseExtensionPointName> dependencies = configurable.getDependencies();
+      for (BaseExtensionPointName dependency : dependencies) {
+        if (dependency instanceof ExtensionPointName) {
+          ((ExtensionPointName)dependency).addExtensionPointListener((e, pd) -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              //dispose resources -> reset nested component
+              wrapper.disposeUIResources();
+              resetValue(wrapper);
+            }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
+          }, disposable);
+        }
+      }
 
-          //dispose resources -> reset nested component
-          wrapper.disposeUIResources();
-          resetValue(wrapper);
-        }, ModalityState.stateForComponent(this), (__) -> this.isDisposed());
-      }, disposable);
       myListeners.put(wrapper, disposable);
     }
   }
