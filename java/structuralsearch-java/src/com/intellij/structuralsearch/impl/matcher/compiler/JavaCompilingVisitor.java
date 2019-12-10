@@ -5,7 +5,6 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -290,14 +289,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       // typed var for expression (but not top level)
       final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
       GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
-      if (handler instanceof SubstitutionHandler) {
-        final PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(reference);
-        if (label != null) {
-          final SubstitutionHandler handler1 = (SubstitutionHandler)handler;
-          pattern.setHandler(label, new SubstitutionHandler("__case_" + label.getTextOffset(), false,
-                                                            handler1.getMinOccurs(), handler1.getMaxOccurs(), true));
-        }
-      }
       typedVarProcessed = true;
     }
 
@@ -339,9 +330,27 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
-    super.visitBlockStatement(psiBlockStatement);
-    myCompilingVisitor.setFilterSimple(psiBlockStatement, BlockFilter.getInstance());
+  public void visitBlockStatement(PsiBlockStatement statement) {
+    super.visitBlockStatement(statement);
+    myCompilingVisitor.setFilterSimple(statement, BlockFilter.getInstance());
+  }
+
+  @Override
+  public void visitSwitchStatement(PsiSwitchStatement statement) {
+    super.visitSwitchStatement(statement);
+    myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchBlock);
+  }
+
+  @Override
+  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    super.visitSwitchLabelStatement(statement);
+    myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchLabelStatementBase);
+  }
+
+  @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    super.visitSwitchLabeledRuleStatement(statement);
+    myCompilingVisitor.setFilterSimple(statement, e -> e instanceof PsiSwitchLabelStatementBase);
   }
 
   @Override

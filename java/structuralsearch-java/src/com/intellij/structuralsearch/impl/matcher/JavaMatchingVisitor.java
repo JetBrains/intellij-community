@@ -105,7 +105,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiAnnotation[] annotations = list.getAnnotations();
     if (annotations.length > 0) {
-      Set<PsiAnnotation> annotationSet = ContainerUtil.set(annotations);
+      final Set<PsiAnnotation> annotationSet = ContainerUtil.set(annotations);
 
       for (PsiAnnotation annotation : annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -1174,51 +1174,88 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
-    final PsiSwitchStatement other = (PsiSwitchStatement)myMatchingVisitor.getElement();
-
-    if (myMatchingVisitor.setResult(myMatchingVisitor.match(statement.getExpression(), other.getExpression()))) {
-      final List<PsiSwitchLabelStatement> cases1 = PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatement.class);
-      if (cases1.isEmpty()) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchSons(statement.getBody(), other.getBody()));
-      }
-      else {
-        final List<PsiSwitchLabelStatement> cases2 = PsiTreeUtil.getChildrenOfTypeAsList(other.getBody(), PsiSwitchLabelStatement.class);
-        myMatchingVisitor.setResult(
-          myMatchingVisitor.matchSequentially(cases1.toArray(PsiElement.EMPTY_ARRAY), cases2.toArray(PsiElement.EMPTY_ARRAY)));
-      }
-    }
+    myMatchingVisitor.setResult(matchSwitchBlock(statement));
   }
 
   @Override
-  public void visitSwitchLabelStatement(PsiSwitchLabelStatement case1) {
-    final PsiSwitchLabelStatement other = (PsiSwitchLabelStatement)myMatchingVisitor.getElement();
-    final MatchContext context = myMatchingVisitor.getMatchContext();
-    final PsiExpression value1 = case1.getCaseValue();
-    final PsiExpression value2 = other.getCaseValue();
-    final boolean isTypedVar = context.getPattern().isTypedVar(value1);
-    context.pushResult();
-    try {
-      if (myMatchingVisitor.setResult(isTypedVar ||
-                                      case1.isDefaultCase() == other.isDefaultCase() && myMatchingVisitor.match(value1, value2))) {
-        final List<PsiStatement> statements = collectCaseStatements(case1);
-        if (!statements.isEmpty()) {
-          myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(statements.toArray(PsiElement.EMPTY_ARRAY),
-                                                                          collectCaseStatements(other).toArray(PsiElement.EMPTY_ARRAY)));
-        }
-      }
-    } finally {
-      myMatchingVisitor.scopeMatch(value1, isTypedVar, (value2 == null) ? other : value2);
-    }
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    myMatchingVisitor.setResult(matchSwitchBlock(expression));
   }
 
-  private static List<PsiStatement> collectCaseStatements(PsiSwitchLabelStatement switchLabelStatement) {
-    final List<PsiStatement> result = new SmartList<>();
-    PsiStatement sibling = PsiTreeUtil.getNextSiblingOfType(switchLabelStatement, PsiStatement.class);
-    while (sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
-      result.add(sibling);
-      sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class);
+  private boolean matchSwitchBlock(PsiSwitchBlock switchBlock) {
+    final PsiSwitchBlock other = (PsiSwitchBlock)myMatchingVisitor.getElement();
+
+    if (!myMatchingVisitor.match(switchBlock.getExpression(), other.getExpression())) {
+      return false;
     }
-    return result;
+    final PsiCodeBlock body = switchBlock.getBody();
+    final PsiSwitchLabelStatementBase[] cases1 = PsiTreeUtil.getChildrenOfType(body, PsiSwitchLabelStatementBase.class);
+    if (cases1 != null) {
+      final PsiSwitchLabelStatementBase[] cases2 = PsiTreeUtil.getChildrenOfType(other.getBody(), PsiSwitchLabelStatementBase.class);
+      return myMatchingVisitor.matchSequentially(cases1, cases2 != null ? cases2 : PsiElement.EMPTY_ARRAY);
+    }
+    final List<PsiElement> statements1 = PsiTreeUtil.getChildrenOfAnyType(body, PsiStatement.class, PsiComment.class);
+    if (!statements1.isEmpty()) {
+      final List<PsiElement> statements2 = PsiTreeUtil.getChildrenOfAnyType(other.getBody(), PsiStatement.class, PsiComment.class);
+      return myMatchingVisitor.matchSequentially(statements1.toArray(PsiElement.EMPTY_ARRAY), statements2.toArray(PsiElement.EMPTY_ARRAY));
+    }
+    return true;
+  }
+
+  @Override
+  public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    myMatchingVisitor.setResult(matchLabelStatement(statement, (PsiSwitchLabelStatementBase)myMatchingVisitor.getElement()));
+  }
+
+  @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    myMatchingVisitor.setResult(matchLabelStatement(statement, (PsiSwitchLabelStatementBase)myMatchingVisitor.getElement()));
+  }
+
+  private boolean matchLabelStatement(PsiSwitchLabelStatementBase statement1, PsiSwitchLabelStatementBase statement2) {
+    final PsiExpressionList values1 = statement1.getCaseValues();
+    final PsiExpressionList values2 = statement2.getCaseValues();
+    if (statement1.isDefaultCase() && !statement2.isDefaultCase()) {
+      return false;
+    }
+    if (values1 == null) {
+      return true;
+    }
+    final PsiExpression[] expressions = (values2 == null) ? PsiExpression.EMPTY_ARRAY : values2.getExpressions();
+    if (!myMatchingVisitor.matchInAnyOrder(values1.getExpressions(), expressions)) {
+      return false;
+    }
+    final PsiElement[] body = getBody(statement1);
+    return body.length == 0 || myMatchingVisitor.matchSequentially(body, getBody(statement2));
+  }
+
+  private static PsiElement[] getBody(PsiSwitchLabelStatementBase switchLabelStatement) {
+    final List<PsiElement> result = new SmartList<>();
+    if (switchLabelStatement instanceof PsiSwitchLabeledRuleStatement) {
+      final PsiStatement body = ((PsiSwitchLabeledRuleStatement)switchLabelStatement).getBody();
+      if (body instanceof PsiBlockStatement) {
+        result.addAll(PsiTreeUtil.getChildrenOfAnyType(((PsiBlockStatement)body).getCodeBlock(), PsiStatement.class, PsiComment.class));
+      }
+      else {
+        result.add(body);
+      }
+    }
+    else {
+      PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(switchLabelStatement, PsiStatement.class);
+      while (sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
+        if (sibling instanceof PsiStatement || sibling instanceof PsiComment) {
+          result.add(sibling);
+        }
+        sibling = sibling.getNextSibling();
+      }
+    }
+    return result.toArray(PsiElement.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void visitYieldStatement(PsiYieldStatement statement) {
+    final PsiYieldStatement other = (PsiYieldStatement)myMatchingVisitor.getElement();
+    myMatchingVisitor.setResult(myMatchingVisitor.match(statement.getExpression(), other.getExpression()));
   }
 
   @Override

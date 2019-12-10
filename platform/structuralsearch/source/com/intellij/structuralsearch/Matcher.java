@@ -325,11 +325,13 @@ public class Matcher {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
     try {
-      final PsiElement[] elements =
-        MatcherImplUtil.createSourceTreeFromText(source, fileContext ? PatternTreeContext.File : PatternTreeContext.Block,
-                                                 sourceFileType, project, physicalSourceFile);
+      if (options.getScope() == null) {
+        final PsiElement[] elements =
+          MatcherImplUtil.createSourceTreeFromText(source, fileContext ? PatternTreeContext.File : PatternTreeContext.Block,
+                                                   sourceFileType, project, physicalSourceFile);
 
-      options.setScope(new LocalSearchScope(elements));
+        options.setScope(new LocalSearchScope(elements));
+      }
       testFindMatches(sink, options);
     } finally {
       options.setScope(null);

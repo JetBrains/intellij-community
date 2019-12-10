@@ -335,7 +335,9 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.unboxing"), "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.try.without.resources"), "try ('_ResourceType '_resource{0,0} = '_init; '_expression{0,0}) {\n  '_TryStatement*;\n} catch('_ExceptionType '_Exception{0,0}) {\n  '_CatchStatement*;\n}", INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "switch ('_expression) {\n  case '_value{0,4}\\: '_statement*;\n}", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switch.with.branches"), "[ script( \"import com.intellij.psi.*;\n" +
+                                                                                                   "import com.intellij.psi.util.*;\n" +
+                                                                                                   "PsiTreeUtil.getChildrenOfType(__context__.body, PsiSwitchLabelStatementBase.class).length < 5\" ) ]switch ('_expression) {\n}", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.labeled.break"), "break '_label;", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.methods.with.final.parameters"),
                                "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);",
