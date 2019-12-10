@@ -26,10 +26,7 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -538,7 +535,13 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    final Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
+    Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
+    if (container instanceof JFrame) {
+      ComponentWithMnemonics componentWithMnemonics = UIUtil.getParentOfType(ComponentWithMnemonics.class, focusOwner);
+      if (componentWithMnemonics instanceof Container) {
+        container = (Container)componentWithMnemonics;
+      }
+    }
     return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
   }
 

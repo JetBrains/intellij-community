@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
@@ -44,7 +45,7 @@ import java.util.Map;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class InternalDecorator extends JPanel implements Queryable, DataProvider {
+public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
   private final Project myProject;
   private WindowInfoImpl myInfo;
   private final ToolWindowImpl myToolWindow;

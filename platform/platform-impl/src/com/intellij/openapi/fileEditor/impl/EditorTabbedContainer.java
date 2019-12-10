@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.docking.DockContainer;
@@ -603,7 +604,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
-  private static final class EditorTabs extends SingleHeightTabs {
+  private static final class EditorTabs extends SingleHeightTabs implements ComponentWithMnemonics {
     @NotNull
     private final EditorWindow myWindow;
 
