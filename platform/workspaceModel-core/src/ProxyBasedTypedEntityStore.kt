@@ -186,7 +186,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     createEntityDataByUnmodifiableEntityClass(source, getUnmodifiableEntityClass(clazz))
 
   private fun <T : TypedEntity> createEntityDataByUnmodifiableEntityClass(source: EntitySource, unmodifiableEntityType: Class<out T>) =
-    EntityData(source, NEXT_ID.getAndIncrement(), metaDataRegistry.getEntityMetaData(unmodifiableEntityType))
+    EntityData(source, metaDataRegistry.getEntityMetaData(unmodifiableEntityType))
 
   private fun <M : ModifiableTypedEntity<T>, T : TypedEntity> initializeEntityInstance(data: EntityData, clazz: Class<M>,
                                                                                        initializer: M.() -> Unit): M {
@@ -769,10 +769,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                                                          referrers.mapValues { it.value.toList() },
                                                                          metaDataRegistry)
 
-  companion object {
-    internal val NEXT_ID = AtomicLong(1)
-  }
-
   sealed class ChangeEntry {
     data class AddEntity(val entityData: EntityData) : ChangeEntry()
     data class RemoveEntity(val id: Long) : ChangeEntry()
@@ -786,7 +782,36 @@ internal class ProxyBasedEntityReferenceImpl<E : TypedEntity>(val id: Long): Ent
   }
 }
 
+internal inline class IdGenerator(val generator: AtomicLong) {
+  internal fun getId() = generator.getAndIncrement()
+  internal fun adjustId(existingId: Long) {
+    while (true) {
+      val currentGeneratorValue = generator.get()
+      if (currentGeneratorValue <= existingId) {
+        val res = generator.compareAndSet(currentGeneratorValue, existingId + 1)
+        if (res) break
+      } else break
+    }
+  }
+
+  companion object {
+    fun startGenerator(initialValue: Long = 1) = IdGenerator(AtomicLong(initialValue))
+  }
+}
+
+internal val entityDataIdGenerator = IdGenerator.startGenerator()
+
 internal class EntityData(val entitySource: EntitySource, val id: Long, val metaData: EntityMetaData, val properties: MutableMap<String, Any?> = HashMap()) {
+  init {
+    entityDataIdGenerator.adjustId(id)
+  }
+
+  constructor(
+    entitySource: EntitySource,
+    metaData: EntityMetaData,
+    properties: MutableMap<String, Any?> = HashMap()
+  ) : this(entitySource, entityDataIdGenerator.getId(), metaData, properties)
+
   val unmodifiableEntityType: Class<out TypedEntity>
     get() = metaData.unmodifiableEntityType
 
