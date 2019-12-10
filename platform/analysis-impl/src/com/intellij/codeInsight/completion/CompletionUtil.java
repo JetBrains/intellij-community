@@ -22,12 +22,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.UnmodifiableIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
+import java.util.List;
 
 public class CompletionUtil {
 
@@ -238,5 +241,32 @@ public class CompletionUtil {
         };
       }
     };
+  }
+
+  @NotNull
+  @ApiStatus.Internal
+  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable Lookup lookup,
+                                                                                     LookupElement item,
+                                                                                     char completionChar,
+                                                                                     Editor editor,
+                                                                                     PsiFile psiFile,
+                                                                                     int caretOffset,
+                                                                                     int idEndOffset,
+                                                                                     OffsetMap offsetMap) {
+    int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
+
+    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, initialStartOffset);
+    offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
+    offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
+
+    List<LookupElement> items = lookup != null ? lookup.getItems() : Collections.emptyList();
+    return new CompletionAssertions.WatchingInsertionContext(offsetMap, psiFile, completionChar, items, editor);
+  }
+
+  @ApiStatus.Internal
+  public static int calcIdEndOffset(CompletionProcessEx indicator) {
+    return indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+           indicator.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) :
+           CompletionInitializationContext.calcDefaultIdentifierEnd(indicator.getEditor(), indicator.getCaret().getOffset());
   }
 }
