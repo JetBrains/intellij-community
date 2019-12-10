@@ -47,5 +47,9 @@
     <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalExecutionAware" beanClass="com.intellij.util.KeyedLazyInstanceEP">
+      <with attribute="implementationClass"
+            implements="com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
