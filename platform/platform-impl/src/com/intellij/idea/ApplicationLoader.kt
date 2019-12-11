@@ -27,9 +27,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogEarthquakeShaker
-import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemPropertyBean
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
@@ -303,14 +301,15 @@ fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPlug
 }
 
 private fun addActivateAndWindowsCliListeners() {
-  StartupUtil.addExternalInstanceListener { args ->
+  StartupUtil.addExternalInstanceListener { rawArgs ->
+    LOG.info("External instance command received")
+    val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
     val ref = AtomicReference<Future<CliResult>>()
+
     ApplicationManager.getApplication().invokeAndWait {
-      LOG.info("ApplicationImpl.externalInstanceListener invocation")
-      val realArgs = if (args.isEmpty()) args else args.subList(1, args.size)
-      val projectAndFuture = CommandLineProcessor.processExternalCommandLine(realArgs, args.firstOrNull())
-      ref.set(projectAndFuture.getSecond())
-      val project = projectAndFuture.getFirst()
+      val (project, future) = CommandLineProcessor.processExternalCommandLine(args, currentDirectory)
+      ref.set(future)
+
       if (project == null) {
         val frame = WindowManager.getInstance().findVisibleFrame()
         frame.toFront()
@@ -327,21 +326,24 @@ private fun addActivateAndWindowsCliListeners() {
   }
 
   MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
+    LOG.info("External Windows command received")
+    if (args.isEmpty()) return@WindowsCommandLineListener 0
+
     val app = ApplicationManager.getApplication()
-    val argsList = args.toList()
-    LOG.info("Received external Windows command line: current directory $currentDirectory, command line $argsList")
-    if (argsList.isEmpty()) return@WindowsCommandLineListener 0
-    var state = app.defaultModalityState
-    for (starter in ApplicationStarter.EP_NAME.iterable) {
-      if (starter.canProcessExternalCommandLine() && argsList[0] == starter.commandName && starter.allowAnyModalityState()) {
-        state = app.anyModalityState
-      }
-    }
+    val anyState = ApplicationStarter.EP_NAME.iterable.any { it.canProcessExternalCommandLine() && args[0] == it.commandName && it.allowAnyModalityState() }
+    val state = if (anyState) app.anyModalityState else app.defaultModalityState
 
     val ref = AtomicReference<Future<CliResult>>()
-    app.invokeAndWait({ ref.set(CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory).getSecond()) }, state)
-    CliResult.unmap(ref.get(), 1).exitCode
+    app.invokeAndWait({ ref.set(CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory).second) }, state)
+    CliResult.unmap(ref.get(), Main.ACTIVATE_ERROR).exitCode
   }
+
+  ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+    override fun appWillBeClosed(isRestart: Boolean) {
+      StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      MainRunner.LISTENER = WindowsCommandLineListener { _, _ -> Main.ACTIVATE_DISPOSING }
+    }
+  })
 }
 
 @JvmOverloads
