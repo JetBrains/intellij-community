@@ -28,7 +28,7 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
           featuredPlugins.put("Node JS", "Web Development:Support for Node.js projects:NodeJS");
         }
         featuredPlugins.put("Grazie", "Spellcheck:Intelligent spelling and grammar checks:tanvd.grazi");
-        featuredPlugins.put("AWS Toolkit", "Cloud Support:Helps you create, test, and debug serverless applications built using the AWS Serverless Application Model:aws.toolkit");
+        addAwsPlugin(featuredPlugins);
         featuredPlugins.put("IntelliJ Light Theme", "Themes:IntelliJ Light is a new light theme for IntelliJ-based IDEs:com.jetbrains.lightThemePreview");
         featuredPlugins.put("Big Data Tools", "Tools Integration:Zeppelin and Spark support:com.intellij.bigdatatools");
         featuredPlugins.put("EduTools", "Code tools:Learn and teach programming languages such as Kotlin, Java, and Python in the form of coding tasks and custom verification tests:com.jetbrains.edu");

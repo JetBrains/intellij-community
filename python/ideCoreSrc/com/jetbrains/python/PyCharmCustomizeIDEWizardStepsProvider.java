@@ -20,7 +20,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
         addVimPlugin(featuredPlugins);
         addMarkdownPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
-        featuredPlugins.put("AWS Toolkit", "Tools Integration:A plugin for interacting with Amazon Web Services:aws.toolkit");
+        addAwsPlugin(featuredPlugins);
       }
     };
 

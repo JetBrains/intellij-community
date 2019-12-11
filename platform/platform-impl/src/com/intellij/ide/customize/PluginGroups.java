@@ -253,6 +253,10 @@ public class PluginGroups {
     featuredPlugins.put("IdeaVim", "Editor:Emulates Vim editor:" + IDEA_VIM_PLUGIN_ID);
   }
 
+  public static void addAwsPlugin(Map<String, String> featuredPlugins) {
+    featuredPlugins.put("AWS Toolkit", "Cloud Support:Provides integration with AWS resources including creating, testing and debugging modern cloud applications.:aws.toolkit");
+  }
+
   public static void addTrainingPlugin(Map<String, String> featuredPlugins) {
     featuredPlugins.put("IDE Features Trainer", "Code tools:Learn basic shortcuts and essential IDE features with quick interactive exercises:training");
   }
