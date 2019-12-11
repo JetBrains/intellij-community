@@ -80,9 +80,7 @@ class ContentTabLabel extends BaseLabel {
     @NotNull
     @Override
     public String getTooltip() {
-      String text =
-        KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-
+      String text = KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
       return text.isEmpty() || !isSelected() ? ACTION_NAME : ACTION_NAME + " (" + text + ")";
     }
   };
@@ -90,8 +88,7 @@ class ContentTabLabel extends BaseLabel {
   private CurrentTooltip currentIconTooltip;
 
   private void showTooltip(AdditionalIcon icon) {
-
-    if(icon != null) {
+    if (icon != null) {
       if (currentIconTooltip != null) {
         if (currentIconTooltip.icon == icon) {
           IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, false, false);

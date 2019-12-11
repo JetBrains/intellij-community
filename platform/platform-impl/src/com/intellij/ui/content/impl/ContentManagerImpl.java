@@ -172,8 +172,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean requestFocus, final boolean forcedFocus) {
-    final ActionCallback result = new ActionCallback();
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus) {
+    ActionCallback result = new ActionCallback();
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
         Content current = getSelectedContent();
@@ -273,7 +273,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void removeAllContents(final boolean dispose) {
+  public void removeAllContents(boolean dispose) {
+    if (myContents.isEmpty()) {
+      return;
+    }
+
     for (Content content : new ArrayList<>(myContents)) {
       removeContent(content, dispose);
     }

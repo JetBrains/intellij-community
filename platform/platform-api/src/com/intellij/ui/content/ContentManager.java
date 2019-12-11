@@ -19,7 +19,6 @@ import java.util.List;
  * @see ContentsUtil
  */
 public interface ContentManager extends Disposable, BusyObject {
-
   boolean canCloseContents();
 
   @NotNull
