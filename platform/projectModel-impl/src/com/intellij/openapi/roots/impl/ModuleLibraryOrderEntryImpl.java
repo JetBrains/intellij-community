@@ -146,10 +146,10 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
 
   @NotNull
   @Override
-  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+  public OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
-    return new ModuleLibraryOrderEntryImpl(myLibrary, rootModel, myExported, myScope);
+    return new ModuleLibraryOrderEntryImpl(myLibrary, (RootModelImpl)rootModel, myExported, myScope);
   }
 
   @Override

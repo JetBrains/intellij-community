@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ClonableOrderEntry
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
-import com.intellij.openapi.roots.impl.RootModelImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -83,7 +82,7 @@ internal abstract class ModuleOrderEntryBaseViaTypedEntity(
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitModuleOrderEntry(this, initialValue)
 
-  override fun cloneEntry(rootModel: RootModelImpl,
+  override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
@@ -236,7 +235,7 @@ internal class LibraryOrderEntryViaTypedEntity(
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitLibraryOrderEntry(this, initialValue)
 
-  override fun cloneEntry(rootModel: RootModelImpl,
+  override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
@@ -270,7 +269,7 @@ internal class SdkOrderEntryViaTypedEntity(
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitJdkOrderEntry(this, initialValue)
 
-  override fun cloneEntry(rootModel: RootModelImpl,
+  override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
@@ -292,7 +291,7 @@ internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitInheritedJdkOrderEntry(this, initialValue)
 
-  override fun cloneEntry(rootModel: RootModelImpl,
+  override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")
@@ -312,7 +311,7 @@ internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
 
   override fun getRootModel() = model
 
-  override fun cloneEntry(rootModel: RootModelImpl,
+  override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager): OrderEntry {
     TODO("not implemented")

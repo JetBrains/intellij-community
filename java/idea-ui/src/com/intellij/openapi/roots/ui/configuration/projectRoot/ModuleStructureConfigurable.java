@@ -974,7 +974,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                 if (entry instanceof JdkOrderEntry) continue;
                 if (entry instanceof ModuleSourceOrderEntry) continue;
                 if (entry instanceof ClonableOrderEntry) {
-                  modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry((RootModelImpl)modifiableRootModel,
+                  modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry(modifiableRootModel,
                                                                                            (ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject),
                                                                                            VirtualFilePointerManager.getInstance()));
                 }
