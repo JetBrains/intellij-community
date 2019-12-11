@@ -26,6 +26,13 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
 
   public boolean reportChars = false;
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("unnecessary.string.escape.display.name");
+  }
+  
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

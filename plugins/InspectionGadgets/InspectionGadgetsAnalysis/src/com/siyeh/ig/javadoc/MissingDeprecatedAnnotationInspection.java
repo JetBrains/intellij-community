@@ -41,6 +41,12 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
   @Override
   @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("missing.deprecated.annotation.display.name");
+  }
+
+  @Override
+  @NotNull
   protected String buildErrorString(Object... infos) {
     final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
     return annotationWarning

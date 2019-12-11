@@ -35,6 +35,12 @@ public class ReplaceAllDotInspection extends BaseInspection {
 
   @Override
   @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("replace.all.dot.display.name");
+  }
+
+  @Override
+  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final String methodName = methodCallExpression.getMethodExpression().getReferenceName();
