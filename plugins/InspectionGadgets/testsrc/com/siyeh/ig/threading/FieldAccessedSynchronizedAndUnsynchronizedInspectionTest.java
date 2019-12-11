@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.util.RecursionManager;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 public class FieldAccessedSynchronizedAndUnsynchronizedInspectionTest extends LightJavaInspectionTestCase {
 
   public void testFieldAccessedSynchronizedAndUnsynchronized() {
+    doTest();
+  }
+
+  public void testMutualRecursion() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     doTest();
   }
 

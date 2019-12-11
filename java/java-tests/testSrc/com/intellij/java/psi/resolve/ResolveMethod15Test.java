@@ -611,8 +611,9 @@ public class ResolveMethod15Test extends LightResolveTestCase {
   }
 
   public void testSOE() throws Exception {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     PsiReference ref = configureByFile();
-    ref.resolve();
+    assertNull(ref.resolve());
   }
   public void testHidingSuperPrivate() throws Exception {
     PsiJavaReference ref = (PsiJavaReference)configureByFile();
