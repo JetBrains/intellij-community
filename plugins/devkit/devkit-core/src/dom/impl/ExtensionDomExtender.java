@@ -5,7 +5,6 @@ import com.google.common.base.CaseFormat;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compiler.CompileTaskBean;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -38,6 +37,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ExtensionDomExtender extends DomExtender<Extension> {
 
@@ -390,8 +390,14 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       private boolean doNotTransformName() {
-        return CompileTaskBean.CompileTaskExecutionPhase.class.getCanonicalName().equals(fieldPsiClass.getQualifiedName());
+        return LEGACY_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
       }
     };
   }
+
+  private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
+    ContainerUtil.immutableSet(
+      "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
+      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind"
+    );
 }
