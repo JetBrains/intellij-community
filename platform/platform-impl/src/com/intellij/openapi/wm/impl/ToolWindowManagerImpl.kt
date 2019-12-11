@@ -450,7 +450,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           icon = EmptyIcon.ICON_13
         }
       }
-      window.icon = icon!!
+      window.setIcon(icon!!)
     }
 
     val info = entry.internalDecorator.windowInfo
@@ -929,7 +929,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     doUnregisterToolWindow(id)
   }
 
-  private fun doUnregisterToolWindow(id: String) {
+  internal fun doUnregisterToolWindow(id: String) {
     if (LOG.isDebugEnabled) {
       LOG.debug("enter: unregisterToolWindow($id)")
     }

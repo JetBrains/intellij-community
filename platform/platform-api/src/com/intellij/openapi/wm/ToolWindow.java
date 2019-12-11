@@ -109,6 +109,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window icon. Returns {@code null} if window has no icon.
    */
+  @Nullable
   Icon getIcon();
 
   /**

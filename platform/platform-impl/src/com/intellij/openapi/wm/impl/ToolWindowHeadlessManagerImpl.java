@@ -289,6 +289,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     }
 
+    @Nullable
     @Override
     public Icon getIcon() {
       return null;

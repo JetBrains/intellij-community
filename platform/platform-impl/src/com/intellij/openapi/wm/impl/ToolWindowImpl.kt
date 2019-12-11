@@ -1,548 +1,390 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.UiActivity;
-import com.intellij.ide.UiActivityMonitor;
-import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.notification.EventLog;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.BusyObject;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.ui.content.impl.ContentManagerImpl;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.UiActivity
+import com.intellij.ide.UiActivityMonitor
+import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.notification.EventLog
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.BusyObject
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.commands.FinalizableCommand
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.ui.LayeredIcon
+import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.impl.ContentImpl
+import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.Rectangle
+import java.awt.event.InputEvent
+import java.util.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.LayoutFocusTraversalPolicy
+import kotlin.math.abs
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.util.ArrayList;
+private val LOG = Logger.getInstance(ToolWindowImpl::class.java)
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
-public final class ToolWindowImpl implements ToolWindowEx {
-  private static final Logger LOG = Logger.getInstance(ToolWindowImpl.class);
+class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
+                                          val id: String,
+                                          canCloseContent: Boolean,
+                                          component: JComponent?,
+                                          private val parentDisposable: Disposable) : ToolWindowEx {
+  private val component: JComponent
+  private var isAvailable = true
+  private val contentManager: ContentManager
+  private var icon: Icon? = null
+  private var stripeTitle: String? = null
+  private val contentUi = ToolWindowContentUi(this)
+  private var decorator: InternalDecorator? = null
+  private var hideOnEmptyContent = false
+  var isPlaceholderMode = false
+  private var contentFactory: ToolWindowFactory? = null
+  private val myShowing = object : BusyObject.Impl() {
+    override fun isReady() = component != null && component.isShowing
+  }
 
-  private final ToolWindowManagerImpl myToolWindowManager;
-  private final String myId;
-  @NotNull
-  private final Disposable parentDisposable;
-  private final JComponent myComponent;
-  private boolean myAvailable = true;
-  private final ContentManager myContentManager;
-  private Icon myIcon;
-  private String myStripeTitle;
+  private var helpId: String? = null
 
-  private final ToolWindowContentUi myContentUI;
-
-  private InternalDecorator myDecorator;
-
-  private boolean myHideOnEmptyContent;
-  private boolean myPlaceholderMode;
-  private ToolWindowFactory myContentFactory;
-
-  private final BusyObject.Impl myShowing = new BusyObject.Impl() {
-    @Override
-    public boolean isReady() {
-      return myComponent != null && myComponent.isShowing();
-    }
-  };
-
-  private String myHelpId;
-
-  ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager,
-                 @NotNull String id,
-                 boolean canCloseContent,
-                 @Nullable JComponent component,
-                 @NotNull Disposable parentDisposable) {
-    myToolWindowManager = toolWindowManager;
-    myId = id;
-    this.parentDisposable = parentDisposable;
-
-    myContentUI = new ToolWindowContentUi(this);
-    myContentManager = new ContentManagerImpl(myContentUI, canCloseContent, toolWindowManager.getProject(), parentDisposable);
-
+  init {
+    contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
     if (component != null) {
-      Content content = new ContentImpl(component, "", false);
-      myContentManager.addContent(content);
-      myContentManager.setSelectedContent(content, false);
+      val content = ContentImpl(component, "", false)
+      contentManager.addContent(content)
+      contentManager.setSelectedContent(content, false)
     }
 
-    myComponent = myContentManager.getComponent();
+    this.component = contentManager.component
+    InternalDecorator.installFocusTraversalPolicy(this.component, LayoutFocusTraversalPolicy())
 
-    InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
-
-    Disposer.register(parentDisposable, new UiNotifyConnector(myComponent, new Activatable() {
-      @Override
-      public void showNotify() {
-        myShowing.onReady();
+    Disposer.register(parentDisposable, UiNotifyConnector(this.component, object : Activatable {
+      override fun showNotify() {
+        myShowing.onReady()
       }
-    }));
+    }))
   }
 
-  @NotNull
-  @Override
-  public Disposable getDisposable() {
-    return parentDisposable;
+  fun getContentUI() = contentUi
+
+  override fun getDisposable() = parentDisposable
+
+  override fun remove() {
+    toolWindowManager.doUnregisterToolWindow(id)
   }
 
-  @Override
-  public void remove() {
-    myToolWindowManager.unregisterToolWindow(myId);
+  override fun activate(runnable: Runnable?) {
+    activate(runnable, true)
   }
 
-  @Override
-  public final void activate(@Nullable Runnable runnable) {
-    activate(runnable, true);
+  override fun activate(runnable: Runnable?, autoFocusContents: Boolean) {
+    activate(runnable, autoFocusContents, true)
   }
 
-  @Override
-  public void activate(@Nullable Runnable runnable, boolean autoFocusContents) {
-    activate(runnable, autoFocusContents, true);
+  override fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val activity: UiActivity = UiActivity.Focus("toolWindow:$id")
+    UiActivityMonitor.getInstance().addActivity(toolWindowManager.project, activity, ModalityState.NON_MODAL)
+    toolWindowManager.activateToolWindow(id, forced, autoFocusContents)
+    toolWindowManager.invokeLater(Runnable {
+      runnable?.run()
+      UiActivityMonitor.getInstance().removeActivity(toolWindowManager.project, activity)
+    })
   }
 
-  @Override
-  public void activate(@Nullable Runnable runnable, boolean autoFocusContents, boolean forced) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    UiActivity activity = new UiActivity.Focus("toolWindow:" + myId);
-    UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
-
-    myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
-    myToolWindowManager.invokeLater(() -> {
-      if (runnable != null) {
-        runnable.run();
-      }
-      UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
-    });
-  }
-
-  @Override
-  public final boolean isActive() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    JFrame frame = WindowManagerEx.getInstanceEx().getFrame(myToolWindowManager.getProject());
-    if (frame == null || !frame.isActive() || myToolWindowManager.isEditorComponentActive()) {
-      return false;
+  override fun isActive(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val frame = WindowManagerEx.getInstanceEx().getFrame(toolWindowManager.project)
+    if (frame == null || !frame.isActive || toolWindowManager.isEditorComponentActive) {
+      return false
     }
 
-    ActionManager actionManager = ActionManager.getInstance();
-    if (actionManager instanceof ActionManagerImpl
-        && !((ActionManagerImpl)actionManager).isActionPopupStackEmpty()
-        && !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible()) {
-      return false;
+    val actionManager = ActionManager.getInstance()
+    if (actionManager is ActionManagerImpl && !actionManager.isActionPopupStackEmpty && !actionManager.isToolWindowContextMenuVisible) {
+      return false
     }
-
-    return myToolWindowManager.isToolWindowActive(myId) || (myDecorator != null && myDecorator.isFocused());
+    else {
+      return toolWindowManager.isToolWindowActive(id) || (decorator?.isFocused ?: false)
+    }
   }
 
-  @NotNull
-  @Override
-  public ActionCallback getReady(@NotNull Object requestor) {
-    ActionCallback result = new ActionCallback();
+  override fun getReady(requestor: Any): ActionCallback {
+    val result = ActionCallback()
     myShowing.getReady(this)
-      .doWhenDone(() -> {
-        ArrayList<FinalizableCommand> cmd = new ArrayList<>();
-        cmd.add(new FinalizableCommand(null) {
-          @Override
-          public boolean willChangeState() {
-            return false;
+      .doWhenDone {
+        val cmd = ArrayList<FinalizableCommand>()
+        cmd.add(object : FinalizableCommand(null) {
+          override fun willChangeState(): Boolean {
+            return false
           }
 
-          @Override
-          public void run() {
-            IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
-              if (myContentManager.isDisposed()) return;
-              myContentManager.getReady(requestor).notify(result);
-            });
+          override fun run() {
+            IdeFocusManager.getInstance(toolWindowManager.project).doWhenFocusSettlesDown {
+              if (contentManager.isDisposed) return@doWhenFocusSettlesDown
+              contentManager.getReady(requestor).notify(result)
+            }
           }
-        });
-        myToolWindowManager.execute(cmd);
-      });
-    return result;
+        })
+        toolWindowManager.execute(cmd)
+      }
+    return result
   }
 
-  @Override
-  public final void show(final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.showToolWindow(myId);
+  override fun show(runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.showToolWindow(id)
+    callLater(runnable)
+  }
+
+  override fun hide(runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.hideToolWindow(id, false)
+    callLater(runnable)
+  }
+
+  override fun isVisible(): Boolean {
+    return toolWindowManager.isToolWindowRegistered(id) && toolWindowManager.isToolWindowVisible(id)
+  }
+
+  override fun getAnchor(): ToolWindowAnchor {
+    return toolWindowManager.getToolWindowAnchor(id)
+  }
+
+  override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.setToolWindowAnchor(id, anchor)
+    callLater(runnable)
+  }
+
+  override fun isSplitMode(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return toolWindowManager.isSplitMode(id)
+  }
+
+  override fun setContentUiType(type: ToolWindowContentUiType, runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.setContentUiType(id, type)
+    callLater(runnable)
+  }
+
+  override fun setDefaultContentUiType(type: ToolWindowContentUiType) {
+    toolWindowManager.setDefaultContentUiType(this, type)
+  }
+
+  override fun getContentUiType(): ToolWindowContentUiType {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return toolWindowManager.getContentUiType(id)
+  }
+
+  override fun setSplitMode(isSideTool: Boolean, runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.setSideTool(id, isSideTool)
+    callLater(runnable)
+  }
+
+  override fun setAutoHide(state: Boolean) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.setToolWindowAutoHide(id, state)
+  }
+
+  override fun isAutoHide(): Boolean {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return toolWindowManager.isToolWindowAutoHide(id)
+  }
+
+  override fun getType(): ToolWindowType {
+    return toolWindowManager.getToolWindowType(id)
+  }
+
+  override fun setType(type: ToolWindowType, runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    toolWindowManager.setToolWindowType(id, type)
+    callLater(runnable)
+  }
+
+  override fun getInternalType(): ToolWindowType {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return toolWindowManager.getToolWindowInternalType(id)
+  }
+
+  override fun stretchWidth(value: Int) {
+    toolWindowManager.stretchWidth(this, value)
+  }
+
+  override fun stretchHeight(value: Int) {
+    toolWindowManager.stretchHeight(this, value)
+  }
+
+  override fun getDecorator() = decorator!!
+
+  override fun setAdditionalGearActions(additionalGearActions: ActionGroup?) {
+    decorator?.setAdditionalGearActions(additionalGearActions)
+  }
+
+  override fun setTitleActions(vararg actions: AnAction) {
+    decorator?.setTitleActions(actions)
+  }
+
+  override fun setTabActions(vararg actions: AnAction) {
+    decorator?.setTabActions(actions)
+  }
+
+  fun setTabDoubleClickActions(vararg actions: AnAction) {
+    contentUi.setTabDoubleClickActions(*actions)
+  }
+
+  override fun setAvailable(available: Boolean, runnable: Runnable?) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    isAvailable = available
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_AVAILABLE)
+    callLater(runnable)
+  }
+
+  private fun callLater(runnable: Runnable?) {
     if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
+      toolWindowManager.invokeLater(runnable)
     }
   }
 
-  @Override
-  public final void hide(@Nullable final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.hideToolWindow(myId, false);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public final boolean isVisible() {
-    return myToolWindowManager.isToolWindowRegistered(myId) && myToolWindowManager.isToolWindowVisible(myId);
-  }
-
-  @Override
-  public final ToolWindowAnchor getAnchor() {
-    return myToolWindowManager.getToolWindowAnchor(myId);
-  }
-
-  @Override
-  public final void setAnchor(@NotNull final ToolWindowAnchor anchor, @Nullable final Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.setToolWindowAnchor(myId, anchor);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public boolean isSplitMode() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.isSplitMode(myId);
-  }
-
-  @Override
-  public void setContentUiType(@NotNull ToolWindowContentUiType type, @Nullable Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.setContentUiType(myId, type);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public void setDefaultContentUiType(@NotNull ToolWindowContentUiType type) {
-    myToolWindowManager.setDefaultContentUiType(this, type);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindowContentUiType getContentUiType() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.getContentUiType(myId);
-  }
-
-  @Override
-  public void setSplitMode(boolean isSideTool, @Nullable Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.setSideTool(myId, isSideTool);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public final void setAutoHide(final boolean state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.setToolWindowAutoHide(myId, state);
-  }
-
-  @Override
-  public final boolean isAutoHide() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.isToolWindowAutoHide(myId);
-  }
-
-  @Override
-  public final ToolWindowType getType() {
-    return myToolWindowManager.getToolWindowType(myId);
-  }
-
-  @Override
-  public final void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myToolWindowManager.setToolWindowType(myId, type);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public final ToolWindowType getInternalType() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myToolWindowManager.getToolWindowInternalType(myId);
-  }
-
-  @Override
-  public void stretchWidth(int value) {
-    myToolWindowManager.stretchWidth(this, value);
-  }
-
-  @Override
-  public void stretchHeight(int value) {
-    myToolWindowManager.stretchHeight(this, value);
-  }
-
-  @Override
-  @NotNull
-  public InternalDecorator getDecorator() {
-    return myDecorator;
-  }
-
-  @Override
-  public void setAdditionalGearActions(ActionGroup additionalGearActions) {
-    getDecorator().setAdditionalGearActions(additionalGearActions);
-  }
-
-  @Override
-  public void setTitleActions(AnAction... actions) {
-    getDecorator().setTitleActions(actions);
-  }
-
-  @Override
-  public void setTabActions(AnAction... actions) {
-    getDecorator().setTabActions(actions);
-  }
-
-  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
-    myContentUI.setTabDoubleClickActions(actions);
-  }
-
-  @Override
-  public final void setAvailable(boolean available, Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myAvailable = available;
-    myToolWindowManager.toolWindowPropertyChanged(this, PROP_AVAILABLE);
-    if (runnable != null) {
-      myToolWindowManager.invokeLater(runnable);
-    }
-  }
-
-  @Override
-  public void installWatcher(ContentManager contentManager) {
-    new ContentManagerWatcher(this, contentManager);
+  override fun installWatcher(contentManager: ContentManager) {
+    ContentManagerWatcher(this, contentManager)
   }
 
   /**
-   * @return {@code true} if the component passed into constructor is not instance of
-   *         {@code ContentManager} class. Otherwise it delegates the functionality to the
-   *         passed content manager.
+   * @return `true` if the component passed into constructor is not instance of
+   * `ContentManager` class. Otherwise it delegates the functionality to the
+   * passed content manager.
    */
-  @Override
-  public final boolean isAvailable() {
-    return myAvailable && myComponent != null;
+  override fun isAvailable(): Boolean {
+    return isAvailable && component != null
   }
 
-  @Override
-  public final JComponent getComponent() {
-    return myComponent;
-  }
+  override fun getComponent() = component
 
-  @Override
-  public ContentManager getContentManager() {
-    ensureContentInitialized();
-    return myContentManager;
+  override fun getContentManager(): ContentManager {
+    ensureContentInitialized()
+    return contentManager
   }
 
   // to avoid ensureContentInitialized call - myContentManager can report canCloseContents without full initialization
-  public boolean canCloseContents() {
-    return myContentManager.canCloseContents();
+  fun canCloseContents() = contentManager.canCloseContents()
+
+  override fun getIcon(): Icon? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return icon
   }
 
-  public ToolWindowContentUi getContentUI() {
-    return myContentUI;
+  override fun getTitle(): String? {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return contentManager.selectedContent?.displayName
   }
 
-  @Override
-  public final Icon getIcon() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return myIcon;
+  override fun getStripeTitle(): String {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    return ObjectUtils.notNull(stripeTitle, id)
   }
 
-  @NotNull
-  public final String getId() {
-    return myId;
-  }
-
-  @Override
-  @Nullable
-  public String getTitle() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    Content selected = getContentManager().getSelectedContent();
-    return selected == null ? null : selected.getDisplayName();
-  }
-
-  @Override
-  @NotNull
-  public final String getStripeTitle() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    return ObjectUtils.notNull(myStripeTitle, myId);
-  }
-
-  @Override
-  public final void setIcon(@NotNull Icon icon) {
-    //icon = IconUtil.filterIcon(icon, new UIUtil.GrayFilter(), myComponent);
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Icon oldIcon = getIcon();
-    if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
-      if (oldIcon != icon &&
-          !(icon instanceof LayeredIcon) &&
-          (Math.abs(icon.getIconHeight() - JBUIScale.scale(13f)) >= 1 || Math.abs(icon.getIconWidth() - JBUIScale.scale(13f)) >= 1)) {
-        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  " + getId() + ") or icon " + icon);
+  override fun setIcon(icon: Icon) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val oldIcon = getIcon()
+    if (EventLog.LOG_TOOL_WINDOW_ID != id) {
+      if (oldIcon !== icon &&
+          icon !is LayeredIcon &&
+          (abs(icon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(icon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
+        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $icon")
       }
     }
-    //getSelectedContent().setIcon(icon);
-
-    myIcon = new ToolWindowIcon(icon, getId());
-    myToolWindowManager.toolWindowPropertyChanged(this, PROP_ICON);
+    this.icon = ToolWindowIcon(icon, id)
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_ICON)
   }
 
-  @Override
-  public final void setTitle(String title) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    Content selected = getContentManager().getSelectedContent();
+  override fun setTitle(title: String) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val selected = contentManager.selectedContent
     if (selected != null) {
-      selected.setDisplayName(title);
+      selected.displayName = title
     }
-    myToolWindowManager.toolWindowPropertyChanged(this, PROP_TITLE);
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_TITLE)
   }
 
-  @Override
-  public final void setStripeTitle(@NotNull String stripeTitle) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myStripeTitle = stripeTitle;
-    myToolWindowManager.toolWindowPropertyChanged(this, PROP_STRIPE_TITLE);
+  override fun setStripeTitle(value: String) {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    stripeTitle = value
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_STRIPE_TITLE)
   }
 
-  public void setDecorator(@NotNull InternalDecorator decorator) {
-    myDecorator = decorator;
+  fun setDecorator(value: InternalDecorator) {
+    decorator = value
   }
 
-  public void fireActivated() {
-    if (myDecorator != null) {
-      myDecorator.fireActivated();
-    }
+  fun fireActivated() {
+    decorator?.fireActivated()
   }
 
-  public void fireHidden() {
-    if (myDecorator != null) {
-      myDecorator.fireHidden();
-    }
+  fun fireHidden() {
+    decorator?.fireHidden()
   }
 
-  public void fireHiddenSide() {
-    if (myDecorator != null) {
-      myDecorator.fireHiddenSide();
-    }
+  fun fireHiddenSide() {
+    decorator?.fireHiddenSide()
   }
 
-  @NotNull
-  public ToolWindowManagerImpl getToolWindowManager() {
-    return myToolWindowManager;
+  val popupGroup: ActionGroup?
+    get() = decorator?.createPopupGroup()
+
+  override fun setDefaultState(anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
+    toolWindowManager.setDefaultState(this, anchor, type, floatingBounds)
   }
 
-  @Nullable
-  public ActionGroup getPopupGroup() {
-    return myDecorator != null ? myDecorator.createPopupGroup() : null;
+  override fun setToHideOnEmptyContent(value: Boolean) {
+    hideOnEmptyContent = value
   }
 
-  @SuppressWarnings("unused")
-  public void removeStripeButton() {
-    if (myDecorator != null) {
-      myDecorator.removeStripeButton();
-    }
-  }
-  @SuppressWarnings("unused")
-  public void showStripeButton() {
-    if (myDecorator != null) {
-      myDecorator.showStripeButton();
-    }
+  override fun isToHideOnEmptyContent() = hideOnEmptyContent
+
+  override fun setShowStripeButton(show: Boolean) {
+    toolWindowManager.setShowStripeButton(id, show)
   }
 
-  @Override
-  public void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds) {
-    myToolWindowManager.setDefaultState(this, anchor, type, floatingBounds);
+  override fun isShowStripeButton() = toolWindowManager.isShowStripeButton(id)
+
+  override fun isDisposed() = contentManager.isDisposed
+
+  fun setContentFactory(value: ToolWindowFactory) {
+    contentFactory = value
+    value.init(this)
   }
 
-  @Override
-  public void setToHideOnEmptyContent(final boolean hideOnEmpty) {
-    myHideOnEmptyContent = hideOnEmpty;
-  }
-
-  @Override
-  public boolean isToHideOnEmptyContent() {
-    return myHideOnEmptyContent;
-  }
-
-  @Override
-  public void setShowStripeButton(boolean show) {
-    myToolWindowManager.setShowStripeButton(myId, show);
-  }
-
-  @Override
-  public boolean isShowStripeButton() {
-    return myToolWindowManager.isShowStripeButton(myId);
-  }
-
-  @Override
-  public boolean isDisposed() {
-    return myContentManager.isDisposed();
-  }
-
-  boolean isPlaceholderMode() {
-    return myPlaceholderMode;
-  }
-
-  void setPlaceholderMode(final boolean placeholderMode) {
-    myPlaceholderMode = placeholderMode;
-  }
-
-  public void setContentFactory(ToolWindowFactory contentFactory) {
-    myContentFactory = contentFactory;
-    contentFactory.init(this);
-  }
-
-  public void ensureContentInitialized() {
-    if (myContentFactory != null) {
-      ToolWindowFactory contentFactory = myContentFactory;
+  fun ensureContentInitialized() {
+    val currentContentFactory = contentFactory
+    if (currentContentFactory != null) {
       // clear it first to avoid SOE
-      myContentFactory = null;
-      myContentManager.removeAllContents(false);
-      contentFactory.createToolWindowContent(myToolWindowManager.getProject(), this);
+      this.contentFactory = null
+      contentManager.removeAllContents(false)
+      currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
     }
   }
 
-  @Override
-  public void setHelpId(String helpId) {
-    myHelpId = helpId;
+  override fun getHelpId() = helpId
+
+  override fun setHelpId(value: String) {
+    helpId = value
   }
 
-  @Nullable
-  @Override
-  public String getHelpId() {
-    return myHelpId;
-  }
-
-  @Override
-  public void showContentPopup(InputEvent inputEvent) {
-    myContentUI.toggleContentPopup();
+  override fun showContentPopup(inputEvent: InputEvent) {
+    contentUi.toggleContentPopup()
   }
 }
