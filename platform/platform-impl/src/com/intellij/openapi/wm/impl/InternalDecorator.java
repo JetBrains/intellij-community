@@ -110,7 +110,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     init(dumbAware, parentDisposable);
 
-    apply(info);
+    setWindowInfo(info);
 
     this.listener = listener;
   }
@@ -139,6 +139,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return;
     }
 
+    setWindowInfo(info);
+  }
+
+  private void setWindowInfo(@NotNull WindowInfoImpl info) {
     myInfo = info;
 
     // Anchor
