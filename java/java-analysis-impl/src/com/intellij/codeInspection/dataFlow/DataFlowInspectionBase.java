@@ -23,10 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
@@ -736,9 +733,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (reporter.isOnTheFly()) {
         fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       }
+      String text = PsiExpressionTrimRenderer.render(operand);
       String message = alwaysFails ?
-                       InspectionsBundle.message("dataflow.message.cce.always", operand.getText()) :
-                       InspectionsBundle.message("dataflow.message.cce", operand.getText());
+                       InspectionsBundle.message("dataflow.message.cce.always", text) :
+                       InspectionsBundle.message("dataflow.message.cce", text);
       reporter.registerProblem(castType, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     });
   }
