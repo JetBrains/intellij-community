@@ -65,9 +65,9 @@ public class JBCefJSQuery implements Disposable {
   }
 
   /**
-   * Returns query callback call to inject into JS code
+   * Returns the query callback call to inject into JS code
    *
-   * @param queryResult the result passed to the handler {@link #addHandler(Function)}
+   * @param queryResult the result that weill be passed to the java handler {@link #addHandler(Function)}
    * @param onSuccessCallback JS callback in format: function(response) {}
    * @param onFailureCallback JS callback in format: function(error_code, error_message) {}
    */
