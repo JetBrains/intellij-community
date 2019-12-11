@@ -58,22 +58,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
 
   protected final void registerExtensionPointListeners(@NotNull Disposable disposable) {
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
-        new ExtensionPointListener<FileIndentOptionsProvider>() {
-          @Override
-          public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
-            notifyCodeStyleSettingsChanged();
-          }
+    FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<FileIndentOptionsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          notifyCodeStyleSettingsChanged();
+        }
 
-          @Override
-          public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
-                                       @NotNull PluginDescriptor pluginDescriptor) {
-            notifyCodeStyleSettingsChanged();
-          }
-        }, disposable);
-    }
+        @Override
+        public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          notifyCodeStyleSettingsChanged();
+        }
+      }, disposable);
   }
 
   /**
