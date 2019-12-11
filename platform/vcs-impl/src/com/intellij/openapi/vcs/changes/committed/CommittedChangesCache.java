@@ -437,7 +437,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     return changes;
   }
 
-  private void fireChangesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
+  private void fireChangesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
   }
 
@@ -448,7 +448,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
   @NotNull
-  private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+  private List<CommittedChangeList> refreshCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Refreshing cache for " + cacheFile.getLocation());
     final List<CommittedChangeList> newLists = new ArrayList<>();
 
@@ -458,7 +458,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     final Pair<Long, List<CommittedChangeList>> externalLists = myExternallyLoadedChangeLists.get(location.getKey());
     final long latestChangeList = getLatestListForFile(cacheFile);
     if ((externalLists != null) && (latestChangeList == externalLists.first.longValue())) {
-      newLists.addAll(appendLoadedChanges(cacheFile, location, externalLists.second));
+      newLists.addAll(appendLoadedChanges(cacheFile, externalLists.second));
       myExternallyLoadedChangeLists.clear();
     }
 
@@ -484,7 +484,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     defaultSettings.STRICTLY_AFTER = true;
     final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, maxCount);
     debug("Loaded " + newChanges.size() + " new changelists");
-    newLists.addAll(appendLoadedChanges(cacheFile, location, newChanges));
+    newLists.addAll(appendLoadedChanges(cacheFile, newChanges));
 
     return newLists;
   }
@@ -493,11 +493,11 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     LOG.debug(message);
   }
 
-  private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
+  private List<CommittedChangeList> appendLoadedChanges(@NotNull ChangesCacheFile cacheFile,
                                                         @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
-      fireChangesLoaded(location, savedChanges);
+      fireChangesLoaded(cacheFile.getLocation(), savedChanges);
     }
     return savedChanges;
   }
@@ -629,8 +629,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     }
   }
 
-  public void commitMessageChanged(final AbstractVcs vcs,
-                                   final RepositoryLocation location, final long number, final String newMessage) {
+  public void commitMessageChanged(@NotNull RepositoryLocation location, long number, String newMessage) {
     myTaskQueue.run(() -> {
       final ChangesCacheFile file = myCachesHolder.haveCache(location);
       if (file != null) {

@@ -42,9 +42,9 @@ public class IncomingChangesIndicator {
     myProject = project;
     myCache = cache;
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
       @Override
-      public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
+      public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
         ApplicationManager.getApplication().invokeLater(() -> refreshIndicator());
       }
     });

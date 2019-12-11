@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -18,6 +18,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -92,14 +93,14 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     });
   }
 
-  private class MyCommittedChangesListener extends CommittedChangesAdapter {
+  private class MyCommittedChangesListener implements CommittedChangesListener {
     @Override
-    public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
+    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
       updateModel(true, true);
     }
 
     @Override
-    public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
+    public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
       updateModel(true, true);
     }
 
@@ -115,7 +116,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     }
 
     @Override
-    public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
+    public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
       if (lastError != null) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
       }

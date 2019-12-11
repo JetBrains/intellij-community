@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -83,9 +84,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }
   }
 
-  private class MyCommittedChangesListener extends CommittedChangesAdapter {
+  private class MyCommittedChangesListener implements CommittedChangesListener {
     @Override
-    public void changesLoaded(RepositoryLocation location, List<CommittedChangeList> changes) {
+    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
       presentationChanged();
     }
 
@@ -99,7 +100,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }
 
     @Override
-    public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {
+    public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
       if (lastError != null) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
       }
