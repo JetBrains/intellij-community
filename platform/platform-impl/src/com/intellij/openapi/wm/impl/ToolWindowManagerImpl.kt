@@ -555,7 +555,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     // show activated
-    val info = entry.internalDecorator.windowInfo
+    val info = getRegisteredMutableInfoOrLogError(id)
     var toApplyInfo = false
     if (!info.isActive) {
       info.isActive = true
@@ -639,7 +639,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override val activeToolWindowId: String?
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return idToEntry.values.firstOrNull { it.internalDecorator.windowInfo.isActive }?.internalDecorator?.toolWindow?.id
+      return idToEntry.values.firstOrNull {
+        it.readOnlyWindowInfo.isActive
+      }?.internalDecorator?.toolWindow?.id
     }
 
   override fun getLastActiveToolWindowId(): String? {
@@ -742,7 +744,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     val entry = idToEntry.get(id)!!
-    val info = entry.internalDecorator.windowInfo
+    val info = getRegisteredMutableInfoOrLogError(id)
     val commands = mutableListOf<FinalizableCommand>()
     val wasActive = info.isActive
     // hide and deactivate
@@ -808,7 +810,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    */
   private fun showToolWindowImpl(id: String, dirtyMode: Boolean, commands: MutableList<FinalizableCommand>) {
     val entry = idToEntry.get(id)!!
-    val toBeShownInfo = entry.internalDecorator.windowInfo
+    val toBeShownInfo = getRegisteredMutableInfoOrLogError(id)
     val window = entry.internalDecorator.toolWindow
     if (toBeShownInfo.isWindowed) {
       UIUtil.toFront(UIUtil.getWindow(window.component))
@@ -1822,11 +1824,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * state.
    */
   fun toolWindowPropertyChanged(toolWindow: ToolWindowImpl, propertyName: String?) {
-    if (propertyName == ToolWindowEx.PROP_AVAILABLE && !toolWindow.isAvailable && layout.getInfo(toolWindow.id)?.isVisible == true) {
+    val entry = idToEntry.get(toolWindow.id)
+
+    if (propertyName == ToolWindowEx.PROP_AVAILABLE && !toolWindow.isAvailable && entry?.readOnlyWindowInfo?.isVisible == true) {
       hideToolWindow(toolWindow.id, false)
     }
 
-    val entry = idToEntry.get(toolWindow.id)
     entry?.stripeButton?.updatePresentation()
     ActivateToolWindowAction.updateToolWindowActionPresentation(toolWindow)
   }

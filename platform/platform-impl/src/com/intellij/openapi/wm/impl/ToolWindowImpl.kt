@@ -96,7 +96,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val activity: UiActivity = UiActivity.Focus("toolWindow:$id")
+    val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(toolWindowManager.project, activity, ModalityState.NON_MODAL)
     toolWindowManager.activateToolWindow(id, forced, autoFocusContents)
     toolWindowManager.invokeLater(Runnable {

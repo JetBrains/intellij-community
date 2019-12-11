@@ -467,11 +467,13 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   public void finishDrop() {
-    if (myLastLayoutData == null || !isDroppingButton()) return;
+    if (myLastLayoutData == null || !isDroppingButton()) {
+      return;
+    }
 
-    final WindowInfoImpl info = myDragButton.getDecorator().getWindowInfo();
+    String id = myDragButton.getDecorator().getToolWindow().getId();
     myFinishingDrop = true;
-    myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
+    myManager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
                                     myLastLayoutData.dragToSide);
 
     myManager.invokeLater(() -> resetDrop());
