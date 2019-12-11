@@ -7,8 +7,10 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
@@ -50,6 +52,10 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       })
     }
 
+    private fun getDefaultProjectSdk(): Sdk? {
+      return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
+    }
+
     private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
       existingSdks.filter { it.isSystemWide }.sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
 
@@ -86,6 +92,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     // TODO: Introduce an extension for configuring a project via a Python SDK provider
     detectAndSetupPipEnv(project, module, existingSdks)?.let {
       SdkConfigurationUtil.addSdk(it)
+      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+      return
+    }
+
+    getDefaultProjectSdk()?.let {
       SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
       return
     }
