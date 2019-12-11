@@ -148,7 +148,7 @@ abstract class ToolWindowManager {
 
   abstract fun getToolWindowBalloon(id: String): Balloon?
 
-  abstract fun isMaximized(wnd: ToolWindow): Boolean
+  abstract fun isMaximized(window: ToolWindow): Boolean
 
   abstract fun setMaximized(window: ToolWindow, maximized: Boolean)
 }

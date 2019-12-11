@@ -477,7 +477,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setDefaultState(@Nullable final ToolWindowAnchor anchor, @Nullable final ToolWindowType type, @Nullable final Rectangle floatingBounds) {
+  public void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds) {
     myToolWindowManager.setDefaultState(this, anchor, type, floatingBounds);
   }
 

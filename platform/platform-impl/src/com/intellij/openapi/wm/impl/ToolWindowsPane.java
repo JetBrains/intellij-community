@@ -607,8 +607,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  public boolean isMaximized(@NotNull ToolWindow wnd) {
-      return myMaximizedProportion != null && myMaximizedProportion.first == wnd;
+  public boolean isMaximized(@NotNull ToolWindow window) {
+    return myMaximizedProportion != null && myMaximizedProportion.first == window;
   }
 
   void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
