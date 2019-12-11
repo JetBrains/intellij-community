@@ -3,8 +3,9 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.impl.light.LightField;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,18 +38,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     for (PsiRecordComponent component : components) {
       String name = component.getName();
       if (name == null) continue;
-      LightMethod method = new LightMethod(element.getManager(), factory.createMethod(name, component.getType()), aClass) {
-        @Override
-        public int getTextOffset() {
-          return component.getTextOffset();
-        }
-
-        @NotNull
-        @Override
-        public PsiElement getNavigationElement() {
-          return component.getNavigationElement();
-        }
-      };
+      LightMethod method = new LightRecordMethod(element.getManager(), factory.createMethod(name, component.getType()), aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
@@ -63,18 +53,7 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     for (PsiRecordComponent component : components) {
       PsiField recordField = createRecordField(component, factory);
       if (recordField == null) continue;
-      LightField field = new LightField(element.getManager(), recordField, aClass) {
-        @Override
-        public int getTextOffset() {
-          return component.getTextOffset();
-        }
-
-        @NotNull
-        @Override
-        public PsiElement getNavigationElement() {
-          return component.getNavigationElement();
-        }
-      };
+      LightRecordField field = new LightRecordField(element.getManager(), recordField, aClass, component);
       //noinspection unchecked
       fields.add((Psi)field);
     }
