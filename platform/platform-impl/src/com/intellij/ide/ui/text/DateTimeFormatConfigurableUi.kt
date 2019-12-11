@@ -5,7 +5,6 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
@@ -19,7 +18,6 @@ import javax.swing.JTextField
 class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : ConfigurableUi<DateTimeFormatManager> {
   private val ui: JComponent
   private lateinit var usePrettyFormatting: JCheckBox
-  private lateinit var link: HyperlinkLabel
   private lateinit var overrideSystemDateFormatting: JCheckBox
   private lateinit var use24HourTime: JCheckBox
   private lateinit var pattern: JTextField
