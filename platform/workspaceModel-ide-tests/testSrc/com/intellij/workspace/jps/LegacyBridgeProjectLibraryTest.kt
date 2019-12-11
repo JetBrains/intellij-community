@@ -3,7 +3,10 @@ package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -11,12 +14,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspace.api.EntityChange
-import com.intellij.workspace.api.EntityStoreChanged
-import com.intellij.workspace.api.LibraryEntity
-import com.intellij.workspace.api.LibraryTableId
+import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -216,6 +218,50 @@ class LegacyBridgeProjectLibraryTest {
     assertEquals(2, libraryEntity.roots.size)
   }
 
+  @Test
+  fun `test project library rename as module dependency`() = WriteCommandAction.runWriteCommandAction(project) {
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+    val iprFile = File(project.projectFilePath!!)
+    val moduleFile = File(project.basePath, "build.iml")
+
+    val library = createProjectLibrary(antLibraryName, withRoots = false)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertTrue(iprFile.readText().contains(antLibraryName))
+
+    val module = ModuleManager.getInstance(project).modifiableModel.let {
+      val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      it.commit()
+      module
+    }
+    ModuleRootManager.getInstance(module).modifiableModel.let {
+      it.addLibraryEntry(library)
+      it.commit()
+    }
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertTrue(moduleFile.readText().contains(antLibraryName))
+    assertFalse(moduleFile.readText().contains(mavenLibraryName))
+
+    library.modifiableModel.let {
+      it.name = mavenLibraryName
+      it.commit()
+    }
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    // Check project file contains new name of lib
+    assertTrue(iprFile.readText().contains(mavenLibraryName))
+    assertFalse(iprFile.readText().contains(antLibraryName))
+    // Check module file contains new name of lib too
+    assertTrue(moduleFile.readText().contains(mavenLibraryName))
+    assertFalse(moduleFile.readText().contains(antLibraryName))
+
+    val moduleDependencyItem = WorkspaceModel.getInstance(project).entityStore.current
+                                                                  .entities(ModuleEntity::class.java).first()
+                                                                  .dependencies.last()
+    assertTrue(moduleDependencyItem is ModuleDependencyItem.Exportable.LibraryDependency)
+    val libraryDependency = moduleDependencyItem as ModuleDependencyItem.Exportable.LibraryDependency
+    assertEquals(mavenLibraryName, libraryDependency.library.name)
+  }
+
   private fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
     assertTrue(event is EntityChange.Added)
     val libraryEntity = (event as EntityChange.Added).entity
@@ -254,14 +300,16 @@ class LegacyBridgeProjectLibraryTest {
              ?.getAttribute("url")?.value?.contains(classFileName) ?: false
   }
 
-  private fun createProjectLibrary(libraryName: String): Library {
+  private fun createProjectLibrary(libraryName: String, withRoots: Boolean = true): Library {
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     val library = projectLibraryTable.createLibrary(libraryName)
 
-    library.modifiableModel.let {
-      it.addRoot(File(project.basePath, "$libraryName.jar").path, OrderRootType.CLASSES)
-      it.addRoot(File(project.basePath, "$libraryName-sources.jar").path, OrderRootType.SOURCES)
-      it.commit()
+    if (withRoots) {
+      library.modifiableModel.let {
+        it.addRoot(File(project.basePath, "$libraryName.jar").path, OrderRootType.CLASSES)
+        it.addRoot(File(project.basePath, "$libraryName-sources.jar").path, OrderRootType.SOURCES)
+        it.commit()
+      }
     }
     return library
   }

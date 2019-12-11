@@ -115,8 +115,10 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
                         "old library id: '$idBefore' new library id: '$idAfter'")
                     }
 
-                    // Since we do not track names in moduleRootComponent.moduleLibraries
-                    // it's nothing to do here
+                    val moduleRootComponent = getModuleRootComponentByLibrary(change.oldEntity)
+                    val moduleLibrary = moduleRootComponent.moduleLibraries.firstOrNull { it.entityId == idBefore }
+                                        ?: error("Could not find library '${idBefore.name}' in module ${moduleRootComponent.module.name}")
+                    moduleLibrary.entityId = idAfter
                   }
 
                   Unit

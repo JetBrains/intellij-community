@@ -63,11 +63,13 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       error("Library named $name already exists")
     }
 
+    val oldPersistentId = entity.persistentId()
     entityId = entity.persistentId().copy(name = name)
     diff.modifyEntity(ModifiableLibraryEntity::class.java, entity) {
       this.name = name
     }
 
+    updateModuleDependency(oldPersistentId)
     if (assertChangesApplied && currentLibrary.name != name) {
       error("setName: expected library name ${name}, but got ${currentLibrary.name}. Original name: ${originalLibrarySnapshot.name}")
     }
@@ -99,6 +101,29 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     else {
       diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, referrers.first(), updater)
       referrers.drop(1).forEach { diff.removeEntity(it) }
+    }
+  }
+
+  private fun updateModuleDependency(oldLibraryId: LibraryId) {
+    entityStoreOnDiff.current.entities(ModuleEntity::class.java).forEach { moduleEntity ->
+      var containsOldDependency = false
+      val newDependencies = moduleEntity.dependencies.map {
+        when(it) {
+          is ModuleDependencyItem.Exportable.LibraryDependency -> {
+            if (it.library == oldLibraryId) {
+              containsOldDependency = true
+              it.copy(library = entityId)
+            } else it
+          }
+          else -> it
+        }
+      }
+
+      if (containsOldDependency) {
+        diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+          dependencies = newDependencies
+        }
+      }
     }
   }
 
