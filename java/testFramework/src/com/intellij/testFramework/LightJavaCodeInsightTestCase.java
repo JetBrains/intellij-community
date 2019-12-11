@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModuleTypeId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Disposer;
@@ -20,6 +19,9 @@ import java.util.regex.Pattern;
 public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
   private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(Preview)?(\\.java)?$");
 
+  // extension.setLanguageLevel uses message bus
+  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
+
   public JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(getProject());
   }
@@ -28,6 +30,19 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
   protected void setUp() throws Exception {
     super.setUp();
     setLanguageLevel(getLanguageLevel());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myBeforeParentDisposeDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   /**
@@ -63,11 +78,10 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    Project project = getProject();
-    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(project);
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
     LanguageLevel prev = extension.getLanguageLevel();
     extension.setLanguageLevel(level);
-    Disposer.register(((ProjectEx)project).getEarlyDisposable(), () -> extension.setLanguageLevel(prev));
+    Disposer.register(myBeforeParentDisposeDisposable, () -> extension.setLanguageLevel(prev));
   }
 
   @Override
