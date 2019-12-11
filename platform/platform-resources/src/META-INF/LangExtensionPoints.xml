@@ -26,13 +26,13 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.editor.EditorAppearanceConfigurable"/>
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
     <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
     <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
-      <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
 
     <!--suppress PluginXmlValidity -->
