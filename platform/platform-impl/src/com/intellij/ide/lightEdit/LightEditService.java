@@ -197,7 +197,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   public void setAutosaveMode(boolean autosaveMode) {
-    myConfiguration.autosaveMode = true;
+    myConfiguration.autosaveMode = autosaveMode;
     myEditorManager.fireAutosaveModeChanged(autosaveMode);
   }
 }
