@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchRequestCollector;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +21,10 @@ public class JavaRecordComponentSearcher extends QueryExecutorBase<PsiReference,
         SearchRequestCollector optimizer = queryParameters.getOptimizer();
         optimizer.searchWord(info.myName,
                              queryParameters.getEffectiveSearchScope(),
-                             UsageSearchContext.IN_CODE,
                              false,
                              info.myLightMethod);
         optimizer.searchWord(info.myName,
                              new LocalSearchScope(info.myClass),
-                             UsageSearchContext.IN_CODE,
                              true,
                              info.myLightField);
       }
