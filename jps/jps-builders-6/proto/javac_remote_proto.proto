@@ -44,6 +44,7 @@ message Message {
     repeated OutputGroup output = 7;
     repeated string module_path = 8;
     repeated string upgrade_module_path = 9;
+    map<string,string> module_names = 10;
   }
 
   message Response {

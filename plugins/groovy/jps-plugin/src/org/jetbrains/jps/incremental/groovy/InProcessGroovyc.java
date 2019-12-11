@@ -21,10 +21,7 @@ import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.incremental.CompileContext;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -145,7 +142,7 @@ class InProcessGroovyc implements GroovycFlavor {
                                               CompileContext context,
                                               File tempFile,
                                               final GroovycOutputParser parser,
-                                              @Nullable String byteCodeTargetLevel, @Nullable Queue mailbox) {
+                                              @Nullable String byteCodeTargetLevel, @Nullable Queue mailbox) throws IOException {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
     ClassLoader oldLoader = Thread.currentThread().getContextClassLoader();
@@ -328,14 +325,14 @@ class InProcessGroovyc implements GroovycFlavor {
   }
 
   @NotNull
-  private static PrintStream createStream(final GroovycOutputParser parser, final Key type, final PrintStream overridden) {
+  private static PrintStream createStream(GroovycOutputParser parser, Key type, PrintStream overridden) throws IOException {
     final Thread thread = Thread.currentThread();
-    return new PrintStream(new OutputStream() {
+    OutputStream out = new OutputStream() {
       ByteArrayOutputStream line = new ByteArrayOutputStream();
       boolean hasLineSeparator = false;
 
       @Override
-      public void write(int b) {
+      public void write(int b) throws IOException {
         if (Thread.currentThread() != thread) {
           overridden.write(b);
           return;
@@ -355,19 +352,19 @@ class InProcessGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void flush() {
+      public void flush() throws IOException {
         if (Thread.currentThread() != thread) {
           overridden.flush();
           return;
         }
 
         if (line.size() > 0) {
-          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString()), type);
+          parser.notifyTextAvailable(StringUtil.convertLineSeparators(line.toString("UTF-8")), type);
           line = new ByteArrayOutputStream();
           hasLineSeparator = false;
         }
       }
-
-    });
+    };
+    return new PrintStream(out, false, "UTF-8");
   }
 }

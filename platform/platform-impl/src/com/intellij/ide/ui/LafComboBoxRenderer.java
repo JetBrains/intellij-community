@@ -24,7 +24,7 @@ import javax.swing.*;
  * @deprecated unused
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public class LafComboBoxRenderer extends ListCellRendererWrapper<UIManager.LookAndFeelInfo> {
   @Override
   public void customize(final JList list,

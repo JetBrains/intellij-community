@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -290,13 +291,16 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       return Conditions.alwaysFalse();
     }
 
-    Document originalDocument = file.getViewProvider().getDocument();
-    if (originalDocument != null) {
-      // The copy document doesn't contain live template key.
-      // Register offset translator to make getOriginalElement() work in the copy.
-      OffsetTranslator translator = new OffsetTranslator(originalDocument, file, copyDocument, newOffset, currentOffset, "");
-      Disposer.register(parentDisposable, translator);
+    // The copy document doesn't contain live template key.
+    // Register offset translator to make getOriginalElement() work in the copy.
+    Document fileDocument = file.getViewProvider().getDocument();
+    if (fileDocument != null && fileDocument.getTextLength() < currentOffset) {
+      LOG.error("File document length (" + fileDocument.getTextLength() + ") is less than offset (" + currentOffset + ")",
+                AttachmentFactory.createAttachment(fileDocument));
     }
+    Document originalDocument = editor.getDocument();
+    OffsetTranslator translator = new OffsetTranslator(originalDocument, file, copyDocument, newOffset, currentOffset, "");
+    Disposer.register(parentDisposable, translator);
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;

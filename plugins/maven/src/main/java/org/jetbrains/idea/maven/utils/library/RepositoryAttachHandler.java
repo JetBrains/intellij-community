@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * This class is deprecated and is to be removed in future releases
  * @deprecated Use {@link JarRepositoryManager} instead
  */
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 @Deprecated
 public class RepositoryAttachHandler {
 

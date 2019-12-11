@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -146,8 +147,14 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {
-            LOG.assertTrue(descriptor != null, LocalInspectionTool.this.getClass().getName());
-            holder.registerProblem(descriptor);
+            if (descriptor != null) {
+              holder.registerProblem(descriptor);
+            }
+            else {
+              Class<?> inspectionToolClass = LocalInspectionTool.this.getClass();
+              LOG.error(PluginException.createByClass("Array returned from checkFile() method of " + inspectionToolClass + " contains null element",
+                                                      null, inspectionToolClass));
+            }
           }
         }
       }

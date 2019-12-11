@@ -8,6 +8,7 @@ import com.intellij.execution.filters.InputFilter;
 import com.intellij.execution.process.AnsiEscapeDecoderTest;
 import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
@@ -35,6 +36,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -373,6 +375,74 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     DataContext dataContext = ((EditorEx)editor).getDataContext();
 
     action.actionPerformed(editor, c, dataContext);
+  }
+
+  public void testCompleteLinesWhenMessagesArePrintedConcurrently() throws ExecutionException, InterruptedException {
+    assertCompleteLines("stdout ", 20000, 2, "stderr ", 20000, 3, 10);
+    assertCompleteLines("stdout ", 20000, 5, "stderr ", 20000, 7, 10);
+    assertCompleteLines("info: ", 20000, 11, "error: ", 20000, 13, 10);
+    assertCompleteLines("Hello", 40000, 199, "Bye", 40000, 101, 5);
+  }
+
+  private void assertCompleteLines(@NotNull String stdoutLinePrefix, int stdoutLines, int stdoutBufferSize,
+                                   @NotNull String stderrLinePrefix, int stderrLines, int stderrBufferSize,
+                                   int rerunCount) throws ExecutionException, InterruptedException {
+    ProcessHandler processHandler = new NopProcessHandler();
+    myConsole.attachToProcess(processHandler);
+    for (int i = 0; i < rerunCount; i++) {
+      myConsole.clear();
+      myConsole.waitAllRequests();
+      int estimatedPrintedChars = stdoutLines * (stdoutLinePrefix.length() + Integer.toString(stdoutLines).length() + 1) +
+                                  stderrLines * (stderrLinePrefix.length() + Integer.toString(stderrLines).length() + 1);
+      Assert.assertTrue(ConsoleBuffer.getCycleBufferSize() > estimatedPrintedChars);
+      Future<?> stdout = sendMessagesInBackground(processHandler, stdoutLinePrefix, stdoutLines, ProcessOutputType.STDOUT, stdoutBufferSize);
+      Future<?> stderr = sendMessagesInBackground(processHandler, stderrLinePrefix, stderrLines, ProcessOutputType.STDERR, stderrBufferSize);
+      stdout.get();
+      stderr.get();
+      ((ConsoleViewRunningState)myConsole.getState()).getStreamsSynchronizer().waitForAllFlushed();
+      myConsole.flushDeferredText();
+      String text = myConsole.getEditor().getDocument().getText();
+      String[] lines = StringUtil.splitByLinesKeepSeparators(text);
+      int readStdoutLines = 0;
+      int readStderrLines = 0;
+      for (String line : lines) {
+        if (line.startsWith(stdoutLinePrefix)) {
+          Assert.assertEquals(stdoutLinePrefix + (readStdoutLines + 1) + LineSeparator.LF.getSeparatorString(), line);
+          readStdoutLines++;
+        }
+        else {
+          Assert.assertEquals(stderrLinePrefix + (readStderrLines + 1) + LineSeparator.LF.getSeparatorString(), line);
+          readStderrLines++;
+        }
+      }
+      Assert.assertEquals(stdoutLines, readStdoutLines);
+      Assert.assertEquals(stderrLines, readStderrLines);
+    }
+  }
+
+  @NotNull
+  private static Future<?> sendMessagesInBackground(@NotNull ProcessHandler processHandler,
+                                                    @NotNull String linePrefix,
+                                                    int lineCount,
+                                                    @NotNull ProcessOutputType outputType,
+                                                    int bufferSize) {
+    return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      int bufferRestSize = bufferSize;
+      for (int i = 1; i <= lineCount; i++) {
+        String text = linePrefix + i + LineSeparator.LF.getSeparatorString();
+        int printedTextSize = 0;
+        while (printedTextSize < text.length()) {
+          if (bufferRestSize == 0) {
+            bufferRestSize = bufferSize;
+          }
+          int endInd = Math.min(printedTextSize + bufferRestSize, text.length());
+          String textToPrint = text.substring(printedTextSize, endInd);
+          processHandler.notifyTextAvailable(textToPrint, outputType);
+          bufferRestSize -= textToPrint.length();
+          printedTextSize += textToPrint.length();
+        }
+      }
+    });
   }
 
   public void testBackspaceDoesDeleteTheLastTypedChar() {

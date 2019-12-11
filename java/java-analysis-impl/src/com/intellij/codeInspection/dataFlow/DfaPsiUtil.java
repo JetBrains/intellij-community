@@ -184,7 +184,8 @@ public class DfaPsiUtil {
     Ref<Nullability> result = Ref.create(Nullability.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
       result.set(getTypeOwnNullability(eachType));
-      return result.get() == Nullability.UNKNOWN;
+      return result.get() == Nullability.UNKNOWN &&
+             (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }

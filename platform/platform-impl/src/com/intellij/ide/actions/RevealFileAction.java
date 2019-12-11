@@ -214,11 +214,12 @@ public class RevealFileAction extends DumbAwareAction {
       try {
         CapturingProcessHandler handler;
         if (SystemInfo.isWindows) {
+          assert command.length == 1;
           Process process = Runtime.getRuntime().exec(command[0]);  // no quoting/escaping is needed
-          handler = new CapturingProcessHandler(process, null, command[0]);
+          handler = new CapturingProcessHandler.Silent(process, null, command[0]);
         }
         else {
-          handler = new CapturingProcessHandler(new GeneralCommandLine(command));
+          handler = new CapturingProcessHandler.Silent(new GeneralCommandLine(command));
         }
         handler.runProcess(10000, false).checkSuccess(LOG);
       }

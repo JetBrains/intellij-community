@@ -28,6 +28,9 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpCommandPlaceholder() = "mvn <goals...> <options...>"
 
+  override fun getMainListItem(dataContext: DataContext, value: String) =
+    RunAnythingMavenItem(getCommand(value), getIcon(value))
+
   override fun suggestCompletionVariants(dataContext: DataContext, commandLine: CommandLine): Sequence<String> {
     val basicPhasesVariants = completeBasicPhases(commandLine).sorted()
     val customGoalsVariants = completeCustomGoals(dataContext, commandLine).sorted()

@@ -138,11 +138,11 @@ class IntellijModulesPublication {
     def server = ''
     if (options.repositoryPassword != null && options.repositoryUser != null &&
         !options.repositoryPassword.isEmpty() && !options.repositoryUser.isEmpty()) {
-      server = '''<server>
+      server = """<server>
         <id>server-id</id>
         <username>${options.repositoryUser}</username>
         <password>${options.repositoryPassword}</password>
-      </server>'''
+      </server>"""
     }
     File.createTempFile('settings', '.xml').with {
       it << """<settings xmlns="https://maven.apache.org/SETTINGS/1.0.0"

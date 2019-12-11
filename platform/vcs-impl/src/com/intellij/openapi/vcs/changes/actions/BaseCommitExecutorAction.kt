@@ -29,6 +29,13 @@ abstract class BaseCommitExecutorAction : DumbAwareAction() {
 
   protected open val executorId: String = ""
   protected open fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
+
+  companion object {
+    fun AnActionEvent.getAmendCommitModePrefix(): String {
+      val isAmend = getContextCommitWorkflowHandler()?.amendCommitHandler?.isAmendCommitMode == true
+      return if (isAmend) "Amend " else ""
+    }
+  }
 }
 
 internal class DefaultCommitExecutorAction(private val executor: CommitExecutor) : BaseCommitExecutorAction() {

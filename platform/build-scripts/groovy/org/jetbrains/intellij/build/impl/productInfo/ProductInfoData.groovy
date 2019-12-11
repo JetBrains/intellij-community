@@ -12,6 +12,7 @@ import groovy.transform.Immutable
 class ProductInfoData {
   String name
   String version
+  String versionSuffix
   String buildNumber
   String productCode
   String svgIconPath

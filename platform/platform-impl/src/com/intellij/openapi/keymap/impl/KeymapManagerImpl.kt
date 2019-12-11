@@ -85,20 +85,37 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
       CtrlYActionChooser.askAboutShortcut()
     }
+    fun removeKeymap(keymapName: String) {
+      if (schemeManager.activeScheme?.name.equals(keymapName)) {
+        val newKeymap = schemeManager.allSchemes.firstOrNull() { it.name.startsWith("Default") }
+        if (newKeymap != null) {
+          schemeManager.setCurrent(newKeymap, true, true)
+        }
+      }
+      schemeManager.removeScheme(keymapName)
+      DefaultKeymap.instance.removeKeymap(keymapName)
+    }
+    BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
+      override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
+        val keymapName = ep.keymapName
+        val keymap = DefaultKeymap.instance.loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
+          override fun read() = pluginDescriptor.pluginClassLoader
+            .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
+        }, pluginDescriptor.pluginId)
+        schemeManager.addScheme(keymap)
+        schemeManager.setCurrent(keymap, true, true)
+      }
 
+      override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
+        removeKeymap(ep.keymapName)
+      }
+    }, ApplicationManager.getApplication())
     BundledKeymapProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapProvider> {
       override fun extensionAdded(ep: BundledKeymapProvider, pluginDescriptor: PluginDescriptor) {
         for (fileName in ep.keymapFileNames) {
-          val keymap = DefaultKeymapImpl(object : SchemeDataHolder<KeymapImpl> {
+          val keymap = DefaultKeymap.instance.loadKeymap(ep.getKeyFromFileName(fileName), object : SchemeDataHolder<KeymapImpl> {
             override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
-
-            override fun updateDigest(scheme: KeymapImpl) {
-            }
-
-            override fun updateDigest(data: Element?) {
-            }
-          }, DefaultKeymap.instance, ep.javaClass)
-          keymap.name = ep.getKeyFromFileName(fileName)
+          }, pluginDescriptor.pluginId)
           schemeManager.addScheme(keymap)
           schemeManager.setCurrent(keymap, true, true)
         }
@@ -106,17 +123,10 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
       override fun extensionRemoved(ep: BundledKeymapProvider, pluginDescriptor: PluginDescriptor) {
         for (fileName in ep.keymapFileNames) {
-          val keymapName = ep.getKeyFromFileName(fileName)
-          if (schemeManager.activeScheme?.name.equals(keymapName)) {
-            val newKeymap = schemeManager.allSchemes.firstOrNull() { it.name.startsWith("Default") }
-            if (newKeymap != null) {
-              schemeManager.setCurrent(newKeymap, true, true)
-            }
-          }
-          schemeManager.removeScheme(keymapName)
+          removeKeymap(ep.getKeyFromFileName(fileName))
         }
       }
-    }, null)
+    }, ApplicationManager.getApplication())
   }
 
   private fun fireActiveKeymapChanged(newScheme: Keymap?) {

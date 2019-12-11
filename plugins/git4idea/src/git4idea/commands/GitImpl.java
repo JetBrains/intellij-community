@@ -122,7 +122,7 @@ public class GitImpl extends GitImplBase {
       if (!fileStatusPrefix.isEmpty() && !relPath.startsWith(fileStatusPrefix)) continue;
 
       String relativePath = relPath.substring(fileStatusPrefix.length());
-      files.add(GitContentRevision.createPathFromEscaped(root, relativePath, relativePath.endsWith("/")));
+      files.add(GitContentRevision.createPath(root, relativePath, relativePath.endsWith("/")));
     }
 
     return files;

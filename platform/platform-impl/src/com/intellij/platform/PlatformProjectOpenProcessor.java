@@ -6,6 +6,7 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -180,11 +181,22 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
       }
     }
 
-    Project project = openExistingProject(file, baseDir, options, null);
-    if (project != null && file != baseDir && !Files.isDirectory(file)) {
-      openFileFromCommandLine(project, file, line);
+    SaveAndSyncHandler saveAndSyncHandler = ApplicationManager.getApplication().getServiceIfCreated(SaveAndSyncHandler.class);
+    if (saveAndSyncHandler != null) {
+      saveAndSyncHandler.blockSyncOnFrameActivation();
     }
-    return project;
+    try {
+      Project project = openExistingProject(file, baseDir, options, null);
+      if (project != null && file != baseDir && !Files.isDirectory(file)) {
+        openFileFromCommandLine(project, file, line);
+      }
+      return project;
+    }
+    finally {
+      if (saveAndSyncHandler != null) {
+        saveAndSyncHandler.unblockSyncOnFrameActivation();
+      }
+    }
   }
 
   @Nullable

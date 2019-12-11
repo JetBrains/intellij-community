@@ -55,7 +55,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
@@ -404,13 +403,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     appendForkInfo(executor);
     appendRepeatMode();
 
-    OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine()) {
-      @NotNull
-      @Override
-      protected BaseOutputReader.Options readerOptions() {
-        return BaseOutputReader.Options.forMostlySilentProcess();
-      }
-    };
+    OSProcessHandler processHandler = new KillableColoredProcessHandler.Silent(createCommandLine());
     ProcessTerminatedListener.attach(processHandler);
     final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {

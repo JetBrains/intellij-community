@@ -199,13 +199,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myListsToBeDeleted.removeAll(myListsToBeDeletedSilently);
 
-      listsToBeDeletedSilently = ContainerUtil.mapNotNull(myListsToBeDeletedSilently, toDeleteMapping);
+      listsToBeDeletedSilently = mapNotNull(myListsToBeDeletedSilently, toDeleteMapping);
       myListsToBeDeletedSilently.clear();
 
       boolean askLater = myModalNotificationsBlocked &&
                          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS == Value.SHOW_CONFIRMATION;
       if (!askLater) {
-        listsToBeDeleted = ContainerUtil.mapNotNull(myListsToBeDeleted, toDeleteMapping);
+        listsToBeDeleted = mapNotNull(myListsToBeDeleted, toDeleteMapping);
         myListsToBeDeleted.clear();
       }
       else {
@@ -884,7 +884,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public LocalChangeList getChangeList(String id) {
+  @Nullable
+  public LocalChangeList getChangeList(@Nullable String id) {
     synchronized (myDataLock) {
       return myWorker.getChangeListById(id);
     }
@@ -1241,7 +1242,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
     readonlyStatusHandler.getState().SHOW_DIALOG = false;
     try {
-      readonlyStatusHandler.ensureFilesWritable(ContainerUtil.mapNotNull(paths, FilePath::getVirtualFile));
+      readonlyStatusHandler.ensureFilesWritable(mapNotNull(paths, FilePath::getVirtualFile));
     }
     finally {
       readonlyStatusHandler.getState().SHOW_DIALOG = savedOption;

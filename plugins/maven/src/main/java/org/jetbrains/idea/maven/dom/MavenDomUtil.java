@@ -334,6 +334,7 @@ public class MavenDomUtil {
     return prop == null ? null : prop.getPsiElement().getFirstChild().getNextSibling().getNextSibling();
   }
 
+  @Nullable
   private static Set<VirtualFile> getFilteredResourcesRoots(@NotNull MavenProject mavenProject) {
     Pair<Long, Set<VirtualFile>> cachedValue = mavenProject.getCachedValue(FILTERED_RESOURCES_ROOTS_KEY);
 
@@ -345,7 +346,7 @@ public class MavenDomUtil {
 
         String resourceDirectory = resource.getDirectory();
         if (resourceDirectory == null) {
-          return null;
+          continue;
         }
         VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
@@ -422,6 +423,19 @@ public class MavenDomUtil {
                                                        @Nullable Editor editor,
                                                        @NotNull final MavenId id) {
     return createDomDependency(model.getDependencies(), editor, id);
+  }
+
+
+  @Deprecated
+  /*
+   *  @deprecated leavy for plugin binary compatilibity
+   */
+  @NotNull
+  public static MavenDomDependency createDomDependency(MavenDomDependencies dependencies,
+                                                       @Nullable Editor editor,
+                                                       @NotNull final MavenId id) {
+
+    return createDomDependency(dependencies, editor, (MavenCoordinate)id);
   }
 
   @NotNull

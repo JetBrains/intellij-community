@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="intellij.vcs.github" />
     <orderEntry type="module" module-name="intellij.reStructuredText" />
     <orderEntry type="module" module-name="intellij.python.reStructuredText" />
-    <orderEntry type="module" module-name="intellij.python.helpers" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.pycharm.community" />
     <orderEntry type="module" module-name="intellij.pycharm.community.customization" />

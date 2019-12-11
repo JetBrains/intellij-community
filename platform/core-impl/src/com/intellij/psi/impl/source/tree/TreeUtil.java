@@ -46,33 +46,16 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode skipElements(@Nullable ASTNode element, @NotNull TokenSet types) {
-    while (true) {
-      if (element == null) return null;
-      if (!types.contains(element.getElementType())) break;
-      element = element.getTreeNext();
-    }
-    return element;
+    ASTNode candidate = element;
+    while (candidate != null && types.contains(candidate.getElementType())) candidate = candidate.getTreeNext();
+    return candidate;
   }
 
   @Nullable
   public static ASTNode skipElementsBack(@Nullable ASTNode element, @NotNull TokenSet types) {
-    if (element == null) return null;
-    if (!types.contains(element.getElementType())) return element;
-
-    ASTNode parent = element.getTreeParent();
-    ASTNode prev = element;
-    while (prev instanceof CompositeElement) {
-      if (!types.contains(prev.getElementType())) return prev;
-      prev = prev.getTreePrev();
-    }
-    if (prev == null) return null;
-    ASTNode firstChildNode = parent.getFirstChildNode();
-    ASTNode lastRelevant = null;
-    while (firstChildNode != prev) {
-      if (!types.contains(firstChildNode.getElementType())) lastRelevant = firstChildNode;
-      firstChildNode = firstChildNode.getTreeNext();
-    }
-    return lastRelevant;
+    ASTNode candidate = element;
+    while (candidate != null && types.contains(candidate.getElementType())) candidate = candidate.getTreePrev();
+    return candidate;
   }
 
   @Nullable

@@ -12,13 +12,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class PyRemoteCommandLineStateUtil {
+/**
+ * Use {@link PyRemoteCommandLinePatcherKt} instead
+ */
+final class PyRemoteCommandLineStateUtil {
   private PyRemoteCommandLineStateUtil() {
   }
 
-  public static void patchDebugParams(@NotNull String helpersPath,
-                                      @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                      @NotNull ParamsGroup debugParams)
+  static void patchDebugParams(@NotNull String helpersPath,
+                               @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                               @NotNull ParamsGroup debugParams)
     throws RemoteSdkException {
     debugParams.getParametersList().set(0, new RemoteFile(helpersPath, PyDebugRunner.DEBUGGER_MAIN).getPath());
 
@@ -36,11 +39,11 @@ public class PyRemoteCommandLineStateUtil {
       .set(PyDebugRunner.findIndex(debugParams.getParameters(), PyDebugRunner.PORT_PARAM), Integer.toString(socket.getSecond()));
   }
 
-  public static void patchProfileParams(@NotNull String interpreterPath,
-                                        @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
-                                        @NotNull ParamsGroup profileParams,
-                                        @Nullable File workDirectory,
-                                        @NotNull PathMapper pathMapper)
+  static void patchProfileParams(@NotNull String interpreterPath,
+                                 @NotNull PyRemoteSocketToLocalHostProvider remoteSocketProvider,
+                                 @NotNull ParamsGroup profileParams,
+                                 @Nullable File workDirectory,
+                                 @NotNull PathMapper pathMapper)
     throws RemoteSdkException {
     PyCommandLineStateUtil.remapParameters(interpreterPath, pathMapper, profileParams, workDirectory);
 
@@ -55,10 +58,10 @@ public class PyRemoteCommandLineStateUtil {
       .set(2, Integer.toString(socket.getSecond()));
   }
 
-  public static void patchCoverageParams(@NotNull String interpreterPath,
-                                         @NotNull ParamsGroup coverageParams,
-                                         @Nullable File workDirectory,
-                                         @NotNull PathMapper pathMapper)
+  static void patchCoverageParams(@NotNull String interpreterPath,
+                                  @NotNull ParamsGroup coverageParams,
+                                  @Nullable File workDirectory,
+                                  @NotNull PathMapper pathMapper)
     throws RemoteSdkException {
 
     PyCommandLineStateUtil.remapParameters(interpreterPath, pathMapper, coverageParams, workDirectory);

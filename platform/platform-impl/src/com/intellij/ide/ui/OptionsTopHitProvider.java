@@ -4,7 +4,7 @@ package com.intellij.ide.ui;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter;
+import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
@@ -240,9 +240,13 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
+      NonUrgentExecutor.getInstance().execute(() -> {
+        if (project.isDisposedOrDisposeInProgress()) {
+          return;
+        }
+
         cacheAll(null, project);
-        StartupActivity.POST_STARTUP_ACTIVITY.findExtensionOrFail(StartUpPerformanceReporter.class).lastOptionTopHitProviderFinishedForProject();
+        StartUpPerformanceService.getInstance().lastOptionTopHitProviderFinishedForProject(project);
       });
     }
 

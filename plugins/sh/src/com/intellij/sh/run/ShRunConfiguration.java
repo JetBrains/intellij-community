@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-    return new ShRunConfigurationProfileState(getProject(), this);
+    return ShSupport.getInstance().createRunProfileState(executor, environment, this);
   }
 
   @Override
@@ -116,43 +117,43 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return vfile.getPath();
   }
 
-  String getScriptPath() {
+  public String getScriptPath() {
     return myScriptPath;
   }
 
-  void setScriptPath(@NotNull String scriptPath) {
+  public void setScriptPath(@NotNull String scriptPath) {
     myScriptPath = scriptPath.trim();
   }
 
-  String getScriptOptions() {
+  public String getScriptOptions() {
     return myScriptOptions;
   }
 
-  void setScriptOptions(@NotNull String scriptOptions) {
+  public void setScriptOptions(@NotNull String scriptOptions) {
     myScriptOptions = scriptOptions.trim();
   }
 
-  String getScriptWorkingDirectory() {
+  public String getScriptWorkingDirectory() {
     return myScriptWorkingDirectory;
   }
 
-  void setScriptWorkingDirectory(String scriptWorkingDirectory) {
+  public void setScriptWorkingDirectory(String scriptWorkingDirectory) {
     myScriptWorkingDirectory = scriptWorkingDirectory.trim();
   }
 
-  String getInterpreterPath() {
+  public String getInterpreterPath() {
     return myInterpreterPath;
   }
 
-  void setInterpreterPath(@NotNull String interpreterPath) {
+  public void setInterpreterPath(@NotNull String interpreterPath) {
     myInterpreterPath = interpreterPath.trim();
   }
 
-  String getInterpreterOptions() {
+  public String getInterpreterOptions() {
     return myInterpreterOptions;
   }
 
-  void setInterpreterOptions(@NotNull String interpreterOptions) {
+  public void setInterpreterOptions(@NotNull String interpreterOptions) {
     myInterpreterOptions = interpreterOptions.trim();
   }
 }

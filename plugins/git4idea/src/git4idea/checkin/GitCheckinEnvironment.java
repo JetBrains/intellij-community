@@ -37,6 +37,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -88,7 +89,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
   private final VcsDirtyScopeManager myDirtyScopeManager;
 
-  private String myNextCommitAuthor = null; // The author for the next commit
+  private VcsUser myNextCommitAuthor = null; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
@@ -1136,7 +1137,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     @SuppressWarnings("unused") // used by external plugins
     @Nullable
     public String getAuthor() {
-      return myOptionsUi.getAuthor();
+      VcsUser author = myOptionsUi.getAuthor();
+      return author != null ? author.toString() : null;
     }
 
     @SuppressWarnings("unused") // used by external plugins

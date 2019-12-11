@@ -13,6 +13,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -61,17 +62,7 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       return new File(s);
     }
   };
-  private static final Method ourContainsMethod;
-  static {
-    Method method = null;
-    try {
-      method = JavaFileManager.class.getDeclaredMethod("contains", Location.class, FileObject.class);
-    }
-    catch (Throwable ignored) {
-    }
-    ourContainsMethod = method;
-  }
-  
+
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
   @Nullable
   private String myEncodingName;
@@ -82,6 +73,12 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
     myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
     myContext = new Context() {
+      @Nullable
+      @Override
+      public String getExplodedAutomaticModuleName(File pathElement) {
+        return context.getExplodedAutomaticModuleName(pathElement);
+      }
+
       @Override
       public boolean isCanceled() {
         return context.isCanceled();
@@ -267,6 +264,9 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   }
 
   public interface Context {
+    @Nullable
+    String getExplodedAutomaticModuleName(File pathElement);
+    
     boolean isCanceled();
 
     @NotNull
@@ -333,6 +333,9 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   @Override
   public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
     getStdManager().setLocation(location, path);
+    if ("MODULE_PATH".equals(location.getName())) {
+      initExplodedModuleNames(location, path);
+    }
   }
 
   @Override
@@ -485,21 +488,15 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
   }
 
   // this method overrides corresponding API method since javac 9
-  public boolean contains(Location location, FileObject fo) {
+  public boolean contains(Location location, FileObject fo) throws IOException {
     if (fo instanceof JpsFileObject) {
       return location.equals(((JpsFileObject)fo).getLocation());
     }
-    if (ourContainsMethod == null) {
-      throw new UnsupportedOperationException("Operation is not supported for file objects " + fo.getClass().getName());
-    }
-    // delegate the call further
-    try {
-      return ((Boolean)ourContainsMethod.invoke(getStdManager(), location, fo)).booleanValue();
-    }
-    catch (Throwable e) {
-      throw new UnsupportedOperationException(e);
-    }
+    return myContainsCall.callDefaultImpl(getStdManager(), "file object " + fo.getClass().getName(), location, fo);
   }
+  private final DelegateCallHandler<JavaFileManager, Boolean> myContainsCall = new DelegateCallHandler<JavaFileManager, Boolean>(
+    JavaFileManager.class, "contains", Location.class, FileObject.class
+  );
 
   public void onOutputFileGenerated(File file) {
     final File parent = file.getParentFile();
@@ -528,6 +525,76 @@ public class JpsJavacFileManager extends ForwardingJavaFileManager<StandardJavaF
       setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir));
     }
     myOutputsMap = outputDirToSrcRoots;
+  }
+
+  private final DelegateCallHandler<StandardJavaFileManager, Void> mySetLocationForModuleCall = new DelegateCallHandler<StandardJavaFileManager, Void>(
+    StandardJavaFileManager.class, "setLocationForModule", Location.class, String.class, Collection.class
+  );
+  private final DelegateCallHandler<File, Object> myToPathCall = new DelegateCallHandler<File, Object>(File.class, "toPath");
+  
+  private void initExplodedModuleNames(final Location modulePathLocation, Iterable<? extends File> path) throws IOException {
+    if (mySetLocationForModuleCall.isAvailable() && myToPathCall.isAvailable()) {
+      for (File pathEntry : path) {
+        final String explodedModuleName = myContext.getExplodedAutomaticModuleName(pathEntry);
+        if (explodedModuleName != null) {
+          mySetLocationForModuleCall.callDefaultImpl(
+            getStdManager(), modulePathLocation, explodedModuleName, Collections.singleton(myToPathCall.callDefaultImpl(pathEntry))
+          );
+        }
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static class DelegateCallHandler<T, R> {
+    private final Method myMethod;
+    private final String myUnsupportedMessage;
+
+    DelegateCallHandler(final Class<? extends T> apiInterface, String methodName, Class<?>... argTypes) {
+      myUnsupportedMessage = "Operation "+ methodName + " is not supported";
+      Method m = null;
+      try {
+        m = apiInterface.getDeclaredMethod(methodName, argTypes);
+      }
+      catch (Throwable ignored) {
+      }
+      myMethod = m;
+    }
+
+    boolean isAvailable() {
+      return myMethod != null;
+    }
+
+    R callDefaultImpl(final T callTarget, Object... args) throws IOException {
+      return callDefaultImpl(callTarget, "", args);
+    }
+
+    R callDefaultImpl(final T callTarget, String errorDetails, Object... args) throws IOException{
+      if (!isAvailable()) {
+        throw new UnsupportedOperationException(getErrorMessage(errorDetails));
+      }
+      // delegate the call further
+      try {
+        return (R)myMethod.invoke(callTarget, args);
+      }
+      catch (InvocationTargetException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof IOException) {
+          throw (IOException)cause;
+        }
+        if (cause instanceof RuntimeException) {
+          throw (RuntimeException)cause;
+        }
+        throw new UnsupportedOperationException(getErrorMessage(errorDetails), cause != null ? cause : e);
+      }
+      catch (Throwable e) {
+        throw new UnsupportedOperationException(getErrorMessage(errorDetails), e);
+      }
+    }
+
+    private String getErrorMessage(String errorDetails) {
+      return errorDetails.isEmpty() ? myUnsupportedMessage : myUnsupportedMessage + ": " + errorDetails;
+    }
   }
 
   public static <T> Iterable<T> merge(final Iterable<? extends T> first, final Iterable<? extends T> second) {

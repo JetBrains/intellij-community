@@ -56,6 +56,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
+  private static final String SECONDARY_SHORTCUT = "SecondaryActions.shortcut";
+
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
       ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
@@ -328,6 +330,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
             return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
                    ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
                    : super.getPopState();
+          }
+
+          @Override
+          protected String getShortcutText() {
+            Object shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
+            return shortcut != null ? shortcut.toString() : super.getShortcutText();
           }
         };
       mySecondaryActionsButton.setNoIconsInPopup(true);
@@ -1362,7 +1370,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setSecondaryActionsTooltip(@NotNull String secondaryActionsTooltip) {
-    mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
+    mySecondaryActions.getTemplatePresentation().setText(secondaryActionsTooltip);
+  }
+
+  public void setSecondaryActionsShortcut(@NotNull String secondaryActionsShortcut) {
+    mySecondaryActions.getTemplatePresentation().putClientProperty(SECONDARY_SHORTCUT, secondaryActionsShortcut);
   }
 
   @Override

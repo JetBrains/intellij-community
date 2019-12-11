@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
-import com.intellij.diff.editor.GraphViewVirtualFile;
+import com.intellij.diff.editor.VCSContentVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -47,6 +47,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -61,6 +62,7 @@ import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
+import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +107,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final AbstractVcsLogUi myLogUi;
 
   @Nullable DiffPreviewProvider myDiffPreviewProvider;
-  @Nullable private GraphViewVirtualFile myGraphViewFile;
+  @Nullable private VCSContentVirtualFile myGraphViewFile;
   @NotNull private final JComponent myToolbarsAndTable;
 
   public MainFrame(@NotNull VcsLogData logData,
@@ -225,6 +227,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         instance.openFile(file, false, true);
       }
     }, this);
+
+    new AnAction() {
+      {
+        setShortcutSet(CommonShortcuts.ESCAPE);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        openLogEditorTab();
+      }
+    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   private void installGraphView() {
@@ -260,11 +273,18 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myGraphViewFile == null || !myGraphViewFile.isValid()) {
-      myGraphViewFile = new GraphViewVirtualFile(myToolbarsAndTable, () -> {
+      myGraphViewFile = new VCSContentVirtualFile(myToolbarsAndTable, () -> {
         return getTabName();
       });
 
-      myGraphViewFile.putUserData(GraphViewVirtualFile.TabContentId, myLogUi.getId());
+      myGraphViewFile.putUserData(VCSContentVirtualFile.TabSelector, () -> {
+
+        VcsLogContentUtil.findAndSelect(myLogData.getProject(), AbstractVcsLogUi.class, ui1 -> {
+          return ui1.getId() == myLogUi.getId();
+        });
+
+        return Unit.INSTANCE;
+      });
     }
 
     Disposer.register(this, () -> myGraphViewFile = null);

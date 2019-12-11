@@ -259,6 +259,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         myButtonSynchronizer = new MyButtonSynchronizer();
         myPresentation.addPropertyChangeListener(myButtonSynchronizer);
       }
+      updateTooltipText();
     }
 
     private void updateTooltipText() {

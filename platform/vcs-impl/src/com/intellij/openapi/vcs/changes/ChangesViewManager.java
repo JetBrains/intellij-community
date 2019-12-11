@@ -331,7 +331,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       JComponent mainPanel;
       if (Registry.is("show.diff.preview.as.editor.tab")) {
-        myDiffPreview = new EditorTabPreview(changeProcessor);
+        myDiffPreview = new EditorTabPreview(changeProcessor, contentPanel);
         mainPanel = contentPanel;
 
         myView.addTreeSelectionListener(e -> myDiffPreview.updatePreview(myModelUpdateInProgress));
@@ -366,7 +366,7 @@ public class ChangesViewManager implements ChangesViewEx,
           if (myCommitWorkflowHandler == null) return;
 
           if (value.asBoolean()) {
-            myCommitWorkflowHandler.deactivate();
+            myCommitWorkflowHandler.deactivate(false);
           }
           else {
             myCommitWorkflowHandler.activate();
@@ -415,7 +415,7 @@ public class ChangesViewManager implements ChangesViewEx,
           myCommitPanel = new ChangesViewCommitPanel(myView, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
-          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate();
+          if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
           Disposer.register(this, myCommitPanel);
 
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
@@ -712,7 +712,8 @@ public class ChangesViewManager implements ChangesViewEx,
       @NotNull private final ChangesViewDiffPreviewProcessor myChangeProcessor;
       @NotNull private final PreviewDiffVirtualFile myPreviewDiffVirtualFile;
 
-      private EditorTabPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
+      private EditorTabPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor,
+                               JComponent contentPanel) {
         myChangeProcessor = changeProcessor;
 
         MyDiffPreviewProvider previewProvider = new MyDiffPreviewProvider(changeProcessor);
@@ -729,6 +730,17 @@ public class ChangesViewManager implements ChangesViewEx,
             setDiffPreviewVisible(true);
           });
         });
+
+        new AnAction() {
+          {
+            copyShortcutFrom(ActionManager.getInstance().getAction("NextDiff"));
+          }
+
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, true, true);
+          }
+        }.registerCustomShortcutSet(contentPanel, myCommitPanel);
       }
 
       @Override

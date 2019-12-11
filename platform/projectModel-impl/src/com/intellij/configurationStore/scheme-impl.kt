@@ -30,9 +30,9 @@ interface SchemeDataHolder<in T> {
    */
   fun read(): Element
 
-  fun updateDigest(scheme: T)
+  fun updateDigest(scheme: T) = Unit
 
-  fun updateDigest(data: Element?)
+  fun updateDigest(data: Element?) = Unit
 }
 
 /**

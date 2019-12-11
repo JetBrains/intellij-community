@@ -2,7 +2,6 @@
 package com.intellij.psi.util
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.util.SmartList
@@ -30,7 +29,7 @@ sealed class StringEntry {
       if (sourcePsi is PsiLanguageInjectionHost) return sourcePsi to entry.range
       val parent = sourcePsi.parent
       if (parent is PsiLanguageInjectionHost) { // Kotlin interpolated string, TODO: encapsulate this logic to range retrieval
-        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent - ElementManipulators.getValueTextRange(parent).startOffset)
+        return parent to entry.range.shiftRight(sourcePsi.startOffsetInParent)
       }
       return null
     }
@@ -114,7 +113,8 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
     return this to empty
   }
 
-  fun split(pattern: String): List<PartiallyKnownString> {
+  fun split(pattern: String, escaperFactory: (CharSequence, String) -> SplitEscaper = { _, _ -> SplitEscaper.AcceptAll })
+    : List<PartiallyKnownString> {
 
     tailrec fun collectPaths(result: MutableList<PartiallyKnownString>,
                              pending: MutableList<StringEntry>,
@@ -129,8 +129,8 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
         is StringEntry.Known -> {
           val value = head.value
 
-          val stringPaths = splitToTextRanges(value, pattern).toList()
-          if (stringPaths.size == 1) {
+          val stringParts = splitToTextRanges(value, pattern, escaperFactory).toList()
+          if (stringParts.size == 1) {
             return collectPaths(result, pending.apply { add(head) }, tail)
           }
           else {
@@ -138,15 +138,15 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
               result.apply {
                 add(PartiallyKnownString(
                   pending.apply {
-                    add(StringEntry.Known(stringPaths.first().substring(value), head.sourcePsi,
-                                          stringPaths.first().shiftRight(head.range.startOffset)))
+                    add(StringEntry.Known(stringParts.first().substring(value), head.sourcePsi,
+                                          stringParts.first().shiftRight(head.range.startOffset)))
                   }))
-                addAll(stringPaths.subList(1, stringPaths.size - 1).map {
+                addAll(stringParts.subList(1, stringParts.size - 1).map {
                   PartiallyKnownString(it.substring(value), head.sourcePsi, it.shiftRight(head.range.startOffset))
                 })
               },
-              mutableListOf(StringEntry.Known(stringPaths.last().substring(value), head.sourcePsi,
-                                              stringPaths.last().shiftRight(head.range.startOffset))),
+              mutableListOf(StringEntry.Known(stringParts.last().substring(value), head.sourcePsi,
+                                              stringParts.last().shiftRight(head.range.startOffset))),
               tail
             )
           }
@@ -173,8 +173,12 @@ class PartiallyKnownString(val segments: List<StringEntry>) {
 }
 
 @ApiStatus.Experimental
-fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<TextRange> {
+fun splitToTextRanges(charSequence: CharSequence,
+                      pattern: String,
+                      escaperFactory: (CharSequence, String) -> SplitEscaper = { _, _ -> SplitEscaper.AcceptAll }): Sequence<TextRange> {
   var lastMatch = 0
+  var lastSplit = 0
+  val escaper = escaperFactory(charSequence, pattern)
   return sequence {
     while (true) {
       val start = charSequence.indexOf(pattern, lastMatch)
@@ -182,9 +186,23 @@ fun splitToTextRanges(charSequence: CharSequence, pattern: String): Sequence<Tex
         yield(TextRange(lastMatch, charSequence.length))
         return@sequence
       }
-      yield(TextRange(lastMatch, start))
       lastMatch = start + pattern.length
+      if (escaper.filter(lastSplit, start)) {
+        yield(TextRange(lastSplit, start))
+        lastSplit = lastMatch
+      }
     }
+  }
+
+}
+
+@ApiStatus.Experimental
+interface SplitEscaper {
+
+  fun filter(lastSplit: Int, currentPosition: Int): Boolean
+
+  object AcceptAll : SplitEscaper {
+    override fun filter(lastSplit: Int, currentPosition: Int): Boolean = true
   }
 
 }

@@ -3,12 +3,12 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +21,12 @@ import java.util.concurrent.TimeUnit;
  * For example, it increases probability to see a complete stack trace printed to stderr without some occasional
  * data from stdout inserted inside the stack trace.
  * <p>
- * Please note that ordering of data is guaranteed only in a stream (stdout/stderr/system), no ordering of data
- * read between different streams.
+ * Please note that ordering of data is guaranteed only in a stream (stdout/stderr/system),
+ * no ordering guarantees are provided for data read from different streams. To order stdout/stderr messages,
+ * stdout and stderr streams should be merged, see `run.processes.with.redirectedErrorStream` registry key.
  */
 class ProcessStreamsSynchronizer {
 
-  private static final Logger LOG = Logger.getInstance(ProcessStreamsSynchronizer.class);
   /**
    * Timeout to wait for the same stream data.<p>
    * Should be greater than {@code SleepingPolicy.NON_BLOCKING.getTimeToSleep(false)}
@@ -40,9 +40,10 @@ class ProcessStreamsSynchronizer {
 
   private final Object myLock = new Object();
   private final List<Chunk> myPendingChunks = new ArrayList<>();
-  private boolean myFlushedChunksEndWithNewLine = true;
-  private Chunk myLastFlushedChunk = null;
   private final Alarm myAlarm;
+  private boolean myFlushedChunksEndWithNewline = true;
+  private ProcessOutputType myLastFlushedChunkBaseOutputType = null;
+  private long myLastFlushedChunkCreatedNanoTime = 0;
 
   ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
@@ -59,26 +60,42 @@ class ProcessStreamsSynchronizer {
   final void doWhenStreamsSynchronized(@NotNull String text, @NotNull ProcessOutputType outputType, @NotNull Runnable flushRunnable) {
     long nowNano = getNanoTime();
     synchronized (myLock) {
-      if (ProcessOutputType.SYSTEM.equals(outputType.getBaseOutputType())) {
+      ProcessOutputType baseOutputType = outputType.getBaseOutputType();
+      if (ProcessOutputType.SYSTEM.equals(baseOutputType)) {
         handleSystemOutput(flushRunnable, nowNano);
         return;
       }
-      Chunk chunk = new Chunk(text, outputType, nowNano, myLastFlushedChunk, flushRunnable);
-      if ((myLastFlushedChunk == null || outputType.getBaseOutputType().equals(myLastFlushedChunk.myOutputType.getBaseOutputType()))) {
-        flush(chunk);
+      Boolean textEndsWithNewline = text.isEmpty() ? null : StringUtil.endsWithChar(text, '\n');
+      if ((myLastFlushedChunkBaseOutputType == null || baseOutputType.equals(myLastFlushedChunkBaseOutputType))) {
+        boolean newlineAdded = !myFlushedChunksEndWithNewline && Boolean.TRUE.equals(textEndsWithNewline);
+        if (textEndsWithNewline != null) {
+          myFlushedChunksEndWithNewline = textEndsWithNewline;
+        }
+        myLastFlushedChunkBaseOutputType = baseOutputType;
+        myLastFlushedChunkCreatedNanoTime = nowNano;
+        flushRunnable.run();
+        if (newlineAdded && myPendingChunks.size() > 0
+              && myPendingChunks.get(0).getNanoTimePassedSinceLastFlushedChunk(nowNano) >= AWAIT_SAME_STREAM_TEXT_NANO) {
+          processPendingChunks(nowNano);
+        }
         return;
       }
+      Chunk chunk = new Chunk(textEndsWithNewline, baseOutputType, nowNano, myLastFlushedChunkCreatedNanoTime, flushRunnable);
       myPendingChunks.add(chunk);
-      if (myAlarm.isEmpty()) {
-        long timeoutNano = myLastFlushedChunk.myCreatedNanoTime + AWAIT_SAME_STREAM_TEXT_NANO - nowNano;
-        if (timeoutNano <= 0) {
+      if (!isProcessingScheduled()) {
+        long delayNano = AWAIT_SAME_STREAM_TEXT_NANO - chunk.getNanoTimePassedSinceLastFlushedChunk(nowNano);
+        if (delayNano <= 0) {
           processPendingChunks(nowNano);
         }
         else {
-          scheduleProcessPendingChunks(timeoutNano);
+          scheduleProcessPendingChunks(delayNano);
         }
       }
     }
+  }
+
+  boolean isProcessingScheduled() {
+    return !myAlarm.isEmpty();
   }
 
   long getNanoTime() {
@@ -105,25 +122,23 @@ class ProcessStreamsSynchronizer {
     }
     Chunk first = myPendingChunks.get(0);
     // flush after the last pending chunk
-    myPendingChunks.add(new Chunk("", first.myOutputType.getBaseOutputType(), nowNano, null, flushRunnable));
+    myPendingChunks.add(new Chunk(null, first.myBaseOutputType, nowNano, myLastFlushedChunkCreatedNanoTime, flushRunnable));
   }
 
   final void processPendingChunks(long nowNano) {
     synchronized (myLock) {
       if (myPendingChunks.isEmpty()) {
-        LOG.error("No pending chunks unexpectedly");
+        // There could be no pending chunks in the following case:
+        // When pending chunks were processed for the first time, another stream didn't end with a newline => the chunks were re-scheduled.
+        // Then, another stream got a newline => the pending chunks were processed immediately.
         return;
       }
-      // All pending chunks should have the same base output type (`chunk.myOutputType.getBaseOutputType()`).
+      // All pending chunks should have the same base output type (`chunk.myBaseOutputType`).
       Chunk eldestChunk = myPendingChunks.get(0);
-      long awaitNano = nowNano - eldestChunk.myCreatedNanoTime;
-      if (eldestChunk.myPrevFlushedChunk != null) {
-        awaitNano = nowNano - eldestChunk.myPrevFlushedChunk.myCreatedNanoTime;
-      }
-      if (awaitNano >= AWAIT_SAME_STREAM_TEXT_NANO && myFlushedChunksEndWithNewLine || awaitNano >= AWAIT_NEW_LINE_NANO) {
+      long awaitNano = eldestChunk.getNanoTimePassedSinceLastFlushedChunk(nowNano);
+      if (awaitNano >= AWAIT_SAME_STREAM_TEXT_NANO && myFlushedChunksEndWithNewline || awaitNano >= AWAIT_NEW_LINE_NANO) {
         flushAllPendingChunks();
       }
-      myAlarm.cancelAllRequests();
       if (!myPendingChunks.isEmpty()) {
         scheduleProcessPendingChunks(AWAIT_SAME_STREAM_TEXT_NANO);
       }
@@ -138,35 +153,61 @@ class ProcessStreamsSynchronizer {
   }
 
   private void flush(@NotNull Chunk chunk) {
-    if (!chunk.myText.isEmpty()) {
-      myFlushedChunksEndWithNewLine = chunk.myText.endsWith(LineSeparator.LF.getSeparatorString());
+    if (chunk.myTextEndsWithNewline != null) {
+      myFlushedChunksEndWithNewline = chunk.myTextEndsWithNewline;
     }
-    myLastFlushedChunk = chunk;
+    myLastFlushedChunkBaseOutputType = chunk.myBaseOutputType;
+    myLastFlushedChunkCreatedNanoTime = chunk.myCreatedNanoTime;
     chunk.myFlushRunnable.run();
   }
 
+  @TestOnly
+  void waitForAllFlushed() {
+    while (true) {
+      synchronized (myLock) {
+        if (myPendingChunks.isEmpty()) {
+          return;
+        }
+        if (myAlarm.isEmpty()) {
+          throw new RuntimeException("No requests scheduled");
+        }
+      }
+      try {
+        myAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
   private static class Chunk {
-    private final String myText;
-    private final ProcessOutputType myOutputType;
+    private final @Nullable Boolean myTextEndsWithNewline;
+    private final ProcessOutputType myBaseOutputType;
     private final long myCreatedNanoTime;
-    private final Chunk myPrevFlushedChunk;
+    private final long myPrevFlushedChunkCreatedNanoTime;
     private final Runnable myFlushRunnable;
 
-    private Chunk(@NotNull String text,
-                  @NotNull ProcessOutputType outputType,
+    private Chunk(@Nullable Boolean textEndsWithNewline,
+                  @NotNull ProcessOutputType baseOutputType,
                   long createdNanoTime,
-                  @Nullable Chunk prevFlushedChunk,
+                  long prevFlushedChunkCreatedNanoTime,
                   @NotNull Runnable flushRunnable) {
-      myText = text;
-      myOutputType = outputType;
+      myTextEndsWithNewline = textEndsWithNewline;
+      myBaseOutputType = baseOutputType;
       myCreatedNanoTime = createdNanoTime;
-      myPrevFlushedChunk = prevFlushedChunk;
+      myPrevFlushedChunkCreatedNanoTime = prevFlushedChunkCreatedNanoTime;
       myFlushRunnable = flushRunnable;
+    }
+
+    long getNanoTimePassedSinceLastFlushedChunk(long nowNanoTime) {
+      return myPrevFlushedChunkCreatedNanoTime > 0 ? nowNanoTime - myPrevFlushedChunkCreatedNanoTime
+                                                   : nowNanoTime - myCreatedNanoTime;
     }
 
     @Override
     public String toString() {
-      return "text='" + myText + '\'' + ", outputType=" + myOutputType;
+      return "ends-with-newline='" + myTextEndsWithNewline + '\'' + ", outputType=" + myBaseOutputType;
     }
   }
 }

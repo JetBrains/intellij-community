@@ -50,7 +50,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final String ARCHETYPE_VERSION_KEY = "MavenModuleWizard.archetypeVersionKey";
 
   private final Project myProjectOrNull;
-  private final MavenModuleBuilder myBuilder;
+  private final AbstractMavenModuleBuilder myBuilder;
   private final WizardContext myContext;
   private MavenProject myAggregator;
   private MavenProject myParent;
@@ -77,7 +77,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Nullable
   private final MavenArchetypesStep myArchetypes;
 
-  public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
+  public MavenModuleWizardStep(AbstractMavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
@@ -90,6 +90,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
     initComponents();
     loadSettings();
+  }
+
+  /**
+   * @deprecated use {@link MavenModuleWizardStep#MavenModuleWizardStep(AbstractMavenModuleBuilder, WizardContext, boolean)} instead
+   */
+  @Deprecated
+  public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
+    this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
   }
 
   private void initComponents() {

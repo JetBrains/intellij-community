@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -202,7 +203,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
-      fingerprint += FileUtil.pathHashCode(path);
+      fingerprint += pathHashCode(path);
     }
     
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
@@ -260,8 +261,16 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
       if (logBuilder != null) {
         logBuilder.append(path).append("\n");
       }
-      fingerprint = 31 * fingerprint + FileUtil.pathHashCode(path);
+      fingerprint = 31 * fingerprint + pathHashCode(path);
     }
     return fingerprint;
+  }
+
+  private static int pathHashCode(@NotNull String path) {
+    // On case insensitive OS hash calculated from path converted to lower case
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
+    }
+    return FileUtil.pathHashCode(path);
   }
 }

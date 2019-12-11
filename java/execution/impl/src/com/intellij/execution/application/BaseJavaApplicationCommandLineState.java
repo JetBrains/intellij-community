@@ -11,7 +11,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,13 +35,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine()) {
-      @NotNull
-      @Override
-      protected BaseOutputReader.Options readerOptions() {
-        return BaseOutputReader.Options.forMostlySilentProcess();
-      }
-    };
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(createCommandLine());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;

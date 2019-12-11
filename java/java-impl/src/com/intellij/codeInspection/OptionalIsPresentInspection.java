@@ -139,7 +139,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
     if (!OPTIONAL_IS_PRESENT.matches(call)) return null;
     PsiReferenceExpression qualifier =
-      ObjectUtils.tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
     if (qualifier == null) return null;
     PsiElement element = qualifier.resolve();
     if (!(element instanceof PsiVariable) || isRaw((PsiVariable)element)) return null;

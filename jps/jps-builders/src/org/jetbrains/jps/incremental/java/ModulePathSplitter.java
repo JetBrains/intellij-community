@@ -11,19 +11,27 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.javac.JpsJavacFileManager;
+import org.jetbrains.jps.javac.ModulePath;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
  * Date: 26-Sep-19
  */
 public class ModulePathSplitter {
-
   private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(new THashMap<>(FileUtil.FILE_HASHING_STRATEGY));
+  private static final Attributes.Name AUTOMATIC_MODULE_NAME = new Attributes.Name("Automatic-Module-Name");
   private static final Method myModuleFinderCreateMethod;
   private static final Method myFindAll;
   private static final Method myGetDescriptor;
@@ -60,22 +68,74 @@ public class ModulePathSplitter {
     myDescriptorRequires = descriptorRequires;
   }
 
+  // derives module name from filename
+  public static final Function<File, String> DEFAULT_MODULE_NAME_SEARCH = file -> {
+    final String fName = file.getName();
+    final int dotIndex = fName.lastIndexOf('.'); // drop extension
+    return dotIndex >= 0? fName.substring(0, dotIndex) : fName;
+  };
+
+  @NotNull
+  private final Function<File, String> myModuleNameSearch;
+
   public ModulePathSplitter() {
+    this(DEFAULT_MODULE_NAME_SEARCH);
+  }
+  
+  public ModulePathSplitter(@NotNull Function<File, String> moduleNameSearch) {
+    myModuleNameSearch = moduleNameSearch;
   }
 
-  public Pair<Collection<File>, Collection<File>> splitPath(File chunkModuleInfo, Set<File> chunkOutputs, Collection<File> path) {
+  public Pair<ModulePath, Collection<File>> splitPath(File chunkModuleInfo, Set<File> chunkOutputs, Collection<File> path) {
     if (myModuleFinderCreateMethod == null) {
       // the module API is not available
-      return Pair.create(path, Collections.emptyList());
+      return Pair.create(ModulePath.create(path), Collections.emptyList());
     }
-    final List<File> modulePath = new ArrayList<>();
+    final ModulePath.Builder mpBuilder = ModulePath.newBuilder();
     final List<File> classpath = new ArrayList<>();
 
     final Set<String> allRequired = collectRequired(chunkModuleInfo, JpsJavacFileManager.filter(path, file -> !chunkOutputs.contains(file)));
     for (File file : path) {
-      (chunkOutputs.contains(file) || allRequired.contains(getModuleInfo(file).name) ? modulePath : classpath).add(file);
+      if (chunkOutputs.contains(file)) {
+        mpBuilder.add(null, file);
+      }
+      else {
+        final ModuleInfo info = getModuleInfo(file);
+        if (allRequired.contains(info.name)) {
+          // storing only names for automatic modules in "exploded" form.
+          // for all other kinds of roots module-name is correctly determined by javac itself
+          mpBuilder.add(info.isAutomaticExploded? info.name : null, file);
+        }
+        else {
+          classpath.add(file);
+        }
+      }
     }
-    return Pair.create(Collections.unmodifiableList(modulePath), Collections.unmodifiableList(classpath));
+    return Pair.create(mpBuilder.create(), Collections.unmodifiableList(classpath));
+  }
+
+  private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
+  private static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
+
+  /**
+   * Following the logic of jdk.internal.module.ModulePath.cleanModuleName() that normalizes the module name derived from a jar artifact name
+   */
+  private static String normalizeModuleName(String fName) {
+    if (fName != null) {
+      fName = NON_ALPHANUM.matcher(fName).replaceAll(".");
+      // collapse repeating dots
+      fName = REPEATING_DOTS.matcher(fName).replaceAll(".");
+      // drop leading and trailing dots
+      final int len = fName.length();
+      if (len > 0) {
+        final int start = fName.startsWith(".") ? 1 : 0;
+        final int end = fName.endsWith(".") ? len - 1 : len;
+        if (start > 0 || end < len) {
+          fName = fName.substring(start, end);
+        }
+      }
+    }
+    return fName;
   }
 
   private Set<String> collectRequired(File chunkModuleInfo, Iterable<? extends File> path) {
@@ -104,21 +164,30 @@ public class ModulePathSplitter {
 
     try {
       Object mf = myModuleFinderCreateMethod.invoke(null, (Object)new Path[]{f.toPath()}); //  ModuleFinder.of(f.toPath());
-      for (Object moduleRef : (Set<?>)myFindAll.invoke(mf)) {  // mf.findAll()
-        final Object descriptor = myGetDescriptor.invoke(moduleRef); // moduleRef.descriptor()
-        final String moduleName = (String)myDescriptorName.invoke(descriptor); // descriptor.name();
-        final Set<?> requires = (Set<?>)myDescriptorRequires.invoke(descriptor); //descriptor.requires();
-        if (requires.isEmpty()) {
-          info = new ModuleInfo(moduleName);
-        }
-        else {
-          final Set<String> req = new HashSet<>();
-          for (Object require : requires) {
-            req.add((String)myRequiresName.invoke(require)/*require.name()*/);
+      final Set<?> moduleRefs = (Set<?>)myFindAll.invoke(mf); // mf.findAll()
+      if (!moduleRefs.isEmpty()) {
+        for (Object moduleRef : moduleRefs) {
+          final Object descriptor = myGetDescriptor.invoke(moduleRef); // moduleRef.descriptor()
+          final String moduleName = (String)myDescriptorName.invoke(descriptor); // descriptor.name();
+          final Set<?> requires = (Set<?>)myDescriptorRequires.invoke(descriptor); //descriptor.requires();
+          if (requires.isEmpty()) {
+            info = new ModuleInfo(moduleName, false);
           }
-          info = new ModuleInfo(moduleName, req);
+          else {
+            final Set<String> req = new HashSet<>();
+            for (Object require : requires) {
+              req.add((String)myRequiresName.invoke(require)/*require.name()*/);
+            }
+            info = new ModuleInfo(moduleName, req);
+          }
+          break;
         }
-        break;
+      }
+      else {
+        final String explodedModuleName = deriveAutomaticModuleName(f);
+        if (explodedModuleName != null) {
+          info = new ModuleInfo(explodedModuleName, true);
+        }
       }
     }
     catch (Throwable ignored) {
@@ -127,21 +196,39 @@ public class ModulePathSplitter {
     return info;
   }
 
-  private static final class ModuleInfo {
-    static final ModuleInfo EMPTY = new ModuleInfo(null, Collections.emptyList());
+  private String deriveAutomaticModuleName(File dir) {
+    if (dir.isDirectory()) {
+      try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(new File(dir, "META-INF/MANIFEST.MF")))) {
+        final String name = new Manifest(is).getMainAttributes().getValue(AUTOMATIC_MODULE_NAME);
+        return name != null ? name : normalizeModuleName(myModuleNameSearch.apply(dir));
+      }
+      catch (FileNotFoundException e) {
+        return normalizeModuleName(myModuleNameSearch.apply(dir)); // inferring the module name from the dir
+      }
+      catch (Throwable ignored) {
+      }
+    }
+    return null;
+  }
 
+  private static final class ModuleInfo {
+    static final ModuleInfo EMPTY = new ModuleInfo(null, false);
     @Nullable
     final String name;
     @NotNull
     final Collection<String> requires;
+    private final boolean isAutomaticExploded;
 
-    ModuleInfo(String name) {
-      this(name, Collections.emptyList());
+    ModuleInfo(@Nullable String name, boolean isAutomaticExploded) {
+      this.name = name;
+      this.requires = Collections.emptyList();
+      this.isAutomaticExploded = isAutomaticExploded;
     }
 
     ModuleInfo(@Nullable String name, @NotNull Collection<String> requires) {
       this.name = name;
       this.requires = Collections.unmodifiableCollection(requires);
+      this.isAutomaticExploded = false;
     }
   }
 }

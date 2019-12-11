@@ -4,14 +4,10 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Please do not use this class outside impl package!!!
- * Please do not use this class even if you managed to make it public!!!
- * Thank you in advance.
- * The UI Engineers.
- */
+@ApiStatus.Internal
 final class ProxyShortcutSet implements ShortcutSet {
   private final String myActionId;
 
@@ -19,9 +15,10 @@ final class ProxyShortcutSet implements ShortcutSet {
     myActionId = actionId;
   }
 
-  @Override
   @NotNull
+  @Override
   public Shortcut[] getShortcuts() {
-    return KeymapManager.getInstance().getActiveKeymap().getShortcuts(myActionId);
+    KeymapManager manager = KeymapManager.getInstance();
+    return manager != null ? manager.getActiveKeymap().getShortcuts(myActionId) : Shortcut.EMPTY_ARRAY;
   }
 }

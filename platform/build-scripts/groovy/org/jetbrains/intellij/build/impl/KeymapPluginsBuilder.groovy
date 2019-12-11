@@ -4,17 +4,9 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
 
-class KeymapPluginsBuilder {
-  final BuildContext buildContext
-  final String targetDir
+final class KeymapPluginsBuilder {
 
-  KeymapPluginsBuilder(BuildContext buildContext, String targetDir) {
-    this.targetDir = targetDir
-    this.buildContext = buildContext
-  }
-
-  static void buildKeymapPlugins(BuildContext buildContext, String targetDir) {
-    def builder = new KeymapPluginsBuilder(buildContext, targetDir)
+  static List<PluginRepositorySpec> buildKeymapPlugins(BuildContext buildContext, String targetDir) {
     [["Default for GNOME"],
      ["Default for KDE"],
      ["Default for XWin"],
@@ -24,12 +16,12 @@ class KeymapPluginsBuilder {
      ["ReSharper", "ReSharper OSX"],
      ["Sublime Text", "Sublime Text (Mac OS X)"],
      ["Visual Studio"],
-     ["Xcode"]].forEach {
-      builder.keymapPlugin(targetDir, it)
+     ["Xcode"]].collect {
+      keymapPlugin(buildContext, targetDir, it)
     }
   }
 
-  void keymapPlugin(String targetDir, List<String> keymaps) {
+  static PluginRepositorySpec keymapPlugin(BuildContext buildContext, String targetDir, List<String> keymaps) {
     def keymapPath = "$buildContext.paths.communityHome/platform/platform-resources/src/keymaps"
     def longName = keymaps[0].replaceAll("Default for ", "")
     def shortName = keymaps[0].replaceAll("[.0-9 ]|Default for ", "")
@@ -63,14 +55,16 @@ class KeymapPluginsBuilder {
       }
     }
     buildContext.notifyArtifactBuilt("$targetDir/${shortName}Keymap.zip")
+    return new PluginRepositorySpec(pluginZip: "$targetDir/${shortName}Keymap.zip",
+                                    pluginXml: "$tempDir/META-INF/plugin.xml")
   }
 
   static String keymapPluginXml(String version, String id, String name, List<String> keymaps) {
     return """<idea-plugin>
   <name>$name Keymap</name>
   <id>com.intellij.plugins.${id}keymap</id>
-  <idea-version since-build="${version.substring(0, version.lastIndexOf('.'))}"/>
   <version>$version</version>
+  <idea-version since-build="${version.substring(0, version.lastIndexOf('.'))}"/>
   <vendor>JetBrains</vendor>
   <category>Keymap</category>
   <description>

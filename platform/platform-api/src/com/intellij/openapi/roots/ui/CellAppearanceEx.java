@@ -10,7 +10,7 @@ public interface CellAppearanceEx {
 
   /** @deprecated don't implement this method - it's never called */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void customize(@SuppressWarnings("ALL") com.intellij.ui.HtmlListCellRenderer renderer) { }
 
   void customize(@NotNull SimpleColoredComponent component);

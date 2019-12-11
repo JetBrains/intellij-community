@@ -47,6 +47,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -83,7 +84,7 @@ public class PluginManagerCore {
   public static final String EDIT = "edit";
 
   private static Set<String> ourDisabledPlugins;
-  private static Reference<MultiMap<String, String>> ourBrokenPluginVersions;
+  private static Reference<Map<String, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   private static List<IdeaPluginDescriptor> ourLoadedPlugins;
 
@@ -257,42 +258,58 @@ public class PluginManagerCore {
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-    return pluginId == null || getBrokenPluginVersions().get(pluginId.getIdString()).contains(descriptor.getVersion());
+    if (pluginId == null) {
+      return true;
+    }
+
+    Set<String> set = getBrokenPluginVersions().get(pluginId.getIdString());
+    return set != null && set.contains(descriptor.getVersion());
   }
 
   @NotNull
-  private static MultiMap<String, String> getBrokenPluginVersions() {
-    MultiMap<String, String> result = SoftReference.dereference(ourBrokenPluginVersions);
-    if (result == null) {
-      result = MultiMap.createSet();
+  private static Map<String, Set<String>> getBrokenPluginVersions() {
+    Map<String, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
+    if (result != null) {
+      return result;
+    }
 
-      if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-        try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
-             BufferedReader br = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-          String s;
-          while ((s = br.readLine()) != null) {
-            s = s.trim();
-            if (s.startsWith("//")) continue;
+    result = new HashMap<>();
 
-            List<String> tokens = ParametersListUtil.parse(s);
-            if (tokens.isEmpty()) continue;
-
-            if (tokens.size() == 1) {
-              throw new RuntimeException("brokenPlugins.txt is broken. The line contains plugin name, but does not contains version: " + s);
-            }
-
-            String pluginId = tokens.get(0);
-            List<String> versions = tokens.subList(1, tokens.size());
-
-            result.putValues(pluginId, versions);
+    if (System.getProperty("idea.ignore.disabled.plugins") == null) {
+      try (InputStream resource = PluginManagerCore.class.getResourceAsStream("/brokenPlugins.txt");
+           BufferedReader br = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+        String s;
+        while ((s = br.readLine()) != null) {
+          s = s.trim();
+          if (s.startsWith("//")) {
+            continue;
           }
-        }
-        catch (IOException e) {
-          throw new RuntimeException("Failed to read /brokenPlugins.txt", e);
+
+          List<String> tokens = ParametersListUtil.parse(s);
+          if (tokens.isEmpty()) {
+            continue;
+          }
+
+          if (tokens.size() == 1) {
+            throw new RuntimeException("brokenPlugins.txt is broken. The line contains plugin name, but does not contains version: " + s);
+          }
+
+          String pluginId = tokens.get(0);
+          List<String> versions = tokens.subList(1, tokens.size());
+
+          Set<String> set = result.get(pluginId);
+          if (set == null) {
+            set = new HashSet<>();
+            result.put(pluginId, set);
+          }
+          set.addAll(versions);
         }
       }
-      ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
+      catch (IOException e) {
+        throw new RuntimeException("Failed to read /brokenPlugins.txt", e);
+      }
     }
+    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(result);
 
     return result;
   }
@@ -1228,6 +1245,7 @@ public class PluginManagerCore {
     Set<PluginId> explicitlyEnabled = null;
     if (selectedIds != null) {
       HashSet<String> set = new HashSet<>(StringUtil.split(selectedIds, ","));
+      set.addAll(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds());
       explicitlyEnabled = JBIterable.from(allDescriptors)
         .map(IdeaPluginDescriptor::getPluginId)
         .filter(o -> set.contains(o.getIdString())).addAllTo(new LinkedHashSet<>());
@@ -1253,9 +1271,11 @@ public class PluginManagerCore {
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor.getPluginId())) {
-          errorSuffix = selectedIds != null
-                        ? "is not in 'idea.load.plugins.id' system property"
-                        : "category doesn't match 'idea.load.plugins.category' system property";
+          errorSuffix = "";
+          getLogger().info("Plugin " + toPresentableName(descriptor) + " " +
+                           (selectedIds != null
+                            ? "is not in 'idea.load.plugins.id' system property"
+                            : "category doesn't match 'idea.load.plugins.category' system property"));
         }
         else {
           errorSuffix = null;
@@ -1275,9 +1295,11 @@ public class PluginManagerCore {
         errorSuffix = "";
       }
       else if (isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) != null) {
-        errorSuffix = "is incompatible (target build range is " +
-                      StringUtil.notNullize(descriptor.getSinceBuild(), "0.0") + " to " +
-                      StringUtil.notNullize(descriptor.getUntilBuild(), "*.*") + ")";
+        String since = StringUtil.notNullize(descriptor.getSinceBuild(), "0.0");
+        String until = StringUtil.notNullize(descriptor.getUntilBuild(), "*.*");
+        errorSuffix = "is incompatible (target build " +
+                      (since.equals(until) ? "is " + since
+                                           : "range is " + since + " to " + until) + ")";
       }
       else if (isBrokenPlugin(descriptor)) {
         errorSuffix = "version was marked as incompatible";
@@ -1443,17 +1465,19 @@ public class PluginManagerCore {
   @NotNull
   private static Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap(@NotNull IdeaPluginDescriptorImpl[] descriptors,
                                                                           @NotNull List<? super String> errors) {
-    MultiMap<PluginId, IdeaPluginDescriptorImpl> idMultiMap = new LinkedMultiMap<>();
+    LinkedHashMap<PluginId, List<IdeaPluginDescriptorImpl>> idMultiMap = new LinkedHashMap<>(descriptors.length);
     for (IdeaPluginDescriptorImpl o : descriptors) {
-      idMultiMap.putValue(o.getPluginId(), o);
+      ContainerUtilRt.putValue(o.getPluginId(), o, idMultiMap);
       for (String module : o.getModules()) {
-        idMultiMap.putValue(PluginId.getId(module), o);
+        ContainerUtilRt.putValue(PluginId.getId(module), o, idMultiMap);
       }
     }
+
     if (idMultiMap.get(PluginId.getId(CORE_PLUGIN_ID)).isEmpty()) {
       String message = SPECIAL_IDEA_PLUGIN + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")";
       throw new EssentialPluginMissingException(Collections.singletonList(message));
     }
+
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = new LinkedHashMap<>();
     for (PluginId id : idMultiMap.keySet()) {
       Collection<IdeaPluginDescriptorImpl> values = idMultiMap.get(id);

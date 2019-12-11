@@ -1,3 +1,11 @@
+## 14
+
+* add `project` name. Encoded using Argon to ensure that project name is not exposed.
+
+## 13
+
+* add `buildDate`.
+
 ## 12
 
 * service/component events are reported in a google trace event format.

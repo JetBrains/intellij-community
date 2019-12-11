@@ -60,10 +60,10 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
 
   private boolean skipUpdateUI;
-  private final MavenModuleBuilder myBuilder;
+  private final AbstractMavenModuleBuilder myBuilder;
   @Nullable private final StepAdapter myStep;
 
-  public MavenArchetypesStep(MavenModuleBuilder builder, @Nullable StepAdapter step) {
+  public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
     Disposer.register(this, myLoadingIcon);

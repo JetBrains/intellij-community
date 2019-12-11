@@ -78,6 +78,10 @@ fun buildTopLevelSession(place: PsiElement,
   val startConstraint = if (expression is GrBinaryExpression || expression is GrAssignmentExpression && expression.isOperatorAssignment) {
     OperatorExpressionConstraint(expression as GrOperatorExpression)
   }
+  else if (expression is GrSafeCastExpression && expression.operand !is GrFunctionalExpression) {
+    val result = expression.reference.advancedResolve() as? GroovyMethodResult ?: return session
+    MethodCallConstraint(null, result, expression)
+  }
   else {
     val mostTopLevelExpression = getMostTopLevelExpression(expression)
     val typeAndPosition = getExpectedTypeAndPosition(mostTopLevelExpression)

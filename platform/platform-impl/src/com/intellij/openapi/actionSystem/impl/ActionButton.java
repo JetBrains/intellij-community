@@ -252,10 +252,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override
-  public void setToolTipText(String s) {
+  public void setToolTipText(String toolTipText) {
     if (!Registry.is("ide.helptooltip.enabled")) {
-      String tooltipText = KeymapUtil.createTooltipText(s, myAction);
-      super.setToolTipText(tooltipText.isEmpty() ? null : tooltipText);
+      while (StringUtil.endsWithChar(toolTipText, '.')) {
+        toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
+      }
+
+      String shortcutsText = getShortcutText();
+      if (StringUtil.isNotEmpty(shortcutsText)) {
+        toolTipText += " (" + shortcutsText + ")";
+      }
+      super.setToolTipText(StringUtil.isNotEmpty(toolTipText) ? toolTipText : null);
     }
   }
 

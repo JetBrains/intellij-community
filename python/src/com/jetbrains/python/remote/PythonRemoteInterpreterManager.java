@@ -18,6 +18,7 @@ package com.jetbrains.python.remote;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -30,11 +31,13 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.extensions.python.ProgressManagerExtKt;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyConsoleProcessHandler;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
+import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +106,14 @@ public abstract class PythonRemoteInterpreterManager {
       }
 
       for (PathMappingProvider mappingProvider : PathMappingProvider.getSuitableMappingProviders(data)) {
-        PathMappingSettings settings = mappingProvider.getPathMappingSettings(project, data);
+        PathMappingSettings settings =
+          ProgressManagerExtKt.runUnderProgress(ProgressManager.getInstance(), "Accessing remote interpreter...",
+                                                new Function0<PathMappingSettings>() {
+            @Override
+            public PathMappingSettings invoke() { //Path mapping may require external process with WSL
+              return mappingProvider.getPathMappingSettings(project, data);
+            }
+          });
         newPathMapper.addAll(settings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.REPLICATED_FOLDER);
       }
     }

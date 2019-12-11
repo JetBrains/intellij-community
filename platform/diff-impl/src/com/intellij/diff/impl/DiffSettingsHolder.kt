@@ -68,6 +68,9 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     if (place == DiffPlaces.VCS_LOG_VIEW) {
       settings.DIFF_TOOLS_ORDER = listOf(UnifiedDiffTool::class.java.canonicalName)
     }
+    if (place == DiffPlaces.CHANGES_VIEW) {
+      settings.DIFF_TOOLS_ORDER = listOf(UnifiedDiffTool::class.java.canonicalName)
+    }
     return settings
   }
 

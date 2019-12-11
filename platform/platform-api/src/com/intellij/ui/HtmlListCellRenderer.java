@@ -11,7 +11,7 @@ import static com.intellij.ui.SimpleColoredComponent.formatText;
 
 /** @deprecated the class is no longer used in API; use {@link SimpleColoredRenderer} instead */
 @Deprecated
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T> {
   private StringBuilder myText;
 

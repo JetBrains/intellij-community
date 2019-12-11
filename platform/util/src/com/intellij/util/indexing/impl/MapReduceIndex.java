@@ -135,6 +135,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void clear() {
     try {
       getWriteLock().lock();
+      myModificationStamp.incrementAndGet();
       doClear();
     }
     catch (StorageException | IOException e) {

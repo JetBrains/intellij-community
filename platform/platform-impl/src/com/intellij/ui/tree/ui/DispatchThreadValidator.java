@@ -28,7 +28,7 @@ final class DispatchThreadValidator {
     if (thread == background) {
       return true; // the background thread is allowed only before the first access from the EDT
     }
-    LOG.warn(new IllegalStateException("unexpected thread: " + thread));
+    LOG.debug(new IllegalStateException("unexpected thread: " + thread));
     return false; // a background thread is not allowed to handle Swing components
   }
 }

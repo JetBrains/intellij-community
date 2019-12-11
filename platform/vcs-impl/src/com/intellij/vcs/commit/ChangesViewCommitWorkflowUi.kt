@@ -9,7 +9,7 @@ import com.intellij.vcs.log.VcsUser
 
 interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   val isActive: Boolean
-  fun deactivate()
+  fun deactivate(isRestoreState: Boolean)
 
   var isDefaultCommitActionEnabled: Boolean
   fun setCustomCommitActions(actions: List<AnAction>)
@@ -18,6 +18,7 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
 
   var inclusionModel: InclusionModel?
 
+  fun expand(item: Any)
   fun select(item: Any)
   fun selectFirst(items: Collection<Any>)
 

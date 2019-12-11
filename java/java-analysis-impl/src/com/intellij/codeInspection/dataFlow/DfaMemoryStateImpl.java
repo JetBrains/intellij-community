@@ -395,12 +395,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return value instanceof DfaBoxedValue || value instanceof DfaVariableValue || value instanceof DfaConstValue;
   }
 
-  @NotNull
-  List<DfaValue> getEquivalentValues(@NotNull DfaValue dfaValue) {
-    EqClass set = getEqClass(dfaValue);
-    return set == null ? Collections.emptyList() : set.getMemberValues();
-  }
-
   private boolean canBeNaN(@NotNull DfaValue dfaValue) {
     if (!(dfaValue instanceof DfaVariableValue) ||
         (!PsiType.FLOAT.equals(dfaValue.getType()) && !PsiType.DOUBLE.equals(dfaValue.getType()))) {

@@ -31,7 +31,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -135,7 +135,7 @@ public class ExternalJavacManager extends ProcessAdapter {
                            CanceledStatus cancelStatus) {
     return forkJavac(
       javaHome, heapSize, vmOptions, options,
-      CompilationPaths.create(platformCp, classpath, upgradeModulePath, modulePath, sourcePath),
+      CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath),
       files, outs, diagnosticSink, outputSink, compilingTool, cancelStatus, false
     ).get();
   }

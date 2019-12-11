@@ -1008,7 +1008,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private static IntentionAction assertContainsOneOf(@NotNull Collection<IntentionAction> collection, @NotNull String text) {
+  private static IntentionAction assertContainsOneOf(@NotNull Collection<? extends IntentionAction> collection, @NotNull String text) {
     IntentionAction result = null;
     for (IntentionAction action : collection) {
       if (text.equals(action.getText())) {
@@ -1685,7 +1685,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(applied, ContainerUtil.newHashSet(editor1, editor2));
   }
 
-  private void registerFakePass(@NotNull final Set<Editor> applied, @NotNull final Set<Editor> collected) {
+  private void registerFakePass(@NotNull final Set<? super Editor> applied, @NotNull final Set<? super Editor> collected) {
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
       public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
@@ -2161,7 +2161,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  private void useAnnotatorIn(Annotator annotator, Runnable runnable) {
+  private static void useAnnotatorIn(@NotNull Annotator annotator, @NotNull Runnable runnable) {
     com.intellij.lang.Language java = StdFileTypes.JAVA.getLanguage();
     LanguageAnnotators.INSTANCE.addExplicitExtension(java, annotator);
     try {
@@ -2381,13 +2381,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   public static class MySleepyAnnotator implements Annotator {
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      if (element instanceof PsiComment) {
+      if (element instanceof PsiClass) { // must be after MyFastAnnotator annotated the comment
         // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
         while (toSleepMs.addAndGet(-100) > 0) {
           TimeoutUtil.sleep(100);
         }
       }
-    };
+    }
   }
   public static class MyFastAnnotator implements Annotator {
     private static final String SWEARING = "No swearing";
@@ -2396,7 +2396,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         holder.createErrorAnnotation(element.getTextRange(), SWEARING);
       }
-    };
+    }
   }
 
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {

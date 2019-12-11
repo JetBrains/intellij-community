@@ -33,6 +33,7 @@ class ContractChecker {
     private boolean myMayReturnNormally = false;
 
     ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+      super(true);
       myMethod = method;
       myContract = contract;
       myOwnContract = ownContract;
@@ -102,7 +103,7 @@ class ContractChecker {
                                 (myContract.isTrivial() ? "" : " in this case"));
           }
         }
-      } else if (myFailures.isEmpty() && errors.isEmpty()) {
+      } else if (myFailures.isEmpty() && errors.isEmpty() && myMayReturnNormally) {
         PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
         errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
                    "Contract clause '" + myContract + "' is violated: no exception is thrown");

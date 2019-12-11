@@ -17,7 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.ContainerUtilRt;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
@@ -156,12 +156,12 @@ public final class SocketLock {
 
     lockPortFiles();
 
-    MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+    Map<Integer, List<String>> portToPath = new HashMap<>();
     readPort(myConfigPath, portToPath);
     readPort(mySystemPath, portToPath);
     if (!portToPath.isEmpty()) {
       args = JetBrainsProtocolHandler.checkForJetBrainsProtocolCommand(args);
-      for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+      for (Map.Entry<Integer, List<String>> entry : portToPath.entrySet()) {
         Pair<ActivationStatus, CliResult> status = tryActivate(entry.getKey(), entry.getValue(), args);
         if (status.first != ActivationStatus.NO_INSTANCE) {
           log("exit: lock(): " + status.first);
@@ -249,15 +249,17 @@ public final class SocketLock {
     myLockedFiles.clear();
   }
 
-  private static void readPort(String path, MultiMap<Integer, String> portToPath) {
+  private static void readPort(@NotNull String path, @NotNull Map<Integer, List<String>> portToPath) {
     File portFile = new File(path, PORT_FILE);
-    if (portFile.exists()) {
-      try {
-        portToPath.putValue(Integer.parseInt(FileUtil.loadFile(portFile)), path);
-      }
-      catch (Exception e) {
-        log(e);  // no need to delete - it would be overwritten
-      }
+    if (!portFile.exists()) {
+      return;
+    }
+
+    try {
+      ContainerUtilRt.putValue(Integer.parseInt(FileUtil.loadFile(portFile)), path, portToPath);
+    }
+    catch (Exception e) {
+      log(e);  // no need to delete - it would be overwritten
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.function.Function;
  *
  * @deprecated Use {@link BundledKeymapBean} instead.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @Deprecated
 public interface BundledKeymapProvider {
   ExtensionPointName<BundledKeymapProvider> EP_NAME = ExtensionPointName.create("com.intellij.bundledKeymapProvider");
@@ -24,7 +26,7 @@ public interface BundledKeymapProvider {
   List<String> getKeymapFileNames();
 
   default <R> R load(@NotNull String key, @NotNull Function<? super InputStream, ? extends R> consumer) throws IOException {
-    try (InputStream stream = BundledKeymapProvider.class.getResourceAsStream("/keymaps/" + key)) {
+    try (InputStream stream = getClass().getClassLoader().getResourceAsStream("keymaps/" + key)) {
       return consumer.apply(stream);
     }
   }

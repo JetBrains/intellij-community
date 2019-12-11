@@ -19,12 +19,14 @@ import org.jetbrains.concurrency.Obsolescent;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.util.PlatformUtils.isRider;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 import static java.awt.EventQueue.isDispatchThread;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -102,8 +104,7 @@ public abstract class Invoker implements Disposable {
     if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
     AsyncPromise<?> promise = new AsyncPromise<>();
     if (canInvoke(task, promise)) {
-      count.incrementAndGet();
-      offer(() -> invokeSafely(task, promise, 0), delay);
+      offerSafely(task, promise, 0, delay);
     }
     return promise;
   }
@@ -144,6 +145,25 @@ public abstract class Invoker implements Disposable {
   }
 
   abstract void offer(@NotNull Runnable runnable, int delay);
+
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @param attempt an attempt to run the specified task
+   * @param delay   milliseconds for the initial delay
+   */
+  private void offerSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt, int delay) {
+    try {
+      count.incrementAndGet();
+      offer(() -> invokeSafely(task, promise, attempt), delay);
+    }
+    catch (RejectedExecutionException exception) {
+      count.decrementAndGet();
+      logRiderTest("offer failed");
+      LOG.debug("Executor is shutdown");
+      promise.setError("shutdown");
+    }
+  }
 
   /**
    * @param task    a task to execute on the valid thread
@@ -206,8 +226,7 @@ public abstract class Invoker implements Disposable {
    */
   private void offerRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
     if (canRestart(task, promise, attempt)) {
-      count.incrementAndGet();
-      offer(() -> invokeSafely(task, promise, attempt + 1), 10);
+      offerSafely(task, promise, attempt + 1, 10);
       LOG.debug("Task is restarted");
     }
   }
@@ -299,6 +318,7 @@ public abstract class Invoker implements Disposable {
    * Every thread is valid for this invoker except the EDT.
    * It allows to run background tasks in parallel,
    * but requires a good synchronization.
+   *
    * @deprecated use {@link Background#Background(Disposable, int)} instead
    */
   @Deprecated
@@ -322,6 +342,7 @@ public abstract class Invoker implements Disposable {
   /**
    * This class is the {@code Invoker} in a single background thread.
    * This invoker does not need additional synchronization.
+   *
    * @deprecated use {@link Background#Background(Disposable)} instead
    */
   @Deprecated
@@ -337,8 +358,10 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void dispose() {
+      logRiderTest("dispose started");
       super.dispose();
       executor.shutdown();
+      logRiderTest("dispose finished");
     }
 
     @Override
@@ -427,8 +450,10 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void dispose() {
+      logRiderTest("dispose started");
       super.dispose();
       executor.shutdown();
+      logRiderTest("dispose finished");
     }
 
     @Override
@@ -464,5 +489,12 @@ public abstract class Invoker implements Disposable {
     else {
       executor.execute(runnable);
     }
+  }
+
+  void logRiderTest(@NotNull String prefix) {
+    // experiment with flaky tests in Rider
+    Application application = isRider() ? getApplication() : null;
+    if (application == null || !application.isUnitTestMode()) return;
+    LOG.warn(new Exception(prefix + " EDT:" + isDispatchThread() + "; disposed:" + disposed + "; " + this));
   }
 }

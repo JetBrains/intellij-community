@@ -230,7 +230,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.copy(todir: unixSnapDistPath) {
         fileset(dir: unixDistPath) {
           exclude(name: "bin/fsnotifier")
-          exclude(name: "bin/fsnotifier-arm")
           exclude(name: "bin/libyjpagent-linux.so")
         }
       }

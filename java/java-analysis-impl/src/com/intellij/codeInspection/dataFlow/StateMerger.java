@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,9 +58,6 @@ class StateMerger {
         replacements.stripAndMerge(group, original -> {
           DfaMemoryStateImpl copy = original.createCopy();
           fact.removeFromState(copy);
-          if (fact instanceof EqualityFact) {
-            restoreOtherInequalities((EqualityFact)fact, group, copy);
-          }
           return copy;
         });
       }
@@ -151,48 +147,6 @@ class StateMerger {
       }
     }
     return new CompactFactSet(state.getFactory(), result);
-  }
-
-  private void restoreOtherInequalities(@NotNull EqualityFact removedFact,
-                                        @NotNull Collection<DfaMemoryStateImpl> mergedGroup,
-                                        @NotNull DfaMemoryStateImpl state) {
-    Set<DfaConstValue> inequalitiesToRestore = null;
-    for (DfaMemoryStateImpl member : mergedGroup) {
-      Set<Fact> memberFacts = getFacts(member);
-      if (memberFacts.contains(removedFact)) {
-        Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
-        if (inequalitiesToRestore == null) {
-          inequalitiesToRestore = otherInequalities;
-        } else {
-          inequalitiesToRestore.retainAll(otherInequalities);
-        }
-      }
-    }
-    if (inequalitiesToRestore != null) {
-      DfaRelationValue.Factory relationFactory = state.getFactory().getRelationFactory();
-      for (DfaConstValue toRestore : inequalitiesToRestore) {
-        state.applyCondition(relationFactory.createRelation(removedFact.myVar, RelationType.NE, toRestore));
-      }
-    }
-  }
-
-  @NotNull
-  private static Set<DfaConstValue> getOtherInequalities(@NotNull EqualityFact removedFact,
-                                                         @NotNull Set<Fact> memberFacts,
-                                                         @NotNull DfaMemoryStateImpl state) {
-    Set<DfaConstValue> otherInequalities = new LinkedHashSet<>();
-    Set<DfaValue> eqValues = new HashSet<>(state.getEquivalentValues(removedFact.myArg));
-    for (Fact candidate : memberFacts) {
-      if (!(candidate instanceof EqualityFact)) continue;
-      EqualityFact equality = (EqualityFact)candidate;
-      if (!equality.myPositive &&
-          equality.myVar == removedFact.myVar &&
-          equality.myArg instanceof DfaConstValue &&
-          !eqValues.contains(equality.myArg)) {
-        otherInequalities.add((DfaConstValue)equality.myArg);
-      }
-    }
-    return otherInequalities;
   }
 
   @Nullable

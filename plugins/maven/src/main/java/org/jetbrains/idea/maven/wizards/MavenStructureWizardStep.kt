@@ -16,7 +16,7 @@ import java.io.File
 import javax.swing.Icon
 
 class MavenStructureWizardStep(
-  private val builder: MavenModuleBuilder,
+  private val builder: AbstractMavenModuleBuilder,
   context: WizardContext
 ) : MavenizedStructureWizardStep<MavenProject>(context) {
 
@@ -40,6 +40,7 @@ class MavenStructureWizardStep(
       parentData?.mavenId?.version == version
     )
     builder.name = entityName
+    builder.contentEntryPath = location
   }
 
   override fun _init() {

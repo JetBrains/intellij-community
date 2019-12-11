@@ -210,6 +210,7 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testInvalidPostfixExpr() { doTest("a1", true, false, true, "int[]"); }
   public void testPolyadic() { doTest("b1", true, true, true, "boolean"); }
   public void testAssignmentToUnresolvedReference() { doTest("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"); }
+  public void testSubstringInSwitch() { doTest("ba", false, false, false, CommonClassNames.JAVA_LANG_STRING);}
 
   public void testNameSuggestion() {
     String expectedTypeName = "Path";

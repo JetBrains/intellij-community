@@ -292,21 +292,24 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
   }
 
   private void updateToolbarVisibility() {
-    myToolbar.setVisible(UISettings.getInstance().getShowMainToolbar() && !UISettings.getInstance().getPresentationMode());
+    UISettings uiSettings = UISettings.getShadowInstance();
+    myToolbar.setVisible(uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode());
   }
 
   private void updateStatusBarVisibility() {
-    myStatusBar.setVisible(UISettings.getInstance().getShowStatusBar() && !UISettings.getInstance().getPresentationMode());
+    UISettings uiSettings = UISettings.getShadowInstance();
+    myStatusBar.setVisible(uiSettings.getShowStatusBar() && !uiSettings.getPresentationMode());
   }
 
   private void updateMainMenuVisibility() {
-    if (UISettings.getInstance().getPresentationMode() || IdeFrameDecorator.isCustomDecorationActive()) {
+    UISettings uiSettings = UISettings.getShadowInstance();
+    if (uiSettings.getPresentationMode() || IdeFrameDecorator.isCustomDecorationActive()) {
       return;
     }
 
     final boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
-    final boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && UISettings.getInstance().getShowMainMenu();
+    final boolean visible = SystemInfo.isMacSystemMenu || !globalMenuVisible && uiSettings.getShowMainMenu();
     if (visible != menuBar.isVisible()) {
       menuBar.setVisible(visible);
     }
@@ -320,7 +323,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener, 
     ContainerUtil.addAll(myNorthComponents, IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       myNorthPanel.add(northComponent.getComponent());
-      northComponent.uiSettingsChanged(UISettings.getInstance());
+      northComponent.uiSettingsChanged(UISettings.getShadowInstance());
     }
   }
 

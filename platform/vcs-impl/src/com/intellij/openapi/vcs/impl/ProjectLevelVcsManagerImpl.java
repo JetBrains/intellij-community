@@ -748,7 +748,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
     if (myInitialization != null) {
-      ApplicationManager.getApplication().runReadAction(() -> myInitialization.add(vcsInitObject, runnable));
+      myInitialization.add(vcsInitObject, runnable);
     }
   }
 

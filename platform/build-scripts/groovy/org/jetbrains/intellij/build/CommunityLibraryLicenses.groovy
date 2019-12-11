@@ -171,7 +171,6 @@ class CommunityLibraryLicenses {
                        url: "http://bouncycastle.org", licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
-    new LibraryLicense(libraryName: "change-reminder-prediction-model", license: "Apache 2.0"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", transitiveDependency: true, version: "1.1", license: "codehaus",
                        url: "https://github.com/codehaus/classworlds",
                        licenseUrl: "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
@@ -263,8 +262,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
 
-    new LibraryLicense(name: "ImageIO", libraryName: "imageio-tiff", license: "BSD",
-                       url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL",
@@ -562,6 +559,8 @@ class CommunityLibraryLicenses {
                        license: "BSD style (see LICENSE.txt in trilead-ssh2-build213.jar)", url: "http://www.trilead.com/SSH_Library/"),
     new LibraryLicense(name: "Trove4j (JetBrains's fork)", libraryName: "Trove4j", license: "LGPL", url: "https://github.com/JetBrains/intellij-deps-trove4j",
                        licenseUrl: "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
+    new LibraryLicense(name: "TwelveMonkeys ImageIO", libraryName: "imageio-tiff", license: "BSD",
+                       url: "https://github.com/haraldk/TwelveMonkeys", licenseUrl: "https://github.com/haraldk/TwelveMonkeys#license"),
     new LibraryLicense(name: "unit-api", libraryName: "javax.measure:unit-api:1.0",
                        license: "BSD", url: "https://github.com/unitsofmeasurement/unit-api",
                        licenseUrl: "https://github.com/unitsofmeasurement/unit-api/blob/master/LICENSE"),
@@ -607,6 +606,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
 
+    jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-kotlin"),
     jetbrainsLibrary("completion-ranking-python"),

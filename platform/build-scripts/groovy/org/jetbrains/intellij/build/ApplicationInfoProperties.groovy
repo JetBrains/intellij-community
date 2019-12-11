@@ -28,6 +28,7 @@ class ApplicationInfoProperties {
   final String microVersion
   final String patchVersion
   final String fullVersionFormat
+  final String versionSuffix
   final String shortProductName
   /**
    * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
@@ -47,11 +48,15 @@ class ApplicationInfoProperties {
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
   ApplicationInfoProperties(String appInfoXmlPath) {
     def root = new XmlParser().parse(new File(appInfoXmlPath))
-    majorVersion = root.version.first().@major
-    minorVersion = root.version.first().@minor ?: "0"
-    microVersion = root.version.first().@micro ?: "0"
-    patchVersion = root.version.first().@patch ?: "0"
-    fullVersionFormat = root.version.first().@full ?: "{0}.{1}"
+    def versionTag = root.version.first()
+    majorVersion = versionTag.@major
+    minorVersion = versionTag.@minor ?: "0"
+    microVersion = versionTag.@micro ?: "0"
+    patchVersion = versionTag.@patch ?: "0"
+    fullVersionFormat = versionTag.@full ?: "{0}.{1}"
+    isEAP = Boolean.parseBoolean(versionTag.@eap)
+    versionSuffix = versionTag.@suffix ?: isEAP ? "EAP" : null
+
     shortProductName = root.names.first().@product
     String buildNumber = root.build.first().@number
     int productCodeSeparator = buildNumber.indexOf('-')
@@ -63,7 +68,6 @@ class ApplicationInfoProperties {
     motto = root.names.first().@motto
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
-    isEAP = Boolean.parseBoolean(root.version.first().@eap)
     shortCompanyName = root.company.first().@shortName ?: shortenCompanyName(companyName)
     def svgPath = root.icon.first().@svg
     svgRelativePath = isEAP && !root."icon-eap".isEmpty() ? (root."icon-eap".first().@svg ?: svgPath) : svgPath

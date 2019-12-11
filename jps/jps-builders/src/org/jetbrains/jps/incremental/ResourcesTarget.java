@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -135,10 +137,17 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     final List<ResourceRootDescriptor> roots = rootIndex.getTargetRoots(this, null);
     for (ResourceRootDescriptor root : roots) {
       String path = relativizer.toRelative(root.getRootFile().getAbsolutePath());
-      fingerprint += FileUtil.pathHashCode(path);
+      fingerprint += pathHashCode(path);
       fingerprint += root.getPackagePrefix().hashCode();
     }
     out.write(Integer.toHexString(fingerprint));
   }
 
+  private static int pathHashCode(@Nullable String path) {
+    // On case insensitive OS hash calculated from path converted to lower case
+    if (ProjectStamps.PORTABLE_CACHES) {
+      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
+    }
+    return FileUtil.pathHashCode(path);
+  }
 }

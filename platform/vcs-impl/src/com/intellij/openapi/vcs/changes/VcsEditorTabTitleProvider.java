@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.editor.GraphViewVirtualFile;
+import com.intellij.diff.editor.VCSContentVirtualFile;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,8 +17,8 @@ public class VcsEditorTabTitleProvider implements EditorTabTitleProvider {
       return ((PreviewDiffVirtualFile)file).getProvider().getEditorTabName();
     }
 
-    if (file instanceof GraphViewVirtualFile) {
-      return ((GraphViewVirtualFile)file).getTabName();
+    if (file instanceof VCSContentVirtualFile) {
+      return ((VCSContentVirtualFile)file).getTabName();
     }
 
     return null;

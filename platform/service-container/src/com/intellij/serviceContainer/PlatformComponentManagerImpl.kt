@@ -149,7 +149,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
     }
 
     // app - phase must be set before getMessageBus()
-    if (picoContainer.parent == null && !LoadingState.PROJECT_OPENED.isOccurred /* loading plugin on the fly */) {
+    if (picoContainer.parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 

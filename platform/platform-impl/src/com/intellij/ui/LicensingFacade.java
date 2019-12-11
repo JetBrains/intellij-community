@@ -16,6 +16,7 @@ public final class LicensingFacade {
   public boolean isEvaluation;
   public Date expirationDate;
   public Date perpetualFallbackDate;
+  public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
 
   public volatile static LicensingFacade INSTANCE;
@@ -47,9 +48,23 @@ public final class LicensingFacade {
     return perpetualFallbackDate != null && releaseDate.before(perpetualFallbackDate);
   }
 
+  /**
+   * @return the first day when the IDE license becomes invalid
+   */
   @Nullable
   public Date getLicenseExpirationDate() {
     return expirationDate;
+  }
+
+  /**
+   * @param productCode the product code to lookup the expiration date for
+   * @return the expiration date for the specified product as it is hard-coded in the license.
+   * Normally the is the last day when the license is still valid.
+   * null value is returned if expiration date is not applicable for the product, or the licence has net been obtained
+   */
+  @Nullable
+  public Date getExpirationDate(String productCode) {
+    return expirationDates == null ? null : expirationDates.get(productCode);
   }
 
   /**

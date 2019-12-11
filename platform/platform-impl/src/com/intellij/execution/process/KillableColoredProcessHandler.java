@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,5 +48,17 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableColoredProcessHandler(commandLine, true);
+  }
+
+  public static class Silent extends KillableColoredProcessHandler {
+    public Silent(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      super(commandLine);
+    }
+
+    @NotNull
+    @Override
+    protected BaseOutputReader.Options readerOptions() {
+      return BaseOutputReader.Options.forMostlySilentProcess();
+    }
   }
 }

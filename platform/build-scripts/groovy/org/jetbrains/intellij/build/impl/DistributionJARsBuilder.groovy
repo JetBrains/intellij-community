@@ -141,6 +141,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.ui")
       withModule("intellij.platform.util.ex")
 
+      withModule("intellij.platform.diagnostic")
       withModule("intellij.platform.ide.util.io")
 
       withModule("intellij.platform.concurrency")
@@ -180,8 +181,6 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
       withModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
-
-      withModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
 
       if (allProductDependencies.contains("intellij.platform.coverage")) {
         withModule("intellij.platform.coverage", productLayout.mainJarName)
@@ -683,7 +682,7 @@ class DistributionJARsBuilder {
 
         def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
         def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-        if (!new File(pluginXmlPath)) {
+        if (!new File(pluginXmlPath).exists()) {
           buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
         }
 
@@ -757,7 +756,11 @@ Android Studio: This attempts to read a non-existent file. */
         buildContext.notifyArtifactBuilt(destFile)
       }
 
-      KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/keymaps")
+      KeymapPluginsBuilder.buildKeymapPlugins(buildContext, "$nonBundledPluginsArtifacts/auto-uploading").forEach {
+        if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+          pluginsToIncludeInCustomRepository.add(it)
+        }
+      }
 
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)

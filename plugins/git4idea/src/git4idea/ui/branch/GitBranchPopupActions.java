@@ -213,8 +213,12 @@ class GitBranchPopupActions {
             }
 
             //git checkout -B for current branch conflict and execute git branch -f for others
-            brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
-            brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+            if (!currentBranchOfSameName.isEmpty()) {
+              brancher.checkoutNewBranchStartingFrom(name, HEAD, true, currentBranchOfSameName, null);
+            }
+            if (!currentBranchOfDifferentName.isEmpty()) {
+              brancher.createBranch(name, StreamEx.of(currentBranchOfDifferentName).toMap(position -> HEAD), true);
+            }
           }
           else {
             brancher.createBranch(name, StreamEx.of(myRepositories).filter(r -> r.getBranches().findLocalBranch(name) == null)
@@ -579,13 +583,13 @@ class GitBranchPopupActions {
               "Cancel", null);
           if (result == Messages.CANCEL) return;
           if (result == Messages.YES) {
-            GitBrancher brancher = GitBrancher.getInstance(myProject);
-            brancher.rebase(myRepositories, myRemoteBranchName, suggestedLocalName);
+            checkout(myProject, myRepositories, myRemoteBranchName, suggestedLocalName, true);
             return;
           }
         }
         GitBrancher brancher = GitBrancher.getInstance(myProject);
-        brancher.checkoutNewBranchStartingFrom(suggestedLocalName, myRemoteBranchName, hasCommits, myRepositories, null);
+        brancher
+          .checkoutNewBranchStartingFrom(suggestedLocalName, myRemoteBranchName, !conflictingLocalBranches.isEmpty(), myRepositories, null);
       }
 
       private void askNewBranchNameAndCheckout(@NotNull String suggestedLocalName) {
@@ -656,23 +660,10 @@ class GitBranchPopupActions {
 
   static void checkoutNewOrExistingBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories,
                                           @NotNull String startPoint, GitNewBranchOptions newBranchOptions) {
-    GitBrancher brancher = GitBrancher.getInstance(project);
+    if (repositories.isEmpty()) return;
     String name = newBranchOptions.getName();
     if (!newBranchOptions.shouldReset()) {
-      List<GitRepository> reposWithLocalBranch = new ArrayList<>();
-      List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
-      for (GitRepository repo : repositories) {
-        if (repo.getBranches().findLocalBranch(name) != null) {
-          reposWithLocalBranch.add(repo);
-        }
-        else {
-          reposWithoutLocalBranch.add(repo);
-        }
-      }
-      //checkout existing branch
-      brancher.checkout(name, false, reposWithLocalBranch, null);
-      //checkout new
-      brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
+      checkout(project, repositories, startPoint, name, false);
     }
     else {
       boolean hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name);
@@ -681,7 +672,39 @@ class GitBranchPopupActions {
           .notifyError("Checkout Failed", "Can't overwrite " + name + " branch because some commits can be lost");
         return;
       }
+      GitBrancher brancher = GitBrancher.getInstance(project);
       brancher.checkoutNewBranchStartingFrom(name, startPoint, true, repositories, null);
+    }
+  }
+
+  private static void checkout(@NotNull Project project,
+                               @NotNull List<? extends GitRepository> repositories,
+                               @NotNull String startPoint,
+                               @NotNull String name,
+                               boolean withRebase) {
+    GitBrancher brancher = GitBrancher.getInstance(project);
+    List<GitRepository> reposWithLocalBranch = new ArrayList<>();
+    List<GitRepository> reposWithoutLocalBranch = new ArrayList<>();
+    for (GitRepository repo : repositories) {
+      if (repo.getBranches().findLocalBranch(name) != null) {
+        reposWithLocalBranch.add(repo);
+      }
+      else {
+        reposWithoutLocalBranch.add(repo);
+      }
+    }
+    //checkout/rebase existing branch
+    if (!reposWithLocalBranch.isEmpty()) {
+      if (withRebase) {
+        brancher.rebase(reposWithLocalBranch, startPoint, name);
+      }
+      else {
+        brancher.checkout(name, false, reposWithLocalBranch, null);
+      }
+    }
+    //checkout new
+    if (!reposWithoutLocalBranch.isEmpty()) {
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, reposWithoutLocalBranch, null);
     }
   }
 

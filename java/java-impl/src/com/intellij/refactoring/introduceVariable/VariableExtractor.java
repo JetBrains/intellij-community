@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -268,6 +269,10 @@ class VariableExtractor {
   private static PsiElement correctAnchor(PsiExpression expr,
                                           @NotNull PsiElement anchor,
                                           PsiExpression[] occurrences) {
+    if (!expr.isPhysical()) {
+      expr = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
+      if (expr == null) return anchor;
+    }
     if (anchor instanceof PsiSwitchLabelStatementBase) {
       PsiSwitchBlock block = ((PsiSwitchLabelStatementBase)anchor).getEnclosingSwitchBlock();
       if (block == null) return anchor;
@@ -276,7 +281,7 @@ class VariableExtractor {
         expr = (PsiExpression)anchor;
       }
     }
-    Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).append(expr).toSet();
+    Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
     if (anchor instanceof PsiWhileStatement) {
       PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;

@@ -490,6 +490,10 @@
     <applicationService serviceInterface="com.intellij.notification.NotificationsConfiguration"
                         serviceImplementation="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ide.SaveAndSyncHandler" preload="notHeadless"
+                        serviceImplementation="com.intellij.configurationStore.SaveAndSyncHandlerImpl"
+                        headlessImplementation="com.intellij.configurationStore.HeadlessSaveAndSyncHandler"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingProjectManager"
                     serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl"/>
     <postStartupActivity implementation="com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$EncodingProjectManagerStartUpActivity"/>
@@ -513,7 +517,6 @@
       <configurable instance="com.intellij.javaee.XMLCatalogConfigurable" displayName="XML Catalog" id="xml.catalog"/>
     </projectConfigurable>
 
-    <bundledKeymapProvider implementation="com.intellij.openapi.keymap.impl.DefaultBundledKeymaps"/>
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
     <bundledKeymap file="Mac OS X.xml"/>
@@ -827,8 +830,5 @@
     <applicationService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
                         serviceImplementation="com.intellij.configurationStore.StoreReloadManagerImpl"/>
     <virtualFileManagerListener implementation="com.intellij.configurationStore.StoreReloadManagerImpl$MyVirtualFileManagerListener"/>
-
-    <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
-    <registryKey key="appcds.enabled" defaultValue="false" restartRequired="true" description="Whether IDE should use AppCDS (JRP 310) for faster startup"/>
   </extensions>
 </idea-plugin>

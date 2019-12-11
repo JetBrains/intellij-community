@@ -130,8 +130,12 @@ public class StringIndex {
     return myIndex.update(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content)).compute();
   }
 
-  public void flush() throws StorageException {
-    myIndex.flush();
+  public long getModificationStamp() {
+    return myIndex.getModificationStamp();
+  }
+
+  public void clear() {
+    myIndex.clear();
   }
 
   public void dispose() {

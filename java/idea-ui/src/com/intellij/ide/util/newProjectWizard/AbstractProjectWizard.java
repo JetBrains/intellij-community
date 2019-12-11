@@ -51,6 +51,14 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     myWizardContext.setWizard(this);
   }
 
+  @Override
+  protected String addStepComponent(Component component) {
+    if (component instanceof JComponent) {
+      ((JComponent)component).setBorder(JBUI.Borders.empty());
+    }
+    return super.addStepComponent(component);
+  }
+
   public abstract StepSequence getSequence();
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {

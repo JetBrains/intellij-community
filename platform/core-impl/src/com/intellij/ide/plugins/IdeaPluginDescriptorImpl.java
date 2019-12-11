@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.messages.ListenerDescriptor;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.xmlb.BeanBinding;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -90,7 +90,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private List<String> myModules;
   private ClassLoader myLoader;
-  private WeakReference<ClassLoader> myLoaderRef;
   private String myDescriptionChildText;
   private boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
@@ -762,13 +761,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public void setLoader(ClassLoader loader) {
     myLoader = loader;
-    myLoaderRef = new WeakReference<>(loader);
   }
 
   public boolean unloadClassLoader() {
+    GCWatcher watcher = GCWatcher.tracking(myLoader);
     myLoader = null;
-    System.gc();
-    return myLoaderRef.get() == null;
+    return watcher.tryCollect();
   }
 
   @Override

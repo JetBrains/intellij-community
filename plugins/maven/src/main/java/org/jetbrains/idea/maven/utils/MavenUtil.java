@@ -80,6 +80,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -453,10 +454,23 @@ public class MavenUtil {
     if (errorEx[0] != null) throw errorEx[0];
   }
 
-  public static MavenTaskHandler runInBackground(final Project project,
-                                                 final String title,
+
+  @NotNull
+  public static MavenTaskHandler runInBackground(@NotNull final Project project,
+                                                 @NotNull final String title,
                                                  final boolean cancellable,
-                                                 final MavenTask task) {
+                                                 @NotNull final MavenTask task) {
+    return runInBackground(project, title, cancellable, task, null);
+
+  }
+
+  @NotNull
+  public static MavenTaskHandler runInBackground(@NotNull final Project project,
+                                                 @NotNull final String title,
+                                                 final boolean cancellable,
+                                                 @NotNull final MavenTask task,
+                                                 @Nullable("null means application pooled thread")
+                                                     ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
 
     final MavenProgressIndicator indicator = new MavenProgressIndicator(manager::getSyncConsole);
@@ -481,7 +495,12 @@ public class MavenUtil {
       };
     }
     else {
-      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      final Future<?> future;
+      if (executorService == null) {
+        future = ApplicationManager.getApplication().executeOnPooledThread(runnable);
+      } else {
+        future = executorService.submit(runnable);
+      }
       final MavenTaskHandler handler = new MavenTaskHandler() {
         @Override
         public void waitFor() {

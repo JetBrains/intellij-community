@@ -40,6 +40,6 @@ private class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
       commitProjectAction.actionPerformed(e)
     }
     else {
-      e.getProjectCommitWorkflowHandler()!!.deactivate()
+      e.getProjectCommitWorkflowHandler()!!.deactivate(false)
     }
 }

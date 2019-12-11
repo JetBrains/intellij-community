@@ -10,25 +10,17 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.ChangeListData
-import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.ui.EditorTextField
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor.StringValueDescriptor
-import com.intellij.util.textCompletion.TextFieldWithCompletion
-import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.commit.AmendCommitHandler
-import com.intellij.vcs.commit.AmendCommitModeListener
-import com.intellij.vcs.commit.ToggleAmendCommitOption
-import com.intellij.vcs.commit.commitProperty
+import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
@@ -50,29 +42,15 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-private val COMMIT_AUTHOR_KEY = Key.create<String>("Git.Commit.Author")
+private val COMMIT_AUTHOR_KEY = Key.create<VcsUser>("Git.Commit.Author")
 private val COMMIT_AUTHOR_DATE_KEY = Key.create<Date>("Git.Commit.AuthorDate")
 private val IS_SIGN_OFF_COMMIT_KEY = Key.create<Boolean>("Git.Commit.IsSignOff")
 private val IS_COMMIT_RENAMES_SEPARATELY_KEY = Key.create<Boolean>("Git.Commit.IsCommitRenamesSeparately")
 
-internal var CommitContext.commitAuthor: String? by commitProperty(COMMIT_AUTHOR_KEY, null)
+internal var CommitContext.commitAuthor: VcsUser? by commitProperty(COMMIT_AUTHOR_KEY, null)
 internal var CommitContext.commitAuthorDate: Date? by commitProperty(COMMIT_AUTHOR_DATE_KEY, null)
 internal var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OFF_COMMIT_KEY)
 internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
-
-private fun createTextField(project: Project, values: List<String>): EditorTextField {
-  val completionProvider = ValuesCompletionProviderDumbAware(StringValueDescriptor(), values)
-
-  return object : TextFieldWithCompletion(project, completionProvider, "", true, true, true) {
-    override fun updateUI() {
-      // When switching from Darcula to IntelliJ `getBackground()` has `UIUtil.getTextFieldBackground()` value which is `UIResource`.
-      // `LookAndFeel.installColors()` (called from `updateUI()`) calls `setBackground()` and sets panel background (gray) to be used.
-      // So we clear background to allow default behavior (use background from color scheme).
-      background = null
-      super.updateUI()
-    }
-  }
-}
 
 private fun getAllUsers(project: Project): List<String> =
   project.service<VcsUserRegistry>().users.map { VcsUserUtil.toExactString(it) }
@@ -95,9 +73,10 @@ class GitCommitOptionsUi(
   val amendHandler: AmendCommitHandler get() = commitPanel.commitWorkflowHandler.amendCommitHandler
 
   private var authorDate: Date? = null
+  private var currentChangeList: LocalChangeList? = null
 
   private val panel = JPanel(GridBagLayout())
-  private val authorField = createTextField(project, getKnownCommitAuthors())
+  private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
   private val signOffCommit = JBCheckBox("Sign-off commit", settings.shouldSignOffCommit()).apply {
     mnemonic = VK_G
 
@@ -115,11 +94,14 @@ class GitCommitOptionsUi(
 
   init {
     authorField.addFocusListener(object : FocusAdapter() {
-      override fun focusLost(e: FocusEvent) = clearAuthorWarning()
+      override fun focusLost(e: FocusEvent) {
+        updateCurrentCommitAuthor()
+        clearAuthorWarning()
+      }
     })
     authorField.addHierarchyListener(object : HierarchyListener {
       override fun hierarchyChanged(e: HierarchyEvent) {
-        if (e.isShowingChanged && authorField.isShowing && authorField.text.isNotBlank()) {
+        if (e.isShowingChanged && authorField.isShowing && authorField.user != null) {
           showAuthorWarning()
           authorField.removeHierarchyListener(this)
         }
@@ -153,12 +135,7 @@ class GitCommitOptionsUi(
 
   override fun restoreState() = refresh()
 
-  override fun refresh() {
-    updateRenamesCheckboxState()
-    authorField.setText(null)
-    clearAuthorWarning()
-    authorDate = null
-  }
+  override fun refresh() = refresh(null)
 
   override fun saveState() {
     val author = getAuthor()
@@ -178,30 +155,40 @@ class GitCommitOptionsUi(
   }
 
   override fun onChangeListSelected(list: LocalChangeList) {
-    updateRenamesCheckboxState()
-    clearAuthorWarning()
-
-    val data = list.data as? ChangeListData
-    setAuthor(data?.author)
-    authorDate = data?.date
+    refresh(list)
 
     panel.revalidate()
     panel.repaint()
   }
 
-  fun getAuthor(): String? = authorField.text.takeIf { it.isNotBlank() }?.let { GitCommitAuthorCorrector.correct(it) }
+  private fun refresh(changeList: LocalChangeList?) {
+    updateRenamesCheckboxState()
+    clearAuthorWarning()
+
+    currentChangeList = changeList
+    setAuthor(changeList?.author)
+    authorDate = changeList?.authorDate
+  }
+
+  fun getAuthor(): VcsUser? = authorField.user
 
   private fun setAuthor(author: VcsUser?) {
-    if (author != null && !isDefaultAuthor(author)) {
-      authorField.text = VcsUserUtil.toExactString(author)
+    val isAuthorNullOrDefault = author == null || isDefaultAuthor(author)
+    authorField.user = author.takeUnless { isAuthorNullOrDefault }
+
+    if (!isAuthorNullOrDefault) {
       authorField.putClientProperty("JComponent.outline", "warning")
-      if (authorField.isShowing) {
-        showAuthorWarning()
-      }
+      if (authorField.isShowing) showAuthorWarning()
     }
-    else {
-      authorField.setText(null)
-    }
+  }
+
+  private fun updateCurrentCommitAuthor() {
+    if (!commitPanel.isNonModalCommit) return
+
+    val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+
+    changeListManager.editChangeListData(changeList.name, ChangeListData(getAuthor(), authorDate))
   }
 
   private fun updateRenamesCheckboxState() {

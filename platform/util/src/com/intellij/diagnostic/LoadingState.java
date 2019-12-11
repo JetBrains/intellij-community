@@ -22,6 +22,7 @@ public enum LoadingState {
   final String displayName;
 
   private static boolean CHECK_LOADING_PHASE;
+  private static Set<Throwable> stackTraces;
 
   LoadingState(@NotNull String displayName) {
     this.displayName = displayName;
@@ -37,26 +38,6 @@ public enum LoadingState {
     CHECK_LOADING_PHASE = true;
   }
 
-  private final static Set<Throwable> stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
-    @Override
-    public int computeHashCode(Throwable throwable) {
-      return fingerprint(throwable).hashCode();
-    }
-
-    @Override
-    public boolean equals(Throwable o1, Throwable o2) {
-      return o1 == o2 || o1 != null && o2 != null && fingerprint(o1).equals(fingerprint(o2));
-    }
-
-    private String fingerprint(Throwable throwable) {
-      StringBuilder sb = new StringBuilder();
-      for (StackTraceElement traceElement : throwable.getStackTrace()) {
-        sb.append(traceElement.getClassName()).append(traceElement.getMethodName());
-      }
-      return sb.toString();
-    }
-  });
-
   public void checkOccurred() {
     if (!CHECK_LOADING_PHASE) {
       return;
@@ -67,16 +48,41 @@ public enum LoadingState {
       return;
     }
 
-    Throwable t = new Throwable();
-    synchronized (stackTraces) {
-      if (!stackTraces.add(t)) {
-        return;
-      }
+    logStateError(currentState);
+  }
 
-      getLogger().error("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
-                        "Current violators count: " + stackTraces.size() + "\n\n",
-                        t);
+  private synchronized void logStateError(@NotNull LoadingState currentState) {
+    Throwable t = new Throwable();
+    if (stackTraces == null) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      stackTraces = new THashSet<>(new TObjectHashingStrategy<Throwable>() {
+        @Override
+        public int computeHashCode(Throwable throwable) {
+          return fingerprint(throwable).hashCode();
+        }
+
+        @Override
+        public boolean equals(Throwable o1, Throwable o2) {
+          return o1 == o2 || o1 != null && o2 != null && fingerprint(o1).equals(fingerprint(o2));
+        }
+
+        private String fingerprint(Throwable throwable) {
+          StringBuilder sb = new StringBuilder();
+          for (StackTraceElement traceElement : throwable.getStackTrace()) {
+            sb.append(traceElement.getClassName()).append(traceElement.getMethodName());
+          }
+          return sb.toString();
+        }
+      });
     }
+
+    if (!stackTraces.add(t)) {
+      return;
+    }
+
+    getLogger().error("Should be called at least in the state " + this + ", the current state is: " + currentState + "\n" +
+                      "Current violators count: " + stackTraces.size() + "\n\n",
+                      t);
   }
 
   private static boolean isKnownViolator() {

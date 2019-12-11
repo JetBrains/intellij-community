@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,6 +7,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -58,6 +45,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     myConsole = console;
     myProcessHandler = processHandler;
     myFinishedStated = finishedStated;
+    myStreamsSynchronizer = new ProcessStreamsSynchronizer(console);
 
     // attach to process stdout
     if (attachToStdOut) {
@@ -72,7 +60,6 @@ public class ConsoleViewRunningState extends ConsoleState {
     else {
       myUserInputWriter = null;
     }
-    myStreamsSynchronizer = new ProcessStreamsSynchronizer(console);
   }
 
   private static OutputStreamWriter createOutputStreamWriter(OutputStream processInput, ProcessHandler processHandler) {
@@ -127,6 +114,12 @@ public class ConsoleViewRunningState extends ConsoleState {
   @Override
   public ConsoleState attachTo(@NotNull final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
+  }
+
+  @TestOnly
+  @NotNull
+  ProcessStreamsSynchronizer getStreamsSynchronizer() {
+    return myStreamsSynchronizer;
   }
 
   @Override
