@@ -65,7 +65,7 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         val result = mutableListOf<JavaLocalSdkFix>()
 
         SdkDetector.getInstance().detectSdks(sdkType, indicator, object : DetectedSdkListener {
-          override fun onSdkDetected(type: SdkType, version: String?, home: String) {
+          override fun onSdkDetected(type: SdkType, version: String, home: String) {
             val javaVersion = JavaVersion.tryParse(version)
             if (javaVersion != null) {
               result += JavaLocalSdkFix(home, javaVersion)
