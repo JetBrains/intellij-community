@@ -887,7 +887,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val decorator = InternalDecorator(project, info.copy(), toolWindow, task.canWorkInDumbMode, disposable, internalDecoratorListener)
 
     // create and show tool button
-    val button = StripeButton(decorator, (toolWindowPane)!!)
+    val button = StripeButton(decorator, toolWindowPane!!)
     val commands = mutableListOf<FinalizableCommand>()
     appendAddButtonCmd(button, info, commands)
 
@@ -1989,7 +1989,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val violations = mutableListOf<String>()
-    idToEntry.forEach { id, entry ->
+    idToEntry.forEach { (id, entry) ->
       val info = layout.getInfo(id) ?: return@forEach
       if (info.isVisible) {
         if (info.isFloating) {
