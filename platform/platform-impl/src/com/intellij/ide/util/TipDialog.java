@@ -30,12 +30,6 @@ public class TipDialog extends DialogWrapper {
   private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
   private final TipPanel myTipPanel;
 
-  @Nullable
-  @Override
-  protected String getDimensionServiceKey() {
-    return getClass().getName();
-  }
-
   TipDialog(@NotNull final Window parent) {
     super(parent, true);
     setModal(false);
