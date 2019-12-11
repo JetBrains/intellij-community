@@ -16,11 +16,9 @@ import java.util.List;
 
 public final class DefaultLanguageInjector implements MultiHostInjector {
   private final Configuration myInjectionConfiguration;
-  private final LanguageInjectionSupport[] mySupports;
 
   public DefaultLanguageInjector(@NotNull Project project) {
     myInjectionConfiguration = Configuration.getProjectInstance(project);
-    mySupports = InjectorUtils.getActiveInjectionSupports().toArray(new LanguageInjectionSupport[0]);
   }
 
   @Override
@@ -34,7 +32,7 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
     if (!(context instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost)context).isValidHost()) return;
     PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
 
-    for (LanguageInjectionSupport support : mySupports) {
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       if (!support.isApplicableTo(host)) continue;
       if (!support.useDefaultInjector(host)) continue;
 
