@@ -598,6 +598,11 @@ public class PluginManagerCore {
         // might be an optional dependency
         continue;
       }
+      if ("com.android.layoutlib.native".equals(depId.getIdString()) && !dep.isEnabled()) {
+        // If the layoutlib native plugin is disabled, do not add its class loader to the list of parent class loaders of the android plugin,
+        // as the fallback to standard layoutlib relies on the native layoutlib jar file not to be present in the classpath.
+        continue;
+      }
       ClassLoader loader = dep.getPluginClassLoader();
       if (loader == null) {
         getLogger().error("Plugin \"" + toPresentableName(descriptor) + "\" requires missing class loader for " + toPresentableName(dep));
