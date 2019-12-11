@@ -405,6 +405,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         (ThrowableComputable<Module, Exception>)() -> builder.createModule(myModuleModel));
     }
     catch (Exception e) {
+      LOG.error(ProjectBundle.message("module.add.error.message", e.getMessage()), e);
       Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", e.getMessage()),
                                ProjectBundle.message("module.add.error.title"));
       return null;
