@@ -95,7 +95,7 @@ public final class UIUtil {
   @NotNull
   // cannot be static because logging maybe not configured yet
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.ui.UIUtil");
+    return Logger.getInstance(UIUtil.class);
   }
 
   public static void decorateWindowHeader(JRootPane pane) {
@@ -1277,7 +1277,6 @@ public final class UIUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
@@ -1287,7 +1286,6 @@ public final class UIUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
@@ -1296,7 +1294,6 @@ public final class UIUtil {
   /**
    * @deprecated Aqua Look-n-Feel is not supported anymore
    */
-  @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAquaLookAndFeel() {
@@ -1342,17 +1339,14 @@ public final class UIUtil {
     return false;
   }
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean isUnderDarcula() {
     return StartupUiUtil.isUnderDarcula();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderIntelliJLaF() {
     return UIManager.getLookAndFeel().getName().contains("IntelliJ");
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderGTKLookAndFeel() {
@@ -1374,7 +1368,6 @@ public final class UIUtil {
    * @deprecated GTK Look-n-Feel is not supported anymore
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static String getGtkThemeName() {
@@ -3779,9 +3772,6 @@ public final class UIUtil {
     if (result < 0) {
       return 0;
     }
-    if (result > 255) {
-      return 255;
-    }
-    return result;
+    return Math.min(result, 255);
   }
 }
