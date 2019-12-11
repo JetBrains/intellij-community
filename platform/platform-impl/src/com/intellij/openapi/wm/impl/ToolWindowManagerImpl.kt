@@ -580,7 +580,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun activateToolWindowImpl(id: String,
-                                     commandList: MutableList<FinalizableCommand>,
+                                     commands: MutableList<FinalizableCommand>,
                                      forced: Boolean,
                                      autoFocusContents: Boolean) {
     var effectiveAutoFocusContents = autoFocusContents
@@ -589,26 +589,23 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (LOG.isDebugEnabled) {
       LOG.debug("enter: activateToolWindowImpl($id)")
     }
-    if (!getToolWindow(id)!!.isAvailable) {
+    val entry = idToEntry.get(id)!!
+    if (!entry.internalDecorator.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
       // when the user switched to another application. So we just need to bring
       // tool window's window to front.
-      val decorator = getInternalDecorator(id)
-      if (!decorator.hasFocus() && effectiveAutoFocusContents) {
-        appendRequestFocusInToolWindowCmd(id, commandList)
+      if (effectiveAutoFocusContents && !entry.internalDecorator.hasFocus()) {
+        appendRequestFocusInToolWindowCmd(id, commands)
       }
       return
     }
-    deactivateWindows(id, commandList)
-    showAndActivate(id, false, commandList, effectiveAutoFocusContents)
+    deactivateWindows(id, commands)
+    showAndActivate(id, false, commands, effectiveAutoFocusContents)
   }
 
   private fun getRegisteredInfoOrLogError(id: String): WindowInfoImpl {
-    val info = layout.getInfo(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
-    if (!isToolWindowRegistered(id)) {
-      LOG.error("window with id=\"$id\" isn't registered")
-    }
-    return info
+    val entry = idToEntry.get(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
+    return entry.internalDecorator.windowInfo
   }
 
   /**
@@ -632,7 +629,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override val activeToolWindowId: String?
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return layout.activeId
+      return idToEntry.values.firstOrNull { it.internalDecorator.windowInfo.isActive }?.internalDecorator?.toolWindow?.id
     }
 
   override fun getLastActiveToolWindowId(): String? {

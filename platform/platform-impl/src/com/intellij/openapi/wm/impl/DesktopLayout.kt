@@ -69,9 +69,6 @@ class DesktopLayout {
 
   fun getInfo(id: String) = idToInfo.get(id)
 
-  val activeId: String?
-    get() = idToInfo.values.firstOrNull { it.isActive }?.id
-
   /**
    * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
    * Returned infos are sorted by order.
