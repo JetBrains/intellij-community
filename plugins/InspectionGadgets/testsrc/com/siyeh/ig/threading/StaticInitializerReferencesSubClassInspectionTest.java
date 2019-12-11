@@ -16,7 +16,6 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
@@ -29,16 +28,8 @@ public class StaticInitializerReferencesSubClassInspectionTest extends LightJava
   }
 
   public void testStaticInitializer() {
-    doTest();
-  }
-
-  public void testStaticMethodCallsOwnOverride() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    doTest();
-  }
-
-  private void doTest() {
     myFixture.enableInspections(new StaticInitializerReferencesSubClassInspection());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
+
 }

@@ -5,6 +5,7 @@ class Super {
   static final Sub C3;
   static final Sub C4 = SubFactory.<warning descr="Referencing subclass Sub from superclass Super initializer might lead to class loading deadlock">create</warning>();
   static final String C5 = SubFactory.<warning descr="Referencing subclass Sub from superclass Super initializer might lead to class loading deadlock">create</warning>().toString();
+  static Super USED_PRIVATE = new <warning descr="Referencing subclass MyUsedSub from superclass Super initializer might lead to class loading deadlock">MyUsedSub</warning>();
 
   static Object INSIDE_ANONYMOUS = new Object() {
     {
@@ -26,7 +27,17 @@ class Super {
     C3 = new <warning descr="Referencing subclass Sub from superclass Super initializer might lead to class loading deadlock">Sub</warning>();
   }
 
+  static void foo() {
+    MyUsedSub.foo();
+  }
+
   private static class MySub extends Super { }
+  private static class MyUsedSub extends Super {
+    static void foo() {
+      System.out.println("hello");
+    }
+
+  }
 }
 
 class Sub extends Super implements Intf {
