@@ -8,9 +8,17 @@ import javax.swing.Icon
 /**
  * @author Konstantin Bulenkov
  */
-object LafIconLookup {
-  private const val ICONS_DIR_PREFIX = "/com/intellij/ide/ui/laf/icons/"
+private const val ICONS_DIR_PREFIX = "/com/intellij/ide/ui/laf/icons/"
 
+open class DirProvider {
+  open fun dir() : String = ICONS_DIR_PREFIX + when {
+    UIUtil.isUnderDarcula() -> "darcula/"
+    UIUtil.isUnderIntelliJLaF() -> "intellij/"
+    else -> ""
+  }
+}
+
+object LafIconLookup {
   @JvmStatic
   @JvmOverloads
   fun getIcon(name: String,
@@ -19,7 +27,7 @@ object LafIconLookup {
               enabled: Boolean = true,
               editable: Boolean = false,
               pressed: Boolean = false,
-              dirProvider: () -> String = { defaultDirProvider() }): Icon {
+              dirProvider: DirProvider = DirProvider()) : Icon {
 
     return findIcon(name,
                     selected = selected,
@@ -39,7 +47,7 @@ object LafIconLookup {
                editable: Boolean = false,
                pressed: Boolean = false,
                isThrowErrorIfNotFound: Boolean = false,
-               dirProvider: () -> String = { defaultDirProvider() }): Icon? {
+               dirProvider: DirProvider = DirProvider()): Icon? {
     var key = name
     if (editable) key += "Editable"
     if (selected) key += "Selected"
@@ -51,13 +59,7 @@ object LafIconLookup {
     }
 
     // For Mac blue theme and other LAFs use default directory icons
-    return IconLoader.findLafIcon(dirProvider() + key, LafIconLookup::class.java, isThrowErrorIfNotFound)
-  }
-
-  private fun defaultDirProvider() : String = ICONS_DIR_PREFIX + when {
-    UIUtil.isUnderDarcula() -> "darcula/"
-    UIUtil.isUnderIntelliJLaF() -> "intellij/"
-    else -> ""
+    return IconLoader.findLafIcon(dirProvider.dir() + key, dirProvider.javaClass, isThrowErrorIfNotFound)
   }
 
   @JvmStatic

@@ -1,13 +1,16 @@
 package com.intellij.laf.macos
 
 import com.intellij.icons.AllIcons
+import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.LafIconLookup
 import com.intellij.util.ui.UIUtil
 import javax.swing.Icon
 
-object MacIconLookup {
-  private const val ICONS_DIR_PREFIX = "/icons/"
+private class MacDirProvider : DirProvider() {
+  override fun dir(): String = "/icons/" + if (UIUtil.isGraphite()) "graphite/" else "blue/"
+}
 
+object MacIconLookup {
   @JvmStatic
   @JvmOverloads
   fun getIcon(name: String,
@@ -24,7 +27,6 @@ object MacIconLookup {
       editable = editable,
       pressed = pressed,
       isThrowErrorIfNotFound = true,
-      dirProvider = { ICONS_DIR_PREFIX + if (UIUtil.isGraphite()) "graphite/" else "blue/" } )
-           ?: AllIcons.Actions.Stub
+      dirProvider = MacDirProvider()) ?: AllIcons.Actions.Stub
   }
 }

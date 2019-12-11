@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.UIUtil
 import javax.swing.LookAndFeel
+import javax.swing.UIDefaults
 
 class MacLafProvider : LafProvider {
   override fun getLookAndFeelInfo(): PluggableLafInfo {
@@ -27,6 +28,10 @@ class MacLafProvider : LafProvider {
 
     override fun createEditorTextFieldBorder(editorTextField: EditorTextField, editor: EditorEx): DarculaEditorTextFieldBorder {
       return MacEditorTextFieldBorder(editorTextField, editor)
+    }
+
+    override fun updateDefaults(defaults: UIDefaults) {
+      defaults["ClassLoader"] = MacIntelliJLaf::class.java.classLoader
     }
   }
 

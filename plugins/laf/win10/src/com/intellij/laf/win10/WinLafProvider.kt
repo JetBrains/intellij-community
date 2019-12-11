@@ -33,6 +33,7 @@ class WinLafProvider : LafProvider {
 
     override fun updateDefaults(defaults: UIDefaults) {
       defaults["Menu.arrowIcon"] = Win10MenuArrowIcon()
+      defaults["ClassLoader"] = WinIntelliJLaf::class.java.classLoader
     }
   }
 

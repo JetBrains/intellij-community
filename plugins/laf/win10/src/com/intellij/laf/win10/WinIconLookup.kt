@@ -1,12 +1,15 @@
 package com.intellij.laf.win10
 
 import com.intellij.icons.AllIcons
+import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.LafIconLookup
 import javax.swing.Icon
 
-object WinIconLookup {
-  private const val ICONS_DIR_PREFIX = "/icons/"
+private class WinDirProvider : DirProvider() {
+  override fun dir(): String = "/icons/"
+}
 
+object WinIconLookup {
   @JvmStatic
   @JvmOverloads
   fun getIcon(name: String,
@@ -23,6 +26,6 @@ object WinIconLookup {
                                   editable = editable,
                                   pressed = pressed,
                                   isThrowErrorIfNotFound = true,
-                                  dirProvider = { ICONS_DIR_PREFIX } ) ?: AllIcons.Actions.Stub
+                                  dirProvider = WinDirProvider()) ?: AllIcons.Actions.Stub
   }
 }
