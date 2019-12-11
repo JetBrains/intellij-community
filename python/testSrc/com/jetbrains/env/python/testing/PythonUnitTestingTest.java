@@ -46,7 +46,6 @@ import java.util.List;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author traff
@@ -444,42 +443,6 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                                            "....(i='7_7')(+)\n" +
                                                            "....(i='8_8')(+)\n" +
                                                            "....(i='9_9')(+)\n", runner.getFormattedTestTree());
-      }
-    });
-  }
-
-  @EnvTestTagsRequired(tags = "unittest2")
-  @Test
-  public void testUnitTest2() {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(toFullPath(getMyScriptName()), 1);
-      }
-
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all, int exitCode) {
-        runner.getFormattedTestTree();
-        assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
-                                                      "[root](-)\n" +
-                                                      ".test_test(-)\n" +
-                                                      "..SampleTest(-)\n" +
-                                                      "...test_sample(-)\n" +
-                                                      "....(i=0)(-)\n" +
-                                                      "....(i=1)(-)\n" +
-                                                      "....(i=2)(-)\n" +
-                                                      "....(i=3)(-)\n" +
-                                                      "....(i=4)(+)\n" +
-                                                      "....(i=5)(+)\n" +
-                                                      "....(i=6)(+)\n" +
-                                                      "....(i=7)(+)\n" +
-                                                      "....(i=8)(+)\n" +
-                                                      "....(i=9)(+)\n", runner.getFormattedTestTree());
       }
     });
   }
