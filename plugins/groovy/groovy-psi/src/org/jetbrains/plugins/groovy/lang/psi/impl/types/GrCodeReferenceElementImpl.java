@@ -74,7 +74,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @NotNull
   @Override
   protected GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
-    return GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+    return GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(qName);
   }
 
   @Override

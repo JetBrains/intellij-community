@@ -217,9 +217,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
                                               String... modifiers) throws IncorrectOperationException;
 
   @NotNull
-  public abstract GrCodeReferenceElement createTypeOrPackageReference(@NotNull String qName);
-
-  @NotNull
   public abstract GrTypeDefinition createTypeDefinition(@NotNull String text) throws IncorrectOperationException;
 
   @NotNull

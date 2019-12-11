@@ -403,22 +403,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrCodeReferenceElement createTypeOrPackageReference(@NotNull String qName) {
-    try {
-      final GroovyFileBase file = createGroovyFileChecked("def i = new " + qName + "()");
-      final GrStatement[] statements = file.getStatements();
-      final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)statements[0];
-      final GrVariable var = variableDeclaration.getVariables()[0];
-      final GrExpression initializer = var.getInitializerGroovy();
-      return ((GrNewExpression)initializer).getReferenceElement();
-    }
-    catch (RuntimeException e) {
-      throw new IncorrectOperationException("reference text=" + qName, (Throwable)e);
-    }
-  }
-
-  @NotNull
-  @Override
   public GrTypeDefinition createTypeDefinition(@NotNull String text) throws IncorrectOperationException {
     final GroovyFileBase file = createGroovyFileChecked(text);
     final GrTypeDefinition[] classes = file.getTypeDefinitions();
