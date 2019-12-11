@@ -1180,7 +1180,16 @@ public class TypeConversionUtil {
   @Contract("null -> false")
   public static boolean isAssignableFromPrimitiveWrapper(@Nullable PsiType type) {
     if (type == null) return false;
-    return isPrimitiveWrapper(type) || type.equalsToText(JAVA_LANG_OBJECT) || type.equalsToText(JAVA_LANG_NUMBER);
+    if (isPrimitiveWrapper(type)) return true;
+    for (PsiType component : type instanceof PsiIntersectionType ? ((PsiIntersectionType)type).getConjuncts() : new PsiType[]{type}) {
+      if (!(component instanceof PsiClassType)) return false;
+      if (component.equalsToText(JAVA_LANG_OBJECT)) continue;
+      if (component.equalsToText(JAVA_LANG_NUMBER)) continue;
+      if (component.equalsToText(JAVA_IO_SERIALIZABLE)) continue;
+      if (((PsiClassType)component).rawType().equalsToText(JAVA_LANG_COMPARABLE)) continue;
+      return false;
+    }
+    return true;
   }
 
   @Contract("null -> false")
