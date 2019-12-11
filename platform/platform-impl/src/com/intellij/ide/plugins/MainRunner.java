@@ -13,7 +13,13 @@ import java.util.LinkedHashMap;
 
 public final class MainRunner  {
   @SuppressWarnings("StaticNonFinalField")
-  public static WindowsCommandLineListener LISTENER;
+  public static WindowsCommandLineListener LISTENER = new WindowsCommandLineListener() {
+    @Override
+    public int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
+      return Main.ACTIVATE_NOT_INITIALIZED;
+    }
+  };
+
   @SuppressWarnings("StaticNonFinalField")
   public static Activity startupStart;
 
@@ -47,6 +53,6 @@ public final class MainRunner  {
   /** Called via reflection from {@link WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
   @SuppressWarnings("UnusedDeclaration")
   public static int processWindowsLauncherCommandLine(final String currentDirectory, final String[] args) {
-    return LISTENER != null ? LISTENER.processWindowsLauncherCommandLine(currentDirectory, args) : 1;
+    return LISTENER.processWindowsLauncherCommandLine(currentDirectory, args);
   }
 }
