@@ -70,6 +70,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     findExistingAssociatedSdk(module, existingSdks)?.let {
       SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+      module.excludeInnerVirtualEnv(it)
       return
     }
 
@@ -78,6 +79,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       SdkConfigurationUtil.addSdk(newSdk)
       newSdk.associateWithModule(module, null)
       SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
+      module.excludeInnerVirtualEnv(it)
       return
     }
 
