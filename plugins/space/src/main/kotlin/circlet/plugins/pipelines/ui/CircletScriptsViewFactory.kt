@@ -6,7 +6,6 @@ import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.services.run.*
 import circlet.plugins.pipelines.viewmodel.*
-import circlet.runtime.*
 import com.intellij.execution.*
 import com.intellij.icons.*
 import com.intellij.ide.*
@@ -22,6 +21,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
+import runtime.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.BoxLayout
@@ -76,17 +76,16 @@ class CircletScriptsViewFactory : KLogging() {
             resetNodes(root, model, viewModel.extendedViewModeEnabled.value)
             (tree.model as DefaultTreeModel).reload()
         }
-
-
+        
         viewModel.script.forEach(lifetime) {
-            launch(lifetime, ApplicationUiDispatch.coroutineContext) {
+            launch(lifetime, Ui) {
                 recalcTree()
                 viewModel.modelBuildIsRunning.value = false
             }
         }
 
         viewModel.extendedViewModeEnabled.forEach(lifetime) {
-            launch(lifetime, ApplicationUiDispatch.coroutineContext) {
+            launch(lifetime, Ui) {
                 recalcTree()
             }
         }

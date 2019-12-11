@@ -16,7 +16,7 @@ class CircletApplicationComponent {
             KLoggerStaticFactory.customFactory = KLoggerFactoryIdea
         }
 
-        mutableUiDispatch = ApplicationUiDispatch
+        mutableUiDispatch = ApplicationDispatcher(application)
 
         initCircletArenas()
 
