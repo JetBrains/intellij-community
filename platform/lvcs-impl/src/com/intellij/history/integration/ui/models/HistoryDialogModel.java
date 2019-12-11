@@ -9,22 +9,17 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -174,10 +169,6 @@ public abstract class HistoryDialogModel {
 
   protected Change createChange(Difference d) {
     return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
-  }
-
-  public void createPatch(String path, String basePath, boolean isReverse, @NotNull Charset charset) throws VcsException, IOException {
-    PatchCreator.create(myProject, basePath, getChanges(), path, isReverse, null, charset);
   }
 
   public abstract Reverter createReverter();

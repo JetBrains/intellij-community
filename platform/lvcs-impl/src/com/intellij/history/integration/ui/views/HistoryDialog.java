@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -437,14 +438,14 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
 
+      String base = p.getBaseDirName();
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch());
       if (p.isToClipboard()) {
-        String base = p.getBaseDirName();
-        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), true);
         writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
         showNotification("Patch copied to clipboard");
       }
       else {
-        myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
+        PatchWriter.writePatches(myProject, p.getFileName(), base, patches, null, p.getEncoding());
         showNotification(message("message.patch.created"));
         RevealFileAction.openFile(new File(p.getFileName()));
       }
