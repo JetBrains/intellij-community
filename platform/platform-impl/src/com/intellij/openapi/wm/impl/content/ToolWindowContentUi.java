@@ -112,14 +112,21 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   private boolean isResizeable() {
-    if (myWindow.getType() == ToolWindowType.FLOATING || myWindow.getType() == ToolWindowType.WINDOWED) return false;
-    if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) return true;
-    if (myWindow.getAnchor() == ToolWindowAnchor.TOP) return false;
-    if (!myWindow.isSplitMode()) return false;
+    if (myWindow.getType() == ToolWindowType.FLOATING || myWindow.getType() == ToolWindowType.WINDOWED) {
+      return false;
+    }
+    if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) {
+      return true;
+    }
+    if (myWindow.getAnchor() == ToolWindowAnchor.TOP || !myWindow.isSplitMode()) {
+      return false;
+    }
+
     ToolWindowManagerImpl manager = myWindow.getToolWindowManager();
-    List<String> ids = manager.getIdsOn(myWindow.getAnchor());
-    for (String id : ids) {
-      if (id.equals(myWindow.getId())) continue;
+    for (String id : manager.getIdsOn(myWindow.getAnchor())) {
+      if (id.equals(myWindow.getId())) {
+        continue;
+      }
       ToolWindow window = manager.getToolWindow(id);
       if (window != null && window.isVisible() && (window.getType() == ToolWindowType.DOCKED || window.getType() == ToolWindowType.SLIDING)) {
         return true;

@@ -25,6 +25,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +181,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     myToolWindow.getContentUI().setType(myInfo.getContentUiType());
-    setBorder(new InnerPanelBorder(myToolWindow));
+    setBorder(new InnerPanelBorder(myToolWindow, myInfo));
   }
 
   @Nullable
@@ -266,11 +267,15 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHeader.setTabActions(actions);
   }
 
-  private final class InnerPanelBorder implements Border {
-    private final ToolWindow myWindow;
+  private static final class InnerPanelBorder implements Border {
+    @NotNull
+    private final ToolWindowImpl window;
+    @NotNull
+    private final WindowInfo windowInfo;
 
-    private InnerPanelBorder(ToolWindow window) {
-      myWindow = window;
+    private InnerPanelBorder(@NotNull ToolWindowImpl window, @NotNull WindowInfo windowInfo) {
+      this.window = window;
+      this.windowInfo = windowInfo;
     }
 
     @Override
@@ -306,19 +311,14 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     @Override
     public Insets getBorderInsets(@NotNull Component c) {
-      if (myProject == null) {
-        return new Insets(0, 0, 0, 0);
+      ToolWindowManagerImpl toolWindowManager = window.getToolWindowManager();
+      if (toolWindowManager.getProject().isDisposed() ||
+          !toolWindowManager.isToolWindowRegistered(window.getId()) || windowInfo.getType() == ToolWindowType.FLOATING || windowInfo.getType() == ToolWindowType.WINDOWED) {
+        return JBUI.emptyInsets();
       }
 
-      ToolWindowManagerImpl toolWindowManager = myToolWindow.getToolWindowManager();
-      if (!toolWindowManager.isToolWindowRegistered(myInfo.getId()) ||
-          myInfo.getType() == ToolWindowType.FLOATING ||
-          myInfo.getType() == ToolWindowType.WINDOWED) {
-        return new Insets(0, 0, 0, 0);
-      }
-
-      ToolWindowAnchor anchor = myWindow.getAnchor();
-      Component component = myWindow.getComponent();
+      ToolWindowAnchor anchor = windowInfo.getAnchor();
+      Component component = window.getComponent();
       Container parent = component.getParent();
       boolean isSplitter = false;
       boolean isFirstInSplitter = false;
@@ -335,10 +335,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         parent = component.getParent();
       }
 
-      int top =
-        isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && myInfo.isSplit() && isVerticalSplitter
-        ? -1
-        : 0;
+      int top = isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && windowInfo.isSplit() && isVerticalSplitter ? -1 : 0;
       int left = anchor == ToolWindowAnchor.RIGHT && (!isSplitter || isVerticalSplitter || isFirstInSplitter) ? 1 : 0;
       int bottom = 0;
       int right = anchor == ToolWindowAnchor.LEFT && (!isSplitter || isVerticalSplitter || !isFirstInSplitter) ? 1 : 0;
