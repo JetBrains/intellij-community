@@ -57,7 +57,12 @@ public class FilterPanel implements FilterTable {
   final Header myHeader = new Header();
   private final ScriptFilter myScriptFilter = new ScriptFilter(this);
   private final List<FilterAction> myFilters =
-    Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), myScriptFilter);
+    Arrays.asList(new TextFilter(this),
+                  new CountFilter(this),
+                  new TypeFilter(this),
+                  new ReferenceFilter(this),
+                  new ContextFilter(this),
+                  myScriptFilter);
   private Runnable myConstraintChangedCallback;
   boolean myValid;
 
