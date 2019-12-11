@@ -28,20 +28,9 @@ public class TipsOfTheDayUsagesCollector {
   public static void triggerTipShown(@NotNull TipAndTrickBean tip) {
     FeatureUsageData usageData = new FeatureUsageData();
 
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(tip.getPluginDescriptor());
-    usageData.addPluginInfo(pluginInfo);
     String featureId = tip.featureId;
-    String filename = tip.fileName;
-
-    if (!pluginInfo.isSafeToReport()) {
-      filename = THIRD_PARTY;
-      if (featureId != null) {
-        featureId = THIRD_PARTY;
-      }
-    }
-
     usageData.addData("feature_id", featureId != null ? featureId : NO_FEATURE_ID);
-    usageData.addData("filename", filename);
+    usageData.addData("filename", tip.fileName);
 
     FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, "tip.shown", usageData);
   }
