@@ -44,6 +44,8 @@
     <projectService serviceInterface="com.intellij.util.CachedValuesFactory"
                     serviceImplementation="com.intellij.psi.impl.PsiCachedValuesFactory"/>
     <projectService serviceImplementation="com.intellij.psi.impl.source.resolve.ResolveCache"/>
+    <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
+                    serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
   </extensions>
 
   <project-components>
