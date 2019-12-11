@@ -32,4 +32,4 @@ if __name__ == '__main__':
     jb_doc_args("unittests", args)
     # Working dir should be on path, that is how unittest work when launched from command line
     sys.path.insert(0, PROJECT_DIR)
-    main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner, buffer=not JB_DISABLE_BUFFERING)
+    sys.exit(main(argv=args, module=None, testRunner=unittestpy.TeamcityTestRunner, buffer=not JB_DISABLE_BUFFERING))

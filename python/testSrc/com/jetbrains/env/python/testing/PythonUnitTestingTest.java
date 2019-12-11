@@ -71,6 +71,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test
   public void testNameChanged() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nameChanged", "test_name_changed.py") {
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //old runner is used
+        return runner;
+      }
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
@@ -211,6 +218,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   public void testSetupPyRunner() {
     // We need to make sure setup.py is called using different runner
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "setup.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        PyUnitTestProcessRunner runner = super.createProcessRunner();
+        runner.setSkipExitCodeAssertion(true); //setup.py doesn't support exit codes now
+        return runner;
+      }
 
       @Override
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,

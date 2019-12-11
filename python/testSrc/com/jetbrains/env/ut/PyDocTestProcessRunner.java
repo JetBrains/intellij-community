@@ -31,6 +31,7 @@ public class PyDocTestProcessRunner extends PyScriptTestProcessRunner<PythonDocT
   public PyDocTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_DOCTEST_FACTORY,
           PythonDocTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
+    setSkipExitCodeAssertion(true);    //Doctest doesn't support exit codes
   }
 
   @Override

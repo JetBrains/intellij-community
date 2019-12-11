@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
     jb_doc_args("pytest", args)
 
+
     class Plugin:
         @staticmethod
         def pytest_configure(config):
@@ -39,4 +40,4 @@ if __name__ == '__main__':
             start_protocol()
 
 
-    pytest.main(args, plugins_to_load + [Plugin])
+    sys.exit(pytest.main(args, plugins_to_load + [Plugin]))
