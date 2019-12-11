@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.WindowsRegistryUtil;
@@ -45,7 +46,7 @@ public class WSLDistributionWithRoot extends WSLDistribution {
     final File uncRoot = getUNCRoot();
     String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
     final boolean isDirectory = wslRootInHost != null && new File(wslRootInHost).isDirectory();
-    if (!isDirectory) {
+    if (Experiments.getInstance().isFeatureEnabled("wsl.prefer.p9.support") || !isDirectory) {
       wslRootInHost = FileUtil.toSystemDependentName(uncRoot.getPath());
     }
     if (!FileUtil.exists(wslRootInHost)) {
