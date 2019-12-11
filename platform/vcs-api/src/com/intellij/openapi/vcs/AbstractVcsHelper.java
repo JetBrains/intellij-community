@@ -60,20 +60,20 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
 
-  public abstract void showChangesListBrowser(CommittedChangeList changelist, @Nls String title);
+  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title);
 
   public abstract void showChangesBrowser(@NotNull CommittedChangesProvider provider,
                                           @NotNull RepositoryLocation location,
-                                          @Nls String title,
-                                          @Nullable final Component parent);
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent);
 
-  public abstract void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
+  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title);
 
   public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
                                                @NotNull RepositoryLocation location,
-                                               ChangeBrowserSettings settings,
+                                               @NotNull ChangeBrowserSettings settings,
                                                int maxCount,
-                                               String title);
+                                               @Nullable String title);
 
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.

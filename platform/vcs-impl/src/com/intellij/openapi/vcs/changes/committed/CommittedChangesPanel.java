@@ -50,7 +50,7 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
 
   public CommittedChangesPanel(@NotNull Project project,
                                @NotNull CommittedChangesProvider provider,
-                               ChangeBrowserSettings settings,
+                               @NotNull ChangeBrowserSettings settings,
                                @Nullable RepositoryLocation location,
                                @Nullable ActionGroup extraActions) {
     super(new BorderLayout());

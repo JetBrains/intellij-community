@@ -40,7 +40,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, settings: ChangeBrowserSettings?, maxCount: Int, title: String?) {
+  override fun openCommittedChangesTab(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, settings: ChangeBrowserSettings, maxCount: Int, title: String?) {
     throw UnsupportedOperationException()
   }
 
@@ -60,11 +60,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesListBrowser(changelist: CommittedChangeList, title: String) {
+  override fun showChangesListBrowser(changelist: CommittedChangeList, title: String?) {
     throw UnsupportedOperationException()
   }
 
-  override fun showWhatDiffersBrowser(parent: Component?, changes: Collection<Change>, title: String) {
+  override fun showWhatDiffersBrowser(changes: Collection<Change>, title: String?) {
     throw UnsupportedOperationException()
   }
 

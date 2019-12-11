@@ -30,7 +30,9 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
     }
   };
 
-  public CommittedChangesFilterDialog(Project project, @NotNull ChangesBrowserSettingsEditor panel, ChangeBrowserSettings settings) {
+  public CommittedChangesFilterDialog(Project project,
+                                      @NotNull ChangesBrowserSettingsEditor panel,
+                                      @NotNull ChangeBrowserSettings settings) {
     super(project, false);
     myPanel = panel;
     //noinspection unchecked
