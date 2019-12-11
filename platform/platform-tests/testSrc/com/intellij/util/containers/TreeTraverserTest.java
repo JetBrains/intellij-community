@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -744,6 +745,15 @@ public class TreeTraverserTest extends TestCase {
                  num2Traverser().withTraversal(TreeTraversal.PLAIN_BFS.unique()).toList());
     assertEquals(JBIterable.generate(1, INCREMENT).take(37).toList(),
                  num2Traverser().withTraversal(TreeTraversal.PLAIN_BFS.unique().unique()).toList());
+  }
+
+  public void testTraverseCached() {
+    HashMap<Integer, Collection<Integer>> map1 = new HashMap<>(numbers());
+    JBTreeTraverser<Integer> traverser = JBTreeTraverser.from(Functions.compose(ASSERT_NUMBER, a -> map1.remove(a))).withRoot(1);
+    JBTreeTraverser<Integer> cached = traverser.cached();
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), cached.toList());
+    assertEquals(cached.toList(), cached.toList());
+    assertEquals(Arrays.asList(1), traverser.toList());
   }
 
   public void testTraverseMap() {

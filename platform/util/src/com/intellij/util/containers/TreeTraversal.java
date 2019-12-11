@@ -136,6 +136,34 @@ public abstract class TreeTraversal {
   }
 
   /**
+   * Configures the traversal to cache its structure.
+   */
+  @NotNull
+  public TreeTraversal cached(final Map<Object, Object> cache) {
+    final TreeTraversal original = this;
+    return new TreeTraversal(debugName + " (CACHED)") {
+
+      @NotNull
+      @Override
+      public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
+                                        @NotNull final Function<? super TT, ? extends Iterable<? extends TT>> tree) {
+        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+          @Override
+          public Iterable<? extends TT> fun(TT t) {
+            //noinspection unchecked
+            return (Iterable<? extends TT>)cache.computeIfAbsent(t, o -> JBIterable.from(tree.fun((TT)o)).collect());
+          }
+        }
+        if (tree instanceof WrappedTree) {
+          return original.createIterator(roots, tree);
+        }
+        WrappedTree wrappedTree = new WrappedTree();
+        return original.createIterator(roots, wrappedTree);
+      }
+    };
+  }
+
+  /**
    * Configures the traversal to expand and return the nodes within the range only.
    * It is an optimized version of expand-and-filter operation.
    * It skips all the nodes "before" the {@code rangeCondition} return true for the first time,
@@ -145,7 +173,7 @@ public abstract class TreeTraversal {
   @NotNull
   public <T> TreeTraversal onRange(@NotNull final Condition<T> rangeCondition) {
     final TreeTraversal original = this;
-    return new TreeTraversal(original.toString() + " (ON_RANGE)") {
+    return new TreeTraversal(debugName + " (ON_RANGE)") {
       @NotNull
       @Override
       public <TT> It<TT> createIterator(@NotNull Iterable<? extends TT> roots,
@@ -724,7 +752,7 @@ public abstract class TreeTraversal {
     }
 
     final Iterable<? extends T> iterable(@NotNull Function<? super T, ? extends Iterable<? extends T>> tree) {
-      return itle != null ? itle : JBIterable.from(itle = tree.fun(node));
+      return itle != null ? itle : (itle = tree.fun(node)) != null ? itle : JBIterable.empty();
     }
 
     /** @noinspection unchecked */
