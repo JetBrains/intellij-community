@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,13 +8,10 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,14 +20,11 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBoxItem;
-import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
-  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
-
+public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
   @NotNull private final SdkListModelBuilder myModel;
 
@@ -90,7 +83,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
-    super();
     myOnNewSdkAdded = sdk -> {
       if (sdk == null) return;
       setSelectedJdk(sdk);
@@ -98,13 +90,6 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
         onNewSdkAdded.consume(sdk);
       }
     };
-
-    UIUtil.putClientProperty(this, ANIMATION_IN_RENDERER_ALLOWED, true);
-
-    setMinimumAndPreferredWidth(JBUI.scale(300));
-    setMaximumRowCount(30);
-    setSwingPopup(false);
-    putClientProperty("ComboBox.jbPopup.supportUpdateModel", true);
     setRenderer(new SdkListPresenter(sdkModel) {
       @NotNull
       @Override
@@ -563,48 +548,9 @@ public class JdkComboBox extends ComboBox<JdkComboBoxItem> {
    */
   @Override
   @Deprecated
-  public void addItem(JdkComboBoxItem item) {
-    LOG.warn("JdkComboBox#addItem() is deprecated!" + item, new RuntimeException());
-  }
-
-  /**
-   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
-   * this call is ignored
-   */
-  @Override
-  @Deprecated
+  @SuppressWarnings("deprecation")
   public void insertItemAt(JdkComboBoxItem item, int index) {
-    LOG.warn("JdkComboBox#insertItemAt() is deprecated!" + item + " at " + index, new RuntimeException());
+    super.insertItemAt(item, index);
     processFirstItem(item);
-  }
-
-  /**
-   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
-   * this call is ignored
-   */
-  @Override
-  @Deprecated
-  public void removeItem(Object anObject) {
-    LOG.warn("JdkComboBox#removeItem() is deprecated!", new RuntimeException());
-  }
-
-  /**
-   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
-   * this call is ignored
-   */
-  @Override
-  @Deprecated
-  public void removeItemAt(int anIndex) {
-    LOG.warn("JdkComboBox#removeItemAt() is deprecated!", new RuntimeException());
-  }
-
-  /**
-   * @deprecated Use the {@link JdkComboBox} API to manage shown items,
-   * this call is ignored
-   */
-  @Override
-  @Deprecated
-  public void removeAllItems() {
-    LOG.warn("JdkComboBox#removeAllItems() is deprecated!", new RuntimeException());
   }
 }

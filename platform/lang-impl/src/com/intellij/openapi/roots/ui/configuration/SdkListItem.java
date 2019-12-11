@@ -16,7 +16,7 @@ import java.util.Objects;
 public abstract class SdkListItem {
   private SdkListItem() {}
 
-  interface ActionableItem {
+  public interface ActionableItem {
     void executeAction();
   }
 
@@ -127,7 +127,7 @@ public abstract class SdkListItem {
     DOWNLOAD, ADD
   }
 
-  static abstract class ActionItem extends SdkListItem implements ActionableItem {
+  public static abstract class ActionItem extends SdkListItem implements ActionableItem {
     @Nullable
     final GroupItem myGroup;
     final ActionRole myRole;
@@ -154,7 +154,7 @@ public abstract class SdkListItem {
     public abstract void executeAction();
   }
 
-  static final class GroupItem extends SdkListItem {
+  public static final class GroupItem extends SdkListItem {
     final Icon myIcon;
     final String myCaption;
     final List<? extends SdkListItem> mySubItems;
