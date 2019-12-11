@@ -2,10 +2,14 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -20,6 +24,11 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   protected void doQuickFixTest() {
     super.doTest();
     checkQuickFixAll();
+  }
+
+  @Override
+  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
+    return UnnecessaryStringEscapeInspection.class;
   }
 
   @Nullable

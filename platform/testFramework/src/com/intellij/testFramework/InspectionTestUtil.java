@@ -171,6 +171,10 @@ public class InspectionTestUtil {
     return instantiateTools(classNames);
   }
 
+  public static <T extends InspectionProfileEntry> T instantiateTool(Class<? extends T> inspection) {
+    return (T)instantiateTools(Collections.singleton(inspection)).get(0);
+  }
+  
   @NotNull
   public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)

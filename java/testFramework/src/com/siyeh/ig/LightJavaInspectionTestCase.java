@@ -16,11 +16,16 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.redundancy.UnnecessaryStringEscapeInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -102,8 +107,8 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
-  protected final void checkQuickFixAll() {
-    final InspectionProfileEntry inspection = getInspection();
+  protected final void checkQuickFixAll() { 
+    InspectionProfileEntry inspection = InspectionTestUtil.instantiateTool(getInspectionClass());
     assert inspection != null : "getInspection() needs to return a non-null value for checkQuickFixAll() to work";
     checkQuickFix(InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.getDisplayName()));
   }
