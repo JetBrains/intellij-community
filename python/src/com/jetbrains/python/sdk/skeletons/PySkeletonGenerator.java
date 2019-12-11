@@ -333,11 +333,16 @@ public class PySkeletonGenerator {
       }
     };
 
-    runProcessWithLineOutputListener(builder.getWorkingDir(),
-                                     builder.getCommandLine(),
-                                     builder.getEnvironment(),
-                                     builder.myStdin,
-                                     builder.getTimeout(Time.MINUTE * 20), listener);
+    final ProcessOutput output = runProcessWithLineOutputListener(builder.getWorkingDir(),
+                                                                  builder.getCommandLine(),
+                                                                  builder.getEnvironment(),
+                                                                  builder.myStdin,
+                                                                  builder.getTimeout(Time.MINUTE * 20),
+                                                                  listener);
+    if (output.getExitCode() != 0) {
+      throw new InvalidSdkException("Failed to run skeleton generator for " + mySdk.getHomePath());
+    }
+
     return results;
   }
 
@@ -357,12 +362,13 @@ public class PySkeletonGenerator {
     return new File(name).exists();
   }
 
-  protected void runProcessWithLineOutputListener(@NotNull String homePath,
-                                                  @NotNull List<String> cmd,
-                                                  @NotNull Map<String, String> env,
-                                                  @Nullable String stdin,
-                                                  int timeout,
-                                                  @NotNull LineWiseProcessOutputListener listener)
+  @NotNull
+  protected ProcessOutput runProcessWithLineOutputListener(@NotNull String homePath,
+                                                           @NotNull List<String> cmd,
+                                                           @NotNull Map<String, String> env,
+                                                           @Nullable String stdin,
+                                                           int timeout,
+                                                           @NotNull LineWiseProcessOutputListener listener)
     throws ExecutionException, InvalidSdkException {
     final GeneralCommandLine commandLine = new GeneralCommandLine(cmd)
       .withWorkDirectory(homePath)
@@ -372,7 +378,7 @@ public class PySkeletonGenerator {
       sendLineToProcessInput(handler, stdin);
     }
     handler.addProcessListener(new LineWiseProcessOutputListener.Adapter(listener));
-    handler.runProcess(timeout);
+    return handler.runProcess(timeout);
   }
 
   public String getSkeletonsPath() {
