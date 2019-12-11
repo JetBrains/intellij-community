@@ -102,7 +102,7 @@
     <group id="PowerSaveGroup">
       <separator/>
       <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ToggleReadOnlyAttribute"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileMainSettingsGroup"/>
     </group>
 
     <!-- Edit -->
