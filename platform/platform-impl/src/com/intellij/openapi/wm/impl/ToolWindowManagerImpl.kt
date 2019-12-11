@@ -387,6 +387,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       init()
 
       ApplicationManager.getApplication().invokeLater(Runnable {
+        pendingSetLayoutTask.getAndSet(null)?.run()
+
         runActivity("toolwindow creating") {
           appendUpdateRootPane(list)
           val editorComponent = FileEditorManagerEx.getInstanceEx(project).component
