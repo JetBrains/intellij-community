@@ -85,12 +85,13 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   var order by property(-1)
 
   @get:Transient
-  var isWasRead = false
-    private set
+  var isFromPersistentSettings = true
+    internal set
 
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.copyFrom(this)
+    info.isFromPersistentSettings = isFromPersistentSettings
     return info
   }
 
@@ -107,8 +108,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     get() = type == ToolWindowType.SLIDING
 
   fun normalizeAfterRead() {
-    isWasRead = true
-
     setTypeAndCheck(type)
 
     if (isVisible && id != null && !canActivateOnStart(id!!)) {

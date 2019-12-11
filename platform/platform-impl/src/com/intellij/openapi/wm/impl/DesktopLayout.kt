@@ -45,10 +45,11 @@ class DesktopLayout {
    * Creates or gets `WindowInfo` for the specified `id`. If tool
    * window is being registered first time the method uses `anchor`.
    */
-  fun register(task: RegisterToolWindowTask): WindowInfoImpl {
+  fun getOrCreate(task: RegisterToolWindowTask): WindowInfoImpl {
     var info = idToInfo.get(task.id)
     if (info == null) {
       info = WindowInfoImpl()
+      info.isFromPersistentSettings = false
       info.id = task.id
       info.anchor = task.anchor
       info.isSplit = task.sideTool

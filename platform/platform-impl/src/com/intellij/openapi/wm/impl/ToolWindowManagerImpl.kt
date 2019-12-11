@@ -435,9 +435,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val label = createInitializingLabel()
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
     val entry = doRegisterToolWindow(RegisterToolWindowTask(id = bean.id, component = label, anchor = toolWindowAnchor,
-                                                             canCloseContent = bean.canCloseContents,
-                                                             canWorkInDumbMode = DumbService.isDumbAware(factory),
-                                                             shouldBeAvailable = factory.shouldBeAvailable(project)))
+                                                            canCloseContent = bean.canCloseContents,
+                                                            canWorkInDumbMode = DumbService.isDumbAware(factory),
+                                                            shouldBeAvailable = factory.shouldBeAvailable(project)))
     val window = entry.internalDecorator.toolWindow
     window.setContentFactory(factory)
     if (bean.icon != null && window.icon == null) {
@@ -454,7 +454,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val info = entry.internalDecorator.windowInfo
-    if (!info.isSplit && bean.secondary && !info.isWasRead) {
+    if (!info.isSplit && bean.secondary && !info.isFromPersistentSettings) {
       setSideTool(bean.id, true)
     }
 
@@ -883,7 +883,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       throw IllegalArgumentException("window with id=\"${task.id}\" is already registered")
     }
 
-    val info = layout.register(task)
+    val info = layout.getOrCreate(task)
     val wasActive = info.isActive
     val wasVisible = info.isVisible
     info.isActive = false
@@ -1544,9 +1544,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun setDefaultState(toolWindow: ToolWindowImpl, anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
-    if (info.isWasRead) {
+    if (info.isFromPersistentSettings) {
       return
     }
+
     if (floatingBounds != null) {
       info.floatingBounds = floatingBounds
     }
@@ -1560,7 +1561,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun setDefaultContentUiType(toolWindow: ToolWindowImpl, type: ToolWindowContentUiType) {
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
-    if (info.isWasRead) {
+    if (info.isFromPersistentSettings) {
       return
     }
     toolWindow.setContentUiType(type, null)
@@ -1570,7 +1571,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindowPane!!.stretchWidth(toolWindow, value)
   }
 
-  override fun isMaximized(wnd: ToolWindow) = toolWindowPane!!.isMaximized(wnd)
+  override fun isMaximized(window: ToolWindow) = toolWindowPane!!.isMaximized(window)
 
   override fun setMaximized(window: ToolWindow, maximized: Boolean) {
     if (window.type == ToolWindowType.FLOATING && window is ToolWindowImpl) {
