@@ -140,7 +140,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
 
     val gutterComponentEx = editor.gutterComponentEx
     val linesShift = fileDocument.getLineNumber(actualTextRange.startOffset)
-    gutterComponentEx.setLineNumberConverter(LineNumberConverter.Simple { _, line -> line + linesShift })
+    gutterComponentEx.setLineNumberConverter(LineNumberConverter.Increasing { _, line -> line + linesShift })
     gutterComponentEx.setPaintBackground(false)
     val scrollPane = editor.scrollPane
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER

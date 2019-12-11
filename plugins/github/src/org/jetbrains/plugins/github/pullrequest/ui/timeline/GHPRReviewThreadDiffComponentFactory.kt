@@ -83,8 +83,10 @@ class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTyp
         return EditorHandlerPanel.create(editorFactory) {
           val editor = createEditor(document)
           editor.gutter.apply {
-            setLineNumberConverter(LineNumberConverter.Simple {_, line -> line + patchHunk.startLineBefore },
-                                   LineNumberConverter.Simple {_, line -> line + patchHunk.startLineAfter })
+            setLineNumberConverter(
+              LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
+              LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter }
+            )
           }
           editor
         }
