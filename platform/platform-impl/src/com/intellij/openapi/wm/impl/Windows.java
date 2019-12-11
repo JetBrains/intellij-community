@@ -68,25 +68,26 @@ public final class Windows {
           // FocusEvent
           // for now we are interested in focus lost events
           String id = ToolWindowManager.getActiveId();
-          if (event.getID() == FocusEvent.FOCUS_LOST) {
-            // let's check that it is a toolwindow who loses the focus
+          if (event.getID() != FocusEvent.FOCUS_LOST) {
+            return;
+          }
+          // let's check that it is a toolwindow who loses the focus
 
-            FocusEvent focusEvent = (FocusEvent)event;
+          FocusEvent focusEvent = (FocusEvent)event;
 
-            if (isInActiveToolWindow(focusEvent.getSource())
-                && !isInActiveToolWindow(focusEvent.getOppositeComponent())
-                && focusEvent.getOppositeComponent() != null) {
-              //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
+          if (isInActiveToolWindow(focusEvent.getSource())
+              && !isInActiveToolWindow(focusEvent.getOppositeComponent())
+              && focusEvent.getOppositeComponent() != null) {
+            //System.err.println("Tool window is loosing focus: " + ToolWindowManager.getActiveToolWindow().getStripeTitle());
 
-              // A toolwindow lost focus
-              ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
-              boolean focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(focusEvent.getOppositeComponent()) != null;
-              if (!focusEvent.isTemporary() &&
-                  !focusGoesToPopup &&
-                  activeToolWindow != null &&
-                  (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
-                pinnedWindowFocusLostHandler.accept(id);
-              }
+            // A toolwindow lost focus
+            ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
+            boolean focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(focusEvent.getOppositeComponent()) != null;
+            if (!focusEvent.isTemporary() &&
+                !focusGoesToPopup &&
+                activeToolWindow != null &&
+                (activeToolWindow.isAutoHide() || activeToolWindow.getType() == ToolWindowType.SLIDING)) {
+              pinnedWindowFocusLostHandler.accept(id);
             }
           }
         }

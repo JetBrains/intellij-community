@@ -23,10 +23,13 @@ abstract class ToolWindowManager {
     fun getActiveToolWindow(): ToolWindow? {
       val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
       val project = if (frame == null) ProjectManager.getInstance().defaultProject else frame.project
-      if (project != null && !project.isDisposed) {
-        return getActiveId()?.let { getInstance(project).getToolWindow(it) }
+      if (project == null || project.isDisposed) {
+        return null
       }
-      return null
+
+      val toolWindowManager = getInstance(project)
+      val activeId = toolWindowManager.activeToolWindowId
+      return activeId?.let { toolWindowManager.getToolWindow(it) }
     }
 
     @JvmStatic
