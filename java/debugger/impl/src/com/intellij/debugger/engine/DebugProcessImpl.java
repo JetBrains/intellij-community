@@ -78,7 +78,6 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,12 +90,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
-
-  private static final String CONNECTOR_PACKAGE = "com." + (Registry.is("debugger.jb.jdi") ? "jetbrains" : "sun") + ".jdi.";
-  @NonNls private static final String SOCKET_ATTACHING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SocketAttach";
-  @NonNls private static final String SHMEM_ATTACHING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SharedMemoryAttach";
-  @NonNls public static final String SOCKET_LISTENING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SocketListen";
-  @NonNls private static final String SHMEM_LISTENING_CONNECTOR_NAME = CONNECTOR_PACKAGE + "SharedMemoryListen";
 
   private final Project myProject;
   private final RequestManagerImpl myRequestManager;
@@ -602,18 +595,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   public static Connector findConnector(boolean useSockets, boolean listen) throws ExecutionException {
-    if (listen) {
-      return findConnector(useSockets ? SOCKET_LISTENING_CONNECTOR_NAME : SHMEM_LISTENING_CONNECTOR_NAME);
-    }
-    else {
-      return findConnector(useSockets ? SOCKET_ATTACHING_CONNECTOR_NAME : SHMEM_ATTACHING_CONNECTOR_NAME);
-    }
+    String connectorName = (Registry.is("debugger.jb.jdi") ? "com.jetbrains.jdi." : "com.sun.jdi.") +
+                           (useSockets ? "Socket" : "SharedMemory") +
+                           (listen ? "Listen" : "Attach");
+    return findConnector(connectorName);
   }
 
   @NotNull
   public static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
-    if (Registry.is("debugger.jb.jdi")) {
+    if (connectorName.startsWith("com.jetbrains")) {
       virtualMachineManager = VirtualMachineManagerImpl.virtualMachineManager();
     }
     else {
