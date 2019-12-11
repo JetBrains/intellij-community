@@ -101,7 +101,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
         return factory.createType(resolvedClass, *mappedParameters.toTypedArray())
       }
       else {
-        return PsiWildcardType.createUnbounded(manager)
+        return classType
       }
     }
 
@@ -252,10 +252,11 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+      wildcardType ?: return null
+      val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
-        wildcardType == null -> null
-        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, wildcardType.bound!!.accept(this))
-        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, wildcardType.bound!!.accept(this))
+        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
+        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, bound)
         else -> wildcardType
       }
     }
