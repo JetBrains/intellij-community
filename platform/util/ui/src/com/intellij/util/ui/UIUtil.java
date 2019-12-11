@@ -1627,15 +1627,15 @@ public final class UIUtil {
 
     final boolean drawRound = endXf - startXf > 4;
     if (drawRound) {
-      LinePainter2D.paint((Graphics2D)g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint((Graphics2D)g, endX, 4, endX, height - 4);
+      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
+      LinePainter2D.paint(g, endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      LinePainter2D.paint((Graphics2D)g, startX - 1, 4, startX - 1, height - 4);
-      LinePainter2D.paint((Graphics2D)g, endX, 4, endX, height - 4);
+      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
+      LinePainter2D.paint(g, endX, 4, endX, height - 4);
 
-      LinePainter2D.paint((Graphics2D)g, startX, 3, endX - 1, 3);
-      LinePainter2D.paint((Graphics2D)g, startX, height - 3, endX - 1, height - 3);
+      LinePainter2D.paint(g, startX, 3, endX - 1, 3);
+      LinePainter2D.paint(g, startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
@@ -1654,8 +1654,8 @@ public final class UIUtil {
     if (opaque && bgColor != null) {
       g.setColor(bgColor);
 
-      LinePainter2D.paint((Graphics2D)g, startX, lineY, endX, lineY);
-      LinePainter2D.paint((Graphics2D)g, startX, lineY + 1, endX, lineY + 1);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY + 1, endX, lineY + 1);
     }
 
     // Draw dotted line:
@@ -1671,8 +1671,8 @@ public final class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      LinePainter2D.paint((Graphics2D)g, dotXi, lineY, dotXi + 1, lineY);
-      LinePainter2D.paint((Graphics2D)g, dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      LinePainter2D.paint(g, dotXi, lineY, dotXi + 1, lineY);
+      LinePainter2D.paint(g, dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1722,10 +1722,10 @@ public final class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        LinePainter2D.paint((Graphics2D)g, dot, xOrY, dot, xOrY);
+        LinePainter2D.paint(g, dot, xOrY, dot, xOrY);
       }
       else {
-        LinePainter2D.paint((Graphics2D)g, xOrY, dot, xOrY, dot);
+        LinePainter2D.paint(g, xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -1743,9 +1743,9 @@ public final class UIUtil {
     if (opaque && bgColor != null) {
       g.setColor(bgColor);
 
-      LinePainter2D.paint((Graphics2D)g, startX, lineY, endX, lineY);
-      LinePainter2D.paint((Graphics2D)g, startX, lineY + 1, endX, lineY + 1);
-      LinePainter2D.paint((Graphics2D)g, startX, lineY + 2, endX, lineY + 2);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY + 1, endX, lineY + 1);
+      LinePainter2D.paint(g, startX, lineY + 2, endX, lineY + 2);
     }
 
     AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
@@ -1927,7 +1927,7 @@ public final class UIUtil {
   public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
-      LinePainter2D.paint((Graphics2D)g, lineX, startY, lineX, endY);
+      LinePainter2D.paint(g, lineX, startY, lineX, endY);
     }
 
     g.setColor(fgColor);
@@ -1939,7 +1939,7 @@ public final class UIUtil {
   public static void drawHDottedLine(@NotNull Graphics2D g, int startX, int endX, int lineY, @Nullable final Color bgColor, final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
-      LinePainter2D.paint((Graphics2D)g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
     }
 
     g.setColor(fgColor);
