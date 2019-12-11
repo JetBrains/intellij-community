@@ -19,6 +19,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     test_srcs = ["src"],
     test_tags = ["manual"],  # test infrastructure; no tests

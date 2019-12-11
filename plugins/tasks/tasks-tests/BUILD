@@ -38,6 +38,7 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",

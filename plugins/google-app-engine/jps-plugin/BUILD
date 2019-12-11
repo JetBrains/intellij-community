@@ -31,6 +31,7 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
         "//tools/idea/plugins/ui-designer-core:intellij.uiDesigner",
     ],

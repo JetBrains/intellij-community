@@ -6,6 +6,7 @@ iml_module(
     iml_files = ["intellij.idea.community.main.tests.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/java/remote-servers/impl:intellij.java.remoteServers.impl",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/java/plugin:intellij.java.plugin",

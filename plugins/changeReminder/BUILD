@@ -24,6 +24,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [
@@ -34,6 +35,6 @@ iml_module(
         "//tools/idea/platform/vcs-log/impl:intellij.platform.vcs.log.impl[module]",
         "//tools/idea/platform/vcs-log/api:intellij.platform.vcs.log[module]",
         "//tools/idea/plugins/git4idea:intellij.vcs.git[module]",
-        "//tools/idea/.idea/libraries:change-reminder-prediction-model",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/changeReminder/prediction/randomForestRegressor/0.0.11:jar",
     ],
 )

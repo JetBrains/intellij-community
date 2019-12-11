@@ -30,6 +30,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [

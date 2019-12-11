@@ -25,6 +25,7 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/images:intellij.platform.images",
     ],

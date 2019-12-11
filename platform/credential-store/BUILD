@@ -31,6 +31,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [

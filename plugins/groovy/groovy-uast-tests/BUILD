@@ -10,6 +10,7 @@ iml_module(
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
         "//tools/idea/plugins/ant/jps-plugin:intellij.ant.jps",

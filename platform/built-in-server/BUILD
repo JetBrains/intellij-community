@@ -27,6 +27,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [
@@ -74,6 +75,7 @@ iml_module(
         "//tools/idea/json:intellij.json",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
+        "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
     ],
     # do not sort: must match IML order
     deps = [
