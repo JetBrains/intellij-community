@@ -32,7 +32,7 @@ public interface With extends DomElement {
 
   @NotNull
   @Attribute("tag")
-  @Convert(PluginFieldNameConverter.class)
+  @Convert(PluginFieldNameConverter.class) // todo .ForTag variante!!! sucht nacht @Tag statt Attribute
   GenericAttributeValue<PsiField> getTag();
 
   @NotNull

@@ -360,6 +360,16 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     doHighlightingTest("extensionWithDefaultValuesInAnnotations.xml", "ExtBeanWithDefaultValuesInAnnotations.java")
   }
 
+  void testExtensionDefinesWithAttributeViaAnnotation() {
+    doHighlightingTest("extensionDefinesWithAttributeViaAnnotation.xml", "ExtensionDefinesWithAttributeViaAnnotation.java")
+  }
+
+  void testExtensionDefinesWithAttributeViaAnnotationCompletion() {
+    myFixture.copyFileToProject("ExtensionDefinesWithAttributeViaAnnotation.java")
+    myFixture.testCompletionVariants("extensionDefinesWithAttributeViaAnnotation-completion.xml",
+                                     "customAttributeName", "myAttributeWithoutAnnotation")
+  }
+
   void testLanguageAttributeHighlighting() {
     configureLanguageAttributeTest()
     doHighlightingTest("languageAttribute.xml", "MyLanguageAttributeEPBean.java")

@@ -12,8 +12,8 @@
     <extensionPoint name="dom.implementation"
                     beanClass="com.intellij.util.xml.impl.DomImplementationClassEP"
                     dynamic="true">
-      <with attribute="interfaceName" implements="com.intellij.util.xml.DomElement"/>
-      <with attribute="implementationName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="interfaceClass" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="implementationClass" implements="com.intellij.util.xml.DomElement"/>
     </extensionPoint>
 
     <extensionPoint name="dom.converter"
@@ -23,7 +23,7 @@
     <extensionPoint name="dom.extender"
                     beanClass="com.intellij.util.xml.reflect.DomExtenderEP"
                     dynamic="true">
-      <with attribute="domClassName" implements="com.intellij.util.xml.DomElement"/>
+      <with attribute="domClass" implements="com.intellij.util.xml.DomElement"/>
       <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
 

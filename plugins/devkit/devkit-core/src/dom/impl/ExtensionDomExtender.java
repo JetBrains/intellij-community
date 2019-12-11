@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.CompileTaskBean;
 import com.intellij.openapi.extensions.RequiredElement;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -97,10 +96,11 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   }
 
   @Nullable
-  static With findWithElement(List<? extends With> elements, PsiField field) {
-    for (With element : elements) {
-      if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
-        return element;
+  static With findWithElement(List<? extends With> withElements, PsiField field) {
+    for (With with : withElements) {
+      PsiField withPsiField = DomUtil.hasXml(with.getTag()) ? with.getTag().getValue() : with.getAttribute().getValue();
+      if (field.getManager().areElementsEquivalent(field, withPsiField)) {
+        return with;
       }
     }
     return null;
@@ -113,12 +113,12 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       return;
     }
 
-    final String fieldName = field.getName();
-    final PsiAnnotation attrAnno = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
+    String fieldName = field.getName();
+    final PsiAnnotation attributeAnnotation = PsiUtil.findAnnotation(Attribute.class, field, getter, setter);
     final PsiType fieldType = field.getType();
-    if (attrAnno != null) {
-      final String attrName = getStringAttribute(attrAnno, "value", fieldName);
-      if (attrName != null) {
+    if (attributeAnnotation != null) {
+      fieldName = getStringAttribute(attributeAnnotation, "value", fieldName);
+      if (fieldName != null) {
         Class clazz = String.class;
         if (withElement != null || Extension.isClassField(fieldName)) {
           clazz = PsiClass.class;
@@ -131,7 +131,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           clazz = Integer.class;
         }
         final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attrName), clazz).setDeclaringElement(field);
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(fieldName), clazz).setDeclaringElement(field);
         if (PsiUtil.findAnnotation(RequiredElement.class, field) != null) {
           extension.addCustomAnnotation(MyRequired.INSTANCE);
         }

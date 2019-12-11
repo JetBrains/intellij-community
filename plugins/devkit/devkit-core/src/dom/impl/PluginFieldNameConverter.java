@@ -16,8 +16,11 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -36,6 +39,12 @@ import java.util.List;
  * @author yole
  */
 public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
+
+  @Override
+  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    return "Cannot resolve extension point property '" + s + "'";
+  }
+
   @NotNull
   @Override
   public Collection<? extends PsiField> getVariants(ConvertContext context) {
@@ -58,19 +67,30 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
 
   @Nullable
   @Override
+  public LookupElement createLookupElement(PsiField field) {
+    final String fieldName = ObjectUtils.chooseNotNull(getAttributeAnnotationValue(field), field.getName());
+    return JavaLookupElementBuilder.forField(field, fieldName, null);
+  }
+
+  @Nullable
+  @Override
   public PsiField fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
     PsiClass value = getEPBeanClass(context);
     if (value == null) return null;
     PsiField field = value.findFieldByName(s, true);
-    if (field != null) {
+    if (field != null && getAttributeAnnotationValue(field) == null) {
       return field;
     }
+    
     return findFieldByAttributeValue(value, s);
   }
 
+  @Nullable
   private static PsiField findFieldByAttributeValue(PsiClass psiClass, @NotNull String attrNameToFind) {
     for (PsiField psiField : psiClass.getAllFields()) {
+      if (psiField.hasModifierProperty(PsiModifier.STATIC)) continue;
+
       if (attrNameToFind.equals(getAttributeAnnotationValue(psiField))) {
         return psiField;
       }

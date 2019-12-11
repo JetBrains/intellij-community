@@ -26,12 +26,12 @@
                     beanClass="com.intellij.openapi.options.ConfigurableEP"
                     area="IDEA_PROJECT"
                     dynamic="true">
-      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
 
     <extensionPoint name="applicationConfigurable"
                     beanClass="com.intellij.openapi.options.ConfigurableEP">
-      <with attribute="instanceClass" implements="com.intellij.openapi.options.Configurable"/>
+      <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
 
     <extensionPoint name="fileType"
