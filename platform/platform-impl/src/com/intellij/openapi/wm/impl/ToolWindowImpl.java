@@ -250,7 +250,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setSplitMode(final boolean isSideTool, @Nullable final Runnable runnable) {
+  public void setSplitMode(boolean isSideTool, @Nullable Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setSideTool(myId, isSideTool);
     if (runnable != null) {
