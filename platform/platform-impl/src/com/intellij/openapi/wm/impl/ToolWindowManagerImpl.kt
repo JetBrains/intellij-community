@@ -453,7 +453,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       window.setIcon(icon!!)
     }
 
-    val info = entry.internalDecorator.windowInfo
+    val info = entry.readOnlyWindowInfo
     if (!info.isSplit && bean.secondary && !info.isFromPersistentSettings) {
       setSideTool(bean.id, true)
     }
@@ -1078,7 +1078,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       stripe.repaint()
     }
 
-    val anchor = entry.internalDecorator.windowInfo.anchor
+    val anchor = entry.readOnlyWindowInfo.anchor
     val position = Ref.create(Balloon.Position.below)
     when {
       ToolWindowAnchor.TOP == anchor -> position.set(Balloon.Position.below)
@@ -1301,11 +1301,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun isToolWindowAutoHide(id: String): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return idToEntry.get(id)?.internalDecorator?.windowInfo?.isAutoHide ?: false
+    return idToEntry.get(id)?.readOnlyWindowInfo?.isAutoHide ?: false
   }
 
   fun isToolWindowVisible(id: String): Boolean {
-    return idToEntry.get(id)?.internalDecorator?.windowInfo?.isVisible ?: false
+    return idToEntry.get(id)?.readOnlyWindowInfo?.isVisible ?: false
   }
 
   fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
@@ -1934,7 +1934,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     var toFocus: String? = null
     for (each in activeStack.stack) {
       if (idToIgnore != null && idToIgnore.equals(each, ignoreCase = true)) continue
-      if (idToEntry.get(each)!!.internalDecorator.windowInfo.isVisible) {
+      if (idToEntry.get(each)!!.readOnlyWindowInfo.isVisible) {
         toFocus = each
         break
       }
@@ -1943,7 +1943,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (toFocus == null) {
       for (each in activeStack.persistentStack) {
         if (idToIgnore != null && idToIgnore.equals(each, ignoreCase = true)) continue
-        if (idToEntry.get(each)!!.internalDecorator.windowInfo.isVisible) {
+        if (idToEntry.get(each)!!.readOnlyWindowInfo.isVisible) {
           toFocus = each
           break
         }

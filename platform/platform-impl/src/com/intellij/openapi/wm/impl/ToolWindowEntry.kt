@@ -11,4 +11,7 @@ internal data class ToolWindowEntry(val stripeButton: StripeButton,
   var floatingDecorator: FloatingDecorator? = null
   var windowedDecorator: WindowedDecorator? = null
   var balloon: Balloon? = null
+
+  val readOnlyWindowInfo: WindowInfoImpl
+    get() = internalDecorator.windowInfo
 }
