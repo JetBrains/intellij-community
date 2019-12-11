@@ -728,14 +728,16 @@ public class TreeTraverserTest extends TestCase {
 
   public void testTraverseUnique() {
     assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser().unique().toList());
-    JBIterable<Integer> t0 = numTraverser().unique(o -> o % 5).traverse();
+    JBTreeTraverser<Integer> t0 = numTraverser().unique(o -> o % 5);
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), t0.toList());
     assertEquals(Arrays.asList(1, 2, 5, 3, 9), t0.toList()); // same results again
 
+    assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 4), numTraverser().unique(o -> o % 7).toList());
+
     JBIterable<Integer> t1 = numTraverser().unique(o -> o % 5).unique(o -> o % 7).traverse();
     JBIterable<Integer> t2 = numTraverser().unique(o -> o % 7).unique(o -> o % 5).traverse();
-    assertEquals(Arrays.asList(1, 2, 5, 3, 4), t1.toList());
-    assertEquals(Arrays.asList(1, 2, 5, 3), t2.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3), t1.toList());
+    assertEquals(Arrays.asList(1, 2, 5, 3, 4), t2.toList());
 
     TreeTraversal preOrder = TreeTraversal.PRE_ORDER_DFS;
     assertEquals(t1.toList(), numTraverser().traverse(preOrder.unique(o -> ((int)o) % 5).unique(o -> ((int)o) % 7)).toList());
