@@ -54,13 +54,9 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
                       @Nullable VcsLogFilterCollection initialFilters) {
     super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
+
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
-    
-    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
-    myMainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
-    if (isDiffPreviewAsEditor) {
-      new VcsLogEditorDiffPreview(myProject, myUiProperties, myMainFrame);
-    }
+    myMainFrame = createMainFrame(logData, uiProperties, filterUi);
 
     for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensions(myProject)) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
@@ -72,6 +68,17 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     myHistory = VcsLogUiUtil.installNavigationHistory(this);
 
     applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+  }
+
+  @NotNull
+  protected MainFrame createMainFrame(@NotNull VcsLogData logData,
+                                      @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
+    boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
+    MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
+    if (isDiffPreviewAsEditor) {
+      new VcsLogEditorDiffPreview(myProject, myUiProperties, myMainFrame);
+    }
+    return mainFrame;
   }
 
   @NotNull
