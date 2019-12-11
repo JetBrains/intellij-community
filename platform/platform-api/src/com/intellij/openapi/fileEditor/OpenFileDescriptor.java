@@ -161,8 +161,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
   private boolean navigateInProjectView(boolean requestFocus) {
     SelectInContext context = new FileSelectInContext(myProject, myFile, null);
-    for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
-      if (context.selectIn(target, requestFocus)) return true;
+    for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargetList()) {
+      if (context.selectIn(target, requestFocus)) {
+        return true;
+      }
     }
     return false;
   }

@@ -4,10 +4,10 @@ package com.intellij.ide;
 import com.intellij.openapi.extensions.SimpleSmartExtensionPoint;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -39,12 +39,19 @@ public final class SelectInManager  {
     myTargets.removeExplicitExtension(target);
   }
 
-  public SelectInTarget[] getTargets() {
-    List<SelectInTarget> targets = myTargets.getExtensions();
+  @NotNull
+  public List<SelectInTarget> getTargetList() {
+    List<SelectInTarget> targets = new ArrayList<>(myTargets.getExtensions());
     if (DumbService.getInstance(myProject).isDumb()) {
-      targets = ContainerUtil.filter(targets, target -> DumbService.isDumbAware(target));
+      targets.removeIf(target -> !DumbService.isDumbAware(target));
     }
-    return ContainerUtil.sorted(targets, SelectInTargetComparator.INSTANCE).toArray(new SelectInTarget[0]);
+    targets.sort(SelectInTargetComparator.INSTANCE);
+    return targets;
+  }
+
+  @NotNull
+  public SelectInTarget[] getTargets() {
+    return getTargetList().toArray(new SelectInTarget[0]);
   }
 
   public static SelectInManager getInstance(@NotNull Project project) {
@@ -53,7 +60,7 @@ public final class SelectInManager  {
 
   public static SelectInTarget findSelectInTarget(@NotNull String id, Project project) {
     SelectInManager manager = project == null || project.isDisposed() ? null : getInstance(project);
-    SelectInTarget[] targets = manager == null ? null : manager.getTargets();
+    List<SelectInTarget> targets = manager == null ? null : manager.getTargetList();
     if (targets != null) {
       for (SelectInTarget target : targets) {
         if (target != null && Objects.equals(id, target.getToolWindowId())) {
