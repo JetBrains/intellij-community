@@ -363,8 +363,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       }
       LanguageLevel level = extension.getLanguageLevel();
       componentTag.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
-      componentTag.setAttribute("assert-keyword", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_4) >= 0));
-      componentTag.setAttribute("jdk-15", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_5) >= 0));
     }
   }
 
