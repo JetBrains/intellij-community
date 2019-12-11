@@ -14,7 +14,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -136,9 +135,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    * Applies specified decoration.
    */
   public final void apply(@NotNull WindowInfoImpl info) {
-    if (Comparing.equal(myInfo, info) || myProject == null || myProject.isDisposed()) {
+    if (myInfo.equals(info) || myProject == null || myProject.isDisposed()) {
       return;
     }
+
     myInfo = info;
 
     // Anchor
@@ -248,7 +248,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
       Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction("FocusEditor").getShortcutSet());
       if (keyStrokes.contains(ks)) {
-        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        myToolWindow.getToolWindowManager().activateEditorComponent();
         return true;
       }
     }
@@ -263,8 +263,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHeader.setTabActions(actions);
   }
 
-  private class InnerPanelBorder implements Border {
-
+  private final class InnerPanelBorder implements Border {
     private final ToolWindow myWindow;
 
     private InnerPanelBorder(ToolWindow window) {
@@ -303,15 +302,18 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     @Override
-    public Insets getBorderInsets(final Component c) {
-      if (myProject == null) return new Insets(0, 0, 0, 0);
-      ToolWindowManager toolWindowManager =  ToolWindowManager.getInstance(myProject);
-      if (!(toolWindowManager instanceof ToolWindowManagerImpl)
-          || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
-          || myWindow.getType() == ToolWindowType.FLOATING
-          || myWindow.getType() == ToolWindowType.WINDOWED) {
+    public Insets getBorderInsets(@NotNull Component c) {
+      if (myProject == null) {
         return new Insets(0, 0, 0, 0);
       }
+
+      ToolWindowManagerImpl toolWindowManager = myToolWindow.getToolWindowManager();
+      if (!toolWindowManager.isToolWindowRegistered(myInfo.getId()) ||
+          myInfo.getType() == ToolWindowType.FLOATING ||
+          myInfo.getType() == ToolWindowType.WINDOWED) {
+        return new Insets(0, 0, 0, 0);
+      }
+
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();
@@ -345,7 +347,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return false;
     }
   }
-
 
   @NotNull
   final ActionGroup createPopupGroup() {
@@ -597,9 +598,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return Math.abs(myInfo.getAnchor().isHorizontal() ? p.y : p.x) < 6;
     }
 
-
-    private class MyMouseAdapter extends MouseAdapter {
-
+    private final class MyMouseAdapter extends MouseAdapter {
       private void updateCursor(MouseEvent e) {
         if (isInDragZone(e)) {
           myGlassPane.setCursor(MyDivider.this.getCursor(), MyDivider.this);
@@ -631,7 +630,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
       @Override
       public void mouseDragged(MouseEvent e) {
-        if (!myDragging) return;
+        if (!myDragging) {
+          return;
+        }
+
         MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, MyDivider.this);
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         final Point point = event.getPoint();

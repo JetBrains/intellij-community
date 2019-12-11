@@ -681,19 +681,18 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override fun getIdsOn(anchor: ToolWindowAnchor) = layout.getVisibleIdsOn(anchor, this)
 
   override fun getLocationIcon(id: String, fallbackIcon: Icon): Icon {
-    val window = getToolWindow(id)
     val info = layout.getInfo(id)
-    if (window == null && info == null) {
+    if (info == null) {
       return fallbackIcon
     }
 
-    val type = if (window == null) info!!.type else window.type
+    val type = info.type
     if (type == ToolWindowType.FLOATING || type == ToolWindowType.WINDOWED) {
       return AllIcons.Actions.MoveToWindow
     }
 
-    val anchor = if (window == null) info!!.anchor else window.anchor
-    val splitMode = window?.isSplitMode ?: info!!.isSplit
+    val anchor = info.anchor
+    val splitMode = info.isSplit
     return when {
       ToolWindowAnchor.BOTTOM == anchor -> {
         if (splitMode) AllIcons.Actions.MoveToBottomRight else AllIcons.Actions.MoveToBottomLeft

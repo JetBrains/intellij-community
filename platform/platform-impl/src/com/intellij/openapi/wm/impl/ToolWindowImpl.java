@@ -276,7 +276,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setType(@NotNull final ToolWindowType type, @Nullable final Runnable runnable) {
+  public final void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.setToolWindowType(myId, type);
     if (runnable != null) {
@@ -453,6 +453,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   }
 
+  @NotNull
   public ToolWindowManagerImpl getToolWindowManager() {
     return myToolWindowManager;
   }
