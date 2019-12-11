@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NotNull;
  * @see ToolWindowEP
  */
 public interface ToolWindowFactory {
+  default boolean isApplicable(@NotNull Project project) {
+    return true;
+  }
+
   void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow);
 
   /**

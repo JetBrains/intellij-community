@@ -56,7 +56,11 @@ public class ToolWindowEP implements PluginAware {
   @Attribute("factoryClass")
   public String factoryClass;
 
+  /**
+   * @deprecated Implement {@link ToolWindowFactory#isApplicable(Project)} instead.
+   */
   @Attribute("conditionClass")
+  @Deprecated
   public String conditionClass;
 
   @Attribute("secondary")
@@ -66,7 +70,8 @@ public class ToolWindowEP implements PluginAware {
   public boolean canCloseContents;
 
   private Class<? extends ToolWindowFactory> myFactoryClass;
-  private ToolWindowFactory myFactory;
+
+  private volatile ToolWindowFactory myFactory;
 
   @Transient
   @NotNull
@@ -80,20 +85,34 @@ public class ToolWindowEP implements PluginAware {
   }
 
   public ToolWindowFactory getToolWindowFactory() {
-    if (myFactory == null) {
+    ToolWindowFactory factory = myFactory;
+    if (factory != null) {
+      return factory;
+    }
+
+    if (factoryClass == null) {
+      LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
+      return null;
+    }
+
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      factory = myFactory;
+      if (factory != null) {
+        return factory;
+      }
+
       try {
-        if (factoryClass == null) {
-          LOG.error(new PluginException("No toolwindow factory specified for " + id, pluginDescriptor.getPluginId()));
-          return null;
-        }
-        myFactory = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, pluginDescriptor);
+        //noinspection NonPrivateFieldAccessedInSynchronizedContext
+        factory = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(factoryClass, pluginDescriptor);
+        myFactory = factory;
       }
       catch (Exception e) {
         LOG.error(e);
         return null;
       }
     }
-    return myFactory;
+    return factory;
   }
 
   @Nullable
@@ -118,15 +137,17 @@ public class ToolWindowEP implements PluginAware {
 
   @Nullable
   public Condition<Project> getCondition() {
-    if (conditionClass != null) {
-      try {
-        return ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(conditionClass, pluginDescriptor);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    if (conditionClass == null) {
+      return null;
     }
-    return null;
+
+    try {
+      return ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(conditionClass, pluginDescriptor);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   @Override

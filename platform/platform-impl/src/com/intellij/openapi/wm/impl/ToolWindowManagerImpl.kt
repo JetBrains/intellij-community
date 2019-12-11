@@ -114,6 +114,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       layout = DesktopLayout()
     }
+
+    runActivity("toolwindow factory class preloading") {
+      ToolWindowEP.EP_NAME.forEachExtensionSafe { bean ->
+        bean.toolWindowFactory
+      }
+    }
   }
 
   @Service
@@ -353,7 +359,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
 
     val list = mutableListOf<FinalizableCommand>()
-    runActivity("toolwindow factory loading") {
+    runActivity("toolwindow init command creation") {
       ToolWindowEP.EP_NAME.forEachExtensionSafe { bean ->
         val condition = bean.condition
         // compute outside of EDT
@@ -361,7 +367,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           return@forEachExtensionSafe
         }
 
-        // compute outside of EDT
+        // compute outside of EDT (should be already preloaded, but who knows)
         val toolWindowFactory = bean.toolWindowFactory
 
         list.add(object : FinalizableCommand(null) {
