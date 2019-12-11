@@ -10,6 +10,10 @@ import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.*
 
+/**
+ * See [ShowcaseUiDslAction]
+ */
+
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
     row("Create Android module") { CheckBox("FooBar module name foo")() }
