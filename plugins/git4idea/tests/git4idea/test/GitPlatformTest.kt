@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
@@ -244,6 +245,12 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected fun assertChanges(changes: ChangesBuilder.() -> Unit): List<Change> {
+    return changeListManager.assertChanges(changes)
+  }
+
+  protected fun assertChangesWithRefresh(changes: ChangesBuilder.() -> Unit): List<Change> {
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    changeListManager.ensureUpToDate()
     return changeListManager.assertChanges(changes)
   }
 
