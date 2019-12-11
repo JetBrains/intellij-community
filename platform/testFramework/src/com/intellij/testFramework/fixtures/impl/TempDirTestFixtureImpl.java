@@ -103,9 +103,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   public static Path createEmptyTempFile(@NotNull Path parent, @NotNull String name) throws IOException {
     Path file = resolvePath(parent, name);
-    if (name.indexOf('/') != -1 || name.indexOf(File.separatorChar) != -1) {
-      Files.createDirectories(file.getParent());
-    }
+    Files.createDirectories(file.getParent());
     Files.newByteChannel(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE).close();
     return file;
   }
