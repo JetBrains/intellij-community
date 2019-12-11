@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
@@ -28,7 +29,7 @@ import java.util.function.Function;
 public class JBCefJSQuery implements Disposable {
   @NotNull private final String myJSCallID;
   @NotNull private final CefMessageRouter myMsgRouter;
-  @NotNull private final JBCefBrowser myCefBrowser;
+  @NotNull private final CefClient myCefClient;
 
   @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
@@ -40,9 +41,9 @@ public class JBCefJSQuery implements Disposable {
     config.jsQueryFunction = myJSCallID;
     config.jsCancelFunction = myJSCallID;
     myMsgRouter = CefMessageRouter.create(config);
-    myCefBrowser = browser;
-    myCefBrowser.getJBCefClient().getCefClient().addMessageRouter(myMsgRouter);
-    Disposer.register(myCefBrowser, this);
+    myCefClient = browser.getJBCefClient().getCefClient();
+    myCefClient.addMessageRouter(myMsgRouter);
+    Disposer.register(browser, this);
   }
 
   /**
@@ -70,10 +71,7 @@ public class JBCefJSQuery implements Disposable {
    * @param onSuccessCallback JS callback in format: function(response) {}
    * @param onFailureCallback JS callback in format: function(error_code, error_message) {}
    */
-  public String inject(@Nullable String queryResult,
-                       @SuppressWarnings("unused") @NotNull String onSuccessCallback,
-                       @SuppressWarnings("unused") @NotNull String onFailureCallback)
-  {
+  public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {
     return "window." + myJSCallID +
            "({request: '' + " + queryResult + "," +
              "onSuccess: " + onSuccessCallback + "," +
@@ -115,7 +113,7 @@ public class JBCefJSQuery implements Disposable {
 
   @Override
   public void dispose() {
-    myCefBrowser.getJBCefClient().getCefClient().removeMessageRouter(myMsgRouter);
+    myCefClient.removeMessageRouter(myMsgRouter);
     myHandlerMap.clear();
   }
 
@@ -135,9 +133,9 @@ public class JBCefJSQuery implements Disposable {
     }
 
     public Response(@Nullable String response, int errCode, @Nullable String errMsg) {
-      this.myResponse = response;
-      this.myErrCode = errCode;
-      this.myErrMsg = errMsg;
+      myResponse = response;
+      myErrCode = errCode;
+      myErrMsg = errMsg;
     }
 
     @Nullable
