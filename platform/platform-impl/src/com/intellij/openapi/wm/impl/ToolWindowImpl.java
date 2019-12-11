@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.content.impl.ContentManagerImpl;
@@ -56,7 +55,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private Icon myIcon;
   private String myStripeTitle;
 
-  private static final Content EMPTY_CONTENT = new ContentImpl(new JLabel(), "", false);
   private final ToolWindowContentUi myContentUI;
 
   private InternalDecorator myDecorator;
@@ -71,6 +69,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
       return myComponent != null && myComponent.isShowing();
     }
   };
+
   private String myHelpId;
 
   ToolWindowImpl(@NotNull ToolWindowManagerImpl toolWindowManager,
@@ -82,12 +81,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
     myId = id;
     this.parentDisposable = parentDisposable;
 
-    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     myContentUI = new ToolWindowContentUi(this);
     myContentManager = new ContentManagerImpl(myContentUI, canCloseContent, toolWindowManager.getProject(), parentDisposable);
 
     if (component != null) {
-      Content content = contentFactory.createContent(component, "", false);
+      Content content = new ContentImpl(component, "", false);
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content, false);
     }
@@ -96,7 +94,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     InternalDecorator.installFocusTraversalPolicy(myComponent, new LayoutFocusTraversalPolicy());
 
-    Disposer.register(myContentManager, new UiNotifyConnector(myComponent, new Activatable() {
+    Disposer.register(parentDisposable, new UiNotifyConnector(myComponent, new Activatable() {
       @Override
       public void showNotify() {
         myShowing.onReady();
@@ -162,26 +160,27 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   @NotNull
   @Override
-  public ActionCallback getReady(@NotNull final Object requestor) {
-    final ActionCallback result = new ActionCallback();
-    myShowing.getReady(this).doWhenDone(() -> {
-      ArrayList<FinalizableCommand> cmd = new ArrayList<>();
-      cmd.add(new FinalizableCommand(null) {
-        @Override
-        public boolean willChangeState() {
-          return false;
-        }
+  public ActionCallback getReady(@NotNull Object requestor) {
+    ActionCallback result = new ActionCallback();
+    myShowing.getReady(this)
+      .doWhenDone(() -> {
+        ArrayList<FinalizableCommand> cmd = new ArrayList<>();
+        cmd.add(new FinalizableCommand(null) {
+          @Override
+          public boolean willChangeState() {
+            return false;
+          }
 
-        @Override
-        public void run() {
-          IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
-            if (myContentManager.isDisposed()) return;
-            myContentManager.getReady(requestor).notify(result);
-          });
-        }
+          @Override
+          public void run() {
+            IdeFocusManager.getInstance(myToolWindowManager.getProject()).doWhenFocusSettlesDown(() -> {
+              if (myContentManager.isDisposed()) return;
+              myContentManager.getReady(requestor).notify(result);
+            });
+          }
+        });
+        myToolWindowManager.execute(cmd);
       });
-      myToolWindowManager.execute(cmd);
-    });
     return result;
   }
 
@@ -382,9 +381,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final String getTitle() {
+  @Nullable
+  public String getTitle() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return getSelectedContent().getDisplayName();
+
+    Content selected = getContentManager().getSelectedContent();
+    return selected == null ? null : selected.getDisplayName();
   }
 
   @Override
@@ -415,7 +417,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
   @Override
   public final void setTitle(String title) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    getSelectedContent().setDisplayName(title);
+
+    Content selected = getContentManager().getSelectedContent();
+    if (selected != null) {
+      selected.setDisplayName(title);
+    }
     myToolWindowManager.toolWindowPropertyChanged(this, PROP_TITLE);
   }
 
@@ -424,11 +430,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myStripeTitle = stripeTitle;
     myToolWindowManager.toolWindowPropertyChanged(this, PROP_STRIPE_TITLE);
-  }
-
-  private Content getSelectedContent() {
-    final Content selected = getContentManager().getSelectedContent();
-    return selected != null ? selected : EMPTY_CONTENT;
   }
 
   public void setDecorator(@NotNull InternalDecorator decorator) {

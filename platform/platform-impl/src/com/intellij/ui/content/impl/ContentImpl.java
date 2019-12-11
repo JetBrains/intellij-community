@@ -86,7 +86,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<? extends JComponent> computable) {
+  public void setPreferredFocusedComponent(Computable<? extends JComponent> computable) {
     myFocusRequest = computable;
   }
 

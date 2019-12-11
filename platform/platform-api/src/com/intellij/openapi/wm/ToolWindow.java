@@ -119,6 +119,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window title. Returns {@code null} if window has no title.
    */
+  @Nullable
   String getTitle();
 
   /**
