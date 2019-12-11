@@ -10,28 +10,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.*;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
-public class JdkListModel {
+public class SdkListModel {
   private final boolean myIsSearching;
-  private final ImmutableList<JdkComboBoxItem> myItems;
-  private final ImmutableMap<JdkComboBoxItem, String> mySeparators;
+  private final ImmutableList<SdkListItem> myItems;
+  private final ImmutableMap<SdkListItem, String> mySeparators;
 
-  public JdkListModel(boolean isSearching, @NotNull List<? extends JdkComboBoxItem> items) {
+  public SdkListModel(boolean isSearching, @NotNull List<? extends SdkListItem> items) {
     myIsSearching = isSearching;
     myItems = ImmutableList.copyOf(items);
 
     boolean myFirstSepSet = false;
     boolean mySuggestedSep = false;
-    ImmutableMap.Builder<JdkComboBoxItem, String> sep = ImmutableMap.builder();
+    ImmutableMap.Builder<SdkListItem, String> sep = ImmutableMap.builder();
 
-    for (JdkComboBoxItem it : myItems) {
-      if (!myFirstSepSet && (it instanceof ActionGroupJdkItem || it instanceof ActionJdkItem)) {
+    for (SdkListItem it : myItems) {
+      if (!myFirstSepSet && (it instanceof GroupItem || it instanceof ActionItem)) {
         myFirstSepSet = true;
         sep.put(it, "");
       }
 
-      if (!mySuggestedSep && it instanceof SuggestedJdkItem) {
+      if (!mySuggestedSep && it instanceof SuggestedItem) {
         mySuggestedSep = true;
         sep.put(it, ProjectBundle.message("jdk.combo.box.autodetected"));
       }
@@ -40,8 +40,8 @@ public class JdkListModel {
   }
 
   @NotNull
-  public JdkListModel buildSubModel(@NotNull ActionGroupJdkItem group) {
-    return new JdkListModel(myIsSearching, group.mySubItems);
+  public SdkListModel buildSubModel(@NotNull GroupItem group) {
+    return new SdkListModel(myIsSearching, group.mySubItems);
   }
 
   public boolean isSearching() {
@@ -49,20 +49,20 @@ public class JdkListModel {
   }
 
   @NotNull
-  public List<JdkComboBoxItem> getItems() {
+  public List<SdkListItem> getItems() {
     return myItems;
   }
 
   @Nullable
-  public String getSeparatorTextAbove(@NotNull JdkComboBoxItem value) {
+  public String getSeparatorTextAbove(@NotNull SdkListItem value) {
     return mySeparators.get(value);
   }
 
   @Nullable
-  public ActualJdkComboBoxItem findSdkItem(@NotNull Sdk value) {
-    for (JdkComboBoxItem item : myItems) {
-      if (!(item instanceof ActualJdkComboBoxItem)) continue;
-      ActualJdkComboBoxItem sdkItem = (ActualJdkComboBoxItem)item;
+  public SdkItem findSdkItem(@NotNull Sdk value) {
+    for (SdkListItem item : myItems) {
+      if (!(item instanceof SdkItem)) continue;
+      SdkItem sdkItem = (SdkItem)item;
       if (sdkItem.hasSameSdk(value)) {
         return sdkItem;
       }

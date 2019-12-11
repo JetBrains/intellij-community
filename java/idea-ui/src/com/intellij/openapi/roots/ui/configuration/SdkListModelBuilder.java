@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox.*;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 import com.intellij.openapi.roots.ui.configuration.SdkDetector.DetectedSdkListener;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
@@ -21,9 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 
-public abstract class JdkListModelBuilder {
+public abstract class SdkListModelBuilder {
   @Nullable private final Project myProject;
   @NotNull private final ProjectSdksModel mySdkModel;
   @NotNull private final Condition<? super Sdk> mySdkFilter;
@@ -33,14 +35,14 @@ public abstract class JdkListModelBuilder {
   private boolean mySuggestedItemsConnected = false;
   private boolean myIsSdkDetectorInProgress = false;
 
-  private JdkComboBoxItem myFirstItem = null;
-  private ImmutableList<ActualJdkComboBoxItem> myHead = ImmutableList.of();
-  private ImmutableList<ActionJdkItem> myDownloadActions = ImmutableList.of();
-  private ImmutableList<ActionJdkItem> myAddActions = ImmutableList.of();
-  private ImmutableList<SuggestedJdkItem> mySuggestions = ImmutableList.of();
-  private JdkComboBox.InvalidJdkComboBoxItem myInvalidJdkItem = null;
+  private SdkListItem myFirstItem = null;
+  private ImmutableList<SdkItem> myHead = ImmutableList.of();
+  private ImmutableList<ActionItem> myDownloadActions = ImmutableList.of();
+  private ImmutableList<ActionItem> myAddActions = ImmutableList.of();
+  private ImmutableList<SuggestedItem> mySuggestions = ImmutableList.of();
+  private InvalidSdkItem myInvalidItem = null;
 
-  protected JdkListModelBuilder(@Nullable Project project,
+  protected SdkListModelBuilder(@Nullable Project project,
                                 @NotNull ProjectSdksModel sdkModel,
                                 @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
                                 @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
@@ -62,20 +64,20 @@ public abstract class JdkListModelBuilder {
   }
 
   /**
-   * Implement this method to turn a given {@link JdkListModel}
+   * Implement this method to turn a given {@link SdkListModel}
    * into a specific model and apply it for the control
    */
-  protected abstract void syncModel(@NotNull JdkListModel model);
+  protected abstract void syncModel(@NotNull SdkListModel model);
 
   private void syncModel() {
     syncModel(buildModel());
   }
 
   @NotNull
-  public JdkListModel buildModel() {
-    ImmutableList.Builder<JdkComboBoxItem> newModel = ImmutableList.builder();
+  public SdkListModel buildModel() {
+    ImmutableList.Builder<SdkListItem> newModel = ImmutableList.builder();
 
-    if (myFirstItem instanceof ProjectJdkComboBoxItem) {
+    if (myFirstItem instanceof ProjectSdkItem) {
       Sdk projectSdk = mySdkModel.getProjectSdk();
       if (projectSdk == null || mySdkFilter.value(projectSdk)) {
         newModel.add(myFirstItem);
@@ -86,41 +88,51 @@ public abstract class JdkListModelBuilder {
     }
 
     newModel.addAll(myHead);
-    if (myInvalidJdkItem != null) {
-      newModel.add(myInvalidJdkItem);
+    if (myInvalidItem != null) {
+      newModel.add(myInvalidItem);
     }
 
-    ImmutableList<ActionJdkItem> subItems = ImmutableList.<ActionJdkItem>builder()
+    ImmutableList<ActionItem> subItems = ImmutableList.<ActionItem>builder()
       .addAll(myDownloadActions)
       .addAll(myAddActions)
       .build();
 
     if (subItems.size() > 3) {
-      newModel.add(new ActionGroupJdkItem(AllIcons.General.Add, "Add SDK", subItems));
+      newModel.add(new GroupItem(AllIcons.General.Add, "Add SDK", subItems));
     }
     else {
       newModel.addAll(subItems);
     }
 
-    for (SuggestedJdkItem item : mySuggestions) {
+    for (SuggestedItem item : mySuggestions) {
       if (!isApplicableSuggestedItem(item)) continue;
       newModel.add(item);
     }
 
-    return new JdkListModel(myIsSdkDetectorInProgress, newModel.build());
+    return new SdkListModel(myIsSdkDetectorInProgress, newModel.build());
   }
 
-  private boolean isApplicableSuggestedItem(@NotNull SuggestedJdkItem item) {
+  private boolean isApplicableSuggestedItem(@NotNull SuggestedItem item) {
     if (!mySdkTypeFilter.value(item.getSdkType())) return false;
 
     for (Sdk sdk : mySdkModel.getSdks()) {
-      if (FileUtil.pathsEqual(sdk.getHomePath(), item.getPath())) return false;
+      if (FileUtil.pathsEqual(sdk.getHomePath(), item.getHomePath())) return false;
     }
     return true;
   }
 
-  @Nullable
-  public JdkComboBoxItem setFirstItem(@NotNull JdkComboBoxItem firstItem) {
+  @NotNull
+  public SdkListItem showProjectSdkItem() {
+    return setFirstItem(new ProjectSdkItem());
+  }
+
+  @NotNull
+  public SdkListItem showNoneSdkItem() {
+    return setFirstItem(new NoneSdkItem());
+  }
+
+  @NotNull
+  public SdkListItem setFirstItem(@NotNull SdkListItem firstItem) {
     if (Objects.equals(myFirstItem, firstItem)) return myFirstItem;
     myFirstItem = firstItem;
     syncModel();
@@ -128,23 +140,23 @@ public abstract class JdkListModelBuilder {
   }
 
   @NotNull
-  public JdkComboBoxItem setInvalidJdk(String name) {
-    if (myInvalidJdkItem == null || !Objects.equals(myInvalidJdkItem.getSdkName(), name)) {
-      myInvalidJdkItem = new JdkComboBox.InvalidJdkComboBoxItem(name);
-      syncModel();
-    }
-    return myInvalidJdkItem;
+  public SdkListItem setInvalidSdk(String name) {
+    InvalidSdkItem invalidItem = new InvalidSdkItem(name);
+    if (Objects.equals(myInvalidItem, invalidItem)) return myInvalidItem;
+    myInvalidItem = invalidItem;
+    syncModel();
+    return myInvalidItem;
   }
 
   public void reloadSdks() {
-    ImmutableList.Builder<ActualJdkComboBoxItem> newHead = new ImmutableList.Builder<>();
-    for (Sdk jdk : sortSdks(mySdkModel.getSdks())) {
-      if (!mySdkFilter.value(jdk)) continue;
+    ImmutableList.Builder<SdkItem> newHead = new ImmutableList.Builder<>();
+    for (Sdk sdk : sortSdks(mySdkModel.getSdks())) {
+      if (!mySdkFilter.value(sdk)) continue;
 
-      newHead.add(new ActualJdkComboBoxItem(jdk) {
+      newHead.add(new SdkItem(sdk) {
         @Override
         boolean hasSameSdk(@NotNull Sdk value) {
-          return Objects.equals(getJdk(), value) || Objects.equals(mySdkModel.findSdk(getJdk()), value);
+          return Objects.equals(getSdk(), value) || Objects.equals(mySdkModel.findSdk(getSdk()), value);
         }
       });
     }
@@ -179,18 +191,19 @@ public abstract class JdkListModelBuilder {
       }
 
       @Override
-      public void onSdkDetected(@NotNull SdkType type, @Nullable String version, @NotNull String home) {
-        SuggestedJdkItem item = new SuggestedJdkItem(type, version, home) {
+      public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
+        SuggestedItem item = new SuggestedItem(type, version, home) {
           @Override
-          void executeAction() {
-            mySdkModel.addSdk(getSdkType(), getPath(), onNewSdkAdded);
+          public void executeAction() {
+            mySdkModel.addSdk(getSdkType(), getHomePath(), onNewSdkAdded);
           }
         };
 
-        mySuggestions = ImmutableList.<SuggestedJdkItem>builder()
+        mySuggestions = ImmutableList.<SuggestedItem>builder()
           .addAll(mySuggestions)
           .add(item)
           .build();
+
         syncModel();
       }
 
@@ -203,14 +216,14 @@ public abstract class JdkListModelBuilder {
   }
 
   @NotNull
-  private static ImmutableList<ActionJdkItem> createActions(@NotNull JComponent parent,
-                                                            @NotNull ActionRole role,
-                                                            @NotNull Map<SdkType, NewSdkAction> actions) {
-    ImmutableList.Builder<ActionJdkItem> builder = ImmutableList.builder();
+  private static ImmutableList<ActionItem> createActions(@NotNull JComponent parent,
+                                                         @NotNull ActionRole role,
+                                                         @NotNull Map<SdkType, NewSdkAction> actions) {
+    ImmutableList.Builder<ActionItem> builder = ImmutableList.builder();
     for (NewSdkAction action : actions.values()) {
-      builder.add(new ActionJdkItem(role, action) {
+      builder.add(new ActionItem(role, action, null) {
         @Override
-        void executeAction() {
+        public void executeAction() {
           DataContext dataContext = DataManager.getInstance().getDataContext(parent);
           AnActionEvent event = new AnActionEvent(null,
                                                   dataContext,
@@ -231,9 +244,9 @@ public abstract class JdkListModelBuilder {
     Arrays.sort(clone, (sdk1, sdk2) -> {
       SdkType sdkType1 = (SdkType)sdk1.getSdkType();
       SdkType sdkType2 = (SdkType)sdk2.getSdkType();
-      if (!sdkType1.getComparator().equals(sdkType2.getComparator())) return StringUtil
-        .compare(sdkType1.getPresentableName(), sdkType2.getPresentableName(), true);
-      return sdkType1.getComparator().compare(sdk1, sdk2);
+      return !sdkType1.equals(sdkType2)
+             ? StringUtil.compare(sdkType1.getPresentableName(), sdkType2.getPresentableName(), true)
+             : sdkType1.getComparator().compare(sdk1, sdk2);
     });
     return clone;
   }

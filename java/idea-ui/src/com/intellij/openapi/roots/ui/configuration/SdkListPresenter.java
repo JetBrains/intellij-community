@@ -7,43 +7,61 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.SdkAppearanceService;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox.ActionGroupJdkItem;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox.ActionJdkItem;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox.ActualJdkComboBoxItem;
-import com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBoxItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
+import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Objects;
 
-import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.*;
+import static com.intellij.openapi.roots.ui.configuration.SdkListItem.*;
 
-public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboBoxItem> {
+public abstract class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   private static final Icon EMPTY_ICON = EmptyIcon.create(1, 16);
 
   @NotNull
   private final ProjectSdksModel mySdkModel;
 
-  protected JdkListPresenter(@NotNull ProjectSdksModel sdkModel) {
+  protected SdkListPresenter(@NotNull ProjectSdksModel sdkModel) {
     mySdkModel = sdkModel;
   }
 
   @NotNull
-  protected abstract JdkListModel getModel();
+  protected abstract SdkListModel getModel();
 
   protected abstract boolean showProgressIcon();
 
+
+  @NotNull
+  public <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
+    return new ListCellRenderer<T>() {
+      @NotNull
+      @Override
+      public Component getListCellRendererComponent(JList<? extends T> list,
+                                                    @Nullable T value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
+        SdkListItem item = value == null ? null : unwrap.fun(value);
+        //noinspection unchecked,rawtypes
+        return SdkListPresenter.this.getListCellRendererComponent((JList)list, item, index, isSelected, cellHasFocus);
+      }
+    };
+  }
+
   @Override
-  public Component getListCellRendererComponent(JList<? extends JdkComboBoxItem> list,
-                                                JdkComboBoxItem value,
+  public Component getListCellRendererComponent(@NotNull JList<? extends SdkListItem> list,
+                                                @Nullable SdkListItem value,
                                                 int index,
                                                 boolean selected,
                                                 boolean hasFocus) {
@@ -59,7 +77,7 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
     };
     panel.add(component, BorderLayout.CENTER);
 
-    JdkListModel model = getModel();
+    SdkListModel model = getModel();
     //handle the selected item to show in the ComboBox, not in the popup
     if (index == -1) {
       component.setOpaque(false);
@@ -74,13 +92,13 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
     component.setOpaque(true);
     panel.setOpaque(true);
     panel.setBackground(selected ? list.getSelectionBackground() : list.getBackground());
-    if (value instanceof ActionGroupJdkItem) {
+    if (value instanceof GroupItem) {
       JBLabel toggle = new JBLabel(AllIcons.Icons.Ide.NextStep);
       toggle.setOpaque(false);
       panel.add(toggle, BorderLayout.EAST);
     }
 
-    String separatorTextAbove = model.getSeparatorTextAbove(value);
+    String separatorTextAbove = value != null ? model.getSeparatorTextAbove(value) : null;
     if (separatorTextAbove != null) {
       SeparatorWithText separator = new SeparatorWithText();
       if (!separatorTextAbove.isEmpty()) {
@@ -100,33 +118,34 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
   }
 
   @Override
-  protected void customizeCellRenderer(@NotNull JList<? extends JdkComboBoxItem> list,
-                                       JdkComboBoxItem value,
+  protected void customizeCellRenderer(@NotNull JList<? extends SdkListItem> list,
+                                       @Nullable SdkListItem value,
                                        int index,
                                        boolean selected,
                                        boolean hasFocus) {
 
     setIcon(EMPTY_ICON);    // to fix vertical size
-    if (value instanceof InvalidJdkComboBoxItem) {
-      final String str = ProjectBundle.message("jdk.combo.box.invalid.item", value.getSdkName());
+    if (value instanceof InvalidSdkItem) {
+      InvalidSdkItem item = (InvalidSdkItem)value;
+      final String str = ProjectBundle.message("jdk.combo.box.invalid.item", item.mySdkName);
       append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
-    else if (value instanceof ProjectJdkComboBoxItem) {
-      final Sdk jdk = mySdkModel.getProjectSdk();
-      if (jdk != null) {
-        setIcon(((SdkType)jdk.getSdkType()).getIcon());
+    else if (value instanceof ProjectSdkItem) {
+      final Sdk sdk = mySdkModel.getProjectSdk();
+      if (sdk != null) {
+        setIcon(((SdkType)sdk.getSdkType()).getIcon());
         append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        append(" " + jdk.getName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" " + sdk.getName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
         String str = ProjectBundle.message("jdk.combo.box.project.item");
         append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
-    else if (value instanceof SuggestedJdkItem) {
-      SuggestedJdkItem item = (SuggestedJdkItem)value;
+    else if (value instanceof SuggestedItem) {
+      SuggestedItem item = (SuggestedItem)value;
       SdkType type = item.getSdkType();
-      String home = item.getPath();
+      String home = item.getHomePath();
       String version = item.getVersion();
 
       Icon icon1 = type.getIconForAddAction();
@@ -135,11 +154,10 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
       Icon icon = icon1;
       setIcon(icon);
       append(presentDetectedSdkPath(home));
-      if (version == null) version = type.getPresentableName();
       append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    else if (value instanceof ActionJdkItem) {
-      ActionJdkItem item = (ActionJdkItem)value;
+    else if (value instanceof ActionItem) {
+      ActionItem item = (ActionItem)value;
       Presentation template = item.myAction.getTemplatePresentation();
       //this is a sub-menu item
       SdkType sdkType = item.myAction.getSdkType();
@@ -171,25 +189,28 @@ public abstract class JdkListPresenter extends ColoredListCellRenderer<JdkComboB
         }
       }
     }
-    else if (value instanceof ActionGroupJdkItem) {
-      ActionGroupJdkItem item = (ActionGroupJdkItem)value;
+    else if (value instanceof GroupItem) {
+      GroupItem item = (GroupItem)value;
       setIcon(item.myIcon);
       append(item.myCaption);
     }
-    else if (value instanceof ActualJdkComboBoxItem || value instanceof NoneJdkComboBoxItem) {
-      Sdk sdk = value.getJdk();
+    else if (value instanceof SdkItem) {
+      Sdk sdk = ((SdkItem)value).getSdk();
       SdkAppearanceService.getInstance()
         .forSdk(sdk, false, selected, false)
         .customize(this);
 
-      if (sdk != null) {
-        String version = sdk.getVersionString();
-        if (version == null) version = ((SdkType)sdk.getSdkType()).getPresentableName();
-        append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
+      String version = sdk.getVersionString();
+      if (version == null) version = ((SdkType)sdk.getSdkType()).getPresentableName();
+      append(" " + version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+    else if (value instanceof NoneSdkItem) {
+      SdkAppearanceService.getInstance()
+        .forSdk(null, false, selected, false)
+        .customize(this);
     }
     else {
-      customizeCellRenderer(list, new NoneJdkComboBoxItem(), index, selected, hasFocus);
+      customizeCellRenderer(list, new NoneSdkItem(), index, selected, hasFocus);
     }
   }
 
