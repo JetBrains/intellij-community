@@ -254,11 +254,24 @@ public abstract class LongRangeSet {
       return modRange(minValue(isLong), maxValue(isLong), mod, 1).plus(constVal, isLong);
     }
     if (this instanceof Point && other instanceof ModRange) {
-      if (((Point)this).myValue % ((ModRange)other).myMod == 0) {
-        return other;
+      ModRange modRange = (ModRange)other;
+      long value = ((Point)this).myValue;
+      if (value % modRange.myMod == 0) {
+        return modRange(minValue(isLong), maxValue(isLong), modRange.myMod, modRange.myBits);
       }
-      else if (((ModRange)other).myBits == 1) {
+      if (modRange.myBits == 1) {
         return this.plus(other, isLong);
+      }
+      if (value >= -64 && value < 64) {
+        int gcd = gcd(Math.abs((int)value), modRange.myMod);
+        if (gcd > 1) {
+          long count = modRange.myMod / gcd;
+          long bits = 0;
+          for(int i=0; i<count; i++) {
+            bits |= (modRange.myBits >>> (i * gcd)) & ((1L << gcd) - 1);
+          }
+          return modRange(minValue(isLong), maxValue(isLong), gcd, bits);
+        }
       }
     }
     if (other instanceof Point && this instanceof ModRange) {
