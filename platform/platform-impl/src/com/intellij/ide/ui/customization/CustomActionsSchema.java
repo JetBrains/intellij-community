@@ -74,7 +74,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
     myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
     myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
-    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
+    myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar Popup Menu");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
 
     List<Couple<String>> extList = new ArrayList<>();
