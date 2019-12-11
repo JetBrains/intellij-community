@@ -13,6 +13,7 @@ projectNameToTitle.set("/q9N7EHxr8F1NHjbNQnpqb0Q0fs", "joda-time")
 projectNameToTitle.set("73YWaW9bytiPDGuKvwNIYMK5CKI", "simple for IJ")
 projectNameToTitle.set("j1a8nhKJexyL/zyuOXJ5CFOHYzU", "simple for PS")
 projectNameToTitle.set("JeNLJFVa04IA+Wasc+Hjj3z64R0", "simple for WS")
+projectNameToTitle.set("nC4MRRFMVYUSQLNIvPgDt+B3JqA", "Idea")
 Object.seal(projectNameToTitle)
 
 @Component({
@@ -48,7 +49,7 @@ export default class AggregatedStatsPage extends Vue {
           return
         }
 
-        this.lastInfoResponse = data
+        this.lastInfoResponse = Object.seal(data)
         this.products = data.productNames
 
         let selectedProduct = this.chartSettings.selectedProduct
