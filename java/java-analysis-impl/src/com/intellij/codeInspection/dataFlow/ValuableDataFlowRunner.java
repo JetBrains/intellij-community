@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -75,28 +76,34 @@ class ValuableDataFlowRunner extends DataFlowRunner {
 
     private ValuableDfaVariableState(DfaValue value,
                                      @NotNull FList<PsiExpression> concatenation,
-                                     @NotNull DfaFactMap factMap) {
-      super(factMap);
+                                     @NotNull DfType dfType) {
+      super(dfType);
       myValue = value;
       myConcatenation = concatenation;
     }
 
     @NotNull
     @Override
-    protected DfaVariableState createCopy(@NotNull DfaFactMap factMap) {
-      return new ValuableDfaVariableState(myValue, myConcatenation, factMap);
+    protected DfaVariableState createCopy(@NotNull DfType dfType) {
+      return dfType.equals(myDfType) ? this : new ValuableDfaVariableState(myValue, myConcatenation, dfType);
     }
 
     @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(value, myConcatenation, myFactMap);
+      return new ValuableDfaVariableState(value, myConcatenation, myDfType);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
-      return new ValuableDfaVariableState(myValue, concatenation, myFactMap);
+      return new ValuableDfaVariableState(myValue, concatenation, myDfType);
+    }
+
+    @Override
+    public boolean isSuperStateOf(DfaVariableState other) {
+      return other instanceof ValuableDfaVariableState && myConcatenation.equals(((ValuableDfaVariableState)other).myConcatenation) && 
+             Objects.equals(myValue, ((ValuableDfaVariableState)other).myValue) && super.isSuperStateOf(other);
     }
 
     @Override

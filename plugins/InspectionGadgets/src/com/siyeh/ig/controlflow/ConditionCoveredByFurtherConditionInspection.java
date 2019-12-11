@@ -4,7 +4,9 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -135,7 +137,10 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
                                          DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
-          state.forceVariableFact((DfaVariableValue)value, DfaFactType.NULLABILITY, DfaNullability.NULLABLE);
+          DfType dfType = state.getDfType(value);
+          if (dfType instanceof DfReferenceType) {
+            state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
+          }
         }
         return true;
       }
@@ -150,11 +155,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
         ThreeState result = ThreeState.UNSURE;
-        if (value instanceof DfaConstValue) {
-          Object bool = ((DfaConstValue)value).getValue();
-          if (bool instanceof Boolean) {
-            result = ThreeState.fromBoolean((Boolean)bool);
-          }
+        Boolean bool = DfConstantType.getConstantOfType(state.getDfType(value), Boolean.class);
+        if (bool != null) {
+          result = ThreeState.fromBoolean(bool);
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }

@@ -15,10 +15,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
@@ -219,7 +216,7 @@ public class HardcodedContracts {
              className.startsWith("com.google.common.truth.") ||
              className.startsWith("org.assertj.core.api.") ||
              className.equals("org.hamcrest.MatcherAssert")) {
-      return handleTestFrameworks(paramCount, className, methodName, call);
+      return handleTestFrameworks(method, paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
       if (OptionalUtil.OPTIONAL_GET.methodMatches(method) || "orElseThrow".equals(methodName)) {
@@ -298,7 +295,10 @@ public class HardcodedContracts {
     return className.startsWith("org.testng.") && !className.equals("org.testng.AssertJUnit");
   }
 
-  private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
+  private static List<MethodContract> handleTestFrameworks(PsiMethod method,
+                                                           int paramCount,
+                                                           String className,
+                                                           String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
     if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
       return handleAssertThat(paramCount, call);
@@ -316,20 +316,21 @@ public class HardcodedContracts {
     if (paramCount == 0) return Collections.emptyList();
 
     int checkedParam = testng || isJunit5(className) ? 0 : paramCount - 1;
+    PsiType type = Objects.requireNonNull(method.getParameterList().getParameter(checkedParam)).getType();
     ValueConstraint[] constraints = createConstraintArray(paramCount);
-    if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
+    if (("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) && PsiType.BOOLEAN.equals(type)) {
       constraints[checkedParam] = FALSE_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
-    if ("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) {
+    if (("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) && PsiType.BOOLEAN.equals(type)) {
       constraints[checkedParam] = TRUE_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
-    if ("assertNull".equals(methodName)) {
+    if ("assertNull".equals(methodName) && TypeUtils.isJavaLangObject(type)) {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new StandardMethodContract(constraints, fail()));
     }
-    if ("assertNotNull".equals(methodName)) {
+    if ("assertNotNull".equals(methodName) && TypeUtils.isJavaLangObject(type)) {
       return failIfNull(checkedParam, paramCount, false);
     }
     return Collections.emptyList();

@@ -17,8 +17,8 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -61,7 +61,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     s_typesToCheck.add(CommonClassNames.JAVA_LANG_CHARACTER);
   }
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreNonOverflowingCompileTimeConstants = true;
 
   @Nullable
@@ -250,8 +250,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
       if (dfr != null) {
         long min = 1, max = 1;
         for (PsiExpression operand : operands) {
-          LongRangeSet set = dfr.getExpressionFact(PsiUtil.skipParenthesizedExprDown(operand), DfaFactType.RANGE);
-          if (set == null) return false;
+          LongRangeSet set = DfLongType.extractRange(dfr.getDfType(PsiUtil.skipParenthesizedExprDown(operand)));
           long nextMin = set.min();
           long nextMax = set.max();
           if (operand == operands[0]) {

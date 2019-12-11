@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,21 +102,17 @@ public abstract class ContractReturnValue {
   }
 
   static DfaValue merge(DfaValue defaultValue, DfaValue newValue, DfaMemoryState memState) {
-    if (defaultValue == null || defaultValue == DfaUnknownValue.getInstance()) return newValue;
-    if (newValue == null || newValue == DfaUnknownValue.getInstance()) return defaultValue;
-    if (defaultValue instanceof DfaFactMapValue) {
-      DfaFactMap defaultFacts = ((DfaFactMapValue)defaultValue).getFacts();
-      if (newValue instanceof DfaFactMapValue) {
-        DfaFactMap intersection = defaultFacts.intersect(((DfaFactMapValue)newValue).getFacts());
-        if (intersection != null) {
-          return defaultValue.getFactory().getFactFactory().createValue(intersection);
-        }
-      }
-      if (newValue instanceof DfaVariableValue) {
-        defaultFacts.facts(Pair::create).forEach(fact -> memState.applyFact(newValue, fact.getFirst(), fact.getSecond()));
-      }
+    if (defaultValue == null || DfaTypeValue.isUnknown(defaultValue)) return newValue;
+    if (newValue == null || DfaTypeValue.isUnknown(newValue)) return defaultValue;
+    DfType defaultType = memState.getDfType(defaultValue);
+    DfType newType = memState.getDfType(newValue);
+    DfType result = defaultType.meet(newType);
+    if (result == DfTypes.BOTTOM) return newValue;
+    if (newValue instanceof DfaVariableValue) {
+      memState.meetDfType(newValue, result);
+      return newValue;
     }
-    return newValue;
+    return defaultValue.getFactory().fromDfType(result);
   }
 
   /**
@@ -352,7 +352,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.getConstFactory().getContractFail();
+      return factory.getContractFail();
     }
 
     @Override
@@ -369,7 +369,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.getConstFactory().getNull();
+      return factory.getNull();
     }
 
     @Override
@@ -391,11 +391,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      if (defaultValue instanceof DfaVariableValue) {
-        callState.myMemoryState.forceVariableFact((DfaVariableValue)defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-        return defaultValue;
-      }
-      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      return merge(defaultValue, factory.fromDfType(DfTypes.NOT_NULL_OBJECT), callState.myMemoryState);
     }
 
     @Override
@@ -412,20 +408,17 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      if (defaultValue instanceof DfaVariableValue) {
-        defaultValue = factory.getFactFactory().createValue(callState.myMemoryState.getFacts((DfaVariableValue)defaultValue));
-      }
-      DfaValue value = factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      DfType dfType = callState.myMemoryState.getDfType(defaultValue);
+      dfType = dfType.meet(DfTypes.NOT_NULL_OBJECT);
       if (callState.myCallArguments.myPure) {
-        boolean unmodifiableView =
-          value instanceof DfaFactMapValue && ((DfaFactMapValue)value).get(DfaFactType.MUTABILITY) == Mutability.UNMODIFIABLE_VIEW;
+        boolean unmodifiableView = Mutability.fromDfType(dfType) == Mutability.UNMODIFIABLE_VIEW;
         // Unmodifiable view methods like Collections.unmodifiableList create new object, but their special field "size" is
         // actually a delegate, so we cannot trust it if the original value is not local
         if (!unmodifiableView) {
-          value = factory.withFact(value, DfaFactType.LOCALITY, true);
+          dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
       }
-      return value;
+      return merge(defaultValue, factory.fromDfType(dfType), callState.myMemoryState);
     }
 
     @Override
@@ -462,10 +455,10 @@ public abstract class ContractReturnValue {
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
       DfaValue qualifier = callState.myCallArguments.myQualifier;
-      if (qualifier != null && qualifier != DfaUnknownValue.getInstance()) {
+      if (qualifier != null && !DfaTypeValue.isUnknown(qualifier)) {
         return merge(defaultValue, qualifier, callState.myMemoryState);
       }
-      return factory.withFact(defaultValue, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+      return merge(defaultValue, factory.fromDfType(DfTypes.NOT_NULL_OBJECT), callState.myMemoryState);
     }
 
     @Override
@@ -510,8 +503,8 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      DfaConstValue dfaConst = state.getConstantValue(value);
-      return dfaConst == null || Boolean.valueOf(myValue).equals(dfaConst.getValue());
+      DfType type = state.getUnboxedDfType(value);
+      return type.isSuperType(DfTypes.booleanValue(myValue));
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateCh
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -517,16 +518,16 @@ public class TrackingRunner extends DataFlowRunner {
     if (constantExpressionValue != null && constantExpressionValue.equals(expectedValue)) {
       return new CauseItem[]{new CauseItem("it's compile-time constant which evaluates to '" + value + "'", expression)};
     }
-    if (value instanceof DfaConstValue) {
-      Object constValue = ((DfaConstValue)value).getValue();
+    if (value.getDfType() instanceof DfConstantType) {
+      Object constValue = ((DfConstantType<?>)value.getDfType()).getValue();
       if (Objects.equals(constValue, expectedValue) && constValue instanceof Boolean) {
         return findBooleanResultCauses(expression, history, ((Boolean)constValue).booleanValue());
       }
     }
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
-        (DfaVariableValue)value, rel -> rel.myRelationType == RelationType.EQ && rel.myCounterpart instanceof DfaConstValue &&
-            Objects.equals(expectedValue, ((DfaConstValue)rel.myCounterpart).getValue()), false);
+        (DfaVariableValue)value, rel -> rel.myRelationType == RelationType.EQ &&
+            DfConstantType.isConst(rel.myCounterpart.getDfType(), expectedValue), false);
       if (change != null) {
         PsiExpression varSourceExpression = change.getExpression();
         Instruction instruction = change.myInstruction;
@@ -605,8 +606,7 @@ public class TrackingRunner extends DataFlowRunner {
           if (push != null &&
               ((push.myInstruction instanceof ConditionalGotoInstruction &&
                 ((ConditionalGotoInstruction)push.myInstruction).isTarget(value, history.myInstruction)) ||
-               (push.myTopOfStack instanceof DfaConstValue &&
-                Boolean.valueOf(value).equals(((DfaConstValue)push.myTopOfStack).getValue())))) {
+               DfConstantType.isConst(push.myTopOfStack.getDfType(), value))) {
             CauseItem cause = new CauseItem("operand #" + (i + 1) + " of " + (and ? "&&" : "||") + "-chain is " + value, operand);
             cause.addChildren(findBooleanResultCauses(operand, push, value));
             operandCauses.add(cause);
@@ -640,7 +640,7 @@ public class TrackingRunner extends DataFlowRunner {
             return causes;
           }
           if (leftValue == rightValue &&
-              (leftValue instanceof DfaVariableValue || leftValue instanceof DfaConstValue)) {
+              (leftValue instanceof DfaVariableValue || leftValue.getDfType() instanceof DfConstantType)) {
             List<CauseItem> constCauses = new ArrayList<>();
             CauseItem leftCause = constantInitializerCause(leftValue, leftChange.getExpression());
             CauseItem rightCause = constantInitializerCause(rightValue, rightChange.getExpression());
@@ -651,7 +651,7 @@ public class TrackingRunner extends DataFlowRunner {
             return constCauses.toArray(new CauseItem[0]);
           }
           if (leftValue != rightValue && relationType.isInequality() &&
-              leftValue instanceof DfaConstValue && rightValue instanceof DfaConstValue) {
+              leftValue.getDfType() instanceof DfConstantType && rightValue.getDfType() instanceof DfConstantType) {
             CauseItem causeItem = new CauseItem("comparison arguments are different constants", binOp.getOperationSign());
             causeItem.addChildren(constantInitializerCause(leftValue, leftChange.getExpression()), 
                                   constantInitializerCause(rightValue, rightChange.getExpression()));
@@ -689,7 +689,7 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   private static CauseItem constantInitializerCause(DfaValue value, PsiExpression ref) {
-    if (!(value instanceof DfaConstValue)) return null;
+    if (!(value.getDfType() instanceof DfConstantType)) return null;
     if (ref instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)ref).resolve();
       if (target instanceof PsiVariable && ((PsiVariable)target).hasModifierProperty(PsiModifier.FINAL)) {
@@ -1403,9 +1403,10 @@ public class TrackingRunner extends DataFlowRunner {
     List<RelationType> subRelations;
     switch (relation.myRelationType) {
       case NE:
-        if (relation.myCounterpart instanceof DfaConstValue) {
+        if (relation.myCounterpart.getDfType() instanceof DfConstantType) {
           return history.findRelation(var, rel -> rel.equals(relation) ||
-                                                  rel.myRelationType == RelationType.EQ && rel.myCounterpart instanceof DfaConstValue,
+                                                  rel.myRelationType == RelationType.EQ && 
+                                                  rel.myCounterpart.getDfType() instanceof DfConstantType,
                                       true);
         }
         subRelations = Arrays.asList(RelationType.NE, RelationType.GT, RelationType.LT);

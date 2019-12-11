@@ -17,16 +17,17 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactMap;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.lang.ExpressionTypeProvider;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,41 +86,54 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return "<unknown>";
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    String advancedTypeInfo = "";
+    List<Pair<String, String>> infoLines = new ArrayList<>();
     String basicTypeEscaped = getInformationHint(expression);
     if (result != null) {
-      DfaFactMap map = result.getAllFacts(expression);
+      DfType dfType = result.getDfType(expression);
       PsiType type = expression.getType();
-      if (map != null) {
-        advancedTypeInfo = map.facts(new DfaFactMap.FactMapper<String>() {
-          @Override
-          public <T> String apply(DfaFactType<T> factType, T value) {
-            return formatFact(factType, value, type);
-          }
-        }).joining();
-      }
-      List<Object> nonValues = new ArrayList<>(result.getValuesNotEqualToExpression(expression));
-      nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info
-      if (!nonValues.isEmpty()) {
-        advancedTypeInfo = makeHtmlRow("Not equal to", StringUtil.join(nonValues, DfaConstValue::renderValue, ", ")) + advancedTypeInfo;
-      }
       Set<Object> values = result.getExpressionValues(expression);
       if (!values.isEmpty()) {
         if (values.size() == 1) {
-          advancedTypeInfo = makeHtmlRow("Value", DfaConstValue.renderValue(values.iterator().next())) + advancedTypeInfo;
+          infoLines.add(Pair.create("Value", DfConstantType.renderValue(values.iterator().next())));
         } else {
-          advancedTypeInfo = makeHtmlRow("Value (one of)", StringUtil.join(values, DfaConstValue::renderValue, ", ")) + advancedTypeInfo;
+          infoLines.add(Pair.create("Value (one of)", StreamEx.of(values).map(DfConstantType::renderValue).sorted().joining(", ")));
+        }
+      } else {
+        if (dfType instanceof DfAntiConstantType) {
+          List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
+          nonValues.remove(null); // Nullability: not-null will be displayed, so this just duplicates nullability info
+          if (!nonValues.isEmpty()) {
+            infoLines.add(Pair.create("Not equal to", StreamEx.of(nonValues).map(DfConstantType::renderValue).sorted().joining(", ")));
+          }
+        }
+        if (dfType instanceof DfIntegralType) {
+          String rangeText = ((DfIntegralType)dfType).getRange().getPresentationText(type);
+          if (!rangeText.equals("any value")) {
+            infoLines.add(Pair.create("Range", rangeText));
+          }
+        }
+        else if (dfType instanceof DfReferenceType) {
+          DfReferenceType refType = (DfReferenceType)dfType;
+          infoLines.add(Pair.create("Nullability", refType.getNullability().getPresentationName()));
+          infoLines.add(Pair.create("Constraints", refType.getConstraint().getPresentationText(type)));
+          if (refType.getMutability() != Mutability.UNKNOWN) {
+            infoLines.add(Pair.create("Mutability", refType.getMutability().toString()));
+          }
+          infoLines.add(Pair.create("Locality", refType.isLocal() ? "local object" : ""));
+          SpecialField field = refType.getSpecialField();
+          if (field != null) {
+            infoLines.add(Pair.create(StringUtil.wordsToBeginFromUpperCase(field.toString()),
+                                      field.getPresentationText(refType.getSpecialFieldType(), type)));
+          }
         }
       }
     }
-    return advancedTypeInfo.isEmpty()
-           ? basicTypeEscaped
-           : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";
-  }
-
-  private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
-    String presentationText = factType.getPresentationText(value, type);
-    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(value), StringUtil.escapeXmlEntities(presentationText));
+    infoLines.removeIf(pair -> pair.getSecond().isEmpty());
+    if (!infoLines.isEmpty()) {
+      infoLines.add(0, Pair.create("Type", basicTypeEscaped));
+      return StreamEx.of(infoLines).map(pair -> makeHtmlRow(pair.getFirst(), pair.getSecond())).joining("", "<table>", "</table>");
+    }
+    return basicTypeEscaped;
   }
 
   private static String makeHtmlRow(@NotNull String titleText, String contentHtml) {

@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -15,8 +18,7 @@ import java.util.*;
 /**
  * Immutable class representing a number of non-primitive type constraints applied to some value.
  * There are two types of constrains: value is instance of some type and value is not an instance of some type.
- * Unlike usual Java semantics, the {@code null} value is considered to be instanceof any type (non-null instanceof can be expressed
- * via additional restriction {@link DfaFactType#NULLABILITY} {@code = NOT_NULL}).
+ * Null or primitive types are not handled here.
  */
 public abstract class TypeConstraint {
 
@@ -35,13 +37,13 @@ public abstract class TypeConstraint {
   @Nullable
   public abstract PsiType getPsiType();
 
-  abstract boolean isSuperStateOf(@NotNull TypeConstraint other);
+  public abstract boolean isSuperStateOf(@NotNull TypeConstraint other);
 
-  @Nullable
+  @NotNull
   public abstract TypeConstraint unite(@NotNull TypeConstraint other);
 
   @Nullable
-  abstract TypeConstraint intersect(@NotNull TypeConstraint right);
+  public abstract TypeConstraint intersect(@NotNull TypeConstraint right);
 
   @NotNull
   public abstract Set<DfaPsiType> getInstanceofValues();
@@ -56,6 +58,15 @@ public abstract class TypeConstraint {
   public abstract boolean isExact(String typeName);
 
   public abstract String getAssignabilityExplanation(DfaPsiType otherType, boolean expectedAssignable);
+
+  public DfReferenceType asDfType() {
+    return DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
+  }
+
+  @NotNull
+  public static TypeConstraint fromDfType(@NotNull DfType type) {
+    return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : empty();
+  }
 
   static final class Exact extends TypeConstraint {
     final @NotNull DfaPsiType myType;
@@ -110,11 +121,11 @@ public abstract class TypeConstraint {
     }
 
     @Override
-    boolean isSuperStateOf(@NotNull TypeConstraint other) {
+    public boolean isSuperStateOf(@NotNull TypeConstraint other) {
       return this.equals(other);
     }
 
-    @Nullable
+    @NotNull
     @Override
     public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
@@ -124,7 +135,7 @@ public abstract class TypeConstraint {
 
     @Override
     @Nullable
-    TypeConstraint intersect(@NotNull TypeConstraint right) {
+    public TypeConstraint intersect(@NotNull TypeConstraint right) {
       if (right instanceof Exact) {
         return right.equals(this) ? this : null;
       }
@@ -230,7 +241,10 @@ public abstract class TypeConstraint {
     @Nullable
     public TypeConstraint withInstanceofValue(@NotNull DfaPsiType type) {
       PsiType psiType = type.getPsiType();
-      if (psiType instanceof PsiPrimitiveType || LambdaUtil.notInferredType(psiType)) return this;
+      if (psiType instanceof PsiPrimitiveType || LambdaUtil.notInferredType(psiType) ||
+          psiType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return this;
+      }
 
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
       if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -305,26 +319,32 @@ public abstract class TypeConstraint {
     }
 
     @Override
-    boolean isSuperStateOf(@NotNull TypeConstraint other) {
+    public boolean isSuperStateOf(@NotNull TypeConstraint other) {
       if (other instanceof Constrained) {
         Constrained that = (Constrained)other;
-        if (that.myNotInstanceofValues.containsAll(myNotInstanceofValues) && that.myInstanceofValues.containsAll(myInstanceofValues)) {
-          return true;
+        if (!that.myNotInstanceofValues.containsAll(myNotInstanceofValues)) {
+          if (that.myInstanceofValues.isEmpty()) return false;
+          for (DfaPsiType thisNotType : this.myNotInstanceofValues) {
+            if (!that.myNotInstanceofValues.contains(thisNotType) &&
+                that.myInstanceofValues.stream().anyMatch(thatType -> thisNotType.isConvertibleFrom(thatType))) {
+              return false;
+            }
+          }
         }
-        if (this.myNotInstanceofValues.isEmpty() && that.myNotInstanceofValues.isEmpty()) {
-          return that.myInstanceofValues.stream().allMatch(
-            thatType -> this.myInstanceofValues.stream().allMatch(thisType -> thisType.isAssignableFrom(thatType)));
-        }
+        if (that.myInstanceofValues.containsAll(myInstanceofValues)) return true;
+        if (that.myInstanceofValues.isEmpty()) return myInstanceofValues.isEmpty();
+        return that.myInstanceofValues.stream().allMatch(
+          thatType -> this.myInstanceofValues.stream().allMatch(thisType -> thisType.isAssignableFrom(thatType)));
       } else if (other instanceof Exact) {
         DfaPsiType otherType = ((Exact)other).myType;
-        return this.myInstanceofValues.stream().allMatch(otherType::isAssignableFrom) &&
-               this.myNotInstanceofValues.stream().noneMatch(otherType::isAssignableFrom);
+        return this.myInstanceofValues.stream().allMatch(my -> my.isAssignableFrom(otherType)) &&
+               this.myNotInstanceofValues.stream().noneMatch(my -> my.isAssignableFrom(otherType));
       }
       return false;
     }
 
     @Override
-    @Nullable
+    @NotNull
     public TypeConstraint unite(@NotNull TypeConstraint other) {
       if(isSuperStateOf(other)) return this;
       if(other.isSuperStateOf(this)) return other;
@@ -339,7 +359,7 @@ public abstract class TypeConstraint {
 
     @Override
     @Nullable
-    TypeConstraint intersect(@NotNull TypeConstraint right) {
+    public TypeConstraint intersect(@NotNull TypeConstraint right) {
       if (right instanceof Exact) {
         return right.intersect(this);
       }
@@ -355,6 +375,7 @@ public abstract class TypeConstraint {
       return result;
     }
 
+    @NotNull
     private TypeConstraint unite(@NotNull Constrained other) {
       Set<DfaPsiType> notTypes = new THashSet<>(this.myNotInstanceofValues);
       notTypes.retainAll(other.myNotInstanceofValues);
@@ -480,14 +501,6 @@ public abstract class TypeConstraint {
       notInstanceofValues = Collections.singleton(notInstanceofValues.iterator().next());
     }
     return new TypeConstraint.Constrained(instanceofValues, notInstanceofValues);
-  }
-
-  @Nullable
-  public static DfaFactMap withInstanceOf(@NotNull DfaFactMap map, @NotNull DfaPsiType type) {
-    TypeConstraint constraint = map.get(DfaFactType.TYPE_CONSTRAINT);
-    if (constraint == null) constraint = Constrained.EMPTY;
-    constraint = constraint.withInstanceofValue(type);
-    return constraint == null ? null : map.with(DfaFactType.TYPE_CONSTRAINT, constraint);
   }
 
   public static TypeConstraint exact(@NotNull DfaPsiType type) {

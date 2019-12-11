@@ -5,7 +5,8 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -37,17 +38,15 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
                                       @NotNull DfaMemoryState state) {
     if (range != null) return;
     DfaHint hint = DfaHint.ANY_VALUE;
-    if (value instanceof DfaConstValue) {
-      Object constVal = ((DfaConstValue)value).getValue();
-      if (Boolean.TRUE.equals(constVal)) {
-        hint = DfaHint.TRUE;
-      }
-      else if (Boolean.FALSE.equals(constVal)) {
-        hint = DfaHint.FALSE;
-      }
-      else if (DfaConstValue.isContractFail(value)) {
-        hint = DfaHint.FAIL;
-      }
+    DfType dfType = state.getDfType(value);
+    if (dfType == DfTypes.TRUE) {
+      hint = DfaHint.TRUE;
+    }
+    else if (dfType == DfTypes.FALSE) {
+      hint = DfaHint.FALSE;
+    }
+    else if (dfType == DfTypes.FAIL) {
+      hint = DfaHint.FAIL;
     }
     addHint(expression, hint);
   }

@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,7 +94,7 @@ class SideEffectCalculator {
       PsiExpression array = access.getArrayExpression();
       return mayHaveSideEffect(array) ||
              mayHaveSideEffect(access.getIndexExpression()) ||
-             !Boolean.TRUE.equals(CommonDataflow.getExpressionFact(array, DfaFactType.LOCALITY));
+             !DfReferenceType.isLocal(CommonDataflow.getDfType(array));
     }
     if (e instanceof PsiLambdaExpression) {
       return false; // lambda itself (unless called) has no side effect

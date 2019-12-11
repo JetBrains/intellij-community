@@ -2,6 +2,8 @@
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.openapi.project.Project;
@@ -216,9 +218,9 @@ class DebuggerDfaRunner extends DataFlowRunner {
                           DfaValueFactory factory,
                           DfaMemoryState state, DfaVariableValue var,
                           Value jdiValue) {
-    DfaConstValue val = getConstantValue(psiFactory, factory, jdiValue);
-    if (val != null) {
-      state.applyCondition(var.eq(val));
+    DfType val = getConstantValue(psiFactory, factory, jdiValue);
+    if (val != DfTypes.TOP) {
+      state.applyCondition(var.eq(factory.fromDfType(val)));
     }
     if (jdiValue instanceof ObjectReference) {
       ObjectReference ref = (ObjectReference)jdiValue;
@@ -227,8 +229,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (psiType == null) return;
       TypeConstraint exactType = TypeConstraint.exact(factory.createDfaType(psiType));
       String name = type.name();
-      state.applyFact(var, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-      state.applyFact(var, DfaFactType.TYPE_CONSTRAINT, exactType);
+      state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
       if (jdiValue instanceof ArrayReference) {
         DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, var);
         int jdiLength = ((ArrayReference)jdiValue).length();
@@ -291,28 +292,31 @@ class DebuggerDfaRunner extends DataFlowRunner {
     }
   }
 
-  @Nullable
-  private DfaConstValue getConstantValue(PsiElementFactory psiFactory, DfaValueFactory factory, Value jdiValue) {
+  @NotNull
+  private DfType getConstantValue(PsiElementFactory psiFactory, DfaValueFactory factory, Value jdiValue) {
     if (jdiValue == NullConst) {
-      return factory.getConstFactory().getNull();
+      return DfTypes.NULL;
     }
     if (jdiValue instanceof BooleanValue) {
-      return factory.getBoolean(((BooleanValue)jdiValue).value());
+      return DfTypes.booleanValue(((BooleanValue)jdiValue).value());
+    }
+    if (jdiValue instanceof LongValue) {
+      return DfTypes.longValue(((LongValue)jdiValue).longValue());
     }
     if (jdiValue instanceof ShortValue || jdiValue instanceof CharValue ||
         jdiValue instanceof ByteValue || jdiValue instanceof IntegerValue) {
-      return factory.getConstFactory().createFromValue(((PrimitiveValue)jdiValue).intValue(), PsiType.LONG);
+      return DfTypes.intValue(((PrimitiveValue)jdiValue).intValue());
     }
     if (jdiValue instanceof FloatValue) {
-      return factory.getConstFactory().createFromValue(((FloatValue)jdiValue).floatValue(), PsiType.FLOAT);
+      return DfTypes.floatValue(((FloatValue)jdiValue).floatValue());
     }
     if (jdiValue instanceof DoubleValue) {
-      return factory.getConstFactory().createFromValue(((DoubleValue)jdiValue).doubleValue(), PsiType.DOUBLE);
+      return DfTypes.doubleValue(((DoubleValue)jdiValue).doubleValue());
     }
     if (jdiValue instanceof StringReference) {
-      return factory.getConstFactory().createFromValue(
-        ((StringReference)jdiValue).value(), psiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING,
-                                                                                myBody.getResolveScope()));
+      DfaPsiType dfaType =
+        factory.createDfaType(psiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope()));
+      return DfTypes.constant(((StringReference)jdiValue).value(), dfaType);
     }
     if (jdiValue instanceof ObjectReference) {
       ReferenceType type = ((ObjectReference)jdiValue).referenceType();
@@ -324,13 +328,13 @@ class DebuggerDfaRunner extends DataFlowRunner {
           if (enumClass != null && enumClass.isEnum()) {
             PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
             if (enumConst instanceof PsiEnumConstant) {
-              return factory.getConstFactory().createFromValue(enumConst, psiType);
+              return DfTypes.constant(enumConst, factory.createDfaType(psiType));
             }
           }
         }
       }
     }
-    return null;
+    return DfTypes.TOP;
   }
 
   private static String getEnumConstantName(ObjectReference ref) {

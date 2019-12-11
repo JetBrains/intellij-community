@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.util.keyFMap.KeyFMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +34,10 @@ import java.util.List;
  * To create a new {@code DfaFactMap}, use {@link #EMPTY} and call {@link #with(DfaFactType, Object)} method.
  *
  * @author Tagir Valeev
+ * @deprecated Will be removed once {@link TrackingRunner} is adapted to avoid it
  */
-public final class DfaFactMap {
+@Deprecated
+final class DfaFactMap {
   public static final DfaFactMap EMPTY = new DfaFactMap(KeyFMap.EMPTY_MAP);
 
   // Contains DfaFactType as keys only
@@ -180,34 +184,24 @@ public final class DfaFactMap {
     });
   }
 
-  /**
-   * Calculate facts from variable itself (not knowing its state). This method should not be used directly.
-   * Instead use {@link DfaVariableValue#getInherentFacts()} which caches the calculated value.
-   *
-   * @param value variable value to calculate facts from
-   * @return a calculated fact map.
-   */
-  public static DfaFactMap calcFromVariable(@NotNull DfaVariableValue value) {
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (factMap, type) -> updateMap(factMap, type, value));
-  }
-
-  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
-    return map.with(factType, factType.calcFromVariable(value));
-  }
-
-  /**
-   * Derives facts which might be known from given DfaValue without knowing the particular memory state
-   *
-   * @param value a value to derive facts from
-   * @return map of facts derived from the value
-   */
   @NotNull
-  public static DfaFactMap fromDfaValue(DfaValue value) {
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (map, type) -> updateMap(map, type, value));
-  }
-
-  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
-    return map.with(factType, factType.fromDfaValue(value));
+  public static DfaFactMap fromDfType(DfType dfType) {
+    DfaFactMap map = EMPTY;
+    if (dfType instanceof DfIntegralType) {
+      map = map.with(DfaFactType.RANGE, ((DfIntegralType)dfType).getRange());
+    }
+    else if (dfType instanceof DfReferenceType) {
+      DfReferenceType refType = (DfReferenceType)dfType;
+      SpecialField field = refType.getSpecialField();
+      DfType type = refType.getSpecialFieldType();
+      map = map
+        .with(DfaFactType.TYPE_CONSTRAINT, refType.getConstraint())
+        .with(DfaFactType.NULLABILITY, refType.getNullability())
+        .with(DfaFactType.MUTABILITY, refType.getMutability())
+        .with(DfaFactType.LOCALITY, refType.isLocal())
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, field == null || type == DfTypes.TOP ? null : new SpecialFieldValue(field, type));
+    }
+    return map;
   }
 
   @FunctionalInterface

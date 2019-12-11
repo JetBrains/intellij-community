@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -164,8 +165,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                       @NotNull DfaMemoryState state) {
         if (owner != myOwner) return;
         myContexts.add(expression);
-        LongRangeSet range = state.getValueFact(value, DfaFactType.RANGE);
-        myRange = range == null ? LongRangeSet.all() : myRange.unite(range);
+        myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
       }
     }
 

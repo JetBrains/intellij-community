@@ -18,6 +18,8 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -52,7 +54,7 @@ public class GuessManagerImpl extends GuessManager {
     initMethodPatterns();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
@@ -571,16 +573,10 @@ public class GuessManagerImpl extends GuessManager {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
         if (myConstraint == TypeConstraint.empty()) return;
-        TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
-        if (constraint == null) {
-          constraint = myInitial;
-        }
+        DfType type = memoryState.getDfType(memoryState.peek());
+        TypeConstraint constraint = type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : myInitial;
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
-          if (myConstraint == null) {
-            myConstraint = TypeConstraint.empty();
-            return;
-          }
         }
       }
     }

@@ -16,8 +16,9 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,7 @@ public final class DfaRelation extends DfaCondition {
 
   public static DfaRelation createRelation(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
     if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) &&
-        dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
+        dfaRight instanceof DfaTypeValue && !(dfaLeft instanceof DfaTypeValue)) {
       return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
     if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaBinOpValue
@@ -65,27 +66,27 @@ public final class DfaRelation extends DfaCondition {
       }
       return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
-    if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
-      return createConstBasedRelation((DfaFactMapValue)dfaLeft, relationType, (DfaConstValue)dfaRight);
+    if (dfaLeft instanceof DfaTypeValue && dfaRight.getDfType() instanceof DfConstantType) {
+      return createConstBasedRelation((DfaTypeValue)dfaLeft, relationType, dfaRight);
     }
-    else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
-      return createConstBasedRelation((DfaFactMapValue)dfaRight, relationType, (DfaConstValue)dfaLeft);
+    else if (dfaRight instanceof DfaTypeValue && dfaLeft.getDfType() instanceof DfConstantType) {
+      return createConstBasedRelation((DfaTypeValue)dfaRight, relationType, dfaLeft);
     }
-    if (dfaLeft instanceof DfaInstanceofValue && dfaRight instanceof DfaConstValue) {
+    if (dfaLeft instanceof DfaInstanceofValue && dfaRight.getDfType() instanceof DfConstantType) {
       return new DfaRelation(dfaLeft, dfaRight, relationType);
     }
-    if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaInstanceofValue) {
+    if (dfaLeft.getDfType() instanceof DfConstantType && dfaRight instanceof DfaInstanceofValue) {
       return new DfaRelation(dfaRight, dfaLeft, relationType);
     }
     return null;
   }
 
   @NotNull
-  private static DfaRelation createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
-    if (dfaRight.getValue() == null && DfaNullability.isNullable(dfaLeft.getFacts())) {
-      return new DfaRelation(dfaLeft.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE), dfaRight, relationType);
+  private static DfaRelation createConstBasedRelation(DfaTypeValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    if (dfaRight.getDfType() == DfTypes.NULL && DfaNullability.fromDfType(dfaLeft.getDfType()) == DfaNullability.NULLABLE) {
+      return new DfaRelation(dfaLeft.getFactory().fromDfType(DfaNullability.NULLABLE.asDfType()), dfaRight, relationType);
     }
-    return new DfaRelation(DfaUnknownValue.getInstance(), dfaRight, relationType);
+    return new DfaRelation(dfaLeft.getFactory().getUnknown(), dfaRight, relationType);
   }
 
   public boolean isEquality() {

@@ -17,13 +17,13 @@ package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.DfaFactMap;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -78,14 +78,14 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  protected DfaFactMap filterFactsOnAssignment(DfaVariableValue var, @NotNull DfaFactMap facts) {
-    if (myHonorAssignments) return facts;
-    if (ControlFlowAnalyzer.isTempVariable(var) || 
+  protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {
+    if (myHonorAssignments) return dfType;
+    if (ControlFlowAnalyzer.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||    
         var.getPsiVariable() instanceof PsiParameter && var.getPsiVariable().getParent().getParent() instanceof PsiLambdaExpression) {
       // Pass type normally for synthetic lambda parameter assignment
-      return facts;
+      return dfType;
     }
-    return facts.with(DfaFactType.TYPE_CONSTRAINT, null);
+    return ((DfReferenceType)dfType).dropTypeConstraint();
   }
 
   @NotNull
@@ -118,10 +118,9 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
       DfaValue leftOperand = rel.getLeftOperand();
       DfaValue rightOperand = rel.getRightOperand();
       RelationType relation = rel.getRelation();
-      if (leftOperand instanceof DfaInstanceofValue && rightOperand instanceof DfaConstValue &&
-          (relation == RelationType.EQ || relation == RelationType.NE)) {
+      if (leftOperand instanceof DfaInstanceofValue && (relation == RelationType.EQ || relation == RelationType.NE)) {
         DfaInstanceofValue value = (DfaInstanceofValue)leftOperand;
-        Boolean val = ObjectUtils.tryCast(((DfaConstValue)rightOperand).getValue(), Boolean.class);
+        Boolean val = DfConstantType.getConstantOfType(rightOperand.getDfType(), Boolean.class);
         if (val != null) {
           boolean negated = (relation == RelationType.EQ) != val; 
           if (!negated) {

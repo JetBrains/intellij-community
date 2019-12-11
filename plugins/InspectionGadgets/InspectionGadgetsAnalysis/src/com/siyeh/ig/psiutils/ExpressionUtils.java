@@ -1121,6 +1121,7 @@ public class ExpressionUtils {
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(call -> {
       if (call instanceof PsiNewExpression) return true;
+      if (call instanceof PsiArrayInitializerExpression) return true;
       if (call instanceof PsiMethodCallExpression) {
         ContractReturnValue returnValue =
           JavaMethodContractUtil.getNonFailingReturnValue(JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)call));

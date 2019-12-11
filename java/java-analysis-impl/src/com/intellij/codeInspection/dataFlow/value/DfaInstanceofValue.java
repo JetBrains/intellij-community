@@ -27,7 +27,7 @@ public class DfaInstanceofValue extends DfaValue {
   private final @NotNull PsiType myCastType;
   private final @NotNull DfaCondition myRelation;
 
-  public DfaInstanceofValue(DfaValueFactory factory,
+  public DfaInstanceofValue(@NotNull DfaValueFactory factory,
                             @NotNull PsiExpression expression,
                             @NotNull PsiType castType,
                             @NotNull DfaCondition relation) {

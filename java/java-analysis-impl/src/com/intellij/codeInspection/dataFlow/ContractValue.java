@@ -15,8 +15,12 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +51,7 @@ public abstract class ContractValue {
       qualifierValue = factory.createValue(qualifier);
     }
     if (qualifierValue == null) {
-      qualifierValue = DfaUnknownValue.getInstance();
+      qualifierValue = factory.getUnknown();
     }
     boolean varArgCall = MethodCallUtils.isVarArgCall(call);
     PsiExpression[] args = argumentList.getExpressions();
@@ -59,7 +63,7 @@ public abstract class ContractValue {
         argValue = factory.createValue(args[i]);
       }
       if (argValue == null) {
-        argValue = DfaUnknownValue.getInstance();
+        argValue = factory.getUnknown();
       }
       argValues[i] = argValue;
     }
@@ -122,7 +126,8 @@ public abstract class ContractValue {
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type), String.valueOf(value));
+    return new IndependentValue(factory -> factory.getConstant(TypeConversionUtil.computeCastTo(value, type), type),
+                                String.valueOf(value));
   }
 
   public static ContractValue booleanValue(boolean value) {
@@ -165,7 +170,7 @@ public abstract class ContractValue {
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
       if (arguments.myArguments.length <= myIndex) {
-        return DfaUnknownValue.getInstance();
+        return factory.getUnknown();
       }
       return arguments.myArguments[myIndex];
     }
@@ -194,14 +199,14 @@ public abstract class ContractValue {
   }
 
   private static class IndependentValue extends ContractValue {
-    static final IndependentValue NULL = new IndependentValue(factory -> factory.getConstFactory().getNull(), "null");
-    static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true") {
+    static final IndependentValue NULL = new IndependentValue(factory -> factory.getNull(), "null");
+    static final IndependentValue TRUE = new IndependentValue(factory -> factory.getBoolean(true), "true") {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == FALSE;
       }
     };
-    static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false") {
+    static final IndependentValue FALSE = new IndependentValue(factory -> factory.getBoolean(false), "false") {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == TRUE;
@@ -311,11 +316,12 @@ public abstract class ContractValue {
       }
       if (index >= 0 && index < arguments.myArguments.length) {
         DfaValue arg = arguments.myArguments[index];
-        if (arg instanceof DfaFactMapValue) {
-          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, targetNullability);
-          if (newArg != arg) {
+        if (arg instanceof DfaTypeValue) {
+          DfType dfType = arg.getDfType();
+          DfType target = dfType.meet(targetNullability.asDfType());
+          if (!target.equals(dfType) && target != DfTypes.BOTTOM) {
             DfaValue[] newArguments = arguments.myArguments.clone();
-            newArguments[index] = newArg;
+            newArguments[index] = arg.getFactory().fromDfType(target);
             return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
           }
         }
@@ -348,7 +354,7 @@ public abstract class ContractValue {
 
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return DfaUnknownValue.getInstance();
+      return factory.getUnknown();
     }
 
     @NotNull
@@ -356,10 +362,10 @@ public abstract class ContractValue {
     DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
-      if (left instanceof DfaConstValue && left.getType() instanceof PsiPrimitiveType) {
+      if (left.getDfType() instanceof DfPrimitiveType) {
         right = DfaUtil.boxUnbox(right, left.getType());
       }
-      if (right instanceof DfaConstValue && right.getType() instanceof PsiPrimitiveType) {
+      if (right.getDfType() instanceof DfPrimitiveType) {
         left = DfaUtil.boxUnbox(left, right.getType());
       }
       return left.cond(myRelationType, right);

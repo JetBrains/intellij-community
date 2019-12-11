@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.*;
@@ -79,9 +78,8 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
       if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
         return;
       }
-      TypeConstraint constraint = CommonDataflow.getExpressionFact(operand, DfaFactType.TYPE_CONSTRAINT);
-      if (constraint != null &&
-          constraint.getInstanceofValues().stream().map(DfaPsiType::getPsiType).anyMatch(type -> castClassType.isAssignableFrom(type))) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(operand));
+      if (constraint.getInstanceofValues().stream().map(DfaPsiType::getPsiType).anyMatch(type -> castClassType.isAssignableFrom(type))) {
         return;
       }
       registerError(castTypeElement);

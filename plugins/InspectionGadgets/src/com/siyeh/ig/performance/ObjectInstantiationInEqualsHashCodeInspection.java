@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -107,7 +110,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     }
 
     private static boolean isAutoBoxingFromCache(PsiExpression expression) {
-      final LongRangeSet range = CommonDataflow.getExpressionFact(expression, DfaFactType.RANGE);
+      final LongRangeSet range = CommonDataflow.getExpressionRange(expression);
       if (range != null && !range.isEmpty() && range.min() >= -128 && range.max() <= 127) {
         return true;
       }

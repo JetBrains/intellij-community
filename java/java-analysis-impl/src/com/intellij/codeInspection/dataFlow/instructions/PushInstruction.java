@@ -20,23 +20,21 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PushInstruction extends ExpressionPushingInstruction<PsiExpression> {
   private final DfaValue myValue;
   private final boolean myReferenceWrite;
 
-  public PushInstruction(@Nullable DfaValue value, PsiExpression place) {
+  public PushInstruction(@NotNull DfaValue value, PsiExpression place) {
     this(value, place, false);
   }
 
-  public PushInstruction(@Nullable DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
+  public PushInstruction(@NotNull DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
     super(place);
-    myValue = value != null ? value : DfaUnknownValue.getInstance();
+    myValue = value;
     myReferenceWrite = isReferenceWrite;
   }
 

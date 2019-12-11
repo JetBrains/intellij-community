@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -212,8 +211,8 @@ public class MalformedFormatStringInspection extends BaseInspection {
           continue;
         }
         if (validator != null && !validator.valid(argumentType)) {
-          TypeConstraint fact = CommonDataflow.getExpressionFact(argument, DfaFactType.TYPE_CONSTRAINT);
-          PsiType preciseType = fact != null ? fact.getPsiType() : null;
+          TypeConstraint fact = TypeConstraint.fromDfType(CommonDataflow.getDfType(argument));
+          PsiType preciseType = fact.getPsiType();
           if (preciseType == null || !validator.valid(preciseType)) {
             registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
           }

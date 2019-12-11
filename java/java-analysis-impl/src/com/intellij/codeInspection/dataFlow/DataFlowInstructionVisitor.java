@@ -2,6 +2,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.application.Application;
@@ -69,8 +72,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       } else {
         DfaValue value = memState.peek();
         DfaValue target = memState.getStackValue(1);
+        DfType dfType = memState.getDfType(value);
         if (target != null && memState.areEqual(value, target) &&
-            !(value instanceof DfaConstValue && isFloatingZero(((DfaConstValue)value).getValue())) &&
+            !(dfType instanceof DfConstantType && isFloatingZero(((DfConstantType<?>)dfType).getValue())) &&
             // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
             // (we compare strings by contents)
             !(TypeUtils.isJavaLangString(left.getType()) && !memState.isNull(value)) &&
@@ -107,14 +111,13 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
            ((PsiAssignmentExpression)rExpression).getOperationTokenType().equals(JavaTokenType.EQ)) {
       rExpression = ((PsiAssignmentExpression)rExpression).getRExpression();
     }
-    if (rExpression == null) return false;
     DfaValue dest = runner.getFactory().createValue(rExpression);
-    if (!(dest instanceof DfaConstValue)) return false;
-    Object value = ((DfaConstValue)dest).getValue();
+    if (dest == null) return false;
+    DfType dfType = dest.getDfType();
 
     PsiType type = var.getType();
-    boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) ||
-                             Long.valueOf(0L).equals(value) && TypeConversionUtil.isIntegralNumberType(type);
+    boolean isDefaultValue = DfConstantType.isConst(dfType, PsiTypesUtil.getDefaultValue(type)) ||
+                             DfConstantType.isConst(dfType, 0) && TypeConversionUtil.isIntegralNumberType(type);
     if (!isDefaultValue) return false;
     PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
     return method != null && method.isConstructor();
@@ -222,8 +225,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     expression.accept(new ExpressionVisitor(value, memState));
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression) {
-      TypeConstraint fact = memState.getValueFact(value, DfaFactType.TYPE_CONSTRAINT);
-      if (fact == null) fact = TypeConstraint.empty();
+      TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
       myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::unite);
     }
     reportConstantExpressionValue(value, memState, expression, range);
@@ -257,7 +259,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
     DfaValueFactory factory = value.getFactory();
-    DfaValue optionalValue = factory == null ? DfaUnknownValue.getInstance() : SpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    DfaValue optionalValue = SpecialField.OPTIONAL_VALUE.createValue(factory, value);
     ThreeState present;
     if (memState.isNull(optionalValue)) {
       present = ThreeState.NO;
@@ -380,7 +382,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       super.visitCallExpression(call);
       Boolean isFailing = myFailingCalls.get(call);
       if (isFailing != null || hasNonTrivialFailingContracts(call)) {
-        myFailingCalls.put(call, DfaConstValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
+        myFailingCalls.put(call, DfaTypeValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
       }
     }
   }
@@ -408,20 +410,17 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     }
 
     @NotNull
-    static ConstantResult fromConstValue(@NotNull DfaConstValue constant) {
-      Object value = constant.getValue();
-      if (value == null) return NULL;
-      if (Boolean.TRUE.equals(value)) return TRUE;
-      if (Boolean.FALSE.equals(value)) return FALSE;
+    static ConstantResult fromDfType(@NotNull DfType dfType) {
+      if (dfType == DfTypes.NULL) return NULL;
+      if (dfType == DfTypes.TRUE) return TRUE;
+      if (dfType == DfTypes.FALSE) return FALSE;
       return UNKNOWN;
     }
 
     @NotNull
     static ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
-      if (state == UNKNOWN) return UNKNOWN;
-      DfaConstValue dfaConst = memState.getConstantValue(value);
-      if (dfaConst == null) return UNKNOWN;
-      ConstantResult nextState = fromConstValue(dfaConst);
+      if (state == UNKNOWN || value == null) return UNKNOWN;
+      ConstantResult nextState = fromDfType(memState.getUnboxedDfType(value));
       return state == null || state == nextState ? nextState : UNKNOWN;
     }
   }

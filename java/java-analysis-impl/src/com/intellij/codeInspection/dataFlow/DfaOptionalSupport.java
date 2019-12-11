@@ -17,6 +17,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -84,10 +86,8 @@ public class DfaOptionalSupport {
    */
   @NotNull
   public static DfaValue getOptionalValue(DfaValueFactory factory, boolean present) {
-    DfaValue value = present ? factory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL) : factory.getConstFactory().getNull();
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
-      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.OPTIONAL_VALUE.withValue(value));
-    return factory.getFactFactory().createValue(facts);
+    DfType valueType = present ? DfTypes.NOT_NULL_OBJECT : DfTypes.NULL;
+    return factory.fromDfType(SpecialField.OPTIONAL_VALUE.asDfType(valueType));
   }
 
   private static class ReplaceOptionalCallFix implements LocalQuickFix {

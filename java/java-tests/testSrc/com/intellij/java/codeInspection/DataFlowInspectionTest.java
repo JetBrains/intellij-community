@@ -672,4 +672,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testArraysAsList() { doTest(); }
   public void testArraycopy() { doTest(); }
   public void testEnumName() { doTest(); }
+  public void testStaticConstantType() { doTest(); }
+  public void testReassignedAfterNullCheck() { doTest(); }
+  public void testCompareEqualObjectWithNull() { doTest(); }
+  public void testNullabilityAfterCastAndInstanceOf() { doTest(); }
 }

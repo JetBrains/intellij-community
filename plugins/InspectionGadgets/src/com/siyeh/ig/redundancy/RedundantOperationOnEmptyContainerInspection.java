@@ -7,11 +7,9 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.SpecialFieldValue;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -101,9 +99,10 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         } else {
           return null;
         }
-        SpecialFieldValue fact = CommonDataflow.getExpressionFact(value, DfaFactType.SPECIAL_FIELD_VALUE);
-        DfaValue length = lengthField.extract(fact);
-        if (length instanceof DfaConstValue && Long.valueOf(0).equals(((DfaConstValue)length).getValue())) {
+        DfType dfType = CommonDataflow.getDfType(value);
+        DfType length = lengthField.getFromQualifier(dfType);
+        // TODO: remove 0L when refactoring is complete
+        if (DfConstantType.isConst(length, 0) || DfConstantType.isConst(length, 0L)) {
           return message;
         }
         return null;

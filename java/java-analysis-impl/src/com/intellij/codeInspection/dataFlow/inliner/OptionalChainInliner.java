@@ -174,7 +174,7 @@ public class OptionalChainInliner implements CallInliner {
     if (pushIntermediateOperationValue(builder, call)) {
       DfaVariableValue result = builder.createTempVariable(call.getType());
       builder
-        .assign(result, builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
+        .assign(result, builder.getFactory().getObjectType(call.getType(), Nullability.NOT_NULL)) // stack: ...value opt
         .push(SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), result)) // stack: ...value opt opt.value
         .splice(3, 1, 0, 2)
         .assign()

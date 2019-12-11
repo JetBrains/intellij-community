@@ -4,7 +4,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -146,8 +146,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     LongRangeSet getFullRange() {
       LongRangeSet result;
       if (myField != null) {
-        DfaValueFactory factory = new DfaValueFactory(null, false);
-        result = LongRangeSet.fromDfaValue(myField.getDefaultValue(factory, false));
+        result = DfLongType.extractRange(myField.getDefaultValue(false));
       }
       else {
         result = LongRangeSet.fromType(myExpression.getType());

@@ -37,4 +37,11 @@ class Testcase {
     Integer boxed = x;
     if (<warning descr="Condition 'boxed == 5' is always 'false'">boxed == 5</warning>) {}
   }
+
+  public void testUnboxObject(Object obj, int val) {
+    if (obj instanceof Integer) {
+      int objVal = (int)obj;
+      if (objVal == val) {}
+    }
+  }
 }

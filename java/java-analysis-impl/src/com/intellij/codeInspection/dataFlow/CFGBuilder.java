@@ -18,7 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -79,7 +79,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushNull() {
-    return add(new PushInstruction(getFactory().getConstFactory().getNull(), null));
+    return add(new PushInstruction(getFactory().getNull(), null));
   }
 
   /**
@@ -419,7 +419,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder boxUnbox(PsiExpression expression, PsiType expressionType, PsiType expectedType) {
-    myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expressionType, expectedType);
+    myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expressionType, expectedType, false);
     return this;
   }
 
@@ -469,7 +469,7 @@ public class CFGBuilder {
    */
   public CFGBuilder assignAndPop(DfaValue target, DfaValue source) {
     if (target instanceof DfaVariableValue) {
-      if (source == DfaUnknownValue.getInstance()) {
+      if (DfaTypeValue.isUnknown(source)) {
         add(new FlushVariableInstruction((DfaVariableValue)target));
       } else {
         pushForWrite((DfaVariableValue)target).push(source).assign().pop();
@@ -491,7 +491,7 @@ public class CFGBuilder {
    */
   public CFGBuilder assign(DfaValue target, DfaValue source) {
     if (target instanceof DfaVariableValue) {
-      if (source == DfaUnknownValue.getInstance()) {
+      if (DfaTypeValue.isUnknown(source)) {
         add(new FlushVariableInstruction((DfaVariableValue)target)).push(target);
       } else {
         pushForWrite((DfaVariableValue)target).push(source).assign();
@@ -646,12 +646,12 @@ public class CFGBuilder {
         if (argCount == expectedArgCount) {
           if (pushQualifier) {
             DfaValue qualifierValue = myMethodRefQualifiers.remove(methodRef);
-            push(qualifierValue == null ? DfaUnknownValue.getInstance() : qualifierValue);
+            push(qualifierValue == null ? getFactory().getUnknown() : qualifierValue);
             moveTopValue(argCount);
           }
           myAnalyzer.addBareCall(null, methodRef);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
-                                                          LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
+                                                          LambdaUtil.getFunctionalInterfaceReturnType(methodRef), false);
           if (resultNullability == Nullability.NOT_NULL) {
             myAnalyzer.addNullCheck(NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
           }
@@ -662,7 +662,7 @@ public class CFGBuilder {
       if (qualifier instanceof PsiTypeElement && ((PsiTypeElement)qualifier).getType() instanceof PsiArrayType) {
         // like String[]::new
         splice(argCount)
-          .push(getFactory().createTypeValue(((PsiTypeElement)qualifier).getType(), Nullability.NOT_NULL));
+          .push(getFactory().getObjectType(((PsiTypeElement)qualifier).getType(), Nullability.NOT_NULL));
         return this;
       }
     }
@@ -678,7 +678,7 @@ public class CFGBuilder {
     myAnalyzer.addMethodThrows(LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType), null);
     PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
     if (returnType != null) {
-      push(getFactory().createTypeValue(returnType, DfaPsiUtil.getTypeNullability(returnType)));
+      push(getFactory().getObjectType(returnType, DfaPsiUtil.getTypeNullability(returnType)));
     }
     else {
       pushUnknown();
@@ -724,7 +724,7 @@ public class CFGBuilder {
                                                                    PsiClassObjectAccessExpression.class);
     if (qualifier == null) return false;
     PsiType type = qualifier.getOperand().getType();
-    push(getFactory().createTypeValue(type, Nullability.NOT_NULL));
+    push(getFactory().getObjectType(type, Nullability.NOT_NULL));
     add(new InstanceofInstruction(methodRef, null, type));
     return true;
   }
@@ -791,7 +791,7 @@ public class CFGBuilder {
       myBranches.add(() -> pushUnknown().add(condGoto));
       assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getType()));
     } else {
-      push(factory.getConstFactory().getSentinel());
+      push(factory.getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
         boxUnbox(expression, targetVariable.getType());
@@ -800,7 +800,7 @@ public class CFGBuilder {
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));
       GotoInstruction gotoInstruction = new GotoInstruction(null);
       gotoInstruction.setOffset(myAnalyzer.getInstructionCount());
-      dup().push(factory.getConstFactory().getSentinel()).compare(JavaTokenType.EQEQ);
+      dup().push(factory.getSentinel()).compare(JavaTokenType.EQEQ);
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       add(condGoto);
       assignTo(targetVariable);

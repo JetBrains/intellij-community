@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -158,10 +159,10 @@ public abstract class InstructionVisitor {
     DfaValue value = state.pop();
     DfaValueFactory factory = runner.getFactory();
     if (value instanceof DfaBinOpValue) {
-      value = factory.getFactValue(DfaFactType.RANGE, state.getValueFact(value, DfaFactType.RANGE));
+      value = factory.fromDfType(state.getDfType(value));
     }
     DfaValue boxed = factory.getBoxedFactory().createBoxed(value, instruction.getTargetType());
-    state.push(boxed == null ? factory.createTypeValue(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
+    state.push(boxed == null ? factory.getObjectType(instruction.getTargetType(), Nullability.NOT_NULL) : boxed);
     return nextInstruction(instruction, runner, state);
   }
 
@@ -176,7 +177,7 @@ public abstract class InstructionVisitor {
                                                      DataFlowRunner runner,
                                                      DfaMemoryState state) {
     state.pop();
-    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, state);
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, state);
     return nextInstruction(instruction, runner, state);
   }
 
@@ -234,15 +235,14 @@ public abstract class InstructionVisitor {
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
     memState.pop();
-    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
-    DfaConstValue constant = state.getConstantValue(value);
-    PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
-    state.push(runner.getFactory().createTypeValue(type, Nullability.NOT_NULL));
+    PsiType type = DfConstantType.getConstantOfType(state.getDfType(value), PsiType.class);
+    state.push(runner.getFactory().getObjectType(type, Nullability.NOT_NULL));
     return nextInstruction(instruction, runner, state);
   }
 
@@ -279,7 +279,7 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitMethodReference(MethodReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
-    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -299,13 +299,13 @@ public abstract class InstructionVisitor {
     }
 
     memState.pop(); //qualifier
-    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
-    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
+    pushExpressionResult(runner.getFactory().getUnknown(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 

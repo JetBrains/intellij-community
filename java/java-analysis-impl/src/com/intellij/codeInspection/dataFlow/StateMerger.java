@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
@@ -13,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
 
 /**
  * @author peter
@@ -70,12 +69,12 @@ class StateMerger {
   @NotNull
   private MultiMap<Fact, DfaMemoryStateImpl> createFactToStateMap(@NotNull List<DfaMemoryStateImpl> states) {
     MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
-    Map<DfaConstValue, Map<DfaVariableValue, Set<DfaMemoryStateImpl>>> constantVars = new HashMap<>();
+    Map<DfaTypeValue, Map<DfaVariableValue, Set<DfaMemoryStateImpl>>> constantVars = new HashMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       for (Fact fact : getFacts(state)) {
         statesByFact.putValue(fact, state);
-        DfaConstValue value = fact.comparedToConstant();
+        DfaTypeValue value = fact.comparedToConstant();
         if (value != null) {
           constantVars.computeIfAbsent(value, k -> new HashMap<>())
             .computeIfAbsent(fact.myVar, k -> ContainerUtil.newIdentityTroveSet()).add(state);
@@ -107,7 +106,7 @@ class StateMerger {
    * @return true if fact is {@link EqualityFact} which compares two variables which were compared with some constant
    */
   private static boolean isComparisonOfVariablesComparedWithConstant(Fact fact,
-                                                                     Map<DfaConstValue, Map<DfaVariableValue, Set<DfaMemoryStateImpl>>> constantVars,
+                                                                     Map<DfaTypeValue, Map<DfaVariableValue, Set<DfaMemoryStateImpl>>> constantVars,
                                                                      Collection<DfaMemoryStateImpl> positiveStates,
                                                                      Collection<DfaMemoryStateImpl> negativeStates) {
     if (!(fact instanceof EqualityFact) || !(((EqualityFact)fact).myArg instanceof DfaVariableValue)) return false;
@@ -172,9 +171,9 @@ class StateMerger {
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       state.forVariableStates((varValue, varState) -> {
-        LongRangeSet range = varState.getFact(RANGE);
-        if (range != null) {
-          ranges.computeIfAbsent(varValue, k -> new HashSet<>()).add(range);
+        DfType dfType = varState.myDfType;
+        if (dfType instanceof DfIntegralType) {
+          ranges.computeIfAbsent(varValue, k -> new HashSet<>()).add(((DfIntegralType)dfType).getRange());
         }
       });
     }
@@ -187,11 +186,7 @@ class StateMerger {
     Map<DfaMemoryStateImpl, List<DfaMemoryStateImpl>> merged = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
       DfaVariableState variableState = state.getVariableState(var);
-      LongRangeSet range = variableState.getFact(RANGE);
-      if (range == null) {
-        range = LongRangeSet.fromType(var.getType());
-        if (range == null) return null;
-      }
+      if (!(variableState.myDfType instanceof DfIntegralType)) return null;
       merged.computeIfAbsent(copyWithoutVar(state, var), k -> new ArrayList<>()).add(state);
     }
     if (merged.size() == states.size()) return null;
@@ -224,54 +219,48 @@ class StateMerger {
   private static Set<Fact> doGetFacts(DfaMemoryStateImpl state) {
     Set<Fact> result = new LinkedHashSet<>();
 
-    IdentityHashMap<EqClass, EqClassInfo> classInfo = new IdentityHashMap<>();
-
     for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-      EqClassInfo info = classInfo.computeIfAbsent(eqClass, EqClassInfo::new);
-      DfaValue constant = info.constant;
-      List<DfaVariableValue> vars = info.vars;
-      int size = vars.size();
+      int size = eqClass.size();
       for (int i = 0; i < size; i++) {
-        DfaVariableValue var = vars.get(i);
-        if (constant != null) {
-          result.add(Fact.createEqualityFact(var, constant));
-        }
+        DfaVariableValue var = eqClass.getVariable(i);
         for (int j = i + 1; j < size; j++) {
-          DfaVariableValue eqVar = vars.get(j);
+          DfaVariableValue eqVar = eqClass.getVariable(j);
           result.add(Fact.createEqualityFact(var, eqVar));
         }
       }
     }
 
     for (DistinctPairSet.DistinctPair classPair : state.getDistinctClassPairs()) {
-      EqClassInfo info1 = classInfo.computeIfAbsent(classPair.getFirst(), EqClassInfo::new);
-      EqClassInfo info2 = classInfo.computeIfAbsent(classPair.getSecond(), EqClassInfo::new);
-
-      for (DfaVariableValue var1 : info1.vars) {
-        for (DfaVariableValue var2 : info2.vars) {
+      EqClass class1 = classPair.getFirst();
+      EqClass class2 = classPair.getSecond();
+      for (DfaVariableValue var1 : class1) {
+        for (DfaVariableValue var2 : class2) {
           result.add(new EqualityFact(var1, false, var2));
           result.add(new EqualityFact(var2, false, var1));
         }
       }
-      if(info1.constant != null) {
-        for (DfaVariableValue var2 : info2.vars) {
-          result.add(new EqualityFact(var2, false, info1.constant));
-        }
-      }
-      if(info2.constant != null) {
-        for (DfaVariableValue var1 : info1.vars) {
-          result.add(new EqualityFact(var1, false, info2.constant));
-        }
-      }
     }
 
-    state.forVariableStates((var, variableState) -> {
-      TypeConstraint typeConstraint = variableState.getTypeConstraint();
+    state.forVariableStates((var, varState) -> {
+      TypeConstraint typeConstraint = varState.getTypeConstraint();
       for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
         result.add(new InstanceofFact(var, true, type));
       }
       for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
         result.add(new InstanceofFact(var, false, type));
+      }
+      DfType dfType = state.getDfType(var);
+      if (dfType instanceof DfConstantType) {
+        result.add(new EqualityFact(var, true, var.getFactory().fromDfType(dfType)));
+      }
+      if (dfType instanceof DfAntiConstantType) {
+        Set<?> notValues = ((DfAntiConstantType<?>)dfType).getNotValues();
+        if (!notValues.isEmpty() && var.getType() != null) {
+          DfaPsiType dfaPsiType = var.getFactory().createDfaType(var.getType());
+          for (Object notValue : notValues) {
+            result.add(new EqualityFact(var, false, var.getFactory().fromDfType(DfTypes.constant(notValue, dfaPsiType))));
+          }
+        }
       }
     });
     return result;
@@ -343,7 +332,7 @@ class StateMerger {
     @NotNull
     abstract Fact getPositiveCounterpart();
 
-    DfaConstValue comparedToConstant() {
+    DfaTypeValue comparedToConstant() {
       return null;
     }
 
@@ -400,8 +389,8 @@ class StateMerger {
     }
 
     @Override
-    DfaConstValue comparedToConstant() {
-      return myArg instanceof DfaConstValue ? (DfaConstValue)myArg : null;
+    DfaTypeValue comparedToConstant() {
+      return myArg instanceof DfaTypeValue ? (DfaTypeValue)myArg : null;
     }
 
     @Override
@@ -418,7 +407,16 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      state.removeEquivalenceForVariableAndWrappers(myVar);
+      DfType dfType = state.getDfType(myVar);
+      if (dfType instanceof DfConstantType || 
+          dfType instanceof DfAntiConstantType && ((DfAntiConstantType<?>)dfType).getNotValues().size() == 1) {
+        state.flushVariable(myVar);
+        if (myArg.getDfType() == DfTypes.NULL) {
+          state.meetDfType(myVar, DfaNullability.NULLABLE.asDfType());
+        }
+      } else {
+        state.removeEquivalence(myVar);
+      }
     }
   }
 
@@ -512,16 +510,6 @@ class StateMerger {
           myMerged.add(entry.getKey());
         }
       }
-    }
-  }
-
-  static final class EqClassInfo {
-    final List<DfaVariableValue> vars;
-    final DfaConstValue constant;
-
-    EqClassInfo(EqClass eqClass) {
-      vars = eqClass.getVariables(false);
-      constant = eqClass.findConstant();
     }
   }
 }

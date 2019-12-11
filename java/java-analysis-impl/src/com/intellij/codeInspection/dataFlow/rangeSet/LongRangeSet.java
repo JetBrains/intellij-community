@@ -2,8 +2,7 @@
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -686,6 +685,7 @@ public abstract class LongRangeSet {
   /**
    * @return a set containing all possible long values
    */
+  @NotNull
   public static LongRangeSet all() {
     return Range.LONG_RANGE;
   }
@@ -713,20 +713,6 @@ public abstract class LongRangeSet {
     }
     else if (val instanceof Character) {
       return point(((Character)val).charValue());
-    }
-    return null;
-  }
-
-  @Nullable
-  public static LongRangeSet fromDfaValue(DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      return ((DfaFactMapValue)value).get(DfaFactType.RANGE);
-    }
-    if (value instanceof DfaConstValue) {
-      return fromConstant(((DfaConstValue)value).getValue());
-    }
-    if (value instanceof DfaVariableValue) {
-      return fromType(value.getType());
     }
     return null;
   }

@@ -15,21 +15,24 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DfaValue {
   private final int myID;
+  @NotNull
   protected final DfaValueFactory myFactory;
 
-  protected DfaValue(final DfaValueFactory factory) {
+  protected DfaValue(@NotNull final DfaValueFactory factory) {
     myFactory = factory;
-    myID = factory == null ? 0 : factory.registerValue(this);
+    myID = factory.registerValue(this);
   }
 
+  @NotNull
   public DfaValueFactory getFactory() {
     return myFactory;
   }
@@ -47,6 +50,14 @@ public abstract class DfaValue {
   }
 
   /**
+   * @return a DfType this value belongs under any possible memory state
+   */
+  @NotNull
+  public DfType getDfType() {
+    return DfTypes.TOP;
+  }
+
+  /**
    * Produces a value which describes a union of this value and other value
    *
    * @param other other value to unite with
@@ -54,8 +65,7 @@ public abstract class DfaValue {
    */
   public DfaValue unite(DfaValue other) {
     if (this == other) return this;
-    if (this == DfaUnknownValue.getInstance() || other == DfaUnknownValue.getInstance()) return DfaUnknownValue.getInstance();
-    return myFactory.getFactFactory().createValue(DfaFactMap.fromDfaValue(this).unite(DfaFactMap.fromDfaValue(other)));
+    return myFactory.fromDfType(getDfType().join(other.getDfType()));
   }
 
   /**

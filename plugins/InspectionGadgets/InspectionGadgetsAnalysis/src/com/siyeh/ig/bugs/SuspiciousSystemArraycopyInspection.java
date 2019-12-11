@@ -16,10 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.SpecialFieldValue;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -115,17 +114,12 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
                              @NotNull PsiMethodCallExpression call) {
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(src);
       if (result == null) return;
-      SpecialFieldValue srcFact = result.getExpressionFact(src, DfaFactType.SPECIAL_FIELD_VALUE);
-      if (srcFact == null) return;
-      SpecialFieldValue destFact = result.getExpressionFact(dest, DfaFactType.SPECIAL_FIELD_VALUE);
-      if (destFact == null) return;
 
-      LongRangeSet srcLengthSet = DfaFactType.RANGE.fromDfaValue(SpecialField.ARRAY_LENGTH.extract(srcFact));
-      LongRangeSet destLengthSet = DfaFactType.RANGE.fromDfaValue(SpecialField.ARRAY_LENGTH.extract(destFact));
-      LongRangeSet srcPosSet = result.getExpressionFact(srcPos, DfaFactType.RANGE);
-      LongRangeSet destPosSet = result.getExpressionFact(destPos, DfaFactType.RANGE);
-      LongRangeSet lengthSet = result.getExpressionFact(length, DfaFactType.RANGE);
-      if (srcLengthSet == null || destLengthSet == null || srcPosSet == null || destPosSet == null || lengthSet == null) return;
+      LongRangeSet srcLengthSet = DfIntType.extractRange(SpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(src)));
+      LongRangeSet destLengthSet = DfIntType.extractRange(SpecialField.ARRAY_LENGTH.getFromQualifier(result.getDfType(dest)));
+      LongRangeSet srcPosSet = DfIntType.extractRange(result.getDfType(srcPos));
+      LongRangeSet destPosSet = DfIntType.extractRange(result.getDfType(destPos));
+      LongRangeSet lengthSet = DfIntType.extractRange(result.getDfType(length));
       LongRangeSet srcPossibleLengthToCopy = srcLengthSet.minus(srcPosSet, false);
       LongRangeSet destPossibleLengthToCopy = destLengthSet.minus(destPosSet, false);
       long lengthMin = lengthSet.min();

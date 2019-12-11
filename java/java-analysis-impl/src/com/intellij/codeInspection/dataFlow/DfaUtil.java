@@ -9,7 +9,6 @@ import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -191,7 +190,7 @@ public class DfaUtil {
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
 
-    return factory.createTypeValue(target.getType(), Nullability.NULLABLE);
+    return factory.getObjectType(target.getType(), Nullability.NULLABLE);
   }
 
   private static int getWriteOffset(PsiField target) {
@@ -323,15 +322,13 @@ public class DfaUtil {
 
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
-      if (value instanceof DfaConstValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
+      if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
         DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
-        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+        return boxed == null ? value.getFactory().getUnknown() : boxed;
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaBoxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
+      if (value instanceof DfaBoxedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
     }
@@ -350,38 +347,9 @@ public class DfaUtil {
     if (expressionToAnalyze == null) return null;
     Object computed = ExpressionUtils.computeConstantExpression(expression);
     if (computed != null) return computed;
-
-    DataFlowRunner runner = new DataFlowRunner(expression);
-    class Visitor extends StandardInstructionVisitor {
-      Object exprValue;
-
-      @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expr,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        super.beforeExpressionPush(value, expr, range, state);
-        if (expr != expressionToAnalyze) return;
-        Object newValue;
-        if (value instanceof DfaConstValue) {
-          newValue = ((DfaConstValue)value).getValue();
-        } else {
-          newValue = UNKNOWN_VALUE;
-        }
-        if (exprValue == null) {
-          exprValue = newValue;
-        } else if (exprValue != newValue) {
-          exprValue = UNKNOWN_VALUE;
-        }
-        if (exprValue == UNKNOWN_VALUE) {
-          runner.cancel();
-        }
-      }
-    }
-    Visitor visitor = new Visitor();
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
-    if (result == RunnerResult.OK && visitor.exprValue != UNKNOWN_VALUE) {
-      return visitor.exprValue;
+    CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expression);
+    if (dataflowResult != null) {
+      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expression));
     }
     return null;
   }
@@ -399,13 +367,13 @@ public class DfaUtil {
       LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
       if (fromAnnotation.min() > fromType.min()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), parameter.getType()),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }
       if (fromAnnotation.max() < fromType.max()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.GT, ContractValue.constant(fromAnnotation.max(), parameter.getType()),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }

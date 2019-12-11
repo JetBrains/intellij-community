@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -448,7 +450,7 @@ public class DataFlowRunner {
       DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
       // In class initializer this variable is local until escaped
       for (DfaMemoryState state : initialStates) {
-        state.applyFact(thisValue, DfaFactType.LOCALITY, true);
+        state.meetDfType(thisValue, DfTypes.LOCAL_OBJECT);
       }
       return;
     }
@@ -465,13 +467,14 @@ public class DataFlowRunner {
   @Nullable
   private static DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
     DfaValueFactory factory = var.getFactory();
-    if (var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
+    if (var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor && var.getType() != null) {
       PsiClass aClass = ((DfaExpressionFactory.ThisDescriptor)var.getDescriptor()).getPsiElement();
-      DfaValue value = factory.createTypeValue(var.getType(), Nullability.NOT_NULL);
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state
-        return factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE_VIEW);
+        DfType dfType = DfTypes.typedObject(factory.createDfaType(var.getType()), Nullability.NOT_NULL)
+          .meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
+        return factory.fromDfType(dfType);
       }
       return null;
     }

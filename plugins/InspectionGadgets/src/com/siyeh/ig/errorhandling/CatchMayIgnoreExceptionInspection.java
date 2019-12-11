@@ -176,7 +176,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             for (DfaMemoryState memState : memStates) {
               memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
               memState.applyCondition(
-                myExceptionVar.cond(RelationType.IS, factory.createTypeValue(exception, Nullability.NOT_NULL)));
+                myExceptionVar.cond(RelationType.IS, factory.getObjectType(exception, Nullability.NOT_NULL)));
             }
             return super.createInitialInstructionStates(psiBlock, memStates, flow);
           }
@@ -220,7 +220,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         // Methods like "getCause" and "getMessage" return "null" for our test exception
         if (memState.areEqual(qualifier, myExceptionVar)) {
           memState.pop();
-          memState.push(runner.getFactory().getConstFactory().getNull());
+          memState.push(runner.getFactory().getNull());
           return nextInstruction(instruction, runner, memState);
         }
       }

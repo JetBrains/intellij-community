@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.PsiType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,21 +11,15 @@ import java.util.Objects;
 
 /**
  * A special field with associated information about its value
+ * @deprecated could be removed in future; used only in DfaFactMap and TrackingRunner
  */
-public final class SpecialFieldValue {
+@Deprecated
+final class SpecialFieldValue {
   private final @NotNull SpecialField myField;
-  private final @NotNull DfaValue myValue;
+  private final @NotNull DfType myType;
 
-  public SpecialFieldValue(@NotNull SpecialField field, @NotNull DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      myValue = ((DfaFactMapValue)value).withFact(DfaFactType.SPECIAL_FIELD_VALUE, null);
-    }
-    else if (value instanceof DfaConstValue) {
-      myValue = value;
-    }
-    else {
-      throw new IllegalArgumentException("Unexpected value: " + value);
-    }
+  SpecialFieldValue(@NotNull SpecialField field, @NotNull DfType type) {
+    myType = type instanceof DfReferenceType ? ((DfReferenceType)type).dropSpecialField() : type;
     myField = field;
   }
 
@@ -36,8 +29,8 @@ public final class SpecialFieldValue {
   }
 
   @NotNull
-  public DfaValue getValue() {
-    return myValue;
+  public DfType getDfType() {
+    return myType;
   }
 
   @Override
@@ -45,31 +38,24 @@ public final class SpecialFieldValue {
     if (this == o) return true;
     if (!(o instanceof SpecialFieldValue)) return false;
     SpecialFieldValue value = (SpecialFieldValue)o;
-    return myField == value.myField && myValue == value.myValue;
+    return myField == value.myField && myType == value.myType;
   }
 
   @Nullable
   public SpecialFieldValue unite(SpecialFieldValue other) {
     if (other == this) return this;
     if (myField != other.myField) return null;
-    DfaValue newValue = myValue.unite(other.myValue);
-    if (newValue instanceof DfaConstValue || newValue instanceof DfaFactMapValue) {
-      return new SpecialFieldValue(myField, newValue);
-    }
-    return null;
+    DfType type = myType.join(other.myType);
+    return type == DfTypes.TOP ? null : new SpecialFieldValue(myField, type);
   }
   
   @Override
   public int hashCode() {
-    return myField.hashCode() * 31 + Objects.hashCode(myValue);
+    return myField.hashCode() * 31 + Objects.hashCode(myType);
   }
 
   @Override
   public String toString() {
-    return myField + " = " + myValue;
-  }
-
-  public String getPresentationText(PsiType type) {
-    return myField.getPresentationText(myValue, type);
+    return myField + " = " + myType;
   }
 }

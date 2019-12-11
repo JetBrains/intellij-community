@@ -172,8 +172,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
   private fun stateForCatchClause(param: PsiParameter, constraint: TypeConstraint): DfaMemoryState {
     val catchingCopy = state.createCopy()
     val value = runner.factory.varFactory.createVariableValue(param)
-    catchingCopy.applyFact(value, DfaFactType.TYPE_CONSTRAINT, constraint)
-    catchingCopy.applyFact(value, DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+    catchingCopy.meetDfType(value, constraint.asDfType().meet(DfaNullability.NOT_NULL.asDfType()))
     return catchingCopy
   }
 

@@ -19,8 +19,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -241,7 +240,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
       return REPORT_NON_CONSTANT &&
              !VariableAccessUtils.variableIsUsed(variable, argument) &&
              !SideEffectChecker.mayHaveSideEffects(argument) &&
-             CommonDataflow.getExpressionFact(argument, DfaFactType.NULLABILITY) == DfaNullability.NOT_NULL;
+             !CommonDataflow.getDfType(argument).isSuperType(DfTypes.NULL);
     }
   }
 }

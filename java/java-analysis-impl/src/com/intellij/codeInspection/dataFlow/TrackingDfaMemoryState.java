@@ -5,6 +5,9 @@ import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -49,15 +52,26 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   private Map<DfaVariableValue, Set<Relation>> getRelations() {
     Map<DfaVariableValue, Set<Relation>> result = new HashMap<>();
-    for (EqClass eqClass : getNonTrivialEqClasses()) {
-      DfaConstValue constant = eqClass.findConstant();
-      List<DfaVariableValue> vars = eqClass.getVariables(false);
-      for (DfaVariableValue var : vars) {
-        Set<Relation> set = result.computeIfAbsent(var, k -> new HashSet<>());
-        if (constant != null) {
-          set.add(new Relation(RelationType.EQ, constant));
+    forVariableStates((var, state) -> {
+      if (state.myDfType instanceof DfConstantType) {
+        result.computeIfAbsent(var, k -> new HashSet<>()).add(new Relation(RelationType.EQ, getFactory().fromDfType(state.myDfType)));
+      }
+      if (state.myDfType instanceof DfAntiConstantType) {
+        Set<?> notValues = ((DfAntiConstantType<?>)state.myDfType).getNotValues();
+        if (!notValues.isEmpty() && var.getType() != null) {
+          DfaPsiType dfaPsiType = getFactory().createDfaType(var.getType());
+          for (Object notValue : notValues) {
+            result.computeIfAbsent(var, k -> new HashSet<>()).add(
+              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, dfaPsiType))));
+          }
         }
-        for (DfaVariableValue eqVar : vars) {
+      }
+    });
+    
+    for (EqClass eqClass : getNonTrivialEqClasses()) {
+      for (DfaVariableValue var : eqClass) {
+        Set<Relation> set = result.computeIfAbsent(var, k -> new HashSet<>());
+        for (DfaVariableValue eqVar : eqClass) {
           if (eqVar != var) {
             set.add(new Relation(RelationType.EQ, eqVar));
           }
@@ -71,24 +85,10 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       RelationType plain = classPair.isOrdered() ? RelationType.LT : RelationType.NE;
       RelationType flipped = Objects.requireNonNull(plain.getFlipped());
 
-      List<DfaVariableValue> firstVars = first.getVariables(false);
-      List<DfaVariableValue> secondVars = second.getVariables(false);
-      for (DfaVariableValue var1 : firstVars) {
-        for (DfaVariableValue var2 : secondVars) {
+      for (DfaVariableValue var1 : first) {
+        for (DfaVariableValue var2 : second) {
           result.computeIfAbsent(var1, k -> new HashSet<>()).add(new Relation(plain, var2));
           result.computeIfAbsent(var2, k -> new HashSet<>()).add(new Relation(flipped, var1));
-        }
-      }
-      DfaConstValue firstConst = first.findConstant();
-      if (firstConst != null) {
-        for (DfaVariableValue var2 : secondVars) {
-          result.computeIfAbsent(var2, k -> new HashSet<>()).add(new Relation(flipped, firstConst));
-        }
-      }
-      DfaConstValue secondConst = second.findConstant();
-      if (secondConst != null) {
-        for (DfaVariableValue var1 : firstVars) {
-          result.computeIfAbsent(var1, k -> new HashSet<>()).add(new Relation(plain, secondConst));
         }
       }
     }
@@ -99,7 +99,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
   void recordChange(Instruction instruction, TrackingDfaMemoryState previous) {
     Map<DfaVariableValue, Change> result = getChangeMap(previous);
-    DfaValue value = isEmptyStack() ? DfaUnknownValue.getInstance() : peek();
+    DfaValue value = isEmptyStack() ? getFactory().getUnknown() : peek();
     myHistory = MemoryStateChange.create(myHistory, instruction, result, value);
   }
 
@@ -110,8 +110,8 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     previous.forVariableStates((value, state) -> varsToCheck.add(value));
     forVariableStates((value, state) -> varsToCheck.add(value));
     for (DfaVariableValue value : varsToCheck) {
-      DfaFactMap newMap = getVariableState(value).myFactMap;
-      DfaFactMap oldMap = previous.getVariableState(value).myFactMap;
+      DfaFactMap newMap = DfaFactMap.fromDfType(getVariableState(value).myDfType);
+      DfaFactMap oldMap = DfaFactMap.fromDfType(previous.getVariableState(value).myDfType);
       if (!newMap.equals(oldMap)) {
         DfaFactMap added = DfaFactMap.EMPTY;
         DfaFactMap removed = DfaFactMap.EMPTY;
@@ -345,14 +345,16 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         for (MemoryStateChange change = this; change != null; change = change.getPrevious()) {
           FactDefinition<T> factPair = factFromChange(type, change, change.myChanges.get(value));
           if (factPair != null) return factPair;
-          factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
-          if (factPair != null) return factPair;
+          if (!(change.myInstruction instanceof ConditionalGotoInstruction)) {
+            factPair = factFromChange(type, change, change.myBridgeChanges.get(value));
+            if (factPair != null) return factPair;
+          }
           if (change.myInstruction instanceof AssignInstruction && change.myTopOfStack == value && change.getPrevious() != null) {
             FactDefinition<T> fact = change.getPrevious().findFact(value, type);
             return new FactDefinition<>(change, fact.myFact);
           }
         }
-        return new FactDefinition<>(null, ((DfaVariableValue)value).getInherentFacts().get(type));
+        return new FactDefinition<>(null, DfaFactMap.fromDfType(((DfaVariableValue)value).getInherentType()).get(type));
       }
       return new FactDefinition<>(null, type.fromDfaValue(value));
     }
@@ -421,7 +423,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       if (previous.size() == 1) {
         return previous.iterator().next();
       }
-      return new MemoryStateChange(new ArrayList<>(previous), new MergeInstruction(), Collections.emptyMap(), DfaUnknownValue.getInstance(),
+      return new MemoryStateChange(new ArrayList<>(previous), new MergeInstruction(), Collections.emptyMap(), myTopOfStack.getFactory().getUnknown(),
                                    Collections.emptyMap());
     }
 
@@ -432,7 +434,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
           instruction = myInstruction;
         } else {
           return new MemoryStateChange(
-            Collections.singletonList(this), instruction, Collections.emptyMap(), DfaUnknownValue.getInstance(), bridge);
+            Collections.singletonList(this), instruction, Collections.emptyMap(), myTopOfStack.getFactory().getUnknown(), bridge);
         }
       }
       assert myBridgeChanges.isEmpty();
@@ -444,7 +446,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
                                     @NotNull Instruction instruction,
                                     @NotNull Map<DfaVariableValue, Change> result,
                                     @NotNull DfaValue value) {
-      if (result.isEmpty() && value == DfaUnknownValue.getInstance()) {
+      if (result.isEmpty() && DfaTypeValue.isUnknown(value)) {
         return previous;
       }
       return new MemoryStateChange(ContainerUtil.createMaybeSingletonList(previous), instruction, result, value, Collections.emptyMap());

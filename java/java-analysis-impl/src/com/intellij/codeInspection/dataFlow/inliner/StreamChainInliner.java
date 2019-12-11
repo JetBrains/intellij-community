@@ -19,7 +19,12 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -173,9 +178,7 @@ public class StreamChainInliner implements CallInliner {
         myNext.pushResult(builder);
       }
       else {
-        DfaValue resultValue =
-          builder.getFactory().createTypeValue(myCall.getType(),
-                                               getNullability());
+        DfaValue resultValue = builder.getFactory().getObjectType(myCall.getType(), getNullability());
         builder.push(resultValue, myCall);
       }
     }
@@ -256,7 +259,7 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static class SumTerminalStep extends TerminalStep {
-    private @NotNull DfaValue myResultRange = DfaUnknownValue.getInstance();
+    private DfaValue myResultRange;
     
     SumTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, null);
@@ -265,7 +268,9 @@ public class StreamChainInliner implements CallInliner {
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
       if ("count".equals(myCall.getMethodExpression().getReferenceName())) {
-        myResultRange = builder.getFactory().getFactValue(DfaFactType.RANGE, narrowCountResult(myCall));
+        myResultRange = builder.getFactory().fromDfType(DfTypes.longRange(narrowCountResult(myCall)));
+      } else {
+        myResultRange = builder.getFactory().getUnknown();
       }
       PsiType type = myCall.getType();
       if (!(type instanceof PsiPrimitiveType)) {
@@ -275,7 +280,7 @@ public class StreamChainInliner implements CallInliner {
         // Invalid standard library or custom sum() method?
         builder.pushUnknown();
       } else {
-        builder.push(builder.getFactory().getConstFactory().createDefault(type))
+        builder.push(builder.getFactory().getDefaultValue(type))
           .boxUnbox(myCall, type, myCall.getType());
       }
     }
@@ -329,7 +334,7 @@ public class StreamChainInliner implements CallInliner {
         DfaVariableValue optValue = (DfaVariableValue)SpecialField.OPTIONAL_VALUE.createValue(builder.getFactory(), myResult);
         builder.push(optValue)
                .ifNotNull()
-                 .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
+                 .push(builder.getFactory().fromDfType(DfTypes.NOT_NULL_OBJECT))
                  .swap()
                  .invokeFunction(2, myFunction, Nullability.NOT_NULL)
                .end();
@@ -381,7 +386,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void iteration(CFGBuilder builder) {
-      DfaConstValue result = builder.getFactory().getBoolean("anyMatch".equals(myCall.getMethodExpression().getReferenceName()));
+      DfaTypeValue result = builder.getFactory().getBoolean("anyMatch".equals(myCall.getMethodExpression().getReferenceName()));
       builder.invokeFunction(1, myFunction)
              .ifConditionIs(!"allMatch".equals(myCall.getMethodExpression().getReferenceName()))
              .assignAndPop(myResult, result)
@@ -490,7 +495,7 @@ public class StreamChainInliner implements CallInliner {
                  .pushUnknown()
                  .ifConditionIs(true)
                    .doWhileUnknown()
-                     .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
+                     .push(builder.getFactory().getObjectType(outType, Nullability.UNKNOWN))
                      .chain(myNext::iteration)
                    .end()
                  .end()
@@ -602,13 +607,13 @@ public class StreamChainInliner implements CallInliner {
       }
       else {
         DfaValueFactory factory = builder.getFactory();
-        DfaValue value = factory.createTypeValue(myCall.getType(), Nullability.NOT_NULL);
+        DfType dfType = factory.createDfType(myCall.getType(), Nullability.NOT_NULL);
         if (myImmutable) {
-          value = factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+          dfType = dfType.meet(Mutability.UNMODIFIABLE.asDfType());
         } else {
-          value = factory.withFact(value, DfaFactType.LOCALITY, true);
+          dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
         }
-        builder.push(value);
+        builder.push(factory.fromDfType(dfType));
       }
     }
   }
@@ -688,7 +693,7 @@ public class StreamChainInliner implements CallInliner {
         builder.pushUnknown()
                .ifConditionIs(true)
                .pop()
-               .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
+               .push(builder.getFactory().fromDfType(DfTypes.NOT_NULL_OBJECT))
                .dup()
                .invokeFunction(2, myMerger)
                .end();
@@ -719,7 +724,7 @@ public class StreamChainInliner implements CallInliner {
            .ifConditionIs(true)
            .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
            .end()
-           .push(builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL), call);
+           .push(builder.getFactory().getObjectType(call.getType(), Nullability.NOT_NULL), call);
     return true;
   }
 
@@ -817,7 +822,7 @@ public class StreamChainInliner implements CallInliner {
 
   private static void makeMainLoop(CFGBuilder builder, Step firstStep, PsiType inType) {
     builder.doWhileUnknown()
-           .assign(builder.createTempVariable(inType), builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
+           .assign(builder.createTempVariable(inType), builder.getFactory().getObjectType(inType, DfaPsiUtil.getTypeNullability(inType)))
            .chain(firstStep::iteration).end();
   }
 

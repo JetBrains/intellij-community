@@ -3,8 +3,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -146,8 +146,8 @@ public class WrapWithUnmodifiableAction extends BaseIntentionAction {
   }
 
   private static boolean isUnmodifiable(@NotNull PsiExpression expression) {
-    Mutability fact = CommonDataflow.getExpressionFact(expression, DfaFactType.MUTABILITY);
-    if (fact != null && fact.isUnmodifiable()) {
+    DfType dfType = CommonDataflow.getDfType(expression);
+    if (Mutability.fromDfType(dfType).isUnmodifiable()) {
       return true;
     }
     PsiMethodCallExpression methodCall = tryCast(expression, PsiMethodCallExpression.class);

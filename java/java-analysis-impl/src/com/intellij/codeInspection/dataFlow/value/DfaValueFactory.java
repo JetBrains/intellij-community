@@ -6,15 +6,20 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +46,10 @@ public class DfaValueFactory {
     myUnknownMembersAreNullable = unknownMembersAreNullable;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
-    myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
-    myFactFactory = new DfaFactMapValue.Factory(this);
     myBinOpFactory = new DfaBinOpValue.Factory(this);
+    myTypeValueFactory = new DfaTypeValue.Factory(this);
   }
 
   public boolean canTrustFieldInitializer(PsiField field) {
@@ -68,36 +72,26 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullability nullability) {
-    if (type == null) return DfaUnknownValue.getInstance();
+  public DfaTypeValue getObjectType(@Nullable PsiType type, @NotNull Nullability nullability) {
+    return fromDfType(createDfType(type, nullability));
+  }
+
+  @NotNull
+  public DfType createDfType(@Nullable PsiType type, @NotNull Nullability nullability) {
+    if (type == null) return DfTypes.TOP;
     if (type instanceof PsiPrimitiveType) {
-      LongRangeSet range = LongRangeSet.fromType(type);
-      if (range != null) {
-        return getFactFactory().createValue(DfaFactType.RANGE, range);
+      if (type.equals(PsiType.VOID)) return DfTypes.TOP;
+      if (type.equals(PsiType.BOOLEAN)) return DfTypes.BOOLEAN;
+      if (type.equals(PsiType.INT)) return DfTypes.INT;
+      if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
+        return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(type)));
       }
+      if (type.equals(PsiType.LONG)) return DfTypes.LONG;
+      if (type.equals(PsiType.DOUBLE)) return DfTypes.DOUBLE;
+      if (type.equals(PsiType.FLOAT)) return DfTypes.FLOAT;
+      if (type.equals(PsiType.NULL)) return DfTypes.NULL;
     }
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
-      .with(DfaFactType.NULLABILITY, DfaNullability.fromNullability(nullability));
-    return getFactFactory().createValue(facts);
-  }
-
-  @NotNull
-  public DfaValue createExactTypeValue(@Nullable PsiType type) {
-    if (type == null) return DfaUnknownValue.getInstance();
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
-      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
-    return getFactFactory().createValue(facts);
-  }
-
-  @NotNull
-  public <T> DfaValue withFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
-    if(value instanceof DfaUnknownValue) {
-      return getFactFactory().createValue(DfaFactMap.EMPTY.with(factType, factValue));
-    }
-    if(value instanceof DfaFactMapValue) {
-      return ((DfaFactMapValue)value).withFact(factType, factValue);
-    }
-    return DfaUnknownValue.getInstance();
+    return DfTypes.typedObject(createDfaType(type), nullability);
   }
 
   @NotNull
@@ -131,21 +125,133 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaConstValue getInt(int value) {
-    return getConstFactory().createFromValue(value, PsiType.INT);
+  public DfaTypeValue getInt(int value) {
+    return fromDfType(DfTypes.intValue(value));
+  }
+  
+  @NotNull
+  public DfaTypeValue getUnknown() {
+    return fromDfType(DfTypes.TOP);
+  }
+
+  /**
+   * @return a special sentinel value that never equals to anything else (even unknown value) and 
+   * sometimes pushed on the stack as control flow implementation detail. 
+   * It's never assigned to the variable or merged with any other value.  
+   */
+  @NotNull
+  public DfaValue getSentinel() {
+    return mySentinelValue;
+  }
+
+  @NotNull
+  public DfaTypeValue getBoolean(boolean value) {
+    return fromDfType(DfTypes.booleanValue(value));
+  }
+
+  /**
+   * @return a null value
+   */
+  @NotNull
+  public DfaTypeValue getNull() {
+    return fromDfType(DfTypes.NULL);
+  }
+
+  /**
+   * @return a special value that indicates a failing contract.
+   * @see DfTypes#FAIL
+   */
+  @NotNull
+  public DfaTypeValue getContractFail() {
+    return fromDfType(DfTypes.FAIL);
+  }
+
+  /**
+   * Creates a constant of given type and given value. Constants are always unique 
+   * (two different constants are not equal to each other).
+   * 
+   * The following types of the objects are supported:
+   * <ul>
+   *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
+   *   <li>Character/Byte/Short (will be unboxed and widened to int)</li>
+   *   <li>String</li>
+   *   <li>{@link PsiEnumConstant} (enum constant value, type must be the corresponding enum type)</li>
+   *   <li>{@link PsiField} (a final field that contains a unique value, type must be a type of that field)</li>
+   *   <li>{@link PsiType} (java.lang.Class object value, type must be java.lang.Class)</li>
+   * </ul>
+   *
+   * @param type type of the constant
+   * @return a DfaTypeValue whose type is DfConstantType that corresponds to given constant.
+   */
+  public DfaTypeValue getConstant(Object value, @NotNull PsiType type) {
+    return fromDfType(DfTypes.constant(value, createDfaType(type)));
+  }
+
+  /**
+   * @param expr literal to create a constant type value from
+   * @return a DfaTypeValue; null if the literal is malformed
+   */
+  @Nullable
+  public DfaTypeValue getConstantFromLiteral(PsiLiteralExpression expr) {
+    PsiType type = expr.getType();
+    if (type == null) return null;
+    if (PsiType.NULL.equals(type)) return getNull();
+    Object value = expr.getValue();
+    if (value == null) return null;
+    return getConstant(value, type);
+  }
+
+  /**
+   * @param variable variable to create a constant based on its value
+   * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
+   */
+  @Nullable
+  public DfaValue getConstantFromVariable(PsiVariable variable) {
+    if (!variable.hasModifierProperty(PsiModifier.FINAL) || DfaUtil.ignoreInitializer(variable)) return null;
+    Object value = variable.computeConstantValue();
+    PsiType type = variable.getType();
+    if (value == null) {
+      Boolean boo = computeJavaLangBooleanFieldReference(variable);
+      if (boo != null) {
+        DfaValue unboxed = getConstant(boo, PsiType.BOOLEAN);
+        return getBoxedFactory().createBoxed(unboxed, PsiType.BOOLEAN.getBoxedType(variable));
+      }
+      PsiExpression initializer =
+        variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
+      initializer = PsiUtil.skipParenthesizedExprDown(initializer);
+      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+        return getNull();
+      }
+      if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+        return getConstant(variable, type);
+      }
+      return null;
+    }
+    return getConstant(value, type);
   }
 
   @Nullable
-  public DfaValue createLiteralValue(PsiLiteralExpression literal) {
-    return getConstFactory().create(literal);
+  private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+    if (!(variable instanceof PsiField)) return null;
+    PsiClass psiClass = ((PsiField)variable).getContainingClass();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
+    @NonNls String name = variable.getName();
+    return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
+  }
+  /**
+   * Creates a constant that corresponds to the default value of given type
+   *
+   * @param type type to get the default value for
+   * @return a constant (e.g. 0 from int, false for boolean, null for reference type).
+   */
+  @NotNull
+  public DfaTypeValue getDefaultValue(@NotNull PsiType type) {
+    return fromDfType(DfTypes.constant(PsiTypesUtil.getDefaultValue(type), createDfaType(type)));
   }
 
-  public DfaConstValue getBoolean(boolean value) {
-    return value ? getConstFactory().getTrue() : getConstFactory().getFalse();
-  }
-
-  public <T> DfaValue getFactValue(@NotNull DfaFactType<T> factType, @Nullable T value) {
-    return getFactFactory().createValue(factType, value);
+  @NotNull
+  public DfaTypeValue fromDfType(@NotNull DfType dfType) {
+    return myTypeValueFactory.create(dfType);
   }
 
   public Collection<DfaValue> getValues() {
@@ -161,11 +267,16 @@ public class DfaValueFactory {
     FactoryMap.create(p -> new DfaControlTransferValue(this, p.first, p.second));
 
   private final DfaVariableValue.Factory myVarFactory;
-  private final DfaConstValue.Factory myConstFactory;
   private final DfaBoxedValue.Factory myBoxedFactory;
   private final DfaBinOpValue.Factory myBinOpFactory;
   private final DfaExpressionFactory myExpressionFactory;
-  private final DfaFactMapValue.Factory myFactFactory;
+  private final DfaTypeValue.Factory myTypeValueFactory;
+  private final DfaValue mySentinelValue = new DfaValue(this) {
+    @Override
+    public String toString() {
+      return "SENTINEL";
+    }
+  };
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {
@@ -173,17 +284,8 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaConstValue.Factory getConstFactory() {
-    return myConstFactory;
-  }
-  @NotNull
   public DfaBoxedValue.Factory getBoxedFactory() {
     return myBoxedFactory;
-  }
-
-  @NotNull
-  public DfaFactMapValue.Factory getFactFactory() {
-    return myFactFactory;
   }
 
   @NotNull
@@ -200,12 +302,12 @@ public class DfaValueFactory {
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);
       if (expressionValue == null) {
-        expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
+        expressionValue = getObjectType(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
       loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
-      if (loopElement == DfaUnknownValue.getInstance()) break;
+      if (DfaTypeValue.isUnknown(loopElement)) break;
     }
-    return loopElement == null ? DfaUnknownValue.getInstance() : DfaUtil.boxUnbox(loopElement, targetType);
+    return loopElement == null ? getUnknown() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {

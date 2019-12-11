@@ -1,6 +1,34 @@
 import java.util.*;
 
 class LessThanRelations {
+  void foo1(long f1, long f2, long t1, long t2) {
+    if (t1 < f2 || f1 > f2) return;
+    if (f1 <= f2 && t1 >= t2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (t1 >= t2) return; // TODO: must be always true
+  }
+
+  void foo2(long f1, long f2, long t1, long t2) {
+    if (f1 <= f2 && t1 >= t2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (<warning descr="Condition 't1 >= t2' is always 'true'">t1 >= t2</warning>) return;
+  }
+
+  void foo3(long f1, long f2, long t1, long t2) {
+    if (t1 < f2 || f1 > f2) return;
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (t1 >= t2) return; // TODO: must be always true
+  }
+
+  void foo4(long f1, long f2, long t1, long t2) {
+    if (f1 > f2 && t1 < t2) return;
+    if (f1 <= f2) return;
+    if (<warning descr="Condition 't1 >= t2' is always 'true'">t1 >= t2</warning>) return;
+  }
+
   // IDEA-184278
   void m(int value) {
     for (int i = 0; i < value; i++) {
@@ -58,7 +86,7 @@ final class Range {
       if (from <= myFrom) {
         return new Range(to + 1, myTo);
       }
-      if (<warning descr="Condition 'to >= myTo' is always 'true'">to >= myTo</warning>) {
+      if (to >= myTo) {
         return new Range(myFrom, from - 1);
       }
       throw new RuntimeException("Impossible: " + this + ":" + other);
