@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -129,6 +131,7 @@ public class MavenProjectImporter {
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<>();
     Map<MavenProject, ModuleEntity> moduleEntityMap = new HashMap<>();
+    Disposable tempDisposable = Disposer.newDisposable("Tmp modules");
 
     for (MavenProject each : myAllProjects) {
       if (myMavenProjectToModule.get(each) != null) continue;
@@ -142,6 +145,7 @@ public class MavenProjectImporter {
           .addModuleEntity(diff, each.getDisplayName(), Collections.emptyList(), MavenExternalSource.getINSTANCE());
       }
       Module module = LegacyBridgeModuleManagerComponent.getInstance(myProject).createModuleInstance(entity, store, diff, true);
+      Disposer.register(tempDisposable, module);
       ModuleEntity finalEntity = entity;
       ContentRootEntity contentRootEntity = findFirst(diff, ContentRootEntity.class, e -> e.getModule().equals(finalEntity));
       if (contentRootEntity == null) {
@@ -217,6 +221,7 @@ public class MavenProjectImporter {
         return null;
       });
     });
+    Disposer.dispose(tempDisposable);
     return postTasks;
   }
 
