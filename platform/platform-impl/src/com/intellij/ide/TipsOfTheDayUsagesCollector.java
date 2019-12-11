@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 public class TipsOfTheDayUsagesCollector {
   private static final String GROUP_ID = "ui.tips";
   private static final String NO_FEATURE_ID = "no.feature.id";
-  private static final String THIRD_PARTY = "third.party";
 
   public static void trigger(String feature) {
     FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, feature);
@@ -56,9 +55,7 @@ public class TipsOfTheDayUsagesCollector {
         if (tip != null) {
           PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(tip.getPluginDescriptor());
           context.setPluginInfo(pluginInfo);
-          return pluginInfo.isSafeToReport()
-                 ? ValidationResultType.ACCEPTED
-                 : ValidationResultType.THIRD_PARTY;
+          return pluginInfo.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }
 
