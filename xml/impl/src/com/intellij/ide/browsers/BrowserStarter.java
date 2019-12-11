@@ -5,6 +5,10 @@ import com.google.common.net.HostAndPort;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
@@ -12,7 +16,9 @@ import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.net.URI;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
@@ -83,8 +89,8 @@ public class BrowserStarter {
       checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
     }
     else {
-      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks, opening " + hostAndPort);
-      openPageNow();
+      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks. Failed to open " + hostAndPort);
+      showBrowserOpenTimeoutNotification();
     }
   }
 
@@ -113,5 +119,29 @@ public class BrowserStarter {
 
   private boolean isOutdated() {
     return myOutdated.getAsBoolean();
+  }
+
+  private void showBrowserOpenTimeoutNotification() {
+    NotificationGroup group = NotificationGroup.balloonGroup("URL does not respond notification");
+    NotificationType type = NotificationType.ERROR;
+
+    String title = "URL does not respond";
+    String url = Objects.requireNonNull(mySettings.getUrl());
+    String openUrlDescription = "open_url";
+    String content = String.format(
+      "Unable to open <a href=\"%s\">%s</a> in the browser because the URL does not respond.",
+      openUrlDescription,
+      url
+    );
+
+    Notification openBrowserNotification = group.createNotification(title, content, type, (notification, event) -> {
+      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+      if (event.getDescription().equals(openUrlDescription)) {
+        BrowserUtil.open(url);
+        notification.expire();
+      }
+    });
+
+    openBrowserNotification.notify(myRunConfiguration.getProject());
   }
 }
