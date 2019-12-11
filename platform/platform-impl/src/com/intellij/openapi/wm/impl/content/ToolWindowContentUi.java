@@ -311,10 +311,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   }
 
   @Override
-  public void beforeDispose() {
-  }
-
-  @Override
   public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }

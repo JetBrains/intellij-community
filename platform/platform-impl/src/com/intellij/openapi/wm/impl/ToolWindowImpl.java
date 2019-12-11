@@ -26,6 +26,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.Activatable;
@@ -83,8 +84,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     myContentUI = new ToolWindowContentUi(this);
-    myContentManager = contentFactory.createContentManager(myContentUI, canCloseContent, toolWindowManager.getProject());
-    Disposer.register(parentDisposable, myContentManager);
+    myContentManager = new ContentManagerImpl(myContentUI, canCloseContent, toolWindowManager.getProject(), parentDisposable);
 
     if (component != null) {
       Content content = contentFactory.createContent(component, "", false);
@@ -116,12 +116,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void activate(final Runnable runnable) {
+  public final void activate(@Nullable Runnable runnable) {
     activate(runnable, true);
   }
 
   @Override
-  public void activate(@Nullable final Runnable runnable, final boolean autoFocusContents) {
+  public void activate(@Nullable Runnable runnable, boolean autoFocusContents) {
     activate(runnable, autoFocusContents, true);
   }
 

@@ -82,7 +82,6 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   Content[] getContents();
 
-  //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
 
   @Nullable

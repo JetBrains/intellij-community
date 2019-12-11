@@ -56,6 +56,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
   public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project) {
+    this(contentUI, canCloseContents, project, project);
+  }
+
+  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
     myCanCloseContents = canCloseContents;
     myUI = contentUI;
@@ -65,7 +69,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     // the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored
     // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
     // for which the findFile() must access fileManager for which it must be alive
-    Disposer.register(project, this);
+    Disposer.register(parentDisposable, this);
     Disposer.register(this, contentUI);
   }
 
@@ -161,7 +165,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public boolean removeContent(@NotNull Content content, final boolean dispose) {
+  public boolean removeContent(@NotNull Content content, boolean dispose) {
     boolean wasFocused = content.getComponent() != null && UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
@@ -270,8 +274,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void removeAllContents(final boolean dispose) {
-    Content[] contents = getContents();
-    for (Content content : contents) {
+    for (Content content : new ArrayList<>(myContents)) {
       removeContent(content, dispose);
     }
   }
@@ -287,7 +290,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myContents.toArray(new Content[0]);
   }
 
-  //TODO[anton,vova] is this method needed?
   @Override
   public Content findContent(String displayName) {
     for (Content content : myContents) {
@@ -603,8 +605,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
-    if (myDisposed) return;
-    myUI.beforeDispose();
+    if (!myDisposed) {
+      myUI.beforeDispose();
+    }
   }
 
   @Override

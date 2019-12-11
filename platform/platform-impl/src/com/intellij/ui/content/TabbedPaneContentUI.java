@@ -25,7 +25,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
+public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public static final String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
@@ -311,10 +311,6 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   @Override
   public boolean canBeEmptySelection() {
     return false;
-  }
-
-  @Override
-  public void beforeDispose() {
   }
 
   @Override
