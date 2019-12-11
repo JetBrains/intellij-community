@@ -545,8 +545,11 @@ public class PatternCompiler {
 
     final PsiElement[] patternElements;
     try {
-      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
-                                                           options.getDialect(), options.getPatternContext(), project, false);
+      PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
+                                                              options.getPatternContext(),
+                                                              constraint != null ? constraint.getContextConstraint() : null);
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
+                                                           options.getDialect(), project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
     }
     catch (IncorrectOperationException e) {
