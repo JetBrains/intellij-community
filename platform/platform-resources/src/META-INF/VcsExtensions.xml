@@ -53,6 +53,7 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowManagerImpl"/>
+    <fileDocumentManagerListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.openapi.vcs.impl.FileStatusManagerImpl$FileStatusManagerDocumentListener"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.message.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>

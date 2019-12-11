@@ -276,7 +276,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (!myUnsavedDocuments.isEmpty()) {
       myUnsavedDocuments.clear();
-      fireUnsavedDocumentsDropped();
+      myMultiCaster.unsavedDocumentsDropped();
     }
   }
 
@@ -470,7 +470,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
-    fireUnsavedDocumentsDropped();
+    myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
@@ -772,10 +772,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       return true;
     }
     return false;
-  }
-
-  private void fireUnsavedDocumentsDropped() {
-    myMultiCaster.unsavedDocumentsDropped();
   }
 
   private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
