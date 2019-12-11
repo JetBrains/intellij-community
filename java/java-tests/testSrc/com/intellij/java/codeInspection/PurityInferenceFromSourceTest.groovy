@@ -15,12 +15,13 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
-
 /**
  * @author peter
  */
@@ -386,6 +387,42 @@ static void assertNotNull(Object val) {
 
   void "test recursive factorial"() {
     assertPure true, """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
+  }
+
+  void "test calling static method with the same signature in the subclass"() {
+    RecursionManager.assertOnMissedCache(testRootDisposable)
+    def clazz = myFixture.addClass """
+class Super {
+  static void foo() { Sub.foo(); }
+}
+
+class Sub extends Super {
+  static void foo() {
+    unknown();
+    unknown2();
+  }
+}
+
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+  }
+
+  void "test super static method does not affect purity"() {
+    RecursionManager.assertOnMissedCache(testRootDisposable)
+    def clazz = myFixture.addClass """
+class Sub extends Super {
+  static void foo() {
+    unknown();
+    unknown2();
+  }
+}
+
+class Super {
+  static void foo() { }
+}
+"""
+    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+    assert JavaMethodContractUtil.isPure(clazz.superClass.methods[0])
   }
 
   private void assertPure(boolean expected, String classBody) {
