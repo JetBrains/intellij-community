@@ -154,7 +154,7 @@
 
     <extensionPoint name="additionalTextAttributes" beanClass="com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP" />
     <extensionPoint name="bundledColorScheme" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
-    <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider"/>
+    <extensionPoint name="bundledQuickListsProvider" interface="com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider" dynamic="true"/>
     <extensionPoint name="bundledKeymapProvider" interface="com.intellij.openapi.keymap.impl.BundledKeymapProvider" dynamic="true"/>
     <extensionPoint name="bundledKeymap" beanClass="com.intellij.openapi.keymap.impl.BundledKeymapBean" dynamic="true"/>
 
@@ -165,7 +165,7 @@
 
     <extensionPoint name="toolWindowWhitelist" beanClass="com.intellij.openapi.wm.ToolWindowWhitelistEP"/>
 
-    <extensionPoint name="library.toolWindow"  beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow">
+    <extensionPoint name="library.toolWindow" beanClass="com.intellij.openapi.wm.ext.LibraryDependentToolWindow">
       <with attribute="librarySearchClass" implements="com.intellij.openapi.wm.ext.LibrarySearchHelper"/>
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
       <with attribute="conditionClass" implements="com.intellij.openapi.util.Condition"/>
@@ -237,9 +237,9 @@
 
     <extensionPoint name="search.optionContributor" interface="com.intellij.ide.ui.search.SearchableOptionContributor"/>
 
-    <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement"/>
+    <extensionPoint name="pluginReplacement" interface="com.intellij.ide.plugins.PluginReplacement" dynamic="true"/>
 
-    <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider"/>
+    <extensionPoint name="ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider" dynamic="true"/>
 
     <extensionPoint name="schemeImporter" beanClass="com.intellij.openapi.options.SchemeImporterEP">
       <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
@@ -251,7 +251,7 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeExporter"/>
     </extensionPoint>
 
-    <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener"/>
+    <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean"/>
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
@@ -330,8 +330,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
     </extensionPoint>
 
-    <extensionPoint name="editor.injectedFileChangesHandlerProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="editor.injectedFileChangesHandlerProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
 
