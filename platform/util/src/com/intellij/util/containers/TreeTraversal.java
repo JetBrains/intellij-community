@@ -55,6 +55,18 @@ public abstract class TreeTraversal {
     this.debugName = debugName;
   }
 
+  /**
+   * Creates a new iterator for this type of traversal.
+   *
+   * @param roots tree roots
+   * @param tree  tree structure the children for parent function.
+   *              May return null (useful for map representation).
+   */
+  @NotNull
+  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
+                                           @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
+
+
   @NotNull
   public final <T> JBIterable<T> traversal(@NotNull final Iterable<? extends T> roots, @NotNull final Function<? super T, ? extends Iterable<? extends T>> tree) {
     return new JBIterable<T>() {
@@ -158,16 +170,6 @@ public abstract class TreeTraversal {
       }
     };
   }
-
-  /**
-   * Creates a new iterator for this type of traversal.
-   * @param roots tree roots
-   * @param tree tree structure the children for parent function.
-   *             May return null (useful for map representation).
-   */
-  @NotNull
-  public abstract <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
-                                           @NotNull Function<? super T, ? extends Iterable<? extends T>> tree);
 
   @Override
   public final String toString() {
