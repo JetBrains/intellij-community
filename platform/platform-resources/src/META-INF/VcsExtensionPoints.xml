@@ -91,7 +91,7 @@
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"/>
 
     <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
-                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider"/>
+                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
     <extensionPoint name="ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
