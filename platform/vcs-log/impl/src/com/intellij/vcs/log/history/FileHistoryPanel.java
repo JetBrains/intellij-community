@@ -246,7 +246,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable.getSelectionModel().addListSelectionListener(selectionListener);
     Disposer.register(diffPreview, () -> myGraphTable.getSelectionModel().removeListSelectionListener(selectionListener));
 
-    TableModelListener modelListener = e -> diffPreview.updatePreview(diffPreview.getComponent().isShowing());
+    TableModelListener modelListener = e -> {
+      if (e.getColumn() < 0) {
+        diffPreview.updatePreview(diffPreview.getComponent().isShowing());
+      }
+    };
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
 
