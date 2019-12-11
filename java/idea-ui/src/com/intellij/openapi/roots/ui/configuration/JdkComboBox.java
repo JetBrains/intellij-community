@@ -26,7 +26,6 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
-  @NotNull private final SdkListModelBuilder myModel;
 
   @Nullable private JButton mySetUpButton;
 
@@ -83,6 +82,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
+    super(new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, creationFilter, sdkFilter));
     myOnNewSdkAdded = sdk -> {
       if (sdk == null) return;
       setSelectedJdk(sdk);
@@ -103,17 +103,15 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
       }
     }.forType(JdkComboBox::unwrapItem));
 
-    myModel = new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, creationFilter, sdkFilter) {
-      @Override
-      protected void syncModel(@NotNull SdkListModel model) {
-        Object previousSelection = getSelectedItem();
-        JdkComboBoxModel newModel = new JdkComboBoxModel(model);
-        newModel.setSelectedItem(previousSelection);
-        setModel(newModel);
-      }
-    };
-
     reloadModel();
+  }
+
+  @Override
+  protected void onModelUpdated(@NotNull SdkListModel model) {
+    Object previousSelection = getSelectedItem();
+    JdkComboBoxModel newModel = new JdkComboBoxModel(model);
+    newModel.setSelectedItem(previousSelection);
+    setModel(newModel);
   }
 
   @NotNull
@@ -224,22 +222,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
   public void setSelectedJdk(@Nullable Sdk jdk) {
     setSelectedItem(jdk);
-  }
-
-  public void setInvalidJdk(String name) {
-    setSelectedItem(myModel.setInvalidSdk(name));
-  }
-
-  public void showProjectSdkItem() {
-    myModel.showProjectSdkItem();
-  }
-
-  public void showNoneSdkItem() {
-    myModel.showNoneSdkItem();
-  }
-
-  public void reloadModel() {
-    myModel.reloadSdks();
   }
 
   /**
