@@ -132,9 +132,6 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val animatedScrollingDuration: Int
     get() = state.animatedScrollingDuration
 
-  val animatedScrollingUnitIncrement: Int
-    get() = state.animatedScrollingUnitIncrement
-
   val animatedScrollingCurvePoints: Int
     get() = state.animatedScrollingCurvePoints
 

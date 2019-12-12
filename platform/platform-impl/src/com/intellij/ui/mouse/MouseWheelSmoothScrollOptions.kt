@@ -41,11 +41,6 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction("Smooth Scr
               label("ms")
             }
           }
-          row("Unit increment") {
-            cell {
-              spinner(settings::animatedScrollingUnitIncrement, -1, 100, 1).enableIf(c.selected)
-            }
-          }
         }
         row {
           myBezierPainter(CCFlags.grow).enableIf(c.selected)

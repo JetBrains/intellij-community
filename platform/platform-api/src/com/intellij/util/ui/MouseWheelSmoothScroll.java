@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Timer;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
@@ -51,8 +52,11 @@ public class MouseWheelSmoothScroll {
       return;
     }
 
+    InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
     int value = bar.getValue();
-    int delta = getRoundedAtLeastToOne(getDelta(bar, e));
+    int delta = getRoundedAtLeastToOne(TouchScrollUtil.isTouchScroll(e) ?
+                                       TouchScrollUtil.getDelta(e) :
+                                       getDelta(bar, e, animator.myTargetValue));
     int targetValue = value + delta;
 
     if (TouchScrollUtil.isUpdate(e)) {
@@ -63,7 +67,6 @@ public class MouseWheelSmoothScroll {
       startFling(getEventVerticalScrollBar(e), verticalFling, vertical);
       startFling(getEventHorizontalScrollBar(e), horizontalFling, horizontal);
     } else {
-      InertialAnimator animator = isHorizontalScroll(e) ? horizontal : vertical;
       animator.start(value, targetValue, bar::setValue, shouldStop(bar), DefaultAnimationSettings.SCROLL);
     }
 
@@ -97,10 +100,8 @@ public class MouseWheelSmoothScroll {
   }
 
   private static Predicate<Integer> shouldStop(JScrollBar bar) {
-    int minimum = bar.getMinimum();
-    int maximum = bar.getMaximum();
     return (v) -> {
-      return v - bar.getValue() != 0 || minimum != bar.getMinimum() || maximum != bar.getMaximum() || !bar.isShowing();
+      return v - bar.getValue() != 0 || !bar.isShowing();
     };
   }
 
@@ -108,20 +109,48 @@ public class MouseWheelSmoothScroll {
     return e.isShiftDown();
   }
 
-  public static double getDelta(@NotNull JScrollBar bar, @NotNull MouseWheelEvent event) {
-    if (TouchScrollUtil.isTouchScroll(event)) {
-      return TouchScrollUtil.getDelta(event);
-    }
+  private static double getDelta(@NotNull JScrollBar bar, @NotNull MouseWheelEvent event, double animationTargetValue) {
     double rotation = event.getPreciseWheelRotation();
     int direction = rotation < 0 ? -1 : 1;
+
     if (event.getScrollType() == MouseWheelEvent.WHEEL_BLOCK_SCROLL) {
       return direction * bar.getBlockIncrement(direction);
     }
-    // bar.getUnitIncrement can return -1 for top bound value. Fix it
-    UISettings settings = UISettings.getInstanceOrNull();
-    int increment = settings == null ? -1 : settings.getAnimatedScrollingUnitIncrement();
-    int unitIncrement = max(increment < 0 ? bar.getUnitIncrement(direction) : increment, 0);
-    return unitIncrement * rotation * event.getScrollAmount();
+
+    if (event.getSource() instanceof JScrollPane) {
+      JViewport viewport = ((JScrollPane)event.getSource()).getViewport();
+      if (viewport.getView() instanceof Scrollable) {
+        int orientation = bar.getOrientation();
+        boolean isVertical = orientation == Adjustable.VERTICAL;
+        Scrollable scrollable = (Scrollable)viewport.getView();
+        int scroll = abs(event.getUnitsToScroll());
+        Rectangle rect = viewport.getViewRect();
+        int delta = 0;
+        if (!Double.isNaN(animationTargetValue)) {
+          if (isVertical) {
+            rect.y = (int)animationTargetValue;
+          }
+          else {
+            rect.x = (int)animationTargetValue;
+          }
+        }
+        for (int i = 0; i < scroll; i++) {
+          int increment = scrollable.getScrollableUnitIncrement(rect, orientation, direction) * direction;
+          if (isVertical) {
+            rect.y += increment;
+          }
+          else {
+            rect.x += increment;
+          }
+          delta += increment;
+        }
+        return delta == 0 ? rotation : delta;
+      }
+    }
+
+    int increment = bar.getUnitIncrement(direction);
+    int delta = increment * event.getUnitsToScroll();
+    return delta == 0 ? rotation : delta;
   }
 
   private static int getRoundedAtLeastToOne(double value) {
@@ -165,7 +194,7 @@ public class MouseWheelSmoothScroll {
 
       boolean isSameDirection = (myTargetValue - myInitValue) * (targetValue - initValue) > 0;
       if (isSameDirection && myTimer.isRunning()) {
-        myTargetValue = (targetValue - initValue) + myTargetValue;
+        myTargetValue += (targetValue - initValue);
         myDuration = (long)duration + max(myLastEventTime - myStartEventTime, 0);
         myInitValue = myCurrentValue;
         myStartEventTime = myLastEventTime;
@@ -193,9 +222,9 @@ public class MouseWheelSmoothScroll {
       long currentEventTime = min(myLastEventTime, myStartEventTime + myDuration);
 
       myCurrentValue = mySettings.getEasing().calc(currentEventTime - myStartEventTime,
-                            myInitValue,
-                            myTargetValue - myInitValue,
-                            myDuration);
+                                                   myInitValue,
+                                                   myTargetValue - myInitValue,
+                                                   myDuration);
       myConsumer.accept((int) round(myCurrentValue));
 
       if (myLastEventTime >= myStartEventTime + myDuration) {

@@ -174,19 +174,18 @@ class UISettingsState : BaseState() {
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
 
-  var animatedScrolling by property(true)
+  var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(
     when {
       SystemInfo.isWindows -> 200
-      SystemInfo.isMac -> 100
+      SystemInfo.isMac -> 50
       else -> 150
     }
   )
-  var animatedScrollingUnitIncrement by property(-1)
   var animatedScrollingCurvePoints by property(
     when {
       SystemInfo.isWindows -> 1684366536
-      SystemInfo.isMac -> 13107400
+      SystemInfo.isMac -> 845374563
       else -> 729434056
     }
   )
