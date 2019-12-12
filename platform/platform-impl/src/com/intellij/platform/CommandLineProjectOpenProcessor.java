@@ -16,12 +16,13 @@ public interface CommandLineProjectOpenProcessor {
    * Opens a non-project file in a new project window.
    *
    * @param file the file to open
-   * @param line the line to navigate to
+   * @param line the line to navigate to, -1 if undefined
+   * @param column the column to navigate to, -1 if undefined
    * @param tempProject if true, always opens the file in a new temporary project. If false, searches the parent directories of the file
    *                    for a .idea subdirectory, and if found, opens that directory.
    */
   @Nullable
-  Project openProjectAndFile(@NotNull VirtualFile file, int line, boolean tempProject);
+  Project openProjectAndFile(@NotNull VirtualFile file, int line, int column, boolean tempProject);
 
   static CommandLineProjectOpenProcessor getInstance() {
     CommandLineProjectOpenProcessor extension = getInstanceIfExists();

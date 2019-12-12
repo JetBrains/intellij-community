@@ -17,6 +17,7 @@ import java.util.Map;
  */
 public class CustomProtocolHandler {
   public static final String LINE_NUMBER_ARG_NAME = "--line";
+  public static final String COLUMN_NUMBER_ARG_NAME = "--column";
 
   private static final Logger LOG = Logger.getInstance(CustomProtocolHandler.class);
 
@@ -31,12 +32,17 @@ public class CustomProtocolHandler {
     Map<String, List<String>> parameters = new QueryStringDecoder(uri).parameters();
     String file = ContainerUtil.getFirstItem(parameters.get("file"));
     String line = ContainerUtil.getFirstItem(parameters.get("line"));
+    String column = ContainerUtil.getFirstItem(parameters.get("column"));
 
     List<String> args = new SmartList<>();
     if (file != null) {
       if (line != null) {
         args.add(LINE_NUMBER_ARG_NAME);
         args.add(line);
+      }
+      if (column != null) {
+        args.add(COLUMN_NUMBER_ARG_NAME);
+        args.add(column);
       }
       args.add(file);
     }

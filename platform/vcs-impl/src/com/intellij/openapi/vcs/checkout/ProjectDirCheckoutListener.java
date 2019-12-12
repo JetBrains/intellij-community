@@ -21,7 +21,7 @@ final class ProjectDirCheckoutListener implements CheckoutListener {
       return false;
     }
 
-    PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), new OpenProjectTask(false, project), -1);
+    PlatformProjectOpenProcessor.doOpenProject(dotIdea.getParent(), new OpenProjectTask(false, project));
     return true;
   }
 

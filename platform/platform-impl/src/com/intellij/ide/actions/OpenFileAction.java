@@ -89,7 +89,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     if (file.isDirectory()) {
       Project openedProject;
       if (ProjectAttachProcessor.canAttachToProject()) {
-        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project), -1);
+        openedProject = PlatformProjectOpenProcessor.doOpenProject(Paths.get(file.getPath()), new OpenProjectTask(false, project));
       }
       else {
         openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
@@ -128,7 +128,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
     else {
       if (!LightEditUtil.openFile(file)) {
-        PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask(), -1);
+        PlatformProjectOpenProcessor.createTempProjectAndOpenFile(Paths.get(file.getPath()), new OpenProjectTask());
       }
     }
   }

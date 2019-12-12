@@ -50,7 +50,7 @@ public final class CommandLineProcessor {
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = ProjectUtil.openOrImport(file, openProjectOptions);
     if (project == null) {
-      return doOpenFile(file, -1, false, shouldWait);
+      return doOpenFile(file, -1, -1, false, shouldWait);
     }
     else {
       return pair(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
@@ -58,13 +58,13 @@ public final class CommandLineProcessor {
   }
 
   @NotNull
-  private static Pair<Project, Future<CliResult>> doOpenFile(@NotNull Path ioFile, int line, boolean tempProject, boolean shouldWait) {
+  private static Pair<Project, Future<CliResult>> doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
-      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, tempProject);
+      Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
         final String message = "No project found to open file in";
         Messages.showErrorDialog(message, "Cannot Open File");
@@ -140,6 +140,7 @@ public final class CommandLineProcessor {
     final boolean shouldWait = args.contains(WAIT_KEY);
     Pair<Project, Future<CliResult>> projectAndCallback = null;
     int line = -1;
+    int column = -1;
     boolean tempProject = false;
 
     for (int i = 0; i < args.size(); i++) {
@@ -159,6 +160,21 @@ public final class CommandLineProcessor {
         }
         catch (NumberFormatException e) {
           line = -1;
+        }
+        continue;
+      }
+
+      if (arg.equals("-c") || arg.equals("--column")) {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i == args.size()) {
+          break;
+        }
+        try {
+          column = Integer.parseInt(args.get(i));
+        }
+        catch (NumberFormatException e) {
+          column = -1;
         }
         continue;
       }
@@ -187,7 +203,7 @@ public final class CommandLineProcessor {
       }
 
       if (line != -1 || tempProject) {
-        projectAndCallback = doOpenFile(file, line, tempProject, shouldWait);
+        projectAndCallback = doOpenFile(file, line, column, tempProject, shouldWait);
       }
       else {
         projectAndCallback = doOpenFileOrProject(file, shouldWait);

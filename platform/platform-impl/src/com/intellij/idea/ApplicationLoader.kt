@@ -466,9 +466,23 @@ open class IdeStarter : ApplicationStarter {
         catch (ignore: NumberFormatException) {
           LOG.error("Wrong line number: ${args[2]}")
         }
-
       }
-      PlatformProjectOpenProcessor.doOpenProject(file, OpenProjectTask(), line)
+
+      var column = -1
+      if (args.size > 4 && CustomProtocolHandler.COLUMN_NUMBER_ARG_NAME == args[3]) {
+        try {
+          column = args[4].toInt()
+        }
+        catch (ignore: NumberFormatException) {
+          LOG.error("Wrong column number: ${args[4]}")
+        }
+      }
+
+      val openProjectTask = OpenProjectTask()
+      openProjectTask.line = line
+      openProjectTask.column = column
+
+      PlatformProjectOpenProcessor.doOpenProject(file, openProjectTask)
     }
     return CliResult.error(1, "Can't find file: $file")
   }

@@ -428,7 +428,7 @@ public final class ProjectUtil {
         if (processor != null) {
           VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
           if (virtualFile != null && virtualFile.isValid()) {
-            Project opened = processor.openProjectAndFile(virtualFile, -1, false);
+              Project opened = processor.openProjectAndFile(virtualFile, -1, -1, false);
             if (opened != null && result == null) result = opened;
           }
         }

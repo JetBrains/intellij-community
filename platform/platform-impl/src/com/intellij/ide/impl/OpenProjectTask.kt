@@ -37,6 +37,12 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
   @JvmField
   var callback: ProjectOpenedCallback? = null
 
+  @JvmField
+  var line: Int = -1
+
+  @JvmField
+  var column: Int = -1
+
   var dummyProjectName: String? = null
 
   fun copy(): OpenProjectTask {
@@ -51,6 +57,8 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
     copy.callback = callback
     copy.isRefreshVfsNeeded = isRefreshVfsNeeded
     copy.dummyProjectName = dummyProjectName
+    copy.line = line
+    copy.column = column
     return copy
   }
 }
