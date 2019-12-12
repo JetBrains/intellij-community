@@ -69,6 +69,10 @@ public class PyRedundantParenthesesInspection extends PyInspection {
            ContainerUtil.or(((PyTupleExpression)expression).getElements(), PyStarExpression.class::isInstance);
   }
 
+  private static boolean oneElementTuple(@NotNull PyExpression expression) {
+    return expression instanceof PyTupleExpression && ((PyTupleExpression)expression).getElements().length == 1;
+  }
+
   private static boolean isYieldFrom(@NotNull PsiElement element) {
     return element instanceof PyYieldExpression && ((PyYieldExpression)element).isDelegating();
   }
@@ -112,7 +116,8 @@ public class PyRedundantParenthesesInspection extends PyInspection {
         registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
       }
       else if (parent instanceof PyReturnStatement || parent instanceof PyYieldExpression) {
-        if (!isTupleWithUnpacking(expression) || (languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent))) {
+        if (!isTupleWithUnpacking(expression) && !oneElementTuple(expression) ||
+            languageLevel.isAtLeast(LanguageLevel.PYTHON38) && !isYieldFrom(parent)) {
           registerProblem(node, PyBundle.message("QFIX.redundant.parentheses"), new RedundantParenthesesQuickFix());
         }
       }
