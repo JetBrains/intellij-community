@@ -269,7 +269,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     }
 
     // TODO Set notifyStorage to `true` after fixing module storages
-    moduleImpl.rename(newId.name, false)
+    moduleImpl.rename(newId.name, true)
   }
 
   override fun moduleDependencyComparator(): Comparator<Module> {

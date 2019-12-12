@@ -114,10 +114,13 @@ class LegacyBridgeModulesTest {
   @Test
   fun `test rename module from model`() =
     WriteCommandAction.runWriteCommandAction(project) {
+      val oldModuleName = "oldName"
+      val newModuleName = "newName"
       val moduleManager = ModuleManager.getInstance(project)
 
-      val oldNameFile = File(project.basePath, "oldName.iml")
       val iprFile = File(project.projectFilePath!!)
+      val oldNameFile = File(project.basePath, "$oldModuleName.iml")
+      val newNameFile = File(project.basePath, "$newModuleName.iml")
 
       val module = moduleManager.modifiableModel.let { model ->
         val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
@@ -127,29 +130,26 @@ class LegacyBridgeModulesTest {
       StoreUtil.saveDocumentsAndProjectSettings(project)
       assertTrue(oldNameFile.exists())
       assertTrue(iprFile.readText().contains(oldNameFile.name))
-
-      assertEquals("oldName", module.name)
+      assertEquals(oldModuleName, module.name)
 
       moduleManager.modifiableModel.let { model ->
-        assertSame(module, model.findModuleByName("oldName"))
-        assertNull(model.getModuleToBeRenamed("oldName"))
+        assertSame(module, model.findModuleByName(oldModuleName))
+        assertNull(model.getModuleToBeRenamed(oldModuleName))
 
-        model.renameModule(module, "newName")
+        model.renameModule(module, newModuleName)
 
-        assertSame(module, model.findModuleByName("oldName"))
-        assertSame(module, model.getModuleToBeRenamed("newName"))
-        assertSame("newName", model.getNewName(module))
+        assertSame(module, model.findModuleByName(oldModuleName))
+        assertSame(module, model.getModuleToBeRenamed(newModuleName))
+        assertSame(newModuleName, model.getNewName(module))
 
         model.commit()
       }
 
-      assertNull(moduleManager.findModuleByName("oldName"))
-      assertSame(module, moduleManager.findModuleByName("newName"))
-      assertEquals("newName", module.name)
+      assertNull(moduleManager.findModuleByName(oldModuleName))
+      assertSame(module, moduleManager.findModuleByName(newModuleName))
+      assertEquals(newModuleName, module.name)
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
-
-      val newNameFile = File(project.basePath, "newName.iml")
 
       assertFalse(iprFile.readText().contains(oldNameFile.name))
       assertFalse(oldNameFile.exists())
