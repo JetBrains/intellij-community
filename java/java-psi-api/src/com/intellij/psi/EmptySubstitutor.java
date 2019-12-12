@@ -54,14 +54,14 @@ public final class EmptySubstitutor implements PsiSubstitutor {
     if (mapping != null) {
       PsiUtil.ensureValidType(mapping);
     }
-    return PsiSubstitutorHelper.getInstance().createSubstitutor(classParameter, mapping);
+    return PsiSubstitutorFactory.getInstance().createSubstitutor(classParameter, mapping);
   }
 
   @NotNull
   @Override
   public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings){
     if(!parentClass.hasTypeParameters()) return this;
-    return PsiSubstitutorHelper.getInstance().createSubstitutor(parentClass, mappings);
+    return PsiSubstitutorFactory.getInstance().createSubstitutor(parentClass, mappings);
   }
 
   @NotNull
@@ -73,7 +73,7 @@ public final class EmptySubstitutor implements PsiSubstitutor {
   @NotNull
   @Override
   public PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
-    return map.isEmpty() ? EMPTY : PsiSubstitutorHelper.getInstance().createSubstitutor(map);
+    return map.isEmpty() ? EMPTY : PsiSubstitutorFactory.getInstance().createSubstitutor(map);
   }
 
   @Override

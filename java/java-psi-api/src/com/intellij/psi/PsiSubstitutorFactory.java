@@ -7,14 +7,14 @@ import org.jetbrains.annotations.ApiStatus;
 import java.util.Map;
 
 @ApiStatus.Internal
-public abstract class PsiSubstitutorHelper {
+public abstract class PsiSubstitutorFactory {
   protected abstract PsiSubstitutor createSubstitutor(PsiTypeParameter typeParameter, PsiType mapping);
 
   protected abstract PsiSubstitutor createSubstitutor(PsiClass aClass, PsiType[] mappings);
 
   protected abstract PsiSubstitutor createSubstitutor(Map<PsiTypeParameter, PsiType> map);
 
-  static PsiSubstitutorHelper getInstance() {
-    return ServiceManager.getService(PsiSubstitutorHelper.class);
+  static PsiSubstitutorFactory getInstance() {
+    return ServiceManager.getService(PsiSubstitutorFactory.class);
   }
 }
