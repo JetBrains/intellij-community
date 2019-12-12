@@ -168,7 +168,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true), notSimpleJavaSdkType());
+        myJdksTreeModel.createAddActions(group, myTree, sdk -> {}, notSimpleJavaSdkType());
         return group.getChildren(null);
       }
     };
