@@ -2095,6 +2095,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRedefine() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
     doTest(
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),
