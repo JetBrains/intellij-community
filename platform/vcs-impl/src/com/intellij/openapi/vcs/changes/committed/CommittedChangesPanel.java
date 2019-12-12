@@ -224,8 +224,8 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
     myDisposed = true;
   }
 
-  public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
-                                        final Project project, final VirtualFile root) {
+  public void passCachedListsToListener(@NotNull VcsConfigurationChangeListener.DetailedNotification notification,
+                                        @Nullable VirtualFile root) {
     final List<CommittedChangeList> resultList = new ArrayList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
       @Override
@@ -241,7 +241,7 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
       @Override
       public void onAfterEndReport() {
         if (!resultList.isEmpty()) {
-          notification.execute(project, root, resultList);
+          notification.execute(myProject, root, resultList);
         }
       }
     });

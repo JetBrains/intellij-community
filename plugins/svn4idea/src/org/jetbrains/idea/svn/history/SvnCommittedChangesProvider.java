@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedListsZipper;
 import com.intellij.openapi.vcs.changes.committed.VcsCommittedViewAuxiliary;
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
@@ -45,6 +44,7 @@ import java.util.*;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.progress.ProgressManager.progress2;
+import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
@@ -65,7 +65,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     myZipper = new SvnCommittedListsZipper(myVcs);
 
     myConnection = myVcs.getProject().getMessageBus().connect();
-    myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE,
+    myConnection.subscribe(BRANCHES_CHANGED_RESPONSE,
                            (project, vcsRoot, cachedList) -> getApplication().invokeLater(() -> {
                              cachedList.stream().filter(SvnChangeList.class::isInstance).map(SvnChangeList.class::cast)
                                .filter(list -> vcsRoot == null || vcsRoot.equals(list.getVcsRoot()))

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED;
+import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE;
+
 public class CommittedChangesViewManager implements ChangesViewContentProvider {
   private final MessageBus myBus;
   private MessageBusConnection myConnection;
@@ -36,12 +39,7 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
     if (myComponent == null) {
       myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings(), null, null);
-      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, new VcsConfigurationChangeListener.Notification() {
-        @Override
-        public void execute(final Project project, final VirtualFile vcsRoot) {
-          sendUpdateCachedListsMessage(vcsRoot);
-        }
-      });
+      myConnection.subscribe(BRANCHES_CHANGED, (project, vcsRoot) -> sendUpdateCachedListsMessage(vcsRoot));
     }
     else {
       myComponent.setProvider(provider);
@@ -50,10 +48,11 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
     }
   }
 
-  private void sendUpdateCachedListsMessage(final VirtualFile vcsRoot) {
+  private void sendUpdateCachedListsMessage(@Nullable VirtualFile vcsRoot) {
     ApplicationManager.getApplication().invokeLater(
-      () -> myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
-                                                myProject, vcsRoot), o -> (! myProject.isOpen()) || myProject.isDisposed() || myComponent == null);
+      () -> myComponent.passCachedListsToListener(myBus.syncPublisher(BRANCHES_CHANGED_RESPONSE), vcsRoot),
+      o -> !myProject.isOpen() || myProject.isDisposed() || myComponent == null
+    );
   }
 
   @Override

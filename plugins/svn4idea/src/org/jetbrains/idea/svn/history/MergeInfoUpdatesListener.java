@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
+import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED;
 
 public class MergeInfoUpdatesListener {
   private final static int DELAY = 300;
@@ -37,7 +37,7 @@ public class MergeInfoUpdatesListener {
       myMergeInfoRefreshActions = new ArrayList<>();
       myMergeInfoRefreshActions.add(action);
 
-      myConnection.subscribe(VcsConfigurationChangeListener.BRANCHES_CHANGED, (project, vcsRoot) -> callReloadMergeInfo());
+      myConnection.subscribe(BRANCHES_CHANGED, (project, vcsRoot) -> callReloadMergeInfo());
       final Consumer<Boolean> reloadConsumer = aBoolean -> {
         if (Boolean.TRUE.equals(aBoolean)) {
           callReloadMergeInfo();
