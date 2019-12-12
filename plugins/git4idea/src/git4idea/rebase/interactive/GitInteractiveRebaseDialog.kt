@@ -68,7 +68,11 @@ internal class GitInteractiveRebaseDialog(
     private const val DIALOG_WIDTH = 800
   }
 
-  private val commitsTableModel = CommitsTableModel(entries.map { GitRebaseEntryWithEditedMessage(it) })
+  private val commitsTableModel = CommitsTableModel(entries.map {
+    GitRebaseEntryWithEditedMessage(
+      GitRebaseEntryWithDetails(GitRebaseEntry(it.action, it.commit, it.subject), it.commitDetails)
+    )
+  })
   private val resetEntriesAction = object : AbstractAction("Reset Entries"), Action {
     override fun actionPerformed(e: ActionEvent?) {
       commitsTableModel.resetEntries()

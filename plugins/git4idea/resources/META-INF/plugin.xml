@@ -299,6 +299,9 @@
     <registryKey key="git.interactive.rebase.new.dialog" defaultValue="true"
                  description="Show new Interactive Rebase Dialog" restartRequired="false"/>
 
+    <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
+                 description="Use Log to collect Rebase Entries"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,7 +112,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
     try {
       List<GitRebaseEntry> entries = rebaseFile.load();
-      List<? extends GitRebaseEntry> newEntries = showInteractiveRebaseEditor(entries);
+      List<? extends GitRebaseEntry> newEntries = collectNewEntries(entries);
       if (newEntries != null) {
         rebaseFile.save(newEntries);
         return true;
@@ -125,6 +125,10 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     catch (GitInteractiveRebaseFile.NoopException e) {
       return confirmNoopRebase();
     }
+  }
+
+  protected List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+    return showInteractiveRebaseEditor(entries);
   }
 
   @Nullable
@@ -153,14 +157,18 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     DialogManager.show(editor);
     if (editor.isOK()) {
       List<GitRebaseEntryWithEditedMessage> newEntries = editor.getEntries();
-      for (GitRebaseEntryWithEditedMessage newEntry : newEntries) {
-        if (newEntry.getEntry().getAction() instanceof GitRebaseEntry.Action.REWORD) {
-          myMessagesMapping.add(new Pair<>(newEntry.getEntry().getCommitDetails().getFullMessage(), newEntry.getNewMessage()));
-        }
-      }
+      processNewEntries(newEntries);
       return ContainerUtil.map(newEntries, entry -> entry.getEntry());
     }
     return null;
+  }
+
+  protected void processNewEntries(@NotNull List<GitRebaseEntryWithEditedMessage> newEntries) {
+    for (GitRebaseEntryWithEditedMessage newEntry : newEntries) {
+      if (newEntry.getEntry().getAction() instanceof GitRebaseEntry.Action.REWORD) {
+        myMessagesMapping.add(new Pair<>(newEntry.getEntry().getCommitDetails().getFullMessage(), newEntry.getNewMessage()));
+      }
+    }
   }
 
   private static boolean useNewInteractiveRebaseDialog() {
