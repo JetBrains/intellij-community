@@ -142,12 +142,16 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         EdtTestUtil.runInEdtAndWait(() -> {
           final PythonConsoleView console = new PythonConsoleView(project, "test", sdk, true);
-          Disposer.register(myFixture.getModule(), console);
+
           console.getComponent(); //To init editor
 
           Arrays.stream(messages).forEach((s) -> console.print(s, ConsoleViewContentType.NORMAL_OUTPUT));
           console.flushDeferredText();
-          assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          try {
+            assertEquals("TC messages filtered in wrong way", "Hello\nI am\nPyCharm", console.getText());
+          }finally {
+            Disposer.dispose(console);
+          }
         });
       }
     });
