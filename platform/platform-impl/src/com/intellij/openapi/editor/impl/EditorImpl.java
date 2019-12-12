@@ -1189,6 +1189,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPanel.addHierarchyListener(e -> mySoftWrapModel.getApplianceManager().updateAvailableArea());
 
     myPanel.addComponentListener(new ComponentAdapter() {
+      @DirtyUI
       @Override
       public void componentResized(@NotNull ComponentEvent e) {
         myMarkupModel.recalcEditorDimensions();
@@ -4200,6 +4201,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private class MyMouseMotionListener implements MouseMotionListener {
+    @DirtyUI
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) {
@@ -4219,6 +4221,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    @DirtyUI
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
       if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
@@ -4736,6 +4739,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  @DirtyUI
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
       super(0);

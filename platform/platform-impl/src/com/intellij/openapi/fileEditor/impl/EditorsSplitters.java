@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -66,6 +67,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
+@DirtyUI
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);

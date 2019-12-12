@@ -7,6 +7,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
@@ -36,6 +37,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     return myShowFlatten.get();
   }
 
+  @DirtyUI
   @Override
   public void customizeCellRenderer(@NotNull JTree tree,
                                     Object value,

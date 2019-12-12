@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -137,6 +138,7 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
         }
       };
       ComponentAdapter resizeListener = new ComponentAdapter() {
+        @DirtyUI
         @Override
         public void componentResized(ComponentEvent event) {
           breadcrumbs.updateBorder(getLeftOffset());

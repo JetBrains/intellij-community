@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.components.JBScrollPane;
@@ -39,6 +40,7 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 import static com.intellij.util.ui.tree.WideSelectionTreeUI.TREE_TABLE_TREE_KEY;
 
+@DirtyUI
 public final class DefaultTreeUI extends BasicTreeUI {
   public static final Key<Boolean> SHRINK_LONG_RENDERER = Key.create("resize renderer component if it exceed a visible area");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
