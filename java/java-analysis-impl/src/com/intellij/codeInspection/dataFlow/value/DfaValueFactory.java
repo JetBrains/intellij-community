@@ -217,6 +217,9 @@ public class DfaValueFactory {
         DfaValue unboxed = getConstant(boo, PsiType.BOOLEAN);
         return getBoxedFactory().createBoxed(unboxed, PsiType.BOOLEAN.getBoxedType(variable));
       }
+      if (DfaUtil.isEmptyCollectionConstantField(variable)) {
+        return getConstant(variable, type);
+      }
       PsiExpression initializer =
         variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);

@@ -26,6 +26,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.codeInspection.dataFlow.SpecialField.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.LOCAL_OBJECT;
@@ -97,8 +98,10 @@ class CustomMethodHandlers {
               (args, memState, factory, method) -> numberAsString(args, memState, 1, Long.SIZE))
     .register(instanceCall(JAVA_LANG_ENUM, "name").parameterCount(0),
               (args, memState, factory, method) -> enumName(args.myQualifier, memState, factory, method.getReturnType()))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
+              (args, memState, factory, method) -> getEmptyCollectionConstant(factory, method))
     .register(anyOf(
-      staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap", "singleton", "singletonList", "singletonMap"),
+      staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
       staticCall(JAVA_UTIL_LIST, "of"),
       staticCall(JAVA_UTIL_SET, "of"),
       staticCall(JAVA_UTIL_MAP, "of", "ofEntries"),
@@ -248,6 +251,15 @@ class CustomMethodHandlers {
       .meet(COLLECTION_SIZE.asDfType(size))
       .meet(mutability.asDfType());
     return asList ? result.meet(LOCAL_OBJECT) : result;
+  }
+
+  private static DfType getEmptyCollectionConstant(DfaValueFactory factory, PsiMethod method) {
+    String fieldName = "EMPTY_" + method.getName().substring("empty".length()).toUpperCase(Locale.ROOT);
+    PsiClass collectionsClass = method.getContainingClass();
+    if (collectionsClass == null) return TOP;
+    PsiField field = collectionsClass.findFieldByName(fieldName, false);
+    if (field == null) return TOP;
+    return DfTypes.constant(field, factory.createDfaType(field.getType()));
   }
 
   @NotNull

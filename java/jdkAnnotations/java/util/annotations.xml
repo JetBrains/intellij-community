@@ -1856,6 +1856,18 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Collections EMPTY_LIST'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
+  <item name='java.util.Collections EMPTY_MAP'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
+  <item name='java.util.Collections EMPTY_SET'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
   <item name="java.util.Collections T max(java.util.Collection&lt;? extends T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

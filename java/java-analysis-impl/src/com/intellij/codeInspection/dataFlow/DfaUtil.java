@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -379,6 +380,13 @@ public class DfaUtil {
       }
     }
     return ContainerUtil.concat(rangeContracts, contracts);
+  }
+
+  public static boolean isEmptyCollectionConstantField(@Nullable PsiVariable var) {
+    if (!(var instanceof PsiField)) return false;
+    PsiField field = (PsiField)var;
+    return field.getName().startsWith("EMPTY_") && field.getContainingClass() != null &&
+           JAVA_UTIL_COLLECTIONS.equals(field.getContainingClass().getQualifiedName());
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

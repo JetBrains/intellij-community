@@ -110,6 +110,15 @@ public enum SpecialField implements VariableDescriptor {
 
     @NotNull
     @Override
+    public DfType fromConstant(@Nullable Object obj) {
+      if (obj instanceof PsiField && DfaUtil.isEmptyCollectionConstantField((PsiVariable)obj)) {
+        return DfTypes.intValue(0);
+      }
+      return super.fromConstant(obj);
+    }
+
+    @NotNull
+    @Override
     public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
       if (qualifier instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)qualifier;
