@@ -124,7 +124,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
-    Ref<Thread> result = new Ref<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
@@ -134,10 +133,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       Disposer.register(this, () -> {
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
-      result.set(Thread.currentThread());
     };
     EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
-    myLock = new ReadMostlyRWLock(result.get());
+    myLock = new ReadMostlyRWLock();
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
@@ -289,7 +287,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    LaterInvocator.invokeLaterWithCallback(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired, null);
+    Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
+    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), state, expired, null, true);
   }
 
   @Override
@@ -491,7 +490,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       throw new IllegalStateException("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    LaterInvocator.invokeAndWait(myTransactionGuard.wrapLaterInvocation(runnable, modalityState), modalityState);
+    Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, modalityState);
+    LaterInvocator.invokeAndWait(() -> runIntendedWriteActionOnCurrentThread(r), modalityState, true);
   }
 
   @Override
@@ -766,6 +766,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
+    if (myLock.isWriteIntendedByThisThread()) {
+      action.run();
+    }
+    else {
+      myLock.writeIntentLock();
+      try {
+        action.run();
+      }
+      finally {
+        myLock.writeIntentUnlock();
+      }
+    }
+  }
+
+  @Override
   public void runReadAction(@NotNull final Runnable action) {
     if (checkReadAccessAllowedAndNoPendingWrites()) {
       action.run();
@@ -914,11 +930,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isReadAccessAllowed() {
-    return isDispatchThread() || myLock.isReadLockedByThisThread();
+    return myLock.isWriteIntendedByThisThread() || myLock.isReadLockedByThisThread();
   }
 
   private boolean checkReadAccessAllowedAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    return isDispatchThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
+    return myLock.isWriteIntendedByThisThread() || myLock.checkReadLockedByThisThreadAndNoPendingWrites();
   }
 
   @Override

@@ -3,7 +3,6 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -28,7 +28,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LaterInvocator {
   private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
@@ -43,16 +44,19 @@ public class LaterInvocator {
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
+    private final boolean onEdt;
 
     @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
-                 @Nullable ActionCallback callback) {
+                 @Nullable ActionCallback callback,
+                 boolean edt) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
       this.callback = callback;
+      onEdt = edt;
     }
 
     void markDone() {
@@ -76,7 +80,9 @@ public class LaterInvocator {
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
   private static final List<RunnableInfo> ourSkippedItems = new ArrayList<>(); //protected by LOCK
   private static final ArrayDeque<RunnableInfo> ourQueue = new ArrayDeque<>(); //protected by LOCK
+  private static final ArrayDeque<RunnableInfo> ourLegacyQueue = new ArrayDeque<>(); //protected by LOCK
   private static final FlushQueue ourFlushQueueRunnable = new FlushQueue();
+  private static final Executor ourWriteThreadExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Write Thread", 1);
 
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
 
@@ -110,38 +116,40 @@ public class LaterInvocator {
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired, boolean onEdt) {
     ModalityState modalityState = ModalityState.defaultModalityState();
-    return invokeLater(runnable, modalityState, expired);
+    return invokeLater(runnable, modalityState, expired, onEdt);
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    return invokeLater(runnable, modalityState, Conditions.alwaysFalse());
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
+    return invokeLater(runnable, modalityState, Conditions.alwaysFalse(), onEdt);
   }
 
   @NotNull
-  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
+  static ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, boolean onEdt) {
     ActionCallback callback = new ActionCallback();
-    invokeLaterWithCallback(runnable, modalityState, expired, callback);
+    invokeLaterWithCallback(runnable, modalityState, expired, callback, onEdt);
     return callback;
   }
 
-  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback) {
+  static void invokeLaterWithCallback(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition<?> expired, @Nullable ActionCallback callback,
+                                      boolean onEdt) {
     if (expired.value(null)) {
       if (callback != null) {
         callback.setRejected();
       }
       return;
     }
-    RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback);
+    RunnableInfo runnableInfo = new RunnableInfo(runnable, modalityState, expired, callback, onEdt);
     synchronized (LOCK) {
-      ourQueue.add(runnableInfo);
+      ArrayDeque<RunnableInfo> queue = onEdt ? ourLegacyQueue : ourQueue;
+      queue.add(runnableInfo);
     }
-    requestFlush();
+    requestFlush(onEdt);
   }
 
-  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  static void invokeAndWait(@NotNull final Runnable runnable, @NotNull ModalityState modalityState, boolean onEdt) {
     LOG.assertTrue(!isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
@@ -167,7 +175,7 @@ public class LaterInvocator {
         return "InvokeAndWait[" + runnable + "]";
       }
     };
-    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null);
+    invokeLaterWithCallback(runnable1, modalityState, Conditions.alwaysFalse(), null, onEdt);
     semaphore.waitFor();
     if (!exception.isNull()) {
       Throwable cause = exception.get();
@@ -212,7 +220,7 @@ public class LaterInvocator {
     }
 
     reincludeSkippedItems();
-    requestFlush();
+    requestFlushAll();
   }
 
   public static void enterModal(Project project, Dialog dialog) {
@@ -247,7 +255,7 @@ public class LaterInvocator {
   public static void markTransparent(@NotNull ModalityState state) {
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItems();
-    requestFlush();
+    requestFlush(true);
   }
 
   public static void leaveModal(Project project, Dialog dialog) {
@@ -276,7 +284,7 @@ public class LaterInvocator {
     }
 
     reincludeSkippedItems();
-    requestFlush();
+    requestFlushAll();
   }
 
   private static void removeModality(@NotNull Object modalEntity, int index) {
@@ -293,7 +301,9 @@ public class LaterInvocator {
   private static void reincludeSkippedItems() {
     synchronized (LOCK) {
       for (int i = ourSkippedItems.size() - 1; i >= 0; i--) {
-        ourQueue.addFirst(ourSkippedItems.get(i));
+        RunnableInfo item = ourSkippedItems.get(i);
+        ArrayDeque<RunnableInfo> queue = item.onEdt ? ourLegacyQueue : ourQueue;
+        queue.addFirst(item);
       }
       ourSkippedItems.clear();
     }
@@ -313,7 +323,7 @@ public class LaterInvocator {
     removeModality(modalEntity, index);
 
     reincludeSkippedItems();
-    requestFlush();
+    requestFlushAll();
   }
 
   @TestOnly
@@ -323,7 +333,7 @@ public class LaterInvocator {
     }
     LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
     reincludeSkippedItems();
-    requestFlush();
+    requestFlushAll();
   }
 
   public static Object @NotNull [] getCurrentModalEntities() {
@@ -357,10 +367,32 @@ public class LaterInvocator {
     return ApplicationManager.getApplication().isDispatchThread();
   }
 
-  private static void requestFlush() {
-    if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(ourFlushQueueRunnable);
+  private static void requestFlush(boolean onEdt) {
+    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> value | (1 << (onEdt ? 0 : 1)) | (1 << 3));
+    submitFlush(currentValue);
+  }
+
+  private static void requestFlushAll() {
+    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> value | 11);
+    submitFlush(currentValue);
+  }
+
+  private static void continueFlush() {
+    int currentValue = FLUSHER_SCHEDULED.getAndUpdate(value -> (value & 3) > 0 ? value | (1 << 3) : value);
+    if ((currentValue & 3) > 0) {
+      submitFlush(currentValue);
+    }
+  }
+
+  private static void submitFlush(int currentValue) {
+    if (currentValue >> 3 == 0) {
+      if ((currentValue >> 2 & 1) == 0) {
+        SwingUtilities.invokeLater(ourFlushQueueRunnable);
+      }
+      else {
+        ourWriteThreadExecutor
+          .execute(() -> ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(ourFlushQueueRunnable));
+      }
     }
   }
 
@@ -372,7 +404,7 @@ public class LaterInvocator {
    * @see IdeEventQueue#peekEvent()
    */
   public static boolean ensureFlushRequested() {
-    if (getNextEvent(false) != null) {
+    if (getNextEvent(ourLegacyQueue, false) != null) {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(ourFlushQueueRunnable);
       return true;
@@ -381,55 +413,65 @@ public class LaterInvocator {
   }
 
   @Nullable
-  private static RunnableInfo getNextEvent(boolean remove) {
+  private static RunnableInfo getNextEvent(ArrayDeque<RunnableInfo> queue, boolean remove) {
     synchronized (LOCK) {
       ModalityState currentModality = getCurrentModalityState();
 
-      while (!ourQueue.isEmpty()) {
-        RunnableInfo info = ourQueue.getFirst();
+      while (!queue.isEmpty()) {
+        RunnableInfo info = queue.getFirst();
 
         if (info.expired.value(null)) {
-          ourQueue.removeFirst();
+          queue.removeFirst();
           info.markDone();
           continue;
         }
 
         if (!currentModality.dominates(info.modalityState)) {
           if (remove) {
-            ourQueue.removeFirst();
+            queue.removeFirst();
           }
           return info;
         }
-        ourSkippedItems.add(ourQueue.removeFirst());
+        ourSkippedItems.add(queue.removeFirst());
       }
 
       return null;
     }
   }
 
-  private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
+  // bits: 0 — need to update EDT, 1 — need to update WT, 2 — current queue to be flushed, 3 — is update queued
+  private static final AtomicInteger FLUSHER_SCHEDULED = new AtomicInteger(0);
 
   private static class FlushQueue implements Runnable {
     private RunnableInfo myLastInfo;
 
     @Override
     public void run() {
-      FLUSHER_SCHEDULED.set(false);
+      int whichThread = FLUSHER_SCHEDULED.getAndUpdate(current -> {
+        return (current & 7 & ~(1 << (current >> 2 & 1))) ^ 4;
+      }) >> 2 & 1;
+
+      ArrayDeque<RunnableInfo> queue = whichThread == 0 ? ourLegacyQueue : ourQueue;
+      if ((whichThread == 0) ^ (SwingUtilities.isEventDispatchThread())) {
+        LOG.error("Tasks for one thread are executed on another");
+      }
+
       long startTime = System.currentTimeMillis();
       while (true) {
-        if (!runNextEvent()) {
-          return;
+        if (!runNextEvent(queue)) {
+          break;
         }
         if (System.currentTimeMillis() - startTime > 5) {
-          requestFlush();
-          return;
+          requestFlush(whichThread == 0);
+          break;
         }
       }
+      continueFlush();
     }
 
-    private boolean runNextEvent() {
+    private boolean runNextEvent(ArrayDeque<RunnableInfo> queue) {
       long startedAt = System.currentTimeMillis();
-      final RunnableInfo lastInfo = getNextEvent(true);
+      final RunnableInfo lastInfo = getNextEvent(queue, true);
       myLastInfo = lastInfo;
 
       if (lastInfo != null) {
@@ -474,8 +516,17 @@ public class LaterInvocator {
   }
 
   @TestOnly
+  public static Collection<RunnableInfo> getLaterInvocatorEdtQueue() {
+    synchronized (LOCK) {
+      // used by leak hunter as root, so we must not copy it here to another list
+      // to avoid walking over obsolete queue
+      return Collections.unmodifiableCollection(ourLegacyQueue);
+    }
+  }
+
+  @TestOnly
   @NotNull
-  public static Collection<RunnableInfo> getLaterInvocatorQueue() {
+  public static Collection<RunnableInfo> getLaterInvocatorWtQueue() {
     synchronized (LOCK) {
       // used by leak hunter as root, so we must not copy it here to another list
       // to avoid walking over obsolete queue
@@ -487,19 +538,24 @@ public class LaterInvocator {
     synchronized (LOCK) {
       reincludeSkippedItems();
 
-      List<RunnableInfo> alive = new ArrayList<>(ourQueue.size());
-      for (RunnableInfo info : ourQueue) {
-        if (info.expired.value(null)) {
-          info.markDone();
-        }
-        else {
-          alive.add(info);
-        }
+      purgeExpiredItems(ourQueue);
+      purgeExpiredItems(ourLegacyQueue);
+    }
+  }
+
+  private static void purgeExpiredItems(ArrayDeque<RunnableInfo> queue) {
+    List<RunnableInfo> alive = new ArrayList<>(queue.size());
+    for (RunnableInfo info : queue) {
+      if (info.expired.value(null)) {
+        info.markDone();
       }
-      if (alive.size() < ourQueue.size()) {
-        ourQueue.clear();
-        ourQueue.addAll(alive);
+      else {
+        alive.add(info);
       }
+    }
+    if (alive.size() < queue.size()) {
+      queue.clear();
+      queue.addAll(alive);
     }
   }
 
@@ -509,7 +565,7 @@ public class LaterInvocator {
 
     Semaphore semaphore = new Semaphore();
     semaphore.down();
-    invokeLater(semaphore::up, ModalityState.any());
+    invokeLater(semaphore::up, ModalityState.any(), true);
     while (!semaphore.isUp()) {
       UIUtil.dispatchAllInvocationEvents();
     }

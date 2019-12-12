@@ -125,7 +125,8 @@ public class LeakHunter {
       }
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
-      result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");
+      result.put(LaterInvocator.getLaterInvocatorEdtQueue(), "LaterInvocator.getLaterInvocatorEdtQueue()");
+      result.put(LaterInvocator.getLaterInvocatorWtQueue(), "LaterInvocator.getLaterInvocatorWtQueue()");
       result.put(ThreadTracker.getThreads().values(), "all live threads");
       if (allLoadedClasses != null) {
         result.put(allLoadedClasses, "all loaded classes statics");

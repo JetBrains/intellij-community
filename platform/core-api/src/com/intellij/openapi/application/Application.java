@@ -17,24 +17,43 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Provides access to core application-wide functionality and methods for working with the IDE's
- * thread model.
+ * Provides access to core application-wide functionality and methods for working with the IDE's thread model.
  * <p>
- * The thread model defines two main types of actions which can access the PSI and other
- * IDE data structures: read actions (which do not modify the data) and write actions (which modify
- * some data).
+ * The thread model defines three types of locks which provide access the PSI and other IDE data structures:
+ * <ul>
+ *   <li><b>Read lock</b> provides read access to the data. Can be obtained from any thread concurrently with other Read locks
+ *   and Write Intent lock.</li>
+ *   <li><b>Write Intent lock</b> provides read access to the data and the ability to acquire Write lock. Can be obtained from
+ *   any thread concurrently with Read locks, but cannot be acquired if another Write Intent lock is held on another thread.</li>
+ *   <li><b>Write lock</b> provides read and write access to the data. Can only be obtained from under Write Intent lock.
+ *   Cannot be acquired if a Read lock is held on another thread.</li>
+ * </ul>
  * <p>
- * You can call methods requiring read access from the Swing event-dispatch thread without using
- * {@link #runReadAction} method. If you need to invoke such methods from another thread you have to use
- * {@link #runReadAction}. Multiple read actions can run at the same time without locking each other.
+ * The compatibility matrix for these locks is reflected below.
+ * <table>
+ *   <tr><th style="width: 20px;"></th><th style="width: 15px;">R</th><th style="width: 15px;">IW</th><th style="width: 15px;">W</th></tr>
+ *   <tr><th>R</th><td>+</td><td>+</td><td>-</td></tr>
+ *   <tr><th>IW</th><td>+</td><td>-</td><td>-</td></tr>
+ *   <tr><th>W</th><td>-</td><td>-</td><td>-</td></tr>
+ * </table>
  * <p>
- * Write actions can be called only from the Swing thread using {@link #runWriteAction} method.
+ * Obtaining locks manually is not recommended. The recommended way is to run so-called "read actions" and "write actions" via
+ * {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * Multiple read actions can run at the same time without locking each other.
+ * <p>
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
  * <p>
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
 
+  /**
+   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
+   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
+   *
+   * @param action the action to run
+   */
+  void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action);
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
    * if no write action is currently running, or blocked until the currently running write action completes.<p></p>
@@ -209,8 +228,8 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, with {@link ModalityState#defaultModalityState()} modality state. This will happen after all
-   * pending AWT events have been processed.<p/>
+   * AWT event dispatching thread under Write Intent lock, with {@link ModalityState#defaultModalityState()} modality state.
+   * This will happen after all pending AWT events have been processed.<p/>
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
    * for the reasons described in {@link ModalityState} documentation.
@@ -221,7 +240,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread - unless the expiration condition is fulfilled.
+   * AWT event dispatching thread under Write Intent lock - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed and in {@link ModalityState#defaultModalityState()} modality state
    * (or a state with less modal dialogs open).<p/>
    * <p>
@@ -235,7 +254,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDE is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when IDE is in the specified modality
    * state (or a state with less modal dialogs open).
    * <p>
    * Please use this method instead of {@link javax.swing.SwingUtilities#invokeLater(Runnable)} or {@link com.intellij.util.ui.UIUtil} methods
@@ -248,7 +267,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Causes {@code runnable.run()} to be executed asynchronously on the
-   * AWT event dispatching thread, when IDE is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when IDE is in the specified modality
    * state(or a state with less modal dialogs open) - unless the expiration condition is fulfilled.
    * This will happen after all pending AWT events have been processed.
    * <p>
@@ -263,7 +282,7 @@ public interface Application extends ComponentManager {
 
   /**
    * <p>Causes {@code runnable.run()} to be executed synchronously on the
-   * AWT event dispatching thread, when the IDE is in the specified modality
+   * AWT event dispatching thread under Write Intent lock, when the IDE is in the specified modality
    * state (or a state with less modal dialogs open). This call blocks until all pending AWT events have been processed and (then)
    * {@code runnable.run()} returns.</p>
    *

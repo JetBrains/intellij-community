@@ -18,7 +18,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.CpuUsageData;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -525,7 +528,8 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     int readIterations = 200_000_000;
-    ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
+    ReadMostlyRWLock lock = new ReadMostlyRWLock();
+    lock.setWriteThread(Thread.currentThread());
     final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
     final Field myThreadLocalsField = ObjectUtils.notNull(ReflectionUtil.getDeclaredField(Thread.class, "threadLocals"));
     //noinspection Convert2Lambda

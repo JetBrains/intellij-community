@@ -145,6 +145,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
+    action.run();
+  }
+
+  @Override
   public void runReadAction(@NotNull Runnable action) {
     action.run();
   }
