@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
@@ -149,10 +148,4 @@ inline fun <T> runAsWriteActionIfNeeded(crossinline runnable: () -> T): T {
     ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
     else -> runWriteAction(runnable)
   }
-}
-
-@Throws(IOException::class)
-@ApiStatus.Internal
-fun readProjectNameFile(nameFile: Path): String? {
-  return nameFile.inputStream().reader().useLines { line -> line.firstOrNull { !it.isEmpty() }?.trim() }
 }

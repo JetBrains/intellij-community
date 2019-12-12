@@ -33,6 +33,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerialize
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationSerializer;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +44,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
 
 /**
  * @author nik
@@ -101,15 +101,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   public static String getDirectoryBaseProjectName(@NotNull Path dir) {
-    try (Stream<String> stream = Files.lines(dir.resolve(".name"))) {
-      String value = stream.findFirst().map(String::trim).orElse(null);
-      if (value != null) {
-        return value;
-      }
-    }
-    catch (IOException ignored) { }
-    Path parent = dir.getParent();
-    return (parent == null ? dir : parent).getFileName().toString();
+    String name = JpsPathUtil.readProjectName(dir);
+    return name != null ? name : JpsPathUtil.getDefaultProjectName(dir);
   }
 
   @Nullable

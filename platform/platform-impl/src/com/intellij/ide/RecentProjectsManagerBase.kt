@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.configurationStore.readProjectNameFile
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
@@ -19,7 +18,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -42,10 +40,13 @@ import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
-import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.IIOImage
@@ -573,17 +574,9 @@ private fun readProjectName(path: String): String {
     return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
   }
 
-  val nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(ProjectImpl.NAME_FILE)
-  try {
-    val result = readProjectNameFile(nameFile)
-    if (result != null) {
-      return result
-    }
-  }
-  catch (ignore: NoSuchFileException) { }
-  catch (ignored: IOException) { }
-
-  return file.fileName?.toString() ?: "<unknown>"
+  val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
+  return JpsPathUtil.readProjectName(projectDir) ?:
+         JpsPathUtil.getDefaultProjectName(projectDir)
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")
