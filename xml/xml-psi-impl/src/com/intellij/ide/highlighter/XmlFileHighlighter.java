@@ -22,7 +22,9 @@ import com.intellij.lexer.XmlHighlightingLexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -79,14 +81,45 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
 
       ourMap.putValue(XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
-      for (EmbeddedTokenHighlighter highlighter : EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
-        MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
-        for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
-          if (!ourMap.containsKey(entry.getKey())) {
-            ourMap.putValues(entry.getKey(), entry.getValue());
-          }
-        }
+      registerAdditionalHighlighters(ourMap);
+      EMBEDDED_HIGHLIGHTERS.addExtensionPointListener(new EmbeddedTokenHighlighterExtensionPointListener(ourMap), null);
+    }
+  }
+
+  static void registerAdditionalHighlighters(MultiMap<IElementType, TextAttributesKey> map) {
+    for (EmbeddedTokenHighlighter highlighter : EMBEDDED_HIGHLIGHTERS.getExtensionList()) {
+      registerAdditionalHighlighters(map, highlighter);
+    }
+  }
+
+  private static void registerAdditionalHighlighters(MultiMap<IElementType, TextAttributesKey> map, EmbeddedTokenHighlighter highlighter) {
+    MultiMap<IElementType, TextAttributesKey> attributes = highlighter.getEmbeddedTokenAttributes();
+    for (Map.Entry<IElementType, Collection<TextAttributesKey>> entry : attributes.entrySet()) {
+      if (!map.containsKey(entry.getKey())) {
+        map.putValues(entry.getKey(), entry.getValue());
       }
+    }
+  }
+
+  static class EmbeddedTokenHighlighterExtensionPointListener implements ExtensionPointListener<EmbeddedTokenHighlighter> {
+    private final MultiMap<IElementType, TextAttributesKey> myMap;
+
+    EmbeddedTokenHighlighterExtensionPointListener(MultiMap<IElementType, TextAttributesKey> map) {
+      myMap = map;
+    }
+
+    @Override
+    public void extensionAdded(@NotNull EmbeddedTokenHighlighter extension, @NotNull PluginDescriptor pluginDescriptor) {
+      registerAdditionalHighlighters(myMap, extension);
+    }
+
+    @Override
+    public void extensionRemoved(@NotNull EmbeddedTokenHighlighter extension, @NotNull PluginDescriptor pluginDescriptor) {
+      MultiMap<IElementType, TextAttributesKey> attributes = extension.getEmbeddedTokenAttributes();
+      for (IElementType key : attributes.keySet()) {
+        myMap.remove(key);
+      }
+      registerAdditionalHighlighters(myMap, extension);
     }
   }
 
