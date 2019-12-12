@@ -1132,7 +1132,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean checkNotNullable(DfaValue value) {
+  public boolean checkNotNullable(@NotNull DfaValue value) {
     DfaNullability nullability = DfaNullability.fromDfType(getDfType(value));
     return nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
   }

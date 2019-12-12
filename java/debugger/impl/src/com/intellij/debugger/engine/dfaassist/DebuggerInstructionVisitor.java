@@ -75,7 +75,7 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   protected boolean checkNotNullable(DfaMemoryState state,
-                                     DfaValue value,
+                                     @NotNull DfaValue value,
                                      @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
       PsiExpression expression = problem.getDereferencedExpression();

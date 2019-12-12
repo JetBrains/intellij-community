@@ -130,7 +130,7 @@ public interface DfaMemoryState {
 
   boolean isNull(DfaValue dfaVar);
 
-  boolean checkNotNullable(DfaValue value);
+  boolean checkNotNullable(@NotNull DfaValue value);
 
   boolean isNotNull(DfaValue dfaVar);
 

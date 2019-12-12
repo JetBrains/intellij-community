@@ -39,7 +39,7 @@ public class CommonDataflow {
       myMayFailByContract = other.myMayFailByContract;
     }
 
-    void addValue(DfaMemoryStateImpl memState, DfaValue value) {
+    void addValue(DfaMemoryState memState, DfaValue value) {
       if (myPossibleValues == null) return;
       DfType dfType = memState.getDfType(value);
       if (!(dfType instanceof DfConstantType)) {
@@ -57,7 +57,7 @@ public class CommonDataflow {
       }
     }
 
-    void addFacts(DfaMemoryStateImpl memState, DfaValue value) {
+    void addFacts(DfaMemoryState memState, DfaValue value) {
       if (myDfType == DfTypes.TOP) return;
       DfType newType = memState.getDfType(value);
       if (value instanceof DfaVariableValue) {
@@ -91,7 +91,7 @@ public class CommonDataflow {
       return copy;
     }
 
-    void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+    void add(PsiExpression expression, DfaMemoryState memState, DfaValue value) {
       DataflowPoint point = myData.computeIfAbsent(expression, e -> new DataflowPoint());
       if (DfaTypeValue.isContractFail(value)) {
         point.myMayFailByContract = true;
@@ -288,7 +288,7 @@ public class CommonDataflow {
                                      @NotNull DfaMemoryState state) {
       if (range == null) {
         // Do not track instructions which cover part of expression
-        myResult.add(expression, (DfaMemoryStateImpl)state, value);
+        myResult.add(expression, state, value);
       }
     }
   }

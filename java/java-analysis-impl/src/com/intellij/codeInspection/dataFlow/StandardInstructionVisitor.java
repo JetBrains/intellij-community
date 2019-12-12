@@ -632,11 +632,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return precalculated;
   }
 
-  protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+  protected boolean checkNotNullable(DfaMemoryState state, @NotNull DfaValue value, @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     boolean notNullable = state.checkNotNullable(value);
     if (notNullable && problem != null && problem.thrownException() != null) {
-      DfaValueFactory factory = ((DfaMemoryStateImpl)state).getFactory();
-      state.applyCondition(value.cond(RelationType.NE, factory.getNull()));
+      state.applyCondition(value.cond(RelationType.NE, value.getFactory().getNull()));
     }
     return notNullable;
   }

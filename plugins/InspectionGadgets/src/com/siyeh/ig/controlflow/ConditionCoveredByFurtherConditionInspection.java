@@ -134,7 +134,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
       protected boolean checkNotNullable(DfaMemoryState state,
-                                         DfaValue value,
+                                         @NotNull DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
           DfType dfType = state.getDfType(value);
