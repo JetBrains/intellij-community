@@ -16,7 +16,6 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.StorageException;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -24,7 +23,6 @@ import java.util.Map;
 /**
  * A class intended to make a diff between existing forward index data and new one.
  */
-@ApiStatus.Experimental
 public abstract class InputDataDiffBuilder<Key, Value> {
   protected final int myInputId;
 

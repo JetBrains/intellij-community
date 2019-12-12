@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@ApiStatus.Experimental
 public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key, Value> {
   private static final boolean ourDiffUpdateEnabled = SystemProperties.getBooleanProperty("idea.disable.diff.index.update", true);
 

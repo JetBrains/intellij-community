@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-@ApiStatus.Experimental
 public class CollectionInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key,Value> {
   private final Collection<Key> mySeq;
 
