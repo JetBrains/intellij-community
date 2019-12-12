@@ -50,7 +50,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
   }
 
   public void testAddRetrieve() throws IOException {
-    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension(foo1, boo1, bar1, baz1));
+    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
     persistIndexedState(foo1);
     persistIndexedState(boo1);
 
@@ -62,22 +62,22 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
   }
 
   public void testInvalidation() throws IOException {
-    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension(foo1));
+    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
     persistIndexedState(foo1);
     assertTrue(isIndexedState(foo1));
     myMap.close();
-    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension(foo2));
+    myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
     assertFalse(isIndexedState(foo2));
     persistIndexedState(foo2);
     assertTrue(isIndexedState(foo2));
     assertFalse(isIndexedState(foo1));
   }
 
-  public void testStaleKeysRemoval() throws IOException {
-    int baseThreshold = PersistentSubIndexerVersionEnumerator.getCompactThreshold();
-    PersistentSubIndexerVersionEnumerator.setCompactThreshold(2);
+  public void testStaleKeysRemoval() {
+    int baseThreshold = PersistentSubIndexerVersionEnumerator.getStorageSizeLimit();
+    PersistentSubIndexerVersionEnumerator.setStorageSizeLimit(2);
     try {
-      myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension(foo1, boo1, bar1, baz1));
+      myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
       persistIndexedState(foo1);
       persistIndexedState(boo1);
       persistIndexedState(bar1);
@@ -89,31 +89,18 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
       assertTrue(isIndexedState(baz1));
 
       myMap.close();
-      myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension(foo1, boo1));
-
-      assertTrue(isIndexedState(foo1));
-      assertTrue(isIndexedState(boo1));
-      assertFalse(isIndexedState(bar1));
-      assertFalse(isIndexedState(baz1));
-
+      myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
+      fail();
+    } catch (IOException ignored) {
+      // it's ok
     } finally {
-      PersistentSubIndexerVersionEnumerator.setCompactThreshold(baseThreshold);
+      PersistentSubIndexerVersionEnumerator.setStorageSizeLimit(baseThreshold);
     }
 
   }
 
   private static final Key<MyIndexFileAttribute> ATTRIBUTE_KEY = Key.create("my.index.attr.key");
   private static class MyPerFileIndexExtension implements CompositeDataIndexer<String, String, MyIndexFileAttribute, String> {
-    private final Set<MyIndexFileAttribute> myAllAvailableAttributes;
-
-    private MyPerFileIndexExtension(MyIndexFileAttribute... attributes) {myAllAvailableAttributes = ContainerUtil.newHashSet(attributes);}
-
-    @NotNull
-    @Override
-    public Collection<MyIndexFileAttribute> getAllAvailableSubIndexers() {
-      return myAllAvailableAttributes;
-    }
-
     @Nullable
     @Override
     public MyIndexFileAttribute calculateSubIndexer(@NotNull VirtualFile content) {
