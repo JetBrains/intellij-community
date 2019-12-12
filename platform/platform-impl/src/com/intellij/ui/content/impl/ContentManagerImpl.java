@@ -508,7 +508,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void setSelectedContent(@NotNull final Content content) {
+  public void setSelectedContent(@NotNull Content content) {
     setSelectedContentCB(content);
   }
 

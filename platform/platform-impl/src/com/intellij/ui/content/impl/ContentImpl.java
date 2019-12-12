@@ -59,6 +59,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myPinnable = isPinnable;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myComponent;

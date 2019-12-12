@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.util.ContentsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ public interface ContentManager extends Disposable, BusyObject {
   void setSelectedContent(@NotNull Content content);
 
   @NotNull
+  @ApiStatus.Internal
   ActionCallback setSelectedContentCB(@NotNull Content content);
 
   void setSelectedContent(@NotNull Content content, boolean requestFocus);

@@ -172,14 +172,14 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
-      public void contentAdded(@NotNull final ContentManagerEvent event) {
+      public void contentAdded(@NotNull ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
         event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
         rebuild();
       }
 
       @Override
-      public void contentRemoved(@NotNull final ContentManagerEvent event) {
+      public void contentRemoved(@NotNull ContentManagerEvent event) {
         event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
@@ -187,11 +187,11 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
       }
 
       @Override
-      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
+      public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       }
 
       @Override
-      public void selectionChanged(@NotNull final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull ContentManagerEvent event) {
         ensureSelectedContentVisible();
 
         update();
@@ -212,15 +212,17 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   }
 
   private void ensureSelectedContentVisible() {
-    final Content selected = myManager.getSelectedContent();
+    Content selected = myManager.getSelectedContent();
     if (selected == null) {
       myContent.removeAll();
       return;
     }
 
     if (myContent.getComponentCount() == 1) {
-      final Component visible = myContent.getComponent(0);
-      if (visible == selected.getComponent()) return;
+      Component visible = myContent.getComponent(0);
+      if (visible == selected.getComponent()) {
+        return;
+      }
     }
 
     myContent.removeAll();
@@ -476,10 +478,11 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     c.putClientProperty(TOOLWINDOW_UI_INSTALLED, Boolean.TRUE);
   }
 
-  private void initActionGroup(DefaultActionGroup group, final Content content) {
+  private void initActionGroup(DefaultActionGroup group, @Nullable Content content) {
     if (content == null) {
       return;
     }
+
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
     group.add(myCloseAllAction);
@@ -512,6 +515,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     if (selectedContent == null && toolWindowGroup == null) {
       return;
     }
+
     DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
     group.copyFromGroup(configuredGroup);
@@ -527,7 +531,8 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     popupMenu.getComponent().show(comp, x, y);
   }
 
-  private static AnAction createSplitTabsAction(final TabbedContent content) {
+  @NotNull
+  private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
     return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -536,7 +541,8 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     };
   }
 
-  private static AnAction createMergeTabsAction(final ContentManager manager, final String tabPrefix) {
+  @NotNull
+  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, String tabPrefix) {
     return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -568,7 +574,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     };
   }
 
-  private void processHide(final MouseEvent e) {
+  private void processHide(@NotNull MouseEvent e) {
     IdeEventQueue.getInstance().blockNextEvents(e);
     final Component c = e.getComponent();
     if (c instanceof BaseLabel) {
@@ -576,12 +582,14 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
       if (tab.getContent() != null) {
         if (myManager.canCloseContents() && tab.getContent().isCloseable()) {
           myManager.removeContent(tab.getContent(), true, true, true);
-        } else {
+        }
+        else {
           if (myManager.getContentCount() == 1) {
             hideWindow(e);
           }
         }
-      } else {
+      }
+      else {
         hideWindow(e);
       }
     }
@@ -590,7 +598,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     }
   }
 
-  private void hideWindow(final MouseEvent e) {
+  private void hideWindow(@NotNull MouseEvent e) {
     if (e.isControlDown()) {
       myWindow.fireHiddenSide();
     }
@@ -613,7 +621,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     return null;
   }
 
-
+  @NotNull
   private CloseAction.CloseTarget computeCloseTarget() {
     if (myManager.canCloseContents()) {
       Content selected = myManager.getSelectedContent();
@@ -625,15 +633,14 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     return new HideToolwindowTarget();
   }
 
-  private class HideToolwindowTarget implements CloseAction.CloseTarget {
+  private final class HideToolwindowTarget implements CloseAction.CloseTarget {
     @Override
     public void close() {
       myWindow.fireHidden();
     }
   }
 
-  private class CloseContentTarget implements CloseAction.CloseTarget {
-
+  private final class CloseContentTarget implements CloseAction.CloseTarget {
     private final Content myContent;
 
     private CloseContentTarget(Content content) {

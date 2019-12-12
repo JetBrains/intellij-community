@@ -292,6 +292,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   public void allowHeavyFilters() {
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myTerminalWidget.getComponent();

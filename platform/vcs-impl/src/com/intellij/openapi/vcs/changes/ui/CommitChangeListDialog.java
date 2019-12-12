@@ -590,6 +590,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myCommitMessageArea.getEditorField();
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return mySplitter;
