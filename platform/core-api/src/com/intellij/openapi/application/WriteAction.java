@@ -10,6 +10,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -33,7 +34,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isWriteThread()) {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -48,7 +49,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    WriteThread.invokeAndWait(() -> {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -143,8 +144,12 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
-    if (application.isDispatchThread()) {
+    if (application.isWriteThread()) {
       return ApplicationManager.getApplication().runWriteAction(action);
+    }
+
+    if (SwingUtilities.isEventDispatchThread()) {
+      LOG.error("You can't run blocking actions from EDT in Pure UI mode");
     }
 
     if (application.isReadAccessAllowed()) {
@@ -153,7 +158,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     AtomicReference<T> result = new AtomicReference<>();
     AtomicReference<Throwable> exception = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    WriteThread.invokeAndWait(() -> {
       try {
         result.set(compute(action));
       }

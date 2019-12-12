@@ -26,15 +26,37 @@ import kotlin.coroutines.CoroutineContext
  * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val modality: ModalityState,
+                                                     private val thread: ExecutionThread,
                                                      constraints: Array<ContextConstraint>,
                                                      cancellationConditions: Array<BooleanSupplier>,
                                                      expirableHandles: Set<Expiration>)
   : AppUIExecutor,
-    BaseExpirableExecutorMixinImpl<AppUIExecutorImpl>(constraints, cancellationConditions, expirableHandles, MyExecutor(modality)) {
+    BaseExpirableExecutorMixinImpl<AppUIExecutorImpl>(constraints, cancellationConditions, expirableHandles,
+                                                      getExecutorForThread(thread, modality)) {
 
-  constructor(modality: ModalityState) : this(modality, emptyArray(), emptyArray(), emptySet())
+  constructor(modality: ModalityState, thread: ExecutionThread) : this(modality, thread, emptyArray(), emptyArray(), emptySet())
 
-  private class MyExecutor(private val modality: ModalityState) : Executor {
+  companion object {
+    private fun getExecutorForThread(thread: ExecutionThread,
+                                     modality: ModalityState) =
+      when (thread) {
+        ExecutionThread.EDT -> MyEdtExecutor(modality)
+        ExecutionThread.WT -> MyWtExecutor(modality)
+      }
+  }
+
+  private class MyWtExecutor(private val modality: ModalityState) : Executor {
+    override fun execute(command: Runnable) {
+      if (ApplicationManager.getApplication().isWriteThread && !ModalityState.current().dominates(modality)) {
+        command.run()
+      }
+      else {
+        ApplicationManager.getApplication().invokeLaterOnWriteThread(command, modality)
+      }
+    }
+
+  }
+  private class MyEdtExecutor(private val modality: ModalityState) : Executor {
     override fun execute(command: Runnable) {
       if (ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)) {
         command.run()
@@ -48,10 +70,13 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   override fun cloneWith(constraints: Array<ContextConstraint>,
                          cancellationConditions: Array<BooleanSupplier>,
                          expirationSet: Set<Expiration>): AppUIExecutorImpl =
-    AppUIExecutorImpl(modality, constraints, cancellationConditions, expirationSet)
+    AppUIExecutorImpl(modality, thread, constraints, cancellationConditions, expirationSet)
 
   override fun dispatchLaterUnconstrained(runnable: Runnable) =
-    ApplicationManager.getApplication().invokeLater(runnable, modality)
+    when (thread) {
+      ExecutionThread.EDT -> ApplicationManager.getApplication().invokeLater(runnable, modality)
+      ExecutionThread.WT -> ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, modality)
+    }
 
   override fun later(): AppUIExecutorImpl {
     val edtEventCount = if (ApplicationManager.getApplication().isDispatchThread) IdeEventQueue.getInstance().eventCount else -1
@@ -60,16 +85,19 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       var usedOnce: Boolean = false
 
       override fun isCorrectContext(): Boolean =
-        when (edtEventCount) {
-          -1 -> ApplicationManager.getApplication().isDispatchThread
-          else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
+        when (thread) {
+          ExecutionThread.EDT -> when (edtEventCount) {
+            -1 -> ApplicationManager.getApplication().isDispatchThread
+            else -> usedOnce || edtEventCount != IdeEventQueue.getInstance().eventCount
+          }
+          ExecutionThread.WT -> usedOnce
         }
 
       override fun schedule(runnable: Runnable) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          usedOnce = true
-                                                          runnable.run()
-                                                        }, modality)
+        dispatchLaterUnconstrained(Runnable {
+                                     usedOnce = true
+                                     runnable.run()
+                                   })
       }
 
       override fun toString() = "later"
@@ -126,10 +154,10 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
       override fun toString() = "inWriteAction"
     })
   }
-
   override fun inSmartMode(project: Project): AppUIExecutorImpl {
     return withConstraint(InSmartMode(project), project)
   }
+
 }
 
 @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
@@ -175,4 +203,8 @@ internal class InSmartMode(private val project: Project) : ContextConstraint {
   }
 
   override fun toString() = "inSmartMode"
+}
+
+internal enum class ExecutionThread {
+  EDT, WT
 }

@@ -261,6 +261,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isDispatchThread() {
+    return isWriteThread() && SwingUtilities.isEventDispatchThread();
+  }
+
+  @Override
+  public boolean isWriteThread() {
     return myLock.isWriteThread();
   }
 
@@ -379,8 +384,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread();
     boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
-                           // The thread will deadlock trying to get read action otherwise.
-      ) {
+        // The thread will deadlock trying to get read action otherwise.
+        ) {
       LOG.debug("Starting process with progress from within write action makes no sense");
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
@@ -437,8 +442,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread();
     boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
-                           // The thread will deadlock trying to get read action otherwise.
-      ) {
+      // The thread will deadlock trying to get read action otherwise.
+    ) {
       throw new IncorrectOperationException("Starting process with progress from within write action makes no sense");
     }
 
@@ -483,6 +488,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
       runnable.run();
+      return;
+    }
+    else if (SwingUtilities.isEventDispatchThread()) {
+      runIntendedWriteActionOnCurrentThread(runnable);
       return;
     }
 
@@ -766,6 +775,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal) {
+    invokeLaterOnWriteThread(action, modal, getDisposed());
+  }
+
+  @Override
+  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
+    Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
+    LaterInvocator.invokeLaterWithCallback(() -> runIntendedWriteActionOnCurrentThread(r), modal, expired, null, false);
+  }
+
+  @Override
+  public void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    invokeLaterOnWriteThread(action, ModalityState.defaultModalityState());
+  }
+
+  @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     if (myLock.isWriteIntendedByThisThread()) {
       action.run();
@@ -778,6 +803,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       finally {
         myLock.writeIntentUnlock();
       }
+    }
+  }
+
+  @Override
+  public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
+    if (myLock.isWriteIntendedByThisThread()) {
+      myLock.writeIntentUnlock();
+      try {
+        return action.compute();
+      }
+      finally {
+        myLock.writeIntentLock();
+      }
+    }
+    else {
+      return action.compute();
     }
   }
 
@@ -944,8 +985,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
+  @Override
+  public void assertIsWriteThread() {
+    if (isWriteThread()) return;
+    if (ShutDownTracker.isShutdownHookRunning()) return;
+    assertIsWriteThread("Access is allowed from write thread only.");
+  }
+
   private void assertIsDispatchThread(String message) {
     if (isDispatchThread()) return;
+    throw new RuntimeExceptionWithAttachments(
+      message,
+      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
+      " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
+      "\nCurrent thread: " + describe(Thread.currentThread()) +
+      "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
+      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+  }
+
+  private void assertIsWriteThread(String message) {
+    if (isWriteThread()) return;
     throw new RuntimeExceptionWithAttachments(
       message,
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
@@ -1038,7 +1097,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private void startWrite(@NotNull Class<?> clazz) {
     if (!isWriteAccessAllowed()) {
-      assertIsDispatchThread("Write access is allowed from event dispatch thread only");
+      assertIsWriteThread("Write access is allowed from event dispatch thread only");
     }
     boolean writeActionPending = myWriteActionPending;
     if (gatherStatistics && myWriteActionsStack.isEmpty() && !writeActionPending) {
@@ -1178,7 +1237,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isWriteAccessAllowed() {
-    return isDispatchThread() && myLock.isWriteLocked();
+    return isWriteThread() && myLock.isWriteLocked();
   }
 
   @Override
@@ -1194,7 +1253,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    */
   @ApiStatus.Internal
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
-    assertIsDispatchThread();
+    assertIsWriteThread();
     if (!myLock.isWriteLocked()) {
       runModalProgress(project, title, runnable);
       return;

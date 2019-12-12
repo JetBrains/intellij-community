@@ -37,8 +37,12 @@ import java.util.concurrent.Future;
  *   <tr><th>W</th><td>-</td><td>-</td><td>-</td></tr>
  * </table>
  * <p>
- * Obtaining locks manually is not recommended. The recommended way is to run so-called "read actions" and "write actions" via
- * {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * Obtaining locks manually is not recommended. The recommended way to obtain read and write locks is to run so-called
+ * "read actions" and "write actions" via {@link #runReadAction} and {@link #runWriteAction}, respectively.
+ * <p>
+ * The recommended way to obtain Write Intent lock is to schedule execution on so-called "write thread" (i.e. thread with Write Intent lock)
+ * via {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread} asynchronous API.
+ * <p>
  * Multiple read actions can run at the same time without locking each other.
  * <p>
  * If there are read actions running at this moment {@code runWriteAction} is blocked until they are completed.
@@ -48,11 +52,55 @@ import java.util.concurrent.Future;
 public interface Application extends ComponentManager {
 
   /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * with {@link ModalityState#defaultModalityState()} modality state.
+   *
+   * @param action the runnable to execute.
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(@NotNull Runnable action);
+
+  /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * when IDE is in the specified modality state (or a state with less modal dialogs open).
+   *
+   * @param action the runnable to execute.
+   * @param modal  the state in which action will be executed
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(Runnable action, ModalityState modal);
+
+  /**
+   * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
+   * when IDE is in the specified modality state (or a state with less modal dialogs open)
+   * - unless the expiration condition is fulfilled.
+   *
+   * @param action  the runnable to execute.
+   * @param modal   the state in which action will be executed
+   * @param expired condition to check before execution.
+   */
+  @ApiStatus.Experimental
+  void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired);
+
+  /**
+   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   */
+  @ApiStatus.Internal
+  <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E;
+
+  /**
    * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
    * if no write intent action is currently running, or blocked until the currently running write intent action completes.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   * Use {@link #invokeLaterOnWriteThread}, {@link WriteThread} or {@link AppUIExecutor#onWriteThread()} to
+   * run code under Write Intent lock asynchronously.
    *
    * @param action the action to run
    */
+  @ApiStatus.Internal
   void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action);
   /**
    * Runs the specified read action. Can be called from any thread. The action is executed immediately
@@ -148,6 +196,12 @@ public interface Application extends ComponentManager {
   void assertIsDispatchThread();
 
   /**
+   * Asserts whether the method is being called from under the Write Intent lock
+   */
+  @ApiStatus.Experimental
+  void assertIsWriteThread();
+
+  /**
    * @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead
    * Adds an {@link ApplicationListener}.
    *
@@ -213,12 +267,22 @@ public interface Application extends ComponentManager {
   boolean isReadAccessAllowed();
 
   /**
-   * Checks if the current thread is the Swing dispatch thread.
+   * Checks if the current thread is the Swing dispatch thread and has IW lock acquired.
    *
-   * @return {@code true} if the current thread is the Swing dispatch thread, {@code false} otherwise.
+   * @see #isWriteThread()
+   * @return {@code true} if the current thread is the Swing dispatch thread with IW lock, {@code false} otherwise.
    */
   @Contract(pure = true)
   boolean isDispatchThread();
+
+  /**
+   * Checks if the current thread has IW lock acquired, which grants read access and the ability to run write actions.
+   *
+   * @return {@code true} if the current thread has IW lock acquired, {@code false} otherwise.
+   */
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  boolean isWriteThread();
 
   /**
    * @return a facade, which lets to call all those invokeLater() with a ActionCallback handle returned.

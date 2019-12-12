@@ -86,6 +86,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public boolean isWriteThread() {
+    return true;
+  }
+
+  @Override
   public boolean isActive() {
     return true;
   }
@@ -100,6 +105,10 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void assertIsDispatchThread() {
+  }
+
+  @Override
+  public void assertIsWriteThread() {
   }
 
   @Override
@@ -142,6 +151,26 @@ public class MockApplication extends MockComponentManager implements Application
   @Override
   public boolean isRestartCapable() {
     return false;
+  }
+
+  @Override
+  public void invokeLaterOnWriteThread(@NotNull Runnable action) {
+    action.run();
+  }
+
+  @Override
+  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal) {
+    action.run();
+  }
+
+  @Override
+  public void invokeLaterOnWriteThread(Runnable action, ModalityState modal, @NotNull Condition<?> expired) {
+    action.run();
+  }
+
+  @Override
+  public <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
+    return action.compute();
   }
 
   @Override
