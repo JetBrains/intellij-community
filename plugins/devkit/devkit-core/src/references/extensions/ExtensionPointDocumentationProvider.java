@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
-import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
+import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +13,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -65,7 +64,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
 
     if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
-      generateJavadoc(sb, extensionPoint.getBeanClass().getValue());
+      generateClassDoc(sb, extensionPoint.getBeanClass().getValue());
     }
 
     List<With> withElements = extensionPoint.getWithElements();
@@ -92,7 +91,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     if (extensionPointClass != null) { // e.g. ServiceDescriptor
       sb.append(DocumentationMarkup.CONTENT_START);
       sb.append("<h2>Extension Point Implementation</h2>");
-      generateJavadoc(sb, extensionPointClass);
+      generateClassDoc(sb, extensionPointClass);
       sb.append(DocumentationMarkup.CONTENT_END);
     }
 
@@ -106,15 +105,18 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
   private static void generateClassLink(StringBuilder epClassText, @Nullable PsiClass epClass) {
     if (epClass == null) return;
-    JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
+
+    DocumentationManagerUtil.createHyperlink(epClassText, epClass, epClass.getQualifiedName(), epClass.getName(), false);
   }
 
-  private static void generateJavadoc(StringBuilder sb, @Nullable PsiElement element) {
+  private static void generateClassDoc(StringBuilder sb, @Nullable PsiElement element) {
     if (element == null) {
       sb.append("??? not found ???");
       return;
     }
-    sb.append(JavaDocumentationProvider.generateExternalJavadoc(element));
+
+    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
+    sb.append(documentationProvider.generateDoc(element, null));
   }
 
   private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
