@@ -87,7 +87,7 @@ class CircletIdeaStepExecutionProvider(
         }
     }
 
-    override fun onBeforeJobStatusChanged(tx: AutomationStorageTransaction, events: Iterable<StepStatusChangedEvent>) {
+    override fun onBeforeStepStatusChanged(tx: AutomationStorageTransaction, events: Iterable<StepStatusChangedEvent>) {
         //todo
     }
 
