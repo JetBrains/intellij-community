@@ -56,14 +56,7 @@ class LegacyBridgeModulesTest {
 
   @Before
   fun prepareProject() {
-    val tempDir = temporaryDirectoryRule.newPath("project").toFile()
-
-    project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
-      ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
-    }
-    runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
-
-    disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
+    project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
   }
 
   @Test
@@ -525,3 +518,15 @@ class LegacyBridgeModulesTest {
     }
   }
 }
+
+internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
+                                    disposableRule: DisposableRule): Project {
+  val projectDir = temporaryDirectory.newPath("project").toFile()
+  val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
+    ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
+  }
+  runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
+  disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
+  return project
+}
+

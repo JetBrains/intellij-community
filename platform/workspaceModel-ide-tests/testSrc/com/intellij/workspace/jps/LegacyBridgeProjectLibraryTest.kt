@@ -2,13 +2,8 @@
 package com.intellij.workspace.jps
 
 import com.intellij.configurationStore.StoreUtil
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -16,9 +11,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspace.api.*
+import com.intellij.workspace.api.EntityChange
+import com.intellij.workspace.api.EntityStoreChanged
+import com.intellij.workspace.api.LibraryEntity
+import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
-import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import org.junit.Assert.*
 import org.junit.Before
@@ -45,12 +42,7 @@ class LegacyBridgeProjectLibraryTest {
 
   @Before
   fun prepareProject() {
-    val tempDir = temporaryDirectoryRule.newPath("project").toFile()
-
-    project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
-      ProjectManager.getInstance().createProject("testProject", File(tempDir, "testProject.ipr").path)!!
-    }
-    runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
+    project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
 
     events = mutableListOf()
     val messageBusConnection = project.messageBus.connect(disposableRule.disposable)
@@ -59,8 +51,6 @@ class LegacyBridgeProjectLibraryTest {
         events.addAll(event.getChanges(LibraryEntity::class.java))
       }
     })
-
-    disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
   }
 
   @Test
