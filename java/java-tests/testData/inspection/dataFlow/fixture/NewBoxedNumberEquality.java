@@ -44,4 +44,14 @@ class Testcase {
       if (objVal == val) {}
     }
   }
+  
+  int b;
+  
+  public final Integer getKey() {
+    return b;
+  }
+  
+  public void testInlineSmallMethod(java.util.Map.Entry<Object, Object> e) {
+    if (getKey().equals(e.getKey())) {}
+  }
 }
