@@ -67,10 +67,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
   final SimpleTree myTree;
-  private final FilteringTreeBuilder myBuilder;
+  private final MyBuilder myBuilder;
 
   private final SettingsFilter myFilter;
-  private final MyRoot myRoot;
   private final JScrollPane myScroller;
   private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
@@ -81,7 +80,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   public SettingsTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     myFilter = filter;
-    myRoot = new MyRoot(groups);
     myTree = new MyTree();
     myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
     myTree.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -166,11 +164,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       MyNode node = extractNode(event.getNewLeadSelectionPath());
       select(node == null ? null : node.myConfigurable);
     });
-    myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
+    myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(new MyRoot(groups)));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
   }
-
+  
   @Override
   public void updateUI() {
     super.updateUI();
@@ -350,7 +348,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       if (node == null) {
         return null;
       }
-      if (myRoot == node.getParent()) {
+      if (node.getParent() instanceof MyRoot) {
         return node.myDisplayName;
       }
       path = path.getParentPath();
@@ -611,7 +609,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       setPreferredSize(null);
 
       MyNode node = extractNode(value);
-      boolean isGroup = node != null && myRoot == node.getParent();
+      boolean isGroup = node != null && node.getParent() instanceof MyRoot;
       String name = node != null ? node.myDisplayName : String.valueOf(value);
       myTextLabel.append(name, isGroup ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myTextLabel.setFont(isGroup ? myTree.getFont() : StartupUiUtil.getLabelFont());
