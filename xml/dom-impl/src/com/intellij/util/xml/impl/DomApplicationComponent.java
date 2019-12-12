@@ -93,8 +93,6 @@ public class DomApplicationComponent {
     myTypeChooserManager.clearCache();
 
     registerDescriptions();
-    FileBasedIndex.getInstance().requestRebuild(DomFileIndex.NAME);
-    StubIndex.getInstance().forceRebuild(new Throwable());
   }
 
   public static DomApplicationComponent getInstance() {
