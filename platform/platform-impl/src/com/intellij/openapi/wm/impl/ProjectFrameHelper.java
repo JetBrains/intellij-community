@@ -368,9 +368,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     }
 
     installDefaultProjectStatusBarWidgets(myProject);
-    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
-      selfie = null;
-    });
+    if (selfie != null) {
+      StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
+        selfie = null;
+      });
+    }
   }
 
   private final Set<String> widgetIds = new THashSet<>();
