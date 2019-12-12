@@ -22,13 +22,15 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryViaTypedEntity(
   protected val model: RootModelViaTypedEntityImpl,
-  private val index: Int,
+  protected val index: Int,
   val item: ModuleDependencyItem,
   private val itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : OrderEntry {
 
   protected val updater: ((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit
     get() = itemUpdater ?: error("This mode is read-only. Call from a modifiable model")
+
+  protected val isModifiable = itemUpdater != null
 
   override fun getOwnerModule() = model.module
   override fun compareTo(other: OrderEntry?) = index.compareTo((other as OrderEntryViaTypedEntity).index)
@@ -81,12 +83,6 @@ internal abstract class ModuleOrderEntryBaseViaTypedEntity(
   override fun getPresentableName() = moduleName
 
   override fun <R : Any?> accept(policy: RootPolicy<R>, initialValue: R?): R? = policy.visitModuleOrderEntry(this, initialValue)
-
-  override fun cloneEntry(rootModel: ModifiableRootModel,
-                          projectRootManager: ProjectRootManagerImpl,
-                          filePointerManager: VirtualFilePointerManager): OrderEntry {
-    TODO("not implemented")
-  }
 }
 
 internal class ModuleOrderEntryViaTypedEntity(
@@ -114,16 +110,21 @@ internal class ModuleOrderEntryViaTypedEntity(
     updater { item -> (item as ModuleDependencyItem.Exportable.ModuleDependency).copy(productionOnTest = productionOnTestDependency) }
     productionOnTestVar = productionOnTestDependency
   }
+
+  override fun cloneEntry(rootModel: ModifiableRootModel,
+                          projectRootManager: ProjectRootManagerImpl,
+                          filePointerManager: VirtualFilePointerManager
+  ): OrderEntry = ModuleOrderEntryViaTypedEntity(model, index, moduleDependencyItem.copy(), if (isModifiable) updater else null)
 }
 
-private fun ModuleDependencyItem.DependencyScope.toDependencyScope() = when (this) {
+fun ModuleDependencyItem.DependencyScope.toDependencyScope() = when (this) {
   ModuleDependencyItem.DependencyScope.COMPILE -> DependencyScope.COMPILE
   ModuleDependencyItem.DependencyScope.RUNTIME -> DependencyScope.RUNTIME
   ModuleDependencyItem.DependencyScope.PROVIDED -> DependencyScope.PROVIDED
   ModuleDependencyItem.DependencyScope.TEST -> DependencyScope.TEST
 }
 
-private fun DependencyScope.toEntityDependencyScope(): ModuleDependencyItem.DependencyScope = when (this) {
+fun DependencyScope.toEntityDependencyScope(): ModuleDependencyItem.DependencyScope = when (this) {
   DependencyScope.COMPILE -> ModuleDependencyItem.DependencyScope.COMPILE
   DependencyScope.RUNTIME -> ModuleDependencyItem.DependencyScope.RUNTIME
   DependencyScope.PROVIDED -> ModuleDependencyItem.DependencyScope.PROVIDED
@@ -237,9 +238,8 @@ internal class LibraryOrderEntryViaTypedEntity(
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
-                          filePointerManager: VirtualFilePointerManager): OrderEntry {
-    TODO("not implemented")
-  }
+                          filePointerManager: VirtualFilePointerManager
+  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), moduleLibraryTable, if (isModifiable) updater else null)
 
   override fun isSynthetic(): Boolean = isModuleLevel
 }
@@ -271,9 +271,8 @@ internal class SdkOrderEntryViaTypedEntity(
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
-                          filePointerManager: VirtualFilePointerManager): OrderEntry {
-    TODO("not implemented")
-  }
+                          filePointerManager: VirtualFilePointerManager
+  ): OrderEntry = SdkOrderEntryViaTypedEntity(model, index, sdkDependencyItem.copy())
 
   override fun isSynthetic(): Boolean = true
 }
@@ -293,9 +292,8 @@ internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
-                          filePointerManager: VirtualFilePointerManager): OrderEntry {
-    TODO("not implemented")
-  }
+                          filePointerManager: VirtualFilePointerManager
+  ): OrderEntry = InheritedSdkOrderEntryViaTypedEntity(model, index, ModuleDependencyItem.InheritedSdkDependency)
 }
 
 internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
@@ -313,9 +311,8 @@ internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
 
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
-                          filePointerManager: VirtualFilePointerManager): OrderEntry {
-    TODO("not implemented")
-  }
+                          filePointerManager: VirtualFilePointerManager
+  ): OrderEntry = ModuleSourceOrderEntryViaTypedEntity(model, index, ModuleDependencyItem.ModuleSourceDependency)
 
   override fun isSynthetic(): Boolean = true
 }
