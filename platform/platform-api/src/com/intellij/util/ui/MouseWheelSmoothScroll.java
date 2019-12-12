@@ -25,7 +25,7 @@ import static java.lang.Math.*;
 public class MouseWheelSmoothScroll {
 
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
-  private final FlingDetector horizontalFling = new FlingDetector(), verticalFling = new FlingDetector();
+  private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();
   private final @NotNull Supplier<Boolean> myScrollEnabled;
 
   public static MouseWheelSmoothScroll create() {
@@ -59,27 +59,21 @@ public class MouseWheelSmoothScroll {
                                        getDelta(bar, e, animator.myTargetValue));
     int targetValue = value + delta;
 
-    if (TouchScrollUtil.isUpdate(e)) {
+    if (TouchScrollUtil.isBegin(e)) {
+      verticalFling.registerBegin();
+      horizontalFling.registerBegin();
+    } else if (TouchScrollUtil.isUpdate(e)) {
       bar.setValue(targetValue);
-      FlingDetector fling = isHorizontalScroll(e) ? horizontalFling : verticalFling;
-      fling.updateDelta(delta);
+      FlingManager fling = isHorizontalScroll(e) ? horizontalFling : verticalFling;
+      fling.registerUpdate(delta);
     } else if (TouchScrollUtil.isEnd(e)) {
-      startFling(getEventVerticalScrollBar(e), verticalFling, vertical);
-      startFling(getEventHorizontalScrollBar(e), horizontalFling, horizontal);
+      verticalFling.start(getEventVerticalScrollBar(e), vertical);
+      horizontalFling.start(getEventHorizontalScrollBar(e), horizontal);
     } else {
       animator.start(value, targetValue, bar::setValue, shouldStop(bar), DefaultAnimationSettings.SCROLL);
     }
 
     e.consume();
-  }
-
-  public void startFling(JScrollBar bar, FlingDetector fling, InertialAnimator animator) {
-    if (bar != null && fling.shouldStart()) {
-      animator.stop();
-      int value = bar.getValue();
-      int targetValue = fling.getTargetValue(value);
-      animator.start(value, targetValue, bar::setValue, shouldStop(bar), DefaultAnimationSettings.TOUCH);
-    }
   }
 
   public static @Nullable
@@ -242,27 +236,47 @@ public class MouseWheelSmoothScroll {
     }
   }
 
-  private static class FlingDetector {
+  private static class FlingManager {
+    private long beginTime = 0L;
     private int lastDelta = 0;
 
-    public void updateDelta(int delta) {
+    public void registerBegin() {
+      beginTime = System.currentTimeMillis();
+    }
+
+    public void registerUpdate(int delta) {
+      beginTime = 0L;
       lastDelta = delta;
     }
 
     private static int getPixelThreshold() {
-      return Registry.intValue("idea.inertial.smooth.scrolling.touch.pixel.threshold");
+      return Registry.intValue("idea.inertial.touch.fling.pixelThreshold");
     }
 
     private static int getFlingMultiplier() {
-      return Registry.intValue("idea.inertial.smooth.scrolling.touch.multiplier");
+      return Registry.intValue("idea.inertial.touch.fling.multiplier");
+    }
+
+    private static int getFlingInterruptLag() {
+      return Registry.intValue("idea.inertial.touch.fling.interruptLag");
     }
 
     public boolean shouldStart() {
       return abs(lastDelta) >= getPixelThreshold();
     }
 
-    public int getTargetValue(int initValue) {
-      return initValue + lastDelta * getFlingMultiplier();
+    private Predicate<Integer> shouldStop(JScrollBar bar) {
+      return MouseWheelSmoothScroll.shouldStop(bar).or(v -> {
+        return beginTime != 0L && (System.currentTimeMillis() - beginTime) > getFlingInterruptLag();
+      });
+    }
+
+    public void start(JScrollBar bar, InertialAnimator animator) {
+      if (bar != null && shouldStart()) {
+        int initValue = bar.getValue();
+        int targetValue = initValue + lastDelta * getFlingMultiplier();
+        animator.start(initValue, targetValue, bar::setValue, shouldStop(bar), DefaultAnimationSettings.TOUCH);
+      }
     }
   }
 
