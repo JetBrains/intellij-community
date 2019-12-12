@@ -262,6 +262,33 @@ class LegacyBridgeProjectLibraryTest {
     assertEquals(mavenLibraryName, libraryDependency.library.name)
   }
 
+  @Test
+  fun `test project library add to module disposed`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+
+    val library = createProjectLibrary(antLibraryName, withRoots = false)
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    moduleRootManager.modifiableModel.let { rootModel ->
+      rootModel.addLibraryEntry(library)
+      rootModel.dispose()
+    }
+    val moduleDependencies = WorkspaceModel.getInstance(project).entityStore.current
+                                                                .entities(ModuleEntity::class.java).first()
+                                                                .dependencies
+    assertEquals(1, moduleDependencies.size)
+    assertTrue(moduleDependencies[0] is ModuleDependencyItem.ModuleSourceDependency)
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertFalse(moduleFile.readText().contains(antLibraryName))
+  }
+
   private fun checkLibraryAddedEvent(event: EntityChange<LibraryEntity>, libraryName: String) {
     assertTrue(event is EntityChange.Added)
     val libraryEntity = (event as EntityChange.Added).entity
