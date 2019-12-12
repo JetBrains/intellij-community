@@ -27,7 +27,7 @@ public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   }
 
   @Override
-  protected int textIconGap() {
+  protected int textIconGap(AbstractButton b) {
     return JBUIScale.scale(3);
   }
 

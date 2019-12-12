@@ -31,7 +31,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
   @Override
   public void installDefaults(AbstractButton b) {
     super.installDefaults(b);
-    b.setIconTextGap(textIconGap());
+    b.setIconTextGap(textIconGap(b));
     updateTextPosition(b);
   }
 
@@ -47,7 +47,15 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     button.removePropertyChangeListener(AbstractButton.TEXT_CHANGED_PROPERTY, textChangedListener);
   }
 
-  protected int textIconGap() {
+  protected int textIconGap(AbstractButton b) {
+    Object gap = UIManager.get("RadioButton.iconTextGap");
+    if (gap != null) {
+      try {
+        return JBUIScale.scale(Integer.parseInt(gap.toString()));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
     return JBUIScale.scale(4);
   }
 
