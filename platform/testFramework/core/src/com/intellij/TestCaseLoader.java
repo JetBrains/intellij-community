@@ -155,12 +155,28 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      int index = MathUtil.nonNegativeAbs(testCaseClass.getName().hashCode());
-
-      if (index % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX) {
+      if (matchesCurrentBucket(testCaseClass.getName())) {
         myClassList.add(testCaseClass);
       }
     }
+  }
+
+  /**
+   * @return true iff this {@code testIdentifier} matches current testing settings: number of buckets and bucket index. {@code testIdentifier} may
+   * be something identifying a test: test class or feature file name
+   * @apiNote logic for bucketing tests into different bucket configurations.
+   * @see TestCaseLoader#TEST_RUNNERS_COUNT
+   * @see TestCaseLoader#TEST_RUNNER_INDEX
+   */
+  public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
+    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+  }
+
+  /**
+   * @return true iff tests supposed to be separated into buckets using {@link #matchesCurrentBucket(String)} method
+   */
+  public static boolean shouldBucketTests() {
+    return TEST_RUNNERS_COUNT > 1;
   }
 
   void addFirstTest(Class<?> aClass) {
