@@ -1118,7 +1118,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       myLaFs.setValue(newLaFs);
       if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(newLaFs);
+        myLafComboBoxModel.replaceAll(getLafReferences());
       }
 
       if (!myThemesInUpdatedPlugin.contains(newLaf.getName())) {
@@ -1159,7 +1159,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       myLaFs.setValue(list);
       if (myLafComboBoxModel != null) {
-        myLafComboBoxModel.replaceAll(list);
+        myLafComboBoxModel.replaceAll(getLafReferences());
       }
 
       if (switchLafTo != null) {
