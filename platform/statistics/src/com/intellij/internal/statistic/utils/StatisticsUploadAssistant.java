@@ -1,13 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 
 public class StatisticsUploadAssistant {
@@ -17,11 +14,6 @@ public class StatisticsUploadAssistant {
   public static final Object LOCK = new Object();
 
   private StatisticsUploadAssistant(){}
-
-  public static boolean isShouldShowNotification() {
-    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification() &&
-           (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
-  }
 
   public static long getSendPeriodInMillis() {
     return UsageStatisticsPersistenceComponent.getInstance().getPeriod().getMillis();

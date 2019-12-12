@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.updater;
 
 import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
@@ -26,6 +29,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.util.Time;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +64,7 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
   @Override
   public void componentsInitialized() {
-    if (StatisticsUploadAssistant.isShouldShowNotification()) {
+    if (isShouldShowNotification()) {
       Disposable disposable = Disposer.newDisposable();
       Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
         @Override
@@ -78,6 +82,11 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     runStatesLogging();
     runLegacyDataCleanupService();
     runWhitelistStorageUpdater();
+  }
+
+  public static boolean isShouldShowNotification() {
+    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification() &&
+           (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
   }
 
   private static void runWhitelistStorageUpdater() {

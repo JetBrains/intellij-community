@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.utils.StatisticsTestHelper;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +87,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @Override
   public boolean isInternal() {
-    return StatisticsTestHelper.isTestStatisticsEnabled();
+    return StatisticsUploadAssistant.isTestStatisticsEnabled();
   }
 
   @Nullable

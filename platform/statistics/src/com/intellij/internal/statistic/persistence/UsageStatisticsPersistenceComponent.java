@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.persistence;
 
-import com.intellij.ide.gdpr.ConsentOptions;
+import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.internal.statistic.configurable.SendPeriod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "UsagesStatistic",
@@ -54,7 +55,10 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     // compatibility: if was previously allowed, transfer the setting to the new place
     final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
     if (!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue)) {
-      ConsentOptions.getInstance().setSendingUsageStatsAllowed(true);
+      final ConsentOptionsProvider options = getConsentOptionsProvider();
+      if (options != null) {
+        options.setSendingUsageStatsAllowed(true);
+      }
     }
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
@@ -90,18 +94,23 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
   }
 
   public void setAllowed(boolean allowed) {
-    final ConsentOptions options = ConsentOptions.getInstance();
-    if (options.isEAP()) {
-      isAllowedForEAP = allowed;
-    }
-    else {
-      options.setSendingUsageStatsAllowed(allowed);
+    final ConsentOptionsProvider options = getConsentOptionsProvider();
+    if (options != null) {
+      if (options.isEAP()) {
+        isAllowedForEAP = allowed;
+      }
+      else {
+        options.setSendingUsageStatsAllowed(allowed);
+      }
     }
   }
 
   public boolean isAllowed() {
-    final ConsentOptions options = ConsentOptions.getInstance();
-    return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
+    final ConsentOptionsProvider options = getConsentOptionsProvider();
+    if (options == null) {
+      return false;
+    }
+    return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed();
   }
 
   public void setShowNotification(boolean showNotification) {
@@ -110,5 +119,10 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
 
   public boolean isShowNotification() {
     return isShowNotification && !ApplicationManager.getApplication().isInternal();
+  }
+
+  @Nullable
+  private static ConsentOptionsProvider getConsentOptionsProvider() {
+    return ServiceManager.getService(ConsentOptionsProvider.class);
   }
 }
