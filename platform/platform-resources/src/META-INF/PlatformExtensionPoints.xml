@@ -109,7 +109,7 @@
     </extensionPoint>
 
     <extensionPoint name="directoryProjectConfigurator"
-                    interface="com.intellij.platform.DirectoryProjectConfigurator"/>
+                    interface="com.intellij.platform.DirectoryProjectConfigurator" dynamic="true"/>
     <extensionPoint name="directoryProjectGenerator"
                     interface="com.intellij.platform.DirectoryProjectGenerator"
                     dynamic="true"/>
