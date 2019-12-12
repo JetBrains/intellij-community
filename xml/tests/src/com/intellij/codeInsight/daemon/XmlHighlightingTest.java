@@ -1865,6 +1865,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testXsiType() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
     final String testName = getTestName(false);
 
     doTest(
