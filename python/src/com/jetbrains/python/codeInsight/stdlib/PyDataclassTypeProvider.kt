@@ -40,13 +40,13 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (cls != null && name != null && parseStdDataclassParameters(cls, context)?.init == true) {
         cls
           .findClassAttribute(name, false, context) // `true` is not used here because ancestor should be a dataclass
-          ?.let { return Ref.create(getTypeForParameter(cls, it, PyDataclassParameters.Type.STD, context)) }
+          ?.let { return Ref.create(getTypeForParameter(cls, it, PyDataclassParameters.PredefinedType.STD, context)) }
 
         for (ancestor in cls.getAncestorClasses(context)) {
           if (parseStdDataclassParameters(ancestor, context) != null) {
             ancestor
               .findClassAttribute(name, false, context)
-              ?.let { return Ref.create(getTypeForParameter(ancestor, it, PyDataclassParameters.Type.STD, context)) }
+              ?.let { return Ref.create(getTypeForParameter(ancestor, it, PyDataclassParameters.PredefinedType.STD, context)) }
           }
         }
       }
@@ -172,7 +172,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
               if (parameter == null) {
                 seenNames.add(name)
               }
-              else if (parameters.type == PyDataclassParameters.Type.STD) {
+              else if (parameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
                 // std: attribute that overrides ancestor's attribute does not change the order but updates type
                 collected[name] = collected.remove(name) ?: parameter
               }
@@ -222,7 +222,10 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
 
       val parameterName =
         fieldName.let {
-          if (dataclassType == PyDataclassParameters.Type.ATTRS && PyUtil.getInitialUnderscores(it) == 1) it.substring(1) else it
+          if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && PyUtil.getInitialUnderscores(it) == 1) {
+            it.substring(1)
+          }
+          else it
         }
 
       val parameter = PyCallableParameterImpl.nonPsi(parameterName,
@@ -236,7 +239,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                                     field: PyTargetExpression,
                                     dataclassType: PyDataclassParameters.Type,
                                     context: TypeEvalContext): PyType? {
-      if (dataclassType == PyDataclassParameters.Type.ATTRS && context.maySwitchToAST(field)) {
+      if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && context.maySwitchToAST(field)) {
         (field.findAssignedValue() as? PyCallExpression)
           ?.getKeywordArgument("type")
           ?.let { PyTypingTypeProvider.getType(it, context) }
@@ -248,7 +251,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
         return type.elementTypes.firstOrNull()
       }
 
-      if (type == null && dataclassType == PyDataclassParameters.Type.ATTRS) {
+      if (type == null && dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
         methodDecoratedAsAttributeDefault(cls, field.name)
           ?.let { context.getReturnType(it) }
           ?.let { return PyUnionType.createWeakType(it) }
@@ -272,7 +275,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       }
       else if (fieldStub.hasDefault() ||
                fieldStub.hasDefaultFactory() ||
-               dataclassType == PyDataclassParameters.Type.ATTRS && methodDecoratedAsAttributeDefault(cls, field.name) != null) {
+               dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS &&
+               methodDecoratedAsAttributeDefault(cls, field.name) != null) {
         ellipsis
       }
       else null

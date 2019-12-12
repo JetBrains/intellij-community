@@ -3,6 +3,7 @@
  */
 package com.jetbrains.python.codeInsight
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
@@ -34,16 +35,16 @@ private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash",
  * determine what settings dataclass has.
  */
 private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
-  Triple(KnownDecorator.DATACLASSES_DATACLASS, Type.STD, STD_PARAMETERS),
-  Triple(KnownDecorator.ATTR_S, Type.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRS, Type.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRIBUTES, Type.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, Type.ATTRS, ATTRS_PARAMETERS)
+  Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, STD_PARAMETERS),
+  Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
+  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS)
 )
 
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
-  return parseDataclassParameters(cls, context)?.takeIf { it.type == Type.STD }
+  return parseDataclassParameters(cls, context)?.takeIf { it.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD }
 }
 
 fun parseDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
@@ -72,9 +73,10 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
   if (expression is PyReferenceExpression) {
     val qNames = PyResolveUtil.resolveImportedElementQNameLocally(expression)
 
-    return when (type) {
-      Type.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
-      Type.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+    return when (type.asPredefinedType) {
+      PyDataclassParameters.PredefinedType.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
+      PyDataclassParameters.PredefinedType.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+      else -> false
     }
   }
 
@@ -85,32 +87,38 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
-private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<KnownDecorator, Type, List<PyCallableParameter>>> {
+private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<QualifiedName, Type, List<PyCallableParameter>>> {
   val generator = PyElementGenerator.getInstance(project)
   val ellipsis = generator.createEllipsis()
 
-  return DECORATOR_AND_TYPE_AND_PARAMETERS.map {
-    if (it.second == Type.STD) {
-      val parameters = mutableListOf(PyCallableParameterImpl.psi(generator.createSingleStarParameter()))
-      parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
+  return PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getDecoratorAndTypeAndParameters(project) } +
+         DECORATOR_AND_TYPE_AND_PARAMETERS.map {
+           if (it.second == PyDataclassParameters.PredefinedType.STD) {
+             val parameters = mutableListOf(PyCallableParameterImpl.psi(generator.createSingleStarParameter()))
+             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
 
-      Triple(it.first, it.second, parameters)
-    }
-    else {
-      Triple(it.first, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
-    }
-  }
+             Triple(it.first.qualifiedName, it.second, parameters)
+           }
+           else {
+             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, ellipsis) })
+           }
+         }
 }
 
 private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalContext?): PyDataclassParameters? {
   val decorators = cls.decoratorList ?: return null
+
+  val provided = PyDataclassParametersProvider.EP_NAME.extensionList.asSequence().mapNotNull {
+    it.getDataclassParameters(cls, context)
+  }.firstOrNull()
+  if (provided != null) return provided
 
   for (decorator in decorators.decorators) {
     val callee = (decorator.callee as? PyReferenceExpression) ?: continue
 
     for (decoratorQualifiedName in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
       val types = decoratorAndTypeAndMarkedCallee(cls.project)
-      val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first.qualifiedName == decoratorQualifiedName } ?: continue
+      val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
 
       val mapping = PyCallExpressionHelper.mapArguments(
         decorator,
@@ -136,10 +144,15 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
 
 private fun parseDataclassParametersFromStub(stub: PyDataclassStub?): PyDataclassParameters? {
   return stub?.let {
+    val type =
+      PyDataclassParametersProvider.EP_NAME.extensionList.map { e -> e.getType() }.firstOrNull { t -> t.name == it.type }
+      ?: PyDataclassParameters.PredefinedType.values().firstOrNull { t -> t.name == it.type }
+      ?: PyDataclassParameters.PredefinedType.STD
+
     PyDataclassParameters(
       it.initValue(), it.reprValue(), it.eqValue(), it.orderValue(), it.unsafeHashValue(), it.frozenValue(), it.kwOnly(),
       null, null, null, null, null, null, null,
-      Type.valueOf(it.type), emptyMap()
+      type, emptyMap()
     )
   }
 }
@@ -175,14 +188,32 @@ data class PyDataclassParameters(val init: Boolean,
                                  val type: Type,
                                  val others: Map<String, PyExpression>) {
 
-  enum class Type {
-    STD, ATTRS
+  interface Type {
+    val name: String
+    val asPredefinedType: PredefinedType?
+  }
+
+  enum class PredefinedType : Type {
+    STD, ATTRS;
+
+    override val asPredefinedType: PredefinedType? = this
   }
 }
 
-private class PyDataclassParametersBuilder(private val type: Type,
-                                           decorator: KnownDecorator,
-                                           anchor: PsiElement) {
+interface PyDataclassParametersProvider {
+
+  companion object {
+    val EP_NAME: ExtensionPointName<PyDataclassParametersProvider> = ExtensionPointName.create("Pythonid.pyDataclassParametersProvider")
+  }
+
+  fun getType(): Type
+
+  fun getDecoratorAndTypeAndParameters(project: Project): Triple<QualifiedName, Type, List<PyCallableParameter>>? = null
+
+  fun getDataclassParameters(cls: PyClass, context: TypeEvalContext?): PyDataclassParameters? = null
+}
+
+private class PyDataclassParametersBuilder(private val type: Type, decorator: QualifiedName, anchor: PsiElement) {
 
   companion object {
     private const val DEFAULT_INIT = true
@@ -197,7 +228,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
   private var init = DEFAULT_INIT
   private var repr = DEFAULT_REPR
   private var eq = DEFAULT_EQ
-  private var order = if (type == Type.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
+  private var order = if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
   private var frozen = DEFAULT_FROZEN
   private var kwOnly = DEFAULT_KW_ONLY
@@ -213,7 +244,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
   private val others = mutableMapOf<String, PyExpression>()
 
   init {
-    if (type == Type.ATTRS && decorator == KnownDecorator.ATTR_DATACLASS) {
+    if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && decorator == KnownDecorator.ATTR_DATACLASS.qualifiedName) {
       PyElementGenerator.getInstance(anchor.project)
         .createExpressionFromText(LanguageLevel.forElement(anchor), PyNames.TRUE)
         .also { others["auto_attribs"] = it }
@@ -241,7 +272,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
       }
     }
 
-    if (type == Type.STD) {
+    if (type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
       when (name) {
         "eq" -> {
           eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
@@ -260,7 +291,7 @@ private class PyDataclassParametersBuilder(private val type: Type,
         }
       }
     }
-    else if (type == Type.ATTRS) {
+    else if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
       when (name) {
         "eq" -> {
           eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)

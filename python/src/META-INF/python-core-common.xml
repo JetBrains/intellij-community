@@ -640,6 +640,7 @@
     <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
                     interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"/>
     <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"/>
+    <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider" interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

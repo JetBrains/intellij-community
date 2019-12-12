@@ -9,10 +9,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import com.jetbrains.python.extensions.afterDefInMethod
-import com.jetbrains.python.extensions.inParameterList
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.*
+import com.jetbrains.python.extensions.afterDefInMethod
+import com.jetbrains.python.extensions.inParameterList
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.PySubscriptionExpression
@@ -37,7 +37,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
       val dataclassParameters = parseDataclassParameters(cls, typeEvalContext)
       if (dataclassParameters == null || !dataclassParameters.init) return
 
-      if (dataclassParameters.type == PyDataclassParameters.Type.STD) {
+      if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
         val postInitParameters = mutableListOf(PyNames.CANONICAL_SELF)
 
         cls.processClassLevelDeclarations { element, _ ->
@@ -60,7 +60,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
 
         addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
       }
-      else if (dataclassParameters.type == PyDataclassParameters.Type.ATTRS) {
+      else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
         addMethodToResult(result, cls, typeEvalContext, DUNDER_ATTRS_POST_INIT)
       }
     }
@@ -82,8 +82,7 @@ class PyDataclassCompletionContributor : CompletionContributor() {
 
       val typeEvalContext = parameters.getTypeEvalContext()
 
-      if (parseDataclassParameters(cls,
-                                   typeEvalContext)?.type == PyDataclassParameters.Type.ATTRS) {
+      if (parseDataclassParameters(cls, typeEvalContext)?.type?.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
         result.addElement(LookupElementBuilder.create(if (index == 1) "attribute" else "value").withIcon(AllIcons.Nodes.Parameter))
       }
     }
