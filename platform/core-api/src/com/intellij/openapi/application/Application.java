@@ -52,6 +52,26 @@ import java.util.concurrent.Future;
 public interface Application extends ComponentManager {
 
   /**
+   * Private API to use in instrumented code.
+   * <p>
+   * Acquires IW lock if it's not acquired by the current thread.
+   *
+   * @return {@code true} if IW lock was acquired, or {@code false} if it is held by the current thread already.
+   */
+  @ApiStatus.Internal
+  boolean acquireWriteIntentLockIfNeeded();
+
+  /**
+   * Private API to use in instrumented code.
+   * <p>
+   * Releases IW lock if the parameter is {@code true}.
+   *
+   * @param needed whether IW lock should be released or not
+   */
+  @ApiStatus.Internal
+  void releaseWriteIntentLockIfNeeded(boolean needed);
+
+  /**
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * with {@link ModalityState#defaultModalityState()} modality state.
    *

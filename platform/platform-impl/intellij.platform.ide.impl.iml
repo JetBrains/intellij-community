@@ -68,5 +68,17 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.10.1/byte-buddy-agent-1.10.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.10.1/byte-buddy-agent-1.10.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="ASM" level="project" />
   </component>
 </module>

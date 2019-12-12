@@ -805,6 +805,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
+  public boolean acquireWriteIntentLockIfNeeded() {
+    if (myLock.isWriteIntendedByThisThread()) return false;
+    myLock.writeIntentLock();
+    return true;
+  }
+
+  @Override
+  public void releaseWriteIntentLockIfNeeded(boolean needed) {
+    if (needed) {
+      myLock.writeIntentUnlock();
+    }
+  }
+
+  @Override
   public void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     if (myLock.isWriteIntendedByThisThread()) {
       action.run();

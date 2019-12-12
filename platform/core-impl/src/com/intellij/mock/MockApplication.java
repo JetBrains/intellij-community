@@ -154,6 +154,15 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public boolean acquireWriteIntentLockIfNeeded() {
+    return false;
+  }
+
+  @Override
+  public void releaseWriteIntentLockIfNeeded(boolean needed) {
+  }
+
+  @Override
   public void invokeLaterOnWriteThread(@NotNull Runnable action) {
     action.run();
   }

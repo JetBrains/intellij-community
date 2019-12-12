@@ -9,11 +9,26 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
 public class ApplicationUtil {
+  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
+  @SuppressWarnings("unused")
+  @ApiStatus.Internal
+  public static boolean acquireWriteIntentLockIfNeeded() {
+    return ApplicationManager.getApplication().acquireWriteIntentLockIfNeeded();
+  }
+
+  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
+  @SuppressWarnings("unused")
+  @ApiStatus.Internal
+  public static void releaseWriteIntentLockIfNeeded(boolean needed) {
+    ApplicationManager.getApplication().releaseWriteIntentLockIfNeeded(needed);
+  }
+
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<>();

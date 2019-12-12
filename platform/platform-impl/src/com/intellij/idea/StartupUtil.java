@@ -14,6 +14,7 @@ import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.EndUserAgreement;
+import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
@@ -249,7 +250,7 @@ public final class StartupUtil {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture<Void> initUiFuture = new CompletableFuture<>();
     executor.execute(() -> {
       try {
         checkHiDPISettings();
@@ -266,11 +267,11 @@ public final class StartupUtil {
             StartupUiUtil.initDefaultLaF();
           }
           catch (Throwable e) {
-            future.completeExceptionally(e);
+            initUiFuture.completeExceptionally(e);
             return;
           }
 
-          future.complete(null);
+          initUiFuture.complete(null);
           StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
@@ -295,17 +296,30 @@ public final class StartupUtil {
         });
       }
       catch (Throwable e) {
-        future.completeExceptionally(e);
+        initUiFuture.completeExceptionally(e);
       }
     });
 
     if (!Main.isHeadless()) {
       // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      future.thenRunAsync(() -> {
+      initUiFuture.thenRunAsync(() -> {
         updateFrameClassAndWindowIcon();
       }, executor);
     }
-    return future;
+
+    CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
+    executor.execute(() -> {
+      Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
+      try {
+        WriteIntentLockInstrumenter.instrument();
+      }
+      finally {
+        activity.end();
+        instrumentationFuture.complete(null);
+      }
+    });
+
+    return CompletableFuture.allOf(initUiFuture, instrumentationFuture);
   }
 
   private static void updateFrameClassAndWindowIcon() {
