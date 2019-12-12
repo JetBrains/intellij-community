@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -26,6 +27,11 @@ import java.util.function.Supplier;
  */
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+  }
 
   @Override
   protected void tearDown() throws Exception {
