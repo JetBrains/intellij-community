@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
+import com.intellij.openapi.wm.impl.status.WriteThreadWidget;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLayeredPane;
@@ -61,6 +62,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final boolean myGlassPaneInitialized;
 
   private MemoryUsagePanel myMemoryWidget;
+  private WriteThreadWidget myWriteThreadWidget;
 
   private boolean myFullScreen;
 
@@ -258,6 +260,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
     myStatusBar.addWidget(new IdeMessagePanel(frame, MessagePool.getInstance()), StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
+    setWriteThreadIndicatorVisible(UISettings.getInstance().getShowWriteThreadIndicator());
 
     updateStatusBarVisibility();
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
@@ -281,6 +284,16 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myMemoryWidget.setShowing(visible);
     myStatusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, visible ? 0 : 6));
+  }
+
+  private void setWriteThreadIndicatorVisible(boolean visible) {
+    if (myWriteThreadWidget == null && visible) {
+      myWriteThreadWidget = new WriteThreadWidget();
+      myStatusBar.addWidget(myWriteThreadWidget, StatusBar.Anchors.before(MemoryUsagePanel.WIDGET_ID));
+    }
+    if (myWriteThreadWidget != null) {
+      myWriteThreadWidget.getComponent().setVisible(visible);
+    }
   }
 
   @Nullable
@@ -366,6 +379,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     UIUtil.decorateWindowHeader(this);
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
+    setWriteThreadIndicatorVisible(uiSettings.getShowWriteThreadIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
     updateMainMenuVisibility();

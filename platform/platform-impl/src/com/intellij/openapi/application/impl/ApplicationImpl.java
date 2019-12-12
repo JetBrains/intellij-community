@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
@@ -772,6 +773,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     return true;
+  }
+
+  public ThreeState isCurrentWriteOnEdt() {
+    Thread writeThread = myLock.writeThread;
+    if (writeThread == null) {
+      return ThreeState.UNSURE;
+    }
+    else if (EDT.isEdt(writeThread)) {
+      return ThreeState.YES;
+    }
+    else {
+      return ThreeState.NO;
+    }
   }
 
   @Override

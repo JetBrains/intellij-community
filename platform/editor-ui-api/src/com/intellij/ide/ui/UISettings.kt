@@ -68,6 +68,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMemoryIndicator = value
     }
 
+  var showWriteThreadIndicator: Boolean
+    get() = state.showWriteThreadIndicator
+    set(value) {
+      state.showWriteThreadIndicator = value
+    }
+
   var colorBlindness: ColorBlindness?
     get() = state.colorBlindness
     set(value) {

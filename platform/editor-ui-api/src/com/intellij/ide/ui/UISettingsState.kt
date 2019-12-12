@@ -74,6 +74,8 @@ class UISettingsState : BaseState() {
   var showEditorToolTip by property(true)
   @get:OptionTag("SHOW_MEMORY_INDICATOR")
   var showMemoryIndicator by property(false)
+  @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
+  var showWriteThreadIndicator by property(false)
   @get:OptionTag("ALLOW_MERGE_BUTTONS")
   var allowMergeButtons by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
