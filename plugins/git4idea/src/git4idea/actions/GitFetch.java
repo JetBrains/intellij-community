@@ -11,7 +11,6 @@ import git4idea.GitVcs;
 import git4idea.fetch.GitFetchResult;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static git4idea.GitUtil.getRepositories;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -44,16 +43,15 @@ public class GitFetch extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        onFetchFinished(result);
+        if (result != null) {
+          onFetchFinished(result);
+        }
       }
     });
   }
 
   @CalledInAwt
-  protected void onFetchFinished(@Nullable GitFetchResult result) {
-    if (result != null) {
-      result.showNotification();
-    }
-
+  protected void onFetchFinished(@NotNull GitFetchResult result) {
+    result.showNotification();
   }
 }
