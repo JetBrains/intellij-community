@@ -113,4 +113,5 @@
   <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/ExternalSystemComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="StatisticsEventLog.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

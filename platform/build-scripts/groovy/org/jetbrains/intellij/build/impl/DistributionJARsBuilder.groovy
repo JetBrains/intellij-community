@@ -146,6 +146,7 @@ class DistributionJARsBuilder {
       withModule("intellij.spellchecker")
       withModule("intellij.platform.images")
       withModule("intellij.platform.statistics")
+      withModule("intellij.platform.statistics.devkit")
 
       withModule("intellij.relaxng", "intellij-xml.jar")
       withModule("intellij.xml.analysis.impl", "intellij-xml.jar")

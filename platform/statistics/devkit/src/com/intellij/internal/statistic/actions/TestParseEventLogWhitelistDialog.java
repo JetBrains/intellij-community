@@ -3,7 +3,10 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.LogEventFilter;
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
+import com.intellij.internal.statistic.eventLog.LogEventSerializer;
+import com.intellij.internal.statistic.eventLog.LogEventWhitelistFilter;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.lang.Language;

@@ -6,12 +6,13 @@ import com.intellij.internal.statistic.actions.StatisticsEventLogToolWindow.Comp
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.LogEventAction
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.DateFormatUtil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class StatisticsEventLogToolWindowTest {
+class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   private val eventId = "third.party"
   private val eventTime = 1564643114456
 
