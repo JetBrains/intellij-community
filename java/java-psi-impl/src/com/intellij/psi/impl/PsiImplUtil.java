@@ -15,8 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -100,6 +100,7 @@ public class PsiImplUtil {
     return PsiTypeParameter.EMPTY_ARRAY;
   }
 
+  @Nullable
   public static PsiParameterList getRecordHeaderBasedParameterList(@NotNull PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
@@ -110,18 +111,7 @@ public class PsiImplUtil {
     for (PsiRecordComponent component : recordComponents) {
       String name = component.getName();
       if (name == null) continue;
-      builder.addParameter(new LightParameter(name, component.getType(), method) {
-        @Override
-        public int getTextOffset() {
-          return component.getTextOffset();
-        }
-
-        @NotNull
-        @Override
-        public PsiElement getNavigationElement() {
-          return component;
-        }
-      });
+      builder.addParameter(new LightCompactConstructorParameter(name, component.getType(), method, component));
     }
     return builder;
   }
