@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
@@ -20,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
@@ -129,7 +132,37 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze);
+    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze) {
+      @NotNull
+      @Override
+      protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                         @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                         @NotNull ControlFlow flow) {
+        List<DfaInstructionState> states = super.createInitialInstructionStates(psiBlock, memStates, flow);
+        List<DfaVariableValue> vars = flow.accessedVariables()
+          .filter(var -> {
+            if (!(var.getInherentType() instanceof DfReferenceType) ||
+                ((DfReferenceType)var.getInherentType()).getNullability() == DfaNullability.UNKNOWN) {
+              return false;
+            }
+            PsiVariable psi = ObjectUtils.tryCast(var.getPsiVariable(), PsiVariable.class);
+            if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
+              PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
+              return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);
+            }
+            return true;
+          })
+          .collect(Collectors.toList());
+        if (!vars.isEmpty()) {
+          for (DfaInstructionState state : states) {
+            for (DfaVariableValue var : vars) {
+              state.getMemoryState().setVarValue(var, getFactory().fromDfType(((DfReferenceType)var.getInherentType()).dropNullability()));
+            }
+          }
+        }
+        return states;
+      }
+    };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
