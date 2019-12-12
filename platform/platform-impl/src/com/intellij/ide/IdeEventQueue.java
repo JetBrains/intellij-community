@@ -72,6 +72,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 public final class IdeEventQueue extends EventQueue {
+  private static final Set<String> ourRunnablesWoWrite = ContainerUtil.set("javax.swing.RepaintManager$ProcessingRunnable");
+  private static final Set<String> ourRunnablesWithWrite = ContainerUtil.set("LaterInvocator.FlushQueue");
+  private static final boolean ourDefaultEventWithWrite = true;
+
   private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
   private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName()+".runnables");
@@ -426,43 +430,73 @@ public final class IdeEventQueue extends EventQueue {
       AWTEvent oldEvent = myCurrentEvent;
       myCurrentEvent = e;
 
-      try (AccessToken ignored = startActivity(e)) {
-        ProgressManager progressManager = obtainProgressManager();
-        if (progressManager != null) {
-          progressManager.computePrioritized(() -> {
+      AWTEvent finalE1 = e;
+      Runnable processEventRunnable = () -> {
+        try (AccessToken ignored = startActivity(finalE1)) {
+          ProgressManager progressManager = obtainProgressManager();
+          if (progressManager != null) {
+            progressManager.computePrioritized(() -> {
+              _dispatchEvent(myCurrentEvent);
+              return null;
+            });
+          }
+          else {
             _dispatchEvent(myCurrentEvent);
-            return null;
-          });
+          }
         }
-        else {
-          _dispatchEvent(myCurrentEvent);
+        catch (Throwable t) {
+          processException(t);
+        }
+        finally {
+          myIsInInputEvent = wasInputEvent;
+          myCurrentEvent = oldEvent;
+
+          if (myCurrentSequencedEvent == finalE1) {
+            myCurrentSequencedEvent = null;
+          }
+
+          for (EventDispatcher each : myPostProcessors) {
+            each.dispatch(finalE1);
+          }
+
+          if (finalE1 instanceof KeyEvent) {
+            maybeReady();
+          }
+          if (eventsWatcher instanceof LoggableEventsWatcher) {
+            ((LoggableEventsWatcher)eventsWatcher).logTimeMillis(finalE1, startedAt);
+          }
+        }
+
+        if (isFocusEvent(finalE1)) {
+          onFocusEvent(finalE1);
+        }
+      };
+
+      if (e instanceof InvocationEvent) {
+        String eventToString = e.toString();
+        int i = eventToString.indexOf(",runnable=");
+        if (i != -1) {
+          String substring = eventToString.substring(i + ",runnable=".length());
+          for (String s : ourRunnablesWoWrite) {
+            if (substring.startsWith(s)) {
+              processEventRunnable.run();
+              return;
+            }
+          }
+          for (String s : ourRunnablesWithWrite) {
+            if (substring.startsWith(s)) {
+              ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
+              return;
+            }
+          }
         }
       }
-      catch (Throwable t) {
-        processException(t);
+
+      if (ourDefaultEventWithWrite) {
+        ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(processEventRunnable);
       }
-      finally {
-        myIsInInputEvent = wasInputEvent;
-        myCurrentEvent = oldEvent;
-
-        if (myCurrentSequencedEvent == e) {
-          myCurrentSequencedEvent = null;
-        }
-
-        for (EventDispatcher each : myPostProcessors) {
-          each.dispatch(e);
-        }
-
-        if (e instanceof KeyEvent) {
-          maybeReady();
-        }
-        if (eventsWatcher instanceof LoggableEventsWatcher) {
-          ((LoggableEventsWatcher)eventsWatcher).logTimeMillis(e, startedAt);
-        }
-      }
-
-      if (isFocusEvent(e)) {
-        onFocusEvent(e);
+      else {
+        processEventRunnable.run();
       }
     }
     finally {
@@ -634,7 +668,8 @@ public final class IdeEventQueue extends EventQueue {
   @Override
   @NotNull
   public AWTEvent getNextEvent() throws InterruptedException {
-    AWTEvent event = super.getNextEvent();
+    AWTEvent event = appIsLoaded() ? ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> super.getNextEvent())
+                                   : super.getNextEvent();
     if (isKeyboardEvent(event) && myKeyboardEventsDispatched.incrementAndGet() > myKeyboardEventsPosted.get()) {
       throw new RuntimeException(event + "; posted: " + myKeyboardEventsPosted + "; dispatched: " + myKeyboardEventsDispatched);
     }
@@ -952,8 +987,7 @@ public final class IdeEventQueue extends EventQueue {
       AWTEvent event = peekEvent();
       if (event == null) return;
       try {
-        AWTEvent event1 = getNextEvent();
-        dispatchEvent(event1);
+        dispatchEvent(getNextEvent());
       }
       catch (Exception e) {
         LOG.error(e); //?
