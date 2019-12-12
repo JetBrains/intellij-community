@@ -4,7 +4,7 @@ import com.intellij.configurationStore.StoreUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
@@ -525,8 +525,8 @@ internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
   val project = WorkspaceModelInitialTestContent.withInitialContent(TypedEntityStorageBuilder.create()) {
     ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
   }
-  runInEdt { ProjectManagerEx.getInstanceEx().openProject(project) }
-  disposableRule.disposable.attach { runInEdt { ProjectUtil.closeAndDispose(project) } }
+  invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openProject(project) }
+  disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectUtil.closeAndDispose(project) } }
   return project
 }
 
