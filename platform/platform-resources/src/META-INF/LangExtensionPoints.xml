@@ -369,7 +369,7 @@
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayProviderFactory" interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"/>
 
-    <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>
 
