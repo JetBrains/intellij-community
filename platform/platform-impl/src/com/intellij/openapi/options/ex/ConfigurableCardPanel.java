@@ -46,7 +46,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
 
   private final Map<Configurable, Disposable> myListeners = new ConcurrentHashMap<>();
-  
+
   @Override
   protected Configurable prepare(Configurable key) {
     long time = System.currentTimeMillis();
@@ -64,13 +64,17 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   @Override
   protected JComponent create(Configurable configurable) {
-    JComponent component = createConfigurableComponent(configurable);
-    if (configurable instanceof ConfigurableWrapper && component != null) {
-      addEPChangesListener((ConfigurableWrapper)configurable);
-    }
-    return component;
+    if (configurable == null) return null;
+
+    return ReadAction.compute(() -> {
+      JComponent component = createConfigurableComponent(configurable);
+      if (configurable instanceof ConfigurableWrapper && component != null) {
+        addEPChangesListener((ConfigurableWrapper)configurable);
+      }
+      return component;
+    });
   }
-  
+
   @SuppressWarnings({"unchecked", "rawtypes"})
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
     Configurable.WithEpDependencies configurable = ConfigurableWrapper.cast(Configurable.WithEpDependencies.class, wrapper);
@@ -87,7 +91,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
         public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
           extensionChanged();
         }
-        
+
         public void extensionChanged() {
           ApplicationManager.getApplication().invokeLater(() -> {
             //dispose resources -> reset nested component

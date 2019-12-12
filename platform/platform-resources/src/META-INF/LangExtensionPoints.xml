@@ -28,7 +28,7 @@
     <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
-    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+    <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
     <extensionPoint name="editorSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.EditorSmartKeysConfigurableEP">
