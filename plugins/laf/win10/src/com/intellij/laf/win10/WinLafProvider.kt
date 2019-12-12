@@ -13,7 +13,7 @@ import javax.swing.UIDefaults
 
 class WinLafProvider : LafProvider {
   override fun getLookAndFeelInfo(): PluggableLafInfo {
-    return Win10LookAndFeelInfo()
+    return infoInstance
   }
 
   private class Win10LookAndFeelInfo : PluggableLafInfo(LAF_NAME, WinIntelliJLaf::class.java.name) {
@@ -22,6 +22,8 @@ class WinLafProvider : LafProvider {
       laf.putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
       return laf
     }
+
+    override fun isDark(): Boolean = false
 
     override fun createSearchAreaPainter(context: SearchAreaContext): SearchTextAreaPainter {
       return Win10SearchPainter(context)
@@ -45,5 +47,7 @@ class WinLafProvider : LafProvider {
   companion object {
     const val LAF_NAME = "Windows 10 Light"
     const val MENU_TRIANGLE_ICON_NAME = "menuTriangle"
+
+    val infoInstance:PluggableLafInfo = Win10LookAndFeelInfo()
   }
 }

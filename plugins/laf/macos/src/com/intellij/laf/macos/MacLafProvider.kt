@@ -12,7 +12,7 @@ import javax.swing.UIDefaults
 
 class MacLafProvider : LafProvider {
   override fun getLookAndFeelInfo(): PluggableLafInfo {
-    return MacOsLookAndFeelInfo()
+    return infoInstance
   }
 
   private class MacOsLookAndFeelInfo : PluggableLafInfo(LAF_NAME, MacIntelliJLaf::class.java.name) {
@@ -21,6 +21,8 @@ class MacLafProvider : LafProvider {
       laf.putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
       return laf
     }
+
+    override fun isDark(): Boolean = false
 
     override fun createSearchAreaPainter(context: SearchAreaContext): SearchTextAreaPainter {
       return MacSearchPainter(context)
@@ -37,5 +39,6 @@ class MacLafProvider : LafProvider {
 
   companion object {
     const val LAF_NAME = "macOS Light"
+    val infoInstance:PluggableLafInfo = MacOsLookAndFeelInfo()
   }
 }

@@ -14,7 +14,10 @@ abstract class PluggableLafInfo(name: String, className: String) : UIManager.Loo
   class SearchAreaContext(val searchComponent: JComponent, val textComponent: JTextComponent,
                           val iconsPanel: JComponent, val scrollPane: JComponent)
 
+
   abstract fun createLookAndFeel() : LookAndFeel
+
+  abstract fun isDark() : Boolean
 
   /**
    * Creates paint context needed to render `SearchTextArea` with this look and feel.
