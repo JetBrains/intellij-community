@@ -188,7 +188,7 @@ public class GitExecutableProblemsNotifier {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
           ProcessOutput output = execAndGetOutput(new GeneralCommandLine("xcode-select", "--install"));
-          if (!output.getStderr().isEmpty()) {
+          if (!output.checkSuccess(LOG)) {
             showError(project, output.getStderr(), null);
           }
         }
