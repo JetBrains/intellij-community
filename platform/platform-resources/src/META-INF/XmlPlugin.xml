@@ -65,7 +65,7 @@
     </extensionPoint>
 
     <extensionPoint name="html.inlineScriptTokenTypesProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
 
