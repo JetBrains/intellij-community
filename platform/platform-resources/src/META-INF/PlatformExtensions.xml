@@ -307,8 +307,12 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
                         serviceImplementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageUiEventsImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider" serviceImplementation="com.intellij.ide.plugins.PluginInfoProviderImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider" serviceImplementation="com.intellij.ide.gdpr.ConsentOptionsProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.plugins.PluginInfoProvider"
+                        serviceImplementation="com.intellij.ide.plugins.PluginInfoProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.ConsentOptionsProvider"
+                        serviceImplementation="com.intellij.ide.gdpr.ConsentOptionsProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.StatisticsNotificationManager"
+                        serviceImplementation="com.intellij.internal.statistic.notification.StatisticsNotificationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"

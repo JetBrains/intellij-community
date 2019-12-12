@@ -1,40 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.updater;
 
-import com.intellij.application.Topics;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.LegacyFUSProjectUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.BalloonLayoutImpl;
-import com.intellij.util.Time;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -58,35 +45,19 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
-
-    NotificationsConfigurationImpl.remove("SendUsagesStatistics");
   }
 
   @Override
   public void componentsInitialized() {
-    if (isShouldShowNotification()) {
-      Disposable disposable = Disposer.newDisposable();
-      Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
-        @Override
-        public void onFrameActivated() {
-          if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
-            final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
-            ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
-            Disposer.dispose(disposable);
-          }
-        }
-      });
+    final StatisticsNotificationManager notificationManager = ServiceManager.getService(StatisticsNotificationManager.class);
+    if (notificationManager != null) {
+      notificationManager.showNotificationIfNeeded();
     }
 
     runEventLogStatisticsService();
     runStatesLogging();
     runLegacyDataCleanupService();
     runWhitelistStorageUpdater();
-  }
-
-  public static boolean isShouldShowNotification() {
-    return UsageStatisticsPersistenceComponent.getInstance().isShowNotification() &&
-           (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
   }
 
   private static void runWhitelistStorageUpdater() {
@@ -151,17 +122,5 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       statisticsService::send, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, delayInMs, TimeUnit.MILLISECONDS
     );
-  }
-
-  private static boolean isEmpty(@Nullable Window window) {
-    ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(window);
-    if (frameHelper != null) {
-      BalloonLayout layout = frameHelper.getBalloonLayout();
-      if (layout instanceof BalloonLayoutImpl) {
-        // do not show notification if others exist
-        return ((BalloonLayoutImpl)layout).isEmpty();
-      }
-    }
-    return false;
   }
 }
