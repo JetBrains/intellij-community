@@ -259,18 +259,23 @@ public class VcsLogManager implements Disposable {
     T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
-  private class MainVcsLogUiFactory implements VcsLogUiFactory<MainVcsLogUi> {
+  public abstract static class BaseVcsLogUiFactory<T extends VcsLogUiImpl> implements VcsLogUiFactory<T> {
     @NotNull private final String myLogId;
     @Nullable private final VcsLogFilterCollection myFilters;
+    @NotNull private final VcsLogTabsProperties myUiProperties;
+    @NotNull private final VcsLogColorManagerImpl myColorManager;
 
-    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
+    public BaseVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties uiProperties,
+                               @NotNull VcsLogColorManagerImpl colorManager) {
       myLogId = logId;
       myFilters = filters;
+      myUiProperties = uiProperties;
+      myColorManager = colorManager;
     }
 
     @Override
-    public MainVcsLogUi createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData) {
+    public T createLogUi(@NotNull Project project,
+                         @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
                                                                  logData.getTopCommitsCache(),
@@ -279,7 +284,32 @@ public class VcsLogManager implements Disposable {
       VcsLogFilterCollection initialFilters = myFilters == null ? VcsLogFilterObject.collection() : myFilters;
       VisiblePackRefresherImpl refresher = new VisiblePackRefresherImpl(project, logData, initialFilters, initialSortType,
                                                                         vcsLogFilterer, myLogId);
-      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher, myFilters);
+      return createVcsLogUiImpl(myLogId, logData, properties, myColorManager, refresher, myFilters);
+    }
+
+    @NotNull
+    protected abstract T createVcsLogUiImpl(@NotNull String logId,
+                                            @NotNull VcsLogData logData,
+                                            @NotNull MainVcsLogUiProperties properties,
+                                            @NotNull VcsLogColorManagerImpl colorManager,
+                                            @NotNull VisiblePackRefresherImpl refresher,
+                                            @Nullable VcsLogFilterCollection filters);
+  }
+
+  private class MainVcsLogUiFactory extends BaseVcsLogUiFactory<VcsLogUiImpl> {
+    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
+      super(logId, filters, myUiProperties, myColorManager);
+    }
+
+    @Override
+    @NotNull
+    protected VcsLogUiImpl createVcsLogUiImpl(@NotNull String logId,
+                                              @NotNull VcsLogData logData,
+                                              @NotNull MainVcsLogUiProperties properties,
+                                              @NotNull VcsLogColorManagerImpl colorManager,
+                                              @NotNull VisiblePackRefresherImpl refresher,
+                                              @Nullable VcsLogFilterCollection filters) {
+      return new VcsLogUiImpl(logId, logData, colorManager, properties, refresher, filters);
     }
   }
 
