@@ -6,6 +6,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxPopupState;
@@ -82,7 +83,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
-    super(new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, creationFilter, sdkFilter));
+    super(new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter));
     myOnNewSdkAdded = sdk -> {
       if (sdk == null) return;
       setSelectedJdk(sdk);
