@@ -12,12 +12,17 @@ import org.jdom.Element
 import java.io.File
 
 object JpsProjectEntitiesLoader {
-  fun createProjectSerializers(storagePlace: JpsProjectStoragePlace, reader: JpsFileContentReader): JpsEntitiesSerializationData {
-    return createProjectEntitiesSerializers(storagePlace).createSerializers(reader)
+  /**
+   * [serializeArtifacts] specifies whether artifacts should be serialized or not. We need this until a legacy bridge implementation for
+   * ArtifactManager is provided.
+   */
+  fun createProjectSerializers(storagePlace: JpsProjectStoragePlace, reader: JpsFileContentReader,
+                               serializeArtifacts: Boolean): JpsEntitiesSerializationData {
+    return createProjectEntitiesSerializers(storagePlace, serializeArtifacts).createSerializers(reader)
   }
 
   fun loadProject(storagePlace: JpsProjectStoragePlace, builder: TypedEntityStorageBuilder): JpsEntitiesSerializationData {
-    val mainFactories = createProjectEntitiesSerializers(storagePlace)
+    val mainFactories = createProjectEntitiesSerializers(storagePlace, true)
     val reader = CachingJpsFileContentReader(storagePlace.baseDirectoryUrl)
     val data = mainFactories.createSerializers(reader)
     data.loadAll(reader, builder)
@@ -33,7 +38,7 @@ object JpsProjectEntitiesLoader {
                           source: JpsFileEntitySource.FileInDirectory,
                           storagePlace: JpsProjectStoragePlace,
                           builder: TypedEntityStorageBuilder) {
-    val mainFactories = createProjectEntitiesSerializers(storagePlace)
+    val mainFactories = createProjectEntitiesSerializers(storagePlace, false)
     val reader = CachingJpsFileContentReader(storagePlace.baseDirectoryUrl)
     val moduleSerializerFactory = mainFactories.fileSerializerFactories.filterIsInstance<ModuleSerializersFactory>().single()
 
@@ -41,28 +46,38 @@ object JpsProjectEntitiesLoader {
     serializer.loadEntities(builder, reader)
   }
 
-  private fun createProjectEntitiesSerializers(storagePlace: JpsProjectStoragePlace): JpsEntitiesSerializerFactories {
+  private fun createProjectEntitiesSerializers(storagePlace: JpsProjectStoragePlace,
+                                               serializeArtifacts: Boolean): JpsEntitiesSerializerFactories {
     return when (storagePlace) {
-      is JpsProjectStoragePlace.FileBased -> createIprProjectSerializers(storagePlace)
-      is JpsProjectStoragePlace.DirectoryBased -> createDirectoryProjectSerializers(storagePlace)
+      is JpsProjectStoragePlace.FileBased -> createIprProjectSerializers(storagePlace, serializeArtifacts)
+      is JpsProjectStoragePlace.DirectoryBased -> createDirectoryProjectSerializers(storagePlace, serializeArtifacts)
     }
   }
 
-  private fun createDirectoryProjectSerializers(storagePlace: JpsProjectStoragePlace.DirectoryBased): JpsEntitiesSerializerFactories {
+  private fun createDirectoryProjectSerializers(storagePlace: JpsProjectStoragePlace.DirectoryBased,
+                                                serializeArtifacts: Boolean): JpsEntitiesSerializerFactories {
     val projectDirUrl = storagePlace.projectDir.url
+    val directorySerializersFactories = ArrayList<JpsDirectoryEntitiesSerializerFactory<*>>()
+    directorySerializersFactories += JpsLibrariesDirectorySerializerFactory("$projectDirUrl/.idea/libraries")
+    if (serializeArtifacts) {
+      directorySerializersFactories += JpsArtifactsDirectorySerializerFactory("$projectDirUrl/.idea/artifacts")
+    }
     return JpsEntitiesSerializerFactories(entityTypeSerializers = emptyList(),
-                                          directorySerializersFactories = listOf(JpsLibrariesDirectorySerializerFactory("$projectDirUrl/.idea/libraries"),
-                                                                                 JpsArtifactsDirectorySerializerFactory(
-                                                                                   "$projectDirUrl/.idea/artifacts")),
+                                          directorySerializersFactories = directorySerializersFactories,
                                           fileSerializerFactories = listOf(ModuleSerializersFactory("$projectDirUrl/.idea/modules.xml")),
                                           storagePlace = storagePlace)
   }
 
-  private fun createIprProjectSerializers(storagePlace: JpsProjectStoragePlace.FileBased): JpsEntitiesSerializerFactories {
+  private fun createIprProjectSerializers(storagePlace: JpsProjectStoragePlace.FileBased,
+                                          serializeArtifacts: Boolean): JpsEntitiesSerializerFactories {
     val projectFileSource = JpsFileEntitySource.ExactFile(storagePlace.iprFile, storagePlace)
     val projectFileUrl = projectFileSource.file
-    return JpsEntitiesSerializerFactories(listOf(JpsLibrariesFileSerializer(projectFileUrl, projectFileSource, LibraryTableId.ProjectLibraryTableId),
-                                                 JpsArtifactsFileSerializer(projectFileUrl, projectFileSource)),
+    val entityTypeSerializers = ArrayList<JpsFileEntityTypeSerializer<*>>()
+    entityTypeSerializers += JpsLibrariesFileSerializer(projectFileUrl, projectFileSource, LibraryTableId.ProjectLibraryTableId)
+    if (serializeArtifacts) {
+      entityTypeSerializers += JpsArtifactsFileSerializer(projectFileUrl, projectFileSource)
+    }
+    return JpsEntitiesSerializerFactories(entityTypeSerializers,
                                           directorySerializersFactories = emptyList(),
                                           fileSerializerFactories = listOf(ModuleSerializersFactory(projectFileUrl.url)),
                                           storagePlace = storagePlace)

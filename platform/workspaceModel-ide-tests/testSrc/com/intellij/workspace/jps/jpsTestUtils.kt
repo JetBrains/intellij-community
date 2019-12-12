@@ -130,7 +130,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 
 internal fun createSerializationData(projectDir: File): JpsEntitiesSerializationData {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader)
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true)
 }
 
 fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
