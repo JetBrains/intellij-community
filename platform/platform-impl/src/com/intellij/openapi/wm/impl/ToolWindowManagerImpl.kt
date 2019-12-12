@@ -369,6 +369,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         // compute outside of EDT (should be already preloaded, but who knows)
         val toolWindowFactory = bean.toolWindowFactory
+        if (!toolWindowFactory.isApplicable(project)) {
+          return@forEachExtensionSafe
+        }
 
         list.add(object : FinalizableCommand(null) {
           override fun run() {
@@ -426,7 +429,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    doInitToolWindow(bean, bean.toolWindowFactory)
+    val toolWindowFactory = bean.toolWindowFactory
+    if (!toolWindowFactory.isApplicable(project)) {
+      return
+    }
+    doInitToolWindow(bean, toolWindowFactory)
   }
 
   private fun doInitToolWindow(bean: ToolWindowEP, factory: ToolWindowFactory) {
