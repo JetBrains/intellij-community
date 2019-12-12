@@ -171,6 +171,12 @@ public class ConditionCoveredByFurtherCondition {
         obj = getFoo();
         if (obj == null || obj instanceof String) {}
     }
+    static void test(Object obj) {
+        if (obj == Holder.x || obj instanceof CharSequence) {}
+    }
 
+    static class Holder {
+        static final Object x = new Object();
+    }
 }
 enum X {A, B, C}

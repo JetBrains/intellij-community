@@ -43,7 +43,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
       if (constraint != null) {
         PsiType psiType = constraint.getPsiType();
         DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), psiType == null ? myPsiType : psiType, constraint);
-        if (other.isSuperType(subConstant)) return subConstant;
+        if (type.isSuperType(subConstant)) return subConstant;
       }
     }
     return BOTTOM;
