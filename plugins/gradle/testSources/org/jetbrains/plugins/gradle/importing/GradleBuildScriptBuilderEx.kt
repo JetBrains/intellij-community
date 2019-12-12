@@ -80,7 +80,7 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
 fun GradleBuildScriptBuilder.withBuildScriptMavenCentral() = apply {
   addBuildScriptRepository("""
     maven {
-      url 'http://maven.labs.intellij.net/repo1'
+      url 'https://maven.labs.intellij.net/repo1'
     }
   """.trimIndent())
 }
@@ -88,7 +88,7 @@ fun GradleBuildScriptBuilder.withBuildScriptMavenCentral() = apply {
 fun GradleBuildScriptBuilder.withMavenCentral() = apply {
   addRepository("""
     maven {
-      url 'http://maven.labs.intellij.net/repo1'
+      url 'https://maven.labs.intellij.net/repo1'
     }
   """.trimIndent())
 }
