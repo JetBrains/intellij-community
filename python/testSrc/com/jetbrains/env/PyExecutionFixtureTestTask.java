@@ -148,6 +148,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
     final Module module = myFixture.getModule();
     assert module != null;
+    PlatformPythonModuleType.ensureModuleRegistered();
 
     if (StringUtil.isNotEmpty(myRelativeTestDataPath)) {
       myFixture.copyDirectoryToProject(myRelativeTestDataPath, ".").getPath();
@@ -179,7 +180,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   protected String getFilePath(@NotNull final String path) {
     final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(path);
-    assert virtualFile != null && virtualFile.exists() : String.format("No file '%s' in %s", path,  myFixture.getTempDirPath());
+    assert virtualFile != null && virtualFile.exists() : String.format("No file '%s' in %s", path, myFixture.getTempDirPath());
     return virtualFile.getPath();
   }
 
@@ -246,9 +247,20 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   public static class PlatformPythonModuleType extends PythonModuleTypeBase<EmptyModuleBuilder> {
+
+    private static final String MODULE_ID = PyNames.PYTHON_MODULE_ID;
+
     @NotNull
     public static PlatformPythonModuleType getInstance() {
+      ensureModuleRegistered();
       return (PlatformPythonModuleType)ModuleTypeManager.getInstance().findByID(PyNames.PYTHON_MODULE_ID);
+    }
+
+    static void ensureModuleRegistered() {
+      ModuleTypeManager moduleManager = ModuleTypeManager.getInstance();
+      if (!(moduleManager.findByID(MODULE_ID) instanceof PythonModuleTypeBase)) {
+        moduleManager.registerModuleType(new PlatformPythonModuleType());
+      }
     }
 
     @NotNull
