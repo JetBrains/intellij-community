@@ -41,4 +41,11 @@ public class LongRangeDivShift {
     int a = 0;
     double res = 1 / a / -2;
   }
+
+  void testUnboxDiv(Object obj, int divisor) {
+    if (obj instanceof Integer) {
+      int val = (Integer)obj;
+      int res = val / divisor;
+    }
+  }
 }

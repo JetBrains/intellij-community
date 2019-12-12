@@ -409,7 +409,12 @@ public abstract class LongRangeSet {
   @NotNull
   public LongRangeSet div(LongRangeSet divisor, boolean isLong) {
     if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
-    long[] left = splitAtZero(asRanges());
+    LongRangeSet dividend = this;
+    if (!isLong) {
+      divisor = divisor.intersect(Range.INT_RANGE);
+      dividend = dividend.intersect(Range.INT_RANGE);
+    } 
+    long[] left = splitAtZero(dividend.asRanges());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
