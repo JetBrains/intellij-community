@@ -40,7 +40,7 @@ class LegacyBridgeModulesTest {
   @JvmField
   var edtRule = EdtRule()
 
-  @Rule
+  @Rule                                                         
   @JvmField
   var application = ApplicationRule()
 
@@ -526,7 +526,6 @@ internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
     ProjectManager.getInstance().createProject("testProject", File(projectDir, "testProject.ipr").path)!!
   }
   invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openProject(project) }
-  disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectUtil.closeAndDispose(project) } }
+  disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
   return project
 }
-
