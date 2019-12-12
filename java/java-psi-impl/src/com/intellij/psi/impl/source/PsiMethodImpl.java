@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
   private SoftReference<PsiType> myCachedType;
-  private PsiParameterList myCachedParameterList;
 
   public PsiMethodImpl(final PsiMethodStub stub) {
     this(stub, JavaStubElementTypes.METHOD);
@@ -60,7 +59,6 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   protected void dropCached() {
     myCachedType = null;
-    myCachedParameterList = null;
   }
 
   @Override
@@ -209,16 +207,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public PsiParameterList getParameterList() {
-    if (myCachedParameterList != null) return myCachedParameterList;
-    PsiParameterList parameterList = getRequiredStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
-    if (parameterList.getTextRange().isEmpty()) {
-      PsiParameterList recordHeaderBasedParameterList = PsiImplUtil.getRecordHeaderBasedParameterList(this);
-      if (recordHeaderBasedParameterList != null) {
-        parameterList = recordHeaderBasedParameterList;
-      }
-    }
-    myCachedParameterList = parameterList;
-    return parameterList;
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
   }
 
   @Override
