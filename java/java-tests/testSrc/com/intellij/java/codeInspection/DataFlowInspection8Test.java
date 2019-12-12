@@ -262,4 +262,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testInlineLambdaFromLocal() { doTest(); }
+  public void testAllowRequireNonNullInCtor() { doTest(); }
 }

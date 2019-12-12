@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -311,6 +312,9 @@ public class DfaValueFactory {
   }
 
   private static class ClassInitializationInfo {
+    private static final CallMatcher SAFE_CALLS =
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNull");
+    
     final boolean myCanInstantiateItself;
     final boolean myCtorsCallMethods;
     final boolean mySuperCtorsCallMethods;
@@ -359,6 +363,7 @@ public class DfaValueFactory {
         for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
           PsiReferenceExpression methodExpression = call.getMethodExpression();
           if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+          if (SAFE_CALLS.test(call)) continue;
           if (!virtual) return true;
 
           PsiMethod target = call.resolveMethod();
