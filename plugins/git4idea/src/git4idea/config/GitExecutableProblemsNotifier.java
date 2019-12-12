@@ -25,7 +25,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.function.Predicate;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
-import static com.intellij.execution.util.ExecUtil.sudoAndGetOutput;
+import static com.intellij.execution.util.ExecUtil.execAndGetOutput;
 import static com.intellij.notification.NotificationsManager.getNotificationsManager;
 import static com.intellij.openapi.ui.Messages.getErrorIcon;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
@@ -187,8 +187,7 @@ public class GitExecutableProblemsNotifier {
     private static void sudoXCodeSelectInstall(@Nullable Project project) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
-          ProcessOutput output = sudoAndGetOutput(new GeneralCommandLine("xcode-select", "--install"),
-                                                  "Install XCode Command Line Developer Tools");
+          ProcessOutput output = execAndGetOutput(new GeneralCommandLine("xcode-select", "--install"));
           if (!output.getStderr().isEmpty()) {
             showError(project, output.getStderr(), null);
           }
