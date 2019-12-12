@@ -616,7 +616,6 @@
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotator"/>
-    <extensionPoint qualifiedName="Pythonid.inspectionExtension" interface="com.jetbrains.python.inspections.PyInspectionExtension"/>
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
     <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>

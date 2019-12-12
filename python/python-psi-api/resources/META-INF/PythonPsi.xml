@@ -13,6 +13,7 @@
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.thirdPartySdkDetector" interface="com.jetbrains.python.psi.resolve.PyThirdPartySdkDetector"/>
+    <extensionPoint qualifiedName="Pythonid.inspectionExtension" interface="com.jetbrains.python.inspections.PyInspectionExtension"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"
