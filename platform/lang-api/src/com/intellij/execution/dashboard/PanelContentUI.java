@@ -16,7 +16,7 @@ import java.util.Collections;
  *
  * @author konstantin.aleev
  */
-class PanelContentUI implements ContentUI {
+final class PanelContentUI implements ContentUI {
   private JPanel myPanel;
   private ContentManager myContentManager;
 
@@ -125,12 +125,5 @@ class PanelContentUI implements ContentUI {
   @Override
   public String getNextContentActionName() {
     return "";
-  }
-
-  @Override
-  public void dispose() {
-    if (myPanel != null) {
-      myPanel.removeAll();
-    }
   }
 }

@@ -69,7 +69,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
   public Predicate<Point> isResizableArea = p -> true;
 
-  public ToolWindowContentUi(ToolWindowImpl window) {
+  public ToolWindowContentUi(@NotNull ToolWindowImpl window) {
     myWindow = window;
     myContent.setOpaque(false);
     myContent.setFocusable(false);
@@ -79,30 +79,29 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
     // InternalDecorator adds myContent right after "this" (via ToolWindowHeader)
     // also myContent is never removed (can be invisible due to DumbAwareHider)
-    UIUtil.putClientProperty(
-      myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
-        @Override
-        public Iterator<JComponent> iterator() {
-          if (myManager == null || myManager.getContentCount() == 0) {
-            return Collections.emptyIterator();
-          }
-          return JBIterable.of(myManager.getContents())
-            .map(content -> {
-              JComponent last = null;
-              for (Component c : UIUtil.uiParents(content.getComponent(), false)) {
-                if (c == myManager.getComponent() || !(c instanceof JComponent)) return null;
-                last = (JComponent)c;
-              }
-              return last;
-            })
-            .filter(Conditions.notNull())
-            .iterator();
+    UIUtil.putClientProperty(myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+      @Override
+      public Iterator<JComponent> iterator() {
+        if (myManager == null || myManager.getContentCount() == 0) {
+          return Collections.emptyIterator();
         }
-      });
+        return JBIterable.of(myManager.getContents())
+          .map(content -> {
+            JComponent last = null;
+            for (Component c : UIUtil.uiParents(content.getComponent(), false)) {
+              if (c == myManager.getComponent() || !(c instanceof JComponent)) return null;
+              last = (JComponent)c;
+            }
+            return last;
+          })
+          .filter(Conditions.notNull())
+          .iterator();
+      }
+    });
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> {
-        revalidate();
-        repaint();
+    ApplicationManager.getApplication().getMessageBus().connect(window.getDisposable()).subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      revalidate();
+      repaint();
     });
   }
 
@@ -149,7 +148,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   }
 
   private ContentLayout getCurrentLayout() {
-    assert myManager != null;
     return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
 
@@ -239,7 +237,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     revalidate();
     repaint();
 
-    if (myManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
+    if (myManager != null && myManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
       myWindow.hide(null);
     }
   }
@@ -646,11 +644,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     public void close() {
       myManager.removeContent(myContent, true, true, true);
     }
-  }
-
-  @Override
-  public void dispose() {
-    myContent.removeAll();
   }
 
   boolean isCurrent(ContentLayout layout) {

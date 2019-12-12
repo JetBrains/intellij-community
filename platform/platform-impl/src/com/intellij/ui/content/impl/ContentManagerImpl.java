@@ -70,7 +70,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
     // for which the findFile() must access fileManager for which it must be alive
     Disposer.register(parentDisposable, this);
-    Disposer.register(this, contentUI);
+    if (contentUI instanceof Disposable) {
+      Disposer.register(this, (Disposable)contentUI);
+    }
   }
 
   @Override
@@ -547,7 +549,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void removeContentManagerListener(@NotNull ContentManagerListener l) {
     myDispatcher.removeListener(l);
   }
-
 
   private void fireContentAdded(@NotNull Content content, int newIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, newIndex, ContentManagerEvent.ContentOperation.add);

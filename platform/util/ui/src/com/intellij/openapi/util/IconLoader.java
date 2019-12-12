@@ -152,8 +152,7 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NonNls @NotNull final String path) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
-
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     assert callerClass != null : path;
     return getIcon(path, callerClass);
   }

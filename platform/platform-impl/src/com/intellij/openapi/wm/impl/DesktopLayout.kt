@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.serialize
-import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
@@ -74,7 +73,7 @@ class DesktopLayout {
    * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
    * Returned infos are sorted by order.
    */
-  private fun getAllInfos(anchor: ToolWindowAnchor): List<WindowInfoImpl> {
+  internal fun getAllInfos(anchor: ToolWindowAnchor): List<WindowInfoImpl> {
     val result = mutableListOf<WindowInfoImpl>()
     for (info in idToInfo.values) {
       if (anchor == info.anchor) {
@@ -188,14 +187,6 @@ class DesktopLayout {
       }
     }
     return state
-  }
-
-  fun getVisibleIdsOn(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl): List<String> {
-    return getAllInfos(anchor).mapNotNull { each ->
-      val id = each.id ?: return@mapNotNull null
-      val window = manager.getToolWindow(id) ?: return@mapNotNull null
-      if (window.isAvailable || instance.alwaysShowWindowsButton) id else null
-    }
   }
 
   internal inner class MyStripeButtonComparator(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl) : Comparator<StripeButton> {

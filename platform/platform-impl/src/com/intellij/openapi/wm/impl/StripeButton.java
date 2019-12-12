@@ -281,9 +281,9 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     updateState();
   }
 
-  private void showPopup(final Component component, final int x, final int y) {
-    final ActionGroup group = myDecorator.createPopupGroup();
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
+  private void showPopup(@Nullable Component component, int x, int y) {
+    ActionGroup group = myDecorator.createPopupGroup();
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
     popupMenu.getComponent().show(component, x, y);
   }
 

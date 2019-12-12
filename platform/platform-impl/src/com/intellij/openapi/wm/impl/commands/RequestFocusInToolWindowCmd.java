@@ -2,9 +2,7 @@
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.util.Alarm;
@@ -13,44 +11,48 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.function.BooleanSupplier;
 
 /**
  * Requests focus for the specified tool window.
  *
  * @author Vladimir Kondratyev
  */
-public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
+public final class RequestFocusInToolWindowCmd implements Runnable {
   private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCmd.class);
   private final ToolWindowImpl myToolWindow;
-  private final FocusWatcher myFocusWatcher;
 
-  private final Project myProject;
-
-  public RequestFocusInToolWindowCmd(@NotNull ToolWindowImpl toolWindow, FocusWatcher focusWatcher, @NotNull Runnable finishCallBack, @NotNull Project project) {
-    super(finishCallBack);
-
+  public RequestFocusInToolWindowCmd(@NotNull ToolWindowImpl toolWindow) {
     myToolWindow = toolWindow;
-    myFocusWatcher = focusWatcher;
-    myProject = project;
   }
 
   @Override
   public void run() {
-    try {
-      if (!myProject.isDisposed()) {
-        requestFocus();
-      }
-    }
-    finally {
-      finish();
-    }
-  }
+    Alarm checkerAlarm = new Alarm(myToolWindow.getDisposable());
+    checkerAlarm.addRequest(new Runnable() {
+      final long startTime = System.currentTimeMillis();
 
-  @NotNull
-  @Override
-  public BooleanSupplier getExpireCondition() {
-    return () -> myProject.isDisposed();
+      @Override
+      public void run() {
+        if (System.currentTimeMillis() - startTime > 10000) {
+          LOG.debug(myToolWindow.getId(), " tool window - cannot wait for showing component");
+          return;
+        }
+
+        Component component = getShowingComponentToRequestFocus();
+        if (component == null) {
+          checkerAlarm.addRequest(this, 100);
+        }
+        else {
+          Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
+          ToolWindowManagerImpl manager = myToolWindow.getToolWindowManager();
+          if (owner != component) {
+            manager.getFocusManager().requestFocusInProject(component, manager.getProject());
+            bringOwnerToFront();
+          }
+          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(component));
+        }
+      }
+    }, 0);
   }
 
   private void bringOwnerToFront() {
@@ -94,7 +96,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
       LOG.warn(myToolWindow.getId() + " tool window does not provide focus traversal policy");
       return null;
     }
-    Component component = IdeFocusManager.getInstance(myProject).getFocusTargetFor(container);
+    Component component = myToolWindow.getToolWindowManager().getFocusManager().getFocusTargetFor(container);
     if (component == null || !component.isShowing()) {
       LOG.debug(myToolWindow.getId(), " tool window - default component is hidden: ", container);
       return null;
@@ -102,49 +104,20 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     return component;
   }
 
-  private void requestFocus() {
-    Alarm checkerAlarm = new Alarm(myProject);
-    checkerAlarm.addRequest(new Runnable() {
-      final long startTime = System.currentTimeMillis();
-
-      @Override
-      public void run() {
-        if (System.currentTimeMillis() - startTime > 10000) {
-          LOG.debug(myToolWindow.getId(), " tool window - cannot wait for showing component");
-          return;
-        }
-
-        Component c = getShowingComponentToRequestFocus();
-        if (c == null) {
-          checkerAlarm.addRequest(this, 100);
-        }
-        else {
-          Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
-          ToolWindowManagerImpl manager = myToolWindow.getToolWindowManager();
-          if (owner != c) {
-            manager.getFocusManager().requestFocusInProject(c, myProject);
-            bringOwnerToFront();
-          }
-          manager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
-        }
-      }
-    }, 0);
-  }
-
-  private void updateToolWindow(Component c) {
-    if (c.isFocusOwner()) {
-      myFocusWatcher.setFocusedComponentImpl(c);
+  private void updateToolWindow(@NotNull Component component) {
+    if (component.isFocusOwner()) {
+      myToolWindow.setFocusedComponent(component);
       if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
         myToolWindow.activate(null, true, false);
       }
     }
 
-    updateFocusedComponentForWatcher(c);
+    updateFocusedComponentForWatcher(component);
   }
 
-  private static void updateFocusedComponentForWatcher(final Component c) {
-    final WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
-    final FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
+  private static void updateFocusedComponentForWatcher(@NotNull Component c) {
+    WindowWatcher watcher = ((WindowManagerImpl)WindowManager.getInstance()).getWindowWatcher();
+    FocusWatcher focusWatcher = watcher.getFocusWatcherFor(c);
     if (focusWatcher != null && c.isFocusOwner()) {
       focusWatcher.setFocusedComponentImpl(c);
     }
@@ -154,7 +127,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
    * @return first active window from hierarchy with specified roots. Returns {@code null}
    *         if there is no active window in the hierarchy.
    */
-  private static Window getActiveWindow(final Window[] windows) {
+  private static Window getActiveWindow(@NotNull Window[] windows) {
     for (Window window : windows) {
       if (window.isShowing() && window.isActive()) {
         return window;

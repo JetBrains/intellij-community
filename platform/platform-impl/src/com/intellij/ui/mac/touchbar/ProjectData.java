@@ -63,7 +63,7 @@ final class ProjectData {
         ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);
         myToolWindows.put(toolWindow, toolWindowData);
         // System.out.println("register tool-window: " + id);
-        toolWindow.getContentManager().addContentManagerListener(toolWindowData);
+        toolWindow.addContentManagerListener(toolWindowData);
       }
 
       @Override

@@ -528,22 +528,25 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   /**
    * Sets component which is located as the "inner" splitted area. The method doesn't validate and
    * repaint the splitter.
-   *
    */
   public void setInnerComponent(@Nullable JComponent component) {
-    if (myInnerComponent != component) {
-      if (myInnerComponent != null) {
-        remove(myInnerComponent);
-      }
-      myInnerComponent = component;
-      updateComponentTreeUI(myInnerComponent);
+    if (myInnerComponent == component) {
+      return;
+    }
 
-      if (myInnerComponent != null) {
-        add(myInnerComponent);
-        myInnerComponent.invalidate();
-      }
+    if (myInnerComponent != null) {
+      remove(myInnerComponent);
+    }
+
+    myInnerComponent = component;
+    updateComponentTreeUI(myInnerComponent);
+
+    if (myInnerComponent != null) {
+      add(myInnerComponent);
+      myInnerComponent.invalidate();
     }
   }
+
   public void setMinSize(int minSize) {
     myMinSize = Math.max(0, minSize);
     doLayout();

@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.ide.UiActivity
-import com.intellij.ide.UiActivityMonitor
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
@@ -11,71 +9,109 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.commands.FinalizableCommand
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.content.ContentManager
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.Component
 import java.awt.Rectangle
 import java.awt.event.InputEvent
-import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.abs
 
-private val LOG = Logger.getInstance(ToolWindowImpl::class.java)
+private val LOG = logger<ToolWindowImpl>()
 
 class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
                                           val id: String,
-                                          canCloseContent: Boolean,
+                                          private val canCloseContent: Boolean,
                                           component: JComponent?,
                                           private val parentDisposable: Disposable) : ToolWindowEx {
-  private val component: JComponent
   private var isAvailable = true
-  private val contentManager: ContentManager
-  private var icon: Icon? = null
+  internal var icon: Icon? = null
   private var stripeTitle: String? = null
   private val contentUi = ToolWindowContentUi(this)
   private var decorator: InternalDecorator? = null
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
   private var contentFactory: ToolWindowFactory? = null
+
+  private val pendingContentManagerListeners: List<ContentManagerListener>? = null
+
   private val myShowing = object : BusyObject.Impl() {
     override fun isReady() = component != null && component.isShowing
+  }
+
+  private var afterContentManagerCreation: ((ContentManagerImpl) -> Unit)? = null
+
+  internal var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
+    private set
+
+  fun setAfterContentManagerCreation(value: (ContentManagerImpl) -> Unit) {
+    if (contentManager.isInitialized()) {
+      value(contentManager.value)
+    }
+    else {
+      afterContentManagerCreation = value
+    }
+  }
+
+  private val contentManager = lazy {
+    val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
+
+    val contentComponent = contentManager.component
+    InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
+    Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
+      override fun showNotify() {
+        myShowing.onReady()
+      }
+    }))
+
+    afterContentManagerCreation?.invoke(contentManager)
+
+    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentManager.component)
+
+    // after init, as it was before contentManager creation was changed to be lazy
+    pendingContentManagerListeners?.let { list ->
+      for (listener in list) {
+        contentManager.addContentManagerListener(listener)
+      }
+    }
+
+    contentManager
   }
 
   private var helpId: String? = null
 
   init {
-    contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
     if (component != null) {
       val content = ContentImpl(component, "", false)
+      val contentManager = contentManager.value
       contentManager.addContent(content)
       contentManager.setSelectedContent(content, false)
     }
+  }
 
-    this.component = contentManager.component
-    InternalDecorator.installFocusTraversalPolicy(this.component, LayoutFocusTraversalPolicy())
-
-    Disposer.register(parentDisposable, UiNotifyConnector(this.component, object : Activatable {
-      override fun showNotify() {
-        myShowing.onReady()
-      }
-    }))
+  fun setFocusedComponent(component: Component) {
+    toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
 
   fun getContentUI() = contentUi
@@ -95,14 +131,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    val activity = UiActivity.Focus("toolWindow:$id")
-    UiActivityMonitor.getInstance().addActivity(toolWindowManager.project, activity, ModalityState.NON_MODAL)
-    toolWindowManager.activateToolWindow(id, forced, autoFocusContents)
-    toolWindowManager.invokeLater(Runnable {
-      runnable?.run()
-      UiActivityMonitor.getInstance().removeActivity(toolWindowManager.project, activity)
-    })
+    toolWindowManager.activateToolWindow(id, runnable, autoFocusContents, forced)
   }
 
   override fun isActive(): Boolean {
@@ -125,20 +154,14 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     val result = ActionCallback()
     myShowing.getReady(this)
       .doWhenDone {
-        val cmd = ArrayList<FinalizableCommand>()
-        cmd.add(object : FinalizableCommand(null) {
-          override fun willChangeState(): Boolean {
-            return false
-          }
-
-          override fun run() {
-            IdeFocusManager.getInstance(toolWindowManager.project).doWhenFocusSettlesDown {
-              if (contentManager.isDisposed) return@doWhenFocusSettlesDown
-              contentManager.getReady(requestor).notify(result)
+        toolWindowManager.commandProcessor.execute(listOf(Runnable {
+          toolWindowManager.focusManager.doWhenFocusSettlesDown {
+            if (contentManager.isInitialized() && contentManager.value.isDisposed) {
+              return@doWhenFocusSettlesDown
             }
+            contentManager.value.getReady(requestor).notify(result)
           }
-        })
-        toolWindowManager.execute(cmd)
+        }))
       }
     return result
   }
@@ -268,19 +291,36 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
    * `ContentManager` class. Otherwise it delegates the functionality to the
    * passed content manager.
    */
-  override fun isAvailable(): Boolean {
-    return isAvailable && component != null
+  override fun isAvailable() = isAvailable
+
+  override fun getComponent(): JComponent {
+    if (toolWindowManager.project.isDisposed) {
+      // nullable because of TeamCity plugin
+      return JLabel("Do not call getComponent() on dispose")
+    }
+    return contentManager.value.component
   }
 
-  override fun getComponent() = component
+  fun getComponentIfInitialized(): JComponent? {
+    return if (contentManager.isInitialized()) contentManager.value.component else null
+  }
+
+  fun getContentManagerIfInitialized(): ContentManager? {
+    return if (contentManager.isInitialized()) contentManager.value else null
+  }
 
   override fun getContentManager(): ContentManager {
     ensureContentInitialized()
-    return contentManager
+    return contentManager.value
   }
 
-  // to avoid ensureContentInitialized call - myContentManager can report canCloseContents without full initialization
-  fun canCloseContents() = contentManager.canCloseContents()
+  override fun addContentManagerListener(listener: ContentManagerListener) {
+    if (contentManager.isInitialized()) {
+      contentManager.value.addContentManagerListener(listener)
+    }
+  }
+
+  fun canCloseContents() = canCloseContent
 
   override fun getIcon(): Icon? {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -289,7 +329,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun getTitle(): String? {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return contentManager.selectedContent?.displayName
+    return contentManager.value.selectedContent?.displayName
   }
 
   override fun getStripeTitle(): String {
@@ -313,7 +353,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun setTitle(title: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val selected = contentManager.selectedContent
+    val selected = contentManager.value.selectedContent
     if (selected != null) {
       selected.displayName = title
     }
@@ -361,11 +401,11 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun isShowStripeButton() = toolWindowManager.isShowStripeButton(id)
 
-  override fun isDisposed() = contentManager.isDisposed
+  override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
 
-  fun setContentFactory(value: ToolWindowFactory) {
-    contentFactory = value
-    value.init(this)
+  fun setContentFactory(contentFactory: ToolWindowFactory) {
+    this.contentFactory = contentFactory
+    contentFactory.init(this)
   }
 
   fun ensureContentInitialized() {
@@ -373,7 +413,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     if (currentContentFactory != null) {
       // clear it first to avoid SOE
       this.contentFactory = null
-      contentManager.removeAllContents(false)
+      if (contentManager.isInitialized()) {
+        contentManager.value.removeAllContents(false)
+      }
       currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
     }
   }

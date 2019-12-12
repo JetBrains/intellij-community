@@ -342,7 +342,4 @@ public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListe
     return "Select Next Tab";
   }
 
-  @Override
-  public void dispose() {
-  }
 }

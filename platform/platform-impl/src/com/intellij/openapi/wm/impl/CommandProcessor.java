@@ -1,13 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
@@ -15,9 +14,16 @@ public final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(CommandProcessor.class);
   private final Object myLock = new Object();
 
-  private final List<CommandGroup> commandGroups = new ArrayList<>();
+  private final Deque<List<Runnable>> commandGroups = new ArrayDeque<>();
+  @NotNull
+  private final BooleanSupplier isDisposedCondition;
+
   private int myCommandCount;
   private boolean myFlushed;
+
+  public CommandProcessor(@NotNull BooleanSupplier isDisposedCondition) {
+    this.isDisposedCondition = isDisposedCondition;
+  }
 
   public final int getCommandCount() {
     synchronized (myLock) {
@@ -32,18 +38,16 @@ public final class CommandProcessor implements Runnable {
     }
   }
 
-  /**
-   * Executes passed batch of commands. Note, that the processor surround the
-   * commands with BlockFocusEventsCmd - UnblockFocusEventsCmd. It's required to
-   * prevent focus handling of events which is caused by the commands to be executed.
-   */
-  public final void execute(@NotNull List<? extends FinalizableCommand> commandList, @NotNull BooleanSupplier expired) {
+  public final void execute(@NotNull List<Runnable> commands) {
+    if (commands.isEmpty()) {
+      return;
+    }
+
     synchronized (myLock) {
       boolean isBusy = myCommandCount > 0 || !myFlushed;
 
-      CommandGroup commandGroup = new CommandGroup(commandList, expired);
-      commandGroups.add(commandGroup);
-      myCommandCount += commandList.size();
+      commandGroups.add(commands);
+      myCommandCount += commands.size();
 
       if (!isBusy) {
         run();
@@ -54,81 +58,35 @@ public final class CommandProcessor implements Runnable {
   @Override
   public final void run() {
     synchronized (myLock) {
-      //noinspection StatementWithEmptyBody
-      while (runNext()) ;
-    }
-  }
+      while (true) {
+        List<Runnable> commands = commandGroups.pollFirst();
+        if (commands == null) {
+          return;
+        }
 
-  private boolean runNext() {
-    CommandGroup commandGroup = getNextCommandGroup();
-    if (commandGroup == null || commandGroup.isEmpty()) {
-      return false;
-    }
+        for (int i = commands.size() - 1; i >= 0; i--) {
+          Runnable command = commands.get(i);
+          myCommandCount--;
 
-    BooleanSupplier conditionForGroup = commandGroup.getExpireCondition();
+          if (isDisposedCondition.getAsBoolean()) {
+            continue;
+          }
 
-    FinalizableCommand command = commandGroup.takeNextCommand();
-    myCommandCount--;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("CommandProcessor.run " + command);
+          }
 
-    BooleanSupplier expire = command.getExpireCondition() == null ? conditionForGroup : command.getExpireCondition();
-    if (expire == null ? ApplicationManager.getApplication().isDisposed() : expire.getAsBoolean()) {
-      return true;
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CommandProcessor.run " + command);
-    }
-
-    command.run();
-    return true;
-  }
-
-  @Nullable
-  private CommandGroup getNextCommandGroup() {
-    while (!commandGroups.isEmpty()) {
-      CommandGroup candidate = commandGroups.get(0);
-      if (!candidate.isEmpty()) {
-        return candidate;
+          try {
+            command.run();
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
+        }
       }
-      commandGroups.remove(candidate);
-    }
-    return null;
-  }
-
-  private static final class CommandGroup {
-    private List<? extends FinalizableCommand> myList;
-    private BooleanSupplier myExpireCondition;
-
-    private CommandGroup(@NotNull List<? extends FinalizableCommand> list, @NotNull BooleanSupplier expireCondition) {
-      myList = list;
-      myExpireCondition = expireCondition;
-    }
-
-    @NotNull
-    BooleanSupplier getExpireCondition() {
-      return myExpireCondition;
-    }
-
-    public boolean isEmpty() {
-      return myList == null || myList.isEmpty();
-    }
-
-    @NotNull
-    FinalizableCommand takeNextCommand() {
-      FinalizableCommand command;
-      // if singleton list, do not mutate, just get first element and set to null
-      if (myList.size() == 1) {
-        command = myList.get(0);
-        myList = null;
-      }
-      else {
-        command = myList.remove(0);
-      }
-
-      if (isEmpty()) {
-        // memory leak otherwise
-        myExpireCondition = () -> true;
-      }
-      return command;
     }
   }
 }

@@ -345,6 +345,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void installWatcher(ContentManager contentManager) {
     }
 
+    @NotNull
     @Override
     public JComponent getComponent() {
       return new JLabel();
@@ -353,6 +354,10 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public ContentManager getContentManager() {
       return myContentManager;
+    }
+
+    @Override
+    public void addContentManagerListener(@NotNull ContentManagerListener listener) {
     }
 
     @Override

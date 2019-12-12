@@ -133,11 +133,11 @@ public final class FloatingDecorator extends JDialog {
     if (ScreenUtil.isStandardAddRemoveNotify(getParent())) {
       Disposer.dispose(myDelayAlarm);
       Disposer.dispose(myDisposable);
-    } else {
-      if (isShowing()) {
-        SwingUtilities.invokeLater(() -> show());
-      }
     }
+    else if (isShowing()) {
+      SwingUtilities.invokeLater(() -> show());
+    }
+
     super.dispose();
   }
 

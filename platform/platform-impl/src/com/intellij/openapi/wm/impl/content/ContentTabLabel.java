@@ -23,6 +23,7 @@ import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -69,7 +70,12 @@ class ContentTabLabel extends BaseLabel {
     @NotNull
     @Override
     public Runnable getAction() {
-      return () -> contentManager().removeContent(getContent(), true);
+      return () -> {
+        ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+        if (contentManager != null) {
+          contentManager.removeContent(getContent(), true);
+        }
+      };
     }
 
     @Override
@@ -238,9 +244,9 @@ class ContentTabLabel extends BaseLabel {
   }
 
   protected void selectContent() {
-    final ContentManager mgr = contentManager();
-    if (mgr.getIndexOfContent(myContent) >= 0) {
-      mgr.setSelectedContent(myContent, true);
+    ContentManager manager = getContentManager();
+    if (manager.getIndexOfContent(myContent) >= 0) {
+      manager.setSelectedContent(myContent, true);
     }
   }
 
@@ -252,7 +258,6 @@ class ContentTabLabel extends BaseLabel {
 
     updateTextAndIcon(myContent, isSelected());
   }
-
 
   @Override
   public Dimension getPreferredSize() {
@@ -302,7 +307,8 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getActiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1) {
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
@@ -311,14 +317,15 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Color getPassiveFg(boolean selected) {
-    if (contentManager().getContentCount() > 1) {
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    if (contentManager != null && contentManager.getContentCount() > 1) {
       return selected ? JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground() : JBUI.CurrentTheme.Label.foreground(false);
     }
 
     return super.getPassiveFg(selected);
   }
 
-  private void paintIcons(final Graphics g) {
+  private void paintIcons(@NotNull Graphics g) {
     for (AdditionalIcon icon : myAdditionalIcons) {
       if (icon.getAvailable()) {
         icon.paintIcon(this, g);
@@ -327,13 +334,14 @@ class ContentTabLabel extends BaseLabel {
   }
 
   @Override
-  protected void paintComponent(final Graphics g) {
+  protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
     paintIcons(g);
   }
 
   public boolean isSelected() {
-    return contentManager().isSelected(myContent);
+    ContentManager contentManager = myUi.myWindow.getContentManagerIfInitialized();
+    return contentManager != null && contentManager.isSelected(myContent);
   }
 
   public boolean isHovered() {
@@ -342,18 +350,18 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected Graphics _getGraphics(Graphics2D g) {
-    if (isSelected() && contentManager().getContentCount() > 1) {
+    if (isSelected() && getContentManager().getContentCount() > 1) {
       return new EngravedTextGraphics(g, 1, 1, Gray._0.withAlpha(myUi.myWindow.isActive() ? 120 : 130));
     }
-
     return super._getGraphics(g);
   }
 
-  private ContentManager contentManager() {
+  @NotNull
+  private ContentManager getContentManager() {
     return myUi.myWindow.getContentManager();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public Content getContent() {
     return myContent;

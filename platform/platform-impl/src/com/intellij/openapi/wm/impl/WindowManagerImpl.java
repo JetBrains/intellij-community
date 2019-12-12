@@ -59,7 +59,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  private final CommandProcessor myCommandProcessor = new CommandProcessor();
+  private final CommandProcessor myCommandProcessor = new CommandProcessor(() -> ApplicationManager.getApplication().isDisposed());
   private final WindowWatcher myWindowWatcher = new WindowWatcher();
 
   /**

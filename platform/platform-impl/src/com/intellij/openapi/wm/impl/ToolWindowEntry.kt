@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.popup.Balloon
 
 internal data class ToolWindowEntry(val stripeButton: StripeButton,
                                     val internalDecorator: InternalDecorator,
-                                    val watcher: ToolWindowManagerImpl.ToolWindowFocusWatcher,
                                     val disposable: Disposable) {
   var floatingDecorator: FloatingDecorator? = null
   var windowedDecorator: WindowedDecorator? = null
@@ -14,4 +13,10 @@ internal data class ToolWindowEntry(val stripeButton: StripeButton,
 
   val readOnlyWindowInfo: WindowInfoImpl
     get() = internalDecorator.windowInfo
+
+  val toolWindow: ToolWindowImpl
+    get() = internalDecorator.toolWindow
+
+  val id: String
+    get() = toolWindow.id
 }

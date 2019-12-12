@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -24,6 +23,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
@@ -46,11 +46,9 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
-  private final Project myProject;
   private WindowInfoImpl myInfo;
-  private final ToolWindowImpl myToolWindow;
+  private final ToolWindowImpl toolWindow;
   private final MyDivider myDivider;
-  private final InternalDecoratorListener listener;
   private final RemoveStripeButtonAction myRemoveFromSideBarAction;
 
   private ActionGroup myAdditionalGearActions;
@@ -70,18 +68,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private final ToolWindowHeader myHeader;
   private final ActionGroup myToggleToolbarGroup;
+  private final JPanel contentPane;
 
-  InternalDecorator(@NotNull Project project,
-                    @NotNull WindowInfoImpl info,
-                    @NotNull ToolWindowImpl toolWindow,
-                    boolean dumbAware,
-                    @NotNull Disposable parentDisposable,
-                    @NotNull InternalDecoratorListener listener) {
+  InternalDecorator(@NotNull WindowInfoImpl info, @NotNull ToolWindowImpl toolWindow) {
     super(new BorderLayout());
 
-    myProject = project;
-    myToolWindow = toolWindow;
-    myToolWindow.setDecorator(this);
+    this.toolWindow = toolWindow;
+    toolWindow.setDecorator(this);
     myDivider = new MyDivider();
 
     /*
@@ -89,7 +82,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
      */
     ToggleContentUiTypeAction toggleContentUiTypeAction = new ToggleContentUiTypeAction();
     myRemoveFromSideBarAction = new RemoveStripeButtonAction();
-    myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(myProject, myToolWindow);
+    myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindow.getToolWindowManager().getProject(), this.toolWindow);
     if (!ToolWindowId.PREVIEW.equals(info.getId())) {
       ((DefaultActionGroup)myToggleToolbarGroup).addAction(toggleContentUiTypeAction);
     }
@@ -100,7 +93,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myHeader = new ToolWindowHeader(toolWindow, () -> createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
-        return myToolWindow.isActive();
+        return InternalDecorator.this.toolWindow.isActive();
       }
 
       @Override
@@ -109,34 +102,41 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     };
 
-    init(dumbAware, parentDisposable);
+    enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
+
+    contentPane = new JPanel(new BorderLayout());
+    installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
+    contentPane.add(myHeader, BorderLayout.NORTH);
+
+    add(contentPane, BorderLayout.CENTER);
+    if (SystemInfo.isMac) {
+      setBackground(new JBColor(Gray._200, Gray._90));
+    }
 
     setWindowInfo(info);
-
-    this.listener = listener;
   }
 
   @Override
   public String toString() {
-    return myToolWindow.getId();
+    return toolWindow.getId();
   }
 
   public boolean isFocused() {
-    IdeFocusManager focusManager = myToolWindow.getToolWindowManager().getFocusManager();
-    Component component = focusManager.getFocusedDescendantFor(myToolWindow.getComponent());
+    IdeFocusManager focusManager = toolWindow.getToolWindowManager().getFocusManager();
+    Component component = focusManager.getFocusedDescendantFor(toolWindow.getComponent());
     if (component != null) {
       return true;
     }
 
-    Component owner = focusManager.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
-    return owner != null && SwingUtilities.isDescendingFrom(owner, myToolWindow.getComponent());
+    Component owner = focusManager.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(toolWindow.getToolWindowManager().getProject()));
+    return owner != null && SwingUtilities.isDescendingFrom(owner, toolWindow.getComponent());
   }
 
   /**
    * Applies specified decoration.
    */
   public final void apply(@NotNull WindowInfoImpl info) {
-    if (myInfo.equals(info) || myProject == null || myProject.isDisposed()) {
+    if (myInfo.equals(info) || toolWindow.getToolWindowManager().getProject().isDisposed()) {
       return;
     }
 
@@ -180,15 +180,15 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     }
 
-    myToolWindow.getContentUI().setType(myInfo.getContentUiType());
-    setBorder(new InnerPanelBorder(myToolWindow, myInfo));
+    toolWindow.getContentUI().setType(myInfo.getContentUiType());
+    setBorder(new InnerPanelBorder(toolWindow, myInfo));
   }
 
   @Nullable
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return myToolWindow;
+      return toolWindow;
     }
     return null;
   }
@@ -197,54 +197,40 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    * Fires event that "hide" button has been pressed.
    */
   final void fireHidden() {
-    listener.hidden(this);
+    toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
   }
 
   /**
    * Fires event that "hide" button has been pressed.
    */
   final void fireHiddenSide() {
-    listener.hiddenSide(this);
+    toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), true);
   }
 
   /**
    * Fires event that user performed click into the title bar area.
    */
   final void fireActivated() {
-    listener.activated(this);
+    toolWindow.getToolWindowManager().activated(this);
   }
 
   final void fireResized() {
-    listener.resized(this);
+    toolWindow.getToolWindowManager().resized(this);
   }
 
   private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
-    listener.contentUiTypeChanges(this, type);
+    toolWindow.getToolWindowManager().setContentUiType(toolWindow.getId(), type);
   }
 
-  private void fireVisibleOnPanelChanged(boolean visibleOnPanel) {
-    listener.visibleStripeButtonChanged(this, visibleOnPanel);
-  }
-
-  private void init(boolean dumbAware, @NotNull Disposable parentDisposable) {
-    enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
-
-    JPanel contentPane = new JPanel(new BorderLayout());
-    installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
-    contentPane.add(myHeader, BorderLayout.NORTH);
-
+  void addContentComponent(boolean dumbAware, @NotNull ContentManagerImpl contentManager) {
     JPanel innerPanel = new JPanel(new BorderLayout());
-    JComponent toolWindowComponent = myToolWindow.getComponent();
+    JComponent toolWindowComponent = contentManager.getComponent();
     if (!dumbAware) {
-      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, parentDisposable);
+      toolWindowComponent = DumbService.getInstance(toolWindow.getToolWindowManager().getProject()).wrapGently(toolWindowComponent, toolWindow.getDisposable());
     }
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
     contentPane.add(new NonOpaquePanel(innerPanel), BorderLayout.CENTER);
-    add(contentPane, BorderLayout.CENTER);
-    if (SystemInfo.isMac) {
-      setBackground(new JBColor(Gray._200, Gray._90));
-    }
   }
 
   @Override
@@ -252,7 +238,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (condition == WHEN_ANCESTOR_OF_FOCUSED_COMPONENT && pressed) {
       Collection<KeyStroke> keyStrokes = KeymapUtil.getKeyStrokes(ActionManager.getInstance().getAction("FocusEditor").getShortcutSet());
       if (keyStrokes.contains(ks)) {
-        myToolWindow.getToolWindowManager().activateEditorComponent();
+        toolWindow.getToolWindowManager().activateEditorComponent();
         return true;
       }
     }
@@ -370,7 +356,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       @Nullable
       @Override
       protected String getHelpId(DataContext dataContext) {
-        Content content = myToolWindow.getContentManager().getSelectedContent();
+        Content content = toolWindow.getContentManager().getSelectedContent();
         if (content != null) {
           String helpId = content.getHelpId();
           if (helpId != null) {
@@ -378,7 +364,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
           }
         }
 
-        String id = myToolWindow.getHelpId();
+        String id = toolWindow.getHelpId();
         if (id != null) {
           return id;
         }
@@ -404,10 +390,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         return true;
       }
     };
-    resize.add(new ResizeToolWindowAction.Left(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Right(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Up(myToolWindow, this));
-    resize.add(new ResizeToolWindowAction.Down(myToolWindow, this));
+    resize.add(new ResizeToolWindowAction.Left(toolWindow, this));
+    resize.add(new ResizeToolWindowAction.Right(toolWindow, this));
+    resize.add(new ResizeToolWindowAction.Up(toolWindow, this));
+    resize.add(new ResizeToolWindowAction.Down(toolWindow, this));
     resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
     return resize;
   }
@@ -468,7 +454,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    */
   @NotNull
   final ToolWindowImpl getToolWindow() {
-    return myToolWindow;
+    return toolWindow;
   }
 
   /**
@@ -496,13 +482,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   void removeStripeButton() {
-    fireVisibleOnPanelChanged(false);
+    toolWindow.getToolWindowManager().setShowStripeButton(toolWindow.getId(), false);
     fireHidden();
-  }
-
-  void showStripeButton() {
-    fireVisibleOnPanelChanged(true);
-    fireActivated();
   }
 
   private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
@@ -524,25 +505,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class HideAction extends AnAction implements DumbAware {
-    @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
-
     HideAction() {
       ActionUtil.copyFrom(this, HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }
 
     @Override
-    public final void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       fireHidden();
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
-      final Presentation presentation = event.getPresentation();
+    public void update(@NotNull final AnActionEvent event) {
+      Presentation presentation = event.getPresentation();
       presentation.setEnabled(myInfo.isVisible());
     }
   }
-
 
   private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
     private boolean myHadSeveralContents;
@@ -553,7 +531,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      myHadSeveralContents = myHadSeveralContents || myToolWindow.getContentManager().getContentCount() > 1;
+      myHadSeveralContents = myHadSeveralContents || toolWindow.getContentManager().getContentCount() > 1;
       super.update(e);
       e.getPresentation().setVisible(myHadSeveralContents);
     }
@@ -670,9 +648,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @Override
   public void putInfo(@NotNull Map<String, String> info) {
-    info.put("toolWindowTitle", myToolWindow.getTitle());
+    info.put("toolWindowTitle", toolWindow.getTitle());
 
-    final Content selection = myToolWindow.getContentManager().getSelectedContent();
+    final Content selection = toolWindow.getContentManager().getSelectedContent();
     if (selection != null) {
       info.put("toolWindowTab", selection.getTabName());
     }
@@ -695,8 +673,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     public String getAccessibleName() {
       String name = super.getAccessibleName();
       if (name == null) {
-        String title = StringUtil.defaultIfEmpty(myToolWindow.getTitle(), myToolWindow.getStripeTitle());
-        title = StringUtil.defaultIfEmpty(title, myToolWindow.getId());
+        String title = StringUtil.defaultIfEmpty(toolWindow.getTitle(), toolWindow.getStripeTitle());
+        title = StringUtil.defaultIfEmpty(title, toolWindow.getId());
         name = StringUtil.notNullize(title) + " Tool Window";
       }
       return name;

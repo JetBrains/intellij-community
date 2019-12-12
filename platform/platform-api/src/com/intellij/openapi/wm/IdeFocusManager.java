@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -144,7 +143,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
       return getGlobalInstance();
     }
     else {
-      return ServiceManager.getService(project, IdeFocusManager.class);
+      return project.getService(IdeFocusManager.class);
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,9 +165,12 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return component which represents window content.
    */
+  @NotNull
   JComponent getComponent();
 
   ContentManager getContentManager();
+
+  void addContentManagerListener(@NotNull ContentManagerListener listener);
 
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
