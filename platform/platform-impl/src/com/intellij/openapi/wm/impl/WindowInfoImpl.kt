@@ -101,7 +101,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isFloating: Boolean
     get() = type == ToolWindowType.FLOATING
 
-  override val isWindowed: Boolean
+  val isWindowed: Boolean
     get() = type == ToolWindowType.WINDOWED
 
   override val isSliding: Boolean

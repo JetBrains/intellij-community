@@ -74,7 +74,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
-    toolWindow.setDecorator(this);
     myDivider = new MyDivider();
 
     /*
@@ -144,6 +143,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private void setWindowInfo(@NotNull WindowInfoImpl info) {
+    boolean isContentUiTypeChanged = (myInfo == null ? ToolWindowContentUiType.TABBED : myInfo.getContentUiType()) != info.getContentUiType();
     myInfo = info;
 
     // Anchor
@@ -180,7 +180,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     }
 
-    toolWindow.getContentUI().setType(myInfo.getContentUiType());
+    if (isContentUiTypeChanged) {
+      toolWindow.getContentUI().setType(myInfo.getContentUiType());
+    }
     setBorder(new InnerPanelBorder(toolWindow, myInfo));
   }
 

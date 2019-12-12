@@ -28,8 +28,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-class TabContentLayout extends ContentLayout {
-
+final class TabContentLayout extends ContentLayout {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
   LayoutData myLastLayout;
@@ -74,8 +73,10 @@ class TabContentLayout extends ContentLayout {
         return myUi.myWindow.isActive();
       }
     };
-    for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
-      contentAdded(new ContentManagerEvent(this, myUi.myManager.getContent(i), i));
+
+    ContentManager contentManager = myUi.myManager;
+    for (int i = 0; i < contentManager.getContentCount(); i++) {
+      contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
   }
 
@@ -214,9 +215,10 @@ class TabContentLayout extends ContentLayout {
       }
     }
 
-    Content selected = myUi.myManager.getSelectedContent();
-    if (selected == null && myUi.myManager.getContents().length>0) {
-      selected = myUi.myManager.getContents()[0];
+    ContentManager contentManager = myUi.myManager;
+    Content selected = contentManager.getSelectedContent();
+    if (selected == null && contentManager.getContents().length > 0) {
+      selected = contentManager.getContents()[0];
     }
 
     result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width + (myTabs.size() > 1 ? calcMoreIconWidth() : 0) : 0;

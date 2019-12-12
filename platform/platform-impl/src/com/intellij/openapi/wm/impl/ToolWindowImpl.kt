@@ -48,7 +48,11 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   private var isAvailable = true
   internal var icon: Icon? = null
   private var stripeTitle: String? = null
-  private val contentUi = ToolWindowContentUi(this)
+
+  private val contentUi by lazy {
+    ToolWindowContentUi(this)
+  }
+
   private var decorator: InternalDecorator? = null
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
@@ -62,8 +66,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   private var afterContentManagerCreation: ((ContentManagerImpl) -> Unit)? = null
 
-  internal var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
-    private set
+  private var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
 
   fun setAfterContentManagerCreation(value: (ContentManagerImpl) -> Unit) {
     if (contentManager.isInitialized()) {
@@ -179,7 +182,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun isVisible(): Boolean {
-    return toolWindowManager.isToolWindowRegistered(id) && toolWindowManager.isToolWindowVisible(id)
+    return toolWindowManager.isToolWindowVisible(id)
   }
 
   override fun getAnchor(): ToolWindowAnchor {
@@ -286,11 +289,6 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     ContentManagerWatcher(this, contentManager)
   }
 
-  /**
-   * @return `true` if the component passed into constructor is not instance of
-   * `ContentManager` class. Otherwise it delegates the functionality to the
-   * passed content manager.
-   */
   override fun isAvailable() = isAvailable
 
   override fun getComponent(): JComponent {

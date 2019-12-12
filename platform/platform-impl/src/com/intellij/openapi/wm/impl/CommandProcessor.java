@@ -10,7 +10,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-public final class CommandProcessor implements Runnable {
+final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(CommandProcessor.class);
   private final Object myLock = new Object();
 
@@ -19,9 +19,9 @@ public final class CommandProcessor implements Runnable {
   private final BooleanSupplier isDisposedCondition;
 
   private int myCommandCount;
-  private boolean myFlushed;
+  private boolean isActive;
 
-  public CommandProcessor(@NotNull BooleanSupplier isDisposedCondition) {
+  CommandProcessor(@NotNull BooleanSupplier isDisposedCondition) {
     this.isDisposedCondition = isDisposedCondition;
   }
 
@@ -31,9 +31,9 @@ public final class CommandProcessor implements Runnable {
     }
   }
 
-  public void flush() {
+  public void activate() {
     synchronized (myLock) {
-      myFlushed = true;
+      isActive = true;
       run();
     }
   }
@@ -44,7 +44,7 @@ public final class CommandProcessor implements Runnable {
     }
 
     synchronized (myLock) {
-      boolean isBusy = myCommandCount > 0 || !myFlushed;
+      boolean isBusy = myCommandCount > 0 || !isActive;
 
       commandGroups.add(commands);
       myCommandCount += commands.size();
@@ -57,15 +57,14 @@ public final class CommandProcessor implements Runnable {
 
   @Override
   public final void run() {
-    synchronized (myLock) {
-      while (true) {
+    while (true) {
+      synchronized (myLock) {
         List<Runnable> commands = commandGroups.pollFirst();
         if (commands == null) {
           return;
         }
 
-        for (int i = commands.size() - 1; i >= 0; i--) {
-          Runnable command = commands.get(i);
+        for (Runnable command : commands) {
           myCommandCount--;
 
           if (isDisposedCondition.getAsBoolean()) {

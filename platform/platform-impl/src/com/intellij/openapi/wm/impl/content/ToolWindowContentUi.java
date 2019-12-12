@@ -134,19 +134,21 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
-    if (myType != type) {
-
-      if (myType != null) {
-        getCurrentLayout().reset();
-      }
-
-      myType = type;
-
-      getCurrentLayout().init();
-      rebuild();
+    if (myType == type) {
+      return;
     }
+
+    if (myType != null) {
+      getCurrentLayout().reset();
+    }
+
+    myType = type;
+
+    getCurrentLayout().init();
+    rebuild();
   }
 
+  @NotNull
   private ContentLayout getCurrentLayout() {
     return myType == ToolWindowContentUiType.TABBED ? myTabsLayout : myComboLayout;
   }
@@ -249,7 +251,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     getCurrentLayout().layout();
   }
 
-
   @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
@@ -343,8 +344,10 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     myTabsLayout.setTabDoubleClickActions(actions);
   }
 
-  public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
-    if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) return;
+  public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
+    if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
+      return;
+    }
 
     MouseAdapter mouseAdapter = new MouseAdapter() {
       final Ref<Point> myLastPoint = Ref.create();
@@ -452,7 +455,8 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
           ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
           if (myIsLastComponent.get() == Boolean.TRUE) {
             splitter.setLastSize(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y);
-          } else {
+          }
+          else {
             splitter.setFirstSize(myInitialHeight.get() + myLastPoint.get().y - myPressPoint.get().y);
           }
         }
@@ -478,7 +482,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     c.putClientProperty(TOOLWINDOW_UI_INSTALLED, Boolean.TRUE);
   }
 
-  private void initActionGroup(DefaultActionGroup group, @Nullable Content content) {
+  private void initActionGroup(@NotNull DefaultActionGroup group, @Nullable Content content) {
     if (content == null) {
       return;
     }
@@ -613,11 +617,12 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return myWindow;
     }
-
-    if (CloseAction.CloseTarget.KEY.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myWindow.getToolWindowManager().getProject();
+    }
+    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
     }
-
     return null;
   }
 

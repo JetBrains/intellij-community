@@ -57,16 +57,6 @@ class DesktopLayout {
     return info
   }
 
-  /**
-   * @return `WindowInfo` for the window with specified `id`.
-   * If `onlyRegistered` is `true` then returns not `null`
-   * value if and only if window with `id` is registered one.
-   */
-  fun getInfo(id: String, onlyRegistered: Boolean): WindowInfoImpl? {
-    val info = idToInfo.get(id) ?: return null
-    return if (onlyRegistered) null else info
-  }
-
   fun getInfo(id: String) = idToInfo.get(id)
 
   /**

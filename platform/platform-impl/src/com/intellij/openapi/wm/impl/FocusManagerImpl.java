@@ -136,7 +136,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   }
 
   public static IdeFocusManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(IdeFocusManager.class);
+    return ApplicationManager.getApplication().getService(IdeFocusManager.class);
   }
 
   @Override

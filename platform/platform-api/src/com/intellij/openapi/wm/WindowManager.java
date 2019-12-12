@@ -13,6 +13,9 @@ import java.awt.*;
  * Provides access to IDE's frames and status bar.
  */
 public abstract class WindowManager {
+  public static WindowManager getInstance() {
+    return ApplicationManager.getApplication().getService(WindowManager.class);
+  }
 
   /**
    * @return {@code true} if current OS supports alpha mode for windows and all native libraries were successfully loaded.
@@ -45,10 +48,6 @@ public abstract class WindowManager {
    * @param state  determines the new alpha mode.
    */
   public abstract void setAlphaModeEnabled(Window window, boolean state);
-
-  public static WindowManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(WindowManager.class);
-  }
 
   public abstract void doNotSuggestAsParent(Window window);
 

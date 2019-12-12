@@ -4,10 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -28,7 +25,7 @@ import java.awt.image.BufferedImage;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends AnchoredButton implements ActionListener {
+public final class StripeButton extends AnchoredButton implements ActionListener, DataProvider {
   /**
    * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -67,6 +64,18 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         processDrag(e);
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
+      return myDecorator.getToolWindow();
+    }
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myDecorator.getToolWindow().getToolWindowManager().getProject();
+    }
+    return null;
   }
 
   /**

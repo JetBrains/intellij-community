@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.CommandProcessor;
 import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -40,10 +39,6 @@ public abstract class WindowManagerEx extends WindowManager {
       AppIcon.getInstance().requestAttention(project, critical);
   }
 
-  @NotNull
-  @ApiStatus.Internal
-  public abstract ProjectFrameHelper allocateFrame(@NotNull Project project);
-
   /**
    * @return focus owner of the specified window.
    * @exception IllegalArgumentException if {@code window} is {@code null}.
@@ -63,9 +58,6 @@ public abstract class WindowManagerEx extends WindowManager {
 
   @Nullable
   public abstract IdeFrame findFrameFor(@Nullable Project project);
-
-  @NotNull
-  public abstract CommandProcessor getCommandProcessor();
 
   /**
    * @return default layout for tool windows.

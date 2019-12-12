@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ScreenUtil
@@ -164,22 +165,26 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun projectLoaded(project: Project) {
     ApplicationManager.getApplication().invokeLater(Runnable {
-      runActivity("project frame assigning") {
-        val frame = frameHelper ?: return@Runnable
+      val frameHelper = frameHelper ?: return@Runnable
 
+      val windowManager = WindowManager.getInstance() as WindowManagerImpl
+      runActivity("project frame assigning") {
         val projectFrameBounds = ProjectFrameBounds.getInstance(project)
         if (isFrameBoundsCorrect) {
           // update to ensure that project stores correct frame bounds
-          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frame.frame.extendedState)) null else frame.frame.bounds)
+          projectFrameBounds.markDirty(if (FrameInfoHelper.isMaximized(frameHelper.frame.extendedState)) null else frameHelper.frame.bounds)
         }
         else {
           val frameInfo = projectFrameBounds.getFrameInfoInDeviceSpace()
           if (frameInfo?.bounds != null) {
-            restoreFrameState(frame, frameInfo)
+            restoreFrameState(frameHelper, frameInfo)
           }
         }
 
-        (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
+        windowManager.assignFrame(frameHelper, project)
+      }
+      runActivity("tool window pane creation") {
+        (ToolWindowManager.getInstance(project) as ToolWindowManagerImpl).init(frameHelper)
       }
     }, project.disposed)
   }

@@ -93,7 +93,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     // splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true, parentDisposable);
     RegistryValue registryValue = Registry.get("ide.mainSplitter.min.size");
-    registryValue.addListener(new RegistryValueListener.Adapter() {
+    registryValue.addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         updateInnerMinSize(value);
@@ -211,9 +211,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param comparator     which is used to sort buttons within the stripe.
    */
   @NotNull
-  final Runnable createAddButtonCmd(StripeButton button,
-                                                  @NotNull WindowInfoImpl info,
-                                                  @NotNull Comparator<? super StripeButton> comparator) {
+  final Runnable createAddButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull Comparator<? super StripeButton> comparator) {
     WindowInfoImpl copiedInfo = info.copy();
     return new AddToolStripeButtonCmd(button, copiedInfo, comparator);
   }
@@ -226,9 +224,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
-  final Runnable createAddDecoratorCmd(@NotNull InternalDecorator decorator,
-                                                     @NotNull WindowInfoImpl info,
-                                                     boolean dirtyMode) {
+  final Runnable createAddDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info, boolean dirtyMode) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfoImpl sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
@@ -846,9 +842,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    AddSlidingComponentCmd(@NotNull JComponent component,
-                           @NotNull WindowInfoImpl info,
-                           boolean dirtyMode) {
+    AddSlidingComponentCmd(@NotNull JComponent component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
       myComponent = component;
       myInfo = info;
       myDirtyMode = dirtyMode;

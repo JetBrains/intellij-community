@@ -22,7 +22,10 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -66,17 +69,17 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final DialogWrapper myWrapper;
   private final AbstractDialog myDialog;
   private final boolean myCanBeParent;
-  private final WindowManagerEx myWindowManager;
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
-    myWindowManager = getWindowManager();
+
+    WindowManagerEx windowManager = getWindowManager();
 
     Window window = null;
-    if (myWindowManager != null) {
+    if (windowManager != null) {
       if (project == null) {
         //noinspection deprecation
         project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
@@ -84,15 +87,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       myProject = project;
 
-      window = myWindowManager.suggestParentWindow(project);
+      window = windowManager.suggestParentWindow(project);
       if (window == null) {
-        Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
+        Window focusedWindow = windowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrameImpl) {
           window = focusedWindow;
         }
       }
       if (window == null) {
-        for (ProjectFrameHelper frameHelper : myWindowManager.getProjectFrameHelpers()) {
+        for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
           if (frameHelper.getFrame().isActive()) {
             window = frameHelper.getFrame();
             break;
@@ -139,7 +142,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
-    myWindowManager = getWindowManager();
     myDialog = createDialog(headless, OwnerOptional.fromComponent(parent).get(), wrapper, null, DialogWrapper.IdeModalityType.IDE);
     myCanBeParent = headless || canBeParent;
   }
@@ -147,7 +149,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
     myWrapper = wrapper;
-    myWindowManager = getWindowManager();
     myDialog = createDialog(headless, owner, wrapper, null, DialogWrapper.IdeModalityType.IDE);
     myCanBeParent = headless || canBeParent;
 
@@ -164,7 +165,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     WindowManagerEx windowManager = null;
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      windowManager = (WindowManagerEx)application.getComponent(WindowManager.class);
+      windowManager = WindowManagerEx.getInstanceEx();
     }
     return windowManager;
   }
@@ -389,8 +390,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
-    if (!myCanBeParent && myWindowManager != null) {
-      myWindowManager.doNotSuggestAsParent(myDialog.getWindow());
+    if (!myCanBeParent) {
+      WindowManagerEx windowManager = getWindowManager();
+      if (windowManager != null) {
+        windowManager.doNotSuggestAsParent(myDialog.getWindow());
+      }
     }
 
     final CommandProcessorEx commandProcessor =
@@ -452,8 +456,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDisposeActions.add(() -> StackingPopupDispatcher.getInstance().restorePersistentPopups());
   }
 
-  private class AnCancelAction extends AnAction implements DumbAware {
-
+  private final class AnCancelAction extends AnAction implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -497,8 +500,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
-
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog {
+  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**

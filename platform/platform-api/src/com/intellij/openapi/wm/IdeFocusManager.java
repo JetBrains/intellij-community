@@ -217,7 +217,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
     Application app = ApplicationManager.getApplication();
     if (app != null && LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      focusManager = app.getComponent(IdeFocusManager.class);
+      focusManager = app.getService(IdeFocusManager.class);
     }
 
     if (focusManager == null) {

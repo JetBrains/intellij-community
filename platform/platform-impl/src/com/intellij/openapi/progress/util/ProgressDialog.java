@@ -340,7 +340,7 @@ class ProgressDialog implements Disposable {
 
     @NotNull
     @Override
-    protected DialogWrapperPeer createPeer(final Project project, final boolean canBeParent) {
+    protected DialogWrapperPeer createPeer(@Nullable Project project, boolean canBeParent) {
       if (System.getProperty("vintage.progress") == null) {
         try {
           return new GlassPaneDialogWrapperPeer(project, this);

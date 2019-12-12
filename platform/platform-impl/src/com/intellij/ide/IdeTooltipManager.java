@@ -84,19 +84,19 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myHelpTooltip = Registry.get("ide.helptooltip.enabled");
 
-    RegistryValueListener.Adapter listener = new RegistryValueListener.Adapter() {
+    RegistryValueListener listener = new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
     };
-    Application application = ApplicationManager.getApplication();
-    myIsEnabled.addListener(listener, application);
-    myHelpTooltip.addListener(listener, application);
+    Application app = ApplicationManager.getApplication();
+    myIsEnabled.addListener(listener, app);
+    myHelpTooltip.addListener(listener, app);
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    application.getMessageBus().connect(application).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    app.getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
@@ -657,7 +657,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public static IdeTooltipManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(IdeTooltipManager.class);
+    return ApplicationManager.getApplication().getService(IdeTooltipManager.class);
   }
 
   public void hide(@Nullable IdeTooltip tooltip) {
