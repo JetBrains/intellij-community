@@ -351,28 +351,54 @@ public class RecursionManager {
      */
     boolean isCurrentNonCachingStillTolerated() {
       String trace = ExceptionUtil.getThrowableText(new Throwable());
-
-      if (trace.contains("com.intellij.psi.impl.source.xml.XmlTagImpl.getDescriptor(") ||
-          trace.contains("com.intellij.xml.impl.schema.XmlNSDescriptorImpl.findTypeDescriptor(")) {  // IDEA-212671
-        if (ContainerUtil.exists(progressMap.keySet(), key -> {
-          String s = key.userObject.toString();
-          return s != null &&
-                 (s.contains("XmlTag.getDescriptor(<xs:import " +
-                             "namespace=\"http://www.w3.org/XML/1998/namespace\" " +
-                             "schemaLocation=\"http://www.w3.org/2001/xml.xsd\"") ||
-                  s.startsWith("<XmlTag:xsd:schema") && s.endsWith("http://java.sun.com/xml/ns/javaee>"));
-        })) {
-          return true;
-        }
-      }
-
       return ContainerUtil.exists(toleratedFrames, trace::contains);
     }
   }
 
   private static final String[] toleratedFrames = {
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
-    "org.jetbrains.plugins.grails.references.domain.DomainDescriptor.getDescriptor(", // IDEA-228536
+    "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
+    "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779
+    "com.intellij.psi.impl.search.JavaDirectInheritorsSearcher.processConcurrentlyIfTooMany(", // IDEA-229003
+
+    // WEB-42912
+    "com.intellij.lang.javascript.psi.resolve.JSEvaluatorComplexityTracker.doRunTask(",
+    "com.intellij.lang.javascript.ecmascript6.types.JSTypeSignatureChooser.chooseOverload(",
+    "com.intellij.lang.javascript.psi.resolve.JSTypeEvaluator.getElementType(",
+    "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
+    "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
+
+    // IDEA-228815
+    "at org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter$Companion.computeInferredMethod(",
+    "at org.jetbrains.plugins.groovy.lang.resolve.processors.inference.FunctionalExpressionConstraint",
+    "org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference.resolve(",
+    "org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager.inferType(",
+    "at org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionMembersCache.getTransformationResult(",
+
+    // IDEA-228814
+    // resolve & inference
+    "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
+    "com.intellij.psi.util.PsiUtil.getApplicabilityLevel(",
+    "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
+    "com.intellij.psi.impl.source.tree.java.MethodReferenceResolver.resolve(",
+    "com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil.isPolyExpression(",
+    // inner class imports
+    "com.intellij.psi.impl.source.resolve.ClassResolverProcessor.isAmbiguousInherited(",
+    "com.intellij.psi.impl.source.PsiJavaFileBaseImpl.processDeclarations(",
+    "com.intellij.psi.impl.PsiClassImplUtil.getScopeCorrectedSuperTypes(",
+    "com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl.multiResolve(",
+
+    // IDEA-212671
+    "com.intellij.xml.impl.schema.XmlNSDescriptorImpl.getRedefinedElementDescriptor(",
+    "com.intellij.psi.impl.source.xml.XmlTagImpl.getDescriptor(",
+    "com.intellij.psi.impl.source.xml.XmlTagDelegate.getNSDescriptor(",
+    "com.intellij.xml.impl.schema.XmlNSDescriptorImpl.findTypeDescriptor(",
+    "com.intellij.psi.impl.source.xml.XmlEntityRefImpl.doResolveEntity(",
+    "com.intellij.xml.impl.dtd.XmlNSDescriptorImpl.getElementDescriptor(",
+
+    // PY-39529
+    "com.jetbrains.python.psi.PyKnownDecoratorUtil.resolveDecorator(",
+    "com.jetbrains.python.psi.impl.references.PyReferenceImpl.multiResolve(",
   };
 
   private static class MemoizedValue {
@@ -443,14 +469,18 @@ public class RecursionManager {
    * and find something that shouldn't be called there. There's almost always such something. Remove it and voila, you've got rid of the cycle,
    * improved caching and also avoided calling unnecessary code which can speed up the execution even in unrelated circumstances.
    * <p></p>
-   * There are rare cases when recursion prevention is acceptable. They might involve analyzing incorrect code or
-   * independent plugins calling into each other. This should be an exotic sutiation, not a normal workflow.
+   * What not to do: don't replace {@code RecursionManager} with your own thread-local,
+   * don't just remove {@code mayCacheNow} checks and cache despite them.
+   * Both approaches will likely result in test & production flakiness and {@code IdempotenceChecker} assertions.
+   * <p></p>
+   * There are rare cases when recursion prevention is acceptable. They might involve analyzing very incorrect code or
+   * independent plugins calling into each other. This should be an exotic situation, not a normal workflow.
    * In this case, you may call {@link #disableMissedCacheAssertions} in the tests
    * which check such exotic situations.
    */
   static class CachingPreventedException extends RuntimeException {
     CachingPreventedException(Map<MyKey, Throwable> preventions) {
-      super("Caching disabled due recursion preventions, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
+      super("Caching disabled due to recursion prevention, please get rid of cyclic dependencies. Preventions: " + new ArrayList<>(preventions.keySet()),
             ContainerUtil.getFirstItem(preventions.values()));
     }
   }

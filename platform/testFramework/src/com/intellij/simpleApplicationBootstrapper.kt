@@ -9,7 +9,9 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.ui.IconManager
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.EventQueue
 import java.util.concurrent.CompletableFuture
@@ -41,6 +43,11 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   setupEventQueue()
 
   val app = ApplicationImpl(true, true, true, true)
+
+  if (SystemProperties.getBooleanProperty("tests.assertOnMissedCache", true)) {
+    RecursionManager.assertOnMissedCache(app)
+  }
+
   IconManager.activate()
   val plugins: List<IdeaPluginDescriptorImpl>
   try {
