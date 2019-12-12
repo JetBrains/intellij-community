@@ -7,6 +7,8 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
 
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
+  override fun toString() = "$action $commit $subject"
+
   sealed class Action(val name: String, val mnemonic: Char) {
     object PICK : Action("pick", 'p')
     object EDIT : Action("edit", 'e')
