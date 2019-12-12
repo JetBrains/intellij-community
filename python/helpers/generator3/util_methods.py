@@ -429,7 +429,12 @@ def restore_by_inspect(p_func):
     """
     Returns paramlist restored by inspect.
     """
-    args, varg, kwarg, defaults = inspect.getargspec(p_func)
+    if version[0] > 2:
+        args, varg, kwarg, defaults, kwonlyargs, kwonlydefaults, _ = inspect.getfullargspec(p_func)
+    else:
+        args, varg, kwarg, defaults = inspect.getargspec(p_func)
+        kwonlyargs = []
+        kwonlydefaults = None
     spec = []
     if defaults:
         dcnt = len(defaults) - 1
@@ -444,6 +449,16 @@ def restore_by_inspect(p_func):
         spec.insert(0, arg)
     if varg:
         spec.append("*" + varg)
+    elif kwonlyargs:
+        spec.append("*")
+
+    kwonlydefaults = kwonlydefaults or {}
+    for arg in kwonlyargs:
+        if arg in kwonlydefaults:
+            spec.append(arg + '=' + sanitize_value(kwonlydefaults[arg]))
+        else:
+            spec.append(arg)
+
     if kwarg:
         spec.append("**" + kwarg)
     return flatten(spec)
