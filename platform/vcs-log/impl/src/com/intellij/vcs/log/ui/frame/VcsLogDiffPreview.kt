@@ -40,8 +40,10 @@ fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
 abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewDiff: D,
                                                           uiProperties: VcsLogUiProperties,
                                                           mainComponent: JComponent,
-                                                          splitterProportionKey: String) {
-  private val previewDiffSplitter: Splitter = OnePixelSplitter(false, splitterProportionKey, 0.7f)
+                                                          splitterProportionKey: String,
+                                                          vertical: Boolean = false,
+                                                          defaultProportion: Float = 0.7f) {
+  private val previewDiffSplitter: Splitter = OnePixelSplitter(vertical, splitterProportionKey, defaultProportion)
 
   val mainComponent: JComponent
     get() = previewDiffSplitter
