@@ -64,6 +64,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
   void testInconsistentHierarchyDfa() { doTest() }
+  void testAfterAssertTrueDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
   void testInstanceOfDisjunction() { doTest() }
