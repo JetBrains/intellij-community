@@ -496,7 +496,7 @@ public class SrcFileAnnotator implements Disposable {
                              oldToNewConverter, CoverageDataManager.getInstance(myProject).isSubCoverageActive());
     highlighter.setLineMarkerRenderer(markerRenderer);
 
-    final LineData lineData = className != null ? (LineData)lines[line + 1] : null;
+    final LineData lineData = className != null ? executableLines.get(line) : null;
     if (lineData != null && lineData.getStatus() == LineCoverage.NONE) {
       highlighter.setErrorStripeMarkColor(markerRenderer.getErrorStripeColor(editor));
       highlighter.setThinErrorStripeMark(true);
