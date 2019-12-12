@@ -4,6 +4,7 @@ package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -64,8 +65,10 @@ public final class EventLog {
 
   public static void expireNotification(@NotNull Notification notification) {
     getApplicationService().myModel.removeNotification(notification);
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      getProjectComponent(p).myProjectModel.removeNotification(notification);
+    for (Project p : ProjectUtil.getOpenProjects()) {
+      if (!p.isDisposed()) {
+        getProjectComponent(p).myProjectModel.removeNotification(notification);
+      }
     }
   }
 
