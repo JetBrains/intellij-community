@@ -45,7 +45,8 @@ class CustomMethodHandlers {
     staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
     staticCall(JAVA_LANG_FLOAT, "toString", "toHexString").parameterTypes("float"),
     staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
-    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short")
+    staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short"),
+    staticCall(JAVA_LANG_BOOLEAN, "parseBoolean").parameterTypes("java.lang.String")
   );
   static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
