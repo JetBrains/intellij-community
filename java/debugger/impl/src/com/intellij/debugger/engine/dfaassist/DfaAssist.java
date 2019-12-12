@@ -184,7 +184,7 @@ public class DfaAssist implements DebuggerContextListener {
 
   @Nullable
   private static PsiStatement getAnchorStatement(@NotNull PsiElement element) {
-    while (element != null && (element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
+    while (element instanceof PsiWhiteSpace || element instanceof PsiComment) {
       element = element.getNextSibling();
     }
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false, PsiLambdaExpression.class, PsiMethod.class);
