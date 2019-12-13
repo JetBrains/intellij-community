@@ -40,6 +40,7 @@ public class DefaultActionGroup extends ActionGroup {
    * Contains instances of Pair
    */
   private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
+  private int myModificationStamp = 0;
 
   public DefaultActionGroup() {
     this(null, false);
@@ -72,6 +73,14 @@ public class DefaultActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
+  private void incrementModificationStamp() {
+    myModificationStamp++;
+  }
+
+  public int getModificationStamp() {
+    return myModificationStamp;
+  }
+
   private void addActions(@NotNull List<? extends AnAction> actions) {
     Set<Object> actionSet = new HashSet<>();
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
@@ -84,6 +93,7 @@ public class DefaultActionGroup extends ActionGroup {
       uniqueActions.add(action);
     }
     mySortedChildren.addAll(uniqueActions);
+    incrementModificationStamp();
   }
 
   /**
@@ -159,7 +169,7 @@ public class DefaultActionGroup extends ActionGroup {
       myPairs.add(Pair.create(action, constraint));
     }
     addAllToSortedList(actionManager);
-
+    incrementModificationStamp();
     return new ActionInGroup(this, action);
   }
 
@@ -238,6 +248,7 @@ public class DefaultActionGroup extends ActionGroup {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (pair.first.equals(action) || (pair.first instanceof ActionStub && ((ActionStub)pair.first).getId().equals(id))) {
           myPairs.remove(i);
+          incrementModificationStamp();
           break;
         }
       }
@@ -250,6 +261,7 @@ public class DefaultActionGroup extends ActionGroup {
   public final void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
+    incrementModificationStamp();
   }
 
   /**
@@ -259,6 +271,7 @@ public class DefaultActionGroup extends ActionGroup {
     int index = mySortedChildren.indexOf(oldAction);
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
+      incrementModificationStamp();
       return true;
     }
     else {
@@ -266,6 +279,7 @@ public class DefaultActionGroup extends ActionGroup {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (pair.first.equals(newAction)) {
           myPairs.set(i, Pair.create(newAction, pair.second));
+          incrementModificationStamp();
           return true;
         }
       }
@@ -286,6 +300,7 @@ public class DefaultActionGroup extends ActionGroup {
 
     myPairs.clear();
     myPairs.addAll(other.myPairs);
+    incrementModificationStamp();
   }
 
   @NotNull
