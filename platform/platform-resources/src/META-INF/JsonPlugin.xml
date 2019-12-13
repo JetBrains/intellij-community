@@ -128,7 +128,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
-                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider" dynamic="true"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"/>
