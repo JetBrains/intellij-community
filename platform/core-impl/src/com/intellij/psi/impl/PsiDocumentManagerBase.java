@@ -1062,9 +1062,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void dispose() {
-    clearUncommittedDocuments();
-  }
+  public void dispose() {}
 
   @NotNull
   public PsiToDocumentSynchronizer getSynchronizer() {
