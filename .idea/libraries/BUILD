@@ -1010,8 +1010,8 @@ java_library(
 java_library(
     name = "guava-testlib",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/21.0:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/21.0:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/25.1-jre:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava-testlib/25.1-jre:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1684,8 +1684,8 @@ java_library(
 java_library(
     name = "sa-jdwp",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.12:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.12:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.13:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.13:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1786,16 +1786,16 @@ java_library(
 java_library(
     name = "rd-swing",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.191.63:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.191.63:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.193.101:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-swing/0.193.101:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "rd-core",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.191.63:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.191.63:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.193.101:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jetbrains/rd/rd-core/0.193.101:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1868,4 +1868,20 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/thoughtworks/qdox/qdox/2.0-M10:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "jsoup",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jsoup/jsoup/1.12.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jsoup/jsoup/1.12.1:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "snakeyaml-engine",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/snakeyaml/snakeyaml-engine/2.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/snakeyaml/snakeyaml-engine/2.0:jar"],
 )

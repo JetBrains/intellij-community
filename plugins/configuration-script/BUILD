@@ -4,15 +4,11 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.configurationScript",
     # do not sort: must match IML order
-    srcs = [
-        "src",
-        "snakeyaml-engine",
-    ],
+    srcs = ["src"],
     iml_files = ["intellij.configurationScript.iml"],
     package_prefixes = {
         "test": "com.intellij.configurationScript",
         "src": "com.intellij.configurationScript",
-        "snakeyaml-engine": "org.snakeyaml.engine.v1",
     },
     resources = ["resources"],
     # do not sort: must match IML order
@@ -49,5 +45,6 @@ iml_module(
         "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer[module]",
         "//tools/idea/.idea/libraries:jackson[test]",
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
+        "//tools/idea/.idea/libraries:snakeyaml-engine",
     ],
 )
