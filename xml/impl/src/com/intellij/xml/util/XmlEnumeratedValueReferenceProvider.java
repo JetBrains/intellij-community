@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiDelegateReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
@@ -95,7 +96,7 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
 
       @Override
       protected PsiElement getHost(XmlTag element) {
-        XmlText[] textElements = element.getValue().getTextElements();
+        XmlText[] textElements = PsiTreeUtil.getChildrenOfType(element, XmlText.class);
         return ArrayUtil.getFirstElement(textElements);
       }
     };
