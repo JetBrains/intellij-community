@@ -5,10 +5,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 
+import java.util.Collection;
+import java.util.Collections;
+
 @State(name = "CodeStyleSettingsManager", storages = @Storage("code.style.schemes"))
 public final class AppCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   public AppCodeStyleSettingsManager() {
     registerExtensionPointListeners(ApplicationManager.getApplication());
+  }
+
+  @Override
+  protected Collection<CodeStyleSettings> enumSettings() {
+    return getMainProjectCodeStyle() != null ?
+           Collections.singletonList(getMainProjectCodeStyle()) : Collections.emptyList();
   }
 }

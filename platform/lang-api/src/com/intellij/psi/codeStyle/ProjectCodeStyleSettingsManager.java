@@ -22,6 +22,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -190,5 +192,10 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     protected String getSubStateFileName(@NotNull Element element) {
       return element.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
     }
+  }
+
+  @Override
+  protected Collection<CodeStyleSettings> enumSettings() {
+    return Collections.unmodifiableCollection(mySettingsMap.values());
   }
 }

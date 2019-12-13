@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
@@ -72,6 +75,37 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
           notifyCodeStyleSettingsChanged();
         }
       }, disposable);
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          registerFileTypeIndentOptions(enumSettings(), extension.getFileType(), extension.createIndentOptions());
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterFileTypeIndentOptions(enumSettings(), extension.getFileType());
+        }
+      }, disposable);
+  }
+
+  protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+
+  @ApiStatus.Internal
+  public final void registerFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+                                                  @NotNull FileType fileType,
+                                                  @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    allSettings.forEach(settings -> settings.registerAdditionalIndentOptions(fileType, indentOptions));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+                                                    @NotNull FileType fileType) {
+    allSettings.forEach(settings -> settings.unregisterAdditionalIndentOptions(fileType));
+    notifyCodeStyleSettingsChanged();
   }
 
   /**
