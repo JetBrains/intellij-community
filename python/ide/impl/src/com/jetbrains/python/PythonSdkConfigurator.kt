@@ -117,7 +117,5 @@ class PythonSdkConfigurator {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
       }
     }
-
-    SdkConfigurationUtil.configureDirectoryProjectSdk(project, PreferredSdkComparator.INSTANCE, PythonSdkType.getInstance())
   }
 }
