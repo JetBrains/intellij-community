@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
@@ -89,7 +88,7 @@ public class DfaAssist implements DebuggerContextListener {
         }
         myPromise = ReadAction.nonBlocking(() -> computeHints(runner)).withDocumentsCommitted(myProject)
           .coalesceBy(DfaAssist.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, DfaAssist.this::displayInlays)
+          .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints, newContext))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
@@ -109,7 +108,7 @@ public class DfaAssist implements DebuggerContextListener {
     myInlays.clear();
   }
 
-  private void displayInlays(Map<PsiExpression, DfaHint> hints) {
+  private void displayInlays(Map<PsiExpression, DfaHint> hints, DebuggerContextImpl context) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     disposeInlays();
     if (hints.isEmpty()) return;
@@ -118,7 +117,7 @@ public class DfaAssist implements DebuggerContextListener {
     if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
     InlayModel model = editor.getInlayModel();
     List<Inlay<?>> newInlays = new ArrayList<>();
-    AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
+    AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction(context);
     hints.forEach((expr, hint) -> {
       Segment range = expr.getTextRange();
       if (range == null) return;
@@ -213,14 +212,17 @@ public class DfaAssist implements DebuggerContextListener {
   }
 
   private class TurnOffDfaProcessorAction extends AnAction {
-    private TurnOffDfaProcessorAction() {
+    private final DebuggerContextImpl myContext;
+
+    private TurnOffDfaProcessorAction(DebuggerContextImpl context) {
       super("Turn Off Dataflow Assist", "Switch off dataflow aided debugging for this session", AllIcons.Actions.Cancel);
+      myContext = context;
     }
     @Override
     public void actionPerformed(@NotNull AnActionEvent evt) {
-      DebugProcessImpl process = JavaDebugProcess.getCurrentDebugProcess(myProject);
-      if (process != null) {
-        process.getSession().getContextManager().removeListener(DfaAssist.this);
+      DebuggerSession session = myContext.getDebuggerSession();
+      if (session != null) {
+        session.getContextManager().removeListener(DfaAssist.this);
         cleanUp();
       }
     }
