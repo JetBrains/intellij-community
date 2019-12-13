@@ -38,11 +38,11 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
 import gnu.trove.THashMap
-import org.apache.http.HttpStatus
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -205,11 +205,9 @@ object UpdateChecker {
     return HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
   }
 
-  private fun checkPluginsUpdate(
-    indicator: ProgressIndicator?,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
-    buildNumber: BuildNumber?
-  ): Collection<PluginDownloader>? {
+  private fun checkPluginsUpdate(indicator: ProgressIndicator?,
+                                 incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+                                 buildNumber: BuildNumber?): Collection<PluginDownloader>? {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
@@ -269,7 +267,7 @@ object UpdateChecker {
           PluginsMetaLoader.loadPluginDescriptor(id.idString, lastUpdate, indicator)
         }
         catch (e: HttpRequests.HttpStatusException) {
-          if (e.statusCode == HttpStatus.SC_NOT_FOUND) continue
+          if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue
           else throw e
         }
         buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, incompatiblePlugins, indicator, null)

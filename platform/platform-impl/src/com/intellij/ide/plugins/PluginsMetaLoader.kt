@@ -90,10 +90,7 @@ object PluginsMetaLoader {
         if (file != null) {
           synchronized(PluginsMetaLoader) {
             request.saveToFile(file, indicator)
-            val newETag = connection.getHeaderField("ETag")
-            if (newETag != null) {
-              saveETagForFile(file, newETag)
-            }
+            connection.getHeaderField("ETag")?.let {  saveETagForFile(file, it) }
           }
           return@connect file.bufferedReader().use(parser)
         }
