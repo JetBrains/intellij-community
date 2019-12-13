@@ -19,6 +19,8 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
 
         @JvmStatic
         fun getCustomContentHolder(window: Window, content: JComponent, titleBackgroundColor: Color? = null): CustomFrameViewHolder {
+            if(content is CustomFrameViewHolder) return content
+
             val rootPane: JRootPane? = when (window) {
                 is JWindow -> window.rootPane
                 is JDialog -> {

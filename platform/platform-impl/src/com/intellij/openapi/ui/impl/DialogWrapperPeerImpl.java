@@ -386,11 +386,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
-    Container contentPane = getContentPane();
-    if (IdeFrameDecorator.isCustomDecorationActive() && contentPane instanceof JComponent) {
-      setContentPane(CustomFrameDialogContent.getContent(window, (JComponent) contentPane));
-    }
-
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 
@@ -990,7 +985,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   @Override
   public void setContentPane(JComponent content) {
-    myDialog.setContentPane(content);
+    JComponent wrappedContent =
+      IdeFrameDecorator.isCustomDecorationActive() ? CustomFrameDialogContent.getContent(getWindow(), content) : content;
+
+    myDialog.setContentPane(wrappedContent);
   }
 
   @Override
