@@ -159,6 +159,60 @@ class LegacyBridgeModulesTest {
     }
 
   @Test
+  fun `test rename module and all dependencies in other modules`() =
+    WriteCommandAction.runWriteCommandAction(project) {
+      val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
+        assertNotNull(WorkspaceModel.getInstance(project).entityStore.current.entities(ModuleEntity::class.java)
+                        .first { it.persistentId().name == moduleName }.dependencies
+                        .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
+      }
+
+      val antModuleName = "ant"
+      val mavenModuleName = "maven"
+      val gradleModuleName = "gradle"
+      val moduleManager = ModuleManager.getInstance(project)
+
+      val iprFile = File(project.projectFilePath!!)
+      val antModuleFile = File(project.basePath, "$antModuleName.iml")
+      val mavenModuleFile = File(project.basePath, "$mavenModuleName.iml")
+      val gradleModuleFile = File(project.basePath, "$gradleModuleName.iml")
+
+      val (antModule, mavenModule) = moduleManager.modifiableModel.let { model ->
+        val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
+        val mavenModule = model.newModule(mavenModuleFile.path, ModuleType.EMPTY.id)
+        model.commit()
+        Pair(antModule, mavenModule)
+      }
+      ModuleRootModificationUtil.addDependency(mavenModule, antModule)
+      checkModuleDependency(mavenModuleName, antModuleName)
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      var fileText = iprFile.readText()
+      assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
+
+      assertTrue(antModuleFile.exists())
+      assertTrue(mavenModuleFile.exists())
+      assertTrue(mavenModuleFile.readText().contains(antModuleName))
+
+      moduleManager.modifiableModel.let { model ->
+        model.renameModule(antModule, gradleModuleName)
+        model.commit()
+      }
+      checkModuleDependency(mavenModuleName, gradleModuleName)
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      fileText = iprFile.readText()
+      assertEquals(2, listOf(mavenModuleName, gradleModuleName).filter { fileText.contains(it) }.size)
+
+      assertFalse(antModuleFile.exists())
+      assertTrue(gradleModuleFile.exists())
+      assertTrue(mavenModuleFile.exists())
+      fileText = mavenModuleFile.readText()
+      assertFalse(fileText.contains(antModuleName))
+      assertFalse(fileText.contains(antModuleName))
+    }
+
+  @Test
   fun `test remove and add module with the same name`() =
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
