@@ -4,7 +4,7 @@ package com.intellij.ide.ui.text
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.text.JBDateFormat
@@ -16,7 +16,7 @@ import javax.swing.JTextField
  * @author Konstantin Bulenkov
  */
 class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : ConfigurableUi<DateTimeFormatManager> {
-  private val ui: JComponent
+  private val ui: DialogPanel
   private lateinit var usePrettyFormatting: JCheckBox
   private lateinit var overrideSystemDateFormatting: JCheckBox
   private lateinit var use24HourTime: JCheckBox
@@ -52,28 +52,16 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
     }
   }
 
-  override fun reset(settings: DateTimeFormatManager) {
-    usePrettyFormatting.isSelected = settings.isPrettyFormattingAllowed
-  }
+  override fun reset(settings: DateTimeFormatManager) = ui.reset()
 
-  override fun isModified(settings: DateTimeFormatManager): Boolean {
-    return usePrettyFormatting.isSelected != settings.isPrettyFormattingAllowed
-           || overrideSystemDateFormatting.isSelected != settings.isOverrideSystemDateFormat
-           || !StringUtil.equals(pattern.text, settings.dateFormatPattern)
-           || use24HourTime.isSelected != settings.isUse24HourTime
-  }
+  override fun isModified(settings: DateTimeFormatManager): Boolean = ui.isModified()
 
   @Throws(ConfigurationException::class)
   override fun apply(settings: DateTimeFormatManager) {
-    settings.isPrettyFormattingAllowed = usePrettyFormatting.isSelected
-    settings.isOverrideSystemDateFormat = overrideSystemDateFormatting.isSelected
-    settings.dateFormatPattern = pattern.text
-    settings.isUse24HourTime = use24HourTime.isSelected
+    ui.apply()
     JBDateFormat.invalidateCustomFormatter()
     LafManager.getInstance().updateUI()
   }
 
-  override fun getComponent(): JComponent {
-    return ui
-  }
+  override fun getComponent(): JComponent = ui
 }
