@@ -157,7 +157,7 @@ public class MyPsiUtil {
             @Override
             public void visitElement(@NotNull PsiElement element) {
                 AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
-                annotator.annotate(element, holder);
+                holder.whileAnnotating(element, () -> annotator.annotate(element, holder));
                 for (Annotation annotation : holder) {
                     if (annotation.getSeverity() == HighlightSeverity.ERROR) {
                         error[0] = annotation.getMessage();
