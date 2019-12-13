@@ -39,9 +39,9 @@ public class MavenProjectResolver {
   private final MavenProjectsTree myTree;
   private final Project myProject;
 
-  public MavenProjectResolver(MavenProjectsTree tree) {
+  public MavenProjectResolver(@Nullable MavenProjectsTree tree) {
     myTree = tree;
-    myProject = tree.getProject();
+    myProject = tree == null ? null : tree.getProject();
   }
 
   @TestOnly
@@ -190,7 +190,7 @@ public class MavenProjectResolver {
             filesToRefresh.add(pluginDir); // Refresh both *.pom and *.jar files.
           }
         }
-        if (artifacts.isEmpty()) {
+        if (artifacts.isEmpty() && myProject != null) {
           MavenProjectsManager.getInstance(myProject)
             .getSyncConsole().getListener(MavenServerProgressIndicator.ResolveType.PLUGIN).showError(each.getMavenId().getKey());
         }
