@@ -59,7 +59,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var type by enum(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
-  var isVisible by property(false)
+  override var isVisible by property(false)
 
   @get:Attribute("show_stripe_button")
   override var isShowStripeButton by property(true)
@@ -82,10 +82,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * Defines order of tool window button inside the stripe.
    */
-  var order by property(-1)
+  override var order by property(-1)
 
   @get:Transient
-  var isFromPersistentSettings = true
+  override var isFromPersistentSettings = true
     internal set
 
   fun copy(): WindowInfoImpl {
@@ -100,9 +100,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
 
   override val isFloating: Boolean
     get() = type == ToolWindowType.FLOATING
-
-  val isWindowed: Boolean
-    get() = type == ToolWindowType.WINDOWED
 
   override val isSliding: Boolean
     get() = type == ToolWindowType.SLIDING

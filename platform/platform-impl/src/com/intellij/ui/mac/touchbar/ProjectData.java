@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
@@ -41,9 +42,8 @@ final class ProjectData {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
-        final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
-        final String activeId = twm.getActiveToolWindowId();
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        String activeId = toolWindowManager.getActiveToolWindowId();
         if (activeId != null &&
             (activeId.equals(ToolWindowId.DEBUG) ||
              activeId.equals(ToolWindowId.RUN_DASHBOARD) ||

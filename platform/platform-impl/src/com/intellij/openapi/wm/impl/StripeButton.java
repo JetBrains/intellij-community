@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
@@ -31,28 +32,35 @@ public final class StripeButton extends AnchoredButton implements ActionListener
    * because it causes typing of "funny" characters into the editor.
    */
   private int myMnemonic;
-  private final InternalDecorator myDecorator;
   private boolean myPressedWhenSelected;
+
+  private WindowInfo windowInfo;
 
   private JLayeredPane myDragPane;
   private final ToolWindowsPane myPane;
+  final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
   private Stripe myLastStripe;
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
 
-  StripeButton(@NotNull InternalDecorator decorator, @NotNull ToolWindowsPane pane) {
-    myDecorator = decorator;
+  StripeButton(@NotNull ToolWindowsPane pane, @NotNull WindowInfo info, @NotNull ToolWindowImpl toolWindow) {
     myPane = pane;
+    this.toolWindow = toolWindow;
 
     setFocusable(false);
 
     setBorder(JBUI.Borders.empty(5, 5, 0, 5));
     updatePresentation();
-    apply(decorator.getWindowInfo());
+    apply(info);
     addActionListener(this);
-    addMouseListener(new MyPopupHandler());
+    addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(final Component component, final int x, final int y) {
+        showPopup(component, x, y);
+      }
+    });
     setRolloverEnabled(true);
     setOpaque(false);
 
@@ -66,14 +74,24 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     });
   }
 
+  @NotNull
+  public WindowInfo getWindowInfo() {
+    return windowInfo;
+  }
+
+  @NotNull
+  String getId() {
+    return toolWindow.getId();
+  }
+
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return myDecorator.getToolWindow();
+      return toolWindow;
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myDecorator.getToolWindow().getToolWindowManager().getProject();
+      return toolWindow.getToolWindowManager().getProject();
     }
     return null;
   }
@@ -101,12 +119,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   @Override
   public ToolWindowAnchor getAnchor() {
-    return getWindowInfo().getAnchor();
-  }
-
-  @NotNull
-  WindowInfoImpl getWindowInfo() {
-    return myDecorator.getWindowInfo();
+    return windowInfo.getAnchor();
   }
 
   public boolean isFirst() {
@@ -141,14 +154,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         }
       }
     }
-
-
     return c == this;
-  }
-
-  @NotNull
-  public InternalDecorator getDecorator() {
-    return myDecorator;
   }
 
   private void processDrag(final MouseEvent e) {
@@ -220,6 +226,11 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     myLastStripe = stripe;
   }
 
+  @NotNull
+  public ToolWindowImpl getToolWindow() {
+    return toolWindow;
+  }
+
   private final class DragKeyEventDispatcher implements KeyEventDispatcher {
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
@@ -252,7 +263,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     }
 
     if (UIUtil.isCloseClick(e)) {
-      myDecorator.fireHiddenSide();
+      toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), true);
       return;
     }
 
@@ -275,23 +286,26 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   @Override
   public void actionPerformed(final ActionEvent e) {
     if (myPressedWhenSelected) {
-      myDecorator.fireHidden();
+      toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
     }
     else {
-      myDecorator.fireActivated();
+      toolWindow.getToolWindowManager().activated(toolWindow);
     }
+
     myPressedWhenSelected = false;
     //noinspection SpellCheckingInspection
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + myDecorator.getToolWindow().getId());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + getId());
   }
 
-  public void apply(@NotNull WindowInfoImpl info) {
+  public void apply(@NotNull WindowInfo info) {
+    windowInfo = info;
+
     setSelected(info.isVisible() || info.isActive());
     updateState();
   }
 
   private void showPopup(@Nullable Component component, int x, int y) {
-    ActionGroup group = myDecorator.createPopupGroup();
+    ActionGroup group = toolWindow.getDecorator().createPopupGroup();
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
     popupMenu.getComponent().show(component, x, y);
   }
@@ -299,27 +313,25 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   @Override
   public void updateUI() {
     setUI(StripeButtonUI.createUI(this));
-    Font font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
-    /*
-    if (font.getSize() % 2 == 1) { // that's a trick. Size of antialiased font isn't properly calculated for fonts with odd size
-      font = font.deriveFont(font.getStyle(), font.getSize() - 1);
-    }
-    */
-    setFont(font);
+    setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
   void updatePresentation() {
     updateState();
     updateText();
-    Icon icon = myDecorator.getToolWindow().getIcon();
+    updateIcon();
+  }
+
+  void updateIcon() {
+    Icon icon = toolWindow.getIcon();
     setIcon(icon);
     setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
   }
 
   private void updateText() {
-    String text = myDecorator.getToolWindow().getStripeTitle();
+    String text = toolWindow.getStripeTitle();
     if (UISettings.getInstance().getShowToolWindowsNumbers()) {
-      String toolWindowId = myDecorator.getToolWindow().getId();
+      String toolWindowId = toolWindow.getId();
       int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
       if (mnemonic != -1) {
         text = (char)mnemonic + ": " + text;
@@ -333,7 +345,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void updateState() {
-    ToolWindowImpl window = myDecorator.getToolWindow();
+    ToolWindowImpl window = toolWindow;
     boolean toShow = window.isAvailable() || window.isPlaceholderMode();
     if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
       setVisible(window.isShowStripeButton() || isSelected());
@@ -342,13 +354,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       setVisible(toShow && (window.isShowStripeButton() || isSelected()));
     }
     setEnabled(window.isAvailable());
-  }
-
-  private final class MyPopupHandler extends PopupHandler {
-    @Override
-    public void invokePopup(final Component component, final int x, final int y) {
-      showPopup(component, x, y);
-    }
   }
 
   private boolean isDraggingNow() {
@@ -363,7 +368,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     myDragPane.repaint();
     setVisible(true);
     if (myLastStripe != null) {
-      myLastStripe.finishDrop();
+      myLastStripe.finishDrop(toolWindow.getToolWindowManager());
       myLastStripe = null;
     }
     if (myDragKeyEventDispatcher != null) {

@@ -93,17 +93,19 @@ public final class ToolWindowCollector {
   }
 
   private static void record(@Nullable String toolWindowId, @NotNull ToolWindowActivationSource source, @Nullable WindowInfoImpl windowInfo) {
-    if (StringUtil.isNotEmpty(toolWindowId)) {
-      final ToolWindowInfo info = getToolWindowInfo(toolWindowId);
-      final FeatureUsageData data = new FeatureUsageData().
-        addData("id", info.myRecordedId).
-        addPluginInfo(info.myPluginInfo);
-      if (windowInfo != null) {
-        data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
-        data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
-      }
-      FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
+    if (StringUtil.isEmpty(toolWindowId)) {
+      return;
     }
+
+    ToolWindowInfo info = getToolWindowInfo(toolWindowId);
+    FeatureUsageData data = new FeatureUsageData().
+      addData("id", info.myRecordedId).
+      addPluginInfo(info.myPluginInfo);
+    if (windowInfo != null) {
+      data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
+      data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
+    }
+    FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
   }
 
   @NotNull

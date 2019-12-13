@@ -2,20 +2,17 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.wm.WindowInfo
 
 internal data class ToolWindowEntry(val stripeButton: StripeButton,
-                                    val internalDecorator: InternalDecorator,
-                                    val disposable: Disposable) {
+                                    val toolWindow: ToolWindowImpl,
+                                    val disposable: Disposable,
+                                    var readOnlyWindowInfo: WindowInfo) {
   var floatingDecorator: FloatingDecorator? = null
-  var windowedDecorator: WindowedDecorator? = null
+  var windowedDecorator: FrameWrapper? = null
   var balloon: Balloon? = null
-
-  val readOnlyWindowInfo: WindowInfoImpl
-    get() = internalDecorator.windowInfo
-
-  val toolWindow: ToolWindowImpl
-    get() = internalDecorator.toolWindow
 
   val id: String
     get() = toolWindow.id

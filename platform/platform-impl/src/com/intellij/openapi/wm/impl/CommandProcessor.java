@@ -12,7 +12,6 @@ import java.util.function.BooleanSupplier;
 
 final class CommandProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(CommandProcessor.class);
-  private final Object myLock = new Object();
 
   private final Deque<List<Runnable>> commandGroups = new ArrayDeque<>();
   @NotNull
@@ -26,16 +25,12 @@ final class CommandProcessor implements Runnable {
   }
 
   public final int getCommandCount() {
-    synchronized (myLock) {
-      return myCommandCount;
-    }
+    return myCommandCount;
   }
 
   public void activate() {
-    synchronized (myLock) {
-      isActive = true;
-      run();
-    }
+    isActive = true;
+    run();
   }
 
   public final void execute(@NotNull List<Runnable> commands) {
@@ -43,47 +38,43 @@ final class CommandProcessor implements Runnable {
       return;
     }
 
-    synchronized (myLock) {
-      boolean isBusy = myCommandCount > 0 || !isActive;
+    boolean isBusy = myCommandCount > 0 || !isActive;
 
-      commandGroups.add(commands);
-      myCommandCount += commands.size();
+    commandGroups.add(commands);
+    myCommandCount += commands.size();
 
-      if (!isBusy) {
-        run();
-      }
+    if (!isBusy) {
+      run();
     }
   }
 
   @Override
   public final void run() {
     while (true) {
-      synchronized (myLock) {
-        List<Runnable> commands = commandGroups.pollFirst();
-        if (commands == null) {
-          return;
+      List<Runnable> commands = commandGroups.pollFirst();
+      if (commands == null) {
+        return;
+      }
+
+      for (Runnable command : commands) {
+        myCommandCount--;
+
+        if (isDisposedCondition.getAsBoolean()) {
+          continue;
         }
 
-        for (Runnable command : commands) {
-          myCommandCount--;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("CommandProcessor.run " + command);
+        }
 
-          if (isDisposedCondition.getAsBoolean()) {
-            continue;
-          }
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("CommandProcessor.run " + command);
-          }
-
-          try {
-            command.run();
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            LOG.error(e);
-          }
+        try {
+          command.run();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error(e);
         }
       }
     }

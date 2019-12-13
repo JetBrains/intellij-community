@@ -13,10 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowContentUiType
-import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -31,6 +28,8 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Component
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -43,10 +42,13 @@ private val LOG = logger<ToolWindowImpl>()
 class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManagerImpl,
                                           val id: String,
                                           private val canCloseContent: Boolean,
+                                          private val canWorkInDumbMode: Boolean,
                                           component: JComponent?,
-                                          private val parentDisposable: Disposable) : ToolWindowEx {
-  private var isAvailable = true
-  internal var icon: Icon? = null
+                                          private val parentDisposable: Disposable,
+                                          info: WindowInfoImpl,
+                                          private var contentFactory: ToolWindowFactory?,
+                                          internal var icon: ToolWindowIcon?,
+                                          private var isAvailable: Boolean = true) : ToolWindowEx {
   private var stripeTitle: String? = null
 
   private val contentUi by lazy {
@@ -54,9 +56,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   private var decorator: InternalDecorator? = null
+
   private var hideOnEmptyContent = false
   var isPlaceholderMode = false
-  private var contentFactory: ToolWindowFactory? = null
 
   private val pendingContentManagerListeners: List<ContentManagerListener>? = null
 
@@ -64,18 +66,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     override fun isReady() = component != null && component.isShowing
   }
 
-  private var afterContentManagerCreation: ((ContentManagerImpl) -> Unit)? = null
-
   private var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
-
-  fun setAfterContentManagerCreation(value: (ContentManagerImpl) -> Unit) {
-    if (contentManager.isInitialized()) {
-      value(contentManager.value)
-    }
-    else {
-      afterContentManagerCreation = value
-    }
-  }
 
   private val contentManager = lazy {
     val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
@@ -88,7 +79,16 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       }
     }))
 
-    afterContentManagerCreation?.invoke(contentManager)
+    if (decorator == null) {
+      decorator = InternalDecorator(info.copy(), this)
+      decorator!!.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) {
+          toolWindowManager.resized(e.component as InternalDecorator)
+        }
+      })
+    }
+
+    decorator!!.addContentComponent(canWorkInDumbMode, contentManager)
 
     toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentManager.component)
 
@@ -111,7 +111,19 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       contentManager.addContent(content)
       contentManager.setSelectedContent(content, false)
     }
+
+    contentFactory?.init(this)
   }
+
+  internal fun applyWindowInfo(info: WindowInfo) {
+    decorator?.applyWindowInfo(info)
+  }
+
+  val decoratorComponent: JComponent?
+    get() = decorator
+
+  val hasFocus: Boolean
+    get() = decorator?.hasFocus() ?: false
 
   fun setFocusedComponent(component: Component) {
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
@@ -275,7 +287,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun setAvailable(available: Boolean, runnable: Runnable?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     isAvailable = available
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_AVAILABLE)
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.AVAILABLE)
     callLater(runnable)
   }
 
@@ -335,18 +347,18 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     return ObjectUtils.notNull(stripeTitle, id)
   }
 
-  override fun setIcon(icon: Icon) {
+  override fun setIcon(newIcon: Icon) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val oldIcon = getIcon()
+    val oldIcon = icon
     if (EventLog.LOG_TOOL_WINDOW_ID != id) {
-      if (oldIcon !== icon &&
-          icon !is LayeredIcon &&
-          (abs(icon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(icon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
-        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $icon")
+      if (oldIcon !== newIcon &&
+          newIcon !is LayeredIcon &&
+          (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
+        LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
       }
     }
-    this.icon = ToolWindowIcon(icon, id)
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_ICON)
+    this.icon = ToolWindowIcon(newIcon, id)
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
   }
 
   override fun setTitle(title: String) {
@@ -355,29 +367,25 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     if (selected != null) {
       selected.displayName = title
     }
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_TITLE)
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.TITLE)
   }
 
   override fun setStripeTitle(value: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     stripeTitle = value
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowEx.PROP_STRIPE_TITLE)
-  }
-
-  fun setDecorator(value: InternalDecorator) {
-    decorator = value
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.STRIPE_TITLE)
   }
 
   fun fireActivated() {
-    decorator?.fireActivated()
+    toolWindowManager.activated(this)
   }
 
   fun fireHidden() {
-    decorator?.fireHidden()
+    toolWindowManager.hideToolWindow(id, false)
   }
 
   fun fireHiddenSide() {
-    decorator?.fireHiddenSide()
+    toolWindowManager.hideToolWindow(id, true)
   }
 
   val popupGroup: ActionGroup?
@@ -400,11 +408,6 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun isShowStripeButton() = toolWindowManager.isShowStripeButton(id)
 
   override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
-
-  fun setContentFactory(contentFactory: ToolWindowFactory) {
-    this.contentFactory = contentFactory
-    contentFactory.init(this)
-  }
 
   fun ensureContentInitialized() {
     val currentContentFactory = contentFactory

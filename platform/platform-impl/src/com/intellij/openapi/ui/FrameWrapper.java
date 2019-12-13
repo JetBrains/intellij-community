@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -56,7 +57,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private Window myFrame;
   private final Map<String, Object> myDataMap = new HashMap<>();
   private Project myProject;
-  private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
   private FocusWatcher myFocusWatcher;
 
   private boolean myDisposing;
@@ -92,11 +92,12 @@ public class FrameWrapper implements Disposable, DataProvider {
   public void setProject(@NotNull Project project) {
     myProject = project;
     setData(CommonDataKeys.PROJECT.getName(), project);
-    ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
-    Disposer.register(this, new Disposable() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void dispose() {
-        ProjectManager.getInstance().removeProjectManagerListener(project, myProjectListener);
+      public void projectClosing(@NotNull Project project) {
+        if (project == myProject) {
+          close();
+        }
       }
     });
   }
@@ -183,8 +184,9 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void close() {
-    if (myDisposed) return;
-    if (myOnCloseHandler != null && !myOnCloseHandler.get()) return;
+    if (myDisposed || (myOnCloseHandler != null && !myOnCloseHandler.get())) {
+      return;
+    }
 
     // if you remove this line problems will start happen on Mac OS X
     // 2 projects opened, call Cmd+D on the second opened project and then Esc.
@@ -196,7 +198,9 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   @Override
   public void dispose() {
-    if (isDisposed()) return;
+    if (isDisposed()) {
+      return;
+    }
 
     Window frame = myFrame;
     StatusBar statusBar = myStatusBar;
@@ -560,15 +564,6 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   public void setSize(Dimension size) {
     getFrame().setSize(size);
-  }
-
-  private class MyProjectManagerListener implements ProjectManagerListener {
-    @Override
-    public void projectClosing(@NotNull Project project) {
-      if (project == myProject) {
-        close();
-      }
-    }
   }
 
   @NotNull

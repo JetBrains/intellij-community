@@ -151,7 +151,7 @@ public final class IconLoader {
   //}
 
   @NotNull
-  public static Icon getIcon(@NonNls @NotNull final String path) {
+  public static Icon getIcon(@NonNls @NotNull String path) {
     Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     assert callerClass != null : path;
     return getIcon(path, callerClass);
@@ -212,7 +212,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass, boolean strict) {
+  public static Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
     return findIcon(LAF_PREFIX + key + ".png", aClass, true, strict);
   }
 
@@ -221,17 +221,17 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
    */
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class aClass) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
     return findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT_LOCAL.get()), false);
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow) {
     return findIcon(path, aClass, computeNow, STRICT_LOCAL.get());
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow, boolean strict) {
     return findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(strict), false);
   }
 

@@ -34,7 +34,6 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -46,7 +45,7 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
-  private WindowInfoImpl myInfo;
+  private WindowInfo myInfo;
   private final ToolWindowImpl toolWindow;
   private final MyDivider myDivider;
   private final RemoveStripeButtonAction myRemoveFromSideBarAction;
@@ -58,11 +57,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
   //See ToolWindowViewModeAction and ToolWindowMoveAction
-  @NonNls @Deprecated public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
-  @NonNls @Deprecated public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
-  @NonNls @Deprecated public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
-  @NonNls @Deprecated public static final String TOGGLE_WINDOWED_MODE_ACTION_ID = "ToggleWindowedMode";
-  @NonNls @Deprecated public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
+  public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
+  public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
   private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
@@ -70,7 +67,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final ActionGroup myToggleToolbarGroup;
   private final JPanel contentPane;
 
-  InternalDecorator(@NotNull WindowInfoImpl info, @NotNull ToolWindowImpl toolWindow) {
+  InternalDecorator(@NotNull WindowInfo info, @NotNull ToolWindowImpl toolWindow) {
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
@@ -82,7 +79,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     ToggleContentUiTypeAction toggleContentUiTypeAction = new ToggleContentUiTypeAction();
     myRemoveFromSideBarAction = new RemoveStripeButtonAction();
     myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindow.getToolWindowManager().getProject(), this.toolWindow);
-    if (!ToolWindowId.PREVIEW.equals(info.getId())) {
+    if (!ToolWindowId.PREVIEW.equals(toolWindow.getId())) {
       ((DefaultActionGroup)myToggleToolbarGroup).addAction(toggleContentUiTypeAction);
     }
 
@@ -131,18 +128,13 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return owner != null && SwingUtilities.isDescendingFrom(owner, toolWindow.getComponent());
   }
 
-  /**
-   * Applies specified decoration.
-   */
-  public final void apply(@NotNull WindowInfoImpl info) {
-    if (myInfo.equals(info) || toolWindow.getToolWindowManager().getProject().isDisposed()) {
-      return;
+  public final void applyWindowInfo(@NotNull WindowInfo info) {
+    if (!myInfo.equals(info)) {
+      setWindowInfo(info);
     }
-
-    setWindowInfo(info);
   }
 
-  private void setWindowInfo(@NotNull WindowInfoImpl info) {
+  private void setWindowInfo(@NotNull WindowInfo info) {
     boolean isContentUiTypeChanged = (myInfo == null ? ToolWindowContentUiType.TABBED : myInfo.getContentUiType()) != info.getContentUiType();
     myInfo = info;
 
@@ -198,26 +190,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   /**
    * Fires event that "hide" button has been pressed.
    */
-  final void fireHidden() {
+  private void fireHidden() {
     toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
-  }
-
-  /**
-   * Fires event that "hide" button has been pressed.
-   */
-  final void fireHiddenSide() {
-    toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), true);
-  }
-
-  /**
-   * Fires event that user performed click into the title bar area.
-   */
-  final void fireActivated() {
-    toolWindow.getToolWindowManager().activated(this);
-  }
-
-  final void fireResized() {
-    toolWindow.getToolWindowManager().resized(this);
   }
 
   private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
@@ -327,6 +301,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       int left = anchor == ToolWindowAnchor.RIGHT && (!isSplitter || isVerticalSplitter || isFirstInSplitter) ? 1 : 0;
       int bottom = 0;
       int right = anchor == ToolWindowAnchor.LEFT && (!isSplitter || isVerticalSplitter || !isFirstInSplitter) ? 1 : 0;
+      //noinspection UseDPIAwareInsets
       return new Insets(top, left, bottom, right);
     }
 
@@ -343,7 +318,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   @NotNull
   private ActionGroup createPopupGroup(boolean skipHideAction) {
-    final DefaultActionGroup group = new GearActionGroup();
+    DefaultActionGroup group = new GearActionGroup();
     if (myInfo == null) {
       return group;
     }
@@ -459,11 +434,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return toolWindow;
   }
 
-  /**
-   * @return last window info applied to the decorator.
-   */
   @NotNull
-  final WindowInfoImpl getWindowInfo() {
+  final WindowInfo getWindowInfo() {
     return myInfo;
   }
 
@@ -473,14 +445,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setHeaderVisible(boolean value) {
     myHeader.setVisible(value);
-  }
-
-  @Override
-  protected final void processComponentEvent(final ComponentEvent e) {
-    super.processComponentEvent(e);
-    if (ComponentEvent.COMPONENT_RESIZED == e.getID()) {
-      fireResized();
-    }
   }
 
   void removeStripeButton() {

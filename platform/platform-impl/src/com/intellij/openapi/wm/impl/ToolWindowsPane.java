@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
@@ -35,9 +36,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
-import java.util.function.BooleanSupplier;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
 
@@ -84,9 +83,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean myLeftHorizontalSplit;
   private boolean myRightHorizontalSplit;
 
-  ToolWindowsPane(@NotNull JFrame frame, @NotNull ToolWindowManagerImpl manager, @NotNull Disposable parentDisposable) {
-    myManager = manager;
-
+  ToolWindowsPane(@NotNull JFrame frame, @NotNull Project project, @NotNull Disposable parentDisposable) {
     setOpaque(false);
     myFrame = frame;
 
@@ -118,13 +115,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
 
     // tool stripes
-    myTopStripe = new Stripe(SwingConstants.TOP, manager);
+    myTopStripe = new Stripe(SwingConstants.TOP);
     myStripes.add(myTopStripe);
-    myLeftStripe = new Stripe(SwingConstants.LEFT, manager);
+    myLeftStripe = new Stripe(SwingConstants.LEFT);
     myStripes.add(myLeftStripe);
-    myBottomStripe = new Stripe(SwingConstants.BOTTOM, manager);
+    myBottomStripe = new Stripe(SwingConstants.BOTTOM);
     myStripes.add(myBottomStripe);
-    myRightStripe = new Stripe(SwingConstants.RIGHT, manager);
+    myRightStripe = new Stripe(SwingConstants.RIGHT);
     myStripes.add(myRightStripe);
 
     updateToolStripesVisibility();
@@ -141,7 +138,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    JComponent editorComponent = FileEditorManagerEx.getInstanceEx(myManager.getProject()).getComponent();
+    JComponent editorComponent = FileEditorManagerEx.getInstanceEx(project).getComponent();
     editorComponent.setFocusable(false);
     setDocumentComponent(editorComponent);
   }
@@ -184,36 +181,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
-  @Override
-  public final void addNotify() {
-    super.addNotify();
-  }
-
+  @NotNull
   public Project getProject() {
     return myManager.getProject();
   }
 
   @Override
-  public final void uiSettingsChanged(final UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateToolStripesVisibility();
-    updateLayout();
-  }
-
-  /**
-   * Creates command which adds button into the specified tool stripe.
-   * Command uses copy of passed {@code info} object.
-   *
-   * @param button         button which should be added.
-   * @param info           window info for the corresponded tool window.
-   * @param comparator     which is used to sort buttons within the stripe.
-   */
-  @NotNull
-  final Runnable createAddButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info, @NotNull Comparator<? super StripeButton> comparator) {
-    WindowInfoImpl copiedInfo = info.copy();
-    return new AddToolStripeButtonCmd(button, copiedInfo, comparator);
+    updateLayout(uiSettings);
   }
 
   /**
@@ -224,10 +200,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
-  final Runnable createAddDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info, boolean dirtyMode) {
+  final Runnable createAddDecoratorCmd(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
-      WindowInfoImpl sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
+      WindowInfo sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
       return sideInfo == null
              ? new AddDockedComponentCmd(decorator, info, dirtyMode)
              : new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode);
@@ -241,31 +217,32 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   /**
-   * Creates command which removes tool button from tool stripe.
-   */
-  @NotNull
-  final Runnable createRemoveButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info) {
-    return new RemoveToolStripeButtonCmd(button, info);
-  }
-
-  /**
    * Creates command which hides tool window with specified set of parameters.
    *
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after removing
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
-  @NotNull
-  final Runnable createRemoveDecoratorCmd(@NotNull WindowInfoImpl info, boolean dirtyMode) {
-    Component decorator = myManager.getInternalDecorator(Objects.requireNonNull(info.getId()));
-    if (info.isDocked()) {
+  @Nullable
+  final Runnable createRemoveDecoratorCmd(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode) {
+    if (info.getType() == ToolWindowType.DOCKED) {
       boolean side = !info.isSplit();
-      WindowInfoImpl sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
-      return sideInfo == null
-             ? new RemoveDockedComponentCmd(info, dirtyMode)
-             : new RemoveSplitAndDockedComponentCmd(info, dirtyMode);
+      WindowInfo sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
+      if (sideInfo == null) {
+        return () -> {
+          setComponent(null, info.getAnchor(), 0);
+          if (!dirtyMode) {
+            myLayeredPane.validate();
+            myLayeredPane.repaint();
+          }
+        };
+      }
+      return new RemoveSplitAndDockedComponentCmd(info, dirtyMode);
     }
     else if (info.isSliding()) {
-      return new RemoveSlidingComponentCmd(decorator, info, dirtyMode);
+      if (component != null) {
+        return new RemoveSlidingComponentCmd(component, info, dirtyMode);
+      }
+      return null;
     }
     else {
       throw new IllegalArgumentException("Unknown window type");
@@ -273,26 +250,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @NotNull
-  final Runnable createTransferFocusCmd(@NotNull BooleanSupplier shouldSkip) {
+  final Runnable createUpdateButtonPositionCmd(@NotNull ToolWindowAnchor anchor) {
     return () -> {
-      if (shouldSkip.getAsBoolean()) {
-        return;
-      }
-      transferFocus();
-    };
-  }
-
-  @NotNull
-  final Runnable createUpdateButtonPositionCmd(@NotNull Supplier<StripeButton> buttonSupplier) {
-    return () -> {
-      StripeButton stripeButton = buttonSupplier.get();
-      if (stripeButton == null) {
-        return;
-      }
-
-      WindowInfoImpl info = stripeButton.getWindowInfo();
-      ToolWindowAnchor anchor = info.getAnchor();
-
       if (ToolWindowAnchor.TOP == anchor) {
         myTopStripe.revalidate();
       }
@@ -316,10 +275,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  /**
-   * Sets (docks) specified component to the specified anchor.
-   */
-  private void setComponent(final JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
+  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
     if (ToolWindowAnchor.TOP == anchor) {
       myVerticalSplitter.setFirstComponent(component);
       myVerticalSplitter.setFirstSize((int)(myLayeredPane.getHeight() * weight));
@@ -372,7 +328,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private void updateToolStripesVisibility() {
     boolean oldVisible = myLeftStripe.isVisible();
 
-    final boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().getPresentationMode();
+    boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().getPresentationMode();
     boolean visible = showButtons || myStripesOverlayed;
     myLeftStripe.setVisible(visible);
     myRightStripe.setVisible(visible);
@@ -521,8 +477,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return resizer != null ? Pair.create(resizer, cmp) : null;
   }
 
-  private void updateLayout() {
-    UISettings uiSettings = UISettings.getInstance();
+  private void updateLayout(@NotNull UISettings uiSettings) {
     if (myWidescreen != uiSettings.getWideScreenSupport()) {
       JComponent documentComponent = (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).getInnerComponent();
       myWidescreen = uiSettings.getWideScreenSupport();
@@ -538,27 +493,29 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       myLayeredPane.add(myWidescreen ? myHorizontalSplitter : myVerticalSplitter, DEFAULT_LAYER);
       setDocumentComponent(documentComponent);
     }
+
     if (myLeftHorizontalSplit != uiSettings.getLeftHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.LEFT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
-        InternalDecorator first = (InternalDecorator)splitter.getFirstComponent();
-        InternalDecorator second = (InternalDecorator)splitter.getSecondComponent();
+        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getFirstComponent());
+        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getSecondComponent());
         setComponent(splitter, ToolWindowAnchor.LEFT, ToolWindowAnchor.LEFT.isSplitVertically()
-                                                      ? first.getWindowInfo().getWeight()
-                                                      : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
+                                                      ? firstInfo.getWeight()
+                                                      : firstInfo.getWeight() + secondInfo.getWeight());
       }
       myLeftHorizontalSplit = uiSettings.getLeftHorizontalSplit();
     }
+
     if (myRightHorizontalSplit != uiSettings.getRightHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.RIGHT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
-        InternalDecorator first = (InternalDecorator)splitter.getFirstComponent();
-        InternalDecorator second = (InternalDecorator)splitter.getSecondComponent();
+        WindowInfoImpl firstInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getFirstComponent());
+        WindowInfoImpl secondInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError((InternalDecorator)splitter.getSecondComponent());
         setComponent(splitter, ToolWindowAnchor.RIGHT, ToolWindowAnchor.RIGHT.isSplitVertically()
-                                                       ? first.getWindowInfo().getWeight()
-                                                       : first.getWindowInfo().getWeight() + second.getWindowInfo().getWeight());
+                                                       ? firstInfo.getWeight()
+                                                       : firstInfo.getWeight() + secondInfo.getWeight());
       }
       myRightHorizontalSplit = uiSettings.getRightHorizontalSplit();
     }
@@ -751,6 +708,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
         }
       }
+
       Splitter splitter = new MySplitter();
       splitter.setOrientation(anchor.isSplitVertically());
       if (!anchor.isHorizontal()) {
@@ -773,28 +731,30 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           }
         });
       }
+
       JComponent c = getComponentAt(anchor);
-      //If all components are hidden for anchor we should find the second component to put in a splitter
-      //Otherwise we add empty splitter
+      // if all components are hidden for anchor we should find the second component to put in a splitter
+      // otherwise we add empty splitter
       if (c == null) {
-        List<String> ids = ToolWindowsPane.this.myManager.getIdsOn(anchor);
-        ids.remove(myInfo.getId());
-        for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
-          String id = iterator.next();
-          ToolWindow window = myManager.getToolWindow(id);
-          if (window == null || window.isSplitMode() == myInfo.isSplit() || !window.isVisible()) iterator.remove();
+        List<ToolWindowImpl> toolWindows = myManager.getToolWindowsOn(anchor, Objects.requireNonNull(myInfo.getId()));
+        for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
+          ToolWindowImpl window = iterator.next();
+          if (window == null || window.isSplitMode() == myInfo.isSplit() || !window.isVisible()) {
+            iterator.remove();
+          }
         }
-        if (!ids.isEmpty()) {
-          c = myManager.getInternalDecorator(ids.get(0));
+        if (!toolWindows.isEmpty()) {
+          c = toolWindows.get(0).getDecoratorComponent();
         }
         if (c == null) {
           LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + myInfo.getId());
         }
       }
+
       float newWeight;
       if (c instanceof InternalDecorator) {
         InternalDecorator oldComponent = (InternalDecorator)c;
-        WindowInfoImpl oldInfo = oldComponent.getWindowInfo();
+        WindowInfoImpl oldInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(oldComponent);
 
         IJSwingUtilities.updateComponentTreeUI(oldComponent);
         IJSwingUtilities.updateComponentTreeUI(myNewComponent);
@@ -802,10 +762,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         if (myInfo.isSplit()) {
           splitter.setFirstComponent(oldComponent);
           splitter.setSecondComponent(myNewComponent);
-          float proportion = getPreferredSplitProportion(oldInfo.getId(),
-                                                         normalizeWeigh(oldInfo.getSideWeight() /
-                                                                        (oldInfo.getSideWeight() +
-                                                                         myInfo.getSideWeight())));
+          float proportion = getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(oldInfo.getSideWeight() / (oldInfo.getSideWeight() + myInfo.getSideWeight())));
           splitter.setProportion(proportion);
           if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
             newWeight = normalizeWeigh(oldInfo.getWeight() + myInfo.getWeight());
@@ -825,7 +782,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             newWeight = normalizeWeigh(myInfo.getWeight());
           }
         }
-      } else {
+      }
+      else {
         newWeight = normalizeWeigh(myInfo.getWeight());
       }
       setComponent(splitter, anchor, newWeight);
@@ -903,90 +861,42 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private final class AddToolStripeButtonCmd implements Runnable {
-    private final StripeButton myButton;
-    private final WindowInfoImpl myInfo;
-    private final Comparator<? super StripeButton> myComparator;
-
-    AddToolStripeButtonCmd(StripeButton button,
-                           @NotNull WindowInfoImpl info,
-                           @NotNull Comparator<? super StripeButton> comparator) {
-      myButton = button;
-      myInfo = info;
-      myComparator = comparator;
+  void addStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor, @NotNull Comparator<? super StripeButton> comparator) {
+    if (ToolWindowAnchor.TOP == anchor) {
+      myTopStripe.addButton(button, comparator);
     }
-
-    @Override
-    public final void run() {
-      ToolWindowAnchor anchor = myInfo.getAnchor();
-      if (ToolWindowAnchor.TOP == anchor) {
-        myTopStripe.addButton(myButton, myComparator);
-      }
-      else if (ToolWindowAnchor.LEFT == anchor) {
-        myLeftStripe.addButton(myButton, myComparator);
-      }
-      else if (ToolWindowAnchor.BOTTOM == anchor) {
-        myBottomStripe.addButton(myButton, myComparator);
-      }
-      else if (ToolWindowAnchor.RIGHT == anchor) {
-        myRightStripe.addButton(myButton, myComparator);
-      }
-      else {
-        LOG.error("unknown anchor: " + anchor);
-      }
-      validate();
-      repaint();
+    else if (ToolWindowAnchor.LEFT == anchor) {
+      myLeftStripe.addButton(button, comparator);
+    }
+    else if (ToolWindowAnchor.BOTTOM == anchor) {
+      myBottomStripe.addButton(button, comparator);
+    }
+    else if (ToolWindowAnchor.RIGHT == anchor) {
+      myRightStripe.addButton(button, comparator);
+    }
+    else {
+      LOG.error("unknown anchor: " + anchor);
     }
   }
 
-  private final class RemoveToolStripeButtonCmd implements Runnable {
-    private final StripeButton myButton;
-    private final ToolWindowAnchor myAnchor;
-
-    RemoveToolStripeButtonCmd(@NotNull StripeButton button, @NotNull WindowInfoImpl info) {
-      myButton = button;
-      myAnchor = info.getAnchor();
+  void removeStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor) {
+    if (ToolWindowAnchor.TOP == anchor) {
+      myTopStripe.removeButton(button);
     }
-
-    @Override
-    public final void run() {
-      if (ToolWindowAnchor.TOP == myAnchor) {
-        myTopStripe.removeButton(myButton);
-      }
-      else if (ToolWindowAnchor.LEFT == myAnchor) {
-        myLeftStripe.removeButton(myButton);
-      }
-      else if (ToolWindowAnchor.BOTTOM == myAnchor) {
-        myBottomStripe.removeButton(myButton);
-      }
-      else if (ToolWindowAnchor.RIGHT == myAnchor) {
-        myRightStripe.removeButton(myButton);
-      }
-      else {
-        LOG.error("unknown anchor: " + myAnchor);
-      }
-      validate();
-      repaint();
+    else if (ToolWindowAnchor.LEFT == anchor) {
+      myLeftStripe.removeButton(button);
     }
-  }
-
-  private final class RemoveDockedComponentCmd implements Runnable {
-    private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
-
-    RemoveDockedComponentCmd(@NotNull WindowInfoImpl info, boolean dirtyMode) {
-      myInfo = info;
-      myDirtyMode = dirtyMode;
+    else if (ToolWindowAnchor.BOTTOM == anchor) {
+      myBottomStripe.removeButton(button);
     }
-
-    @Override
-    public final void run() {
-      setComponent(null, myInfo.getAnchor(), 0);
-      if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
-      }
+    else if (ToolWindowAnchor.RIGHT == anchor) {
+      myRightStripe.removeButton(button);
     }
+    else {
+      LOG.error("unknown anchor: " + anchor);
+    }
+    validate();
+    repaint();
   }
 
   private final class RemoveSplitAndDockedComponentCmd implements Runnable {
@@ -1004,12 +914,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       JComponent c = getComponentAt(anchor);
       if (c instanceof Splitter) {
         Splitter splitter = (Splitter)c;
-        InternalDecorator component =
-          myInfo.isSplit() ? (InternalDecorator)splitter.getFirstComponent() : (InternalDecorator)splitter.getSecondComponent();
+        InternalDecorator component = (InternalDecorator)(myInfo.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
         if (myInfo.isSplit() && component != null) {
-          myIdToSplitProportion.put(component.getWindowInfo().getId(), splitter.getProportion());
+          myIdToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
         }
-        setComponent(component, anchor, component != null ? component.getWindowInfo().getWeight() : 0);
+        setComponent(component, anchor, component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
       }
       else {
         setComponent(null, anchor, 0);
@@ -1027,14 +936,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
 
-    RemoveSlidingComponentCmd(Component component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
+    RemoveSlidingComponentCmd(@NotNull Component component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
       myComponent = component;
       myInfo = info;
       myDirtyMode = dirtyMode;
     }
+
     @Override
     public final void run() {
-      final UISettings uiSettings = UISettings.getInstance();
+      UISettings uiSettings = UISettings.getInstance();
       if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
         final Rectangle bounds = myComponent.getBounds();
         // Prepare top image. This image is scrolling over bottom image. It contains
@@ -1064,9 +974,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         surface.runMovement();
         myLayeredPane.remove(surface);
       }
-      else { // not animated
+      else {
+        // not animated
         myLayeredPane.remove(myComponent);
       }
+
       if (!myDirtyMode) {
         myLayeredPane.validate();
         myLayeredPane.repaint();
@@ -1160,7 +1072,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           continue;
         }
 
-        WindowInfoImpl info = (((InternalDecorator)component)).getWindowInfo();
+        WindowInfo info = (((InternalDecorator)component)).getWindowInfo();
         float weight = info.getAnchor().isHorizontal()
                        ? (float)component.getHeight() / getHeight()
                        : (float)component.getWidth() / getWidth();

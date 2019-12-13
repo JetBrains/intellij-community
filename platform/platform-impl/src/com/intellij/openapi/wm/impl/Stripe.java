@@ -3,16 +3,10 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManagerListener;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
@@ -35,34 +29,29 @@ import java.util.List;
 final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
   private final ArrayList<StripeButton> myButtons = new ArrayList<>();
-  private final MyKeymapManagerListener myWeakKeymapManagerListener;
 
   private Dimension myPrefSize;
   private StripeButton myDragButton;
   private Rectangle myDropRectangle;
-  private final ToolWindowManagerImpl myManager;
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
   static final int DROP_DISTANCE_SENSIVITY = 20;
-  private final Disposable myDisposable = Disposer.newDisposable();
-  private BufferedImage myCachedBg;
 
-  Stripe(final int anchor, ToolWindowManagerImpl manager) {
+  Stripe(int anchor) {
     super(new GridBagLayout());
+
     setOpaque(true);
-    myManager = manager;
     myAnchor = anchor;
-    myWeakKeymapManagerListener = new MyKeymapManagerListener();
     setBorder(new AdaptiveBorder());
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updatePresentation();
   }
 
-  private static class AdaptiveBorder implements Border {
+  private static final class AdaptiveBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
@@ -135,25 +124,12 @@ final class Stripe extends JPanel implements UISettingsListener {
   public void addNotify() {
     super.addNotify();
     updatePresentation();
-    KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
   }
 
-  /**
-   * Invoked when enclosed frame is being disposed.
-   */
-  @Override
-  public void removeNotify() {
-    KeymapManagerEx.getInstanceEx().removeWeakListener(myWeakKeymapManagerListener);
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      Disposer.dispose(myDisposable);
-    }
-    super.removeNotify();
-  }
-
-  void addButton(@NotNull StripeButton button, final Comparator<? super StripeButton> comparator) {
+  void addButton(@NotNull StripeButton button, @NotNull Comparator<? super StripeButton> comparator) {
     myPrefSize = null;
     myButtons.add(button);
-    Collections.sort(myButtons, comparator);
+    myButtons.sort(comparator);
     add(button);
     revalidate();
   }
@@ -212,7 +188,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
     if (toFitWith == null) {
       for (StripeButton eachButton : myButtons) {
-        if (!isConsideredInLayout(eachButton)) continue;
+        if (!eachButton.isVisible()) continue;
         final Dimension eachSize = eachButton.getPreferredSize();
         data.fitSize.width = Math.max(eachSize.width, data.fitSize.width);
         data.fitSize.height = Math.max(eachSize.height, data.fitSize.height);
@@ -240,16 +216,16 @@ final class Stripe extends JPanel implements UISettingsListener {
       gap = Math.max(gap, 0);
     }
 
-    int insertOrder = -1;
+    int insertOrder;
     boolean sidesStarted = false;
 
-    for (StripeButton eachButton : getButtonsToLayOut()) {
-      insertOrder = eachButton.getDecorator().getWindowInfo().getOrder();
-      final Dimension eachSize = eachButton.getPreferredSize();
+    for (StripeButton button : getButtonsToLayOut()) {
+      insertOrder = button.getWindowInfo().getOrder();
+      final Dimension eachSize = button.getPreferredSize();
 
-      if (!sidesStarted && eachButton.getWindowInfo().isSplit()) {
+      if (!sidesStarted && button.getWindowInfo().isSplit()) {
         if (processDrop) {
-          tryDroppingOnGap(data, gap, eachButton.getWindowInfo().getOrder());
+          tryDroppingOnGap(data, gap, button.getWindowInfo().getOrder());
         }
         if (data.horizontal) {
           data.eachX += gap;
@@ -283,7 +259,7 @@ final class Stripe extends JPanel implements UISettingsListener {
         }
       }
 
-      layoutButton(data, eachButton, setBounds);
+      layoutButton(data, button, setBounds);
     }
 
     if (!sidesStarted && processDrop) {
@@ -330,13 +306,12 @@ final class Stripe extends JPanel implements UISettingsListener {
       if (nonSideDistance > sideDistance) {
         data.dragInsertPosition = insertOrder;
         data.dragToSide = true;
-        data.dragTargetChoosen = true;
       }
       else {
         data.dragInsertPosition = -1;
         data.dragToSide = false;
-        data.dragTargetChoosen = true;
       }
+      data.dragTargetChoosen = true;
 
       layoutButton(data, myDragButtonImage, false);
     }
@@ -349,7 +324,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     List<StripeButton> sideTools = new ArrayList<>();
 
     for (StripeButton b : myButtons) {
-      if (!isConsideredInLayout(b)) continue;
+      if (!b.isVisible()) continue;
 
       if (b.getWindowInfo().isSplit()) {
         sideTools.add(b);
@@ -404,8 +379,10 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Nullable
   public StripeButton getButtonFor(@NotNull String toolWindowId) {
-    for (StripeButton each : myButtons) {
-      if (each.getWindowInfo().getId().equals(toolWindowId)) return each;
+    for (StripeButton button : myButtons) {
+      if (button.getId().equals(toolWindowId)) {
+        return button;
+      }
     }
     return null;
   }
@@ -466,17 +443,17 @@ final class Stripe extends JPanel implements UISettingsListener {
     );
   }
 
-  public void finishDrop() {
+  public void finishDrop(@NotNull ToolWindowManagerImpl manager) {
     if (myLastLayoutData == null || !isDroppingButton()) {
       return;
     }
 
-    String id = myDragButton.getDecorator().getToolWindow().getId();
+    String id = myDragButton.toolWindow.getId();
     myFinishingDrop = true;
-    myManager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
+    manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
                                     myLastLayoutData.dragToSide);
 
-    myManager.invokeLater(() -> resetDrop());
+    manager.invokeLater(() -> resetDrop());
   }
 
   public void resetDrop() {
@@ -510,17 +487,6 @@ final class Stripe extends JPanel implements UISettingsListener {
     return myDragButton != null;
   }
 
-  private boolean isConsideredInLayout(final StripeButton each) {
-    return each.isVisible();
-  }
-
-  private final class MyKeymapManagerListener implements KeymapManagerListener {
-    @Override
-    public void activeKeymapChanged(final Keymap keymap) {
-      updatePresentation();
-    }
-  }
-
   @Override
   public String toString() {
     String anchor = null;
@@ -541,40 +507,15 @@ final class Stripe extends JPanel implements UISettingsListener {
     return getClass().getName() + " " + anchor;
   }
 
-  private BufferedImage getCachedImage() {
-    if (myCachedBg == null) {
-      ToolWindowAnchor anchor = getAnchor();
-      Rectangle bounds = getBounds();
-      BufferedImage bg;
-      if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-        bg = (BufferedImage)createImage(bounds.width, 50);
-        Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), bounds.width, 0, new Color(0, 0, 0, 0)));
-        graphics.fillRect(0, 0, bounds.width, 50);
-        graphics.dispose();
-      }
-      else {
-        bg = (BufferedImage)createImage(50, bounds.height);
-        Graphics2D graphics = bg.createGraphics();
-        graphics.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 0), 0, bounds.height, new Color(0, 0, 0, 10)));
-        graphics.fillRect(0, 0, 50, bounds.height);
-        graphics.dispose();
-      }
-
-      myCachedBg = bg;
-    }
-
-    return myCachedBg;
-  }
-
   @Override
   protected Graphics getComponentGraphics(Graphics g) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
   }
 
   @Override
-  protected void paintComponent(final Graphics g) {
+  protected void paintComponent(@NotNull Graphics g) {
     super.paintComponent(g);
+
     if (!myFinishingDrop && isDroppingButton() && myDragButton.getParent() != this) {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());

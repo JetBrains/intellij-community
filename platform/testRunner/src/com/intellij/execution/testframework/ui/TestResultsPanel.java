@@ -49,9 +49,8 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     mySplitterDefaultProportion = splitterDefaultProportion;
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
-        final boolean splitVertically = splitVertically();
-        mySplitter.setOrientation(splitVertically);
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        mySplitter.setOrientation(splitVertically());
         revalidate();
         repaint();
       }

@@ -6,15 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface ToolWindowEx extends ToolWindow {
-  @NonNls String PROP_AVAILABLE = "available";
-  @NonNls String PROP_ICON = "icon";
-  @NonNls String PROP_TITLE = "title";
-  @NonNls String PROP_STRIPE_TITLE = "stripe-title";
-
   /**
    * @return type of internal decoration of tool window.
    * @throws IllegalStateException

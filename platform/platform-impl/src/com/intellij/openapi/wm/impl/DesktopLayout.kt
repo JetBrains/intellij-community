@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.xmlb.XmlSerializer
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -180,20 +181,17 @@ class DesktopLayout {
   }
 
   internal inner class MyStripeButtonComparator(anchor: ToolWindowAnchor, manager: ToolWindowManagerImpl) : Comparator<StripeButton> {
-    private val idToInfo: MutableMap<String?, WindowInfoImpl> = THashMap()
+    private val idToRegisteredInfo = ObjectIntHashMap<String>(idToInfo.size)
 
     override fun compare(obj1: StripeButton, obj2: StripeButton): Int {
-      val info1 = idToInfo.get(obj1.windowInfo.id)
-      val order1 = info1?.order ?: 0
-      val info2 = idToInfo.get(obj2.windowInfo.id)
-      val order2 = info2?.order ?: 0
-      return order1 - order2
+      return idToRegisteredInfo.get(obj1.id) - idToRegisteredInfo.get(obj2.id)
     }
 
     init {
       for (info in idToInfo.values) {
-        if (anchor == info.anchor && manager.isToolWindowRegistered(info.id ?: continue)) {
-          idToInfo.put(info.id, info.copy())
+        val id = info.id ?: continue
+        if (anchor == info.anchor && manager.isToolWindowRegistered(id)) {
+          idToRegisteredInfo.put(id, info.order)
         }
       }
     }
