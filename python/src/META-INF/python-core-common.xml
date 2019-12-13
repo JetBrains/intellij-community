@@ -406,7 +406,7 @@
     <localInspection language="Python" shortName="PyFinalInspection" suppressId="PyFinal" displayName="Final classes, methods and variables" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyFinalInspection"/>
     <localInspection language="Python" shortName="PyTypedDictInspection" suppressId="PyTypedDict" displayName="TypedDict definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypedDictInspection"/>
 
-    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
+    <defaultLiveTemplates file="liveTemplates/Python.xml"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
