@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -30,10 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.StackFrame;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -79,9 +77,7 @@ public class DfaAssist implements DebuggerContextListener {
           cleanUp();
           return;
         }
-        StackFrame frame = proxy.getStackFrame();
-        DebuggerDfaRunner runner = ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
-          .withDocumentsCommitted(myProject).executeSynchronously();
+        DebuggerDfaRunner runner = createRunner(proxy);
         if (runner == null) {
           cleanUp();
           return;
@@ -90,6 +86,18 @@ public class DfaAssist implements DebuggerContextListener {
           .coalesceBy(DfaAssist.this)
           .finishOnUiThread(ModalityState.NON_MODAL, hints -> DfaAssist.this.displayInlays(hints, newContext))
           .submit(AppExecutorUtil.getAppExecutorService());
+      }
+
+      @Nullable
+      private DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) throws EvaluateException {
+        try {
+          StackFrame frame = proxy.getStackFrame();
+          return ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
+              .withDocumentsCommitted(myProject).executeSynchronously();
+        }
+        catch (VMDisconnectedException | VMOutOfMemoryException ignore) {
+        }
+        return null;
       }
     });
   }
