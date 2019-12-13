@@ -18,6 +18,7 @@ package com.intellij.facet.ui;
 
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import javax.swing.*;
  *
  * @author nik
  */
+@ApiStatus.NonExtendable
 public interface MultipleFacetEditorHelper {
 
   /**

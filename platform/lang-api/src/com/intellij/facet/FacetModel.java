@@ -2,6 +2,7 @@
 
 package com.intellij.facet;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
+@ApiStatus.NonExtendable
 public interface FacetModel {
   /**
    * Returns all facets in the module sorted in such a way that a facet will occur before any of its subfacets
