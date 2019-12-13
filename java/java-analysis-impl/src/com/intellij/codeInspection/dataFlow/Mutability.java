@@ -118,7 +118,7 @@ public enum Mutability {
   }
 
   @NotNull
-  public static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
+  private static Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
       PsiParameterList list = (PsiParameterList)owner.getParent();
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
