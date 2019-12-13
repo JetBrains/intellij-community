@@ -1018,13 +1018,13 @@ public class PlatformTestUtil {
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
-      return null;
+      fail("No factory found for: " + runConfiguration);
     }
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
       RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
     ProgramRunner runner = ProgramRunner.getRunner(executorId, runConfiguration);
     if (runner == null) {
-      return null;
+      fail("No runner found for: " + executorId + " and " + runConfiguration);
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
     ExecutionEnvironment executionEnvironment =
@@ -1034,6 +1034,7 @@ public class PlatformTestUtil {
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
+        LOG.debug("Process started");
         refRunContentDescriptor.set(descriptor);
         latch.countDown();
       }
@@ -1041,16 +1042,18 @@ public class PlatformTestUtil {
     latch.await(60, TimeUnit.SECONDS);
     ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
     if (processHandler == null) {
-      return null;
+      fail("No process handler found");
     }
 
     CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
     processHandler.addProcessListener(capturingProcessAdapter);
     processHandler.waitFor(60000);
 
-    if (capturingProcessAdapter.getOutput().getStderr().length() > 0) {
-      LOG.warn(capturingProcessAdapter.getOutput().getStderr());
-    }
+    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    ProcessOutput processOutput = capturingProcessAdapter.getOutput();
+    LOG.debug("Exit code: " + processOutput.getExitCode());
+    LOG.debug("Stdout: " + processOutput.getStdout());
+    LOG.debug("Stderr: " + processOutput.getStderr());
 
     return executionEnvironment;
   }
