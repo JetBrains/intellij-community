@@ -1,10 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -15,10 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -26,57 +18,39 @@ import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import com.jetbrains.python.sdk.PythonSdkUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public final class PythonImportUtils {
-  private PythonImportUtils() {
+public class PyImportCollector {
 
+  private final PyElement myNode;
+  private final PsiReference myReference;
+  private final String myRefText;
+  private final String myAlias;
+  private final AutoImportQuickFix fix;
+  private final Set<String> seenCandidateNames;
+
+  public PyImportCollector(PyElement node, PsiReference reference, String refText, String alias) {
+    myNode = node;
+    myReference = reference;
+    myRefText = refText;
+    myAlias = alias;
+
+
+    boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
+    seenCandidateNames = new HashSet<>();
   }
 
-  @Nullable
-  public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
-    final String text = reference.getElement().getText();
-    final String refText = reference.getRangeInElement().substring(text); // text of the part we're working with
-
-    // don't propose meaningless auto imports if no interpreter is configured
-    final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-    if (module != null && PythonSdkUtil.findPythonSdk(module) == null) {
-      return null;
-    }
-
-    // don't show auto-import fix if we're trying to reference a variable which is defined below in the same scope
-    ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
-    if (scopeOwner != null && ControlFlowCache.getScope(scopeOwner).containsDeclaration(refText)) {
-      return null;
-    }
-
-    AutoImportQuickFix fix = addCandidates(node, reference, refText, null);
-    if (fix != null) return fix;
-    final String packageName = PyPackageAliasesProvider.commonImportAliases.get(refText);
-    if (packageName != null) {
-      fix = addCandidates(node, reference, packageName, refText);
-      if (fix != null) return fix;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static AutoImportQuickFix addCandidates(PyElement node, PsiReference reference, String refText, @Nullable String asName) {
-    final boolean qualify = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference.getClass(), refText, qualify);
-    Set<String> seenCandidateNames = new HashSet<>(); // true import names
-
-    PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenCandidateNames);
+  public AutoImportQuickFix addCandidates() {
+    PsiFile existingImportFile = addCandidatesFromExistingImports();
     ProgressManager.checkCanceled(); // before expensive index searches
-    addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
+    addSymbolImportCandidates(existingImportFile);
 
-    for(PyImportCandidateProvider provider: PyImportCandidateProvider.EP_NAME.getExtensionList()) {
-      provider.addImportCandidates(reference, refText, fix);
+    for (PyImportCandidateProvider provider : PyImportCandidateProvider.EP_NAME.getExtensionList()) {
+      provider.addImportCandidates(myReference, myRefText, fix);
     }
     if (!fix.getCandidates().isEmpty()) {
       fix.sortCandidates();
@@ -85,45 +59,34 @@ public final class PythonImportUtils {
     return null;
   }
 
-  /**
-   * maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
-   * collect all such statements and analyze.
-   * NOTE: It only makes sense to look at imports in file scope - there is no guarantee that an import in a local scope will
-   * be visible from the scope where the auto-import was invoked
-   */
-  @Nullable
-  private static PsiFile addCandidatesFromExistingImports(PyElement node, String refText, AutoImportQuickFix fix,
-                                                          Set<String> seenCandidateNames) {
+  private PsiFile addCandidatesFromExistingImports() {
     PsiFile existingImportFile = null; // if there's a matching existing import, this is the file it imports
-    PsiFile file = node.getContainingFile();
+    PsiFile file = myNode.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;
       for (PyImportElement importElement : pyFile.getImportTargets()) {
-        existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, importElement, importElement.resolve());
+        existingImportFile = addImportViaElement(existingImportFile, importElement, importElement.resolve());
       }
-      final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(node.getContainingFile(), PyCodeStyleSettings.class);
-      if (!pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
-        for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
-          if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
-            PsiElement source = fromImportStatement.resolveImportSource();
-            existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
-          }
-        }
+      existingImportFile = addCandidatesViaFromImports(existingImportFile, pyFile);
+    }
+    return existingImportFile;
+  }
+
+  PsiFile addCandidatesViaFromImports(PsiFile existingImportFile, PyFile pyFile) {
+    for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+      if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
+        PsiElement source = fromImportStatement.resolveImportSource();
+        existingImportFile = addImportViaElement(existingImportFile, fromImportStatement.getImportElements()[0], source);
       }
     }
     return existingImportFile;
   }
 
-  private static PsiFile addImportViaElement(String refText,
-                                             AutoImportQuickFix fix,
-                                             Set<String> seenCandidateNames,
-                                             PsiFile existingImportFile,
-                                             PyImportElement importElement,
-                                             PsiElement source) {
+  private PsiFile addImportViaElement(PsiFile existingImportFile, PyImportElement importElement, PsiElement source) {
     PyFile sourceFile = as(PyUtil.turnDirIntoInit(source), PyFile.class);
     if (sourceFile instanceof PyFileImpl) {
 
-      PsiElement res = sourceFile.findExportedName(refText);
+      PsiElement res = sourceFile.findExportedName(myRefText);
       final String name = res instanceof PyQualifiedNameOwner ? ((PyQualifiedNameOwner)res).getQualifiedName() : null;
       if (name != null && seenCandidateNames.contains(name)) {
         return existingImportFile;
@@ -141,40 +104,44 @@ public final class PythonImportUtils {
     return existingImportFile;
   }
 
-  private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
-                                                Set<String> seenCandidateNames, PsiFile existingImportFile) {
-    Project project = node.getProject();
-    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(refText, project, true));
-    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(node);
-    if (!isQualifier(node)) {
-      symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
+  private void addSymbolImportCandidates(PsiFile existingImportFile) {
+    Project project = myNode.getProject();
+    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(myRefText, project, true));
+    GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestsScope(myNode);
+    if (!isQualifier(myNode)) {
+      symbols.addAll(PyFunctionNameIndex.find(myRefText, project, scope));
     }
-    symbols.addAll(PyVariableNameIndex.find(refText, project, scope));
-    if (isPossibleModuleReference(node)) {
-      symbols.addAll(findImportableModules(node.getContainingFile(), refText, project, scope));
+    symbols.addAll(PyVariableNameIndex.find(myRefText, project, scope));
+    if (isPossibleModuleReference(myNode)) {
+      symbols.addAll(findImportableModules(myNode.getContainingFile(), myRefText, project, scope));
     }
     if (!symbols.isEmpty()) {
       for (PsiElement symbol : symbols) {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
-          PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
-          if (srcfile != null && isAcceptableForImport(node, existingImportFile, srcfile)) {
-            QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, node);
+          PsiFileSystemItem srcfile =
+            symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
+          if (srcfile != null && isAcceptableForImport(myNode, existingImportFile, srcfile)) {
+            QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, myNode);
             if (importPath == null) {
               continue;
             }
             if (symbol instanceof PsiFileSystemItem) {
               importPath = importPath.removeTail(1);
             }
-            final String symbolImportQName = importPath.append(refText).toString();
+            final String symbolImportQName = importPath.append(myRefText).toString();
             if (!seenCandidateNames.contains(symbolImportQName)) {
               // a new, valid hit
-              fix.addImport(symbol, srcfile, importPath, asName);
+              fix.addImport(symbol, srcfile, importPath, myAlias);
               seenCandidateNames.add(symbolImportQName);
             }
           }
         }
       }
     }
+  }
+
+  PyElement getNode() {
+    return myNode;
   }
 
   private static boolean isAcceptableForImport(PyElement node, PsiFile existingImportFile, PsiFileSystemItem srcfile) {
@@ -252,14 +219,5 @@ public final class PythonImportUtils {
     }
     // only top-level target expressions are included in VariableNameIndex
     return symbol instanceof PyTargetExpression;
-  }
-
-  public static boolean isImportable(PsiElement ref_element) {
-    PyStatement parentStatement = PsiTreeUtil.getParentOfType(ref_element, PyStatement.class);
-    if (parentStatement instanceof PyGlobalStatement || parentStatement instanceof PyNonlocalStatement ||
-      parentStatement instanceof PyImportStatementBase) {
-      return false;
-    }
-    return PsiTreeUtil.getParentOfType(ref_element, PyStringLiteralExpression.class, false, PyStatement.class) == null;
   }
 }

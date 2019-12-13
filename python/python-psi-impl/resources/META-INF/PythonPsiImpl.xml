@@ -192,4 +192,8 @@
 
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

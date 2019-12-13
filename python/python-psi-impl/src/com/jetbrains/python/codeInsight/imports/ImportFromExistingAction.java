@@ -2,32 +2,22 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -68,6 +58,7 @@ public class ImportFromExistingAction implements QuestionAction {
 
   /**
    * Alters either target (by qualifying a name) or source (by explicitly importing the name).
+   *
    * @return true if action succeeded
    */
   @Override
@@ -75,7 +66,9 @@ public class ImportFromExistingAction implements QuestionAction {
     // check if the tree is sane
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
     PyPsiUtils.assertValid(myTarget);
-    if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) return false; // we cannot be qualified
+    if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) {
+      return false; // we cannot be qualified
+    }
     for (ImportCandidateHolder item : mySources) {
       PyPsiUtils.assertValid(item.getImportable());
       PyPsiUtils.assertValid(item.getFile());
@@ -92,24 +85,15 @@ public class ImportFromExistingAction implements QuestionAction {
       doWriteAction(mySources.get(0));
     }
     else {
-      selectSourceAndDo();
+      selectSourceAndDo(); //todo -> herein lies the problem....and the thing is, we need something like it !
     }
     return true;
   }
 
   private void selectSourceAndDo() {
-    // GUI part
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(mySources)
-      .setRenderer(new CellRenderer(myName))
-      .setTitle(myUseQualifiedImport ? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
-      .setItemChosenCallback((item) -> {
-        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-        doWriteAction(item);
-      })
-      .setNamerForFiltering(o -> o.getPresentableText(myName))
-      .createPopup()
-      .showInBestPositionFor(dataContext));
+    ImportChooser.getInstance()
+      .selectImport(mySources, myName, myUseQualifiedImport, myTarget)
+      .onSuccess(this::doIt);
   }
 
   private void doIt(final ImportCandidateHolder item) {
@@ -140,7 +124,8 @@ public class ImportFromExistingAction implements QuestionAction {
     if (PyUtil.isRoot(item.getFile())) {
       if (myImportLocally) {
         AddImportHelper.addLocalImportStatement(myTarget, myName);
-      } else {
+      }
+      else {
         AddImportHelper.addImportStatement(file, myName, item.getAsName(), priority, null);
       }
     }
@@ -194,55 +179,12 @@ public class ImportFromExistingAction implements QuestionAction {
     if (src == null) {
       return;
     }
-    WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile()).withName(PyBundle.message("ACT.CMD.use.import"))
-                      .run(() -> doIt(item));
+    WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile())
+      .withName(PyPsiBundle.message("ACT.CMD.use.import"))
+      .run(() -> doIt(item));
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }
   }
 
-  // Stolen from FQNameCellRenderer
-  private static class CellRenderer extends SimpleColoredComponent implements ListCellRenderer {
-    private final Font FONT;
-    private final String myName;
-
-    CellRenderer(String name) {
-      myName = name;
-      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
-      setOpaque(true);
-    }
-
-    // value is a QualifiedHolder
-    @Override
-    public Component getListCellRendererComponent(
-      JList list,
-      Object value, // expected to be
-      int index,
-      boolean isSelected,
-      boolean cellHasFocus
-    ){
-
-      clear();
-
-      ImportCandidateHolder item = (ImportCandidateHolder)value;
-      PsiElement importable = ((ImportCandidateHolder)value).getImportable();
-      if (importable != null) {
-        setIcon(importable.getIcon(0));
-      }
-      String item_name = item.getPresentableText(myName);
-      append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-
-      setFont(FONT);
-      if (isSelected) {
-        setBackground(list.getSelectionBackground());
-        setForeground(list.getSelectionForeground());
-      }
-      else {
-        setBackground(list.getBackground());
-        setForeground(list.getForeground());
-      }
-      return this;
-    }
-  }
 }

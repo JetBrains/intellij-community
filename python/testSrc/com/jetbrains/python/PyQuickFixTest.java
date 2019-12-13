@@ -91,7 +91,7 @@ public class PyQuickFixTest extends PyTestCase {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
       doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class,
-                       PyBundle.message("ACT.qualify.with.module"), true, true);
+                       PyPsiBundle.message("ACT.qualify.with.module"), true, true);
     }
     finally {
       settings.PREFER_FROM_IMPORT = oldPreferFrom;

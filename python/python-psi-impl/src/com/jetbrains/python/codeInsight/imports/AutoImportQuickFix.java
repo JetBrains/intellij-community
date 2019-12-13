@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,12 +11,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * The object contains a list of import candidates and serves only to show the initial hint;
@@ -98,55 +90,26 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   @Override
   @NotNull
   public String getText() {
-    if (myUseQualifiedImport) return PyBundle.message("ACT.qualify.with.module");
+    if (myUseQualifiedImport) return PyPsiBundle.message("ACT.qualify.with.module");
     else if (myImports.size() == 1) {
-      return PyBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
+      return PyPsiBundle.message("QFIX.auto.import.import.name", myImports.get(0).getPresentableText(myInitialName));
     }
     else {
-      return PyBundle.message("QFIX.auto.import.import.this.name");
+      return PyPsiBundle.message("QFIX.auto.import.import.this.name");
     }
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("QFIX.auto.import.family");
+    return PyPsiBundle.message("QFIX.auto.import.family");
   }
 
-  public boolean showHint(Editor editor) {
-    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP ||
-        HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true) ||
-        myImports.isEmpty()) {
-      return false;
-    }
-    final PsiElement element = getStartElement();
-    PyPsiUtils.assertValid(element);
-    if (element == null || !element.isValid()) {
-      return false;
-    }
-    final PyElement pyElement = as(element, PyElement.class);
-    if (pyElement == null || !myInitialName.equals(pyElement.getName())) {
-      return false;
-    }
-    final PsiReference reference = findOriginalReference(element);
-    if (reference == null || isResolved(reference)) {
-      return false;
-    }
-    if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).isQualified()) {
-      return false; // we cannot be qualified
-    }
-
-    final String message = ShowAutoImportPass.getMessage(
-      myImports.size() > 1,
-      ImportCandidateHolder.getQualifiedName(myInitialName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
-    );
+  @NotNull
+  public ImportFromExistingAction createAction(PsiElement element) {
     final ImportFromExistingAction action = new ImportFromExistingAction(element, myImports, myInitialName, myUseQualifiedImport, false);
     action.onDone(() -> myExpended = true);
-    HintManager.getInstance().showQuestionHint(
-      editor, message,
-      element.getTextOffset(),
-      element.getTextRange().getEndOffset(), action);
-    return true;
+    return action;
   }
 
   @Override
@@ -221,13 +184,13 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       @NotNull
       @Override
       public String getFamilyName() {
-        return PyBundle.message("QFIX.local.auto.import.family");
+        return PyPsiBundle.message("QFIX.local.auto.import.family");
       }
 
       @NotNull
       @Override
       public String getText() {
-        return PyBundle.message("QFIX.local.auto.import.import.locally", super.getText());
+        return PyPsiBundle.message("QFIX.local.auto.import.import.locally", super.getText());
       }
 
       @NotNull
@@ -243,7 +206,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     return myInitialName;
   }
 
-  private static boolean isResolved(@NotNull PsiReference reference) {
+  static boolean isResolved(@NotNull PsiReference reference) {
     if (reference instanceof PsiPolyVariantReference) {
       return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
     }
@@ -251,7 +214,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   }
 
   @Nullable
-  private PsiReference findOriginalReference(@NotNull PsiElement element) {
+  PsiReference findOriginalReference(@NotNull PsiElement element) {
     return ContainerUtil.findInstance(element.getReferences(), myReferenceType);
   }
 }
