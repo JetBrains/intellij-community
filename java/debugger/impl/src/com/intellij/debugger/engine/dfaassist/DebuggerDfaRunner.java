@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import one.util.streamex.EntryStream;
@@ -144,16 +146,9 @@ class DebuggerDfaRunner extends DataFlowRunner {
       return null;
     }
     if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
-      ReferenceType type = frame.location().method().declaringType();
-      if (type instanceof ClassType) {
-        Field field = type.fieldByName("$assertionsDisabled");
-        if (field != null && field.isStatic() && field.isSynthetic()) {
-          Value value = type.getValue(field);
-          if (value instanceof BooleanValue) {
-            return value;
-          }
-        }
-      }
+      ThreeState status = DebuggerUtils.getEffectiveAssertionStatus(frame.location());
+      // Assume that assertions are enabled if we cannot fetch the status
+      return frame.virtualMachine().mirrorOf(status == ThreeState.NO);
     }
     PsiModifierListOwner psi = var.getPsiVariable();
     if (psi instanceof PsiClass) {
