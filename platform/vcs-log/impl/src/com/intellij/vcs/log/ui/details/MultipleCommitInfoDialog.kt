@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.Consumer
@@ -30,10 +31,11 @@ import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants
 import javax.swing.border.Border
 
 @ApiStatus.Experimental
-abstract class MultipleCommitInfoDialog(private val project: Project, private val commits: List<VcsCommitMetadata>)
+abstract class MultipleCommitInfoDialog(private val project: Project, commits: List<VcsCommitMetadata>)
   : DialogWrapper(project, true) {
   companion object {
     private const val DIALOG_WIDTH = 600
@@ -60,7 +62,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, private va
     commitsList.border = JBUI.Borders.emptyTop(10)
     val model = FilteringListModel(CollectionListModel(commits))
     commitsList.model = model
-    model.setFilter { true }
+    resetFilter()
     commitsList.cellRenderer = object : ColoredListCellRenderer<VcsCommitMetadata>() {
       override fun customizeCellRenderer(
         list: JList<out VcsCommitMetadata>,
@@ -76,7 +78,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, private va
       if (e.valueIsAdjusting) {
         return@addListSelectionListener
       }
-      val selectedCommits = commitsList.selectedIndices.map { row -> commits[row] }
+      val selectedCommits = commitsList.selectedIndices.map { model.getElementAt(it) }
       commitDetails.setCommits(selectedCommits)
       changesLoadingController.request(selectedCommits)
     }
@@ -112,11 +114,28 @@ abstract class MultipleCommitInfoDialog(private val project: Project, private va
   }
 
   fun setFilter(condition: (VcsCommitMetadata) -> Boolean) {
-    (commitsList.model as FilteringListModel<VcsCommitMetadata>).setFilter(condition)
+    val selectedCommits = commitsList.selectedValuesList.toSet()
+    val model = commitsList.model as FilteringListModel<VcsCommitMetadata>
+    model.setFilter(condition)
+
+
+    val selectedIndicesAfterFilter = mutableListOf<Int>()
+    for (index in 0 until model.size) {
+      val commit = model.getElementAt(index)
+      if (commit in selectedCommits) {
+        selectedIndicesAfterFilter.add(index)
+      }
+    }
+    if (selectedIndicesAfterFilter.isEmpty()) {
+      commitsList.selectedIndex = 0
+    }
+    else {
+      commitsList.selectedIndices = selectedIndicesAfterFilter.toIntArray()
+    }
   }
 
   fun resetFilter() {
-    (commitsList.model as FilteringListModel<VcsCommitMetadata>).setFilter { true }
+    setFilter { true }
   }
 
   private fun installSpeedSearch() {
@@ -131,7 +150,13 @@ abstract class MultipleCommitInfoDialog(private val project: Project, private va
     preferredSize = JBDimension(DIALOG_WIDTH, DIALOG_HEIGHT)
     val commitInfoSplitter = OnePixelSplitter(CHANGES_SPLITTER, 0.5f)
     commitInfoSplitter.setHonorComponentsMinimumSize(false)
-    commitInfoSplitter.firstComponent = commitsList
+    val commitsListScrollPane = JBScrollPane(
+      commitsList,
+      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    )
+    commitsListScrollPane.border = JBUI.Borders.empty()
+    commitInfoSplitter.firstComponent = commitsListScrollPane
     val detailsSplitter = OnePixelSplitter(true, DETAILS_SPLITTER, 0.67f)
     detailsSplitter.firstComponent = changesBrowserWithLoadingPanel
     detailsSplitter.secondComponent = commitDetails

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
@@ -33,6 +34,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
   private var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
 
   private var lastReport: ByteBuffer? = null
+  private var lastMetrics: ObjectIntHashMap<String>? = null
 
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
@@ -52,6 +54,8 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
       })
     }
   }
+
+  override fun getMetrics() = lastMetrics
 
   override fun getPluginCostMap() = pluginCostMap!!
 
@@ -134,6 +138,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport
+    lastMetrics = w.publicStatMetrics
 
     if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
       w.writeToLog(LOG)

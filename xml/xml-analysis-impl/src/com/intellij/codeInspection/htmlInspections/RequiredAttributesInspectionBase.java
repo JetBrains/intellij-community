@@ -130,7 +130,8 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
             localizedMessage,
             insertRequiredAttributeIntention,
             holder,
-            getIntentionAction(attrName)
+            getIntentionAction(attrName),
+            isOnTheFly
           );
         }
       }
@@ -151,7 +152,8 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
                                    @NotNull String localizedMessage,
                                    final LocalQuickFix basicIntention,
                                    ProblemsHolder holder,
-                                   final LocalQuickFix addAttributeFix) {
+                                   final LocalQuickFix addAttributeFix,
+                                   boolean isOnTheFly) {
     boolean htmlTag = false;
 
     if (tag instanceof HtmlTag) {
@@ -169,16 +171,19 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
       fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
       highlightType = ProblemHighlightType.ERROR;
     }
-    addElementsForTag(tag, localizedMessage, highlightType, holder, fixes);
+    addElementsForTag(tag, localizedMessage, highlightType, holder, isOnTheFly, fixes);
   }
 
   private static void addElementsForTag(XmlTag tag,
                                         String message,
                                         ProblemHighlightType error,
                                         ProblemsHolder holder,
+                                        boolean isOnTheFly,
                                         LocalQuickFix... fixes) {
     registerProblem(message, error, holder, XmlTagUtil.getStartTagNameElement(tag), fixes);
-    registerProblem(message, error, holder, XmlTagUtil.getEndTagNameElement(tag), fixes);
+    if (isOnTheFly) {
+      registerProblem(message, error, holder, XmlTagUtil.getEndTagNameElement(tag), fixes);
+    }
   }
 
   private static void registerProblem(String message,

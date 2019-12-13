@@ -155,6 +155,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
       setIcon(myPresentation.getIcon());
       setText(myPresentation.getText());
+      setEnabled(myPresentation.isEnabled());
 
       myTooltipText = myPresentation.getDescription();
       updateTooltipText();
@@ -192,6 +193,16 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getModifiers() | e.getModifiersEx(),
                                                e.getX(),
                                                e.getY()));
+        }
+      });
+
+      myPresentation.addPropertyChangeListener(e -> {
+        if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
+          setText((String)e.getNewValue());
+        } else if (Presentation.PROP_ICON.equals(e.getPropertyName())) {
+          setIcon((Icon)e.getNewValue());
+        } else if (Presentation.PROP_ENABLED.equals(e.getPropertyName())) {
+          setEnabled((Boolean)e.getNewValue());
         }
       });
     }
@@ -392,7 +403,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
      * Other updates happen in Swing.
      */
     @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021")
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
     protected void updateButtonSize() {}
 
     @ApiStatus.Experimental

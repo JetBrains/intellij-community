@@ -38,7 +38,7 @@ public class SplitEditorToolbar extends JPanel implements Disposable {
   }
 
   /**
-   * @deprecated this method is not used anymore since gutter size is not tracked anymore
+   * @deprecated this method is not used since gutter size is not tracked anymore
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
@@ -49,7 +49,7 @@ public class SplitEditorToolbar extends JPanel implements Disposable {
   }
 
   /**
-   * @deprecated this method is not used anymore since gutter size is not tracked anymore
+   * @deprecated this method is not used since gutter size is not tracked anymore
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")

@@ -72,5 +72,9 @@
     <group id="RemoteServersViewToolbar.Top">
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+    <group id="RemoteServers.AddCloudConnectionGroup" popup="true" text="Cloud Connection"
+            class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.AddCloudConnectionActionGroup">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </group>
   </actions>
 </idea-plugin>

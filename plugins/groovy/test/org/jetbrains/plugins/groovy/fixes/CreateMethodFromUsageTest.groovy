@@ -25,12 +25,12 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
   @Override
   void setUp() {
     super.setUp()
-    fixture.configureByFiles(USAGE, BEFORE)
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 
-  private void doTest(String action = CREATE_METHOD, int actionCount = 1) {
+  private void doTest(String action = CREATE_METHOD, int actionCount = 1, String[] files = [USAGE, BEFORE]) {
     fixture.with {
+      configureByFiles(files)
       def fixes = filterAvailableIntentions(action)
       assert fixes.size() == actionCount
       if (actionCount == 0) return
@@ -52,8 +52,16 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testSimple4() {
+  void testSimple4() {
     doTest()
+  }
+
+  void testApplicationStatement() {
+    doTest(CREATE_METHOD, 1, BEFORE)
+  }
+
+  void testInapplicableApplicationStatement() {
+    doTest(CREATE_METHOD, 1, BEFORE)
   }
 
   void testAbstract() {
@@ -76,7 +84,7 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void _testAssertDescription() {
+  void testAssertDescription() {
     doTest()
   }
 
@@ -128,7 +136,7 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest(CREATE_METHOD, 1)
   }
 
-  void _testIntegerCast() {
+  void testIntegerCast() {
     doTest()
   }
 
@@ -158,6 +166,14 @@ class CreateMethodFromUsageTest extends GrHighlightingTestBase {
 
   void testConstructorEnum() {
     doTest(CREATE_CONSTRUCTOR, 0)
+  }
+
+  void testConstructorInvocation() {
+    doTest(CREATE_CONSTRUCTOR, 1, BEFORE)
+  }
+
+  void testSuperConstructorInvocation() {
+    doTest(CREATE_CONSTRUCTOR, 1, BEFORE)
   }
 }
 

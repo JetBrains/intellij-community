@@ -179,14 +179,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
-  public Project newProject(@NotNull Path file, boolean useDefaultProjectSettings) {
-    OpenProjectTask options = new OpenProjectTask();
-    options.useDefaultProjectAsTemplate = useDefaultProjectSettings;
-    options.isNewProject = true;
-    return newProject(file, null, options);
-  }
-
-  @Override
   @Nullable
   public Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     OpenProjectTask options = new OpenProjectTask();
@@ -195,6 +187,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return newProject(Paths.get(toCanonicalName(filePath)), projectName, options);
   }
 
+  @Override
   @Nullable
   public Project newProject(@NotNull Path projectFile, @Nullable String projectName, @NotNull OpenProjectTask options) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {

@@ -1,4 +1,5 @@
 import dis
+import sys
 import traceback
 from opcode import opmap, EXTENDED_ARG, HAVE_ARGUMENT
 from types import CodeType
@@ -252,7 +253,7 @@ def _insert_code(code_to_modify, code_to_insert, before_line):
         traceback.print_exc()
         return False, code_to_modify
 
-    new_code = CodeType(
+    args = [
         code_to_modify.co_argcount,  # integer
         code_to_modify.co_kwonlyargcount,  # integer
         len(new_vars),  # integer
@@ -268,5 +269,10 @@ def _insert_code(code_to_modify, code_to_insert, before_line):
         new_lnotab,  # bytes
         code_to_modify.co_freevars,  # tuple
         code_to_modify.co_cellvars  # tuple
-    )
+    ]
+    if sys.version_info >= (3, 8, 0):
+        # Python 3.8 and above supports positional-only parameters. The number of such
+        # parameters is passed to the constructor as the second argument.
+        args.insert(1, code_to_modify.co_posonlyargcount)
+    new_code = CodeType(*args)
     return True, new_code

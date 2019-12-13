@@ -117,10 +117,13 @@ ARITHMETIC_OP = frozenset(['**', '*', '/', '//', '+', '-'])
 WS_OPTIONAL_OPERATORS = ARITHMETIC_OP.union(['^', '&', '|', '<<', '>>', '%'])
 # Warn for -> function annotation operator in py3.5+ (issue 803)
 FUNCTION_RETURN_ANNOTATION_OP = ['->'] if sys.version_info >= (3, 5) else []
+ASSIGNMENT_EXPRESSION_OP = [':='] if sys.version_info >= (3, 8) else []
 WS_NEEDED_OPERATORS = frozenset([
     '**=', '*=', '/=', '//=', '+=', '-=', '!=', '<>', '<', '>',
-    '%=', '^=', '&=', '|=', '==', '<=', '>=', '<<=', '>>=', '='] +
-    FUNCTION_RETURN_ANNOTATION_OP)
+    '%=', '^=', '&=', '|=', '==', '<=', '>=', '<<=', '>>=', '=',
+    'and', 'in', 'is', 'or'] +
+    FUNCTION_RETURN_ANNOTATION_OP +
+    ASSIGNMENT_EXPRESSION_OP)
 WHITESPACE = frozenset(' \t')
 NEWLINE = frozenset([tokenize.NL, tokenize.NEWLINE])
 SKIP_TOKENS = NEWLINE.union([tokenize.INDENT, tokenize.DEDENT])
@@ -133,12 +136,12 @@ RAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,')
 RERAISE_COMMA_REGEX = re.compile(r'raise\s+\w+\s*,.*,\s*\w+\s*$')
 ERRORCODE_REGEX = re.compile(r'\b[A-Z]\d{3}\b')
 DOCSTRING_REGEX = re.compile(r'u?r?["\']')
-EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({] | [\]}),;:]')
+EXTRANEOUS_WHITESPACE_REGEX = re.compile(r'[\[({] | [\]}),;]| :(?!=)')
 WHITESPACE_AFTER_COMMA_REGEX = re.compile(r'[,;:]\s*(?:  |\t)')
 COMPARE_SINGLETON_REGEX = re.compile(r'(\bNone|\bFalse|\bTrue)?\s*([=!]=)'
                                      r'\s*(?(1)|(None|False|True))\b')
 COMPARE_NEGATIVE_REGEX = re.compile(r'\b(not)\s+[^][)(}{ ]+\s+(in|is)\s')
-COMPARE_TYPE_REGEX = re.compile(r'(?:[=!]=|is(?:\s+not)?)\s*type(?:s.\w+Type'
+COMPARE_TYPE_REGEX = re.compile(r'(?:[=!]=|is(?:\s+not)?)\s+type(?:s.\w+Type'
                                 r'|\s*\(\s*([^)]*[^ )])\s*\))')
 KEYWORD_REGEX = re.compile(r'(\s*)\b(?:%s)\b(\s*)' % r'|'.join(KEYWORDS))
 OPERATOR_REGEX = re.compile(r'(?:[^,\s])(\s*)(?:[-+*/|!<=>%&^]+)(\s*)')
@@ -357,14 +360,15 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
           ):
         yield 0, "E303 too many blank lines (%d)" % blank_lines
     elif STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
-        # If this is a one-liner (i.e. the next line is not more
-        # indented), and the previous line is also not deeper
-        # (it would be better to check if the previous line is part
-        # of another def/class at the same level), don't require blank
-        # lines around this.
+        # If this is a one-liner (i.e. this is not a decorator and the
+        # next line is not more indented), and the previous line is also
+        # not deeper (it would be better to check if the previous line
+        # is part of another def/class at the same level), don't require
+        # blank lines around this.
         prev_line = lines[line_number - 2] if line_number >= 2 else ''
         next_line = lines[line_number] if line_number < len(lines) else ''
-        if (expand_indent(prev_line) <= indent_level and
+        if (not logical_line.startswith("@") and
+                expand_indent(prev_line) <= indent_level and
                 expand_indent(next_line) <= indent_level):
             return
         if indent_level:
@@ -493,13 +497,16 @@ def missing_whitespace(logical_line):
     line = logical_line
     for index in range(len(line) - 1):
         char = line[index]
-        if char in ',;:' and line[index + 1] not in WHITESPACE:
+        next_char = line[index + 1]
+        if char in ',;:' and next_char not in WHITESPACE:
             before = line[:index]
             if char == ':' and before.count('[') > before.count(']') and \
                     before.rfind('{') < before.rfind('['):
                 continue  # Slice syntax, no space required
-            if char == ',' and line[index + 1] == ')':
+            if char == ',' and next_char == ')':
                 continue  # Allow tuple with only one element: (3,)
+            if char == ':' and next_char == '=' and sys.version_info >= (3, 8):
+                continue  # Allow assignment expression
             yield index, "E231 missing whitespace after '%s'" % char
 
 
@@ -824,6 +831,7 @@ def missing_whitespace_around_operator(logical_line, tokens):
     E225: submitted +=1
     E225: x = x /2 - 1
     E225: z = x **y
+    E225: z = 1and 1
     E226: c = (a+b) * (a-b)
     E226: hypot2 = x*x + y*y
     E227: c = a|b
@@ -833,6 +841,7 @@ def missing_whitespace_around_operator(logical_line, tokens):
     need_space = False
     prev_type = tokenize.OP
     prev_text = prev_end = None
+    operator_types = (tokenize.OP, tokenize.NAME)
     for token_type, text, start, end, line in tokens:
         if token_type in SKIP_COMMENTS:
             continue
@@ -864,7 +873,7 @@ def missing_whitespace_around_operator(logical_line, tokens):
                     yield (need_space[0], "%s missing whitespace "
                            "around %s operator" % (code, optype))
                 need_space = False
-        elif token_type == tokenize.OP and prev_end is not None:
+        elif token_type in operator_types and prev_end is not None:
             if text == '=' and parens:
                 # Allow keyword args or defaults: foo(bar=None).
                 pass
@@ -1069,7 +1078,8 @@ def module_imports_on_top_of_file(
             line = line[1:]
         return line and (line[0] == '"' or line[0] == "'")
 
-    allowed_try_keywords = ('try', 'except', 'else', 'finally')
+    allowed_keywords = (
+        'try', 'except', 'else', 'finally', 'with', 'if', 'elif')
 
     if indent_level:  # Allow imports in conditional statement/function
         return
@@ -1083,9 +1093,9 @@ def module_imports_on_top_of_file(
             yield 0, "E402 module level import not at top of file"
     elif re.match(DUNDER_REGEX, line):
         return
-    elif any(line.startswith(kw) for kw in allowed_try_keywords):
-        # Allow try, except, else, finally keywords intermixed with
-        # imports in order to support conditional importing
+    elif any(line.startswith(kw) for kw in allowed_keywords):
+        # Allow certain keywords intermixed with imports in order to
+        # support conditional or filtered importing
         return
     elif is_string_literal(line):
         # The first literal is a docstring, allow it. Otherwise, report
@@ -1137,7 +1147,9 @@ def compound_statements(logical_line):
         update_counts(line[prev_found:found], counts)
         if ((counts['{'] <= counts['}'] and   # {'a': 1} (dict)
              counts['['] <= counts[']'] and   # [1:2] (slice)
-             counts['('] <= counts[')'])):    # (annotation)
+             counts['('] <= counts[')']) and  # (annotation)
+            not (sys.version_info >= (3, 8) and
+                 line[found + 1] == '=')):  # assignment expression
             lambda_kw = LAMBDA_REGEX.search(line, 0, found)
             if lambda_kw:
                 before = line[:lambda_kw.start()].rstrip()
@@ -1201,13 +1213,16 @@ def explicit_line_join(logical_line, tokens):
                 parens -= 1
 
 
+_SYMBOLIC_OPS = frozenset("()[]{},:.;@=%~") | frozenset(("...",))
+
+
 def _is_binary_operator(token_type, text):
     is_op_token = token_type == tokenize.OP
     is_conjunction = text in ['and', 'or']
     # NOTE(sigmavirus24): Previously the not_a_symbol check was executed
     # conditionally. Since it is now *always* executed, text may be
     # None. In that case we get a TypeError for `text not in str`.
-    not_a_symbol = text and text not in "()[]{},:.;@=%~"
+    not_a_symbol = text and text not in _SYMBOLIC_OPS
     # The % character is strictly speaking a binary operator, but the
     # common usage seems to be to put it next to the format parameters,
     # after a line break.
@@ -1420,28 +1435,58 @@ def ambiguous_identifier(logical_line, tokens):
 
     Variables can be bound in several other contexts, including class
     and function definitions, 'global' and 'nonlocal' statements,
-    exception handlers, and 'with' statements.
+    exception handlers, and 'with' and 'for' statements.
+    In addition, we have a special handling for function parameters.
 
     Okay: except AttributeError as o:
     Okay: with lock as L:
+    Okay: foo(l=12)
+    Okay: for a in foo(l=12):
     E741: except AttributeError as O:
     E741: with lock as l:
     E741: global I
     E741: nonlocal l
+    E741: def foo(l):
+    E741: def foo(l=12):
+    E741: l = foo(l=12)
+    E741: for l in range(10):
     E742: class I(object):
     E743: def l(x):
     """
+    is_func_def = False  # Set to true if 'def' is found
+    parameter_parentheses_level = 0
     idents_to_avoid = ('l', 'O', 'I')
     prev_type, prev_text, prev_start, prev_end, __ = tokens[0]
     for token_type, text, start, end, line in tokens[1:]:
         ident = pos = None
+        # find function definitions
+        if prev_text == 'def':
+            is_func_def = True
+        # update parameter parentheses level
+        if parameter_parentheses_level == 0 and \
+                prev_type == tokenize.NAME and \
+                token_type == tokenize.OP and text == '(':
+            parameter_parentheses_level = 1
+        elif parameter_parentheses_level > 0 and \
+                token_type == tokenize.OP:
+            if text == '(':
+                parameter_parentheses_level += 1
+            elif text == ')':
+                parameter_parentheses_level -= 1
         # identifiers on the lhs of an assignment operator
-        if token_type == tokenize.OP and '=' in text:
+        if token_type == tokenize.OP and '=' in text and \
+                parameter_parentheses_level == 0:
             if prev_text in idents_to_avoid:
                 ident = prev_text
                 pos = prev_start
-        # identifiers bound to values with 'as', 'global', or 'nonlocal'
-        if prev_text in ('as', 'global', 'nonlocal'):
+        # identifiers bound to values with 'as', 'for',
+        # 'global', or 'nonlocal'
+        if prev_text in ('as', 'for', 'global', 'nonlocal'):
+            if text in idents_to_avoid:
+                ident = text
+                pos = start
+        # function parameter definitions
+        if is_func_def:
             if text in idents_to_avoid:
                 ident = text
                 pos = start
@@ -1453,6 +1498,7 @@ def ambiguous_identifier(logical_line, tokens):
                 yield start, "E743 ambiguous function definition '%s'" % text
         if ident:
             yield pos, "E741 ambiguous variable name '%s'" % ident
+        prev_type = token_type
         prev_text = text
         prev_start = start
 

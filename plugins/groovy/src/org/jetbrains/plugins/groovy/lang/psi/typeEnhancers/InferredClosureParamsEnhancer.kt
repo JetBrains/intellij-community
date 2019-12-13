@@ -32,7 +32,7 @@ class InferredClosureParamsEnhancer : AbstractClosureParameterEnhancer() {
     val resolveResult = methodCall.advancedResolve() as? GroovyMethodResult ?: return null
     val virtualParameter = getVirtualParameter(resolveResult, closureBlock, virtualMethod) ?: return null
     val completeContextSubstitutor =
-      virtualToActualSubstitutor.putAll(virtualSubstitutor(virtualMethod, resolveResult)) compose resolveResult.substitutor
+      virtualToActualSubstitutor.putAll(virtualSubstitutor(virtualMethod, resolveResult, methodCall)) compose resolveResult.substitutor
     val anno = virtualParameter.modifierList.annotations.find { it.shortName == closureParamsShort } ?: return null
     val signatures = getSignatures(anno, completeContextSubstitutor, virtualMethod) ?: return null
     val parameters = closureBlock.allParameters
@@ -59,13 +59,15 @@ class InferredClosureParamsEnhancer : AbstractClosureParameterEnhancer() {
     return processor.inferExpectedSignatures(virtualMethod, substitutor, options.toTypedArray())
   }
 
-  private fun virtualSubstitutor(virtualMethod: GrMethod, resolveResult: GroovyMethodResult): PsiSubstitutor {
+  private fun virtualSubstitutor(virtualMethod: GrMethod,
+                                 resolveResult: GroovyMethodResult,
+                                 methodCall: GrCall): PsiSubstitutor {
     val originalMethod =
       resolveResult.candidate?.method?.takeIf { method -> method.parameters.all { it.name != null } } ?: return PsiSubstitutor.EMPTY
     val proxyMapping = originalMethod.parameters.map { it.name!! }.zip(virtualMethod.parameters).toMap()
     val session = CollectingGroovyInferenceSession(virtualMethod.typeParameters, virtualMethod, resolveResult.contextSubstitutor,
                                                    proxyMapping)
-    session.addConstraint(MethodCallConstraint(null, resolveResult, virtualMethod))
+    session.addConstraint(MethodCallConstraint(null, resolveResult, methodCall))
     return session.inferSubst()
   }
 

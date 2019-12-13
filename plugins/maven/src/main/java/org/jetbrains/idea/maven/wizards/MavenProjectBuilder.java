@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.impl.NewProjectUtil;
@@ -95,11 +95,6 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
       myParameters = new Parameters();
     }
     return myParameters;
-  }
-
-  @Override
-  public boolean validate(Project current, Project dest) {
-    return true;
   }
 
   private boolean setupProjectImport(@NotNull Project project) {

@@ -57,6 +57,10 @@ public class AnnotationDocGenerator {
     return AnnotationUtil.isExternalAnnotation(myAnnotation);
   }
 
+  public String getAnnotationQualifiedName() {
+    return myAnnotation.getQualifiedName();
+  }
+
   public boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
   }

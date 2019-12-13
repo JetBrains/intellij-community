@@ -204,6 +204,8 @@ class ExtractMethodTest extends LightGroovyTestCase {
 
   void testUnassignedVar() { doTest() }
 
+  void testForInLoop() { doTest() }
+
   void testStringPart0() {
     doTest('''\
 def foo() {

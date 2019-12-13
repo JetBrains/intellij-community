@@ -385,7 +385,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           }
           catch (Exception e) {
-            LOG.error(e);
+            LOG.info(e);
+            return smart ? targets : Collections.emptyList();
           }
 
           try {
@@ -412,6 +413,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
           catch (Exception e) {
             LOG.info(e);
+            return Collections.emptyList();
           }
         }
 

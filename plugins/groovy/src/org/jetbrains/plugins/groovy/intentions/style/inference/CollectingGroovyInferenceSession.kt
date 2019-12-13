@@ -23,12 +23,16 @@ class CollectingGroovyInferenceSession(
   context: PsiElement,
   contextSubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY,
   private val proxyMethodMapping: Map<String, GrParameter> = emptyMap(),
-  private val parent: CollectingGroovyInferenceSession? = null,
-  private val ignoreClosureArguments: Set<GrParameter> = emptySet()
+  private val ignoreClosureArguments: Set<GrParameter> = emptySet(),
+  private val depth : Int = 0
 ) : GroovyInferenceSession(typeParams, contextSubstitutor, context, false, emptySet()) {
 
 
+
   companion object {
+    private const val MAX_DEPTH = 127
+    private const val OBSERVING_DISTANCE = 10
+
     fun getContextSubstitutor(resolveResult: GroovyMethodResult,
                               nearestCall: GrCall): PsiSubstitutor = RecursionManager.doPreventingRecursion(resolveResult, true) {
       val collectingSession = CollectingGroovyInferenceSession(nearestCall.parentOfType<GrMethod>()!!.typeParameters, nearestCall)
@@ -49,15 +53,8 @@ class CollectingGroovyInferenceSession(
     })
   }
 
-  override fun substituteWithInferenceVariables(type: PsiType?): PsiType? {
-    val result = substituteForeignTypeParameters(super.substituteWithInferenceVariables(type))
-    if ((result == type || result == null) && parent != null) {
-      return parent.substituteWithInferenceVariables(result)
-    }
-    else {
-      return result
-    }
-  }
+  override fun substituteWithInferenceVariables(type: PsiType?): PsiType? =
+    substituteForeignTypeParameters(super.substituteWithInferenceVariables(type))
 
   override fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
     repeatInferencePhases()
@@ -73,7 +70,14 @@ class CollectingGroovyInferenceSession(
                                   context: PsiElement,
                                   result: GroovyResolveResult,
                                   f: (GroovyInferenceSession) -> Unit) {
-    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, this, ignoreClosureArguments)
+    if (depth >= MAX_DEPTH) {
+      var place = context
+      repeat(OBSERVING_DISTANCE) {
+        place = place.parent ?: place
+      }
+      throw AssertionError("Inference process has gone too deep on ${context.text} in ${place.text}")
+    }
+    val nestedSession = CollectingGroovyInferenceSession(params, context, siteSubstitutor, proxyMethodMapping, ignoreClosureArguments, depth + 1)
     nestedSession.propagateVariables(this)
     f(nestedSession)
     mirrorInnerVariables(nestedSession)

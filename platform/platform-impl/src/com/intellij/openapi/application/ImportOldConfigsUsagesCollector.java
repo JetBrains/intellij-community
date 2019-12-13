@@ -14,7 +14,9 @@ public class ImportOldConfigsUsagesCollector  {
     public void componentsInitialized() {
       final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
-        final FeatureUsageData data = new FeatureUsageData().addData("selected", state.getType().name());
+        final FeatureUsageData data = new FeatureUsageData().
+          addData("selected", state.getType().name()).
+          addData("config_folder_exists", state.isSourceConfigFolderExists());
         FUCounterUsageLogger.getInstance().logEvent("import.old.config", "import.dialog.shown", data);
       }
     }
@@ -28,11 +30,16 @@ public class ImportOldConfigsUsagesCollector  {
     }
 
     private volatile boolean myOldConfigPanelWasOpened = false;
+    private volatile boolean mySourceConfigFolderExists = false;
     @NotNull
-    private ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
+    private volatile ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
 
-    public void saveImportOldConfigType(@NotNull JRadioButton previous, @NotNull JRadioButton custom, @NotNull JRadioButton doNotImport) {
+    public void saveImportOldConfigType(@NotNull JRadioButton previous,
+                                        @NotNull JRadioButton custom,
+                                        @NotNull JRadioButton doNotImport,
+                                        boolean configFolderExists) {
       myOldConfigPanelWasOpened = true;
+      mySourceConfigFolderExists = configFolderExists;
       myType = getOldImportType(previous, custom, doNotImport);
     }
 
@@ -49,6 +56,10 @@ public class ImportOldConfigsUsagesCollector  {
 
     public boolean isOldConfigPanelWasOpened() {
       return myOldConfigPanelWasOpened;
+    }
+
+    public boolean isSourceConfigFolderExists() {
+      return mySourceConfigFolderExists;
     }
 
     @NotNull

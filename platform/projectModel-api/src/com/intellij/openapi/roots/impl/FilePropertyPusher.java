@@ -40,7 +40,7 @@ public interface FilePropertyPusher<T> {
    * @deprecated
    * use {@link FilePropertyPusher#initExtra(Project, MessageBus)} instead
    */
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   @SuppressWarnings("unused")
   default void initExtra(@NotNull Project project, @NotNull MessageBus bus, @NotNull Engine languageLevelUpdater) {
@@ -69,8 +69,11 @@ public interface FilePropertyPusher<T> {
 
   void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
+  /**
+   * @deprecated not used anymore
+   */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   interface Engine {
     void pushAll();
     void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -11,10 +11,14 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 class GroovyVersionAnnotator : Annotator {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    if (element !is GroovyPsiElement) return
+    if (element !is GroovyPsiElement) {
+      return
+    }
     val config = GroovyConfigUtils.getInstance()
-    val version = config.getSDKVersion(element)
-    if (version == NO_VERSION) return
+    val version = config.getSDKVersion(holder.currentAnnotationSession.file)
+    if (version == NO_VERSION) {
+      return
+    }
     if (version < GROOVY1_7) {
       element.accept(GroovyAnnotatorPre17(holder, version))
     }

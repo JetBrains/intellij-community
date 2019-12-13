@@ -276,7 +276,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         fun repaintBorder() {
             val borderInsets = getBorderInsets(this@CustomHeader)
 
-            repaint(0, 0, width, borderInsets.top)
+            repaint(0, 0, width, thickness)
             repaint(0, height - borderInsets.bottom, width, borderInsets.bottom)
         }
 

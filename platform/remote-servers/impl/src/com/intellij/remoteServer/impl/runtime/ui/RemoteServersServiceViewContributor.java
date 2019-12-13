@@ -3,20 +3,29 @@ package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceViewContributor;
 import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewProvidingContributor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
+import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure.RemoteServerNode;
+import com.intellij.remoteServer.runtime.ServerConnectionManager;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +103,47 @@ public abstract class RemoteServersServiceViewContributor
     return group;
   }
 
+  private static String generateUniqueServerName(ServerType<?> serverType) {
+    List<RemoteServer<?>> servers = ContainerUtil.filter(
+      RemoteServersManager.getInstance().getServers(),
+      server -> server.getType().equals(serverType));
+    return UniqueNameGenerator.generateUniqueName(serverType.getPresentableName(), s -> {
+      for (RemoteServer<?> server : servers) {
+        if (server.getName().equals(s)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  /**
+   * @return newly created remote server or {@code null} if edit server configurable dialog was cancelled
+   */
+  public static <C extends ServerConfiguration> RemoteServer<C> addNewRemoteServer(@NotNull Project project,
+                                                                                   @NotNull ServerType<C> serverType,
+                                                                                   @Nullable Class<?> contributorClass) {
+    String name = generateUniqueServerName(serverType);
+    RemoteServersManager remoteServersManager = RemoteServersManager.getInstance();
+    RemoteServer<C> server = remoteServersManager.createServer(serverType, name);
+    SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(server, null, true);
+    configurable.setDisplayName(CloudBundle.getText("new.cloud.connection.configurable.title", serverType.getPresentableName()));
+    Runnable advancedInitialization = () -> {
+      configurable.setDisplayName(name);
+      configurable.updateName();
+    };
+    if (ShowSettingsUtil.getInstance().editConfigurable(project, configurable, advancedInitialization)) {
+      remoteServersManager.addServer(server);
+      if (contributorClass != null) {
+        ServerConnectionManager.getInstance().getOrCreateConnection(server).connect(EmptyRunnable.INSTANCE);
+        RemoteServerNode node = new RemoteServerNode(project, server, (connection, serverNode, deployment) -> null);
+        ServiceViewManager.getInstance(project).select(node, contributorClass, true, true);
+      }
+      return server;
+    }
+    return null;
+  }
+
   public static class RemoteServerNodeDescriptor implements ServiceViewDescriptor {
     private final AbstractTreeNode<?> myNode;
     private final ActionGroups myActionGroups;
@@ -149,6 +199,16 @@ public abstract class RemoteServersServiceViewContributor
       AnActionEvent actionEvent = AnActionEvent.createFromAnAction(connectAction, event, ActionPlaces.UNKNOWN, dataContext);
       connectAction.actionPerformed(actionEvent);
       return true;
+    }
+
+    @Nullable
+    @Override
+    public Runnable getRemover() {
+      AbstractTreeNode<?> node = getNode();
+      if (node instanceof RemoteServerNode) {
+        return () -> RemoteServersManager.getInstance().removeServer(((RemoteServerNode)node).getServer());
+      }
+      return null;
     }
 
     @NotNull

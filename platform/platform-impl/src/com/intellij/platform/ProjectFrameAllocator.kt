@@ -169,7 +169,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       }
 
       (WindowManager.getInstance() as WindowManagerImpl).assignFrame(frame, project)
-    }, project.disposed)
+    }, project.disposedOrDisposeInProgress)
   }
 
   override fun projectNotLoaded(error: CannotConvertException?) {

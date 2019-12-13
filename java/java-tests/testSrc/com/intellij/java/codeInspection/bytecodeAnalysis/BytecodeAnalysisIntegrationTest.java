@@ -4,7 +4,10 @@ package com.intellij.java.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
+import com.intellij.codeInsight.InferredContractAnnotationsLineMarkerProvider;
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerSettings;
+import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
 import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
@@ -18,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -94,6 +98,11 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   }
 
   public void testInferredAnnoGutter() {
+    LineMarkerSettingsImpl settings = (LineMarkerSettingsImpl)LineMarkerSettings.getSettings();
+    final InferredContractAnnotationsLineMarkerProvider descriptor = new InferredContractAnnotationsLineMarkerProvider();
+    settings.setEnabled(descriptor, true);
+    Disposer.register(getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
+
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    "<html><i>Inferred</i> annotations available. Full signature:<p>\n" +
                    "<b><i>@Contract('null,_,_->null')</i></b> \n" +

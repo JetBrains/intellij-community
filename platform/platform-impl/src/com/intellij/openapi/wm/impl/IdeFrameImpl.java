@@ -22,6 +22,10 @@ import java.util.Objects;
 
 @ApiStatus.Internal
 public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
+  /**
+   * @deprecated Not used anymore. Will be opened in fullscreen in any case if needed.
+   */
+  @Deprecated
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
   public static final String NORMAL_STATE_BOUNDS = "normalBounds";

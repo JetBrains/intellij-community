@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
+import git4idea.branch.GitBranchOperationType.CHECKOUT
+import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.repo.GitRepository
 import git4idea.validators.checkRefName
 import git4idea.validators.conflictsWithLocalBranch
@@ -34,14 +36,19 @@ data class GitNewBranchOptions(val name: String,
                                @get:JvmName("shouldReset") val reset: Boolean = false)
 
 
+enum class GitBranchOperationType(val text: String) {
+  CREATE("Create"), CHECKOUT("Checkout"), RENAME("Rename")
+}
+
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
                                                             private val repositories: Collection<GitRepository>,
                                                             dialogTitle: String,
                                                             initialName: String?,
-                                                            private val showCheckOutOption: Boolean,
+                                                            private val showCheckOutOption: Boolean = true,
                                                             private val showResetOption: Boolean = false,
-                                                            private val localConflictsAllowed: Boolean = false) : DialogWrapper(project,
-                                                                                                                                true) {
+                                                            private val localConflictsAllowed: Boolean = false,
+                                                            private val operation: GitBranchOperationType = if (showCheckOutOption) CREATE else CHECKOUT)
+  : DialogWrapper(project, true) {
 
   private var checkout = true
   private var reset = false
@@ -50,7 +57,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
 
   init {
     title = dialogTitle
-    setOKButtonText(if (showCheckOutOption) "Create" else "Checkout")
+    setOKButtonText(operation.text)
     init()
   }
 
@@ -95,8 +102,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   private fun getAdditionalDescription() =
     when {
       repositories.size == 1 -> ""
-      showCheckOutOption -> ". Create new branches in other repositories."
-      else -> ". Checkout existing branches, and create new branches in other repositories."
+      operation == CREATE -> ". Create new branches in other repositories."
+      operation == CHECKOUT -> ". Checkout existing branches, and create new branches in other repositories."
+      else -> ""
     }
 
 

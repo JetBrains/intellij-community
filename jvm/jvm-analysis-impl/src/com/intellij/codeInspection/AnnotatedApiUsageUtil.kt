@@ -39,6 +39,16 @@ data class AnnotatedContainingDeclaration(
 
   val containingDeclarationType: String
     get() = LanguageFindUsages.getType(containingDeclaration)
+
+  val presentableAnnotationName: String?
+    get() {
+      val qualifiedName = psiAnnotation.qualifiedName ?: return null
+      return qualifiedName.split('.')
+               .takeLastWhile { it.isNotEmpty() && it.first().isUpperCase() }
+               .joinToString(separator = ".")
+               .takeIf { it.isNotEmpty() }
+             ?: qualifiedName
+    }
 }
 
 /**

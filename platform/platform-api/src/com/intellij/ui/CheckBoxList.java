@@ -140,7 +140,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
    * @param newIndex new rollover row. If newIndex is -1 then reset old rollover row only.
    */
   private void fireRollOverUpdated(int newIndex) {
-    if (rollOverIndex >= 0) {
+    if (rollOverIndex >= 0 && rollOverIndex < getModel().getSize()) {
       JCheckBox oldRollover = getModel().getElementAt(rollOverIndex);
       oldRollover.getModel().setRollover(false);
     }

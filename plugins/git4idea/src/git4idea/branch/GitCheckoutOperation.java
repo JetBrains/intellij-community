@@ -22,6 +22,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -148,7 +149,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
-        notifyError("Couldn't checkout " + myStartPointReference, "Revision not found" + mention(getSkippedRepositories(), 4));
+        notifyError("Couldn't checkout " + getRefPresentation(myStartPointReference), "Revision not found" + mention(getSkippedRepositories(), 4));
       }
     }
   }
@@ -249,7 +250,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @NotNull
   private String getCommonErrorTitle() {
-    return "Couldn't checkout " + myStartPointReference;
+    return "Couldn't checkout " + getRefPresentation(myStartPointReference);
   }
 
   @NotNull
@@ -258,7 +259,13 @@ class GitCheckoutOperation extends GitBranchOperation {
     if (myNewBranch == null) {
       return String.format("Checked out <b><code>%s</code></b>", myStartPointReference);
     }
-    return String.format("Checked out new branch <b><code>%s</code></b> from <b><code>%s</code></b>", myNewBranch, myStartPointReference);
+    return String.format("Checked out new branch <b><code>%s</code></b> from <b><code>%s</code></b>", myNewBranch,
+                         getRefPresentation(myStartPointReference));
+  }
+
+  @NotNull
+  private static String getRefPresentation(@NotNull String reference) {
+    return StringUtil.substringBeforeLast(reference, "^0");
   }
 
   // stash - checkout - unstash

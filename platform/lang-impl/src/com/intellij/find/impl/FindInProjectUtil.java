@@ -139,10 +139,10 @@ public class FindInProjectUtil {
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
-  /** @deprecated to remove in IDEA 2018 */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  /** @deprecated use {@link #getDirectory(FindModel)} */
   @Deprecated
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
     VirtualFile directory = getDirectory(findModel);
     return directory == null ? null : PsiManager.getInstance(project).findDirectory(directory);
@@ -221,7 +221,7 @@ public class FindInProjectUtil {
    * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2016")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,
                                 @NotNull final Project project,

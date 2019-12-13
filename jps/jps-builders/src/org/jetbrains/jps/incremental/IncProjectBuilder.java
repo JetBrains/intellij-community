@@ -178,6 +178,7 @@ public class IncProjectBuilder {
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
       myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
+      myProjectDescriptor.getBuildTargetSourcesState().reportSourcesState(context);
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }

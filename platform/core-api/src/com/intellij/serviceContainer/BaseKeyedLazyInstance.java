@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,6 +57,7 @@ public abstract class BaseKeyedLazyInstance<T> implements PluginAware {
     return componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(getImplementationClassName(), pluginDescriptor);
   }
 
+  @Transient
   @NotNull
   public final PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;

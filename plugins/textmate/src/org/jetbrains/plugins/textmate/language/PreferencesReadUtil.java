@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.Interner;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.awt.*;
 import java.io.File;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,7 +51,7 @@ public final class PreferencesReadUtil {
       return null;
     }
 
-    Set<TextMateBracePair> result = new HashSet<>();
+    THashSet<TextMateBracePair> result = new THashSet<>();
     List<PListValue> pairs = pairsValue.getArray();
     for (PListValue pair : pairs) {
       List<PListValue> chars = pair.getArray();
@@ -62,6 +63,10 @@ public final class PreferencesReadUtil {
         }
       }
     }
+    if (result.size() == 0) {
+      return Collections.emptySet();
+    }
+    result.trimToSize();
     return result;
   }
 

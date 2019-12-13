@@ -3,6 +3,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -30,20 +31,19 @@ class ProcessStreamsSynchronizer {
   /**
    * Timeout to wait for the same stream data.<p>
    * Should be greater than {@code SleepingPolicy.NON_BLOCKING.getTimeToSleep(false)}
+   *
    * @see com.intellij.util.io.BaseDataReader.SleepingPolicy#NON_BLOCKING
    */
   static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
-  /**
-   * A bit increased timeout to increase probability that stdout and stderr occupy different lines.
-   */
-  static final long AWAIT_NEW_LINE_NANO = TimeUnit.MILLISECONDS.toNanos(20);
 
   private final Object myLock = new Object();
   private final List<Chunk> myPendingChunks = new ArrayList<>();
   private final Alarm myAlarm;
+  private final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private boolean myFlushedChunksEndWithNewline = true;
   private ProcessOutputType myLastFlushedChunkBaseOutputType = null;
   private long myLastFlushedChunkCreatedNanoTime = 0;
+  private int myReschedules = 0;
 
   ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
@@ -75,7 +75,7 @@ class ProcessStreamsSynchronizer {
         myLastFlushedChunkCreatedNanoTime = nowNano;
         flushRunnable.run();
         if (newlineAdded && myPendingChunks.size() > 0
-              && myPendingChunks.get(0).getNanoTimePassedSinceLastFlushedChunk(nowNano) >= AWAIT_SAME_STREAM_TEXT_NANO) {
+            && myPendingChunks.get(0).getNanoTimePassedSinceLastFlushedChunk(nowNano) >= AWAIT_SAME_STREAM_TEXT_NANO) {
           processPendingChunks(nowNano);
         }
         return;
@@ -88,6 +88,7 @@ class ProcessStreamsSynchronizer {
           processPendingChunks(nowNano);
         }
         else {
+          myReschedules++;
           scheduleProcessPendingChunks(delayNano);
         }
       }
@@ -131,16 +132,21 @@ class ProcessStreamsSynchronizer {
         // There could be no pending chunks in the following case:
         // When pending chunks were processed for the first time, another stream didn't end with a newline => the chunks were re-scheduled.
         // Then, another stream got a newline => the pending chunks were processed immediately.
+        myReschedules = 0;
         return;
       }
       // All pending chunks should have the same base output type (`chunk.myBaseOutputType`).
       Chunk eldestChunk = myPendingChunks.get(0);
       long awaitNano = eldestChunk.getNanoTimePassedSinceLastFlushedChunk(nowNano);
-      if (awaitNano >= AWAIT_SAME_STREAM_TEXT_NANO && myFlushedChunksEndWithNewline || awaitNano >= AWAIT_NEW_LINE_NANO) {
+      if ((awaitNano >= AWAIT_SAME_STREAM_TEXT_NANO && myFlushedChunksEndWithNewline) || myReschedules > (isUnitTestMode ? 10 : 1)) {
         flushAllPendingChunks();
       }
       if (!myPendingChunks.isEmpty()) {
+        myReschedules++;
         scheduleProcessPendingChunks(AWAIT_SAME_STREAM_TEXT_NANO);
+      }
+      else {
+        myReschedules = 0;
       }
     }
   }

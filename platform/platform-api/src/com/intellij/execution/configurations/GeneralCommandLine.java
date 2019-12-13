@@ -185,7 +185,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);

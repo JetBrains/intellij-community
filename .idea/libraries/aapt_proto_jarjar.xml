@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="aapt-proto-jarjar">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/aapt-proto-jarjar.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

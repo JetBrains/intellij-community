@@ -59,11 +59,11 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   /**
-   * @deprecated to delete in 2017.X
+   * @deprecated to delete in 2020.3
    */
   @Nullable
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2017")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public T getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }

@@ -59,6 +59,10 @@ cdef extern from "Python.h":
     PyObject* PyObject_CallFunction(PyObject *callable, const char *format, ...)
     object PyObject_GetAttrString(object o, char *attr_name)
 
+# To include the forward-declared structures used in `pystate.h` and set the `Py_BUILD_CORE` sentinel macro.
+cdef extern from "pycore_pystate.h":
+    pass
+
 cdef extern from "pystate.h":
     ctypedef PyObject* _PyFrameEvalFunction(PyFrameObject *frame, int exc)
 

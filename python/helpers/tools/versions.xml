@@ -42,6 +42,7 @@
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
 		<module>_stat</module>
+		<module>_statistics</module>
 		<module>_string</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
@@ -772,7 +773,6 @@
 		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StopAsyncIteration</func>
-		<func>TargetScopeError</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -818,6 +818,7 @@
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
 		<module>_stat</module>
+		<module>_statistics</module>
 		<module>_string</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
@@ -1153,7 +1154,6 @@
 		<func>RecursionError</func>
 		<func>ResourceWarning</func>
 		<func>StopAsyncIteration</func>
-		<func>TargetScopeError</func>
 		<func>TimeoutError</func>
 		<func>__build_class__</func>
 		<func>__loader__</func>
@@ -1208,6 +1208,7 @@
 		<module>_queue</module>
 		<module>_sha3</module>
 		<module>_signal</module>
+		<module>_statistics</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
@@ -1803,7 +1804,6 @@
 		<func>RecursionError</func>
 		<func>StandardError</func>
 		<func>StopAsyncIteration</func>
-		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -1864,6 +1864,7 @@
 		<module>_py_abc</module>
 		<module>_queue</module>
 		<module>_sha3</module>
+		<module>_statistics</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
@@ -2443,7 +2444,6 @@
 		<module>xmlrpclib</module>
 		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
-		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -2505,6 +2505,7 @@
 		<module>_posixshmem</module>
 		<module>_py_abc</module>
 		<module>_queue</module>
+		<module>_statistics</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
@@ -3050,7 +3051,6 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<func>StandardError</func>
-		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>breakpoint</func>
@@ -3108,6 +3108,7 @@
 		<module>_fileio</module>
 		<module>_hotshot</module>
 		<module>_posixshmem</module>
+		<module>_statistics</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata__linux_x86_64-linux-gnu</module>
 		<module>_testinternalcapi</module>
@@ -3647,7 +3648,6 @@
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
 		<func>StandardError</func>
-		<func>TargetScopeError</func>
 		<func>apply</func>
 		<func>basestring</func>
 		<func>buffer</func>

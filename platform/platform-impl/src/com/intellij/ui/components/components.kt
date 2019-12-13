@@ -118,6 +118,10 @@ fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): 
 }
 
 @JvmOverloads
+fun Panel(title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
+  return Panel(title, false, layout)
+}
+
 fun Panel(title: String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }

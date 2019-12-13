@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 22
+version = 23
 
 if not hasattr(sys, '_current_frames'):
 
@@ -1287,7 +1287,7 @@ cdef class TopLevelThreadTracerNoBackFrame:
 
                             else:
                                 # Note: check all, not only the "valid" ones to cover the case
-                                # in "tests_python.test_tracing_on_top_level.raise_unhandled10"
+                                # in "pydev_tests_python.test_tracing_on_top_level.raise_unhandled10"
                                 # where one try..except is inside the other with only a raise
                                 # and it's gotten in the except line.
                                 for try_except_info in self._try_except_info:

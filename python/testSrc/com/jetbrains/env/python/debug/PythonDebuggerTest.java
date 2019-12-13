@@ -83,6 +83,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testPydevTests_Debugger() {
     pytests("pydev_tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
   }
@@ -1278,6 +1279,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testSetNextStatement() {
     runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
       @Override
@@ -1317,7 +1319,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return ImmutableSet.of("-iron", "-python3.8"); // PY-38604
       }
     });
   }
@@ -1347,6 +1349,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
   @Test
+  @Staging
   public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
@@ -1372,7 +1375,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return ImmutableSet.of("-iron", "-python3.8");  // PY-38603
       }
     });
   }

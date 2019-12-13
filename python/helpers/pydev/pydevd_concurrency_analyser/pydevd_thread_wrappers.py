@@ -1,4 +1,7 @@
-from _pydev_imps._pydev_saved_modules import threading
+try:
+    import queue
+except:
+    import Queue as queue
 
 
 def wrapper(fun):
@@ -62,7 +65,14 @@ def factory_wrapper(fun):
     def inner(*args, **kwargs):
         obj = fun(*args, **kwargs)
         return ObjectWrapper(obj)
+
     return inner
+
+
+class QueueWrapper(ObjectWrapper):
+    def __init__(self, maxsize=0):
+        real_queue = queue._real_Queue(maxsize)
+        super().__init__(real_queue)
 
 
 def wrap_threads():
@@ -75,12 +85,8 @@ def wrap_threads():
     threading.RLock = factory_wrapper(threading.RLock)
 
     # queue patching
-    try:
-        import queue  # @UnresolvedImport
-        queue.Queue = factory_wrapper(queue.Queue)
-    except:
-        import Queue
-        Queue.Queue = factory_wrapper(Queue.Queue)
+    queue._real_Queue = queue.Queue
+    queue.Queue = QueueWrapper
 
 
 class AsyncioTaskWrapper(ObjectWrapper):

@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import org.jetbrains.annotations.NotNull;
 
 public final class VcsManagerConfigurableProvider extends ConfigurableProvider {
@@ -22,6 +22,6 @@ public final class VcsManagerConfigurableProvider extends ConfigurableProvider {
 
   @Override
   public boolean canCreateConfigurable() {
-    return !myProject.isDefault() && ProjectLevelVcsManager.getInstance(myProject).getAllVcss().length > 0;
+    return !AllVcses.getInstance(myProject).isEmpty();
   }
 }

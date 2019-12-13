@@ -9,34 +9,34 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
-import com.intellij.util.Function
 import com.intellij.xml.XmlBundle
+import java.util.function.Function
 
 private val model = WebEditorOptions.getInstance()
-val myAutomaticallyInsertClosingTagCheckBox = CheckboxDescriptor("Insert closing tag on tag completion",
+private val myAutomaticallyInsertClosingTagCheckBox = CheckboxDescriptor("Insert closing tag on tag completion",
                                                                  PropertyBinding(model::isAutomaticallyInsertClosingTag,
                                                                                  model::setAutomaticallyInsertClosingTag))
-val myAutomaticallyInsertRequiredAttributesCheckBox = CheckboxDescriptor("Insert required attributes on tag completion",
+private val myAutomaticallyInsertRequiredAttributesCheckBox = CheckboxDescriptor("Insert required attributes on tag completion",
                                                                          PropertyBinding(model::isAutomaticallyInsertClosingTag,
                                                                                          model::setAutomaticallyInsertClosingTag))
-val myAutomaticallyInsertRequiredSubTagsCheckBox = CheckboxDescriptor("Insert required subtags on tag completion",
+private val myAutomaticallyInsertRequiredSubTagsCheckBox = CheckboxDescriptor("Insert required subtags on tag completion",
                                                                       PropertyBinding(model::isAutomaticallyInsertClosingTag,
                                                                                       model::setAutomaticallyInsertClosingTag))
-val myAutomaticallyStartAttributeAfterCheckBox = CheckboxDescriptor("Start attribute on tag completion",
+private val myAutomaticallyStartAttributeAfterCheckBox = CheckboxDescriptor("Start attribute on tag completion",
                                                                     PropertyBinding(model::isAutomaticallyStartAttribute,
                                                                                     model::setAutomaticallyStartAttribute))
-val myAddQuotasForAttributeValue = CheckboxDescriptor("Add quotes for attribute value on typing '=' and attribute completion",
+private val myAddQuotasForAttributeValue = CheckboxDescriptor("Add quotes for attribute value on typing '=' and attribute completion",
                                                       PropertyBinding(model::isInsertQuotesForAttributeValue,
                                                                       model::setInsertQuotesForAttributeValue))
-val myAutoCloseTagCheckBox = CheckboxDescriptor("Auto-close tag on typing '</'",
+private val myAutoCloseTagCheckBox = CheckboxDescriptor("Auto-close tag on typing '</'",
                                                 PropertyBinding(model::isAutoCloseTag, model::setAutoCloseTag))
-val mySyncTagEditing = CheckboxDescriptor("Simultaneous '<tag></tag>' editing",
+private val mySyncTagEditing = CheckboxDescriptor("Simultaneous '<tag></tag>' editing",
                                           PropertyBinding(model::isSyncTagEditing, model::setSyncTagEditing))
-val mySelectWholeCssIdentifierOnDoubleClick = CheckboxDescriptor("Select whole CSS identifiers on double click",
+private val mySelectWholeCssIdentifierOnDoubleClick = CheckboxDescriptor("Select whole CSS identifiers on double click",
                                                                  PropertyBinding(model::isSelectWholeCssIdentifierOnDoubleClick,
                                                                                  model::setSelectWholeCssIdentifierOnDoubleClick))
 
-val webEditorOptionDescriptors = listOf(
+private val webEditorOptionDescriptors = listOf(
       myAutomaticallyInsertClosingTagCheckBox
     , myAutomaticallyInsertRequiredAttributesCheckBox
     , myAutomaticallyInsertRequiredSubTagsCheckBox
@@ -47,7 +47,7 @@ val webEditorOptionDescriptors = listOf(
     , mySelectWholeCssIdentifierOnDoubleClick
 ).map(CheckboxDescriptor::asOptionDescriptor)
 
-class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
+internal class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
   override fun createPanel(): DialogPanel {
     return panel {
       row {
@@ -101,4 +101,4 @@ class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConf
   }
 }
 
-class WebSmartKeysConfigurableEP : ConfigurableEP<UnnamedConfigurable>()
+internal class WebSmartKeysConfigurableEP : ConfigurableEP<UnnamedConfigurable>()

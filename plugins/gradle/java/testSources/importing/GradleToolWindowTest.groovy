@@ -67,7 +67,7 @@ version '1.0-SNAPSHOT'
   @Test
   void testDotInModuleName() {
     createSettingsFile("""
-rootProject.name='rooot'
+rootProject.name='rooot.dot'
 include ':child1'
 include ':child2'
 include ':child2:dot.child'
@@ -269,6 +269,17 @@ project(':string-utils') {
     doTest()
   }
 
+  @Test
+  void testDuplicatingProjectLeafNames() {
+    createSettingsFile("""
+rootProject.name = 'rootProject'
+include 'p1', 'p2', 'p1:sub:sp1', 'p2:p2sub:sub:sp2'
+include 'p1:leaf', 'p2:leaf'
+""")
+
+    doTest()
+  }
+
   @Override
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(super.createImportSpec())
@@ -304,7 +315,7 @@ project(':string-utils') {
     assertSameLinesWithFile(path, sw.toString())
   }
 
-  private String getPath() {
+  protected String getPath() {
     def communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/'.charAt(0))
     def testName = getTestName(true)
     testName = testName.substring(0, testName.indexOf("_"))

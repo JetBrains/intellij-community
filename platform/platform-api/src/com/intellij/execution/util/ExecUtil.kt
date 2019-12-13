@@ -265,7 +265,7 @@ object ExecUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("use {@link #execAndGetOutput(GeneralCommandLine)} instead")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @JvmStatic
   @Throws(ExecutionException::class)
   fun execAndGetOutput(command: List<String>, workDir: String?): ProcessOutput {

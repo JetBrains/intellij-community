@@ -18,7 +18,6 @@ import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,16 +155,7 @@ public abstract class XmlExtension {
   public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
     return descriptor.isRequired();
   }
-
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  @Deprecated
-  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
-                                                                  @NotNull String defaultAttributeQuote,
-                                                                  @NotNull PsiElement context) { 
-    return getAttributeValuePresentation(null, "", defaultAttributeQuote);
-  }
-
+  
   @NotNull
   public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
                                                                   @NotNull String attributeName,

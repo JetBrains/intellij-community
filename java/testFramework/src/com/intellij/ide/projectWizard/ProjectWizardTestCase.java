@@ -100,7 +100,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
     try {
-      myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+      myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
     }
     catch (Throwable e) {
       myCreatedProject = ContainerUtil.find(myProjectManager.getOpenProjects(),
@@ -182,7 +182,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
     createWizard(null);
     runWizard(adjuster);
-    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
     return myCreatedProject;
   }
 

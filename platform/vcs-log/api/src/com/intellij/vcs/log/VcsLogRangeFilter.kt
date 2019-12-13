@@ -25,10 +25,6 @@ interface VcsLogRangeFilter : VcsLogFilter {
     return RANGE_FILTER
   }
 
-  override fun getPresentation(): String {
-    return getTextPresentation().joinToString(", ")
-  }
-
   /**
    * Represents a range between two references pointing to commits.
    *

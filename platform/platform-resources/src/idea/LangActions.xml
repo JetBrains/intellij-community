@@ -1168,6 +1168,14 @@
               text="Copy Configuration" icon="AllIcons.Actions.Copy"
               use-shortcut-of="EditorDuplicate"/>
       <separator/>
+      <action id="RunDashboard.HideConfiguration" class="com.intellij.execution.dashboard.actions.HideConfigurationAction"
+              text="Hide Configuration"/>
+      <action id="RunDashboard.RestoreHiddenConfigurations"
+              class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"
+              text="Restore Hidden Configurations"/>
+      <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"
+              text="Remove Selected Types from Services"/>
+      <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
       <action id="RunDashboard.RestoreConfiguration" class="com.intellij.execution.dashboard.actions.RestoreConfigurationAction"
@@ -1192,13 +1200,20 @@
       </group>
       <group id="ServiceView.Filter" popup="true" text="Filter" icon="AllIcons.General.Filter"
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
+      <group id="ServiceView.OpenInNewTabGroup" popup="true" text="Open in New Tab" icon="AllIcons.Actions.OpenNewTab"
+             class="com.intellij.execution.services.OpenInNewTabActionGroup">
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"
+                text="Open in New Tab">
+        </action>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"
+                text="Open Each in New Tab"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
+                text="Open Each Type in New Tab"/>
+      </group>
       <separator/>
-      <action id="ServiceView.ShowInNewTab" class="com.intellij.execution.services.ShowInNewTabAction"
-              text="Show in New Tab" icon="AllIcons.Actions.OpenNewTab"/>
-      <action id="ServiceView.SplitToNewTabs" class="com.intellij.execution.services.SplitToNewTabsAction"
-              text="Split to New Tabs" icon="AllIcons.General.Layout"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"
-              text="Split By Type" icon="AllIcons.Modules.Split"/>
+      <group id="ServiceView.AddService" popup="true" text="Add Service" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
+             class="com.intellij.execution.services.AddServiceActionGroup">
+      </group>
     </group>
     <group id="ServiceViewItemToolbar">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemToolbarActionGroup" id="ServiceViewItemToolbarGroup"/>
@@ -1207,8 +1222,8 @@
     <group id="ServiceViewItemPopup">
       <group class="com.intellij.execution.services.ServiceViewActionProvider$ItemPopupActionGroup" id="ServiceViewItemPopupGroup"/>
       <separator/>
-      <reference id="ServiceView.ShowInNewTab"/>
-      <reference id="ServiceView.SplitToNewTabs"/>
+      <reference id="ServiceView.OpenInNewTab"/>
+      <reference id="ServiceView.OpenEachInNewTab"/>
       <reference id="ServiceView.SplitByType"/>
       <separator/>
       <reference id="$Delete"/>
@@ -1230,6 +1245,10 @@
            class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
       <add-to-group group-id="ServiceView.Filter"/>
     </group>
+    <action id="RunDashboard.AddType" text="Run Configuration Type"
+            class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
+      <add-to-group group-id="ServiceView.AddService"/>
+    </action>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>

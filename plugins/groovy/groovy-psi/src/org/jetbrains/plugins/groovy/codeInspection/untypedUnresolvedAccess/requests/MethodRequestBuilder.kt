@@ -30,8 +30,6 @@ class MethodRequestsBuilder(private val myCall: GrMethodCall) {
   }
 
   private fun processClass(clazz: PsiClass, invokedExpression: GrReferenceExpression) {
-    //if (CreateMethodFromUsageFix.isMethodSignatureExists(myCall, clazz)) return // TODO add check
-
     val modifiers = mutableSetOf<JvmModifier>()
     if (GrStaticChecker.isInStaticContext(invokedExpression, clazz)) modifiers += JvmModifier.STATIC
     myRequests[clazz] = CreateMethodFromGroovyUsageRequest(myCall, modifiers)

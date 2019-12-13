@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
@@ -151,7 +152,7 @@ private fun GrCodeReferenceElement.isInClosureSafeCast(): Boolean {
  * @return `true` if variable is declared in given block(nested closure and method blocks excluded)
  */
 fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
-  if (this is GrParameter) {
+  if (this is GrParameter && this.parent !is GrForInClause) {
     val parametersOwner = getParentOfType(block, GrParametersOwner::class.java, false)
     return declarationScope == parametersOwner
   }

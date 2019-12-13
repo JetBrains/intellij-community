@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -56,14 +56,13 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
     return factory.createWithInnerClassesScopeChooser(myTitle, classFilter.getScope(), classFilter, null);
   }
 
-  @SuppressWarnings("deprecation")
   protected void onClassChosen(@NotNull PsiClass psiClass) {
     onClassChoosen(psiClass);
   }
 
-  /** Override {@link #onClassChosen(PsiClass)} instead. */
+  /** @deprecated override {@link #onClassChosen(PsiClass)} instead. */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings({"DeprecatedIsStillUsed", "SpellCheckingInspection", "unused"})
   protected void onClassChoosen(PsiClass psiClass) { }
 
@@ -77,9 +76,10 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
 
   protected abstract PsiClass findClass(String className);
 
-  /** Use {@link AppClassBrowser#AppClassBrowser(Project, ConfigurationModuleSelector)} instead. */
+  /** @deprecated use {@link AppClassBrowser#AppClassBrowser(Project, ConfigurationModuleSelector)} instead. */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("rawtypes")
   public static ClassBrowser createApplicationClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector) {
     return new AppClassBrowser(project, moduleSelector);
   }

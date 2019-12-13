@@ -6,7 +6,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,17 +202,6 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
     return create(compute, ContainerUtil::createConcurrentWeakMap);
-  }
-
-  /**
-   * @deprecated needed for compatibility in case of moronic subclassing
-   * TODO to remove in IDEA 2018
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
-  @Deprecated
-  public V getOrDefault(Object key, V defaultValue) {
-      V v;
-      return (v = get(key)) != null ? v : defaultValue;
   }
 
   private static class CollectionWrapper<K> extends AbstractCollection<K> {

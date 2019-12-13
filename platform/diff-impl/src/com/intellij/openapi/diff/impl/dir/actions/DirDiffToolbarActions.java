@@ -48,7 +48,7 @@ public class DirDiffToolbarActions extends ActionGroup implements DumbAware {
       new ChangeCompareModeGroup(model),
       Separator.getInstance()));
 
-    if (model.isOperationsEnabled()) {
+    if (model.getSettings().enableSyncActions && model.isOperationsEnabled()) {
       actions.add(new SynchronizeDiff(model, true));
       actions.add(new SynchronizeDiff(model, false));
     }

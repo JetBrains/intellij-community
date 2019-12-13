@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.beans.PropertyChangeListener
@@ -15,12 +16,13 @@ import javax.swing.JEditorPane
 
 class HTMLFileEditor(private val vFile: VirtualFile) : FileEditor {
   private val component: JComponent =
-    JEditorPane().also {
-      it.editorKit = UIUtil.getHTMLEditorKit()
-      it.text = VfsUtil.loadText(vFile)
-      it.border = JBUI.Borders.empty(8, 12)
-      it.isEditable = false
-    }
+    ScrollPaneFactory.createScrollPane(
+      JEditorPane().also {
+        it.editorKit = UIUtil.getHTMLEditorKit()
+        it.text = VfsUtil.loadText(vFile)
+        it.border = JBUI.Borders.empty(8, 12)
+        it.isEditable = false
+      })
 
   override fun getComponent(): JComponent = component
   override fun getPreferredFocusedComponent() = component

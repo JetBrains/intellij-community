@@ -69,7 +69,7 @@ fun askJBAccountCredentials(parent: Component?, project: Project?, authFailed: B
 
 //<editor-fold desc="Deprecated stuff.">
 @Deprecated("use #askJBAccountCredentials()")
-@ApiStatus.ScheduledForRemoval(inVersion = "2020")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 @JvmOverloads
 fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): DialogWrapper {
   val credentials = ErrorReportConfigurable.getCredentials()

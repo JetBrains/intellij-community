@@ -64,6 +64,7 @@ public class PyCompatibilityInspection extends PyInspection {
   public static final List<String> BACKPORTED_PACKAGES = ImmutableList.<String>builder()
     .add("enum")
     .add("typing")
+    .add("dataclasses")
     .build();
 
   public static final List<String> COMPATIBILITY_LIBS = Collections.singletonList("six");

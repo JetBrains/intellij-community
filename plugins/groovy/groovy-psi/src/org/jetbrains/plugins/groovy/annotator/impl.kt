@@ -67,3 +67,5 @@ fun checkInnerClassReferenceFromInstanceContext(ref: GrCodeReferenceElement, hol
 
   holder.createErrorAnnotation(nameElement, message("cannot.reference.non.static", qname))
 }
+
+internal val illegalJvmNameSymbols: Regex = "[.;\\[/<>:]".toRegex()

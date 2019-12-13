@@ -526,7 +526,9 @@ public class HelpTooltip {
         setSizeForWidth(width);
       }
       else {
-        setText(String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+        setText(BasicHTML.isHTMLString(title) ?
+                title :
+                String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
       }
     }
 

@@ -43,9 +43,8 @@ public interface FoldingModel {
 
   /**
    * @deprecated Does nothing
-   * TODO to remove in IDEA 2018
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2018")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   default boolean addFoldRegion(@NotNull FoldRegion region) {
     DeprecatedMethodException.report("Use addFoldRegion(int,int,String) instead");

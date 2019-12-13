@@ -10,13 +10,16 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public class HelpTooltipManager extends HelpTooltip {
+  public static final String SHORTCUT_PROPERTY = "helptooltip.shortcut";
+
   public HelpTooltipManager() {
     getDismissDelay();
     createMouseListeners();
   }
 
   public void showTooltip(@NotNull JComponent component, @NotNull MouseEvent event) {
-    initPopupBuilder(new HelpTooltip().setTitle(component.getToolTipText(event)));
+    initPopupBuilder(new HelpTooltip().setTitle(component.getToolTipText(event)).
+      setShortcut((String)component.getClientProperty(SHORTCUT_PROPERTY)));
 
     if (event.getID() == MouseEvent.MOUSE_ENTERED) {
       myMouseListener.mouseEntered(event);

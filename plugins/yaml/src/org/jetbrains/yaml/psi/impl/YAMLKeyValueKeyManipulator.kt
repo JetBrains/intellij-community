@@ -14,15 +14,29 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class YAMLKeyValueKeyManipulator : AbstractElementManipulator<YAMLKeyValue>() {
   override fun handleContentChange(element: YAMLKeyValue, range: TextRange, newContent: String?): YAMLKeyValue? {
-    if (newContent == null) return null
-    val updatedKey = element.keyText.replaceRange(range.startOffset, range.endOffset, newContent)
+    val originalContent = element.getRawKeyText() ?: return element
+
+    if (newContent == null) return element
+    val updatedKey = originalContent.replaceRange(range.startOffset, range.endOffset, newContent)
 
     val generator = YAMLElementGenerator.getInstance(element.project)
-    val value = element.value
-    val valueText = when (value) {
+    val valueText = when (val value = element.value) {
       is YAMLMapping -> value.text
       else -> element.valueText
     }
     return generator.createYamlKeyValue(updatedKey, valueText).also { element.replace(it) }
   }
+
+  /**
+   * @return range of unquoted key text
+   */
+  override fun getRangeInElement(element: YAMLKeyValue): TextRange {
+    // don't use YAMLKeyValue#keyText since it implicitly unquotes text making it impossible to calculate right range
+    val content = element.getRawKeyText() ?: return TextRange.EMPTY_RANGE
+    val startOffset = if (content.startsWith("'") || content.startsWith("\"")) 1 else 0
+    val endOffset = if (content.length > 1 && (content.endsWith("'") || content.endsWith("\""))) -1 else 0
+    return TextRange(startOffset, content.length + endOffset)
+  }
+
+  private fun YAMLKeyValue.getRawKeyText(): String? = this.key?.text
 }

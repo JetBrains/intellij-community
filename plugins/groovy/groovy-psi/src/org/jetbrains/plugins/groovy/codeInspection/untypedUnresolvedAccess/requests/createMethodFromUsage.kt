@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import com.intellij.psi.PsiClass
+import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -16,7 +17,7 @@ fun generateCreateMethodActions(call: GrMethodCall): List<IntentionAction> {
     extensions.flatMap { ext ->
       ext.createAddMethodActions(clazz, request)
     }
-  }.groupActionsByType()
+  }.groupActionsByType(GroovyLanguage)
 }
 
 internal fun getTargetClasses(ref: GrReferenceExpression, predicate: (ref: PsiClass) -> Boolean): List<PsiClass> {

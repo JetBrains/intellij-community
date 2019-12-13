@@ -2,6 +2,7 @@
 package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,8 +31,16 @@ public abstract class ProjectManagerEx extends ProjectManager {
   @Nullable
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
+  @TestOnly
+  public final Project newProjectForTest(@NotNull Path file) {
+    OpenProjectTask options = new OpenProjectTask();
+    options.useDefaultProjectAsTemplate = false;
+    options.isNewProject = true;
+    return newProject(file, null, options);
+  }
+
   @Nullable
-  public abstract Project newProject(@NotNull Path file, boolean useDefaultProjectSettings);
+  public abstract Project newProject(@NotNull Path file, @Nullable String projectName, @NotNull OpenProjectTask options);
 
   /**
    * @deprecated Use {@link #loadProject(Path)}

@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 /**
  * @author Denis Zhdanov
@@ -266,8 +267,9 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
       return nullize(join(ArrayUtil.remove(ideModuleGroup, ideModuleGroup.length - 1), "."));
     } else {
       final String name = getInternalName();
-      if (name.lastIndexOf(".") > 0) {
-        return substringBeforeLast(name, "." + moduleName);
+      int i = name.lastIndexOf("." + moduleName);
+      if (i > -1) {
+        return name.substring(0, i);
       } else {
         return null;
       }

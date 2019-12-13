@@ -25,10 +25,10 @@ import org.apache.commons.lang.ArrayUtils
 
 
 private val LOG = logger<GitRevisionContentPreLoader>()
-private const val RECORD_SEPARATOR = "\u0001\u0002\u0003"
-private const val ITEM_SEPARATOR = "\u0002\u0003\u0001"
 
 class GitRevisionContentPreLoader(val project: Project) {
+
+  private val RECORD_SEPARATOR = (1..10).map { "\u0001\u0002\u0003".random() }.joinToString("")
 
   fun preload(root: VirtualFile, changes: Collection<Change>) {
     val toPreload = mutableListOf<Info>()
@@ -51,7 +51,7 @@ class GitRevisionContentPreLoader(val project: Project) {
     val h = GitBinaryHandler(project, root, GitCommand.CAT_FILE)
     h.setSilent(true)
     addTextConvParameters(project, h, false)
-    h.addParameters("--batch=$RECORD_SEPARATOR%(objectname)$ITEM_SEPARATOR%(objectsize)")
+    h.addParameters("--batch=$RECORD_SEPARATOR%(objectname)")
     h.endOptions()
     h.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(
       // we need to pass '<hash> <path>', otherwise --filters parameter doesn't work
@@ -88,7 +88,7 @@ class GitRevisionContentPreLoader(val project: Project) {
 
     return trees.map { tree ->
       if (tree !is GitIndexUtil.StagedFile) {
-        LOG.warn("Unexpected tree: $tree");
+        LOG.warn("Unexpected tree: $tree")
         return null
       }
 
@@ -107,7 +107,7 @@ class GitRevisionContentPreLoader(val project: Project) {
     val result = mutableListOf<ByteArray>()
     var currentPosition = 0
     for (hash in hashes) {
-      val separatorBytes = "$RECORD_SEPARATOR${hash}$ITEM_SEPARATOR".toByteArray()
+      val separatorBytes = "$RECORD_SEPARATOR${hash}".toByteArray()
       if (!ArrayUtil.startsWith(output, currentPosition, separatorBytes)) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null
@@ -120,18 +120,11 @@ class GitRevisionContentPreLoader(val project: Project) {
         return null
       }
 
-      val sizeBytes = output.copyOfRange(currentPosition + separatorBytes.size, eolIndex)
-      val size: Int
-      try {
-        size = Integer.parseInt(String(sizeBytes))
-      }
-      catch (e: NumberFormatException) {
-        LOG.error("Couldn't parse size from ${sizeBytes.contentToString()}")
-        return null
-      }
+      val plainSeparatorBytes = RECORD_SEPARATOR.toByteArray()
+      val nextSeparator = ArrayUtil.indexOf(output, plainSeparatorBytes, eolIndex)
 
       val startIndex = eolIndex + 1
-      val endIndex = startIndex + size + 1
+      val endIndex = if (nextSeparator > 0) nextSeparator else output.size
       if (endIndex > output.size) {
         LOG.error("Unexpected output for hash $hash at position $currentPosition", Attachment("catfile.txt", String(output)))
         return null

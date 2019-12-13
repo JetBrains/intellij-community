@@ -56,6 +56,7 @@ class CompletionLoggerInitializer(private val actionListener: LookupActionsListe
   }
 
   private fun sessionShouldBeLogged(experimentHelper: WebServiceStatus, language: Language): Boolean {
+    if (CompletionTrackerDisabler.isDisabled()) return false
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || experimentHelper.isExperimentOnCurrentIDE()) return true
 

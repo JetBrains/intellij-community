@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/** @deprecated induced exceptions are now grouped as attachments of the initial one - see {@link MessagePool} for details (to be removed in IDEA 2020) */
+/** @deprecated induced exceptions are now grouped as attachments of the initial one - see {@link MessagePool} for details */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
 public class GroupedLogMessage extends AbstractMessage {
   private final List<AbstractMessage> myMessages;
 

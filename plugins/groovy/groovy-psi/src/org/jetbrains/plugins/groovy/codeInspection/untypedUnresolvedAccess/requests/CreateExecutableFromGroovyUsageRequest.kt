@@ -12,15 +12,14 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.util.createSmartPointer
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
-internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCallExpression>(
+internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   call: T,
   private val modifiers: Collection<JvmModifier>
 ) : CreateExecutableRequest {
@@ -29,6 +28,8 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCallExp
   private val project = psiManager.project
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
   protected val call: T get() = callPointer.element ?: error("dead pointer")
+
+  abstract fun getArguments() : List<Argument>?
 
   override fun isValid() = callPointer.element != null
 
@@ -50,36 +51,13 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCallExp
   }
 
   fun getArgumentTypes(): List<Pair<PsiType, GrExpression?>>? {
-    val result = mutableListOf<Pair<PsiType, GrExpression?>>()
-    val namedArguments = call.namedArguments
-    if (namedArguments.isNotEmpty()) {
-      result.add(GrMapType.createFromNamedArgs(call, namedArguments) to null)
+    return getArguments()?.map {
+      if (it is ExpressionArgument) it.type to it.expression
+      else it.type to null
+    }?.map {(type, expression) ->
+      val expectedType = anonymousClassesToBase(type) ?: TypesUtil.getJavaLangObject(call)
+      expectedType to expression
     }
-
-    val expressionArguments = call.expressionArguments
-    for (expression in expressionArguments) {
-      val type = anonymousClassesToBase(expression.type)
-      if (expression is GrSpreadArgument) {
-        if (type is GrTupleType) {
-          type.componentTypes.forEach { result.add(it to null) }
-        }
-        else {
-          return null
-        }
-      }
-      else {
-        val expectedType = type ?: TypesUtil.getJavaLangObject(expression)
-        result.add(expectedType to expression)
-      }
-    }
-
-    val closureArguments = call.closureArguments
-    for (closure in closureArguments) {
-      val expectedType = closure.type ?: TypesUtil.getJavaLangObject(closure)
-      result.add(expectedType to null)
-    }
-
-    return result
   }
 
   private fun anonymousClassesToBase(type: PsiType?): PsiType? {
