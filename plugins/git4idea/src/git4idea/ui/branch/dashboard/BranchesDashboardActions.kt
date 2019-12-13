@@ -21,10 +21,7 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.isRemoteBranchProtected
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchPopupActions
-import git4idea.ui.branch.createOrCheckoutNewBranch
-import git4idea.ui.branch.isTrackingInfosExist
-import git4idea.ui.branch.updateBranches
+import git4idea.ui.branch.*
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -116,6 +113,15 @@ internal object BranchesDashboardActions {
   }
 
   class UpdateSelectedBranchAction : BranchesActionBase(text = "Update Selected", icon = AllIcons.Actions.CheckOut) {
+    override fun update(e: AnActionEvent) {
+      val enabledAndVisible = e.project?.let(::hasRemotes) ?: false
+      e.presentation.isEnabledAndVisible = enabledAndVisible
+
+      if (enabledAndVisible) {
+        super.update(e)
+      }
+    }
+
     override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
       val presentation = e.presentation
       if (GitFetchSupport.fetchSupport(project).isFetchRunning) {

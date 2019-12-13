@@ -2,13 +2,13 @@
 package git4idea.ui.branch
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
@@ -159,3 +159,7 @@ internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<
     repositories
       .flatMap(GitRepository::getBranchTrackInfos)
       .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
+
+internal fun hasRemotes(project: Project): Boolean {
+  return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+}

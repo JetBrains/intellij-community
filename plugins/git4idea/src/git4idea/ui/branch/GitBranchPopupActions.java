@@ -793,6 +793,11 @@ public class GitBranchPopupActions {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      Project project = e.getProject();
+      if (project == null || !hasRemotes(project)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
       String branchPresentation = getBranchPresentation(myBranchName);
       String description = String.format("Fetch remote tracking branch and fast-forward %s (like `git fetch %s:%s`)",
                                          branchPresentation, myBranchName, myBranchName);
