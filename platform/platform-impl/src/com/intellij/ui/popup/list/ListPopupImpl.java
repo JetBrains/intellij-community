@@ -583,7 +583,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
 
       boolean isClick = UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) || UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED);
-      if (!isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
+      if (isClick || myList.locationToIndex(e.getPoint()) == myList.getSelectedIndex()) {
         super.processMouseEvent(e);
       }
     }
