@@ -68,7 +68,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
   @Nullable
   @Override
   public PsiPattern getPattern() {
-    return PsiTreeUtil.findChildOfType(this, PsiPattern.class);
+    return PsiTreeUtil.getChildOfType(this, PsiPattern.class);
   }
 
   @Override
