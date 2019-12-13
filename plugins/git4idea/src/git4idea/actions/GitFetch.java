@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static git4idea.GitUtil.getRepositories;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
+import static git4idea.ui.branch.GitBranchActionsUtilKt.hasRemotes;
 
 public class GitFetch extends DumbAwareAction {
 
@@ -25,8 +26,7 @@ public class GitFetch extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      boolean hasRemotes = getRepositories(project).stream().anyMatch(repository -> !repository.getRemotes().isEmpty());
-      e.getPresentation().setEnabledAndVisible(hasRemotes);
+      e.getPresentation().setEnabledAndVisible(hasRemotes(project));
     }
   }
 
