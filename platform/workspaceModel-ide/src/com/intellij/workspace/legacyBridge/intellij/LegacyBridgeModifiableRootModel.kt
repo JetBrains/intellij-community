@@ -28,7 +28,6 @@ import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEn
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
-import com.intellij.workspace.legacyBridge.typedModel.module.toEntityDependencyScope
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -121,27 +120,14 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun addOrderEntry(orderEntry: OrderEntry): Unit = when (orderEntry) {
-    is LibraryOrderEntry -> {
-      val libraryName = orderEntry.libraryName
-      if (libraryName.isNullOrEmpty()) error("Library name is null or empty: $orderEntry")
-
-      updateDependencies {
-        it + ModuleDependencyItem.Exportable.LibraryDependency(
-          library = LibraryId(libraryName, toLibraryTableId(orderEntry.libraryLevel)),
-          exported = orderEntry.isExported,
-          scope = orderEntry.scope.toEntityDependencyScope()
-        )
-      }
+    is LibraryOrderEntryViaTypedEntity -> {
+      updateDependencies { it + orderEntry.libraryDependencyItem }
     }
 
     is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it); return } ?: error("Module is empty: $orderEntry")
-    is ModuleSourceOrderEntry -> updateDependencies {
-      it + ModuleDependencyItem.ModuleSourceDependency
-    }
+    is ModuleSourceOrderEntry -> updateDependencies { it + ModuleDependencyItem.ModuleSourceDependency }
 
-    is InheritedJdkOrderEntry -> updateDependencies {
-      it + ModuleDependencyItem.InheritedSdkDependency
-    }
+    is InheritedJdkOrderEntry -> updateDependencies { it + ModuleDependencyItem.InheritedSdkDependency }
     is ModuleJdkOrderEntry -> updateDependencies {
       it + ModuleDependencyItem.SdkDependency(orderEntry.jdkName, orderEntry.jdk.sdkType.name)
     }

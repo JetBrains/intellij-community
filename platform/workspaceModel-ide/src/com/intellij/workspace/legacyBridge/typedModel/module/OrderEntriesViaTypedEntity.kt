@@ -172,7 +172,7 @@ internal abstract class LibraryOrderEntryBaseViaTypedEntity(
 internal class LibraryOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
-  private val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
+  internal val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
   private val moduleLibraryTable: LibraryTable,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : LibraryOrderEntryBaseViaTypedEntity(model, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
@@ -239,7 +239,7 @@ internal class LibraryOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), moduleLibraryTable, if (isModifiable) updater else null)
+  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), rootModel.moduleLibraryTable, if (isModifiable) updater else null)
 
   override fun isSynthetic(): Boolean = isModuleLevel
 }
