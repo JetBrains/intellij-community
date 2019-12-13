@@ -32,7 +32,7 @@
       <with attribute="implementationClass" implements="com.intellij.psi.formatter.WhiteSpaceFormattingStrategy"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.indentStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.indentStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.IndentStrategy"/>
     </extensionPoint>
 
