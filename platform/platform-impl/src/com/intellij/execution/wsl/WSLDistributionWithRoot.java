@@ -45,10 +45,14 @@ public class WSLDistributionWithRoot extends WSLDistribution {
     super(wslDistribution);
     final File uncRoot = getUNCRoot();
     String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
+
     final boolean isDirectory = wslRootInHost != null && new File(wslRootInHost).isDirectory();
-    if (Experiments.getInstance().isFeatureEnabled("wsl.p9.support")
-        && (Experiments.getInstance().isFeatureEnabled("wsl.prefer.p9.support") || !isDirectory)) {
-      wslRootInHost = FileUtil.toSystemDependentName(uncRoot.getPath());
+    final boolean checkP9root = Experiments.getInstance().isFeatureEnabled("wsl.prefer.p9.support") || !isDirectory;
+    if (Experiments.getInstance().isFeatureEnabled("wsl.p9.support") && checkP9root) {
+      final String p9root = FileUtil.toSystemDependentName(uncRoot.getPath());
+      if (FileUtil.exists(p9root)) {
+        wslRootInHost = p9root;
+      }
     }
     if (!FileUtil.exists(wslRootInHost)) {
       LOG.warn("WSL rootfs doesn't exist: " + wslRootInHost);
