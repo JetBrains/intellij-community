@@ -1,4 +1,4 @@
-// "Fix all 'Member access can be tightened' problems in file" "true"
+// "Fix all 'Declaration access can be weaker' problems in file" "true"
 class Test {
   <caret>public int myCounter;
 
