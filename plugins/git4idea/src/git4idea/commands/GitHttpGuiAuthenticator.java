@@ -172,9 +172,15 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myAuthenticationMode != GitAuthenticationMode.NONE) {
       delegates.add(passwordSafeProvider);
     }
-    if (myAuthenticationMode == GitAuthenticationMode.FULL) {
-      delegates.addAll(ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
-                                         (provider) -> new ExtensionAdapterProvider(unifiedUrl, myProject, provider)));
+    List<ExtensionAdapterProvider> extensionAdapterProviders = ContainerUtil.map(GitHttpAuthDataProvider.EP_NAME.getExtensions(),
+                                                                                 (provider) -> new ExtensionAdapterProvider(unifiedUrl,
+                                                                                                                            myProject,
+                                                                                                                            provider));
+    if (myAuthenticationMode == GitAuthenticationMode.SILENT) {
+      delegates.addAll(ContainerUtil.filter(extensionAdapterProviders, p -> p.myDelegate.isSilent()));
+    }
+    else if (myAuthenticationMode == GitAuthenticationMode.FULL) {
+      delegates.addAll(extensionAdapterProviders);
       delegates.add(dialogProvider);
     }
     return delegates;
