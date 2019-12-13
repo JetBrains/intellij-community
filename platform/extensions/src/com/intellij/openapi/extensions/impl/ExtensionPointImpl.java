@@ -641,7 +641,10 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
 
       clearCache();
-      listenerCallbacks.add(removeAdapter(adapter, i));
+      Runnable listenerCallback = removeAdapter(adapter, i);
+      if (listenerCallback != null) {
+        listenerCallbacks.add(listenerCallback);
+      }
       if (stopAfterFirstMatch) {
         return true;
       }
