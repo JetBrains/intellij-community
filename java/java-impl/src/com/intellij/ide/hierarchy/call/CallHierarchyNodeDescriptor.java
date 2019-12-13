@@ -170,7 +170,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       FileEditorManager.getInstance(myProject).openFile(psiFile.getVirtualFile(), requestFocus);
     }
 
-    Editor editor = PsiUtilBase.findEditor(callElement);
+    Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(callElement);
 
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);

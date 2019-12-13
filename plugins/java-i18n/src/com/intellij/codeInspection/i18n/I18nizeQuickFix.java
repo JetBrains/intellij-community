@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,8 +116,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
 
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
       try {
-        performI18nization(psiFile, PsiUtilBase.findEditor(psiFile), dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(),
-                           dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
+        performI18nization(psiFile, PsiEditorUtil.Service.getInstance().findEditorByPsiElement(psiFile), dialog.getLiteralExpression(),
+                           propertiesFiles, dialog.getKey(), dialog.getValue(), dialog.getI18nizedText(), dialog.getParameters(),
                            dialog.getPropertyCreationHandler());
       }
       catch (IncorrectOperationException e) {
