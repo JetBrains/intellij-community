@@ -565,13 +565,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
       return new DarculaJBPopupComboPopup<Object>(comboBox) {
         @Override
-        protected void configureList(@NotNull JList<Object> list) {
+        public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);
           list.setBackground(UIManager.getColor("TextField.background"));
         }
 
         @Override
-        protected void customizeListRendererComponent(JComponent component) {
+        public void customizeListRendererComponent(JComponent component) {
           super.customizeListRendererComponent(component);
           component.setBorder(getList().getComponentOrientation().isLeftToRight()
                               ? JBUI.Borders.empty(0, 5, 0, 1)

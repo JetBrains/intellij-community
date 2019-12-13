@@ -6,23 +6,16 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBoxPopupState;
-import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.WizardPopup;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.ListPopupModel;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.plaf.basic.ComboPopup;
@@ -30,15 +23,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * @author gregsh
  */
 @ApiStatus.Experimental
-public class DarculaJBPopupComboPopup<T> implements ComboPopup,
+public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Context<T>,
                                                     ItemListener, MouseListener, MouseMotionListener, MouseWheelListener,
                                                     PropertyChangeListener, AncestorListener {
 
@@ -47,7 +37,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
 
   private final JComboBox<T> myComboBox;
   private final JList<T> myProxyList = new JBList<>();
-  private MyListPopupImpl myPopup;
+  private ComboBoxPopup<T> myPopup;
   private boolean myJustClosedViaClick;
 
   public DarculaJBPopupComboPopup(@NotNull JComboBox<T> comboBox) {
@@ -58,19 +48,40 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     myComboBox.addAncestorListener(this);
   }
 
-  @NotNull
-  private ArrayList<T> copyItemsFromModel() {
-    ComboBoxModel<T> model = myComboBox.getModel();
-    return copyItemsFromModel(model);
+  @Nullable
+  @Override
+  public Project getProject() {
+    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
   }
 
   @NotNull
-  private ArrayList<T> copyItemsFromModel(@NotNull ListModel<T> model) {
-    ArrayList<T> items = new ArrayList<>(model.getSize());
-    for (int i = 0, size = model.getSize(); i < size; i++) {
-      items.add(model.getElementAt(i));
-    }
-    return items;
+  @Override
+  public ListModel<T> getModel() {
+    return myComboBox.getModel();
+  }
+
+  @NotNull
+  @Override
+  public ListCellRenderer<? super T> getRenderer() {
+    return myComboBox.getRenderer();
+  }
+
+  @Override
+  public void setSelectedItem(T selectedValue) {
+    // this call could show some more controls...
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myComboBox.setSelectedItem(selectedValue);
+    }, ModalityState.stateForComponent(myComboBox));
+  }
+
+  @Override
+  public int getMaximumRowCount() {
+    return Math.max(10, myComboBox.getMaximumRowCount());
+  }
+
+  @Override
+  public void onPopupStepCancelled() {
+    myComboBox.firePopupMenuCanceled();
   }
 
   @Override
@@ -82,15 +93,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
       myPopup.cancel();
     }
 
-    MyBasePopupState step = new MyBasePopupState(() -> myComboBox.getModel()) {
-      @Override
-      public void canceled() {
-        myComboBox.firePopupMenuCanceled();
-      }
-    };
-    step.setDefaultOptionIndex(myComboBox.getSelectedIndex());
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
-    myPopup = new MyListPopupImpl(project, step) {
+    myPopup = new ComboBoxPopup<T>(this, myComboBox.getSelectedItem()) {
       @Override
       public void cancel(InputEvent e) {
         if (e instanceof MouseEvent) {
@@ -110,7 +113,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
         //model may drift from the time we decided to open the popup,
         //let's update it to make sure we did not miss anything
         if (useLiveUpdateWithModel()) {
-          syncWithModelChange();
+          myPopup.syncWithModelChange();
         }
       }
 
@@ -122,6 +125,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
         myProxyList.setModel(myComboBox.getModel());
       }
     });
+
     JList<T> list = myPopup.getList();
     myProxyList.setCellRenderer(list.getCellRenderer());
     myProxyList.setModel(list.getModel());
@@ -129,19 +133,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
     myPopup.showUnderneathOf(myComboBox);
   }
 
-  protected void configureList(@NotNull JList<T> list) {
+  @Override
+  public void configureList(@NotNull JList<T> list) {
     list.setFont(myComboBox.getFont());
     list.setForeground(myComboBox.getForeground());
     list.setBackground(myComboBox.getBackground());
-    list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
-    list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
-    list.setBorder(null);
-    list.setFocusable(false);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-  }
-
-  protected void customizeListRendererComponent(JComponent component) {
-    component.setBorder(JBUI.Borders.empty(2, 8));
   }
 
   @Override
@@ -198,25 +194,13 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
         hide();
       }
       else {
-        syncWithModelChange();
+        myPopup.syncWithModelChange();
       }
     }
   }
 
   private boolean useLiveUpdateWithModel() {
     return Boolean.TRUE.equals(myComboBox.getClientProperty(USE_LIVE_UPDATE_MODEL));
-  }
-
-  private void syncWithModelChange() {
-    //noinspection unchecked,rawtypes
-    List<T> values = ((BaseListPopupStep)myPopup.getStep()).getValues();
-    values.clear();
-    values.addAll(copyItemsFromModel());
-    JList<?> popupList = myPopup.getList();
-    myPopup.updateVisibleRowCount();
-    ((ListPopupModel<?>)popupList.getModel()).syncModel();
-    popupList.setVisibleRowCount(Math.min(values.size(), Math.max(10, myComboBox.getMaximumRowCount())));
-    myPopup.setSize(popupList.getPreferredSize());
   }
 
   @Override
@@ -290,147 +274,5 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup,
   @Override
   public void ancestorMoved(AncestorEvent event) {
     hide();
-  }
-
-  private class MyDelegateRenderer implements ListCellRenderer<T> {
-    @Override
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      //noinspection unchecked
-      Component component = myComboBox.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
-      if (component instanceof JComponent &&
-          !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        customizeListRendererComponent((JComponent)component);
-      }
-      return component;
-    }
-  }
-
-  // a helper to implement proper cast
-  private static abstract class MyStaticBasePopupState<T> extends BaseListPopupStep<T> {
-    protected MyStaticBasePopupState(List<? extends T> values) {
-      super("", values);
-    }
-  }
-
-  private class MyBasePopupState extends MyStaticBasePopupState<T> {
-    private final Supplier<ListModel<T>> myGetComboboxModel;
-
-    private MyBasePopupState(@NotNull Supplier<ListModel<T>> getComboboxModel) {
-      super(copyItemsFromModel(getComboboxModel.get()));
-      myGetComboboxModel = getComboboxModel;
-    }
-
-    @Nullable
-    @Override
-    @SuppressWarnings("rawtypes")
-    public PopupStep onChosen(T selectedValue, boolean finalChoice) {
-      ListModel<T> model = myGetComboboxModel.get();
-      if (model instanceof ComboBoxPopupState) {
-        //noinspection unchecked
-        ListModel<T> nextModel = ((ComboBoxPopupState<T>)model).onChosen(selectedValue);
-        if (nextModel != null) {
-          return new MyBasePopupState(() -> nextModel);
-        }
-      }
-
-      // this call could show some more controls...
-      ApplicationManager.getApplication().invokeLater(() -> {
-        myComboBox.setSelectedItem(selectedValue);
-      }, ModalityState.stateForComponent(myComboBox));
-
-      return FINAL_CHOICE;
-    }
-
-    @Override
-    public boolean hasSubstep(T selectedValue) {
-      ListModel<T> model = myGetComboboxModel.get();
-      if (model instanceof ComboBoxPopupState) {
-        //noinspection unchecked
-        return ((ComboBoxPopupState<T>)model).hasSubstep(selectedValue);
-      }
-      return super.hasSubstep(selectedValue);
-    }
-
-    @Override
-    public boolean isSpeedSearchEnabled() {
-      return true;
-    }
-
-    @NotNull
-    @Override
-    public String getTextFor(T value) {
-      Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
-             component instanceof JLabel ? ((JLabel)component).getText() :
-             component instanceof SimpleColoredComponent ?
-             ((SimpleColoredComponent)component).getCharSequence(false).toString() : String.valueOf(value);
-    }
-
-    @Override
-    public boolean isSelectable(T value) {
-      Component component = myComboBox.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return !(component instanceof TitledSeparator || component instanceof JSeparator);
-    }
-  }
-
-  private class MyListPopupImpl extends ListPopupImpl {
-    MyListPopupImpl(@Nullable Project project,
-                    @NotNull BaseListPopupStep<T> step) {
-      super(project, step);
-      configurePopup();
-    }
-
-    MyListPopupImpl(@Nullable Project project,
-                    @Nullable WizardPopup aParent,
-                    @NotNull BaseListPopupStep<T> aStep, Object parentValue) {
-      super(project, aParent, aStep, parentValue);
-      configurePopup();
-    }
-
-    @Override
-    protected void updateVisibleRowCount() {
-      super.updateVisibleRowCount();
-    }
-
-    @NotNull
-    @Override
-    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-      if (step instanceof MyStaticBasePopupState) {
-        //noinspection unchecked
-        return new MyListPopupImpl(getProject(), parent, (MyStaticBasePopupState<T>)step, parentValue);
-      }
-
-      throw new IllegalArgumentException(step.getClass().toString());
-    }
-
-    @Override
-    public JList<T> getList() {
-      //noinspection unchecked
-      return super.getList();
-    }
-
-    @Override
-    protected ListCellRenderer<T> getListElementRenderer() {
-      // we set the correct renderer explicitly
-      // to ensure getComponent().getPreferredSize() is computed
-      // correctly. Fixes the sub-popup jump's to the left on macOS
-      return new MyDelegateRenderer();
-    }
-
-    void configurePopup() {
-      setMaxRowCount(Math.max(10, myComboBox.getMaximumRowCount()));
-      setRequestFocus(false);
-
-      JList<T> list = getList();
-      configureList(list);
-      Border border = UIManager.getBorder("ComboPopup.border");
-      if (border != null) {
-        getContent().setBorder(border);
-      }
-    }
   }
 }

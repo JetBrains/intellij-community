@@ -128,7 +128,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
       return new DarculaJBPopupComboPopup<Object>(comboBox) {
         @Override
-        protected void configureList(@NotNull JList<Object> list) {
+        public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);
           list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
         }
