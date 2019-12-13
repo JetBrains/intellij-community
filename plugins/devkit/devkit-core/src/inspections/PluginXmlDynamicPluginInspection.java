@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -71,7 +72,7 @@ public class PluginXmlDynamicPluginInspection extends BasicDomElementsInspection
 
   private static void highlightExtensionPoint(DomElementAnnotationHolder holder, ExtensionPoint extensionPoint) {
     if (!DomUtil.hasXml(extensionPoint.getDynamic())) {
-      final LocalQuickFix[] fixes = holder.isOnTheFly() ? new LocalQuickFix[]{
+      final LocalQuickFix[] fixes = holder.isOnTheFly() && ApplicationManager.getApplication().isInternal() ? new LocalQuickFix[]{
         createAnalyzeEPFix("AnalyzeEPUsage", extensionPoint),
         createAnalyzeEPFix("AnalyzeEPUsageIgnoreSafeClasses", extensionPoint)
       } : LocalQuickFix.EMPTY_ARRAY;
