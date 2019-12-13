@@ -57,11 +57,11 @@ public final class EventLog {
   public static final String HELP_ID = "reference.toolwindows.event.log";
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
-  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
+  private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"']([^>]*)[\"'][^>]*>");
   private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
   private static final String DEFAULT_CATEGORY = "";
 
-  private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
+  private final LogModel myModel = new LogModel(null);
 
   public static void expireNotification(@NotNull Notification notification) {
     getApplicationService().myModel.removeNotification(notification);
@@ -162,7 +162,7 @@ public final class EventLog {
 
     indentNewLines(logDoc, lineSeparators, afterTitle, hasHtml, indent);
 
-    ArrayList<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<>();
+    List<Pair<TextRange, HyperlinkInfo>> list = new ArrayList<>();
     for (RangeMarker marker : links.keySet()) {
       if (!marker.isValid()) {
         showMore.set(true);
@@ -451,7 +451,7 @@ public final class EventLog {
     private final Project myProject;
 
     ProjectTracker(@NotNull Project project) {
-      myProjectModel = new LogModel(project, project);
+      myProjectModel = new LogModel(project);
       myProject = project;
 
       EventLog appService = ApplicationManager.getApplication().getServiceIfCreated(EventLog.class);
@@ -560,11 +560,10 @@ public final class EventLog {
     @NotNull
     private EventLogConsole createNewContent(@NotNull String name) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      EventLogConsole newConsole = new EventLogConsole(myProjectModel);
-      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(LOG_TOOL_WINDOW_ID);
-      EventLogToolWindowFactory.createContent(myProject, Objects.requireNonNull(toolWindow), newConsole, name);
+      ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(myProject).getToolWindow(LOG_TOOL_WINDOW_ID));
+      EventLogConsole newConsole = new EventLogConsole(myProjectModel, toolWindow.getDisposable());
+      EventLogToolWindowFactory.createContent(myProject, toolWindow, newConsole, name);
       myCategoryMap.put(name, newConsole);
-
       return newConsole;
     }
   }

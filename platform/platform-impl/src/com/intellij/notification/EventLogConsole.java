@@ -10,6 +10,7 @@ import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.notification.impl.ui.NotificationsUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
@@ -27,8 +28,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -52,13 +51,7 @@ final class EventLogConsole {
   private static final Key<String> GROUP_ID = Key.create("GROUP_ID");
   private static final Key<String> NOTIFICATION_ID = Key.create("NOTIFICATION_ID");
 
-  private final NotNullLazyValue<Editor> myLogEditor = new NotNullLazyValue<Editor>() {
-    @NotNull
-    @Override
-    protected Editor compute() {
-      return createLogEditor();
-    }
-  };
+  private final EditorEx myLogEditor;
 
   private final NotNullLazyValue<EditorHyperlinkSupport> myHyperlinkSupport = new NotNullLazyValue<EditorHyperlinkSupport>() {
     @NotNull
@@ -67,49 +60,40 @@ final class EventLogConsole {
       return EditorHyperlinkSupport.get(getConsoleEditor());
     }
   };
+
   private final LogModel myProjectModel;
 
   private String myLastDate;
 
   private List<RangeHighlighter> myNMoreHighlighters;
 
-  EventLogConsole(@NotNull LogModel model) {
+  EventLogConsole(@NotNull LogModel model, @NotNull Disposable parentDisposable) {
     myProjectModel = model;
-  }
 
-  @NotNull
-  private Editor createLogEditor() {
     Project project = myProjectModel.getProject();
-    EditorEx editor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
-    editor.getSettings().setWhitespacesShown(false);
-    installNotificationsFont(editor);
-    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectClosed(@NotNull Project project) {
-        if (project == myProjectModel.getProject()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
+    myLogEditor = ConsoleViewUtil.setupConsoleEditor(project, false, false);
+    myLogEditor.getSettings().setWhitespacesShown(false);
+    installNotificationsFont(myLogEditor, parentDisposable);
+    Disposer.register(parentDisposable, () -> {
+      EditorFactory.getInstance().releaseEditor(myLogEditor);
     });
 
-    ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
+    ((EditorMarkupModel)myLogEditor.getMarkupModel()).setErrorStripeVisible(true);
 
-    final ClearLogAction clearLog = new ClearLogAction(this);
+    ClearLogAction clearLog = new ClearLogAction(this);
     clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(),
-                                       editor.getContentComponent());
+                                       myLogEditor.getContentComponent());
 
-    editor.installPopupHandler(new ContextMenuPopupHandler() {
+    myLogEditor.installPopupHandler(new ContextMenuPopupHandler() {
       @Override
       public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
-        final ActionManager actionManager = ActionManager.getInstance();
-        return createPopupActions(actionManager, clearLog, editor, event);
+        return createPopupActions(ActionManager.getInstance(), clearLog, myLogEditor, event);
       }
     });
-    return editor;
   }
 
-  private void installNotificationsFont(@NotNull final EditorEx editor) {
-    final DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
+  private static void installNotificationsFont(@NotNull EditorEx editor, @NotNull Disposable parentDisposable) {
+    DelegateColorScheme globalScheme = new DelegateColorScheme(EditorColorsManager.getInstance().getGlobalScheme()) {
       @Override
       public String getEditorFontName() {
         return getConsoleFontName();
@@ -149,7 +133,7 @@ final class EventLogConsole {
       }
     };
 
-    ApplicationManager.getApplication().getMessageBus().connect(myProjectModel).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         globalScheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
@@ -373,7 +357,7 @@ final class EventLogConsole {
 
   @NotNull
   public Editor getConsoleEditor() {
-    return myLogEditor.getValue();
+    return myLogEditor;
   }
 
   public void clearNMore() {
