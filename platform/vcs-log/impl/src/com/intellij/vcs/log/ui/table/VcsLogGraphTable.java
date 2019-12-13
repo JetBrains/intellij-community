@@ -872,7 +872,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     private void restoreCursor() {
-      if (getCursor().getType() == Cursor.HAND_CURSOR) {
+      if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
         setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
         myLastCursor = null;
       }
