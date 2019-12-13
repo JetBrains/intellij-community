@@ -345,18 +345,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindowPane = rootPane.toolWindowPane
     toolWindowPane.initDocumentComponent(project)
     this.toolWindowPane = toolWindowPane
-    rootPane.updateToolbar()
-
-    toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
-      val result = ArrayList<JComponent>(idToEntry.size)
-      for (entry in idToEntry.values) {
-        val component = entry.toolWindow.decoratorComponent
-        if (component != null && component.parent == null) {
-          result.add(component)
-        }
-      }
-      result.iterator()
-    })
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       commandProcessor.activate()
@@ -387,6 +375,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // must be executed in EDT
     ApplicationManager.getApplication().invokeLater(Runnable {
+      frame!!.rootPane!!.updateToolbar()
+
       pendingSetLayoutTask.getAndSet(null)?.run()
 
       if (toolWindowPane == null) {
@@ -431,10 +421,18 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           LOG.error("failed to init toolwindow ${bean.factoryClass}", t)
         }
       }
-
-      toolWindowPane!!.validate()
-      toolWindowPane!!.repaint()
     }
+
+    toolWindowPane!!.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
+      val result = ArrayList<JComponent>(idToEntry.size)
+      for (entry in idToEntry.values) {
+        val component = entry.toolWindow.decoratorComponent
+        if (component != null && component.parent == null) {
+          result.add(component)
+        }
+      }
+      result.iterator()
+    })
 
     service<ToolWindowManagerAppLevelHelper>()
   }
@@ -913,13 +911,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       icon = if (icon == null) null else ToolWindowIcon(icon, task.id),
       isAvailable = task.shouldBeAvailable)
 
-    val button = StripeButton(toolWindowPane!!, windowInfoSnapshot, toolWindow)
+    val button = StripeButton(toolWindowPane!!, toolWindow)
     val commands = mutableListOf<Runnable>()
 
     toolWindowPane.addStripeButton(button, info.anchor, layout.MyStripeButtonComparator(info.anchor, this))
 
     val entry = ToolWindowEntry(button, toolWindow, disposable, windowInfoSnapshot)
     idToEntry.put(task.id, entry)
+
+    // only after added to idToEntry map
+    button.init(toolWindow, windowInfoSnapshot)
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
@@ -1772,7 +1773,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val stripeButton = entry?.stripeButton
     if (stripeButton != null) {
       if (property == ToolWindowProperty.ICON) {
-        stripeButton.updateIcon()
+        stripeButton.updateIcon(toolWindow.icon)
       }
       else {
         stripeButton.updatePresentation()

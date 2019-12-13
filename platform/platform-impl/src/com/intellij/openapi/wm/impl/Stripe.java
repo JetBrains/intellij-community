@@ -29,7 +29,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
   private final ArrayList<StripeButton> buttons = new ArrayList<>();
 
-  private Dimension prefferedSize;
+  private Dimension preferredSize;
   private StripeButton myDragButton;
   private Rectangle myDropRectangle;
   private JComponent myDragButtonImage;
@@ -123,7 +123,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   void addButton(@NotNull StripeButton button, @NotNull Comparator<? super StripeButton> comparator) {
-    prefferedSize = null;
+    preferredSize = null;
     buttons.add(button);
     buttons.sort(comparator);
     add(button);
@@ -131,7 +131,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   void removeButton(@NotNull StripeButton button) {
-    prefferedSize = null;
+    preferredSize = null;
     buttons.remove(button);
     remove(button);
     revalidate();
@@ -139,7 +139,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Override
   public void invalidate() {
-    prefferedSize = null;
+    preferredSize = null;
     super.invalidate();
   }
 
@@ -416,11 +416,10 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Override
   public Dimension getPreferredSize() {
-    if (prefferedSize == null) {
-      prefferedSize = recomputeBounds(false, null, false).size;
+    if (preferredSize == null) {
+      preferredSize = recomputeBounds(false, null, false).size;
     }
-
-    return prefferedSize;
+    return preferredSize;
   }
 
   void updatePresentation() {
@@ -456,7 +455,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     myDragButton = null;
     myDragButtonImage = null;
     myFinishingDrop = false;
-    prefferedSize = null;
+    preferredSize = null;
     revalidate();
     repaint();
   }
@@ -467,7 +466,7 @@ final class Stripe extends JPanel implements UISettingsListener {
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;
-      prefferedSize = null;
+      preferredSize = null;
     }
 
     Point point = new Point(screenPoint);

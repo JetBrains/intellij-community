@@ -45,15 +45,14 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
 
-  StripeButton(@NotNull ToolWindowsPane pane, @NotNull WindowInfo info, @NotNull ToolWindowImpl toolWindow) {
+  StripeButton(@NotNull ToolWindowsPane pane, @NotNull ToolWindowImpl toolWindow) {
     myPane = pane;
     this.toolWindow = toolWindow;
 
     setFocusable(false);
 
     setBorder(JBUI.Borders.empty(5, 5, 0, 5));
-    updatePresentation();
-    apply(info);
+
     addActionListener(this);
     addMouseListener(new PopupHandler() {
       @Override
@@ -72,6 +71,14 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         processDrag(e);
       }
     });
+  }
+
+  void init(@NotNull ToolWindowImpl toolWindow, @NotNull WindowInfo info) {
+    updateState(toolWindow);
+    updateText(toolWindow);
+    updateIcon(toolWindow.getIcon());
+
+    apply(info);
   }
 
   @NotNull
@@ -102,11 +109,11 @@ public final class StripeButton extends AnchoredButton implements ActionListener
    * doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
   @Override
-  public void setMnemonic(final int mnemonic) {
+  public void setMnemonic(int mnemonic) {
     throw new UnsupportedOperationException("use setMnemonic2(int)");
   }
 
-  private void setMnemonic2(final int mnemonic) {
+  private void setMnemonic2(int mnemonic) {
     myMnemonic = mnemonic;
     revalidate();
     repaint();
@@ -284,9 +291,10 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   @Override
-  public void actionPerformed(final ActionEvent e) {
+  public void actionPerformed(@NotNull ActionEvent e) {
+    String id = toolWindow.getId();
     if (myPressedWhenSelected) {
-      toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+      toolWindow.getToolWindowManager().hideToolWindow(id, false);
     }
     else {
       toolWindow.getToolWindowManager().activated(toolWindow);
@@ -294,14 +302,14 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
     myPressedWhenSelected = false;
     //noinspection SpellCheckingInspection
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + getId());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
   }
 
   public void apply(@NotNull WindowInfo info) {
     windowInfo = info;
 
     setSelected(info.isVisible() || info.isActive());
-    updateState();
+    updateState(toolWindow);
   }
 
   private void showPopup(@Nullable Component component, int x, int y) {
@@ -317,18 +325,17 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   void updatePresentation() {
-    updateState();
-    updateText();
-    updateIcon();
+    updateState(toolWindow);
+    updateText(toolWindow);
+    updateIcon(toolWindow.getIcon());
   }
 
-  void updateIcon() {
-    Icon icon = toolWindow.getIcon();
+  void updateIcon(@Nullable Icon icon) {
     setIcon(icon);
     setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
   }
 
-  private void updateText() {
+  private void updateText(@NotNull ToolWindowImpl toolWindow) {
     String text = toolWindow.getStripeTitle();
     if (UISettings.getInstance().getShowToolWindowsNumbers()) {
       String toolWindowId = toolWindow.getId();
@@ -344,16 +351,15 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     setText(text);
   }
 
-  private void updateState() {
-    ToolWindowImpl window = toolWindow;
-    boolean toShow = window.isAvailable() || window.isPlaceholderMode();
+  private void updateState(@NotNull ToolWindowImpl toolWindow) {
+    boolean toShow = toolWindow.isAvailable() || toolWindow.isPlaceholderMode();
     if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
-      setVisible(window.isShowStripeButton() || isSelected());
+      setVisible(toolWindow.isShowStripeButton() || isSelected());
     }
     else {
-      setVisible(toShow && (window.isShowStripeButton() || isSelected()));
+      setVisible(toShow && (toolWindow.isShowStripeButton() || isSelected()));
     }
-    setEnabled(window.isAvailable());
+    setEnabled(toolWindow.isAvailable());
   }
 
   private boolean isDraggingNow() {

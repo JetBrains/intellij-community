@@ -23,7 +23,6 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.Component
@@ -344,7 +343,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun getStripeTitle(): String {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return ObjectUtils.notNull(stripeTitle, id)
+    return stripeTitle ?: id
   }
 
   override fun setIcon(newIcon: Icon) {
