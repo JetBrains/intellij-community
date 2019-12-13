@@ -19,7 +19,6 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -28,15 +27,15 @@ import java.util.List;
  */
 final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
-  private final ArrayList<StripeButton> myButtons = new ArrayList<>();
+  private final ArrayList<StripeButton> buttons = new ArrayList<>();
 
-  private Dimension myPrefSize;
+  private Dimension prefferedSize;
   private StripeButton myDragButton;
   private Rectangle myDropRectangle;
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
-  static final int DROP_DISTANCE_SENSIVITY = 20;
+  static final int DROP_DISTANCE_SENSITIVITY = 20;
 
   Stripe(int anchor) {
     super(new GridBagLayout());
@@ -53,50 +52,56 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   private static final class AdaptiveBorder implements Border {
     @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    public void paintBorder(@NotNull Component c, Graphics g, int x, int y, int width, int height) {
       Insets insets = ((JComponent)c).getInsets();
       g.setColor(UIUtil.CONTRAST_BORDER_COLOR);
-      drawBorder(g, x, y, width, height, insets);
+      drawBorder((Graphics2D)g, x, y, width, height, insets);
     }
 
-    private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.top == 1) LinePainter2D.paint((Graphics2D)g, x, y, x + width, y);
-      if (insets.right == 1) LinePainter2D.paint((Graphics2D)g, x + width - 1, y, x + width - 1, y + height);
-      if (insets.left == 1) LinePainter2D.paint((Graphics2D)g, x, y, x, y + height);
-      if (insets.bottom == 1) LinePainter2D.paint((Graphics2D)g, x, y + height - 1, x + width, y + height - 1);
+    private static void drawBorder(Graphics2D g, int x, int y, int width, int height, Insets insets) {
+      if (insets.top == 1) {
+        LinePainter2D.paint(g, x, y, x + width, y);
+      }
+      if (insets.right == 1) {
+        LinePainter2D.paint(g, x + width - 1, y, x + width - 1, y + height);
+      }
+      if (insets.left == 1) {
+        LinePainter2D.paint(g, x, y, x, y + height);
+      }
+      if (insets.bottom == 1) {
+        LinePainter2D.paint(g, x, y + height - 1, x + width, y + height - 1);
+      }
 
-      if (StartupUiUtil.isUnderDarcula()) {
-        final Color c = g.getColor();
-        if (insets.top == 2) {
-          g.setColor(c);
-          LinePainter2D.paint((Graphics2D)g, x, y, x + width, y);
-          g.setColor(Gray._85);
-          LinePainter2D.paint((Graphics2D)g, x, y + 1, x + width, y + 1);
-        }
-        if (insets.right == 2) {
-          g.setColor(Gray._85);
-          LinePainter2D.paint((Graphics2D)g, x + width - 1, y, x + width - 1, y + height);
-          g.setColor(c);
-          LinePainter2D.paint((Graphics2D)g, x + width - 2, y, x + width - 2, y + height);
-        }
-        if (insets.left == 2) {
-          g.setColor(Gray._85);
-          LinePainter2D.paint((Graphics2D)g, x + 1, y, x + 1, y + height);
-          g.setColor(c);
-          LinePainter2D.paint((Graphics2D)g, x, y, x, y + height);
-        }
-        if (insets.bottom == 2) {
-          //do nothing
-        }
+      if (!StartupUiUtil.isUnderDarcula()) {
+        return;
+      }
+
+      Color c = g.getColor();
+      if (insets.top == 2) {
+        g.setColor(c);
+        LinePainter2D.paint(g, x, y, x + width, y);
+        g.setColor(Gray._85);
+        LinePainter2D.paint(g, x, y + 1, x + width, y + 1);
+      }
+      if (insets.right == 2) {
+        g.setColor(Gray._85);
+        LinePainter2D.paint(g, x + width - 1, y, x + width - 1, y + height);
+        g.setColor(c);
+        LinePainter2D.paint(g, x + width - 2, y, x + width - 2, y + height);
+      }
+      if (insets.left == 2) {
+        g.setColor(Gray._85);
+        LinePainter2D.paint(g, x + 1, y, x + 1, y + height);
+        g.setColor(c);
+        LinePainter2D.paint(g, x, y, x, y + height);
       }
     }
 
     @SuppressWarnings("UseDPIAwareInsets")
     @Override
-    public Insets getBorderInsets(Component c) {
+    public Insets getBorderInsets(@NotNull Component c) {
       Stripe stripe = (Stripe)c;
       ToolWindowAnchor anchor = stripe.getAnchor();
-
       if (anchor == ToolWindowAnchor.LEFT) {
         return new Insets(1, 0, 0, 1);
       }
@@ -117,54 +122,37 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    updatePresentation();
-  }
-
   void addButton(@NotNull StripeButton button, @NotNull Comparator<? super StripeButton> comparator) {
-    myPrefSize = null;
-    myButtons.add(button);
-    myButtons.sort(comparator);
+    prefferedSize = null;
+    buttons.add(button);
+    buttons.sort(comparator);
     add(button);
     revalidate();
   }
 
   void removeButton(@NotNull StripeButton button) {
-    myPrefSize = null;
-    myButtons.remove(button);
+    prefferedSize = null;
+    buttons.remove(button);
     remove(button);
     revalidate();
   }
 
-  public List<StripeButton> getButtons() {
-    return Collections.unmodifiableList(myButtons);
-  }
-
   @Override
   public void invalidate() {
-    myPrefSize = null;
+    prefferedSize = null;
     super.invalidate();
   }
 
   @Override
   public void doLayout() {
     if (!myFinishingDrop) {
-      myLastLayoutData = recomputeBounds(true, getSize());
+      myLastLayoutData = recomputeBounds(true, getSize(), /* noDrop = */ false);
     }
   }
 
-  private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith) {
-    return recomputeBounds(setBounds, toFitWith, false);
-  }
-
   private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith, boolean noDrop) {
-    final LayoutData data = new LayoutData();
-    final int horizontaloffset = getHeight();
+    LayoutData data = new LayoutData();
+    int horizontalOffset = getHeight();
 
     data.eachY = 0;
     data.size = new Dimension();
@@ -172,7 +160,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     data.horizontal = isHorizontal();
     data.dragInsertPosition = -1;
     if (data.horizontal) {
-      data.eachX = horizontaloffset - 1;
+      data.eachX = horizontalOffset - 1;
       data.eachY = 1;
     }
     else {
@@ -181,15 +169,17 @@ final class Stripe extends JPanel implements UISettingsListener {
 
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
 
-    final Rectangle stripeSensetiveRec =
-      new Rectangle(-DROP_DISTANCE_SENSIVITY, -DROP_DISTANCE_SENSIVITY, getWidth() + DROP_DISTANCE_SENSIVITY * 2,
-                    getHeight() + DROP_DISTANCE_SENSIVITY * 2);
-    boolean processDrop = isDroppingButton() && stripeSensetiveRec.intersects(myDropRectangle) && !noDrop;
+    Rectangle stripeSensitiveRectangle = new Rectangle(-DROP_DISTANCE_SENSITIVITY, -DROP_DISTANCE_SENSITIVITY,
+                                                       getWidth() + DROP_DISTANCE_SENSITIVITY * 2, getHeight() + DROP_DISTANCE_SENSITIVITY * 2);
+    boolean processDrop = isDroppingButton() && stripeSensitiveRectangle.intersects(myDropRectangle) && !noDrop;
 
     if (toFitWith == null) {
-      for (StripeButton eachButton : myButtons) {
-        if (!eachButton.isVisible()) continue;
-        final Dimension eachSize = eachButton.getPreferredSize();
+      for (StripeButton button : buttons) {
+        if (!button.isVisible()) {
+          continue;
+        }
+
+        Dimension eachSize = button.getPreferredSize();
         data.fitSize.width = Math.max(eachSize.width, data.fitSize.width);
         data.fitSize.height = Math.max(eachSize.height, data.fitSize.height);
       }
@@ -199,7 +189,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     if (toFitWith != null) {
       LayoutData layoutData = recomputeBounds(false, null, true);
       if (data.horizontal) {
-        gap = toFitWith.width - horizontaloffset - layoutData.size.width - data.eachX;
+        gap = toFitWith.width - horizontalOffset - layoutData.size.width - data.eachX;
       }
       else {
         gap = toFitWith.height - layoutData.size.height - data.eachY;
@@ -221,7 +211,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
     for (StripeButton button : getButtonsToLayOut()) {
       insertOrder = button.getWindowInfo().getOrder();
-      final Dimension eachSize = button.getPreferredSize();
+      Dimension eachSize = button.getPreferredSize();
 
       if (!sidesStarted && button.getWindowInfo().isSplit()) {
         if (processDrop) {
@@ -267,7 +257,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
 
     if (isDroppingButton()) {
-      final Dimension dragSize = myDragButton.getPreferredSize();
+      Dimension dragSize = myDragButton.getPreferredSize();
       if (getAnchor().isHorizontal() == myDragButton.getWindowInfo().getAnchor().isHorizontal()) {
         data.size.width = Math.max(data.size.width, dragSize.width);
         data.size.height = Math.max(data.size.height, dragSize.height);
@@ -287,8 +277,10 @@ final class Stripe extends JPanel implements UISettingsListener {
     return data;
   }
 
-  private void tryDroppingOnGap(final LayoutData data, final int gap, final int insertOrder) {
-    if (data.dragTargetChoosen) return;
+  private void tryDroppingOnGap(LayoutData data, int gap, int insertOrder) {
+    if (data.dragTargetChoosen) {
+      return;
+    }
 
     int nonSideDistance;
     int sideDistance;
@@ -317,20 +309,23 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
+  @NotNull
   private List<StripeButton> getButtonsToLayOut() {
     List<StripeButton> result = new ArrayList<>();
 
     List<StripeButton> tools = new ArrayList<>();
     List<StripeButton> sideTools = new ArrayList<>();
 
-    for (StripeButton b : myButtons) {
-      if (!b.isVisible()) continue;
+    for (StripeButton button : buttons) {
+      if (!button.isVisible()) {
+        continue;
+      }
 
-      if (b.getWindowInfo().isSplit()) {
-        sideTools.add(b);
+      if (button.getWindowInfo().isSplit()) {
+        sideTools.add(button);
       }
       else {
-        tools.add(b);
+        tools.add(button);
       }
     }
 
@@ -340,7 +335,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     return result;
   }
 
-
+  @NotNull
   public ToolWindowAnchor getAnchor() {
     return ToolWindowAnchor.get(myAnchor);
   }
@@ -379,7 +374,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Nullable
   public StripeButton getButtonFor(@NotNull String toolWindowId) {
-    for (StripeButton button : myButtons) {
+    for (StripeButton button : buttons) {
       if (button.getId().equals(toolWindowId)) {
         return button;
       }
@@ -388,7 +383,9 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   public void setOverlayed(boolean overlayed) {
-    if (Registry.is("disable.toolwindow.overlay")) return;
+    if (Registry.is("disable.toolwindow.overlay")) {
+      return;
+    }
 
     Color bg = UIUtil.getPanelBackground();
     if (overlayed) {
@@ -399,7 +396,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  private static class LayoutData {
+  private static final class LayoutData {
     int eachX;
     int eachY;
     int gap;
@@ -419,27 +416,27 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Override
   public Dimension getPreferredSize() {
-    if (myPrefSize == null) {
-      myPrefSize = recomputeBounds(false, null).size;
+    if (prefferedSize == null) {
+      prefferedSize = recomputeBounds(false, null, false).size;
     }
 
-    return myPrefSize;
+    return prefferedSize;
   }
 
   void updatePresentation() {
-    for (StripeButton button : myButtons) {
+    for (StripeButton button : buttons) {
       button.updatePresentation();
     }
   }
 
   public boolean containsScreen(@NotNull Rectangle screenRec) {
-    final Point point = screenRec.getLocation();
+    Point point = screenRec.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return new Rectangle(point, screenRec.getSize()).intersects(
-      new Rectangle(-DROP_DISTANCE_SENSIVITY,
-                    -DROP_DISTANCE_SENSIVITY,
-                    getWidth() + DROP_DISTANCE_SENSIVITY,
-                    getHeight() + DROP_DISTANCE_SENSIVITY)
+      new Rectangle(-DROP_DISTANCE_SENSITIVITY,
+                    -DROP_DISTANCE_SENSITIVITY,
+                    getWidth() + DROP_DISTANCE_SENSITIVITY,
+                    getHeight() + DROP_DISTANCE_SENSITIVITY)
     );
   }
 
@@ -450,8 +447,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
     String id = myDragButton.toolWindow.getId();
     myFinishingDrop = true;
-    manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
-                                    myLastLayoutData.dragToSide);
+    manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
 
     manager.invokeLater(() -> resetDrop());
   }
@@ -460,21 +456,21 @@ final class Stripe extends JPanel implements UISettingsListener {
     myDragButton = null;
     myDragButtonImage = null;
     myFinishingDrop = false;
-    myPrefSize = null;
+    prefferedSize = null;
     revalidate();
     repaint();
   }
 
-  public void processDropButton(final StripeButton button, JComponent buttonImage, Point screenPoint) {
+  void processDropButton(@NotNull StripeButton button, @NotNull JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
       final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;
-      myPrefSize = null;
+      prefferedSize = null;
     }
 
-    final Point point = new Point(screenPoint);
+    Point point = new Point(screenPoint);
     SwingUtilities.convertPointFromScreen(point, this);
 
     myDropRectangle = new Rectangle(point, buttonImage.getSize());

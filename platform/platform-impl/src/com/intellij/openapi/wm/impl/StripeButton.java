@@ -210,7 +210,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    final Stripe stripe = myPane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
+    Stripe stripe = myPane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();

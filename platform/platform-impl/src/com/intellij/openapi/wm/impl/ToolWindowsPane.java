@@ -51,42 +51,42 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
-  private final JFrame myFrame;
+  private final JFrame frame;
 
-  private final TObjectFloatHashMap<String> myIdToSplitProportion = new TObjectFloatHashMap<>();
-  private Pair<ToolWindow, Integer> myMaximizedProportion;
+  private final TObjectFloatHashMap<String> idToSplitProportion = new TObjectFloatHashMap<>();
+  private Pair<ToolWindow, Integer> maximizedProportion;
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
    */
-  private final MyLayeredPane myLayeredPane;
+  private final MyLayeredPane layeredPane;
   /*
    * Splitters.
    */
-  private final ThreeComponentsSplitter myVerticalSplitter;
-  private final ThreeComponentsSplitter myHorizontalSplitter;
+  private final ThreeComponentsSplitter verticalSplitter;
+  private final ThreeComponentsSplitter horizontalSplitter;
 
   /*
    * Tool stripes.
    */
-  private final Stripe myLeftStripe;
-  private final Stripe myRightStripe;
-  private final Stripe myBottomStripe;
-  private final Stripe myTopStripe;
+  private final Stripe leftStripe;
+  private final Stripe rightStripe;
+  private final Stripe bottomStripe;
+  private final Stripe topStripe;
 
-  private final List<Stripe> myStripes = new ArrayList<>();
+  private final List<Stripe> stripes = new ArrayList<>();
 
-  private boolean myStripesOverlayed;
-  private boolean myWidescreen;
-  private boolean myLeftHorizontalSplit;
-  private boolean myRightHorizontalSplit;
+  private boolean stripesOverlayed;
+  private boolean isWideScreen;
+  private boolean leftHorizontalSplit;
+  private boolean rightHorizontalSplit;
 
   ToolWindowsPane(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     setOpaque(false);
-    myFrame = frame;
+    this.frame = frame;
 
     // splitters
-    myVerticalSplitter = new ThreeComponentsSplitter(true, parentDisposable);
+    verticalSplitter = new ThreeComponentsSplitter(true, parentDisposable);
     RegistryValue registryValue = Registry.get("ide.mainSplitter.min.size");
     registryValue.addListener(new RegistryValueListener() {
       @Override
@@ -94,45 +94,46 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         updateInnerMinSize(value);
       }
     }, parentDisposable);
-    myVerticalSplitter.setDividerWidth(0);
-    myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
-    myVerticalSplitter.setBackground(Color.gray);
-    myHorizontalSplitter = new ThreeComponentsSplitter(false, parentDisposable);
-    myHorizontalSplitter.setDividerWidth(0);
-    myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
-    myHorizontalSplitter.setBackground(Color.gray);
+    verticalSplitter.setDividerWidth(0);
+    verticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
+    verticalSplitter.setBackground(Color.gray);
+    horizontalSplitter = new ThreeComponentsSplitter(false, parentDisposable);
+    horizontalSplitter.setDividerWidth(0);
+    horizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
+    horizontalSplitter.setBackground(Color.gray);
     updateInnerMinSize(registryValue);
-    myWidescreen = UISettings.getInstance().getWideScreenSupport();
-    myLeftHorizontalSplit = UISettings.getInstance().getLeftHorizontalSplit();
-    myRightHorizontalSplit = UISettings.getInstance().getRightHorizontalSplit();
-    if (myWidescreen) {
-      myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
+    UISettings uiSettings = UISettings.getInstance();
+    isWideScreen = uiSettings.getWideScreenSupport();
+    leftHorizontalSplit = uiSettings.getLeftHorizontalSplit();
+    rightHorizontalSplit = uiSettings.getRightHorizontalSplit();
+    if (isWideScreen) {
+      horizontalSplitter.setInnerComponent(verticalSplitter);
     }
     else {
-      myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
+      verticalSplitter.setInnerComponent(horizontalSplitter);
     }
 
     // tool stripes
-    myTopStripe = new Stripe(SwingConstants.TOP);
-    myStripes.add(myTopStripe);
-    myLeftStripe = new Stripe(SwingConstants.LEFT);
-    myStripes.add(myLeftStripe);
-    myBottomStripe = new Stripe(SwingConstants.BOTTOM);
-    myStripes.add(myBottomStripe);
-    myRightStripe = new Stripe(SwingConstants.RIGHT);
-    myStripes.add(myRightStripe);
+    topStripe = new Stripe(SwingConstants.TOP);
+    stripes.add(topStripe);
+    leftStripe = new Stripe(SwingConstants.LEFT);
+    stripes.add(leftStripe);
+    bottomStripe = new Stripe(SwingConstants.BOTTOM);
+    stripes.add(bottomStripe);
+    rightStripe = new Stripe(SwingConstants.RIGHT);
+    stripes.add(rightStripe);
 
-    updateToolStripesVisibility();
+    updateToolStripesVisibility(uiSettings);
 
     // layered pane
-    myLayeredPane = new MyLayeredPane(myWidescreen ? myHorizontalSplitter : myVerticalSplitter);
+    layeredPane = new MyLayeredPane(isWideScreen ? horizontalSplitter : verticalSplitter);
 
     // compose layout
-    add(myTopStripe, JLayeredPane.POPUP_LAYER);
-    add(myLeftStripe, JLayeredPane.POPUP_LAYER);
-    add(myBottomStripe, JLayeredPane.POPUP_LAYER);
-    add(myRightStripe, JLayeredPane.POPUP_LAYER);
-    add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
+    add(topStripe, JLayeredPane.POPUP_LAYER);
+    add(leftStripe, JLayeredPane.POPUP_LAYER);
+    add(bottomStripe, JLayeredPane.POPUP_LAYER);
+    add(rightStripe, JLayeredPane.POPUP_LAYER);
+    add(layeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }
@@ -145,45 +146,46 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private void updateInnerMinSize(@NotNull RegistryValue value) {
     int minSize = Math.max(0, Math.min(100, value.asInteger()));
-    myVerticalSplitter.setMinSize(JBUIScale.scale(minSize));
-    myHorizontalSplitter.setMinSize(JBUIScale.scale(minSize));
+    verticalSplitter.setMinSize(JBUIScale.scale(minSize));
+    horizontalSplitter.setMinSize(JBUIScale.scale(minSize));
   }
 
   @Override
   public void doLayout() {
     Dimension size = getSize();
-    if (!myTopStripe.isVisible()) {
-      myTopStripe.setBounds(0, 0, 0, 0);
-      myBottomStripe.setBounds(0, 0, 0, 0);
-      myLeftStripe.setBounds(0, 0, 0, 0);
-      myRightStripe.setBounds(0, 0, 0, 0);
-      myLayeredPane.setBounds(0, 0, getWidth(), getHeight());
+    if (!topStripe.isVisible()) {
+      topStripe.setBounds(0, 0, 0, 0);
+      bottomStripe.setBounds(0, 0, 0, 0);
+      leftStripe.setBounds(0, 0, 0, 0);
+      rightStripe.setBounds(0, 0, 0, 0);
+      layeredPane.setBounds(0, 0, getWidth(), getHeight());
     }
     else {
-      Dimension topSize = myTopStripe.getPreferredSize();
-      Dimension bottomSize = myBottomStripe.getPreferredSize();
-      Dimension leftSize = myLeftStripe.getPreferredSize();
-      Dimension rightSize = myRightStripe.getPreferredSize();
+      Dimension topSize = topStripe.getPreferredSize();
+      Dimension bottomSize = bottomStripe.getPreferredSize();
+      Dimension leftSize = leftStripe.getPreferredSize();
+      Dimension rightSize = rightStripe.getPreferredSize();
 
-      myTopStripe.setBounds(0, 0, size.width, topSize.height);
-      myLeftStripe.setBounds(0, topSize.height, leftSize.width, size.height - topSize.height - bottomSize.height);
-      myRightStripe
-        .setBounds(size.width - rightSize.width, topSize.height, rightSize.width, size.height - topSize.height - bottomSize.height);
-      myBottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
+      topStripe.setBounds(0, 0, size.width, topSize.height);
+      int height = size.height - topSize.height - bottomSize.height;
+      leftStripe.setBounds(0, topSize.height, leftSize.width, height);
+      rightStripe.setBounds(size.width - rightSize.width, topSize.height, rightSize.width, height);
+      bottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
 
-      if (UISettings.getInstance().getHideToolStripes() || UISettings.getInstance().getPresentationMode()) {
-        myLayeredPane.setBounds(0, 0, size.width, size.height);
+      UISettings uiSettings = UISettings.getInstance();
+      if (uiSettings.getHideToolStripes() || uiSettings.getPresentationMode()) {
+        layeredPane.setBounds(0, 0, size.width, size.height);
       }
       else {
-        myLayeredPane.setBounds(leftSize.width, topSize.height, size.width - leftSize.width - rightSize.width,
-                                size.height - topSize.height - bottomSize.height);
+        int width = size.width - leftSize.width - rightSize.width;
+        layeredPane.setBounds(leftSize.width, topSize.height, width, height);
       }
     }
   }
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    updateToolStripesVisibility();
+    updateToolStripesVisibility(uiSettings);
     updateLayout(uiSettings);
   }
 
@@ -204,15 +206,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           ToolWindowAnchor anchor = info.getAnchor();
           setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
           if (!dirtyMode) {
-            myLayeredPane.validate();
-            myLayeredPane.repaint();
+            layeredPane.validate();
+            layeredPane.repaint();
           }
         };
       }
       return new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
     }
     else if (info.isSliding()) {
-      return new AddSlidingComponentCmd(decorator, info, dirtyMode);
+      return () -> addSlidingComponent(decorator, info, dirtyMode);
     }
     else {
       throw new IllegalArgumentException("Unknown window type: " + info.getType());
@@ -234,8 +236,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         return () -> {
           setComponent(null, info.getAnchor(), 0);
           if (!dirtyMode) {
-            myLayeredPane.validate();
-            myLayeredPane.repaint();
+            layeredPane.validate();
+            layeredPane.repaint();
           }
         };
       }
@@ -256,16 +258,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   final Runnable createUpdateButtonPositionCmd(@NotNull ToolWindowAnchor anchor) {
     return () -> {
       if (ToolWindowAnchor.TOP == anchor) {
-        myTopStripe.revalidate();
+        topStripe.revalidate();
       }
       else if (ToolWindowAnchor.LEFT == anchor) {
-        myLeftStripe.revalidate();
+        leftStripe.revalidate();
       }
       else if (ToolWindowAnchor.BOTTOM == anchor) {
-        myBottomStripe.revalidate();
+        bottomStripe.revalidate();
       }
       else if (ToolWindowAnchor.RIGHT == anchor) {
-        myRightStripe.revalidate();
+        rightStripe.revalidate();
       }
       else {
         LOG.error("unknown anchor: " + anchor);
@@ -275,25 +277,25 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   @NotNull
   public final JComponent getMyLayeredPane() {
-    return myLayeredPane;
+    return layeredPane;
   }
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
     if (ToolWindowAnchor.TOP == anchor) {
-      myVerticalSplitter.setFirstComponent(component);
-      myVerticalSplitter.setFirstSize((int)(myLayeredPane.getHeight() * weight));
+      verticalSplitter.setFirstComponent(component);
+      verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
-      myHorizontalSplitter.setFirstComponent(component);
-      myHorizontalSplitter.setFirstSize((int)(myLayeredPane.getWidth() * weight));
+      horizontalSplitter.setFirstComponent(component);
+      horizontalSplitter.setFirstSize((int)(layeredPane.getWidth() * weight));
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
-      myVerticalSplitter.setLastComponent(component);
-      myVerticalSplitter.setLastSize((int)(myLayeredPane.getHeight() * weight));
+      verticalSplitter.setLastComponent(component);
+      verticalSplitter.setLastSize((int)(layeredPane.getHeight() * weight));
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
-      myHorizontalSplitter.setLastComponent(component);
-      myHorizontalSplitter.setLastSize((int)(myLayeredPane.getWidth() * weight));
+      horizontalSplitter.setLastComponent(component);
+      horizontalSplitter.setLastSize((int)(layeredPane.getWidth() * weight));
     }
     else {
       LOG.error("unknown anchor: " + anchor);
@@ -302,16 +304,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private JComponent getComponentAt(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
-      return myVerticalSplitter.getFirstComponent();
+      return verticalSplitter.getFirstComponent();
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
-      return myHorizontalSplitter.getFirstComponent();
+      return horizontalSplitter.getFirstComponent();
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
-      return myVerticalSplitter.getLastComponent();
+      return verticalSplitter.getLastComponent();
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
-      return myHorizontalSplitter.getLastComponent();
+      return horizontalSplitter.getLastComponent();
     }
     else {
       LOG.error("unknown anchor: " + anchor);
@@ -320,30 +322,30 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private float getPreferredSplitProportion(@NotNull String id, float defaultValue) {
-    float f = myIdToSplitProportion.get(id);
+    float f = idToSplitProportion.get(id);
     return f == 0 ? defaultValue : f;
   }
 
   private void setDocumentComponent(@Nullable JComponent component) {
-    (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).setInnerComponent(component);
+    (isWideScreen ? verticalSplitter : horizontalSplitter).setInnerComponent(component);
   }
 
-  private void updateToolStripesVisibility() {
-    boolean oldVisible = myLeftStripe.isVisible();
+  private void updateToolStripesVisibility(@NotNull UISettings uiSettings) {
+    boolean oldVisible = leftStripe.isVisible();
 
-    boolean showButtons = !UISettings.getInstance().getHideToolStripes() && !UISettings.getInstance().getPresentationMode();
-    boolean visible = showButtons || myStripesOverlayed;
-    myLeftStripe.setVisible(visible);
-    myRightStripe.setVisible(visible);
-    myTopStripe.setVisible(visible);
-    myBottomStripe.setVisible(visible);
+    boolean showButtons = !uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode();
+    boolean visible = showButtons || stripesOverlayed;
+    leftStripe.setVisible(visible);
+    rightStripe.setVisible(visible);
+    topStripe.setVisible(visible);
+    bottomStripe.setVisible(visible);
 
-    boolean overlayed = !showButtons && myStripesOverlayed;
+    boolean overlayed = !showButtons && stripesOverlayed;
 
-    myLeftStripe.setOverlayed(overlayed);
-    myRightStripe.setOverlayed(overlayed);
-    myTopStripe.setOverlayed(overlayed);
-    myBottomStripe.setOverlayed(overlayed);
+    leftStripe.setOverlayed(overlayed);
+    rightStripe.setOverlayed(overlayed);
+    topStripe.setOverlayed(overlayed);
+    bottomStripe.setOverlayed(overlayed);
 
     if (oldVisible != visible) {
       revalidate();
@@ -352,7 +354,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   public int getBottomHeight() {
-    return myBottomStripe.isVisible() ? myBottomStripe.getHeight() : 0;
+    return bottomStripe.isVisible() ? bottomStripe.getHeight() : 0;
   }
 
   public boolean isBottomSideToolWindowsVisible() {
@@ -362,54 +364,53 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @Nullable
   Stripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
-      return myTopStripe;
+      return topStripe;
     }
     if (ToolWindowAnchor.BOTTOM == anchor) {
-      return myBottomStripe;
+      return bottomStripe;
     }
     if (ToolWindowAnchor.LEFT == anchor) {
-      return myLeftStripe;
+      return leftStripe;
     }
     if (ToolWindowAnchor.RIGHT == anchor) {
-      return myRightStripe;
+      return rightStripe;
     }
 
     throw new IllegalArgumentException("Anchor=" + anchor);
   }
 
   @Nullable
-  Stripe getStripeFor(@NotNull Rectangle screenRec, @NotNull Stripe preferred) {
-    if (preferred.containsScreen(screenRec)) {
-      return myStripes.get(myStripes.indexOf(preferred));
+  Stripe getStripeFor(@NotNull Rectangle screenRectangle, @NotNull Stripe preferred) {
+    if (preferred.containsScreen(screenRectangle)) {
+      return preferred;
     }
 
-    for (Stripe each : myStripes) {
-      if (each.containsScreen(screenRec)) {
-        return myStripes.get(myStripes.indexOf(each));
+    for (Stripe stripe : stripes) {
+      if (stripe.containsScreen(screenRectangle)) {
+        return stripe;
       }
     }
-
     return null;
   }
 
   void startDrag() {
-    for (Stripe each : myStripes) {
+    for (Stripe each : stripes) {
       each.startDrag();
     }
   }
 
   void stopDrag() {
-    for (Stripe each : myStripes) {
-      each.stopDrag();
+    for (Stripe stripe : stripes) {
+      stripe.stopDrag();
     }
   }
 
-  void stretchWidth(@NotNull ToolWindow wnd, int value) {
-    stretch(wnd, value);
+  void stretchWidth(@NotNull ToolWindow window, int value) {
+    stretch(window, value);
   }
 
-  void stretchHeight(@NotNull ToolWindow wnd, int value) {
-    stretch(wnd, value);
+  void stretchHeight(@NotNull ToolWindow window, int value) {
+    stretch(window, value);
   }
 
   private void stretch(@NotNull ToolWindow wnd, int value) {
@@ -419,79 +420,79 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     boolean vertical = wnd.getAnchor() == ToolWindowAnchor.TOP || wnd.getAnchor() == ToolWindowAnchor.BOTTOM;
     int actualSize = (vertical ? pair.second.getHeight() : pair.second.getWidth()) + value;
     boolean first = wnd.getAnchor() == ToolWindowAnchor.LEFT  || wnd.getAnchor() == ToolWindowAnchor.TOP;
-    int maxValue = vertical ? myVerticalSplitter.getMaxSize(first) : myHorizontalSplitter.getMaxSize(first);
-    int minValue = vertical ? myVerticalSplitter.getMinSize(first) : myHorizontalSplitter.getMinSize(first);
+    int maxValue = vertical ? verticalSplitter.getMaxSize(first) : horizontalSplitter.getMaxSize(first);
+    int minValue = vertical ? verticalSplitter.getMinSize(first) : horizontalSplitter.getMinSize(first);
 
     pair.first.setSize(Math.max(minValue, Math.min(maxValue, actualSize)));
   }
 
   @Nullable
-  private Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow wnd) {
-    if (!wnd.isVisible()) return null;
+  private Pair<Resizer, Component> findResizerAndComponent(@NotNull ToolWindow window) {
+    if (!window.isVisible()) return null;
 
     Resizer resizer = null;
-    Component cmp = null;
+    Component component = null;
 
-    if (wnd.getType() == ToolWindowType.DOCKED) {
-      cmp = getComponentAt(wnd.getAnchor());
+    if (window.getType() == ToolWindowType.DOCKED) {
+      component = getComponentAt(window.getAnchor());
 
-      if (cmp != null) {
-        if (wnd.getAnchor().isHorizontal()) {
-          resizer = myVerticalSplitter.getFirstComponent() == cmp
-                    ? new Resizer.Splitter.FirstComponent(myVerticalSplitter)
-                    : new Resizer.Splitter.LastComponent(myVerticalSplitter);
+      if (component != null) {
+        if (window.getAnchor().isHorizontal()) {
+          resizer = verticalSplitter.getFirstComponent() == component
+                    ? new Resizer.Splitter.FirstComponent(verticalSplitter)
+                    : new Resizer.Splitter.LastComponent(verticalSplitter);
         }
         else {
-          resizer = myHorizontalSplitter.getFirstComponent() == cmp
-                    ? new Resizer.Splitter.FirstComponent(myHorizontalSplitter)
-                    : new Resizer.Splitter.LastComponent(myHorizontalSplitter);
+          resizer = horizontalSplitter.getFirstComponent() == component
+                    ? new Resizer.Splitter.FirstComponent(horizontalSplitter)
+                    : new Resizer.Splitter.LastComponent(horizontalSplitter);
         }
       }
     }
-    else if (wnd.getType() == ToolWindowType.SLIDING) {
-      cmp = wnd.getComponent();
-      while (cmp != null) {
-        if (cmp.getParent() == myLayeredPane) break;
-        cmp = cmp.getParent();
+    else if (window.getType() == ToolWindowType.SLIDING) {
+      component = window.getComponent();
+      while (component != null) {
+        if (component.getParent() == layeredPane) break;
+        component = component.getParent();
       }
 
-      if (cmp != null) {
-        if (wnd.getAnchor() == ToolWindowAnchor.TOP) {
-          resizer = new Resizer.LayeredPane.Top(cmp);
+      if (component != null) {
+        if (window.getAnchor() == ToolWindowAnchor.TOP) {
+          resizer = new Resizer.LayeredPane.Top(component);
         }
-        else if (wnd.getAnchor() == ToolWindowAnchor.BOTTOM) {
-          resizer = new Resizer.LayeredPane.Bottom(cmp);
+        else if (window.getAnchor() == ToolWindowAnchor.BOTTOM) {
+          resizer = new Resizer.LayeredPane.Bottom(component);
         }
-        else if (wnd.getAnchor() == ToolWindowAnchor.LEFT) {
-          resizer = new Resizer.LayeredPane.Left(cmp);
+        else if (window.getAnchor() == ToolWindowAnchor.LEFT) {
+          resizer = new Resizer.LayeredPane.Left(component);
         }
-        else if (wnd.getAnchor() == ToolWindowAnchor.RIGHT) {
-          resizer = new Resizer.LayeredPane.Right(cmp);
+        else if (window.getAnchor() == ToolWindowAnchor.RIGHT) {
+          resizer = new Resizer.LayeredPane.Right(component);
         }
       }
     }
 
-    return resizer != null ? Pair.create(resizer, cmp) : null;
+    return resizer != null ? Pair.create(resizer, component) : null;
   }
 
   private void updateLayout(@NotNull UISettings uiSettings) {
-    if (myWidescreen != uiSettings.getWideScreenSupport()) {
-      JComponent documentComponent = (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).getInnerComponent();
-      myWidescreen = uiSettings.getWideScreenSupport();
-      if (myWidescreen) {
-        myVerticalSplitter.setInnerComponent(null);
-        myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
+    if (isWideScreen != uiSettings.getWideScreenSupport()) {
+      JComponent documentComponent = (isWideScreen ? verticalSplitter : horizontalSplitter).getInnerComponent();
+      isWideScreen = uiSettings.getWideScreenSupport();
+      if (isWideScreen) {
+        verticalSplitter.setInnerComponent(null);
+        horizontalSplitter.setInnerComponent(verticalSplitter);
       }
       else {
-        myHorizontalSplitter.setInnerComponent(null);
-        myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
+        horizontalSplitter.setInnerComponent(null);
+        verticalSplitter.setInnerComponent(horizontalSplitter);
       }
-      myLayeredPane.remove(myWidescreen ? myVerticalSplitter : myHorizontalSplitter);
-      myLayeredPane.add(myWidescreen ? myHorizontalSplitter : myVerticalSplitter, DEFAULT_LAYER);
+      layeredPane.remove(isWideScreen ? verticalSplitter : horizontalSplitter);
+      layeredPane.add(isWideScreen ? horizontalSplitter : verticalSplitter, DEFAULT_LAYER);
       setDocumentComponent(documentComponent);
     }
 
-    if (myLeftHorizontalSplit != uiSettings.getLeftHorizontalSplit()) {
+    if (leftHorizontalSplit != uiSettings.getLeftHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.LEFT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -501,10 +502,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                       ? firstInfo.getWeight()
                                                       : firstInfo.getWeight() + secondInfo.getWeight());
       }
-      myLeftHorizontalSplit = uiSettings.getLeftHorizontalSplit();
+      leftHorizontalSplit = uiSettings.getLeftHorizontalSplit();
     }
 
-    if (myRightHorizontalSplit != uiSettings.getRightHorizontalSplit()) {
+    if (rightHorizontalSplit != uiSettings.getRightHorizontalSplit()) {
       JComponent component = getComponentAt(ToolWindowAnchor.RIGHT);
       if (component instanceof Splitter) {
         Splitter splitter = (Splitter)component;
@@ -514,12 +515,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                                        ? firstInfo.getWeight()
                                                        : firstInfo.getWeight() + secondInfo.getWeight());
       }
-      myRightHorizontalSplit = uiSettings.getRightHorizontalSplit();
+      rightHorizontalSplit = uiSettings.getRightHorizontalSplit();
     }
   }
 
   public boolean isMaximized(@NotNull ToolWindow window) {
-    return myMaximizedProportion != null && myMaximizedProportion.first == window;
+    return maximizedProportion != null && maximizedProportion.first == window;
   }
 
   void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
@@ -529,15 +530,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
 
     if (!maximized) {
-      ToolWindow maximizedWindow = myMaximizedProportion.first;
+      ToolWindow maximizedWindow = maximizedProportion.first;
       assert maximizedWindow == wnd;
-      resizerAndComponent.first.setSize(myMaximizedProportion.second);
-      myMaximizedProportion = null;
+      resizerAndComponent.first.setSize(maximizedProportion.second);
+      maximizedProportion = null;
     }
     else {
       int size = wnd.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
       stretch(wnd, Short.MAX_VALUE);
-      myMaximizedProportion = Pair.create(wnd, size);
+      maximizedProportion = Pair.create(wnd, size);
     }
     doLayout();
   }
@@ -553,7 +554,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         mySplitter = splitter;
       }
 
-      static class FirstComponent extends Splitter {
+      final static class FirstComponent extends Splitter {
         FirstComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -564,7 +565,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      static class LastComponent extends Splitter {
+      final static class LastComponent extends Splitter {
         LastComponent(@NotNull ThreeComponentsSplitter splitter) {
           super(splitter);
         }
@@ -595,7 +596,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
       abstract void _setSize(int size);
 
-      static class Left extends LayeredPane {
+      final static class Left extends LayeredPane {
         Left(@NotNull Component component) {
           super(component);
         }
@@ -606,7 +607,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
       }
 
-      static class Right extends LayeredPane {
+      final static class Right extends LayeredPane {
         Right(@NotNull Component component) {
           super(component);
         }
@@ -652,7 +653,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final class AddAndSplitDockedComponentCmd implements Runnable {
     private final JComponent myNewComponent;
     private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
+    private final boolean dirtyMode;
     @NotNull private final ToolWindowManagerImpl manager;
 
     private AddAndSplitDockedComponentCmd(@NotNull JComponent newComponent,
@@ -661,7 +662,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                           @NotNull ToolWindowManagerImpl manager) {
       myNewComponent = newComponent;
       myInfo = info;
-      myDirtyMode = dirtyMode;
+      this.dirtyMode = dirtyMode;
       this.manager = manager;
     }
 
@@ -764,91 +765,79 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       }
       setComponent(splitter, anchor, newWeight);
 
-      if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
+      if (!dirtyMode) {
+        layeredPane.validate();
+        layeredPane.repaint();
       }
     }
   }
 
-  private final class AddSlidingComponentCmd implements Runnable {
-    private final JComponent myComponent;
-    private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
+  private void addSlidingComponent(@NotNull JComponent component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
+    if (dirtyMode || !UISettings.getInstance().getAnimateWindows() || RemoteDesktopService.isRemoteSession()) {
+      // not animated
+      layeredPane.add(component, JLayeredPane.PALETTE_LAYER);
+      layeredPane.setBoundsInPaletteLayer(component, info.getAnchor(), info.getWeight());
+    }
+    else {
+      // Prepare top image. This image is scrolling over bottom image.
+      Image topImage = layeredPane.getTopImage();
 
-    AddSlidingComponentCmd(@NotNull JComponent component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
-      myComponent = component;
-      myInfo = info;
-      myDirtyMode = dirtyMode;
+      Rectangle bounds = component.getBounds();
+
+      useSafely(topImage.getGraphics(), topGraphics -> {
+        component.putClientProperty(TEMPORARY_ADDED, Boolean.TRUE);
+        try {
+          layeredPane.add(component, JLayeredPane.PALETTE_LAYER);
+          layeredPane.moveToFront(component);
+          layeredPane.setBoundsInPaletteLayer(component, info.getAnchor(), info.getWeight());
+          component.paint(topGraphics);
+          layeredPane.remove(component);
+        }
+        finally {
+          component.putClientProperty(TEMPORARY_ADDED, null);
+        }
+      });
+
+      // prepare bottom image
+      Image bottomImage = layeredPane.getBottomImage();
+
+      Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
+      useSafely(bottomImage.getGraphics(), bottomGraphics -> {
+        bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
+        bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
+        layeredPane.paint(bottomGraphics);
+      });
+
+      // start animation.
+      Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), 1, info.getAnchor(), UISettings.ANIMATION_DURATION);
+      layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
+      surface.setBounds(bounds);
+      layeredPane.validate();
+      layeredPane.repaint();
+
+      surface.runMovement();
+      layeredPane.remove(surface);
+      layeredPane.add(component, JLayeredPane.PALETTE_LAYER);
     }
 
-    @Override
-    public void run() {
-      // Show component.
-      if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
-        // Prepare top image. This image is scrolling over bottom image.
-        final Image topImage = myLayeredPane.getTopImage();
-
-        Rectangle bounds =  myComponent.getBounds();
-
-        useSafely(topImage.getGraphics(), topGraphics -> {
-          myComponent.putClientProperty(TEMPORARY_ADDED, Boolean.TRUE);
-          try {
-            myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-            myLayeredPane.moveToFront(myComponent);
-            myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-            myComponent.paint(topGraphics);
-            myLayeredPane.remove(myComponent);
-          }
-          finally {
-            myComponent.putClientProperty(TEMPORARY_ADDED, null);
-          }
-        });
-
-        // Prepare bottom image.
-        final Image bottomImage = myLayeredPane.getBottomImage();
-
-        Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
-        useSafely(bottomImage.getGraphics(), bottomGraphics -> {
-          bottomGraphics.setClip(0, 0, bounds.width, bounds.height);
-          bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
-          myLayeredPane.paint(bottomGraphics);
-        });
-
-        // Start animation.
-        final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), 1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
-        myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
-        surface.setBounds(bounds);
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
-
-        surface.runMovement();
-        myLayeredPane.remove(surface);
-        myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-      }
-      else { // not animated
-        myLayeredPane.add(myComponent, JLayeredPane.PALETTE_LAYER);
-        myLayeredPane.setBoundsInPaletteLayer(myComponent, myInfo.getAnchor(), myInfo.getWeight());
-      }
-      if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
-      }
+    if (!dirtyMode) {
+      layeredPane.validate();
+      layeredPane.repaint();
     }
   }
 
   void addStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor, @NotNull Comparator<? super StripeButton> comparator) {
     if (ToolWindowAnchor.TOP == anchor) {
-      myTopStripe.addButton(button, comparator);
+      topStripe.addButton(button, comparator);
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
-      myLeftStripe.addButton(button, comparator);
+      leftStripe.addButton(button, comparator);
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
-      myBottomStripe.addButton(button, comparator);
+      bottomStripe.addButton(button, comparator);
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
-      myRightStripe.addButton(button, comparator);
+      rightStripe.addButton(button, comparator);
     }
     else {
       LOG.error("unknown anchor: " + anchor);
@@ -857,16 +846,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void removeStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
-      myTopStripe.removeButton(button);
+      topStripe.removeButton(button);
     }
     else if (ToolWindowAnchor.LEFT == anchor) {
-      myLeftStripe.removeButton(button);
+      leftStripe.removeButton(button);
     }
     else if (ToolWindowAnchor.BOTTOM == anchor) {
-      myBottomStripe.removeButton(button);
+      bottomStripe.removeButton(button);
     }
     else if (ToolWindowAnchor.RIGHT == anchor) {
-      myRightStripe.removeButton(button);
+      rightStripe.removeButton(button);
     }
     else {
       LOG.error("unknown anchor: " + anchor);
@@ -892,7 +881,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         Splitter splitter = (Splitter)c;
         InternalDecorator component = (InternalDecorator)(myInfo.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
         if (myInfo.isSplit() && component != null) {
-          myIdToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
+          idToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
         }
         setComponent(component, anchor, component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
       }
@@ -900,8 +889,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         setComponent(null, anchor, 0);
       }
       if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
+        layeredPane.validate();
+        layeredPane.repaint();
       }
       transferFocus();
     }
@@ -925,39 +914,39 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         final Rectangle bounds = myComponent.getBounds();
         // Prepare top image. This image is scrolling over bottom image. It contains
         // picture of component is being removed.
-        final Image topImage = myLayeredPane.getTopImage();
+        final Image topImage = layeredPane.getTopImage();
         useSafely(topImage.getGraphics(), topGraphics -> myComponent.paint(topGraphics));
 
         // Prepare bottom image. This image contains picture of component that is located
         // under the component to is being removed.
-        final Image bottomImage = myLayeredPane.getBottomImage();
+        final Image bottomImage = layeredPane.getBottomImage();
 
-        Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(myLayeredPane);
+        Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
         useSafely(bottomImage.getGraphics(), bottomGraphics -> {
-          myLayeredPane.remove(myComponent);
+          layeredPane.remove(myComponent);
           bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
           bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
-          myLayeredPane.paint(bottomGraphics);
+          layeredPane.paint(bottomGraphics);
         });
 
         // Remove component from the layered pane and start animation.
         final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
-        myLayeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
+        layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
         surface.setBounds(bounds);
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
+        layeredPane.validate();
+        layeredPane.repaint();
 
         surface.runMovement();
-        myLayeredPane.remove(surface);
+        layeredPane.remove(surface);
       }
       else {
         // not animated
-        myLayeredPane.remove(myComponent);
+        layeredPane.remove(myComponent);
       }
 
       if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
+        layeredPane.validate();
+        layeredPane.repaint();
       }
       transferFocus();
     }
@@ -999,8 +988,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final class MyLayeredPane extends JBLayeredPane {
     private final Function<ScaleContext, ImageRef> myImageProvider = __ -> {
-      int width = Math.max(Math.max(1, getWidth()), myFrame.getWidth());
-      int height = Math.max(Math.max(1, getHeight()), myFrame.getHeight());
+      int width = Math.max(Math.max(1, getWidth()), frame.getWidth());
+      int height = Math.max(Math.max(1, getHeight()), frame.getHeight());
       return new ImageRef(ImageUtil.createImage(getGraphicsConfiguration(), width, height, BufferedImage.TYPE_INT_RGB));
     };
 
@@ -1083,9 +1072,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  void setStripesOverlayed(boolean stripesOverlayed) {
-    myStripesOverlayed = stripesOverlayed;
-    updateToolStripesVisibility();
+  void setStripesOverlayed(boolean value) {
+    stripesOverlayed = value;
+    updateToolStripesVisibility(UISettings.getInstance());
   }
 
   private static float normalizeWeigh(final float weight) {
