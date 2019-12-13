@@ -283,7 +283,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void openFileInEditor(@NotNull VirtualFile file);
 
-  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?,?> toolWrapper);
+  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper);
 
   /**
    * @return all highlight infos for current file
@@ -546,6 +546,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   LookupEx getLookup();
 
+  /**
+   * Returns element at caret in the current file ({@link #configureByFile(String)}).
+   * This element must be {@link com.intellij.psi.PsiNamedElement} or has reference to something:
+   * it must valid target for rename/find usage action. See {@link com.intellij.codeInsight.TargetElementUtil}.
+   * For any other type of element use {@link PsiFile#findElementAt(int)} or {@link #findElementByText(String, Class)}
+   */
   @NotNull
   PsiElement getElementAtCaret();
 
@@ -581,13 +587,13 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
 
   /**
-   *  Misnamed, actually it checks only parameter hints
-    */
+   * Misnamed, actually it checks only parameter hints
+   */
   void testInlays();
 
   /**
    * @param inlayPresenter function to render text of inlay. Inlays come to this function only if inlayFilter returned true
-   * @param inlayFilter filter to check only required inlays
+   * @param inlayFilter    filter to check only required inlays
    */
   void testInlays(Function<? super Inlay, String> inlayPresenter, Predicate<? super Inlay> inlayFilter);
 
@@ -633,8 +639,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   /**
    * Get elements found by the Goto Class action called with the given pattern
-   * @param pattern a pattern to search for elements
-   * @param searchEverywhere indicates whether "include non-project classes" checkbox is selected
+   * @param pattern           a pattern to search for elements
+   * @param searchEverywhere  indicates whether "include non-project classes" checkbox is selected
    * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
    * @return a list of the results (likely PsiElements) found for the given pattern
    */
