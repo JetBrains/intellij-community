@@ -620,7 +620,19 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
-  public synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch) {
+  public boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+                                      boolean stopAfterFirstMatch) {
+    List<Runnable> listenerCallbacks = new ArrayList<>();
+    boolean result = unregisterExtensions(extensionClassFilter, stopAfterFirstMatch, listenerCallbacks);
+    for (Runnable callback : listenerCallbacks) {
+      callback.run();
+    }
+    return result;
+  }
+
+  @Override
+  public synchronized boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+                                                   boolean stopAfterFirstMatch, List<Runnable> listenerCallbacks) {
     boolean found = false;
     for (int i = myAdapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = myAdapters.get(i);
@@ -629,7 +641,7 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
       }
 
       clearCache();
-      removeAdapter(adapter, i);
+      listenerCallbacks.add(removeAdapter(adapter, i));
       if (stopAfterFirstMatch) {
         return true;
       }
@@ -813,12 +825,14 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
     }
   }
 
-  private void removeAdapter(@NotNull ExtensionComponentAdapter adapter, int index) {
+  @Nullable
+  private Runnable removeAdapter(@NotNull ExtensionComponentAdapter adapter, int index) {
     myAdapters.remove(index);
 
     if (myListeners.length != 0 && adapter.isInstanceCreated()) {
-      notifyListenersOnRemove(adapter.createInstance(myComponentManager), adapter.getPluginDescriptor(), myListeners);
+      return () -> notifyListenersOnRemove(adapter.createInstance(myComponentManager), adapter.getPluginDescriptor(), myListeners);
     }
+    return null;
   }
 
   @NotNull

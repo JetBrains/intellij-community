@@ -152,19 +152,23 @@ object DynamicPlugins {
 
         val openProjects = ProjectManager.getInstance().openProjects
 
+        val unloadListeners = mutableListOf<Runnable>()
         pluginDescriptor.extensions?.let { extensions ->
           for (epName in extensions.keys) {
             val appEp = Extensions.getRootArea().getExtensionPointIfRegistered<Any>(epName)
             if (appEp != null) {
-              appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
+              appEp.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
             }
             else {
               for (openProject in openProjects) {
                 val projectEp = openProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
-                projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false)
+                projectEp?.unregisterExtensions({ _, adapter -> adapter.pluginDescriptor != pluginDescriptor }, false, unloadListeners)
               }
             }
           }
+        }
+        for (unloadListener in unloadListeners) {
+          unloadListener.run()
         }
 
         pluginDescriptor.app.extensionPoints?.let {
