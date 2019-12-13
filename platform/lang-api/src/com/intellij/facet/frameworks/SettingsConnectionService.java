@@ -36,13 +36,6 @@ public abstract class SettingsConnectionService {
     myDefaultServiceUrl = defaultServiceUrl;
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  @Nullable
-  public String getSettingsUrl() {
-    return mySettingsUrl;
-  }
-
   @Nullable
   public String getDefaultServiceUrl() {
     return myDefaultServiceUrl;
