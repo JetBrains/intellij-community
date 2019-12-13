@@ -1,5 +1,6 @@
 package com.intellij.internal.rulerguide;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 
 import java.awt.*;
@@ -21,7 +22,9 @@ final class BasePreferences {
             new Color(255, 255, 255, 32)
     );
     
-    public static final int ALLOWED_GAP = 1;
+    public static int getAllowedGap() {
+        return Registry.intValue("ide.ruler.guide.allowed.gap", 1);
+    }
 
     private BasePreferences() {
     }

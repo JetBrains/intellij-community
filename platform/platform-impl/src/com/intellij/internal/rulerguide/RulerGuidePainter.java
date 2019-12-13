@@ -120,7 +120,7 @@ final class RulerGuidePainter extends AbstractPainter implements Disposable {
                 int horizontalOffset = Math.abs(baselineOtherPoint.y - baselinePivotPoint.y);
                 if (verticalOffset == 0 || horizontalOffset == 0) {
                     g2d.setColor(FINE_COLOR);
-                } else if (verticalOffset <= ALLOWED_GAP || horizontalOffset <= ALLOWED_GAP) {
+                } else if (verticalOffset <= getAllowedGap() || horizontalOffset <= getAllowedGap()) {
                     g2d.setColor(ERROR_COLOR);
                 } else continue;
 
