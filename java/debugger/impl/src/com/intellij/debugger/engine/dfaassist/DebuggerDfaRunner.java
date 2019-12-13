@@ -173,7 +173,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
       PsiClass varClass = PsiTreeUtil.getParentOfType(psi, PsiClass.class);
-      ObjectReference thisRef = CaptureTraverser.create(varClass, currentClass, true)
+      ObjectReference thisRef = CaptureTraverser.create(varClass, currentClass, false)
         .oneLevelLess().traverse(frame.thisObject());
       if (thisRef != null) {
         ReferenceType type = thisRef.referenceType();
