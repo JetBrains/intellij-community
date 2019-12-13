@@ -52,9 +52,7 @@ class CustomFrameDialogContent private constructor(window: Window, content: Cont
         }
 
         panel.add(header, "growx, wmin 100")
-        val oldButton = (window as RootPaneContainer).rootPane.defaultButton
         panel.add(content, "grow")
-        (window as RootPaneContainer).rootPane.defaultButton = oldButton
     }
 
     override val content: JComponent
