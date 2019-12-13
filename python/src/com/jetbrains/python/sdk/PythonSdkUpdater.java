@@ -40,6 +40,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingSet;
@@ -151,10 +152,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
       return true;
     }
 
-    final Throwable methodCallStacktrace = new Throwable();
+    final Throwable methodCallStacktrace = new Throwable("SDK update trace");
     application.invokeLater(() -> {
       synchronized (ourLock) {
         if (!ourScheduledToRefresh.contains(key)) {
+          if (Trigger.LOG.isDebugEnabled()) {
+            Trigger.LOG.debug("Dropping simultaneous SDK update triggered by " + Trigger.getCauseByTrace(methodCallStacktrace));
+          }
           return;
         }
         ourScheduledToRefresh.remove(key);
@@ -182,6 +186,9 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                 LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
                 indicator.setText(PyBundle.message("python.sdk.updating.skeletons"));
                 try {
+                  if (Trigger.LOG.isDebugEnabled()) {
+                    Trigger.LOG.debug("Performing skeletons update triggered by " + Trigger.getCauseByTrace(methodCallStacktrace));
+                  }
                   PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
                   updateRemoteSdkPaths(sdkInsideTask, getProject());
                   indicator.setIndeterminate(true);
@@ -517,4 +524,37 @@ public class PythonSdkUpdater implements StartupActivity.Background {
     }
     return pythonSdks;
   }
-}
+
+  private enum Trigger {
+    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdater$1.run"),
+    CHANGE_UNDER_INTERPRETER_ROOTS("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$subscribeToLocalChanges"),
+    REFRESH_AFTER_PACKAGING_OPERATION("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$refresh");
+
+    private static final Logger LOG = Logger.getInstance(Trigger.class);
+
+    private final String myFrameMarker;
+
+    Trigger(@NotNull String frameMarker) {
+      myFrameMarker = frameMarker;
+    }
+
+    @NotNull
+    public static String getCauseByTrace(@NotNull Throwable trace) {
+      final Trigger trigger = findTriggerByTrace(trace);
+      if (trigger != null) {
+        return trigger.name();
+      }
+      return "Unknown trigger:\n" + ExceptionUtil.getThrowableText(trace);
+    }
+
+    @Nullable
+    public static Trigger findTriggerByTrace(@NotNull Throwable trace) {
+      final String traceText = ExceptionUtil.getThrowableText(trace);
+      for (Trigger value : values()) {
+        if (traceText.contains(value.myFrameMarker)) {
+          return value;
+        }
+      }
+      return null;
+    }
+  }}

@@ -74,6 +74,10 @@ public class PyPackageUtil {
   public static final String DISTRIBUTE = "distribute";
   private static final Logger LOG = Logger.getInstance(PyPackageUtil.class);
 
+  private static class InterpreterChangeEvents {
+    private static final Logger LOG = Logger.getInstance(InterpreterChangeEvents.class);
+  }
+
   @NotNull
   private static final String REQUIRES = "requires";
 
@@ -538,6 +542,8 @@ public class PyPackageUtil {
           }
 
           if (parent != null && roots.contains(parent)) {
+            InterpreterChangeEvents.LOG.debug("Interpreter change in " + parent + " indicated by " + event +
+                                              " (all events: " + events + ")");
             app.executeOnPooledThread(runnable);
             break allEvents;
           }
