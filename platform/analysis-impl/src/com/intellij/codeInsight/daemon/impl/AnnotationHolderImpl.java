@@ -176,4 +176,9 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   PsiElement myCurrentElement;
+  public void whileAnnotating(@NotNull PsiElement element, @NotNull Runnable runnable) {
+    myCurrentElement = element;
+    runnable.run();
+    myCurrentElement = null;
+  }
 }
