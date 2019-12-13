@@ -813,6 +813,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
           targetOptionFound = "-target".equals(userOption);
+          notifyOptionIgnored(context, userOption, chunk);
           continue;
         }
         if (skip) {
@@ -831,6 +832,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
               appender.accept(compilationOptions, userOption);
             }
           }
+          else {
+            notifyOptionIgnored(context, userOption, chunk);
+          }
         }
       }
     }
@@ -842,6 +846,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile);
 
     return pair(vmOptions, compilationOptions);
+  }
+
+  private static void notifyOptionIgnored(CompileContext context, String option, ModuleChunk chunk) {
+    context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.JPS_INFO,
+      "User-specified option \"" + option + "\" is ignored for \"" + chunk.getPresentableShortName() + "\". This compilation parameter is set automatically according to project settings."
+    ));
   }
 
   public static void addCompilationOptions(List<? super String> options,
