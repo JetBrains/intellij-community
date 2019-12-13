@@ -433,7 +433,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, "FacetManager");
+    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
     Element externalFacetsTag = JDomSerializationUtil.findComponent(moduleRoot, "ExternalFacetManager");
     Element mergedFacetsTag;
     if (facetsTag == null) {
