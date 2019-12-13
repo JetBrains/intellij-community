@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -8,24 +9,22 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 
 /**
  * @author vlan
  */
-class PythonSdkConfigurator : DirectoryProjectConfigurator {
+class PythonSdkConfigurator {
   companion object {
-    fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
+    private fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
       return existingSdks
         .asSequence()
         .filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
@@ -33,7 +32,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         .firstOrNull()
     }
 
-    fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
+    private fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
       // TODO: Move all interpreter detection away from EDT & use proper synchronization for that
       val progress = ProgressManager.getInstance()
       return progress.run(object : Task.WithResult<PyDetectedSdk?, Exception>(module.project,
@@ -63,12 +62,19 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       detectSystemWideSdks(module, existingSdks, context).firstOrNull()
   }
 
-  override fun configureProject(project: Project,
-                                baseDir: VirtualFile,
-                                moduleRef: Ref<Module>,
-                                newProject: Boolean) {
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectOpened(project: Project) {
+        if (!project.isDefault) {
+          configureSdk(project)
+        }
+      }
+    })
+  }
+
+  private fun configureSdk(project: Project) {
     val context = UserDataHolderBase()
-    if (project.pythonSdk != null || newProject) {
+    if (project.pythonSdk != null) {
       return
     }
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
