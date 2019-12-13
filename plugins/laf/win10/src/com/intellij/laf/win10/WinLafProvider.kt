@@ -17,13 +17,7 @@ class WinLafProvider : LafProvider {
   }
 
   private class Win10LookAndFeelInfo : PluggableLafInfo(LAF_NAME, WinIntelliJLaf::class.java.name) {
-    override fun createLookAndFeel(): LookAndFeel {
-      val laf = WinIntelliJLaf()
-      laf.putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
-      return laf
-    }
-
-    override fun isDark(): Boolean = false
+    override fun createLookAndFeel(): LookAndFeel = WinIntelliJLaf()
 
     override fun createSearchAreaPainter(context: SearchAreaContext): SearchTextAreaPainter {
       return Win10SearchPainter(context)
@@ -32,22 +26,10 @@ class WinLafProvider : LafProvider {
     override fun createEditorTextFieldBorder(editorTextField: EditorTextField, editor: EditorEx): DarculaEditorTextFieldBorder {
       return WinIntelliJEditorTextFieldBorder(editorTextField, editor)
     }
-
-    override fun updateDefaults(defaults: UIDefaults) {
-      defaults["Menu.arrowIcon"] = Win10MenuArrowIcon()
-      defaults["ClassLoader"] = WinIntelliJLaf::class.java.classLoader
-    }
   }
-
-  private class Win10MenuArrowIcon :
-    MenuArrowIcon(WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME),
-                  WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, selected = true),
-                  WinIconLookup.getIcon(name = MENU_TRIANGLE_ICON_NAME, enabled = false))
 
   companion object {
     const val LAF_NAME = "Windows 10 Light"
-    const val MENU_TRIANGLE_ICON_NAME = "menuTriangle"
-
     val infoInstance:PluggableLafInfo = Win10LookAndFeelInfo()
   }
 }

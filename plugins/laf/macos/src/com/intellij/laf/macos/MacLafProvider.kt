@@ -16,13 +16,7 @@ class MacLafProvider : LafProvider {
   }
 
   private class MacOsLookAndFeelInfo : PluggableLafInfo(LAF_NAME, MacIntelliJLaf::class.java.name) {
-    override fun createLookAndFeel(): LookAndFeel {
-      val laf = MacIntelliJLaf()
-      laf.putUserData(UIUtil.PLUGGABLE_LAF_KEY, name)
-      return laf
-    }
-
-    override fun isDark(): Boolean = false
+    override fun createLookAndFeel(): LookAndFeel = MacIntelliJLaf()
 
     override fun createSearchAreaPainter(context: SearchAreaContext): SearchTextAreaPainter {
       return MacSearchPainter(context)
@@ -30,10 +24,6 @@ class MacLafProvider : LafProvider {
 
     override fun createEditorTextFieldBorder(editorTextField: EditorTextField, editor: EditorEx): DarculaEditorTextFieldBorder {
       return MacEditorTextFieldBorder(editorTextField, editor)
-    }
-
-    override fun updateDefaults(defaults: UIDefaults) {
-      defaults["ClassLoader"] = MacIntelliJLaf::class.java.classLoader
     }
   }
 

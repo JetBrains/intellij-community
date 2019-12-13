@@ -577,10 +577,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixMacOSDarkThemeDecorations();
 
-    if (myCurrentLaf instanceof PluggableLafInfo) {
-      ((PluggableLafInfo)myCurrentLaf).updateDefaults(uiDefaults);
-    }
-
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);
     }

@@ -13,11 +13,15 @@ import javax.swing.text.JTextComponent
 abstract class PluggableLafInfo(name: String, className: String) : UIManager.LookAndFeelInfo(name, className) {
   class SearchAreaContext(val searchComponent: JComponent, val textComponent: JTextComponent,
                           val iconsPanel: JComponent, val scrollPane: JComponent)
-
-
+  /**
+   * Creates an instance of the LookAndFeel provided by the plugin.
+   */
   abstract fun createLookAndFeel() : LookAndFeel
 
-  abstract fun isDark() : Boolean
+  /**
+   * Returns <code>true</code> if the LookAndFeel is dark, <code>false</code> otherwise.
+   */
+  open fun isDark() : Boolean = false
 
   /**
    * Creates paint context needed to render `SearchTextArea` with this look and feel.
@@ -35,11 +39,4 @@ abstract class PluggableLafInfo(name: String, className: String) : UIManager.Loo
    * @return a new instance of the border.
    */
   abstract fun createEditorTextFieldBorder(editorTextField: EditorTextField, editor: EditorEx): DarculaEditorTextFieldBorder
-
-  /**
-   * Update the `UIDefaults` table with Look And Feel specific values.
-   * This method is called from [com.intellij.ide.ui.LafManager.updateUI]
-   * @param defaults is the defaults table.
-   */
-  open fun updateDefaults(defaults: UIDefaults) {}
 }
