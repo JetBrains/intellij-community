@@ -104,7 +104,7 @@
                     interface="com.intellij.projectImport.ProjectSetProcessor"/>
 
     <extensionPoint name="codeInsight.linkHandler"
-                    beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP">
+                    beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP" dynamic="true">
       <with attribute="handlerClass" implements="com.intellij.codeInsight.highlighting.TooltipLinkHandler"/>
     </extensionPoint>
 
