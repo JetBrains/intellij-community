@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -157,21 +158,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
     PsiModifierListOwner psi = var.getPsiVariable();
     if (psi instanceof PsiClass) {
       // this
-      ObjectReference thisRef = frame.thisObject();
-      if (thisRef != null) {
-        if (PsiTreeUtil.getParentOfType(myBody, PsiClass.class) == psi) {
-          return thisRef;
-        }
-        ReferenceType type = thisRef.referenceType();
-        if (type instanceof ClassType) {
-          for (Field field : type.allFields()) {
-            if (field.isSynthetic() && field.isFinal() && !field.isStatic() &&
-                field.name().matches("this\\$\\d+") && field.typeName().equals(JVMNameUtil.getClassVMName((PsiClass)psi))) {
-              return thisRef.getValue(field);
-            }
-          }
-        }
-      }
+      PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
+      return CaptureTraverser.create((PsiClass)psi, currentClass, true).traverse(frame.thisObject());
     }
     if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
       String varName = ((PsiVariable)psi).getName();
@@ -183,15 +171,16 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       catch (AbsentInformationException ignore) {
       }
-      ObjectReference thisRef = frame.thisObject();
+      PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
+      PsiClass varClass = PsiTreeUtil.getParentOfType(psi, PsiClass.class);
+      ObjectReference thisRef = CaptureTraverser.create(varClass, currentClass, true)
+        .oneLevelLess().traverse(frame.thisObject());
       if (thisRef != null) {
         ReferenceType type = thisRef.referenceType();
         if (type instanceof ClassType) {
-          for (Field field : type.allFields()) {
-            if (field.isSynthetic() && field.isFinal() && !field.isStatic() &&
-                field.name().startsWith("val$") && field.name().substring("val$".length()).equals(varName)) {
-              return wrap(thisRef.getValue(field));
-            }
+          Field field = type.fieldByName("val$" + varName);
+          if (field != null) {
+            return wrap(thisRef.getValue(field));
           }
         }
       }

@@ -761,9 +761,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           return;
         }
         // the expression references final var outside the context's class (in some of the outer classes)
-        // -1 because val$ are located in the same class
-        int iterationCount = calcIterationCount(variableClass, "Base class not found for " + psiVar.getName(), false) - 1;
-        if (iterationCount > -1) {
+        // oneLevelLess() because val$ are located in the same class
+        CaptureTraverser traverser = createTraverser(variableClass, "Base class not found for " + psiVar.getName(), false).oneLevelLess();
+        if (traverser.isValid()) {
           PsiExpression initializer = psiVar.getInitializer();
           if(initializer != null) {
             Object value = JavaPsiFacade.getInstance(psiVar.getProject()).getConstantEvaluationHelper().computeConstantExpression(initializer);
@@ -773,7 +773,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
               return;
             }
           }
-          Evaluator objectEvaluator = new ThisEvaluator(iterationCount);
+          Evaluator objectEvaluator = new ThisEvaluator(traverser);
           myResult = createFallbackEvaluator(
             new FieldEvaluator(objectEvaluator, FieldEvaluator.createClassFilter(positionClass), "val$" + localName),
             new LocalVariableEvaluator(localName, true));
@@ -800,11 +800,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           objectEvaluator = myResult;
         }
         else {
-          int iterations = calcIterationCount(fieldClass, fieldClass.getName(), true);
-          if (iterations < 0) {
+          CaptureTraverser traverser = createTraverser(fieldClass, fieldClass.getName(), true);
+          if (!traverser.isValid()) {
             throwEvaluateException(DebuggerBundle.message("evaluation.error.cannot.sources.for.field.class", psiField.getName()));
           }
-          objectEvaluator = new ThisEvaluator(iterations);
+          objectEvaluator = new ThisEvaluator(traverser);
         }
         myResult = new FieldEvaluator(objectEvaluator, FieldEvaluator.createClassFilter(fieldClass), psiField.getName());
       }
@@ -887,7 +887,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitSuperExpression " + expression);
       }
-      myResult = new SuperEvaluator(calcIterationCount(expression.getQualifier()));
+      myResult = new SuperEvaluator(createTraverser(expression.getQualifier()));
     }
 
     @Override
@@ -895,42 +895,31 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (LOG.isDebugEnabled()) {
         LOG.debug("visitThisExpression " + expression);
       }
-      myResult = new ThisEvaluator(calcIterationCount(expression.getQualifier()));
+      myResult = new ThisEvaluator(createTraverser(expression.getQualifier()));
     }
 
-    private int calcIterationCount(final PsiJavaCodeReferenceElement qualifier) {
+    private CaptureTraverser createTraverser(final PsiJavaCodeReferenceElement qualifier) {
       if (qualifier != null) {
-        return calcIterationCount(qualifier.resolve(), qualifier.getText(), false);
+        return createTraverser(qualifier.resolve(), qualifier.getText(), false);
       }
-      return 0;
+      return CaptureTraverser.direct();
     }
 
-    private int calcIterationCount(PsiElement targetClass, String name, boolean checkInheritance) {
+    private CaptureTraverser createTraverser(PsiElement targetClass, String name, boolean checkInheritance) {
       PsiClass fromClass = getPositionClass();
-      if (targetClass == null || fromClass == null) {
+      if (!(targetClass instanceof PsiClass) || fromClass == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", name));
       }
       try {
-        int iterationCount = calcDepth(targetClass, fromClass, checkInheritance);
-        if (iterationCount < -1 && !fromClass.equals(myContextPsiClass)) { // do not check twice
-          iterationCount = calcDepth(targetClass, myContextPsiClass, checkInheritance);
+        CaptureTraverser traverser = CaptureTraverser.create((PsiClass)targetClass, fromClass, checkInheritance);
+        if (!traverser.isValid() && !fromClass.equals(myContextPsiClass)) { // do not check twice
+          return CaptureTraverser.create((PsiClass)targetClass, myContextPsiClass, checkInheritance);
         }
-        return Math.max(0, iterationCount);
+        return traverser;
       }
       catch (Exception e) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(e));
       }
-    }
-
-    private static int calcDepth(PsiElement targetClass, PsiClass fromClass, boolean checkInheritance) {
-      int iterationCount = 0;
-      while (fromClass != null &&
-             !fromClass.equals(targetClass) &&
-             (!checkInheritance || !fromClass.isInheritor((PsiClass)targetClass, true))) {
-        iterationCount++;
-        fromClass = getOuterClass(fromClass);
-      }
-      return fromClass != null ? iterationCount : -1;
     }
 
     @Override
@@ -1074,12 +1063,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           objectEvaluator = myResult;
         }
         else {
-          int iterationCount = 0;
+          CaptureTraverser traverser = CaptureTraverser.direct();
           PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
           if (currentFileResolveScope instanceof PsiClass) {
-            iterationCount = calcIterationCount(currentFileResolveScope, ((PsiClass)currentFileResolveScope).getName(), false);
+            traverser = createTraverser(currentFileResolveScope, ((PsiClass)currentFileResolveScope).getName(), false);
           }
-          objectEvaluator = new ThisEvaluator(iterationCount);
+          objectEvaluator = new ThisEvaluator(traverser);
         }
       }
       else {
@@ -1456,7 +1445,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             }
             else {
               argumentEvaluators = ArrayUtil.prepend(
-                new ThisEvaluator(calcIterationCount(containingClass, "this", false)),
+                new ThisEvaluator(createTraverser(containingClass, "this", false)),
                 argumentEvaluators);
             }
           }
@@ -1517,11 +1506,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new AssertStatementEvaluator(buildFromJavaCode("if (!(" + condition.getText() + ")) { " +
                                                                 "throw new java.lang.AssertionError(" + descriptionText + ");}",
                                                                 "", statement));
-    }
-
-    @Nullable
-    private static PsiClass getOuterClass(PsiClass aClass) {
-      return aClass == null ? null : PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
     }
 
     @Nullable
