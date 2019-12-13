@@ -43,7 +43,6 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
   private ChangeBrowserSettings mySettings;
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
-  private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
   private final Consumer<String> myIfNotCachedReloader;
@@ -58,7 +57,6 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
     myProject = project;
     myProvider = provider;
     myLocation = location;
-    myShouldBeCalledOnDispose = new ArrayList<>();
     myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<>());
     Disposer.register(this, myBrowser);
     add(myBrowser, BorderLayout.CENTER);
@@ -83,7 +81,7 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
     myBrowser.setToolBar(toolbarPanel);
 
     if (auxiliary != null) {
-      myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
+      Disposer.register(this, () -> auxiliary.getCalledOnViewDispose());
       myBrowser.setTableContextMenu(group, auxiliary.getPopupActions());
     }
     else {
@@ -218,9 +216,6 @@ public class CommittedChangesPanel extends JPanel implements DataProvider, Dispo
 
   @Override
   public void dispose() {
-    for (Runnable runnable : myShouldBeCalledOnDispose) {
-      runnable.run();
-    }
     myDisposed = true;
   }
 
