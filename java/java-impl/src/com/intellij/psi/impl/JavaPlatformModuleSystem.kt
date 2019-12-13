@@ -189,7 +189,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
-    override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; never visible
+    override fun getFamilyName() = "dfd4a2c1-da18-4651-9aa8-d7d31cae10be" // random string; not visible
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
 
@@ -211,7 +211,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
     private val qualifier = "${targetName}/${packageName}"
 
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports=${qualifier}=${useName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports ${qualifier}=${useName}")
 
     override fun update(options: MutableList<String>) {
       var idx = -1; var candidate = -1; var offset = 0
@@ -227,19 +227,15 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
           }
         }
       }
-      when {
-        idx == -1 -> options += "--add-exports=${qualifier}=${useName}"
-        candidate == options.size -> options[idx - 1] = "--add-exports=${qualifier}=${useName}"
-        else -> {
-          val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else "${value},${useName}"
-        }
+      when (idx) {
+        -1 -> options += listOf("--add-exports", "${qualifier}=${useName}")
+        else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
       }
     }
   }
 
   private class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-modules=${moduleName}")
+    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-modules ${moduleName}")
 
     override fun update(options: MutableList<String>) {
       var idx = -1
@@ -250,8 +246,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
       when (idx) {
-        -1 -> options += "--add-modules=${moduleName}"
-        options.size -> options[idx - 1] = "--add-modules=${moduleName}"
+        -1 -> options += listOf("--add-modules", moduleName)
+        options.size -> options += moduleName
         else -> {
           val value = options[idx]
           options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"
