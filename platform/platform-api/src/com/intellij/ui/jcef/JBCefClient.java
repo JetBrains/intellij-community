@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
@@ -34,9 +33,9 @@ import java.util.*;
 // [tav]: todo: think if we need some more sophisticated way to handle results of sequence of handles (like foldResults() callback)
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)
 @ApiStatus.Experimental
-public class JBCefClient implements Disposable {
+public class JBCefClient implements JBCefDisposable {
   @NotNull private final CefClient myCefClient;
-  private volatile boolean isDisposed;
+  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final HandlerSupport<CefContextMenuHandler> myContextMenuHandler = new HandlerSupport<>();
   private final HandlerSupport<CefDialogHandler> myDialogHandler = new HandlerSupport<>();
@@ -61,12 +60,12 @@ public class JBCefClient implements Disposable {
 
   @Override
   public void dispose() {
-    isDisposed = true;
-    myCefClient.dispose();
+    myDisposeHelper.dispose(() -> myCefClient.dispose());
   }
 
+  @Override
   public boolean isDisposed() {
-    return isDisposed;
+    return myDisposeHelper.isDisposed();
   }
 
   public JBCefClient addContextMenuHandler(@NotNull CefContextMenuHandler handler, @NotNull CefBrowser browser) {

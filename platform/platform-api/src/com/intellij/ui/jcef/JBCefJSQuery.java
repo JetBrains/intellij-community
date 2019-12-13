@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
@@ -26,10 +25,11 @@ import java.util.function.Function;
  * @author tav
  */
 @ApiStatus.Experimental
-public class JBCefJSQuery implements Disposable {
+public class JBCefJSQuery implements JBCefDisposable {
   @NotNull private final String myJSCallID;
   @NotNull private final CefMessageRouter myMsgRouter;
   @NotNull private final CefClient myCefClient;
+  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
@@ -113,8 +113,15 @@ public class JBCefJSQuery implements Disposable {
 
   @Override
   public void dispose() {
-    myCefClient.removeMessageRouter(myMsgRouter);
-    myHandlerMap.clear();
+    myDisposeHelper.dispose(() -> {
+      myCefClient.removeMessageRouter(myMsgRouter);
+      myHandlerMap.clear();
+    });
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return myDisposeHelper.isDisposed();
   }
 
   /**

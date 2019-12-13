@@ -4,12 +4,15 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.jcef.JBCefBrowser;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author tav
@@ -31,6 +34,12 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     JBCefBrowser browser = new JBCefBrowser(URL);
     frame.add(browser.getComponent(), BorderLayout.CENTER);
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        Disposer.dispose(browser);
+      }
+    });
 
     JTextField urlBar = new JTextField(URL);
     urlBar.addActionListener(event -> browser.loadURL(urlBar.getText()));

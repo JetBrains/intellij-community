@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import org.cef.browser.CefBrowser;
@@ -23,12 +22,13 @@ import java.awt.*;
  * @author tav
  */
 @ApiStatus.Experimental
-public class JBCefBrowser implements Disposable {
+public class JBCefBrowser implements JBCefDisposable {
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @NotNull private final CefFocusHandler myCefFocusHandler;
   @NotNull private final CefLifeSpanHandler myLifeSpanHandler;
+  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
@@ -170,12 +170,20 @@ public class JBCefBrowser implements Disposable {
 
   @Override
   public void dispose() {
-    myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
-    myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
-    myCefBrowser.close(false);
-    if (myIsDefaultClient) {
-      Disposer.dispose(myCefClient);
-    }
+    myDisposeHelper.dispose(() -> {
+      myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
+      myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
+      myCefBrowser.stopLoad();
+      myCefBrowser.close(false);
+      if (myIsDefaultClient) {
+        Disposer.dispose(myCefClient);
+      }
+    });
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return myDisposeHelper.isDisposed();
   }
 
   @SuppressWarnings("unused")
