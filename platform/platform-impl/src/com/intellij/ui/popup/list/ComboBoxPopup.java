@@ -23,7 +23,7 @@ import java.util.function.Supplier;
 public class ComboBoxPopup<T> extends ListPopupImpl {
   private final Context<T> myContext;
 
-  protected ComboBoxPopup(@NotNull Context<T> context, @Nullable Object selectedItem) {
+  public ComboBoxPopup(@NotNull Context<T> context, @Nullable Object selectedItem) {
     this(context, null, popupStateFromContext(context, selectedItem), null);
   }
 
@@ -72,8 +72,14 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   }
 
   public void syncWithModelChange() {
+    //mouse may be under the expandable item, sub-popup would be shown,
+    //this popup could grow/shrink making the sub-popup mispositioned,
+    //while probability is not high, we just hide child popups
+    disposeChildren();
+
     //noinspection unchecked,rawtypes
-    List<T> values = ((BaseListPopupStep)getStep()).getValues();
+    MyBasePopupState<T> step = (MyBasePopupState)getStep();
+    List<T> values = step.getValues();
     values.clear();
     values.addAll(copyItemsFromModel(myContext.getModel()));
     JList<?> popupList = getList();
@@ -104,7 +110,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   protected ListCellRenderer<T> getListElementRenderer() {
     // we set the correct renderer explicitly
     // to ensure getComponent().getPreferredSize() is computed
-    // correctly. Fixes the sub-popup jump's to the left on macOS
+    // correctly. Fixes the sub-popup jump's to the left on mac
     return new MyDelegateRenderer();
   }
 
@@ -152,7 +158,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     private MyBasePopupState(@NotNull Context<T> context,
                              @NotNull Supplier<ListModel<T>> getComboboxModel) {
-      super("", copyItemsFromModel(getComboboxModel.get()));
+      super(null, copyItemsFromModel(getComboboxModel.get()));
       myGetComboboxModel = getComboboxModel;
       myContext = context;
     }

@@ -85,8 +85,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
     super(new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter));
     myOnNewSdkAdded = sdk -> {
-      if (sdk == null) return;
-      setSelectedJdk(sdk);
       if (onNewSdkAdded != null) {
         onNewSdkAdded.consume(sdk);
       }
@@ -105,6 +103,12 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }.forType(JdkComboBox::unwrapItem));
 
     reloadModel();
+  }
+
+  @Override
+  protected void onNewSdkAdded(@NotNull Sdk sdk) {
+    setSelectedJdk(sdk);
+    myOnNewSdkAdded.consume(sdk);
   }
 
   @Override
@@ -253,8 +257,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   }
 
   private void resolveSuggestionsIfNeeded() {
-    myModel.reloadActions(this, getSelectedJdk(), myOnNewSdkAdded);
-    myModel.detectItems(this, myOnNewSdkAdded);
+    myModel.reloadActions(this, getSelectedJdk());
+    myModel.detectItems(this);
   }
 
   @Override
@@ -310,24 +314,21 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     }
 
     @Nullable
-    private static SdkListItem.GroupItem findGroup(@Nullable JdkComboBoxItem selectedValue) {
-      if (!(selectedValue instanceof InnerComboBoxItem)) return null;
-      SdkListItem item = ((InnerComboBoxItem)selectedValue).getItem();
-      if (!(item instanceof SdkListItem.GroupItem)) return null;
-      return (SdkListItem.GroupItem)item;
-    }
-
-    @Nullable
     @Override
     public ListModel<JdkComboBoxItem> onChosen(JdkComboBoxItem selectedValue) {
-      SdkListItem.GroupItem group = findGroup(selectedValue);
-      if (group == null) return null;
-      return new JdkComboBoxModel(myInnerModel.buildSubModel(group));
+      if (selectedValue instanceof InnerComboBoxItem) {
+        SdkListModel inner = myInnerModel.onChosen(((InnerComboBoxItem)selectedValue).getItem());
+        return inner == null ? null : new JdkComboBoxModel(inner);
+      }
+      return null;
     }
 
     @Override
     public boolean hasSubstep(JdkComboBoxItem selectedValue) {
-      return findGroup(selectedValue) != null;
+      if (selectedValue instanceof InnerComboBoxItem) {
+        return myInnerModel.hasSubstep(((InnerComboBoxItem)selectedValue).getItem());
+      }
+      return false;
     }
 
     @Override

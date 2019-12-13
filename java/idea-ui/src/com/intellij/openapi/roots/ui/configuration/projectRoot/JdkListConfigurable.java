@@ -6,17 +6,20 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.JdkPopup;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -161,17 +164,21 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return ServiceManager.getService(project, JdkListConfigurable.class);
   }
 
+
+  @NotNull
+  @Override
+  protected ArrayList<AnAction> createActions(boolean fromPopup) {
+    ArrayList<AnAction> defaultActions = super.createActions(fromPopup);
+
+    AnAction addNewAction = new AddSdkAction();
+
+    defaultActions.add(0, addNewAction);
+    return defaultActions;
+  }
+
   @Override
   public AbstractAddGroup createAddAction() {
-    return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, sdk -> {}, notSimpleJavaSdkType());
-        return group.getChildren(null);
-      }
-    };
+    return null;
   }
 
   @Override
@@ -198,6 +205,30 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
         myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));
       }
       return true;
+    }
+  }
+
+  private class AddSdkAction extends AnAction implements DumbAware {
+    AddSdkAction() {
+      super(ProjectBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      new JdkPopup(
+        myTree,
+        myProject,
+        getJdksTreeModel(),
+        notSimpleJavaSdkType(),
+        sdk -> false,
+        null,
+        null
+      ).showPopup(e);
     }
   }
 }
