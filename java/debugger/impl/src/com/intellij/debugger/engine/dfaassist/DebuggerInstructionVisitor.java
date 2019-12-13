@@ -36,7 +36,7 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
                                       @NotNull PsiExpression expression,
                                       @Nullable TextRange range,
                                       @NotNull DfaMemoryState state) {
-    if (range != null) return;
+    if (range != null || !shouldTrackExpressionValue(expression)) return;
     DfaHint hint = DfaHint.ANY_VALUE;
     DfType dfType = state.getDfType(value);
     if (dfType == DfTypes.TRUE) {
@@ -91,24 +91,30 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
     return super.checkNotNullable(state, value, problem);
   }
   
+  private static boolean shouldTrackExpressionValue(@NotNull PsiExpression expr) {
+    if (BoolUtils.isNegated(expr)) {
+      // It's enough to report for parent only
+      return false;
+    }
+    if (expr instanceof PsiAssignmentExpression) {
+      // Report right hand of assignment only
+      return false;
+    }
+    if (expr instanceof PsiPolyadicExpression) {
+      IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+        // For polyadic let's report components only, otherwise the report gets cluttered
+        return false;
+      }
+    }
+    return true;
+  }
+  
   void cleanup() {
     myHints.entrySet().removeIf(e -> {
       PsiExpression expr = e.getKey();
       DfaHint hint = e.getValue();
       if (hint.getTitle() == null) return true;
-      if (hint == DfaHint.TRUE || hint == DfaHint.FALSE) {
-        if (BoolUtils.isNegated(expr)) {
-          // It's enough to report for parent only
-          return true;
-        }
-        if (expr instanceof PsiPolyadicExpression) {
-          IElementType tokenType = ((PsiPolyadicExpression)expr).getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-            // For polyadic let's report components only, otherwise the report gets cluttered
-            return true;
-          }
-        }
-      }
       CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expr);
       return result != null && result.getExpressionValues(expr).size() == 1;
     });
