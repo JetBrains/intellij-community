@@ -8,8 +8,12 @@
   <vendor>JetBrains</vendor>
 
   <extensionPoints>
-    <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
-    <extensionPoint name="alphaUnsortedInspectionSuppressor" interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"/>
+    <extensionPoint name="implicitPropertyUsageProvider"
+                    interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+                    dynamic="true"/>
+    <extensionPoint name="alphaUnsortedInspectionSuppressor"
+                    interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
