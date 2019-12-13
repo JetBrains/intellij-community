@@ -13,12 +13,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -182,38 +184,57 @@ public class ProblemDescriptorUtil {
     List<ProblemDescriptor> problems = new ArrayList<>(annotations.size());
     IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
     for (Annotation annotation : annotations) {
-      if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
-          annotation.getStartOffset() == annotation.getEndOffset() && !annotation.isAfterEndOfLine()) {
-        continue;
-      }
+      HighlightSeverity severity = annotation.getSeverity();
+      int startOffset = annotation.getStartOffset();
+      int endOffset = annotation.getEndOffset();
 
-      final PsiElement startElement;
-      final PsiElement endElement;
-      if (annotation.getStartOffset() == annotation.getEndOffset() && annotation.isAfterEndOfLine()) {
-        startElement = endElement = file.findElementAt(annotation.getEndOffset() - 1);
-      }
-      else {
-        startElement = file.findElementAt(annotation.getStartOffset());
-        endElement = file.findElementAt(annotation.getEndOffset() - 1);
-      }
-      if (startElement == null || endElement == null) {
-        continue;
-      }
-
+      String message = annotation.getMessage();
+      boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
-      ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(annotation.getSeverity());
-      ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
-                                                               endElement,
-                                                               annotation.getMessage(),
-                                                               quickFixes,
-                                                               highlightType,
-                                                               annotation.isAfterEndOfLine(),
-                                                               null,
-                                                               true,
-                                                               false);
-      problems.add(descriptor);
+
+      ProblemDescriptor descriptor = convertToDescriptor(file, severity, startOffset, endOffset, message, isAfterEndOfLine, quickFixes);
+      if (descriptor != null) {
+        problems.add(descriptor);
+      }
     }
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  private static ProblemDescriptor convertToDescriptor(@NotNull PsiFile file,
+                                                       @NotNull HighlightSeverity severity,
+                                                       int startOffset,
+                                                       int endOffset,
+                                                       @NotNull String message,
+                                                       boolean isAfterEndOfLine,
+                                                       @NotNull LocalQuickFix[] quickFixes) {
+    if (severity == HighlightSeverity.INFORMATION ||
+        startOffset == endOffset && !isAfterEndOfLine) {
+      return null;
+    }
+
+    final PsiElement startElement;
+    final PsiElement endElement;
+    if (startOffset == endOffset && isAfterEndOfLine) {
+      startElement = endElement = file.findElementAt(endOffset - 1);
+    }
+    else {
+      startElement = file.findElementAt(startOffset);
+      endElement = file.findElementAt(endOffset - 1);
+    }
+    if (startElement == null || endElement == null) {
+      return null;
+    }
+
+    ProblemHighlightType highlightType = HighlightInfo.convertSeverityToProblemHighlight(severity);
+    return new ProblemDescriptorBase(startElement,
+                                     endElement,
+                                     message,
+                                     quickFixes,
+                                     highlightType,
+                                     isAfterEndOfLine,
+                                     null,
+                                     true,
+                                     false);
   }
 
   @NotNull
@@ -241,5 +262,10 @@ public class ProblemDescriptorUtil {
       result[i++] = fix;
     }
     return result;
+  }
+
+  public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
+    List<LocalQuickFix> quickFixes = ContainerUtil.filterIsInstance(ContainerUtil.map(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> p.first.getAction()), LocalQuickFix.class);
+    return convertToDescriptor(file, info.getSeverity(), info.getStartOffset(), info.getEndOffset(), info.getDescription(), info.isAfterEndOfLine(), quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 }
