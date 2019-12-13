@@ -144,7 +144,7 @@ public class GitFileUtils {
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<? extends FilePath> files, boolean force) throws VcsException {
-    addPaths(project, root, files, force, true);
+    addPaths(project, root, files, force, !force);
   }
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
