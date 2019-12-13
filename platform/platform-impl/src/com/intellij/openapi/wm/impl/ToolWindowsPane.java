@@ -76,8 +76,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final List<Stripe> myStripes = new ArrayList<>();
 
-  private final ToolWindowManagerImpl myManager;
-
   private boolean myStripesOverlayed;
   private boolean myWidescreen;
   private boolean myLeftHorizontalSplit;
@@ -181,11 +179,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  @NotNull
-  public Project getProject() {
-    return myManager.getProject();
-  }
-
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateToolStripesVisibility();
@@ -200,13 +193,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
-  final Runnable createAddDecoratorCmd(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode) {
+  final Runnable createAddDecoratorCmd(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
-      WindowInfo sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
-      return sideInfo == null
-             ? new AddDockedComponentCmd(decorator, info, dirtyMode)
-             : new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode);
+      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
+      if (sideInfo == null) {
+        return () -> {
+          ToolWindowAnchor anchor = info.getAnchor();
+          setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
+          if (!dirtyMode) {
+            myLayeredPane.validate();
+            myLayeredPane.repaint();
+          }
+        };
+      }
+      return new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
     }
     else if (info.isSliding()) {
       return new AddSlidingComponentCmd(decorator, info, dirtyMode);
@@ -223,10 +224,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @Nullable
-  final Runnable createRemoveDecoratorCmd(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode) {
+  final Runnable createRemoveDecoratorCmd(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
       boolean side = !info.isSplit();
-      WindowInfo sideInfo = myManager.getDockedInfoAt(info.getAnchor(), side);
+      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
       if (sideInfo == null) {
         return () -> {
           setComponent(null, info.getAnchor(), 0);
@@ -357,13 +358,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @Nullable
-  Stripe getStripeFor(@NotNull String id) {
-    ToolWindow window = myManager.getToolWindow(id);
-    if (window == null) {
-      return null;
-    }
-
-    ToolWindowAnchor anchor = window.getAnchor();
+  Stripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
       return myTopStripe;
     }
@@ -652,41 +647,20 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private final class AddDockedComponentCmd implements Runnable {
-    private final JComponent myComponent;
-    private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
-
-    AddDockedComponentCmd(@NotNull JComponent component,
-                          @NotNull WindowInfoImpl info,
-                          boolean dirtyMode) {
-      myComponent = component;
-      myInfo = info;
-      myDirtyMode = dirtyMode;
-    }
-
-    @Override
-    public void run() {
-      ToolWindowAnchor anchor = myInfo.getAnchor();
-      setComponent(myComponent, anchor, normalizeWeigh(myInfo.getWeight()));
-      if (!myDirtyMode) {
-        myLayeredPane.validate();
-        myLayeredPane.repaint();
-      }
-    }
-  }
-
   private final class AddAndSplitDockedComponentCmd implements Runnable {
     private final JComponent myNewComponent;
     private final WindowInfoImpl myInfo;
     private final boolean myDirtyMode;
+    @NotNull private final ToolWindowManagerImpl manager;
 
     private AddAndSplitDockedComponentCmd(@NotNull JComponent newComponent,
                                           @NotNull WindowInfoImpl info,
-                                          boolean dirtyMode) {
+                                          boolean dirtyMode,
+                                          @NotNull ToolWindowManagerImpl manager) {
       myNewComponent = newComponent;
       myInfo = info;
       myDirtyMode = dirtyMode;
+      this.manager = manager;
     }
 
     @Override
@@ -736,7 +710,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       // if all components are hidden for anchor we should find the second component to put in a splitter
       // otherwise we add empty splitter
       if (c == null) {
-        List<ToolWindowImpl> toolWindows = myManager.getToolWindowsOn(anchor, Objects.requireNonNull(myInfo.getId()));
+        List<ToolWindowImpl> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(myInfo.getId()));
         for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
           ToolWindowImpl window = iterator.next();
           if (window == null || window.isSplitMode() == myInfo.isSplit() || !window.isVisible()) {

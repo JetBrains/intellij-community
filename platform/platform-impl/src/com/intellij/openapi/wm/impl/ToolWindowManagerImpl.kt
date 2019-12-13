@@ -341,7 +341,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     })
 
     frame = frameHelper
-    val toolWindowPane = ToolWindowsPane(frameHelper.frame, this, project)
+    val toolWindowPane = ToolWindowsPane(frameHelper.frame, project, disposable)
     this.toolWindowPane = toolWindowPane
 
     frameHelper.rootPane!!.setToolWindowsPane(toolWindowPane)
@@ -842,7 +842,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      commands.add(toolWindowPane!!.createAddDecoratorCmd(entry.toolWindow.decoratorComponent!!, toBeShownInfo, dirtyMode))
+      commands.add(toolWindowPane!!.createAddDecoratorCmd(entry.toolWindow.decoratorComponent!!, toBeShownInfo, dirtyMode, this))
       // Remove tool window from the SideStack.
       if (isStackEnabled) {
         sideStack.remove(id)
@@ -1089,7 +1089,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     get() = IdeFocusManager.getInstance(project)!!
 
   override fun canShowNotification(toolWindowId: String): Boolean {
-    return toolWindowPane?.getStripeFor(toolWindowId)?.getButtonFor(toolWindowId) != null
+    return toolWindowPane?.getStripeFor(idToEntry.get(toolWindowId)?.readOnlyWindowInfo?.anchor ?: return false)?.getButtonFor(toolWindowId) != null
   }
 
   override fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String) {
@@ -1103,7 +1103,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       Disposer.dispose(existing)
     }
 
-    val stripe = toolWindowPane!!.getStripeFor(toolWindowId) ?: return
+    val stripe = toolWindowPane!!.getStripeFor(entry.readOnlyWindowInfo.anchor) ?: return
     if (!entry.toolWindow.isAvailable) {
       entry.toolWindow.isPlaceholderMode = true
       stripe.updatePresentation()
@@ -1153,8 +1153,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           if (button.isShowing) {
             tracker = object : PositionTracker<Balloon>(button) {
               override fun recalculateLocation(`object`: Balloon): RelativePoint? {
-                val stripeButton = toolWindowPane!!.getStripeFor(toolWindowId)?.getButtonFor(toolWindowId) ?: return null
-                if (getToolWindow(toolWindowId)?.anchor != anchor) {
+                val otherEntry = idToEntry.get(toolWindowId) ?: return null
+                val stripeButton = otherEntry.stripeButton
+                if (otherEntry.readOnlyWindowInfo.anchor != anchor) {
                   `object`.hide()
                   return null
                 }
@@ -1429,7 +1430,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun appendRemoveDecoratorCmd(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>) {
-    toolWindowPane!!.createRemoveDecoratorCmd(info, entry.toolWindow.decoratorComponent, dirtyMode)?.let { commands.add(it) }
+    toolWindowPane!!.createRemoveDecoratorCmd(info, entry.toolWindow.decoratorComponent, dirtyMode, this)?.let { commands.add(it) }
     commands.add(Runnable {
       if (!commands.any { it is RequestFocusInToolWindowCmd }) {
         toolWindowPane!!.transferFocus()
