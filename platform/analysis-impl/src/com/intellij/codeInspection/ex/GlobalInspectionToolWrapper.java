@@ -79,6 +79,12 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       return null;
     }
     return new LocalInspectionToolWrapper(sharedTool){
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return GlobalInspectionToolWrapper.this.getDisplayName();
+      }
+
       @Nullable
       @Override
       public String getLanguage() {
