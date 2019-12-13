@@ -99,7 +99,7 @@ public final class ToolWindowCollector {
         addData("id", info.myRecordedId).
         addPluginInfo(info.myPluginInfo);
       if (windowInfo != null) {
-        data.addData("View Mode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
+        data.addData("ViewMode", ToolWindowViewModeAction.ViewMode.fromWindowInfo(windowInfo).toString());
         data.addData("Location", ToolWindowMoveAction.Anchor.fromWindowInfo(windowInfo).toString());
       }
       FUCounterUsageLogger.getInstance().logEvent("toolwindow", StringUtil.toLowerCase(source.name()), data);
