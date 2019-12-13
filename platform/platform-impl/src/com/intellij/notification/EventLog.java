@@ -489,7 +489,7 @@ public final class EventLog {
       myInitial.clear();
       StartupManager.getInstance(myProject).runAfterOpened(() -> {
         for (Notification notification : notifications) {
-          if (!ShutDownTracker.isShutdownHookRunning()) {
+          if (ShutDownTracker.isShutdownHookRunning()) {
             return;
           }
 
