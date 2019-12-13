@@ -35,7 +35,7 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
 
   private var reparsePosition: Long = 0
   private var remapFunction: LongUnaryOperator? = null
-  private val buffer: HProfReadBuffer
+  val buffer: HProfReadBuffer
 
   private var heapRecordPosition: Long = 0
 
@@ -156,7 +156,7 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
     }
   }
 
-  private fun acceptHeapDumpRecord(heapDumpRecordType: HeapDumpRecordType, visitor: HProfVisitor) {
+  fun acceptHeapDumpRecord(heapDumpRecordType: HeapDumpRecordType, visitor: HProfVisitor) {
     when (heapDumpRecordType) {
       HeapDumpRecordType.RootUnknown -> visitor.visitRootUnknown(readId())
       HeapDumpRecordType.RootGlobalJNI -> visitor.visitRootGlobalJNI(readId(), readRawId())
