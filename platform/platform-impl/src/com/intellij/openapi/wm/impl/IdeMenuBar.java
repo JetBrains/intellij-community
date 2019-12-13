@@ -112,6 +112,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   @Override
+  public JMenu add(JMenu menu) {
+    menu.setFocusable(false);
+    return super.add(menu);
+  }
+
+  @Override
   public Border getBorder() {
     State state = getState();
     // avoid moving lines
