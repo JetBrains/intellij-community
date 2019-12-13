@@ -579,3 +579,29 @@ class SynchronizedTest {
     }
   }
 }
+class VarArgTest {
+  static class MyList extends ArrayList<String> {
+    MyList(String... data) {
+      super(Arrays.asList(data));
+    }
+
+    MyList(int foo, String... data) {
+      super(Arrays.asList(data));
+    }
+  }
+  
+  void test(String[] data) {
+    List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new MyList();
+    for(String s : list) System.out.println(s);
+    List<String> <warning descr="Contents of collection 'list2' are queried, but never updated">list2</warning> = new MyList(1);
+    for(String s : list2) System.out.println(s);
+    List<String> list3 = new MyList("foo");
+    for(String s : list3) System.out.println(s);
+    List<String> list4 = new MyList("foo", "bar");
+    for(String s : list4) System.out.println(s);
+    List<String> list5 = new MyList(1, "foo", "bar");
+    for(String s : list5) System.out.println(s);
+    List<String> list6 = new MyList(data);
+    for(String s : list6) System.out.println(s);
+  }
+}

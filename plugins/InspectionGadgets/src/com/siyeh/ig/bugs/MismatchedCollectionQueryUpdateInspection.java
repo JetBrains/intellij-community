@@ -356,16 +356,19 @@ public class MismatchedCollectionQueryUpdateInspection
     if (argumentList == null) {
       return false;
     }
+    PsiMethod ctor = newExpression.resolveMethod();
+    if (ctor == null) return true;
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    for (final PsiExpression argument : arguments) {
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) {
+    if (ctor.isVarArgs() && arguments.length >= parameters.length) {
+      return false;
+    }
+    for (PsiParameter parameter : parameters) {
+      PsiType type = parameter.getType();
+      if (CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
-      if (CollectionUtils.isCollectionClassOrInterface(argumentType)) {
-        return false;
-      }
-      if (argumentType instanceof PsiArrayType) {
+      if (type instanceof PsiArrayType && !(type instanceof PsiEllipsisType)) {
         return false;
       }
     }
