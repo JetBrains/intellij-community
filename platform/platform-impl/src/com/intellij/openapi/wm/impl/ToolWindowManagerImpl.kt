@@ -341,10 +341,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     })
 
     frame = frameHelper
-    val toolWindowPane = ToolWindowsPane(frameHelper.frame, project, disposable)
+    val rootPane = frameHelper.rootPane!!
+    val toolWindowPane = rootPane.toolWindowPane
+    toolWindowPane.initDocumentComponent(project)
     this.toolWindowPane = toolWindowPane
-
-    frameHelper.rootPane!!.setToolWindowsPane(toolWindowPane)
+    rootPane.updateToolbar()
 
     toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
       val result = ArrayList<JComponent>(idToEntry.size)
@@ -430,6 +431,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           LOG.error("failed to init toolwindow ${bean.factoryClass}", t)
         }
       }
+
+      toolWindowPane!!.validate()
+      toolWindowPane!!.repaint()
     }
 
     service<ToolWindowManagerAppLevelHelper>()
@@ -446,6 +450,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
     doInitToolWindow(bean, toolWindowFactory)
+    toolWindowPane!!.validate()
+    toolWindowPane!!.repaint()
   }
 
   private fun doInitToolWindow(bean: ToolWindowEP, factory: ToolWindowFactory) {

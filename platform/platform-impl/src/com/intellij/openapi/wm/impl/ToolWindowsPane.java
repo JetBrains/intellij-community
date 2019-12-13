@@ -81,7 +81,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private boolean myLeftHorizontalSplit;
   private boolean myRightHorizontalSplit;
 
-  ToolWindowsPane(@NotNull JFrame frame, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  ToolWindowsPane(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     setOpaque(false);
     myFrame = frame;
 
@@ -135,7 +135,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(myLayeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+  }
 
+  void initDocumentComponent(@NotNull Project project) {
     JComponent editorComponent = FileEditorManagerEx.getInstanceEx(project).getComponent();
     editorComponent.setFocusable(false);
     setDocumentComponent(editorComponent);
@@ -522,14 +524,17 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
     Pair<Resizer, Component> resizerAndComponent = findResizerAndComponent(wnd);
-    if (resizerAndComponent == null) return;
+    if (resizerAndComponent == null) {
+      return;
+    }
 
     if (!maximized) {
       ToolWindow maximizedWindow = myMaximizedProportion.first;
       assert maximizedWindow == wnd;
       resizerAndComponent.first.setSize(myMaximizedProportion.second);
       myMaximizedProportion = null;
-    } else {
+    }
+    else {
       int size = wnd.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
       stretch(wnd, Short.MAX_VALUE);
       myMaximizedProportion = Pair.create(wnd, size);
@@ -537,11 +542,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     doLayout();
   }
 
-
   @FunctionalInterface
   interface Resizer {
     void setSize(int size);
-
 
     abstract class Splitter implements Resizer {
       ThreeComponentsSplitter mySplitter;
@@ -593,7 +596,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       abstract void _setSize(int size);
 
       static class Left extends LayeredPane {
-
         Left(@NotNull Component component) {
           super(component);
         }

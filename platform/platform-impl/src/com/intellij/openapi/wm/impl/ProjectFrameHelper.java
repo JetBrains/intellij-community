@@ -180,7 +180,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   public void releaseFrame() {
-    myRootPane.setToolWindowsPane(null);
+    myRootPane.removeToolbar();
     WindowManagerEx.getInstanceEx().releaseFrame(this);
   }
 

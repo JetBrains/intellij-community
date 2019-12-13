@@ -55,10 +55,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
   private final JBBox myNorthPanel = JBBox.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
 
-  /**
-   * Current {@code ToolWindowsPane}. If there is no such pane then this field is null.
-   */
-  private ToolWindowsPane myToolWindowsPane;
+  private final ToolWindowsPane myToolWindowsPane;
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
@@ -122,6 +119,14 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     });
 
     updateMainMenuVisibility();
+
+    myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable);
+    myContentPane.add(myToolWindowsPane, BorderLayout.CENTER);
+  }
+
+  @NotNull
+  public ToolWindowsPane getToolWindowPane() {
+    return myToolWindowsPane;
   }
 
   public void init(@NotNull ProjectFrameHelper frame, @NotNull Disposable parentDisposable) {
@@ -172,7 +177,6 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
         myStatusBarDisposed = true;
         Disposer.dispose(myStatusBar);
       }
-      removeToolbar();
       setJMenuBar(null);
       if (myCustomFrameTitlePane != null) {
         layeredPane.remove(myCustomFrameTitlePane);
@@ -180,24 +184,6 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
       }
     }
     super.removeNotify();
-  }
-
-  /**
-   * Sets current tool windows pane (panel where all tool windows are located).
-   * If {@code toolWindowsPane} is {@code null} then the method just removes
-   * the current tool windows pane.
-   */
-  final void setToolWindowsPane(@Nullable ToolWindowsPane toolWindowsPane) {
-    if (myToolWindowsPane != null) {
-      myContentPane.remove(myToolWindowsPane);
-    }
-
-    myToolWindowsPane = toolWindowsPane;
-    if (myToolWindowsPane != null) {
-      myContentPane.add(myToolWindowsPane, BorderLayout.CENTER);
-    }
-
-    updateToolbar();
   }
 
   @Override
@@ -222,7 +208,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.revalidate();
   }
 
-  private void removeToolbar() {
+  public void removeToolbar() {
     if (myToolbar != null) {
       myNorthPanel.remove(myToolbar);
       myToolbar = null;
@@ -241,6 +227,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     menuBar.repaint();
   }
 
+  @NotNull
   private static JComponent createToolbar() {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
