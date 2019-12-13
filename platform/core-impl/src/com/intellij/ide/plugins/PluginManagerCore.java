@@ -1163,7 +1163,8 @@ public final class PluginManagerCore {
     PluginLoadingResult result = context.parentContext.result;
     for (Future<IdeaPluginDescriptorImpl> task : tasks) {
       IdeaPluginDescriptorImpl descriptor = task.get();
-      if (descriptor != null) {
+      // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
+      if (descriptor != null && !result.contains(descriptor)) {
         descriptor.setUseCoreClassLoader();
         result.add(descriptor, context.parentContext);
       }

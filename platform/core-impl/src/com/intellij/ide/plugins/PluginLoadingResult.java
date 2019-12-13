@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,6 +165,12 @@ final class PluginLoadingResult {
       plugins.put(pluginId, prevDescriptor);
       return false;
     }
+  }
+
+  @Contract(pure = true)
+  boolean contains(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    PluginId pluginId = descriptor.getPluginId();
+    return (pluginId != null && plugins.containsKey(pluginId));
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
