@@ -4,7 +4,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class CompletionInitializationUtil {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       CompletionAssertions.checkEditorValid(editor);
 
-      final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
       assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
       psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
       CompletionAssertions.assertCommitSuccessful(editor, psiFile);
@@ -61,9 +61,8 @@ public class CompletionInitializationUtil {
                                                                                      @NotNull Caret caret,
                                                                                      CompletionType completionType) {
     final Ref<CompletionContributor> current = Ref.create(null);
-    Language language = psiFile.getLanguage();
     CompletionInitializationContextImpl context =
-      new CompletionInitializationContextImpl(editor, caret, language, psiFile, completionType, invocationCount) {
+      new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount) {
         CompletionContributor dummyIdentifierChanger;
 
         @Override
