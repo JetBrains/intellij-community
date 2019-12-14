@@ -22,6 +22,8 @@ interface WindowInfo {
 
   val type: ToolWindowType
 
+  val internalType: ToolWindowType
+
   val isActive: Boolean
 
   val isAutoHide: Boolean

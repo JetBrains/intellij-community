@@ -54,7 +54,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType by enum(ToolWindowType.DOCKED)
+  override var internalType by enum(ToolWindowType.DOCKED)
 
   override var type by enum(ToolWindowType.DOCKED)
 

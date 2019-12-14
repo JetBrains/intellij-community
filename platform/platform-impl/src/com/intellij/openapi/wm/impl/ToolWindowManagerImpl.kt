@@ -455,9 +455,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun doInitToolWindow(bean: ToolWindowEP, factory: ToolWindowFactory) {
     val toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor)
     doRegisterToolWindow(RegisterToolWindowTask(id = bean.id, anchor = toolWindowAnchor,
-                                                            canCloseContent = bean.canCloseContents,
-                                                            canWorkInDumbMode = DumbService.isDumbAware(factory),
-                                                            shouldBeAvailable = factory.shouldBeAvailable(project)), factory, bean)
+      canCloseContent = bean.canCloseContents,
+      canWorkInDumbMode = DumbService.isDumbAware(factory),
+      shouldBeAvailable = factory.shouldBeAvailable(project)), factory, bean)
   }
 
   fun projectClosed() {
@@ -469,8 +469,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val commands = mutableListOf<Runnable>()
     appendUpdateRootPane(commands)
     // hide all tool windows
-    idToEntry.forEach { (id, entry) ->
-      deactivateToolWindowImpl(layout.getInfo(id) ?: return@forEach, entry, true, commands)
+    for ((id, entry) in idToEntry) {
+      deactivateToolWindowImpl(layout.getInfo(id) ?: continue, entry, true, commands)
     }
     // do not notify - project is disposed
     commandProcessor.execute(commands)
@@ -893,23 +893,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val windowInfoSnapshot = info.copy()
 
-    var icon: Icon? = null
-    if (bean?.icon != null) {
-      icon = IconLoader.findIcon(bean.icon, contentFactory!!.javaClass)
-      if (icon == null) {
-        try {
-          icon = IconLoader.getIcon(bean.icon)
-        }
-        catch (ignored: Exception) {
-          icon = EmptyIcon.ICON_13
+    val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
+      windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable)
+
+    // contentFactory?.init(this) can set icon
+    if (toolWindow.icon == null) {
+      var icon: Icon? = null
+      if (bean?.icon != null) {
+        icon = IconLoader.findIcon(bean.icon, contentFactory!!.javaClass)
+        if (icon == null) {
+          try {
+            icon = IconLoader.getIcon(bean.icon)
+          }
+          catch (ignored: Exception) {
+          }
         }
       }
+      toolWindow.doSetIcon(icon ?: EmptyIcon.ICON_13)
     }
-
-    val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
-      windowInfoSnapshot, contentFactory,
-      icon = if (icon == null) null else ToolWindowIcon(icon, task.id),
-      isAvailable = task.shouldBeAvailable)
 
     val button = StripeButton(toolWindowPane!!, toolWindow)
     val commands = mutableListOf<Runnable>()
@@ -1207,8 +1208,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return ComponentUtil.getParentOfType(EditorsSplitters::class.java, focusManager.focusOwner) != null
     }
 
-  fun getToolWindowAnchor(id: String) = getRegisteredMutableInfoOrLogError(id).anchor
-
   fun setToolWindowAnchor(id: String, anchor: ToolWindowAnchor) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     setToolWindowAnchor(id, anchor, -1)
@@ -1261,16 +1260,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  fun isSplitMode(id: String): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return getRegisteredMutableInfoOrLogError(id).isSplit
-  }
-
-  fun getContentUiType(id: String): ToolWindowContentUiType {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return getRegisteredMutableInfoOrLogError(id).contentUiType
-  }
-
   internal fun setSideTool(id: String, isSplit: Boolean) {
     val entry = idToEntry.get(id)!!
     val commands = mutableListOf<Runnable>()
@@ -1321,29 +1310,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     activateToolWindow(entry, false, false)
   }
 
-  fun getToolWindowInternalType(id: String): ToolWindowType {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return getRegisteredMutableInfoOrLogError(id).internalType
-  }
-
-  fun getToolWindowType(id: String) = getRegisteredMutableInfoOrLogError(id).type
-
   protected open fun fireStateChanged() {
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).stateChanged(this)
-  }
-
-  fun isToolWindowActive(id: String): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return layout.getInfo(id)?.isActive ?: false
-  }
-
-  fun isToolWindowAutoHide(id: String): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return idToEntry.get(id)?.readOnlyWindowInfo?.isAutoHide ?: false
-  }
-
-  fun isToolWindowVisible(id: String): Boolean {
-    return idToEntry.get(id)?.readOnlyWindowInfo?.isVisible ?: false
   }
 
   fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
@@ -1743,7 +1711,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         return
       }
 
-      if (!toolWindow.decorator.windowInfo.isActive) {
+      if (!toolWindow.windowInfo.isActive) {
         IdeFocusManager.getInstance(toolWindow.toolWindowManager.project).doWhenFocusSettlesDown(object : EdtRunnable() {
           override fun runEdt() {
             val manager = toolWindow.toolWindowManager
@@ -1895,15 +1863,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val commands = mutableListOf<Runnable>()
     appendApplyWindowInfoCmd(info, idToEntry.get(id)!!, commands)
     execute(commands)
-  }
-
-  fun isShowStripeButton(id: String): Boolean {
-    if (!isToolWindowRegistered(id)) {
-      return false
-    }
-
-    val info = layout.getInfo(id)
-    return info == null || info.isShowStripeButton
   }
 
   internal class InitToolWindowsActivity : StartupActivity {

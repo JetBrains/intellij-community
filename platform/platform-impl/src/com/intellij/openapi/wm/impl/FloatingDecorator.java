@@ -113,7 +113,8 @@ public final class FloatingDecorator extends JDialog {
     setFocusableWindowState(myInfo.isActive());
 
     super.show();
-    final UISettings uiSettings = UISettings.getInstance();
+
+    UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getState().getEnableAlphaMode()) {
       final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
       windowManager.setAlphaModeEnabled(this, true);
@@ -124,7 +125,9 @@ public final class FloatingDecorator extends JDialog {
         windowManager.setAlphaModeRatio(this, uiSettings.getState().getAlphaModeRatio());
       }
     }
-    paint(getGraphics()); // This prevents annoying flick
+
+    // this prevents annoying flick
+    paint(getGraphics());
 
     setFocusableWindowState(true);
 
@@ -144,36 +147,37 @@ public final class FloatingDecorator extends JDialog {
     super.dispose();
   }
 
-  final void apply(@NotNull WindowInfo info){
+  void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.isFloating());
-    myInfo=info;
+    myInfo = info;
     // Set alpha mode
-    final UISettings uiSettings=UISettings.getInstance();
-    if (uiSettings.getState().getEnableAlphaMode() && isShowing() && isDisplayable()) {
-      myDelayAlarm.cancelAllRequests();
-      if (myInfo.isActive()) { // make window non transparent
+    UISettings uiSettings = UISettings.getInstance();
+    if (!uiSettings.getState().getEnableAlphaMode() || !isShowing() || !isDisplayable()) {
+      return;
+    }
+
+    myDelayAlarm.cancelAllRequests();
+    if (myInfo.isActive()) {
+      // make window non transparent
+      myFrameTicker.cancelAllRequests();
+      myStartRatio = getCurrentAlphaRatio();
+      if (myCurrentFrame > 0) {
+        myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
+      }
+      myEndRatio = .0f;
+      myFrameTicker.addRequest(myAnimator, DELAY);
+    }
+    else {
+      // make window transparent
+      myDelayAlarm.addRequest(() -> {
         myFrameTicker.cancelAllRequests();
         myStartRatio = getCurrentAlphaRatio();
         if (myCurrentFrame > 0) {
           myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
         }
-        myEndRatio = .0f;
+        myEndRatio = uiSettings.getState().getAlphaModeRatio();
         myFrameTicker.addRequest(myAnimator, DELAY);
-      }
-      else { // make window transparent
-        myDelayAlarm.addRequest(
-          () -> {
-            myFrameTicker.cancelAllRequests();
-            myStartRatio = getCurrentAlphaRatio();
-            if (myCurrentFrame > 0) {
-              myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
-            }
-            myEndRatio = uiSettings.getState().getAlphaModeRatio();
-            myFrameTicker.addRequest(myAnimator, DELAY);
-          },
-          uiSettings.getState().getAlphaModeDelay()
-        );
-      }
+      }, uiSettings.getState().getAlphaModeDelay());
     }
   }
 

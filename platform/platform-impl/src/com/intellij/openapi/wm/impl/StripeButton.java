@@ -34,8 +34,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private int myMnemonic;
   private boolean myPressedWhenSelected;
 
-  private WindowInfo windowInfo;
-
   private JLayeredPane myDragPane;
   private final ToolWindowsPane myPane;
   final ToolWindowImpl toolWindow;
@@ -83,7 +81,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   @NotNull
   public WindowInfo getWindowInfo() {
-    return windowInfo;
+    return toolWindow.getWindowInfo();
   }
 
   @NotNull
@@ -126,7 +124,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   @Override
   public ToolWindowAnchor getAnchor() {
-    return windowInfo.getAnchor();
+    return toolWindow.getAnchor();
   }
 
   public boolean isFirst() {
@@ -306,8 +304,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   public void apply(@NotNull WindowInfo info) {
-    windowInfo = info;
-
     setSelected(info.isVisible() || info.isActive());
     updateState(toolWindow);
   }

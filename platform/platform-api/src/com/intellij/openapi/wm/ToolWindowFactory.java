@@ -23,7 +23,7 @@ public interface ToolWindowFactory {
   /**
    * Perform additional initialization routine here.
    */
-  default void init(ToolWindow window) {}
+  default void init(@NotNull ToolWindow window) {}
 
   /**
    * Check if tool window (and its stripe button) should be visible after startup.

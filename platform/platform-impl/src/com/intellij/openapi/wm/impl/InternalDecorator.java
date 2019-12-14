@@ -41,7 +41,6 @@ import java.util.Map;
  * @author Vladimir Kondratyev
  */
 public final class InternalDecorator extends JPanel implements Queryable, DataProvider, ComponentWithMnemonics {
-  private WindowInfo myInfo;
   private final ToolWindowImpl toolWindow;
   private final MyDivider myDivider;
 
@@ -55,10 +54,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
-  private final ToolWindowHeader myHeader;
+  private final ToolWindowHeader header;
   private final JPanel contentPane;
 
-  InternalDecorator(@NotNull WindowInfo info, @NotNull ToolWindowImpl toolWindow) {
+  InternalDecorator(@NotNull ToolWindowImpl toolWindow) {
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
@@ -67,15 +66,15 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    myHeader = new ToolWindowHeader(toolWindow, () -> toolWindow.createPopupGroup(true)) {
+    header = new ToolWindowHeader(toolWindow, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
-        return InternalDecorator.this.toolWindow.isActive();
+        return toolWindow.isActive();
       }
 
       @Override
       protected void hideToolWindow() {
-        fireHidden();
+        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
       }
     };
 
@@ -83,14 +82,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     contentPane = new JPanel(new BorderLayout());
     installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
-    contentPane.add(myHeader, BorderLayout.NORTH);
+    contentPane.add(header, BorderLayout.NORTH);
 
     add(contentPane, BorderLayout.CENTER);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
-
-    setWindowInfo(info);
   }
 
   @Override
@@ -109,18 +106,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return owner != null && SwingUtilities.isDescendingFrom(owner, toolWindow.getComponent());
   }
 
-  public final void applyWindowInfo(@NotNull WindowInfo info) {
-    if (!myInfo.equals(info)) {
-      setWindowInfo(info);
-    }
-  }
-
-  private void setWindowInfo(@NotNull WindowInfo info) {
-    boolean isContentUiTypeChanged = (myInfo == null ? ToolWindowContentUiType.TABBED : myInfo.getContentUiType()) != info.getContentUiType();
-    myInfo = info;
-
+  void applyWindowInfo(@NotNull WindowInfo info) {
     // Anchor
-    ToolWindowAnchor anchor = myInfo.getAnchor();
+    ToolWindowAnchor anchor = info.getAnchor();
     if (info.isSliding()) {
       myDivider.invalidate();
       if (ToolWindowAnchor.TOP == anchor) {
@@ -146,17 +134,15 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     repaint();
 
     // push "apply" request forward
-    if (myInfo.isFloating() && myInfo.isVisible()) {
+    if (info.isFloating()) {
       FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
       if (floatingDecorator != null) {
-        floatingDecorator.apply(myInfo);
+        floatingDecorator.apply(info);
       }
     }
 
-    if (isContentUiTypeChanged) {
-      toolWindow.getContentUI().setType(myInfo.getContentUiType());
-    }
-    setBorder(new InnerPanelBorder(toolWindow, myInfo));
+    toolWindow.getContentUI().setType(info.getContentUiType());
+    setBorder(new InnerPanelBorder(toolWindow, info));
   }
 
   @Nullable
@@ -166,13 +152,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return toolWindow;
     }
     return null;
-  }
-
-  /**
-   * Fires event that "hide" button has been pressed.
-   */
-  private void fireHidden() {
-    toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
   }
 
   void addContentComponent(boolean dumbAware, @NotNull ContentManagerImpl contentManager) {
@@ -199,11 +178,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   public void setTitleActions(@NotNull AnAction[] actions) {
-    myHeader.setAdditionalTitleActions(actions);
+    header.setAdditionalTitleActions(actions);
   }
 
   void setTabActions(@NotNull AnAction[] actions) {
-    myHeader.setTabActions(actions);
+    header.setTabActions(actions);
   }
 
   private static final class InnerPanelBorder implements Border {
@@ -296,17 +275,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return toolWindow;
   }
 
-  @NotNull
-  final WindowInfo getWindowInfo() {
-    return myInfo;
-  }
-
   public int getHeaderHeight() {
-    return myHeader.getPreferredSize().height;
+    return header.getPreferredSize().height;
   }
 
   public void setHeaderVisible(boolean value) {
-    myHeader.setVisible(value);
+    header.setVisible(value);
   }
 
   private final class MyDivider extends JPanel {
@@ -334,8 +308,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
 
     boolean isInDragZone(MouseEvent e) {
-      final Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
-      return Math.abs(myInfo.getAnchor().isHorizontal() ? p.y : p.x) < 6;
+      Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
+      return Math.abs(toolWindow.getWindowInfo().getAnchor().isHorizontal() ? p.y : p.x) < 6;
     }
 
     private final class MyMouseAdapter extends MouseAdapter {
@@ -375,7 +349,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         }
 
         MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, MyDivider.this);
-        final ToolWindowAnchor anchor = myInfo.getAnchor();
+        final ToolWindowAnchor anchor = toolWindow.getAnchor();
         final Point point = event.getPoint();
         final Container windowPane = InternalDecorator.this.getParent();
         Point lastPoint = SwingUtilities.convertPoint(MyDivider.this, point, windowPane);
@@ -403,7 +377,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @NotNull
     @Override
     public Cursor getCursor() {
-      final boolean isVerticalCursor = myInfo.isDocked() ? myInfo.getAnchor().isSplitVertically() : myInfo.getAnchor().isHorizontal();
+      WindowInfo info = toolWindow.getWindowInfo();
+      boolean isVerticalCursor = info.getType() == ToolWindowType.DOCKED ? info.getAnchor().isSplitVertically() : info.getAnchor().isHorizontal();
       return isVerticalCursor ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
     }
   }
@@ -426,7 +401,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return accessibleContext;
   }
 
-  protected class AccessibleInternalDecorator extends AccessibleJPanel {
+  private final class AccessibleInternalDecorator extends AccessibleJPanel {
     @Override
     public String getAccessibleName() {
       String name = super.getAccessibleName();

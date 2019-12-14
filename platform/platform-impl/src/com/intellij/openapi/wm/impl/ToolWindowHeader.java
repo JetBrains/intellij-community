@@ -47,7 +47,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
   private ActionToolbar myToolbarWest;
   private final JPanel myWestPanel;
 
-  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Supplier<? extends ActionGroup> gearProducer) {
+  ToolWindowHeader(@NotNull ToolWindowImpl toolWindow, @NotNull Supplier<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
 
     AccessibleContextUtil.setName(this, "Tool Window Header");

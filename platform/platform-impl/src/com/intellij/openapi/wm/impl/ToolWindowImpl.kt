@@ -49,11 +49,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
                                           private val canWorkInDumbMode: Boolean,
                                           component: JComponent?,
                                           private val parentDisposable: Disposable,
-                                          info: WindowInfoImpl,
+                                          windowInfo: WindowInfo,
                                           private var contentFactory: ToolWindowFactory?,
-                                          internal var icon: ToolWindowIcon?,
                                           private var isAvailable: Boolean = true) : ToolWindowEx {
   private var stripeTitle: String? = null
+
+  var windowInfo: WindowInfo = windowInfo
+    private set
 
   private val contentUi by lazy {
     ToolWindowContentUi(this)
@@ -66,7 +68,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   private val pendingContentManagerListeners: List<ContentManagerListener>? = null
 
-  private val myShowing = object : BusyObject.Impl() {
+  private val showing = object : BusyObject.Impl() {
     override fun isReady() = component != null && component.isShowing
   }
 
@@ -76,6 +78,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   private var helpId: String? = null
 
+  internal var icon: ToolWindowIcon? = null
+
   private val contentManager = lazy {
     val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
 
@@ -83,12 +87,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
     Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
       override fun showNotify() {
-        myShowing.onReady()
+        showing.onReady()
       }
     }))
 
     if (decorator == null) {
-      decorator = InternalDecorator(info.copy(), this)
+      decorator = InternalDecorator(this)
+      decorator!!.applyWindowInfo(windowInfo)
       decorator!!.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent) {
           toolWindowManager.resized(e.component as InternalDecorator)
@@ -122,7 +127,10 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
-    decorator?.applyWindowInfo(info)
+    if (windowInfo != info) {
+      windowInfo = info
+      decorator?.applyWindowInfo(info)
+    }
   }
 
   val decoratorComponent: JComponent?
@@ -167,13 +175,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       return false
     }
     else {
-      return toolWindowManager.isToolWindowActive(id) || (decorator?.isFocused ?: false)
+      return windowInfo.isActive || (decorator?.isFocused ?: false)
     }
   }
 
   override fun getReady(requestor: Any): ActionCallback {
     val result = ActionCallback()
-    myShowing.getReady(this)
+    showing.getReady(this)
       .doWhenDone {
         toolWindowManager.commandProcessor.execute(listOf(Runnable {
           toolWindowManager.focusManager.doWhenFocusSettlesDown {
@@ -199,13 +207,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     callLater(runnable)
   }
 
-  override fun isVisible(): Boolean {
-    return toolWindowManager.isToolWindowVisible(id)
-  }
+  override fun isVisible() = windowInfo.isVisible
 
-  override fun getAnchor(): ToolWindowAnchor {
-    return toolWindowManager.getToolWindowAnchor(id)
-  }
+  override fun getAnchor() = windowInfo.anchor
 
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -213,10 +217,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     callLater(runnable)
   }
 
-  override fun isSplitMode(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return toolWindowManager.isSplitMode(id)
-  }
+  override fun isSplitMode() = windowInfo.isSplit
 
   override fun setContentUiType(type: ToolWindowContentUiType, runnable: Runnable?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -228,10 +229,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     toolWindowManager.setDefaultContentUiType(this, type)
   }
 
-  override fun getContentUiType(): ToolWindowContentUiType {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return toolWindowManager.getContentUiType(id)
-  }
+  override fun getContentUiType() = windowInfo.contentUiType
 
   override fun setSplitMode(isSideTool: Boolean, runnable: Runnable?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -244,14 +242,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     toolWindowManager.setToolWindowAutoHide(id, state)
   }
 
-  override fun isAutoHide(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return toolWindowManager.isToolWindowAutoHide(id)
-  }
+  override fun isAutoHide() = windowInfo.isAutoHide
 
-  override fun getType(): ToolWindowType {
-    return toolWindowManager.getToolWindowType(id)
-  }
+  override fun getType() = windowInfo.type
 
   override fun setType(type: ToolWindowType, runnable: Runnable?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
@@ -259,10 +252,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     callLater(runnable)
   }
 
-  override fun getInternalType(): ToolWindowType {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    return toolWindowManager.getToolWindowInternalType(id)
-  }
+  override fun getInternalType(): ToolWindowType = windowInfo.internalType
 
   override fun stretchWidth(value: Int) {
     toolWindowManager.stretchWidth(this, value)
@@ -279,11 +269,13 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setTitleActions(vararg actions: AnAction) {
-    decorator?.setTitleActions(actions)
+    contentManager
+    decorator!!.setTitleActions(actions)
   }
 
   override fun setTabActions(vararg actions: AnAction) {
-    decorator?.setTabActions(actions)
+    contentManager
+    decorator!!.setTabActions(actions)
   }
 
   fun setTabDoubleClickActions(vararg actions: AnAction) {
@@ -355,6 +347,11 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun setIcon(newIcon: Icon) {
     ApplicationManager.getApplication().assertIsDispatchThread()
+    doSetIcon(newIcon)
+    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+  }
+
+  internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
     if (EventLog.LOG_TOOL_WINDOW_ID != id) {
       if (oldIcon !== newIcon &&
@@ -363,8 +360,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
         LOG.warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
       }
     }
-    this.icon = ToolWindowIcon(newIcon, id)
-    toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
+    icon = ToolWindowIcon(newIcon, id)
   }
 
   override fun setTitle(title: String) {
@@ -411,7 +407,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     toolWindowManager.setShowStripeButton(id, show)
   }
 
-  override fun isShowStripeButton() = toolWindowManager.isShowStripeButton(id)
+  override fun isShowStripeButton() = windowInfo.isShowStripeButton
 
   override fun isDisposed() = contentManager.isInitialized() && contentManager.value.isDisposed
 
@@ -563,7 +559,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     }
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      return contentUiType === ToolWindowContentUiType.COMBO
+      return windowInfo.contentUiType === ToolWindowContentUiType.COMBO
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {

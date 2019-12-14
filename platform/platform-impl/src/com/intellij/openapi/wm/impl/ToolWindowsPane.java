@@ -1037,7 +1037,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           continue;
         }
 
-        WindowInfo info = (((InternalDecorator)component)).getWindowInfo();
+        WindowInfo info = (((InternalDecorator)component)).getToolWindow().getWindowInfo();
         float weight = info.getAnchor().isHorizontal()
                        ? (float)component.getHeight() / getHeight()
                        : (float)component.getWidth() / getWidth();
