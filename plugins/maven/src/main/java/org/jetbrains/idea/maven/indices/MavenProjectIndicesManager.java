@@ -44,10 +44,6 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   private final DependencySearchService myDependencySearchService;
   private final MergingUpdateQueue myUpdateQueue;
 
-  public boolean hasOfflineIndexes() {
-    return !myProjectIndices.isEmpty();
-  }
-
   public static MavenProjectIndicesManager getInstance(Project p) {
     return p.getComponent(MavenProjectIndicesManager.class);
   }
