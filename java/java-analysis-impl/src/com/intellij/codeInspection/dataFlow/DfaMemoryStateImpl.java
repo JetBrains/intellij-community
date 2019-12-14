@@ -1172,6 +1172,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
       return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
     }
+    if (value instanceof DfaTypeValue) {
+      DfReferenceType refType = ObjectUtils.tryCast(value.getDfType(), DfReferenceType.class);
+      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
+        return refType.getSpecialFieldType();
+      }
+    }
     return getDfType(value);
   }
 

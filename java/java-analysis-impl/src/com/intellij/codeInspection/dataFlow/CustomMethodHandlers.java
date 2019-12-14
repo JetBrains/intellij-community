@@ -46,7 +46,15 @@ class CustomMethodHandlers {
     staticCall(JAVA_LANG_FLOAT, "toString", "toHexString").parameterTypes("float"),
     staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
     staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short"),
-    staticCall(JAVA_LANG_BOOLEAN, "parseBoolean").parameterTypes("java.lang.String")
+    staticCall(JAVA_LANG_BOOLEAN, "parseBoolean").parameterTypes("java.lang.String"),
+    exactInstanceCall(JAVA_LANG_INTEGER, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_LONG, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_DOUBLE, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_FLOAT, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_BYTE, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_SHORT, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_CHARACTER, "toString").parameterCount(0),
+    exactInstanceCall(JAVA_LANG_BOOLEAN, "toString").parameterCount(0)
   );
   static final int MAX_STRING_CONSTANT_LENGTH_TO_TRACK = 256;
 
@@ -352,7 +360,7 @@ class CustomMethodHandlers {
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
-    DfType type = memoryState.getDfType(value);
+    DfType type = memoryState.getUnboxedDfType(value);
     Object constant = DfConstantType.getConstantOfType(type, Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;

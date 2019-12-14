@@ -562,6 +562,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (precalculated != null) {
       return getPrecalculatedResult(qualifierValue, state, factory, precalculated);
     }
+    SpecialField field = SpecialField.findSpecialField(instruction.getTargetMethod());
+    if (field != null) {
+      return factory.fromDfType(field.getFromQualifier(state.getDfType(qualifierValue)));
+    }
 
     PsiType type = instruction.getResultType();
 

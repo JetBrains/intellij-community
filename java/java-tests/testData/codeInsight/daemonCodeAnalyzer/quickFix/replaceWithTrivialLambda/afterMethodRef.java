@@ -15,7 +15,7 @@ public class MethodReferenceConstantValue {
     Boolean aBoolean = opt.map(s -> false)
       .map(o1 -> true)
       .map(o -> false)
-      .orElse(false);
+      .orElse(new Random().nextBoolean());
     if (opt.isPresent()) {
       Stream.generate(() -> true)
         .limit(10)
