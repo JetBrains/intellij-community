@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -9,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +55,9 @@ public class TipsOfTheDayUsagesCollector {
       if (filename instanceof String) {
         TipAndTrickBean tip = TipAndTrickBean.findByFileName((String)filename);
         if (tip != null) {
-          PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(tip.getPluginDescriptor());
+          PluginDescriptor descriptor = tip.getPluginDescriptor();
+          IdeaPluginDescriptor pluginDescriptor = descriptor instanceof IdeaPluginDescriptor ? (IdeaPluginDescriptor)descriptor : null;
+          PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
           context.setPluginInfo(pluginInfo);
           return pluginInfo.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
