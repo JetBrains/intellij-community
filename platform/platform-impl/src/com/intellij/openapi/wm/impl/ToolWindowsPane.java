@@ -197,7 +197,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
   @NotNull
-  final Runnable createAddDecoratorCmd(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  final Runnable createAddDecoratorCommand(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
@@ -276,7 +276,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @NotNull
-  public final JComponent getMyLayeredPane() {
+  public final JComponent getLayeredPane() {
     return layeredPane;
   }
 

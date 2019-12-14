@@ -831,7 +831,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
 
         val otherInfo = layout.getInfo(otherId) ?: continue
-        if (otherInfo.isVisible && (otherInfo.type == toBeShownInfo.type) && (otherInfo.anchor == toBeShownInfo.anchor) && (otherInfo.isSplit == toBeShownInfo.isSplit)) {
+        if (otherInfo.isVisible && otherInfo.type == toBeShownInfo.type && otherInfo.anchor == toBeShownInfo.anchor && otherInfo.isSplit == toBeShownInfo.isSplit) {
           // hide and deactivate tool window
           otherInfo.isVisible = false
           appendRemoveDecoratorCmd(otherInfo, entry, false, commands)
@@ -846,8 +846,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      commands.add(toolWindowPane!!.createAddDecoratorCmd(entry.toolWindow.decoratorComponent!!, toBeShownInfo, dirtyMode, this))
-      // Remove tool window from the SideStack.
+      commands.add(toolWindowPane!!.createAddDecoratorCommand(entry.toolWindow.decoratorComponent!!, toBeShownInfo, dirtyMode, this))
+      // remove tool window from the SideStack
       if (isStackEnabled) {
         sideStack.remove(id)
       }
@@ -1802,10 +1802,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           info.sideWeight = sizeInSplit / splitter.width
         }
       }
-      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / toolWindowPane!!.myLayeredPane.height else source.width.toFloat() / toolWindowPane!!.myLayeredPane.width
+      val layeredPane = toolWindowPane!!.layeredPane
+      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / layeredPane.height else source.width.toFloat() / layeredPane.width
       info.weight = paneWeight
       if (another != null && anchor.isSplitVertically) {
-        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / toolWindowPane!!.myLayeredPane.height else another.width.toFloat() / toolWindowPane!!.myLayeredPane.width
+        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / layeredPane.height else another.width.toFloat() / layeredPane.width
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
