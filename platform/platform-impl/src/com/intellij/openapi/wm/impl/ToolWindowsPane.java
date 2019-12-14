@@ -220,30 +220,24 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  /**
-   * Creates command which hides tool window with specified set of parameters.
-   *
-   * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after removing
-   *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
-   */
-  @Nullable
-  final Runnable createRemoveDecoratorCmd(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  void removeDecorator(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
       if (sideInfo == null) {
-        return () -> {
-          setComponent(null, info.getAnchor(), 0);
-          if (!dirtyMode) {
-            layeredPane.validate();
-            layeredPane.repaint();
-          }
-        };
+        setComponent(null, info.getAnchor(), 0);
+        if (!dirtyMode) {
+          layeredPane.validate();
+          layeredPane.repaint();
+        }
+        return;
       }
-      return new RemoveSplitAndDockedComponentCmd(info, dirtyMode);
+      new RemoveSplitAndDockedComponentCmd(info, dirtyMode).run();
     }
     else if (info.isSliding()) {
-      return component == null ? null : new RemoveSlidingComponentCmd(component, info, dirtyMode);
+      if (component != null) {
+        new RemoveSlidingComponentCmd(component, info, dirtyMode).run();
+      }
     }
     else {
       throw new IllegalArgumentException("Unknown window type");

@@ -189,10 +189,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
       }
 
       @Override
-      public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
-      }
-
-      @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
         ensureSelectedContentVisible();
 

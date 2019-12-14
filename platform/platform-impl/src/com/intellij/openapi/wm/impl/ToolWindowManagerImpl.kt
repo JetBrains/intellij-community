@@ -600,7 +600,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun deactivateToolWindowImpl(info: WindowInfoImpl, entry: ToolWindowEntry, shouldHide: Boolean, commands: MutableList<Runnable>) {
     LOG.debug { "enter: deactivateToolWindowImpl(${info.id}, $shouldHide)" }
     if (shouldHide) {
-      removeDecoratorCommand(info, entry, false, commands)
+      removeDecorator(info, entry, false, commands)
     }
     info.isActive = false
     appendApplyWindowInfoCmd(info, entry, commands)
@@ -842,7 +842,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           otherEntry.stripeButton.apply(otherSnapshotInfo)
           otherEntry.toolWindow.applyWindowInfo(otherSnapshotInfo)
 
-          toolWindowPane!!.createRemoveDecoratorCmd(otherInfo, otherEntry.toolWindow.decoratorComponent, false, this)?.run()
+          toolWindowPane!!.removeDecorator(otherInfo, otherEntry.toolWindow.decoratorComponent, false, this)
           commands.add(Runnable {
             if (!commands.any { it is RequestFocusInToolWindowCmd }) {
               toolWindowPane!!.transferFocus()
@@ -975,7 +975,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (info != null) {
       // remove decorator and tool button from the screen
       val commands = mutableListOf<Runnable>()
-      removeDecoratorCommand(info, entry, false, commands)
+      removeDecorator(info, entry, false, commands)
       // Save recent appearance of tool window
       activeStack.remove(entry, true)
       if (isStackEnabled) {
@@ -993,20 +993,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     Disposer.dispose(entry.disposable)
   }
 
-  private fun removeDecoratorCommand(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>) {
-    if (!info.isVisible) {
-      return
-    }
-
+  private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>) {
     info.isVisible = false
     when (info.type) {
       ToolWindowType.FLOATING -> {
         val floatingDecorator = entry.floatingDecorator
         if (floatingDecorator != null) {
           info.floatingBounds = floatingDecorator.bounds
-          commands.add(Runnable {
-            floatingDecorator.dispose()
-          })
+          floatingDecorator.dispose()
         }
       }
       ToolWindowType.WINDOWED -> {
@@ -1030,7 +1024,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
       else -> {
-        toolWindowPane!!.createRemoveDecoratorCmd(info, entry.toolWindow.decoratorComponent, dirtyMode, this)?.run()
+        if (!entry.readOnlyWindowInfo.isVisible) {
+          return
+        }
+
+        toolWindowPane!!.removeDecorator(info, entry.toolWindow.decoratorComponent, dirtyMode, this)
         commands.add(Runnable {
           if (!commands.any { it is RequestFocusInToolWindowCmd }) {
             toolWindowPane!!.transferFocus()
@@ -1254,7 +1252,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       // for docked and sliding windows we have to move buttons and window's decorators
       info.isVisible = false
-      toolWindowPane!!.createRemoveDecoratorCmd(info, entry.toolWindow.decoratorComponent, false, this)?.run()
+      toolWindowPane!!.removeDecorator(info, entry.toolWindow.decoratorComponent, false, this)
       commands.add(Runnable {
         if (!commands.any { it is RequestFocusInToolWindowCmd }) {
           toolWindowPane!!.transferFocus()
@@ -1296,8 +1294,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       hideToolWindow(id, false)
     }
 
-    idToEntry.forEach { (otherId, otherEntry) ->
-      val otherInfo = layout.getInfo(otherId) ?: return@forEach
+    for ((otherId, otherEntry) in idToEntry) {
+      val otherInfo = layout.getInfo(otherId) ?: continue
       appendApplyWindowInfoCmd(otherInfo, otherEntry, commands)
     }
     if (wasVisible || wasActive) {
@@ -1306,7 +1304,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (wasActive) {
       activateToolWindowImpl(entry, commands, true, true)
     }
-    commands.add(toolWindowPane!!.createUpdateButtonPositionCmd(idToEntry.get(id)!!.readOnlyWindowInfo.anchor))
+    commands.add(toolWindowPane!!.createUpdateButtonPositionCmd(entry.readOnlyWindowInfo.anchor))
   }
 
   fun setContentUiType(id: String, type: ToolWindowContentUiType) {
@@ -1397,7 +1395,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val info = getRegisteredMutableInfoOrLogError(id)
     if (entry.readOnlyWindowInfo.isVisible) {
       val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
-      removeDecoratorCommand(info, entry, dirtyMode, commands)
+      removeDecorator(info, entry, dirtyMode, commands)
       info.type = type
       appendApplyWindowInfoCmd(info, entry, commands)
       deactivateWindows(id, commands)
@@ -1406,7 +1404,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
     else {
       info.type = type
-      appendApplyWindowInfoCmd(info, entry, commands)
+      val newInfo = info.copy()
+      entry.stripeButton.apply(newInfo)
+      entry.toolWindow.applyWindowInfo(newInfo)
     }
   }
 
