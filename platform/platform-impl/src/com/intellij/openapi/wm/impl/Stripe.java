@@ -26,8 +26,10 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 final class Stripe extends JPanel implements UISettingsListener {
-  private final int myAnchor;
-  private final ArrayList<StripeButton> buttons = new ArrayList<>();
+  private static final Dimension EMPTY_SIZE = new Dimension();
+
+  private final int anchor;
+  private final List<StripeButton> buttons = new ArrayList<>();
 
   private Dimension preferredSize;
   private StripeButton myDragButton;
@@ -41,7 +43,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     super(new GridBagLayout());
 
     setOpaque(true);
-    myAnchor = anchor;
+    this.anchor = anchor;
     setBorder(new AdaptiveBorder());
   }
 
@@ -228,14 +230,14 @@ final class Stripe extends JPanel implements UISettingsListener {
         sidesStarted = true;
       }
 
-      if (processDrop && !data.dragTargetChoosen) {
+      if (processDrop && !data.dragTargetChosen) {
         if (data.horizontal) {
           int distance = myDropRectangle.x - data.eachX;
           if (distance < eachSize.width / 2 || (myDropRectangle.x + myDropRectangle.width) < eachSize.width / 2) {
             layoutButton(data, myDragButtonImage, false);
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
-            data.dragTargetChoosen = true;
+            data.dragTargetChosen = true;
           }
         }
         else {
@@ -244,7 +246,7 @@ final class Stripe extends JPanel implements UISettingsListener {
             layoutButton(data, myDragButtonImage, false);
             data.dragInsertPosition = insertOrder;
             data.dragToSide = sidesStarted;
-            data.dragTargetChoosen = true;
+            data.dragTargetChosen = true;
           }
         }
       }
@@ -268,17 +270,17 @@ final class Stripe extends JPanel implements UISettingsListener {
       }
     }
 
-    if (processDrop && !data.dragTargetChoosen) {
+    if (processDrop && !data.dragTargetChosen) {
       data.dragInsertPosition = -1;
       data.dragToSide = true;
-      data.dragTargetChoosen = true;
+      data.dragTargetChosen = true;
     }
 
     return data;
   }
 
   private void tryDroppingOnGap(LayoutData data, int gap, int insertOrder) {
-    if (data.dragTargetChoosen) {
+    if (data.dragTargetChosen) {
       return;
     }
 
@@ -303,7 +305,7 @@ final class Stripe extends JPanel implements UISettingsListener {
         data.dragInsertPosition = -1;
         data.dragToSide = false;
       }
-      data.dragTargetChoosen = true;
+      data.dragTargetChosen = true;
 
       layoutButton(data, myDragButtonImage, false);
     }
@@ -337,15 +339,15 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @NotNull
   public ToolWindowAnchor getAnchor() {
-    return ToolWindowAnchor.get(myAnchor);
+    return ToolWindowAnchor.get(anchor);
   }
 
-  private static void layoutButton(final LayoutData data, final JComponent eachButton, boolean setBounds) {
-    final Dimension eachSize = eachButton.getPreferredSize();
+  private static void layoutButton(@NotNull LayoutData data, @NotNull JComponent button, boolean setBounds) {
+    Dimension eachSize = button.getPreferredSize();
     if (setBounds) {
       final int width = data.horizontal ? eachSize.width : data.fitSize.width;
       final int height = data.horizontal ? data.fitSize.height : eachSize.height;
-      eachButton.setBounds(data.eachX, data.eachY, width, height);
+      button.setBounds(data.eachX, data.eachY, width, height);
     }
     if (data.horizontal) {
       final int deltaX = eachSize.width + data.gap;
@@ -405,19 +407,24 @@ final class Stripe extends JPanel implements UISettingsListener {
     boolean horizontal;
     int processedComponents;
 
-    boolean dragTargetChoosen;
+    boolean dragTargetChosen;
     boolean dragToSide;
     int dragInsertPosition;
   }
 
   private boolean isHorizontal() {
-    return myAnchor == SwingConstants.TOP || myAnchor == SwingConstants.BOTTOM;
+    return anchor == SwingConstants.TOP || anchor == SwingConstants.BOTTOM;
   }
 
   @Override
   public Dimension getPreferredSize() {
     if (preferredSize == null) {
-      preferredSize = recomputeBounds(false, null, false).size;
+      if (buttons.isEmpty()) {
+        preferredSize = EMPTY_SIZE;
+      }
+      else {
+        preferredSize = recomputeBounds(false, null, false).size;
+      }
     }
     return preferredSize;
   }
@@ -446,7 +453,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
     String id = myDragButton.toolWindow.getId();
     myFinishingDrop = true;
-    manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
+    manager.setSideToolAndAnchor(id, ToolWindowAnchor.get(anchor), myLastLayoutData.dragInsertPosition, myLastLayoutData.dragToSide);
 
     manager.invokeLater(() -> resetDrop());
   }
@@ -485,7 +492,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   @Override
   public String toString() {
     String anchor = null;
-    switch (myAnchor) {
+    switch (this.anchor) {
       case SwingConstants.TOP:
         anchor = "TOP";
         break;
@@ -515,7 +522,11 @@ final class Stripe extends JPanel implements UISettingsListener {
       g.setColor(getBackground().brighter());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-    if (StartupUiUtil.isUnderDarcula()) return;
+
+    if (StartupUiUtil.isUnderDarcula()) {
+      return;
+    }
+
     ToolWindowAnchor anchor = getAnchor();
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();

@@ -313,7 +313,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void showPopup(@Nullable Component component, int x, int y) {
-    ActionGroup group = toolWindow.getDecorator().createPopupGroup();
+    ActionGroup group = toolWindow.createPopupGroup();
     ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
     popupMenu.getComponent().show(component, x, y);
   }

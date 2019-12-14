@@ -1,15 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.*;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
@@ -20,7 +17,6 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentManagerImpl;
@@ -48,9 +44,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private WindowInfo myInfo;
   private final ToolWindowImpl toolWindow;
   private final MyDivider myDivider;
-  private final RemoveStripeButtonAction myRemoveFromSideBarAction;
 
-  private ActionGroup myAdditionalGearActions;
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
@@ -61,10 +55,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
   public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
-  private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
-
   private final ToolWindowHeader myHeader;
-  private final ActionGroup myToggleToolbarGroup;
   private final JPanel contentPane;
 
   InternalDecorator(@NotNull WindowInfo info, @NotNull ToolWindowImpl toolWindow) {
@@ -73,20 +64,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     this.toolWindow = toolWindow;
     myDivider = new MyDivider();
 
-    /*
-     * Actions
-     */
-    ToggleContentUiTypeAction toggleContentUiTypeAction = new ToggleContentUiTypeAction();
-    myRemoveFromSideBarAction = new RemoveStripeButtonAction();
-    myToggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindow.getToolWindowManager().getProject(), this.toolWindow);
-    if (!ToolWindowId.PREVIEW.equals(toolWindow.getId())) {
-      ((DefaultActionGroup)myToggleToolbarGroup).addAction(toggleContentUiTypeAction);
-    }
-
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    myHeader = new ToolWindowHeader(toolWindow, () -> createPopupGroup(true)) {
+    myHeader = new ToolWindowHeader(toolWindow, () -> toolWindow.createPopupGroup(true)) {
       @Override
       protected boolean isActive() {
         return InternalDecorator.this.toolWindow.isActive();
@@ -192,10 +173,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    */
   private void fireHidden() {
     toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
-  }
-
-  private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
-    toolWindow.getToolWindowManager().setContentUiType(toolWindow.getId(), type);
   }
 
   void addContentComponent(boolean dumbAware, @NotNull ContentManagerImpl contentManager) {
@@ -311,121 +288,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
   }
 
-  @NotNull
-  final ActionGroup createPopupGroup() {
-    return createPopupGroup(false);
-  }
-
-  @NotNull
-  private ActionGroup createPopupGroup(boolean skipHideAction) {
-    DefaultActionGroup group = new GearActionGroup();
-    if (myInfo == null) {
-      return group;
-    }
-
-    if (!skipHideAction) {
-      group.addSeparator();
-      group.add(new HideAction());
-    }
-
-    group.addSeparator();
-    group.add(new ContextHelpAction() {
-      @Nullable
-      @Override
-      protected String getHelpId(DataContext dataContext) {
-        Content content = toolWindow.getContentManager().getSelectedContent();
-        if (content != null) {
-          String helpId = content.getHelpId();
-          if (helpId != null) {
-            return helpId;
-          }
-        }
-
-        String id = toolWindow.getHelpId();
-        if (id != null) {
-          return id;
-        }
-
-        DataContext context = content != null ? DataManager.getInstance().getDataContext(content.getComponent()) : dataContext;
-        return super.getHelpId(context);
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setEnabledAndVisible(getHelpId(e.getDataContext()) != null);
-      }
-    });
-    return group;
-  }
-
-  @NotNull
-  private DefaultActionGroup createResizeActionGroup() {
-    DefaultActionGroup resize = new DefaultActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true) {
-      @Override
-      public boolean isDumbAware() {
-        return true;
-      }
-    };
-    resize.add(new ResizeToolWindowAction.Left(toolWindow, this));
-    resize.add(new ResizeToolWindowAction.Right(toolWindow, this));
-    resize.add(new ResizeToolWindowAction.Up(toolWindow, this));
-    resize.add(new ResizeToolWindowAction.Down(toolWindow, this));
-    resize.add(ActionManager.getInstance().getAction("MaximizeToolWindow"));
-    return resize;
-  }
-
-  private class GearActionGroup extends DefaultActionGroup {
-    GearActionGroup() {
-      getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-      getTemplatePresentation().setText("Show Options Menu");
-      if (myInfo == null) return;
-
-      if (myAdditionalGearActions != null) {
-        if (myAdditionalGearActions.isPopup() && !StringUtil.isEmpty(myAdditionalGearActions.getTemplatePresentation().getText())) {
-          add(myAdditionalGearActions);
-        } else {
-          addSorted(this, myAdditionalGearActions);
-        }
-        addSeparator();
-      }
-
-      addAction(myToggleToolbarGroup).setAsSecondary(true);
-      addSeparator();
-
-      add(new ToolWindowViewModeAction.Group());
-      add(new ToolWindowMoveAction.Group());
-      add(createResizeActionGroup());
-      addSeparator();
-
-      add(myRemoveFromSideBarAction);
-    }
-  }
-
-  private static void addSorted(DefaultActionGroup main, ActionGroup group) {
-    final AnAction[] children = group.getChildren(null);
-    boolean hadSecondary = false;
-    for (AnAction action : children) {
-      if (group.isPrimary(action)) {
-        main.add(action);
-      } else {
-        hadSecondary = true;
-      }
-    }
-    if (hadSecondary) {
-      main.addSeparator();
-      for (AnAction action : children) {
-        if (!group.isPrimary(action)) {
-          main.addAction(action).setAsSecondary(true);
-        }
-      }
-    }
-    String separatorText = group.getTemplatePresentation().getText();
-    if (children.length > 0 && !StringUtil.isEmpty(separatorText)) {
-      main.addAction(new Separator(separatorText), Constraints.FIRST);
-    }
-  }
-
   /**
    * @return tool window associated with the decorator.
    */
@@ -445,72 +307,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setHeaderVisible(boolean value) {
     myHeader.setVisible(value);
-  }
-
-  void removeStripeButton() {
-    toolWindow.getToolWindowManager().setShowStripeButton(toolWindow.getId(), false);
-    fireHidden();
-  }
-
-  private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
-    RemoveStripeButtonAction() {
-      Presentation presentation = getTemplatePresentation();
-      presentation.setText(ActionsBundle.message("action.RemoveStripeButton.text"));
-      presentation.setDescription(ActionsBundle.message("action.RemoveStripeButton.description"));
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(myInfo.isShowStripeButton());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      removeStripeButton();
-    }
-  }
-
-  private final class HideAction extends AnAction implements DumbAware {
-    HideAction() {
-      ActionUtil.copyFrom(this, HIDE_ACTIVE_WINDOW_ACTION_ID);
-      getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      fireHidden();
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-      presentation.setEnabled(myInfo.isVisible());
-    }
-  }
-
-  private final class ToggleContentUiTypeAction extends ToggleAction implements DumbAware {
-    private boolean myHadSeveralContents;
-
-    private ToggleContentUiTypeAction() {
-      ActionUtil.copyFrom(this, TOGGLE_CONTENT_UI_TYPE_ACTION_ID);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      myHadSeveralContents = myHadSeveralContents || toolWindow.getContentManager().getContentCount() > 1;
-      super.update(e);
-      e.getPresentation().setVisible(myHadSeveralContents);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myInfo.getContentUiType() == ToolWindowContentUiType.COMBO;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      fireContentUiTypeChanges(state ? ToolWindowContentUiType.COMBO : ToolWindowContentUiType.TABBED);
-    }
   }
 
   private final class MyDivider extends JPanel {
@@ -620,10 +416,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     if (selection != null) {
       info.put("toolWindowTab", selection.getTabName());
     }
-  }
-
-  public void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions) {
-    myAdditionalGearActions = additionalGearActions;
   }
 
   @Override

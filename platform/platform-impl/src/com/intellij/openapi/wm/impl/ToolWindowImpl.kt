@@ -1,15 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.ide.actions.*
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.idea.ActionsBundle
 import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
@@ -18,6 +22,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.LayeredIcon
+import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
@@ -67,6 +72,10 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   private var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
 
+  private var additionalGearActions: ActionGroup? = null
+
+  private var helpId: String? = null
+
   private val contentManager = lazy {
     val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
 
@@ -100,8 +109,6 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
     contentManager
   }
-
-  private var helpId: String? = null
 
   init {
     if (component != null) {
@@ -267,8 +274,8 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun getDecorator() = decorator!!
 
-  override fun setAdditionalGearActions(additionalGearActions: ActionGroup?) {
-    decorator?.setAdditionalGearActions(additionalGearActions)
+  override fun setAdditionalGearActions(value: ActionGroup?) {
+    additionalGearActions = value
   }
 
   override fun setTitleActions(vararg actions: AnAction) {
@@ -388,7 +395,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   val popupGroup: ActionGroup?
-    get() = decorator?.createPopupGroup()
+    get() = createPopupGroup()
 
   override fun setDefaultState(anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
     toolWindowManager.setDefaultState(this, anchor, type, floatingBounds)
@@ -428,5 +435,164 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun showContentPopup(inputEvent: InputEvent) {
     contentUi.toggleContentPopup()
+  }
+
+  @JvmOverloads
+  fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
+    val group = GearActionGroup()
+    if (!skipHideAction) {
+      group.addSeparator()
+      group.add(HideAction())
+    }
+    group.addSeparator()
+    group.add(object : ContextHelpAction() {
+      override fun getHelpId(dataContext: DataContext): String? {
+        val content = getContentManagerIfInitialized()?.selectedContent
+        if (content != null) {
+          val helpId = content.helpId
+          if (helpId != null) {
+            return helpId
+          }
+        }
+
+        val id = getHelpId()
+        if (id != null) {
+          return id
+        }
+
+        val context = if (content == null) dataContext else DataManager.getInstance().getDataContext(content.component)
+        return super.getHelpId(context)
+      }
+
+      override fun update(e: AnActionEvent) {
+        super.update(e)
+
+        e.presentation.isEnabledAndVisible = getHelpId(e.dataContext) != null
+      }
+    })
+    return group
+  }
+
+  private inner class GearActionGroup internal constructor() : DefaultActionGroup(), DumbAware {
+    init {
+      templatePresentation.icon = AllIcons.General.GearPlain
+      templatePresentation.text = "Show Options Menu"
+      val additionalGearActions = additionalGearActions
+      if (additionalGearActions != null) {
+        if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {
+          add(additionalGearActions)
+        }
+        else {
+          addSorted(this, additionalGearActions)
+        }
+        addSeparator()
+      }
+
+      val toggleToolbarGroup = ToggleToolbarAction.createToggleToolbarGroup(toolWindowManager.project, this@ToolWindowImpl)
+      if (ToolWindowId.PREVIEW != id) {
+        toggleToolbarGroup.addAction(ToggleContentUiTypeAction())
+      }
+
+      addAction(toggleToolbarGroup).setAsSecondary(true)
+      addSeparator()
+      add(ToolWindowViewModeAction.Group())
+      add(ToolWindowMoveAction.Group())
+      add(ResizeActionGroup())
+      addSeparator()
+      add(RemoveStripeButtonAction())
+    }
+  }
+
+  private inner class HideAction internal constructor() : AnAction(), DumbAware {
+    override fun actionPerformed(e: AnActionEvent) {
+      toolWindowManager.hideToolWindow(id, false)
+    }
+
+    override fun update(event: AnActionEvent) {
+      val presentation = event.presentation
+      presentation.isEnabled = isVisible
+    }
+
+    init {
+      ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID)
+      templatePresentation.text = UIBundle.message("tool.window.hide.action.name")
+    }
+  }
+
+  private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
+    private val children by lazy<Array<AnAction>> {
+      // force creation
+      contentManager
+      val component = decorator
+      val toolWindow = this@ToolWindowImpl
+      arrayOf(
+        ResizeToolWindowAction.Left(toolWindow, component),
+        ResizeToolWindowAction.Right(toolWindow, component),
+        ResizeToolWindowAction.Up(toolWindow, component),
+        ResizeToolWindowAction.Down(toolWindow, component),
+        ActionManager.getInstance().getAction("MaximizeToolWindow")
+      )
+    }
+    override fun getChildren(e: AnActionEvent?) = children
+
+    override fun isDumbAware() = true
+  }
+
+  private inner class RemoveStripeButtonAction : AnAction(ActionsBundle.message("action.RemoveStripeButton.text"), ActionsBundle.message("action.RemoveStripeButton.description"), null), DumbAware {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = isShowStripeButton
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      toolWindowManager.setShowStripeButton(id, visibleOnPanel = false)
+      toolWindowManager.hideToolWindow(id, hideSide = false)
+    }
+  }
+
+  private inner class ToggleContentUiTypeAction : ToggleAction(), DumbAware {
+    private var hadSeveralContents = false
+
+    init {
+      ActionUtil.copyFrom(this, "ToggleContentUiTypeMode")
+    }
+
+    override fun update(e: AnActionEvent) {
+      hadSeveralContents = hadSeveralContents || getContentManager().contentCount > 1
+      super.update(e)
+      e.presentation.isVisible = hadSeveralContents
+    }
+
+    override fun isSelected(e: AnActionEvent): Boolean {
+      return contentUiType === ToolWindowContentUiType.COMBO
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
+    }
+  }
+}
+
+private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
+  val children = group.getChildren(null)
+  var hadSecondary = false
+  for (action in children) {
+    if (group.isPrimary(action)) {
+      main.add(action)
+    }
+    else {
+      hadSecondary = true
+    }
+  }
+  if (hadSecondary) {
+    main.addSeparator()
+    for (action in children) {
+      if (!group.isPrimary(action)) {
+        main.addAction(action).setAsSecondary(true)
+      }
+    }
+  }
+  val separatorText = group.templatePresentation.text
+  if (children.isNotEmpty() && !separatorText.isNullOrEmpty()) {
+    main.addAction(Separator(separatorText), Constraints.FIRST)
   }
 }
