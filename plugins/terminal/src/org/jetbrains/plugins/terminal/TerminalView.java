@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -93,7 +92,7 @@ public class TerminalView {
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TerminalView.class);
+    return project.getService(TerminalView.class);
   }
 
   void initToolWindow(@NotNull ToolWindow toolWindow) {
