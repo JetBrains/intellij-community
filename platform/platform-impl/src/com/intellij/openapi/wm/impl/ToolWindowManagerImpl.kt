@@ -175,10 +175,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           process { manager ->
             val entry = manager.idToEntry.get(toolWindowId) ?: return@process
             val info = manager.layout.getInfo(toolWindowId) ?: return@process
-            val commands = mutableListOf<Runnable>()
-            manager.deactivateToolWindowImpl(info, entry, shouldHide = true, commands = commands)
-            // notify clients that toolwindow is deactivated
-            manager.execute(commands)
+            manager.deactivateToolWindowImpl(info, entry, shouldHide = true)
           }
         }
         .bind(ApplicationManager.getApplication())
@@ -466,14 +463,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     frame!!.releaseFrame()
-    val commands = mutableListOf<Runnable>()
-    appendUpdateRootPane(commands)
-    // hide all tool windows
-    for ((id, entry) in idToEntry) {
-      deactivateToolWindowImpl(layout.getInfo(id) ?: continue, entry, true, commands)
-    }
-    // do not notify - project is disposed
-    commandProcessor.execute(commands)
     frame = null
   }
 
@@ -503,11 +492,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     focusDefaultElementInSelectedEditor()
   }
 
-  private fun deactivateWindows(idToIgnore: String, commands: MutableList<Runnable>) {
-    idToEntry.forEach { (id, entry) ->
+  private fun deactivateWindows(idToIgnore: String) {
+    for ((id, entry) in idToEntry) {
       if (idToIgnore != id) {
-        val info = layout.getInfo(id) ?: return@forEach
-        deactivateToolWindowImpl(info, entry, isToHideOnDeactivation(info), commands)
+        val info = layout.getInfo(id) ?: continue
+        deactivateToolWindowImpl(info, entry, isToHideOnDeactivation(info))
       }
     }
   }
@@ -516,11 +505,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * Helper method. It makes window visible, activates it and request focus into the tool window.
    * But it doesn't deactivate other tool windows. Use `prepareForActivation` method to
    * deactivates other tool windows.
-   *
-   * @param dirtyMode if `true` then all UI operations are performed in "dirty" mode.
-   * It means that UI isn't validated and repainted just after each add/remove operation.
    */
-  private fun showAndActivate(entry: ToolWindowEntry, dirtyMode: Boolean, autoFocusContents: Boolean, commands: MutableList<Runnable>) {
+  private fun showAndActivate(entry: ToolWindowEntry, autoFocusContents: Boolean, commands: MutableList<Runnable>) {
     if (!entry.toolWindow.isAvailable) {
       return
     }
@@ -533,13 +519,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       toApplyInfo = true
     }
 
-    showToolWindowImpl(entry, dirtyMode, commands)
-    // activate
+    showToolWindowImpl(entry, false, commands)
     if (toApplyInfo) {
       appendApplyWindowInfoCmd(info, entry, commands)
       activeStack.push(entry)
     }
-
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
       appendRequestFocusInToolWindowCmd(entry.id, commands)
     }
@@ -583,8 +567,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    deactivateWindows(id, commands)
-    showAndActivate(entry, dirtyMode = false, autoFocusContents = effectiveAutoFocusContents, commands = commands)
+    deactivateWindows(id)
+    showAndActivate(entry, autoFocusContents = effectiveAutoFocusContents, commands = commands)
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -597,13 +581,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return info
   }
 
-  private fun deactivateToolWindowImpl(info: WindowInfoImpl, entry: ToolWindowEntry, shouldHide: Boolean, commands: MutableList<Runnable>) {
+  private fun deactivateToolWindowImpl(info: WindowInfoImpl, entry: ToolWindowEntry, shouldHide: Boolean) {
     LOG.debug { "enter: deactivateToolWindowImpl(${info.id}, $shouldHide)" }
-    if (shouldHide) {
-      removeDecorator(info, entry, false, commands)
-    }
+
     info.isActive = false
-    appendApplyWindowInfoCmd(info, entry, commands)
+    if (shouldHide) {
+      info.isVisible = false
+      removeDecorator(info, entry, false, null)
+    }
+
+    entry.applyWindowInfo(info.copy())
   }
 
   override val toolWindowIds: Array<String>
@@ -734,7 +721,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val commands = mutableListOf<Runnable>()
     val wasActive = info.isActive
     // hide and deactivate
-    deactivateToolWindowImpl(info, entry, true, commands)
+    deactivateToolWindowImpl(info, entry, true)
     if (hideSide && info.type != ToolWindowType.FLOATING && info.type != ToolWindowType.WINDOWED) {
       for (each in getVisibleToolWindowsOn(info.anchor)) {
         activeStack.remove(each, true)
@@ -747,7 +734,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       idToEntry.forEach { (otherId, otherEntry) ->
         val otherInfo = layout.getInfo(otherId) ?: return@forEach
         if (otherInfo.isVisible && otherInfo.anchor == info.anchor) {
-          deactivateToolWindowImpl(otherInfo, otherEntry, true, commands)
+          deactivateToolWindowImpl(otherInfo, otherEntry, true)
         }
       }
     }
@@ -808,16 +795,23 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toBeShownInfo.isShowStripeButton = true
 
     val snapshotInfo = toBeShownInfo.copy()
-    entry.stripeButton.apply(snapshotInfo)
-    entry.toolWindow.applyWindowInfo(snapshotInfo)
+    entry.applyWindowInfo(snapshotInfo)
 
+    doShowWindow(entry, snapshotInfo, commands, dirtyMode)
+
+    checkInvariants("Id: $id; dirtyMode: $dirtyMode")
+  }
+
+  private fun doShowWindow(entry: ToolWindowEntry, info: WindowInfo, commands: MutableList<Runnable>, dirtyMode: Boolean) {
     entry.toolWindow.ensureContentInitialized()
 
-    if (entry.readOnlyWindowInfo.isFloating) {
-      addFloatingDecorator(entry, snapshotInfo)
+    val id = entry.id
+
+    if (entry.readOnlyWindowInfo.type == ToolWindowType.FLOATING) {
+      addFloatingDecorator(entry, info)
     }
     else if (entry.readOnlyWindowInfo.type == ToolWindowType.WINDOWED) {
-      addWindowedDecorator(entry, snapshotInfo)
+      addWindowedDecorator(entry, info)
     }
     else {
       // docked and sliding windows
@@ -833,16 +827,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
 
         val otherInfo = layout.getInfo(otherId) ?: continue
-        if (otherInfo.isVisible && otherInfo.type == toBeShownInfo.type && otherInfo.anchor == toBeShownInfo.anchor && otherInfo.isSplit == toBeShownInfo.isSplit) {
+        if (otherInfo.isVisible && otherInfo.type == info.type && otherInfo.anchor == info.anchor && otherInfo.isSplit == info.isSplit) {
           // hide and deactivate tool window
           otherInfo.isVisible = false
           otherInfo.isActive = false
 
-          val otherSnapshotInfo = otherInfo.copy()
-          otherEntry.stripeButton.apply(otherSnapshotInfo)
-          otherEntry.toolWindow.applyWindowInfo(otherSnapshotInfo)
+          otherEntry.applyWindowInfo(otherInfo.copy())
 
-          toolWindowPane!!.removeDecorator(otherInfo, otherEntry.toolWindow.decoratorComponent, false, this)
+          otherEntry.toolWindow.decoratorComponent?.let { decorator ->
+            toolWindowPane!!.removeDecorator(otherInfo, decorator, false, this)
+          }
           commands.add(Runnable {
             if (!commands.any { it is RequestFocusInToolWindowCmd }) {
               toolWindowPane!!.transferFocus()
@@ -856,14 +850,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      toolWindowPane!!.addDecorator(entry.toolWindow.decoratorComponent!!, toBeShownInfo, dirtyMode, this)
+      toolWindowPane!!.addDecorator(entry.toolWindow.decoratorComponent!!, info, dirtyMode, this)
       // remove tool window from the SideStack
       if (isStackEnabled) {
         sideStack.remove(id)
       }
     }
-
-    checkInvariants("Id: $id; dirtyMode: $dirtyMode")
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
@@ -933,7 +925,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // tool window. This step has sense only for windows which are not in the auto hide
     // mode. But if tool window was active but its mode doesn't allow to activate it again
     // (for example, tool window is in auto hide mode) then we just activate editor component.
-    if (!info.isAutoHide && contentFactory != null /* not null on init tool window from EP */) {
+    if (contentFactory != null /* not null on init tool window from EP */) {
       // do not activate tool window that is the part of project frame - default component should be focused
       if (wasActive && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING)) {
         activateToolWindowImpl(entry, commands, forced = true, autoFocusContents = true)
@@ -991,7 +983,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>?) {
-    info.isVisible = false
     when (info.type) {
       ToolWindowType.FLOATING -> {
         val floatingDecorator = entry.floatingDecorator
@@ -1071,7 +1062,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val id = currentInfo.id!!
       val info = layout.getInfo(id)
       if (currentInfo.isVisible && (info == null || !info.isVisible)) {
-        deactivateToolWindowImpl(currentInfo, idToEntry.get(id)!!, true, commands)
+        deactivateToolWindowImpl(currentInfo, idToEntry.get(id)!!, true)
       }
     }
 
@@ -1264,8 +1255,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       layout.setAnchor(id, anchor, order)
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
-      idToEntry.forEach { (otherId, otherEntry) ->
-        appendApplyWindowInfoCmd(layout.getInfo(otherId) ?: return@forEach, otherEntry, commands)
+      for ((otherId, otherEntry) in idToEntry) {
+        val newInfo = (layout.getInfo(otherId) ?: continue).copy()
+        otherEntry.applyWindowInfo(newInfo)
       }
       addAddStripeButtonCommand(entry.stripeButton, info, commands)
       showToolWindowImpl(entry, false, commands)
@@ -1306,7 +1298,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (wasActive) {
       activateToolWindowImpl(entry, commands, true, true)
     }
-    commands.add(toolWindowPane!!.createUpdateButtonPositionCmd(entry.readOnlyWindowInfo.anchor))
+    toolWindowPane!!.updateButtonPosition(entry.readOnlyWindowInfo.anchor)
   }
 
   fun setContentUiType(id: String, type: ToolWindowContentUiType) {
@@ -1346,8 +1338,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val entry = idToEntry.get(info.id!!)
     appendApplyWindowInfoCmd(info, entry!!, commands)
     if (info.isVisible) {
-      deactivateWindows(id, commands)
-      showAndActivate(entry, false, true, commands)
+      deactivateWindows(id)
+      showAndActivate(entry, true, commands)
     }
   }
 
@@ -1375,8 +1367,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val entry = idToEntry.get(id)!!
       appendApplyWindowInfoCmd(currentInfo, entry, commands)
       if (currentInfo.isVisible) {
-        deactivateWindows(id, commands)
-        showAndActivate(entry, false, true, commands)
+        deactivateWindows(id)
+        showAndActivate(entry, true, commands)
       }
     }
   }
@@ -1399,24 +1391,39 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
       removeDecorator(info, entry, dirtyMode, commands)
       info.type = type
-      appendApplyWindowInfoCmd(info, entry, commands)
-      deactivateWindows(id, commands)
-      showAndActivate(entry, dirtyMode, true, commands)
+
+      var toApplyInfo = false
+      if (!info.isActive) {
+        info.isActive = true
+        toApplyInfo = true
+      }
+
+      val newInfo = info.copy()
+      entry.applyWindowInfo(newInfo)
+
+      deactivateWindows(id)
+
+      doShowWindow(entry, newInfo, commands, dirtyMode)
+      if (toApplyInfo) {
+        activeStack.push(entry)
+      }
+
+      if (ApplicationManager.getApplication().isActive) {
+        appendRequestFocusInToolWindowCmd(entry.id, commands)
+      }
+
       appendUpdateRootPane(commands)
     }
     else {
       info.type = type
-      val newInfo = info.copy()
-      entry.stripeButton.apply(newInfo)
-      entry.toolWindow.applyWindowInfo(newInfo)
+      entry.applyWindowInfo(info.copy())
     }
   }
 
   private fun appendApplyWindowInfoCmd(info: WindowInfoImpl, entry: ToolWindowEntry, commands: MutableList<Runnable>) {
     val newInfo = info.copy()
     commands.add(Runnable {
-      entry.stripeButton.apply(newInfo)
-      entry.toolWindow.applyWindowInfo(newInfo)
+      entry.applyWindowInfo(newInfo)
     })
   }
 
@@ -1455,10 +1462,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun getState(): Element? {
-    if (frame == null) {
-      // do nothing if the project was not opened
-      return null
-    }
+    // do nothing if the project was not opened
+    val frame = frame ?: return null
 
     val element = Element("state")
     // Save frame's bounds
@@ -1466,14 +1471,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
     // However, I won't change =
     //\is code because I can't even test it.
-    val frameBounds = frame!!.frame.bounds
+    val frameBounds = frame.frame.bounds
     val frameElement = Element(FRAME_ELEMENT)
     element.addContent(frameElement)
     frameElement.setAttribute(X_ATTR, frameBounds.x.toString())
     frameElement.setAttribute(Y_ATTR, frameBounds.y.toString())
     frameElement.setAttribute(WIDTH_ATTR, frameBounds.width.toString())
     frameElement.setAttribute(HEIGHT_ATTR, frameBounds.height.toString())
-    frameElement.setAttribute(EXTENDED_STATE_ATTR, frame!!.frame.extendedState.toString())
+    frameElement.setAttribute(EXTENDED_STATE_ATTR, frame.frame.extendedState.toString())
 
     // Save whether editor is active or not
     if (isEditorComponentActive) {

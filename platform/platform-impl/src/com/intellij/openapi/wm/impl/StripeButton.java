@@ -312,7 +312,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
   }
 
-  public void apply(@NotNull WindowInfo info) {
+  void apply(@NotNull WindowInfo info) {
     setSelected(info.isVisible() || info.isActive());
     updateState(toolWindow);
   }

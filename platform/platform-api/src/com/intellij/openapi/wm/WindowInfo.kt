@@ -5,7 +5,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 interface WindowInfo {
+  val id: String?
+
   val order: Int
+
+  val weight: Float
+  val sideWeight: Float
 
   val isVisible: Boolean
 

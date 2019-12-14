@@ -46,7 +46,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   /**
    * ID of the tool window
    */
-  var id by string()
+  override var id by string()
 
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
@@ -69,9 +69,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  var weight by property(DEFAULT_WEIGHT) { max(0f, min(1f, it)) }
+  override var weight by property(DEFAULT_WEIGHT) { max(0f, min(1f, it)) }
 
-  var sideWeight by property(0.5f) { max(0f, min(1f, it)) }
+  override var sideWeight by property(0.5f) { max(0f, min(1f, it)) }
 
   @get:Attribute("side_tool")
   override var isSplit by property(false)

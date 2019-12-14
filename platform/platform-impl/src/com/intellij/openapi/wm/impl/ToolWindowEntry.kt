@@ -18,4 +18,9 @@ internal data class ToolWindowEntry(val stripeButton: StripeButton,
 
   val readOnlyWindowInfo: WindowInfo
     get() = toolWindow.windowInfo
+
+  fun applyWindowInfo(newInfo: WindowInfo) {
+    stripeButton.apply(newInfo)
+    toolWindow.applyWindowInfo(newInfo)
+  }
 }

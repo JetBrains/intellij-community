@@ -3,7 +3,6 @@ package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import javax.swing.Icon
@@ -22,8 +21,8 @@ abstract class ToolWindowManager {
     @JvmStatic
     fun getActiveToolWindow(): ToolWindow? {
       val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-      val project = if (frame == null) ProjectManager.getInstance().defaultProject else frame.project
-      if (project == null || project.isDisposed) {
+      val project = frame?.project
+      if (project == null || project.isDisposed || project.isDefault) {
         return null
       }
 
@@ -35,7 +34,7 @@ abstract class ToolWindowManager {
     @JvmStatic
     fun getActiveId(): String? {
       val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null
-      return if (project.isDisposed) null else getInstance(project).activeToolWindowId
+      return if (project.isDisposed || project.isDefault) null else getInstance(project).activeToolWindowId
     }
   }
 

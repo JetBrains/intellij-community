@@ -196,7 +196,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
-  final void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  final void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
@@ -209,7 +209,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           }
       }
       else {
-        new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager).run();
+        addAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
       }
     }
     else if (info.isSliding()) {
@@ -220,7 +220,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  void removeDecorator(@NotNull WindowInfoImpl info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
@@ -230,13 +230,14 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           layeredPane.validate();
           layeredPane.repaint();
         }
-        return;
       }
-      new RemoveSplitAndDockedComponentCmd(info, dirtyMode).run();
+      else {
+        removeSplitAndDockedComponent(info, dirtyMode);
+      }
     }
     else if (info.isSliding()) {
       if (component != null) {
-        new RemoveSlidingComponentCmd(component, info, dirtyMode).run();
+        removeSlidingComponentCmd(component, info, dirtyMode);
       }
     }
     else {
@@ -244,25 +245,26 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  @NotNull
-  final Runnable createUpdateButtonPositionCmd(@NotNull ToolWindowAnchor anchor) {
-    return () -> {
-      if (ToolWindowAnchor.TOP == anchor) {
-        topStripe.revalidate();
-      }
-      else if (ToolWindowAnchor.LEFT == anchor) {
-        leftStripe.revalidate();
-      }
-      else if (ToolWindowAnchor.BOTTOM == anchor) {
-        bottomStripe.revalidate();
-      }
-      else if (ToolWindowAnchor.RIGHT == anchor) {
-        rightStripe.revalidate();
-      }
-      else {
-        LOG.error("unknown anchor: " + anchor);
-      }
-    };
+  final void updateButtonPosition(@NotNull ToolWindowAnchor anchor) {
+    Stripe stripe;
+    if (ToolWindowAnchor.TOP == anchor) {
+      stripe = topStripe;
+    }
+    else if (ToolWindowAnchor.LEFT == anchor) {
+      stripe = leftStripe;
+    }
+    else if (ToolWindowAnchor.BOTTOM == anchor) {
+      stripe = bottomStripe;
+    }
+    else if (ToolWindowAnchor.RIGHT == anchor) {
+      stripe = rightStripe;
+    }
+    else {
+      LOG.error("unknown anchor: " + anchor);
+      return;
+    }
+
+    stripe.revalidate();
   }
 
   @NotNull
@@ -640,129 +642,115 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private final class AddAndSplitDockedComponentCmd implements Runnable {
-    private final JComponent myNewComponent;
-    private final WindowInfoImpl myInfo;
-    private final boolean dirtyMode;
-    @NotNull private final ToolWindowManagerImpl manager;
+  private void addAndSplitDockedComponentCmd(@NotNull JComponent newComponent,
+                                             @NotNull WindowInfo info,
+                                             boolean dirtyMode,
+                                             @NotNull ToolWindowManagerImpl manager) {
+    ToolWindowAnchor anchor = info.getAnchor();
+    final class MySplitter extends OnePixelSplitter implements UISettingsListener {
+      @Override
+      public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+        if (anchor == ToolWindowAnchor.LEFT) {
+          setOrientation(!uiSettings.getLeftHorizontalSplit());
+        }
+        else if (anchor == ToolWindowAnchor.RIGHT) {
+          setOrientation(!uiSettings.getRightHorizontalSplit());
+        }
+      }
 
-    private AddAndSplitDockedComponentCmd(@NotNull JComponent newComponent,
-                                          @NotNull WindowInfoImpl info,
-                                          boolean dirtyMode,
-                                          @NotNull ToolWindowManagerImpl manager) {
-      myNewComponent = newComponent;
-      myInfo = info;
-      this.dirtyMode = dirtyMode;
-      this.manager = manager;
+      @Override
+      public String toString() {
+        return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
+      }
     }
 
-    @Override
-    public void run() {
-      ToolWindowAnchor anchor = myInfo.getAnchor();
-      final class MySplitter extends OnePixelSplitter implements UISettingsListener {
-        @Override
-        public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-          if (anchor == ToolWindowAnchor.LEFT) {
-            setOrientation(!uiSettings.getLeftHorizontalSplit());
-          }
-          else if (anchor == ToolWindowAnchor.RIGHT) {
-            setOrientation(!uiSettings.getRightHorizontalSplit());
+    Splitter splitter = new MySplitter();
+    splitter.setOrientation(anchor.isSplitVertically());
+    if (!anchor.isHorizontal()) {
+      splitter.setAllowSwitchOrientationByMouseClick(true);
+      splitter.addPropertyChangeListener(evt -> {
+        if (!Splitter.PROP_ORIENTATION.equals(evt.getPropertyName())) return;
+        boolean isSplitterHorizontalNow = !splitter.isVertical();
+        UISettings settings = UISettings.getInstance();
+        if (anchor == ToolWindowAnchor.LEFT) {
+          if (settings.getLeftHorizontalSplit() != isSplitterHorizontalNow) {
+            settings.setLeftHorizontalSplit(isSplitterHorizontalNow);
+            settings.fireUISettingsChanged();
           }
         }
+        if (anchor == ToolWindowAnchor.RIGHT) {
+          if (settings.getRightHorizontalSplit() != isSplitterHorizontalNow) {
+            settings.setRightHorizontalSplit(isSplitterHorizontalNow);
+            settings.fireUISettingsChanged();
+          }
+        }
+      });
+    }
 
-        @Override
-        public String toString() {
-          return "[" + getFirstComponent() + "|" + getSecondComponent() + "]";
+    JComponent c = getComponentAt(anchor);
+    // if all components are hidden for anchor we should find the second component to put in a splitter
+    // otherwise we add empty splitter
+    if (c == null) {
+      List<ToolWindowImpl> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
+      for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
+        ToolWindowImpl window = iterator.next();
+        if (window == null || window.isSplitMode() == info.isSplit() || !window.isVisible()) {
+          iterator.remove();
         }
       }
-
-      Splitter splitter = new MySplitter();
-      splitter.setOrientation(anchor.isSplitVertically());
-      if (!anchor.isHorizontal()) {
-        splitter.setAllowSwitchOrientationByMouseClick(true);
-        splitter.addPropertyChangeListener(evt -> {
-          if (!Splitter.PROP_ORIENTATION.equals(evt.getPropertyName())) return;
-          boolean isSplitterHorizontalNow = !splitter.isVertical();
-          UISettings settings = UISettings.getInstance();
-          if (anchor == ToolWindowAnchor.LEFT) {
-            if (settings.getLeftHorizontalSplit() != isSplitterHorizontalNow) {
-              settings.setLeftHorizontalSplit(isSplitterHorizontalNow);
-              settings.fireUISettingsChanged();
-            }
-          }
-          if (anchor == ToolWindowAnchor.RIGHT) {
-            if (settings.getRightHorizontalSplit() != isSplitterHorizontalNow) {
-              settings.setRightHorizontalSplit(isSplitterHorizontalNow);
-              settings.fireUISettingsChanged();
-            }
-          }
-        });
+      if (!toolWindows.isEmpty()) {
+        c = toolWindows.get(0).getDecoratorComponent();
       }
-
-      JComponent c = getComponentAt(anchor);
-      // if all components are hidden for anchor we should find the second component to put in a splitter
-      // otherwise we add empty splitter
       if (c == null) {
-        List<ToolWindowImpl> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(myInfo.getId()));
-        for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
-          ToolWindowImpl window = iterator.next();
-          if (window == null || window.isSplitMode() == myInfo.isSplit() || !window.isVisible()) {
-            iterator.remove();
-          }
-        }
-        if (!toolWindows.isEmpty()) {
-          c = toolWindows.get(0).getDecoratorComponent();
-        }
-        if (c == null) {
-          LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + myInfo.getId());
-        }
+        LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + info.getId());
       }
+    }
 
-      float newWeight;
-      if (c instanceof InternalDecorator) {
-        InternalDecorator oldComponent = (InternalDecorator)c;
-        WindowInfoImpl oldInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(oldComponent);
+    float newWeight;
+    if (c instanceof InternalDecorator) {
+      InternalDecorator oldComponent = (InternalDecorator)c;
+      WindowInfoImpl oldInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(oldComponent);
 
-        IJSwingUtilities.updateComponentTreeUI(oldComponent);
-        IJSwingUtilities.updateComponentTreeUI(myNewComponent);
+      IJSwingUtilities.updateComponentTreeUI(oldComponent);
+      IJSwingUtilities.updateComponentTreeUI(newComponent);
 
-        if (myInfo.isSplit()) {
-          splitter.setFirstComponent(oldComponent);
-          splitter.setSecondComponent(myNewComponent);
-          float proportion = getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(oldInfo.getSideWeight() / (oldInfo.getSideWeight() + myInfo.getSideWeight())));
-          splitter.setProportion(proportion);
-          if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-            newWeight = normalizeWeigh(oldInfo.getWeight() + myInfo.getWeight());
-          }
-          else {
-            newWeight = normalizeWeigh(oldInfo.getWeight());
-          }
+      if (info.isSplit()) {
+        splitter.setFirstComponent(oldComponent);
+        splitter.setSecondComponent(newComponent);
+        float proportion = getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(
+          oldInfo.getSideWeight() / (oldInfo.getSideWeight() + info.getSideWeight())));
+        splitter.setProportion(proportion);
+        if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
+          newWeight = normalizeWeigh(oldInfo.getWeight() + info.getWeight());
         }
         else {
-          splitter.setFirstComponent(myNewComponent);
-          splitter.setSecondComponent(oldComponent);
-          splitter.setProportion(normalizeWeigh(myInfo.getSideWeight()));
-          if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-            newWeight = normalizeWeigh(oldInfo.getWeight() + myInfo.getWeight());
-          }
-          else {
-            newWeight = normalizeWeigh(myInfo.getWeight());
-          }
+          newWeight = normalizeWeigh(oldInfo.getWeight());
         }
       }
       else {
-        newWeight = normalizeWeigh(myInfo.getWeight());
+        splitter.setFirstComponent(newComponent);
+        splitter.setSecondComponent(oldComponent);
+        splitter.setProportion(normalizeWeigh(info.getSideWeight()));
+        if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
+          newWeight = normalizeWeigh(oldInfo.getWeight() + info.getWeight());
+        }
+        else {
+          newWeight = normalizeWeigh(info.getWeight());
+        }
       }
-      setComponent(splitter, anchor, newWeight);
+    }
+    else {
+      newWeight = normalizeWeigh(info.getWeight());
+    }
+    setComponent(splitter, anchor, newWeight);
 
-      if (!dirtyMode) {
-        layeredPane.validate();
-        layeredPane.repaint();
-      }
+    if (!dirtyMode) {
+      layeredPane.validate();
+      layeredPane.repaint();
     }
   }
 
-  private void addSlidingComponent(@NotNull JComponent component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
+  private void addSlidingComponent(@NotNull JComponent component, @NotNull WindowInfo info, boolean dirtyMode) {
     if (dirtyMode || !UISettings.getInstance().getAnimateWindows() || RemoteDesktopService.isRemoteSession()) {
       // not animated
       layeredPane.add(component, JLayeredPane.PALETTE_LAYER);
@@ -854,92 +842,70 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     repaint();
   }
 
-  private final class RemoveSplitAndDockedComponentCmd implements Runnable {
-    private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
-
-    private RemoveSplitAndDockedComponentCmd(@NotNull WindowInfoImpl info, boolean dirtyMode) {
-      myInfo = info;
-      myDirtyMode = dirtyMode;
+  private void removeSplitAndDockedComponent(@NotNull WindowInfo info, boolean dirtyMode) {
+    ToolWindowAnchor anchor = info.getAnchor();
+    JComponent c = getComponentAt(anchor);
+    if (c instanceof Splitter) {
+      Splitter splitter = (Splitter)c;
+      InternalDecorator component = (InternalDecorator)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+      if (info.isSplit() && component != null) {
+        idToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
+      }
+      setComponent(component, anchor,
+                   component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
     }
-
-    @Override
-    public void run() {
-      ToolWindowAnchor anchor = myInfo.getAnchor();
-      JComponent c = getComponentAt(anchor);
-      if (c instanceof Splitter) {
-        Splitter splitter = (Splitter)c;
-        InternalDecorator component = (InternalDecorator)(myInfo.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
-        if (myInfo.isSplit() && component != null) {
-          idToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
-        }
-        setComponent(component, anchor, component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
-      }
-      else {
-        setComponent(null, anchor, 0);
-      }
-      if (!myDirtyMode) {
-        layeredPane.validate();
-        layeredPane.repaint();
-      }
-      transferFocus();
+    else {
+      setComponent(null, anchor, 0);
     }
+    if (!dirtyMode) {
+      layeredPane.validate();
+      layeredPane.repaint();
+    }
+    transferFocus();
   }
 
-  private final class RemoveSlidingComponentCmd implements Runnable {
-    private final Component myComponent;
-    private final WindowInfoImpl myInfo;
-    private final boolean myDirtyMode;
+  private void removeSlidingComponentCmd(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
+      final Rectangle bounds = component.getBounds();
+      // Prepare top image. This image is scrolling over bottom image. It contains
+      // picture of component is being removed.
+      final Image topImage = layeredPane.getTopImage();
+      useSafely(topImage.getGraphics(), topGraphics -> component.paint(topGraphics));
 
-    RemoveSlidingComponentCmd(@NotNull Component component, @NotNull WindowInfoImpl info, boolean dirtyMode) {
-      myComponent = component;
-      myInfo = info;
-      myDirtyMode = dirtyMode;
+      // Prepare bottom image. This image contains picture of component that is located
+      // under the component to is being removed.
+      final Image bottomImage = layeredPane.getBottomImage();
+
+      Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
+      useSafely(bottomImage.getGraphics(), bottomGraphics -> {
+        layeredPane.remove(component);
+        bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
+        bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
+        layeredPane.paint(bottomGraphics);
+      });
+
+      // Remove component from the layered pane and start animation.
+      final Surface surface =
+        new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.getAnchor(), UISettings.ANIMATION_DURATION);
+      layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
+      surface.setBounds(bounds);
+      layeredPane.validate();
+      layeredPane.repaint();
+
+      surface.runMovement();
+      layeredPane.remove(surface);
+    }
+    else {
+      // not animated
+      layeredPane.remove(component);
     }
 
-    @Override
-    public final void run() {
-      UISettings uiSettings = UISettings.getInstance();
-      if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
-        final Rectangle bounds = myComponent.getBounds();
-        // Prepare top image. This image is scrolling over bottom image. It contains
-        // picture of component is being removed.
-        final Image topImage = layeredPane.getTopImage();
-        useSafely(topImage.getGraphics(), topGraphics -> myComponent.paint(topGraphics));
-
-        // Prepare bottom image. This image contains picture of component that is located
-        // under the component to is being removed.
-        final Image bottomImage = layeredPane.getBottomImage();
-
-        Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
-        useSafely(bottomImage.getGraphics(), bottomGraphics -> {
-          layeredPane.remove(myComponent);
-          bottomGraphics.clipRect(0, 0, bounds.width, bounds.height);
-          bottomGraphics.translate(bottomImageOffset.getX() - bounds.x, bottomImageOffset.getY() - bounds.y);
-          layeredPane.paint(bottomGraphics);
-        });
-
-        // Remove component from the layered pane and start animation.
-        final Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, myInfo.getAnchor(), UISettings.ANIMATION_DURATION);
-        layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
-        surface.setBounds(bounds);
-        layeredPane.validate();
-        layeredPane.repaint();
-
-        surface.runMovement();
-        layeredPane.remove(surface);
-      }
-      else {
-        // not animated
-        layeredPane.remove(myComponent);
-      }
-
-      if (!myDirtyMode) {
-        layeredPane.validate();
-        layeredPane.repaint();
-      }
-      transferFocus();
+    if (!dirtyMode) {
+      layeredPane.validate();
+      layeredPane.repaint();
     }
+    transferFocus();
   }
 
   private static final class ImageRef extends SoftReference<BufferedImage> {
