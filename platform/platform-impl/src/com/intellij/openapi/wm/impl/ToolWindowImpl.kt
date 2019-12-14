@@ -271,12 +271,12 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun setTitleActions(vararg actions: AnAction) {
-    contentManager
+    contentManager.value
     decorator!!.setTitleActions(actions)
   }
 
   override fun setTabActions(vararg actions: AnAction) {
-    contentManager
+    contentManager.value
     decorator!!.setTabActions(actions)
   }
 
