@@ -60,9 +60,9 @@ import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 
-private val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
-
-private fun createHorizontalPanel(): JBPanel<*> = JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
+private fun createHorizontalPanel(): JBPanel<*> {
+  return JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
+}
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -149,8 +149,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   init {
     Disposer.register(this, commitMessage)
 
+    val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
     commitLegend.isCompact = isCompactCommitLegend.asBoolean()
-    isCompactCommitLegend.addListener(object : RegistryValueListener.Adapter() {
+    isCompactCommitLegend.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         commitLegend.isCompact = value.asBoolean()
       }

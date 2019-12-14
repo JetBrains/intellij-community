@@ -299,7 +299,7 @@ public class TerminalView {
     panel.setContent(terminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 
-    panel.uiSettingsChanged(null);
+    panel.updateDFState();
 
     content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
 
@@ -512,11 +512,11 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateDFState();
   }
 
-  private void updateDFState() {
+  void updateDFState() {
     if (isDfmSupportEnabled()) {
       setDistractionFree(shouldMakeDistractionFree());
     }

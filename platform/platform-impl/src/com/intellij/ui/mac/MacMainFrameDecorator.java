@@ -185,7 +185,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     //noinspection Convert2Lambda
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
+      public void uiSettingsChanged(@NotNull UISettings uiSettings) {
         if (CURRENT_GETTER != null) {
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           SHOWN = CURRENT_GETTER.get();

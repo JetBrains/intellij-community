@@ -147,7 +147,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     clearCaches();
   }
 

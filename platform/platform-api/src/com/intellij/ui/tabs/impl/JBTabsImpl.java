@@ -355,7 +355,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();
       entry.getValue().updateActionLabelPosition();

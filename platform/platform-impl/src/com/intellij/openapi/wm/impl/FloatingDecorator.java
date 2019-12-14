@@ -382,7 +382,7 @@ public final class FloatingDecorator extends JDialog {
 
   private final class MyUISettingsListener implements UISettingsListener {
     @Override
-    public void uiSettingsChanged(final UISettings uiSettings) {
+    public void uiSettingsChanged(@NotNull final UISettings uiSettings) {
       LOG.assertTrue(isDisplayable());
       LOG.assertTrue(isShowing());
       final WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();

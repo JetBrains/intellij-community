@@ -713,8 +713,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   // cannot be ToolWindowEx because of backward compatibility
-  override fun getToolWindow(id: String): ToolWindow? {
-    return idToEntry.get(id)?.toolWindow
+  override fun getToolWindow(id: String?): ToolWindow? {
+    return idToEntry.get(id ?: return null)?.toolWindow
   }
 
   fun showToolWindow(id: String) {

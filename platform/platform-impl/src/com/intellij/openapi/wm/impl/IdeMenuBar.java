@@ -288,7 +288,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateMnemonicsVisibility();
     myPresentationFactory.reset();
   }

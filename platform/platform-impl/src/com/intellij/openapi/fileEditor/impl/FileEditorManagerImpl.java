@@ -1899,7 +1899,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   private final class MyUISettingsListener implements UISettingsListener {
     @Override
-    public void uiSettingsChanged(final UISettings uiSettings) {
+    public void uiSettingsChanged(@NotNull final UISettings uiSettings) {
       assertDispatchThread();
       mySplitters.revalidate();
       for (EditorsSplitters each : getAllSplitters()) {

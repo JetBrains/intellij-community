@@ -138,7 +138,7 @@ abstract class ToolWindowManager {
    * tool window with specified `id` then the method returns `null`.
    * @see ToolWindowId
    */
-  abstract fun getToolWindow(id: String): ToolWindow?
+  abstract fun getToolWindow(id: String?): ToolWindow?
 
   /**
    * Puts specified runnable to the tail of current command queue.

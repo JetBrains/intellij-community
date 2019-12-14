@@ -571,7 +571,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void uiSettingsChanged(UISettings uiSettings) {
+    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
       if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }

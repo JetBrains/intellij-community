@@ -36,7 +36,7 @@ public final class SvnExecutableChecker extends ExecutableValidator {
     super(vcs.getProject(), getNotificationTitle(), getWrongPathMessage());
 
     myVcs = vcs;
-    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener.Adapter() {
+    Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         myVcs.checkCommandLineVersion();

@@ -328,7 +328,7 @@ public class ChangesViewManager implements ChangesViewEx,
       myChangesPanel.setToolbarHorizontal(commitWorkflowManager.isNonModal() && isToolbarHorizontalSetting.asBoolean());
       registerShortcuts(this);
 
-      isToolbarHorizontalSetting.addListener(new RegistryValueListener.Adapter() {
+      isToolbarHorizontalSetting.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           boolean isToolbarHorizontal = value.asBoolean() && commitWorkflowManager.isNonModal();
@@ -412,14 +412,14 @@ public class ChangesViewManager implements ChangesViewEx,
       setContent(simplePanel(mainPanel).addToBottom(myProgressLabel));
 
       setCommitSplitOrientation();
-      isCommitSplitHorizontal.addListener(new RegistryValueListener.Adapter() {
+      isCommitSplitHorizontal.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           setCommitSplitOrientation();
         }
       }, this);
 
-      isToggleCommitUi().addListener(new RegistryValueListener.Adapter() {
+      isToggleCommitUi().addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           if (myCommitWorkflowHandler == null) return;

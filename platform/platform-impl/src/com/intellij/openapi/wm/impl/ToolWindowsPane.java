@@ -671,7 +671,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       ToolWindowAnchor anchor = myInfo.getAnchor();
       final class MySplitter extends OnePixelSplitter implements UISettingsListener {
         @Override
-        public void uiSettingsChanged(UISettings uiSettings) {
+        public void uiSettingsChanged(@NotNull UISettings uiSettings) {
           if (anchor == ToolWindowAnchor.LEFT) {
             setOrientation(!uiSettings.getLeftHorizontalSplit());
           }
