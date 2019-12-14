@@ -76,9 +76,10 @@ import javax.swing.event.HyperlinkListener
 
 private val LOG = Logger.getInstance(ToolWindowManagerImpl::class.java)
 
-@State(name = "ToolWindowManager",
-       defaultStateAsResource = true,
-       storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)]
+@State(
+  name = "ToolWindowManager",
+  defaultStateAsResource = true,
+  storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)]
 )
 open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), PersistentStateComponent<Element?> {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
@@ -1387,37 +1388,42 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val info = getRegisteredMutableInfoOrLogError(id)
-    if (entry.readOnlyWindowInfo.isVisible) {
-      val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
-      removeDecorator(info, entry, dirtyMode, commands)
-      info.type = type
-
-      var toApplyInfo = false
-      if (!info.isActive) {
-        info.isActive = true
-        toApplyInfo = true
-      }
-
-      val newInfo = info.copy()
-      entry.applyWindowInfo(newInfo)
-
-      deactivateWindows(id)
-
-      doShowWindow(entry, newInfo, commands, dirtyMode)
-      if (toApplyInfo) {
-        activeStack.push(entry)
-      }
-
-      if (ApplicationManager.getApplication().isActive) {
-        appendRequestFocusInToolWindowCmd(entry.id, commands)
-      }
-
-      appendUpdateRootPane(commands)
-    }
-    else {
+    if (!entry.readOnlyWindowInfo.isVisible) {
       info.type = type
       entry.applyWindowInfo(info.copy())
+      return
     }
+
+    val dirtyMode = entry.readOnlyWindowInfo.type == ToolWindowType.DOCKED || entry.readOnlyWindowInfo.type == ToolWindowType.SLIDING
+    removeDecorator(info, entry, dirtyMode, commands)
+    info.type = type
+
+    var toApplyInfo = false
+    if (!info.isActive) {
+      info.isActive = true
+      toApplyInfo = true
+    }
+
+    val newInfo = info.copy()
+    entry.applyWindowInfo(newInfo)
+
+    deactivateWindows(id)
+
+    doShowWindow(entry, newInfo, commands, dirtyMode)
+    if (toApplyInfo) {
+      activeStack.push(entry)
+    }
+
+    if (ApplicationManager.getApplication().isActive) {
+      appendRequestFocusInToolWindowCmd(entry.id, commands)
+    }
+
+    val frame = frame!!
+    commands.add(Runnable {
+      val rootPane = frame.rootPane ?: return@Runnable
+      rootPane.revalidate()
+      rootPane.repaint()
+    })
   }
 
   private fun appendApplyWindowInfoCmd(info: WindowInfoImpl, entry: ToolWindowEntry, commands: MutableList<Runnable>) {
@@ -1446,15 +1452,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     commands.add(RequestFocusInToolWindowCmd((idToEntry.get(id) ?: return).toolWindow))
   }
 
-  private fun appendUpdateRootPane(commands: MutableList<Runnable>) {
-    val frame = frame!!
-    commands.add(Runnable {
-      val rootPane = frame.rootPane ?: return@Runnable
-      rootPane.revalidate()
-      rootPane.repaint()
-    })
-  }
-
   override fun clearSideStack() {
     if (isStackEnabled) {
       sideStack.clear()
@@ -1463,39 +1460,22 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun getState(): Element? {
     // do nothing if the project was not opened
-    val frame = frame ?: return null
+    if (frame == null) {
+      return null
+    }
 
     val element = Element("state")
-    // Save frame's bounds
-    // [tav] Where we load these bounds? Should we just remove this code? (because we load frame bounds in WindowManagerImpl.allocateFrame)
-    // Anyway, we should save bounds in device space to preserve backward compatibility with the IDE-managed HiDPI mode (see JBUI.ScaleType).
-    // However, I won't change =
-    //\is code because I can't even test it.
-    val frameBounds = frame.frame.bounds
-    val frameElement = Element(FRAME_ELEMENT)
-    element.addContent(frameElement)
-    frameElement.setAttribute(X_ATTR, frameBounds.x.toString())
-    frameElement.setAttribute(Y_ATTR, frameBounds.y.toString())
-    frameElement.setAttribute(WIDTH_ATTR, frameBounds.width.toString())
-    frameElement.setAttribute(HEIGHT_ATTR, frameBounds.height.toString())
-    frameElement.setAttribute(EXTENDED_STATE_ATTR, frame.frame.extendedState.toString())
-
-    // Save whether editor is active or not
     if (isEditorComponentActive) {
-      val editorElement = Element(EDITOR_ELEMENT)
-      editorElement.setAttribute(ACTIVE_ATTR_VALUE, "true")
-      element.addContent(editorElement)
+      element.addContent(Element(EDITOR_ELEMENT).setAttribute(ACTIVE_ATTR_VALUE, "true"))
     }
 
-    // Save layout of tool windows
-    val layoutElement = layout.writeExternal(DesktopLayout.TAG)
-    if (layoutElement != null) {
-      element.addContent(layoutElement)
+    // save layout of tool windows
+    layout.writeExternal(DesktopLayout.TAG)?.let {
+      element.addContent(it)
     }
 
-    val layoutToRestoreElement = layoutToRestoreLater?.writeExternal(LAYOUT_TO_RESTORE)
-    if (layoutToRestoreElement != null) {
-      element.addContent(layoutToRestoreElement)
+    layoutToRestoreLater?.writeExternal(LAYOUT_TO_RESTORE)?.let {
+      element.addContent(it)
     }
     return element
   }
@@ -1521,7 +1501,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         layoutToRestoreLater!!.readExternal(element)
       }
     }
-    checkInvariants("")
   }
 
   private fun scheduleSetLayout(task: Runnable) {
@@ -1577,15 +1556,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     if (window.type == ToolWindowType.WINDOWED && window is ToolWindowImpl) {
       val decorator = getWindowedDecorator(window.id)
-      val frame = if (decorator != null && decorator.frame is Frame) decorator.frame as Frame else null
-      if (frame != null) {
-        val state = frame.state
-        if (state == Frame.NORMAL) {
-          frame.state = Frame.MAXIMIZED_BOTH
-        }
-        else if (state == Frame.MAXIMIZED_BOTH) {
-          frame.state = Frame.NORMAL
-        }
+      val frame = if (decorator != null && decorator.frame is Frame) decorator.frame as Frame else return
+      val state = frame.state
+      if (state == Frame.NORMAL) {
+        frame.state = Frame.MAXIMIZED_BOTH
+      }
+      else if (state == Frame.MAXIMIZED_BOTH) {
+        frame.state = Frame.NORMAL
       }
       return
     }
@@ -1967,12 +1944,6 @@ private fun getRootBounds(frame: JFrame): Rectangle {
 
 private const val EDITOR_ELEMENT = "editor"
 private const val ACTIVE_ATTR_VALUE = "active"
-private const val FRAME_ELEMENT = "frame"
-private const val X_ATTR = "x"
-private const val Y_ATTR = "y"
-private const val WIDTH_ATTR = "width"
-private const val HEIGHT_ATTR = "height"
-private const val EXTENDED_STATE_ATTR = "extended-state"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 
 internal enum class ToolWindowProperty {
