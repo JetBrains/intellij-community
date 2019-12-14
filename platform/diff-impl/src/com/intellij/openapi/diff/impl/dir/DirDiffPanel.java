@@ -218,7 +218,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       @Override
       public void onLoadingFinish() {
         if (showHelp && myModel.isOperationsEnabled() && myModel.getRowCount() > 0) {
-          final long count = PropertiesComponent.getInstance().getOrInitLong("dir.diff.space.button.info", 0);
+          final long count = PropertiesComponent.getInstance().getLong("dir.diff.space.button.info", 0);
           if (count < 3) {
             JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
               .setFadeoutTime(5000)

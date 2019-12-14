@@ -21,11 +21,7 @@ import org.jetbrains.annotations.SystemDependent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-@State(
-  name = "GeneralSettings",
-  storages = @Storage(GeneralSettings.IDE_GENERAL_XML),
-  reportStatistic = true
-)
+@State(name = "GeneralSettings", storages = @Storage(GeneralSettings.IDE_GENERAL_XML), reportStatistic = true)
 public final class GeneralSettings implements PersistentStateComponent<GeneralSettings> {
   public static final String IDE_GENERAL_XML = "ide.general.xml";
 
@@ -47,7 +43,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.FALSE);
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, false);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDE automatically saves files if it is inactive for some seconds
@@ -185,7 +181,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myUseSafeWrite = useSafeWrite;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public GeneralSettings getState() {
     return this;

@@ -4,10 +4,10 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
+public final class ToolWindowContentUi extends JPanel implements ContentUI, DataProvider, UISettingsListener {
   // when client property is put in toolwindow component, hides toolwindow label
   public static final String HIDE_ID_LABEL = "HideIdLabel";
   private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
@@ -98,11 +98,12 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
           .iterator();
       }
     });
+  }
 
-    ApplicationManager.getApplication().getMessageBus().connect(window.getDisposable()).subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      revalidate();
-      repaint();
-    });
+  @Override
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
+    revalidate();
+    repaint();
   }
 
   private boolean isResizeable() {
@@ -173,16 +174,23 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     getCurrentLayout().init();
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
+      private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          update();
+        }
+      };
+
       @Override
       public void contentAdded(@NotNull ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
-        event.getContent().addPropertyChangeListener(ToolWindowContentUi.this);
+        event.getContent().addPropertyChangeListener(propertyChangeListener);
         rebuild();
       }
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        event.getContent().removePropertyChangeListener(ToolWindowContentUi.this);
+        event.getContent().removePropertyChangeListener(propertyChangeListener);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
@@ -278,11 +286,6 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
     size.width = Math.max(size.width, getMinimumSize().width);
     return size;
-  }
-
-  @Override
-  public void propertyChange(final PropertyChangeEvent evt) {
-    update();
   }
 
   private void update() {

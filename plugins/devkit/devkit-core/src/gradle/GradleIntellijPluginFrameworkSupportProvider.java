@@ -131,7 +131,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   public JComponent createComponent() {
     // checking new gradle version on creating component
     String latestVersion = PropertiesComponent.getInstance().getValue(LATEST_GRADLE_VERSION_KEY);
-    long timeCheck = PropertiesComponent.getInstance().getOrInitLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
+    long timeCheck = PropertiesComponent.getInstance().getLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
     if (latestVersion == null || TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timeCheck) >= 1) {
       ModalityState modalityState = ModalityState.defaultModalityState();
       Lazy.EXECUTOR.execute(() -> {

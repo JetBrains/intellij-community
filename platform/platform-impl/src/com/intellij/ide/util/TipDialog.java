@@ -24,7 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
-public class TipDialog extends DialogWrapper {
+public final class TipDialog extends DialogWrapper {
   private static TipDialog ourInstance;
 
   private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
@@ -76,24 +76,19 @@ public class TipDialog extends DialogWrapper {
   }
 
   public static boolean canBeShownAutomaticallyNow() {
-    if (!GeneralSettings.getInstance().isShowTipsOnStartup()) return false;
-    if (ourInstance != null && ourInstance.isVisible()) return false;
+    if (!GeneralSettings.getInstance().isShowTipsOnStartup() || (ourInstance != null && ourInstance.isVisible())) {
+      return false;
+    }
     return !wereTipsShownToday();
   }
-  
+
   @Override
   public void dispose() {
     super.dispose();
   }
 
   public static boolean wereTipsShownToday() {
-    try {
-      return System.currentTimeMillis() - Long.parseLong(PropertiesComponent.getInstance().getValue(LAST_TIME_TIPS_WERE_SHOWN, "0"))
-             < DateFormatUtil.DAY;
-    }
-    catch (NumberFormatException e) {
-      return false;
-    }
+    return System.currentTimeMillis() - PropertiesComponent.getInstance().getLong(LAST_TIME_TIPS_WERE_SHOWN, 0) < DateFormatUtil.DAY;
   }
 
   public static void showForProject(@Nullable Project project) {

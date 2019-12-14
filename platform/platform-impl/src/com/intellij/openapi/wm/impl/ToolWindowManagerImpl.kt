@@ -973,17 +973,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val info = layout.getInfo(id)
     if (info != null) {
-      // remove decorator and tool button from the screen
-      val commands = mutableListOf<Runnable>()
-      removeDecorator(info, entry, false, commands)
-      // Save recent appearance of tool window
+      // remove decorator and tool button from the screen - removing will also save current bounds
+      removeDecorator(info, entry, false, null)
+      // save recent appearance of tool window
       activeStack.remove(entry, true)
       if (isStackEnabled) {
         sideStack.remove(id)
       }
-      appendRemoveButtonCmd(entry, info, commands)
-      appendApplyWindowInfoCmd(info, entry, commands)
-      commandProcessor.execute(commands)
+      toolWindowPane!!.removeStripeButton(entry.stripeButton, info.anchor)
     }
 
     if (!project.isDisposed) {
@@ -993,7 +990,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     Disposer.dispose(entry.disposable)
   }
 
-  private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>) {
+  private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>?) {
     info.isVisible = false
     when (info.type) {
       ToolWindowType.FLOATING -> {
@@ -1029,11 +1026,16 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
 
         toolWindowPane!!.removeDecorator(info, entry.toolWindow.decoratorComponent, dirtyMode, this)
-        commands.add(Runnable {
-          if (!commands.any { it is RequestFocusInToolWindowCmd }) {
-            toolWindowPane!!.transferFocus()
-          }
-        })
+        if (commands == null) {
+          toolWindowPane!!.transferFocus()
+        }
+        else {
+          commands.add(Runnable {
+            if (!commands.any { it is RequestFocusInToolWindowCmd }) {
+              toolWindowPane!!.transferFocus()
+            }
+          })
+        }
       }
     }
   }

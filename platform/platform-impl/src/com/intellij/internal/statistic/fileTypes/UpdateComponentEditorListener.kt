@@ -71,7 +71,7 @@ private class UpdateComponentEditorListener : EditorFactoryListener {
         val properties = PropertiesComponent.getInstance()
         val lastPluginVersion = properties.getValue(lastVersionKey)
 
-        val lastUpdate = properties.getOrInitLong(lastUpdateKey, 0L)
+        val lastUpdate = properties.getLong(lastUpdateKey, 0L)
         val shouldUpdate = lastUpdate == 0L
                            || System.currentTimeMillis() - lastUpdate > TimeUnit.DAYS.toMillis(1)
                            || lastPluginVersion == null

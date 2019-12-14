@@ -166,12 +166,17 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     if (myDragCancelled || !MouseDragHelper.checkModifiers(e)) {
       return;
     }
+
     if (!isDraggingNow()) {
-      if (myPressedPoint == null) return;
-      if (isWithinDeadZone(e)) return;
+      if (myPressedPoint == null || isWithinDeadZone(e)) {
+        return;
+      }
 
       myDragPane = findLayeredPane(e);
-      if (myDragPane == null) return;
+      if (myDragPane == null) {
+        return;
+      }
+
       int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
       int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
       BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
@@ -181,7 +186,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       paint(graphics);
       graphics.dispose();
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
-
         @Override
         public String toString() {
           return "Image for: " + StripeButton.this.toString();
@@ -204,7 +208,10 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDragKeyEventDispatcher = new DragKeyEventDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(myDragKeyEventDispatcher);
     }
-    if (!isDraggingNow()) return;
+
+    if (!isDraggingNow()) {
+      return;
+    }
 
     Point xy = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myDragPane);
     if (myPressedPoint != null) {
@@ -255,13 +262,15 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   @Nullable
   private static JLayeredPane findLayeredPane(MouseEvent e) {
-    if (!(e.getComponent() instanceof JComponent)) return null;
-    final JRootPane root = ((JComponent)e.getComponent()).getRootPane();
+    if (!(e.getComponent() instanceof JComponent)) {
+      return null;
+    }
+    JRootPane root = ((JComponent)e.getComponent()).getRootPane();
     return root.getLayeredPane();
   }
 
   @Override
-  protected void processMouseEvent(final MouseEvent e) {
+  protected void processMouseEvent(@NotNull MouseEvent e) {
     if (e.isPopupTrigger() && e.getComponent().isShowing()) {
       super.processMouseEvent(e);
       return;
@@ -363,7 +372,9 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   }
 
   private void finishDragging() {
-    if (!isDraggingNow()) return;
+    if (!isDraggingNow()) {
+      return;
+    }
     myDragPane.remove(myDragButtonImage);
     myDragButtonImage = null;
     myPane.stopDrag();

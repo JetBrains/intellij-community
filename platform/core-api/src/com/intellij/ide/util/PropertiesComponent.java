@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,10 +86,8 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
 
   @NotNull
   public String getValue(@NonNls @NotNull String name, @NotNull String defaultValue) {
-    if (!isValueSet(name)) {
-      return defaultValue;
-    }
-    return ObjectUtils.notNull(getValue(name), defaultValue);
+    String value = getValue(name);
+    return value == null ? defaultValue : value;
   }
 
   /**
@@ -106,14 +103,17 @@ public abstract class PropertiesComponent extends SimpleModificationTracker {
     return StringUtilRt.parseInt(getValue(name), defaultValue);
   }
 
+  public long getLong(@NotNull String name, long defaultValue) {
+    return StringUtilRt.parseLong(getValue(name), defaultValue);
+  }
+
+  /**
+   * @deprecated Use {@link #getLong(String, int)}
+   * Init was never performed and in any case is not recommended.
+   */
+  @Deprecated
   public final long getOrInitLong(@NonNls @NotNull String name, long defaultValue) {
-    try {
-      String value = getValue(name);
-      return value == null ? defaultValue : Long.parseLong(value);
-    }
-    catch (NumberFormatException e) {
-      return defaultValue;
-    }
+    return getLong(name, defaultValue);
   }
 
   /**
