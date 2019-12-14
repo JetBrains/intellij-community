@@ -196,25 +196,24 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
-  @NotNull
-  final Runnable createAddDecoratorCommand(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  final void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfoImpl info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
       if (sideInfo == null) {
-        return () -> {
           ToolWindowAnchor anchor = info.getAnchor();
           setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
           if (!dirtyMode) {
             layeredPane.validate();
             layeredPane.repaint();
           }
-        };
       }
-      return new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
+      else {
+        new AddAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager).run();
+      }
     }
     else if (info.isSliding()) {
-      return () -> addSlidingComponent(decorator, info, dirtyMode);
+      addSlidingComponent(decorator, info, dirtyMode);
     }
     else {
       throw new IllegalArgumentException("Unknown window type: " + info.getType());
@@ -244,10 +243,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       return new RemoveSplitAndDockedComponentCmd(info, dirtyMode);
     }
     else if (info.isSliding()) {
-      if (component != null) {
-        return new RemoveSlidingComponentCmd(component, info, dirtyMode);
-      }
-      return null;
+      return component == null ? null : new RemoveSlidingComponentCmd(component, info, dirtyMode);
     }
     else {
       throw new IllegalArgumentException("Unknown window type");

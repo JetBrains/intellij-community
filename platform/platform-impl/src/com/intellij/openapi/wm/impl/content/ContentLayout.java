@@ -54,7 +54,7 @@ abstract class ContentLayout {
   }
 
   private String getTitleSuffix() {
-    ContentManager manager = myUi.myManager;
+    ContentManager manager = myUi.contentManager;
     switch (manager == null ? 0 : manager.getContentCount()) {
       case 0:
         return null;

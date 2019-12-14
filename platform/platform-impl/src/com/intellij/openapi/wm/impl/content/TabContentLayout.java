@@ -74,7 +74,7 @@ final class TabContentLayout extends ContentLayout {
       }
     };
 
-    ContentManager contentManager = myUi.myManager;
+    ContentManager contentManager = myUi.contentManager;
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
@@ -100,7 +100,7 @@ final class TabContentLayout extends ContentLayout {
   @Override
   public void layout() {
     Rectangle bounds = myUi.getBounds();
-    ContentManager manager = myUi.myManager;
+    ContentManager manager = myUi.contentManager;
     LayoutData data = new LayoutData(myUi);
 
     data.eachX = TAB_LAYOUT_START;
@@ -215,7 +215,7 @@ final class TabContentLayout extends ContentLayout {
       }
     }
 
-    ContentManager contentManager = myUi.myManager;
+    ContentManager contentManager = myUi.contentManager;
     Content selected = contentManager.getSelectedContent();
     if (selected == null && contentManager.getContents().length > 0) {
       selected = contentManager.getContents()[0];
@@ -264,7 +264,7 @@ final class TabContentLayout extends ContentLayout {
 
     LayoutData(ToolWindowContentUi ui) {
       layoutSize = ui.getSize();
-      contentCount = ui.myManager.getContentCount();
+      contentCount = ui.contentManager.getContentCount();
     }
   }
 
@@ -363,7 +363,7 @@ final class TabContentLayout extends ContentLayout {
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    Content selected = myUi.myManager.getSelectedContent();
+    Content selected = myUi.contentManager.getSelectedContent();
     if (selected != null) {
       ContentTabLabel tab = myContent2Tabs.get(selected);
       listPopup.showUnderneathOf(tab);

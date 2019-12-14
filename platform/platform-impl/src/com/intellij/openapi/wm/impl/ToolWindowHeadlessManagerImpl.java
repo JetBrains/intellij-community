@@ -276,11 +276,6 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean isToHideOnEmptyContent() {
-      return false;
-    }
-
-    @Override
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
     }
@@ -375,7 +370,7 @@ public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void showContentPopup(InputEvent inputEvent) {
+    public void showContentPopup(@NotNull InputEvent inputEvent) {
     }
 
     @Override

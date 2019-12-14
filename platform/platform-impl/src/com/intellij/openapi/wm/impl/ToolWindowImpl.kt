@@ -127,10 +127,12 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
-    if (windowInfo != info) {
-      windowInfo = info
-      decorator?.applyWindowInfo(info)
+    if (windowInfo == info) {
+      return
     }
+
+    windowInfo = info
+    decorator?.applyWindowInfo(info)
   }
 
   val decoratorComponent: JComponent?
@@ -401,7 +403,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     hideOnEmptyContent = value
   }
 
-  override fun isToHideOnEmptyContent() = hideOnEmptyContent
+  fun isToHideOnEmptyContent() = hideOnEmptyContent
 
   override fun setShowStripeButton(show: Boolean) {
     toolWindowManager.setShowStripeButton(id, show)
@@ -419,6 +421,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       if (contentManager.isInitialized()) {
         contentManager.value.removeAllContents(false)
       }
+      contentManager.value
       currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
     }
   }
@@ -430,7 +433,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun showContentPopup(inputEvent: InputEvent) {
-    contentUi.toggleContentPopup()
+    // create before access contentUi
+    val contentManager = contentManager.value
+    ToolWindowContentUi.toggleContentPopup(contentUi, contentManager)
   }
 
   @JvmOverloads
@@ -518,7 +523,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   private inner class ResizeActionGroup : ActionGroup(ActionsBundle.groupText("ResizeToolWindowGroup"), true), DumbAware {
     private val children by lazy<Array<AnAction>> {
       // force creation
-      contentManager
+      contentManager.value
       val component = decorator
       val toolWindow = this@ToolWindowImpl
       arrayOf(

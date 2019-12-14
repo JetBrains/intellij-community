@@ -8,12 +8,14 @@ import com.intellij.openapi.wm.WindowInfo
 
 internal data class ToolWindowEntry(val stripeButton: StripeButton,
                                     val toolWindow: ToolWindowImpl,
-                                    val disposable: Disposable,
-                                    var readOnlyWindowInfo: WindowInfo) {
+                                    val disposable: Disposable) {
   var floatingDecorator: FloatingDecorator? = null
   var windowedDecorator: FrameWrapper? = null
   var balloon: Balloon? = null
 
   val id: String
     get() = toolWindow.id
+
+  val readOnlyWindowInfo: WindowInfo
+    get() = toolWindow.windowInfo
 }

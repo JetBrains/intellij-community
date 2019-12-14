@@ -6,6 +6,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
@@ -18,8 +19,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class ContentComboLabel extends BaseLabel {
-
+final class ContentComboLabel extends BaseLabel {
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
@@ -33,8 +33,9 @@ public class ContentComboLabel extends BaseLabel {
   };
   private final ComboContentLayout myLayout;
 
-  public ContentComboLabel(ComboContentLayout layout) {
+  ContentComboLabel(@NotNull ComboContentLayout layout) {
     super(layout.myUi, true);
+
     myLayout = layout;
     addMouseListener(new MouseAdapter(){});
     if (ScreenReader.isActive()) {
@@ -43,7 +44,7 @@ public class ContentComboLabel extends BaseLabel {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            myUi.toggleContentPopup();
+            ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
           }
           super.keyPressed(e);
         }
@@ -56,7 +57,7 @@ public class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      myUi.toggleContentPopup();
+      ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
     }
   }
 
@@ -108,7 +109,7 @@ public class ContentComboLabel extends BaseLabel {
   @Nullable
   @Override
   public Content getContent() {
-    return myUi.myManager == null ? null : myUi.myManager.getSelectedContent();
+    return myUi.contentManager == null ? null : myUi.contentManager.getSelectedContent();
   }
 
   @Override
@@ -119,8 +120,7 @@ public class ContentComboLabel extends BaseLabel {
     return accessibleContext;
   }
 
-  protected class AccessibleContentComboLabel extends AccessibleBaseLabel implements AccessibleAction {
-
+  private final class AccessibleContentComboLabel extends AccessibleBaseLabel implements AccessibleAction {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PUSH_BUTTON;
@@ -132,7 +132,6 @@ public class ContentComboLabel extends BaseLabel {
     }
 
     // Implements AccessibleAction
-
     @Override
     public int getAccessibleActionCount() {
       return 1;
@@ -146,7 +145,7 @@ public class ContentComboLabel extends BaseLabel {
     @Override
     public boolean doAccessibleAction(int index) {
       if (index == 0) {
-        myUi.toggleContentPopup();
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
         return true;
       }
       else {

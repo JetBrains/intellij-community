@@ -35,6 +35,7 @@ import java.util.function.Supplier;
 public abstract class ToolWindowHeader extends JPanel implements UISettingsListener {
   @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
+  @NotNull
   private final ToolWindow myToolWindow;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
@@ -296,8 +297,8 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent event) {
-      event.getPresentation().setEnabled(myToolWindow != null && myToolWindow.isVisible());
+    public void update(@NotNull AnActionEvent event) {
+      event.getPresentation().setEnabled(myToolWindow.isVisible());
     }
   }
 }

@@ -28,7 +28,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
   public ShowContentAction() {
   }
 
-  public ShowContentAction(ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
+  public ShowContentAction(@NotNull ToolWindow window, JComponent c, @NotNull Disposable parentDisposable) {
     myWindow = window;
     AnAction original = ActionManager.getInstance().getAction(ACTION_ID);
     new ShadowAction(this, original, c, parentDisposable);

@@ -51,7 +51,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   public static final String HIDE_ID_LABEL = "HideIdLabel";
   private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
-  ContentManager myManager;
+  ContentManager contentManager;
 
   final JPanel myContent = new JPanel(new BorderLayout());
   ToolWindowImpl myWindow;
@@ -82,14 +82,14 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     UIUtil.putClientProperty(myContent, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
       @Override
       public Iterator<JComponent> iterator() {
-        if (myManager == null || myManager.getContentCount() == 0) {
+        if (contentManager == null || contentManager.getContentCount() == 0) {
           return Collections.emptyIterator();
         }
-        return JBIterable.of(myManager.getContents())
+        return JBIterable.of(contentManager.getContents())
           .map(content -> {
             JComponent last = null;
             for (Component c : UIUtil.uiParents(content.getComponent(), false)) {
-              if (c == myManager.getComponent() || !(c instanceof JComponent)) return null;
+              if (c == contentManager.getComponent() || !(c instanceof JComponent)) return null;
               last = (JComponent)c;
             }
             return last;
@@ -163,16 +163,16 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
   }
 
   @Override
-  public void setManager(@NotNull final ContentManager manager) {
-    if (myManager != null) {
+  public void setManager(@NotNull ContentManager manager) {
+    if (contentManager != null) {
       getCurrentLayout().reset();
     }
 
-    myManager = manager;
+    contentManager = manager;
 
     getCurrentLayout().init();
 
-    myManager.addContentManagerListener(new ContentManagerListener() {
+    contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentAdded(@NotNull ContentManagerEvent event) {
         getCurrentLayout().contentAdded(event);
@@ -207,14 +207,14 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
     rebuild();
 
-    myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
-    myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
-    myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(myManager);
-    myShowContent = new ShowContentAction(myWindow, myContent, myManager);
+    myCloseAllAction = new TabbedContentAction.CloseAllAction(contentManager);
+    myNextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
+    myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
+    myShowContent = new ShowContentAction(myWindow, myContent, contentManager);
   }
 
   private void ensureSelectedContentVisible() {
-    Content selected = myManager.getSelectedContent();
+    Content selected = contentManager.getSelectedContent();
     if (selected == null) {
       myContent.removeAll();
       return;
@@ -241,7 +241,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     revalidate();
     repaint();
 
-    if (myManager != null && myManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
+    if (contentManager != null && contentManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
       myWindow.hide(null);
     }
   }
@@ -508,7 +508,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     if (Boolean.TRUE == content.getUserData(Content.TABBED_CONTENT_KEY)) {
       final String groupName = content.getUserData(Content.TAB_GROUP_NAME_KEY);
       if (groupName != null) {
-        group.addAction(createMergeTabsAction(myManager, groupName));
+        group.addAction(createMergeTabsAction(contentManager, groupName));
       }
     }
 
@@ -584,11 +584,11 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     if (c instanceof BaseLabel) {
       final BaseLabel tab = (BaseLabel)c;
       if (tab.getContent() != null) {
-        if (myManager.canCloseContents() && tab.getContent().isCloseable()) {
-          myManager.removeContent(tab.getContent(), true, true, true);
+        if (contentManager.canCloseContents() && tab.getContent().isCloseable()) {
+          contentManager.removeContent(tab.getContent(), true, true, true);
         }
         else {
-          if (myManager.getContentCount() == 1) {
+          if (contentManager.getContentCount() == 1) {
             hideWindow(e);
           }
         }
@@ -628,8 +628,8 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
   @NotNull
   private CloseAction.CloseTarget computeCloseTarget() {
-    if (myManager.canCloseContents()) {
-      Content selected = myManager.getSelectedContent();
+    if (contentManager.canCloseContents()) {
+      Content selected = contentManager.getSelectedContent();
       if (selected != null && selected.isCloseable()) {
         return new CloseContentTarget(selected);
       }
@@ -654,7 +654,7 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
 
     @Override
     public void close() {
-      myManager.removeContent(myContent, true, true, true);
+      contentManager.removeContent(myContent, true, true, true);
     }
   }
 
@@ -662,17 +662,15 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Prop
     return getCurrentLayout() == layout;
   }
 
-  public void toggleContentPopup() {
-    final Content[] contents = myManager.getContents();
-    final Content selectedContent = myManager.getSelectedContent();
-
-    final SelectContentStep step = new SelectContentStep(contents);
+  public static void toggleContentPopup(@NotNull ToolWindowContentUi content, @NotNull ContentManager contentManager) {
+    SelectContentStep step = new SelectContentStep(contentManager.getContents());
+    Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
-      step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
+      step.setDefaultOptionIndex(contentManager.getIndexOfContent(selectedContent));
     }
 
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    getCurrentLayout().showContentPopup(popup);
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+    content.getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {
       new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(false), 50);

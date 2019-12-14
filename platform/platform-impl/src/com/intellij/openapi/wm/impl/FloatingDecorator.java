@@ -53,7 +53,7 @@ public final class FloatingDecorator extends JDialog {
   private float myStartRatio;
   private float myEndRatio; // start and end alpha ratio for transparency animation
 
-  FloatingDecorator(@NotNull JFrame owner, @NotNull WindowInfoImpl info, @NotNull ToolWindowImpl toolWindow) {
+  FloatingDecorator(@NotNull JFrame owner, @NotNull ToolWindowImpl toolWindow) {
     super(owner, toolWindow.getId());
 
     MnemonicHelper.init(getContentPane());
@@ -104,8 +104,6 @@ public final class FloatingDecorator extends JDialog {
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
     }, myDisposable);
-
-    apply(info);
   }
 
   @Override
@@ -150,7 +148,7 @@ public final class FloatingDecorator extends JDialog {
   void apply(@NotNull WindowInfo info) {
     LOG.assertTrue(info.isFloating());
     myInfo = info;
-    // Set alpha mode
+    // set alpha mode
     UISettings uiSettings = UISettings.getInstance();
     if (!uiSettings.getState().getEnableAlphaMode() || !isShowing() || !isDisplayable()) {
       return;

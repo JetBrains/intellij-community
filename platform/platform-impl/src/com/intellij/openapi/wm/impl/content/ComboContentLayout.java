@@ -91,7 +91,7 @@ final class ComboContentLayout extends ContentLayout {
   }
 
   boolean isToDrawCombo() {
-    ContentManager manager = myUi.myManager;
+    ContentManager manager = myUi.contentManager;
     return manager != null && manager.getContentCount() > 1;
   }
 
