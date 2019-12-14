@@ -2572,8 +2572,8 @@ public final class UIUtil {
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {
-      child =  child instanceof JPopupMenu  ? ((JPopupMenu)child).getInvoker()
-                                            : child.getParent();
+      child = child instanceof JPopupMenu ? ((JPopupMenu)child).getInvoker()
+                                          : child.getParent();
     }
     return child == parent;
   }
