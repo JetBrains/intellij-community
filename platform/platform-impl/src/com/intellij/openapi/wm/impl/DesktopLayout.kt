@@ -42,8 +42,7 @@ class DesktopLayout {
   }
 
   /**
-   * Creates or gets `WindowInfo` for the specified `id`. If tool
-   * window is being registered first time the method uses `anchor`.
+   * Creates or gets `WindowInfo` for the specified `id`.
    */
   fun getOrCreate(task: RegisterToolWindowTask): WindowInfoImpl {
     var info = idToInfo.get(task.id)
@@ -53,6 +52,7 @@ class DesktopLayout {
       info.id = task.id
       info.anchor = task.anchor
       info.isSplit = task.sideTool
+      info.order = getMaxOrder(info.anchor) + 1
       idToInfo.put(task.id, info)
     }
     return info
@@ -81,13 +81,13 @@ class DesktopLayout {
    * if there is no any tool window with the specified anchor.
    */
   private fun getMaxOrder(anchor: ToolWindowAnchor): Int {
-    var res = -1
+    var result = -1
     for (info in idToInfo.values) {
-      if (anchor == info.anchor && res < info.order) {
-        res = info.order
+      if (anchor == info.anchor && result < info.order) {
+        result = info.order
       }
     }
-    return res
+    return result
   }
 
   /**
@@ -184,7 +184,13 @@ class DesktopLayout {
     private val idToRegisteredInfo = ObjectIntHashMap<String>(idToInfo.size)
 
     override fun compare(obj1: StripeButton, obj2: StripeButton): Int {
-      return idToRegisteredInfo.get(obj1.id) - idToRegisteredInfo.get(obj2.id)
+      return getOrder(obj1) - getOrder(obj2)
+    }
+
+    private fun getOrder(obj1: StripeButton): Int {
+      val order = idToRegisteredInfo.get(obj1.id)
+      // if unknown, should be the last
+      return if (order == -1) Int.MAX_VALUE else order
     }
 
     init {
