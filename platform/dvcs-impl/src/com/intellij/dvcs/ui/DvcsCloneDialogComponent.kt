@@ -16,6 +16,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -23,9 +24,12 @@ import javax.swing.event.DocumentEvent
 abstract class DvcsCloneDialogComponent(var project: Project,
                                         private var vcsDirectoryName: String,
                                         rememberedInputs: DvcsRememberedInputs) : VcsCloneComponent {
-  private val mainPanel: JPanel
+  protected val mainPanel: JPanel
   private val urlEditor = JBTextField()
-  private val directoryField = SelectChildTextFieldWithBrowseButton(ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
+  private val directoryField = SelectChildTextFieldWithBrowseButton(
+    ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
+
+  protected lateinit var errorComponent: BorderLayoutPanel
 
   init {
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -38,7 +42,13 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     mainPanel = panel {
       row("URL:") { urlEditor(growX) }
       row("Directory:") { directoryField(growX) }
+        .largeGapAfter()
+      row {
+        errorComponent = BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0)
+        errorComponent()
+      }
     }
+
     val insets = UIUtil.PANEL_REGULAR_INSETS
     mainPanel.border = JBEmptyBorder(insets.top / 2, insets.left, insets.bottom, insets.right)
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
+import com.intellij.CommonBundle
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.application.ApplicationManager
@@ -9,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -38,6 +40,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.Color
+import javax.swing.JComponent
 import javax.swing.JLabel
 
 
@@ -70,7 +73,8 @@ internal class GitVcsPanel(private val project: Project,
       }
 
       override fun onThrowable(error: Throwable) {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, project)
+        val problemHandler = findGitExecutableProblemHandler(project)
+        problemHandler.showError(error, ModalErrorNotifierFromSettings(project, pathSelector.mainPanel))
       }
 
       override fun onSuccess() {
@@ -80,10 +84,51 @@ internal class GitVcsPanel(private val project: Project,
                                    GitBundle.getString("git.executable.version.success.title"))
         }
         else {
-          GitExecutableProblemsNotifier.showUnsupportedVersionDialog(gitVersion, project)
+          showUnsupportedVersionError(project, gitVersion, ModalErrorNotifierFromSettings(project, pathSelector.mainPanel))
         }
       }
     }.queue()
+  }
+
+  private class ModalErrorNotifierFromSettings(val project: Project, val parentComponent: JComponent) : ErrorNotifier {
+    val genericTitle = GitBundle.message("git.executable.validation.error.start.title")
+
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+      val errorTitle = getErrorTitle(text, description)
+      val errorMessage = getErrorMessage(text, description)
+
+      // no sense to show the "Configure" button when already invoked from the Settings
+      if (fixOption is ErrorNotifier.FixOption.Configure) {
+        Messages.showErrorDialog(parentComponent, errorMessage, errorTitle)
+      }
+      else {
+        val answer: Int = Messages.showOkCancelDialog(parentComponent, errorMessage, errorTitle,
+                                                      fixOption.text, CommonBundle.getCancelButtonText(),
+                                                      Messages.getErrorIcon())
+        if (answer == Messages.OK) {
+          fixOption.fix()
+        }
+      }
+    }
+
+    override fun showError(text: String) {
+      Messages.showErrorDialog(parentComponent, text, genericTitle)
+    }
+
+    override fun executeTask(title: String, cancellable: Boolean, action: () -> Unit) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, title, cancellable, project)
+    }
+
+    override fun changeProgressTitle(text: String) {
+      ProgressManager.getInstance().progressIndicator?.text = text
+    }
+
+    override fun showMessage(text: String) {
+      Messages.showInfoMessage(parentComponent, text, genericTitle)
+    }
+
+    override fun hideProgress() {
+    }
   }
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }

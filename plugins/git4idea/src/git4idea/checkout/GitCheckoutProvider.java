@@ -3,6 +3,7 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -131,7 +132,7 @@ public class GitCheckoutProvider extends CheckoutProviderEx {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
-                                                  return new GitCloneDialogComponent(project);
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
+    return new GitCloneDialogComponent(project, modalityState);
   }
 }

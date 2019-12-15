@@ -21,6 +21,8 @@ import java.io.File;
 import java.text.ParseException;
 import java.util.Collections;
 
+import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
+
 /**
  * Manager for "current git executable".
  * Allows to get a path to git executable and executable version.
@@ -188,7 +190,7 @@ public class GitExecutableManager {
       return true;
     }
     else {
-      executableProblemsNotifier.notifyUnsupportedVersion(version);
+      showUnsupportedVersionError(project, version, new NotificationErrorNotifier(project));
       return false;
     }
   }
