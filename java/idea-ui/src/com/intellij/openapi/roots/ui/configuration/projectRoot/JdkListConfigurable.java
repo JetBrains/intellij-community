@@ -211,6 +211,15 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   private class AddSdkAction extends AnAction implements DumbAware {
     AddSdkAction() {
       super(ProjectBundle.message("add.new.jdk.text"), null, IconUtil.getAddIcon());
+
+      AbstractAddGroup replacedAction = new AbstractAddGroup("text") {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          return AnAction.EMPTY_ARRAY;
+        }
+      };
+      this.setShortcutSet(replacedAction.getShortcutSet());
     }
 
     @Override
