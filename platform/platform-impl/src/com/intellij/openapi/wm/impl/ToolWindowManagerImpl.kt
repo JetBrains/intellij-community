@@ -464,6 +464,31 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     frame!!.releaseFrame()
+
+    toolWindowPane!!.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, null)
+
+    // hide all tool windows - frame maybe reused for another project
+    for ((id, entry) in idToEntry) {
+      val info = layout.getInfo(id) ?: continue
+      info.isActive = false
+      info.isVisible = false
+      when (info.type) {
+        ToolWindowType.FLOATING -> {
+          entry.floatingDecorator?.dispose()
+        }
+        ToolWindowType.WINDOWED -> {
+          entry.windowedDecorator?.let {
+            Disposer.dispose(it)
+          }
+        }
+        else -> {
+          removeDecorator(info, entry, dirtyMode = true)
+        }
+      }
+    }
+
+    toolWindowPane!!.reset()
+
     frame = null
   }
 
@@ -983,7 +1008,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     Disposer.dispose(entry.disposable)
   }
 
-  private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>?) {
+  private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean, commands: MutableList<Runnable>? = null) {
     when (info.type) {
       ToolWindowType.FLOATING -> {
         val floatingDecorator = entry.floatingDecorator

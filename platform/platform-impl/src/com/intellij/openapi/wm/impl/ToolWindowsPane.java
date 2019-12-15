@@ -26,7 +26,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
-import gnu.trove.TObjectFloatHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +52,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final JFrame frame;
 
-  private final TObjectFloatHashMap<String> idToSplitProportion = new TObjectFloatHashMap<>();
-  private Pair<ToolWindow, Integer> maximizedProportion;
+  private ToolWindowPaneState state = new ToolWindowPaneState();
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
    */
-  private final MyLayeredPane layeredPane;
+  private MyLayeredPane layeredPane;
   /*
    * Splitters.
    */
@@ -76,7 +74,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final List<Stripe> stripes = new ArrayList<>();
 
-  private boolean stripesOverlayed;
   private boolean isWideScreen;
   private boolean leftHorizontalSplit;
   private boolean rightHorizontalSplit;
@@ -313,11 +310,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private float getPreferredSplitProportion(@NotNull String id, float defaultValue) {
-    float f = idToSplitProportion.get(id);
-    return f == 0 ? defaultValue : f;
-  }
-
   private void setDocumentComponent(@Nullable JComponent component) {
     (isWideScreen ? verticalSplitter : horizontalSplitter).setInnerComponent(component);
   }
@@ -326,13 +318,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     boolean oldVisible = leftStripe.isVisible();
 
     boolean showButtons = !uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode();
-    boolean visible = showButtons || stripesOverlayed;
+    boolean visible = showButtons || state.isStripesOverlaid();
     leftStripe.setVisible(visible);
     rightStripe.setVisible(visible);
     topStripe.setVisible(visible);
     bottomStripe.setVisible(visible);
 
-    boolean overlayed = !showButtons && stripesOverlayed;
+    boolean overlayed = !showButtons && state.isStripesOverlaid();
 
     leftStripe.setOverlayed(overlayed);
     rightStripe.setOverlayed(overlayed);
@@ -512,27 +504,39 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   public boolean isMaximized(@NotNull ToolWindow window) {
-    return maximizedProportion != null && maximizedProportion.first == window;
+    return state.isMaximized(window);
   }
 
-  void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
-    Pair<Resizer, Component> resizerAndComponent = findResizerAndComponent(wnd);
+  void setMaximized(@NotNull ToolWindow toolWindow, boolean maximized) {
+    Pair<Resizer, Component> resizerAndComponent = findResizerAndComponent(toolWindow);
     if (resizerAndComponent == null) {
       return;
     }
 
-    if (!maximized) {
-      ToolWindow maximizedWindow = maximizedProportion.first;
-      assert maximizedWindow == wnd;
-      resizerAndComponent.first.setSize(maximizedProportion.second);
-      maximizedProportion = null;
+    if (maximized) {
+      int size = toolWindow.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
+      stretch(toolWindow, Short.MAX_VALUE);
+      state.setMaximizedProportion(Pair.create(toolWindow, size));
     }
     else {
-      int size = wnd.getAnchor().isHorizontal() ? resizerAndComponent.second.getHeight() : resizerAndComponent.second.getWidth();
-      stretch(wnd, Short.MAX_VALUE);
-      maximizedProportion = Pair.create(wnd, size);
+      Pair<ToolWindow, Integer> maximizedProportion = state.getMaximizedProportion();
+      LOG.assertTrue(maximizedProportion != null);
+      ToolWindow maximizedWindow = maximizedProportion.first;
+      assert maximizedWindow == toolWindow;
+      resizerAndComponent.first.setSize(maximizedProportion.second);
+      state.setMaximizedProportion(null);
     }
     doLayout();
+  }
+
+  void reset() {
+    for (Stripe stripe : stripes) {
+      stripe.reset();
+    }
+
+    state = new ToolWindowPaneState();
+
+    revalidate();
   }
 
   @FunctionalInterface
@@ -717,7 +721,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       if (info.isSplit()) {
         splitter.setFirstComponent(oldComponent);
         splitter.setSecondComponent(newComponent);
-        float proportion = getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(
+        float proportion = state.getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(
           oldInfo.getSideWeight() / (oldInfo.getSideWeight() + info.getSideWeight())));
         splitter.setProportion(proportion);
         if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
@@ -848,9 +852,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (c instanceof Splitter) {
       Splitter splitter = (Splitter)c;
       InternalDecorator component = (InternalDecorator)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
-      if (info.isSplit() && component != null) {
-        idToSplitProportion.put(component.getToolWindow().getId(), splitter.getProportion());
-      }
+      state.addSplitProportion(info, component, splitter);
       setComponent(component, anchor,
                    component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
     }
@@ -1029,7 +1031,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   void setStripesOverlayed(boolean value) {
-    stripesOverlayed = value;
+    state.setStripesOverlaid(value);
     updateToolStripesVisibility(UISettings.getInstance());
   }
 

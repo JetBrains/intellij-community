@@ -26,7 +26,7 @@ import java.awt.image.BufferedImage;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class StripeButton extends AnchoredButton implements ActionListener, DataProvider {
+public final class StripeButton extends AnchoredButton implements DataProvider {
   /**
    * This is analog of Swing mnemonic. We cannot use the standard ones
    * because it causes typing of "funny" characters into the editor.
@@ -35,7 +35,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private boolean myPressedWhenSelected;
 
   private JLayeredPane myDragPane;
-  private final ToolWindowsPane myPane;
+  private final ToolWindowsPane pane;
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
@@ -44,14 +44,29 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private boolean myDragCancelled = false;
 
   StripeButton(@NotNull ToolWindowsPane pane, @NotNull ToolWindowImpl toolWindow) {
-    myPane = pane;
+    this.pane = pane;
     this.toolWindow = toolWindow;
 
     setFocusable(false);
 
     setBorder(JBUI.Borders.empty(5, 5, 0, 5));
 
-    addActionListener(this);
+    addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String id = toolWindow.getId();
+        if (myPressedWhenSelected) {
+          toolWindow.getToolWindowManager().hideToolWindow(id, false);
+        }
+        else {
+          toolWindow.getToolWindowManager().activated(toolWindow);
+        }
+
+        myPressedWhenSelected = false;
+        //noinspection SpellCheckingInspection
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
+      }
+    });
     addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component component, final int x, final int y) {
@@ -204,7 +219,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       myDragPane.add(myDragButtonImage, JLayeredPane.POPUP_LAYER);
       myDragButtonImage.setSize(myDragButtonImage.getPreferredSize());
       setVisible(false);
-      myPane.startDrag();
+      pane.startDrag();
       myDragKeyEventDispatcher = new DragKeyEventDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(myDragKeyEventDispatcher);
     }
@@ -222,7 +237,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    Stripe stripe = myPane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
+    Stripe stripe = pane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
@@ -297,21 +312,6 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     super.processMouseEvent(e);
   }
 
-  @Override
-  public void actionPerformed(@NotNull ActionEvent e) {
-    String id = toolWindow.getId();
-    if (myPressedWhenSelected) {
-      toolWindow.getToolWindowManager().hideToolWindow(id, false);
-    }
-    else {
-      toolWindow.getToolWindowManager().activated(toolWindow);
-    }
-
-    myPressedWhenSelected = false;
-    //noinspection SpellCheckingInspection
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("toolwindow.clickstat." + id);
-  }
-
   void apply(@NotNull WindowInfo info) {
     setSelected(info.isVisible() || info.isActive());
     updateState(toolWindow);
@@ -377,7 +377,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     }
     myDragPane.remove(myDragButtonImage);
     myDragButtonImage = null;
-    myPane.stopDrag();
+    pane.stopDrag();
     myDragPane.repaint();
     setVisible(true);
     if (myLastStripe != null) {

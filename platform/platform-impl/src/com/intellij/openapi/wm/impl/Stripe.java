@@ -47,6 +47,14 @@ final class Stripe extends JPanel implements UISettingsListener {
     setBorder(new AdaptiveBorder());
   }
 
+  public void reset() {
+    buttons.clear();
+    preferredSize = null;
+    myLastLayoutData = null;
+    removeAll();
+    revalidate();
+  }
+
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updatePresentation();
