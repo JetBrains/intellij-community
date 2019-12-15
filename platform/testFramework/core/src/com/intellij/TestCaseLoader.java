@@ -6,10 +6,7 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.RunFirst;
-import com.intellij.testFramework.TeamCityLogger;
-import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestSorter;
+import com.intellij.testFramework.*;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,7 +152,7 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      if (matchesCurrentBucket(testCaseClass.getName())) {
+      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
         myClassList.add(testCaseClass);
       }
     }
