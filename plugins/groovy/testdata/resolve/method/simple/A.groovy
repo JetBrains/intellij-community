@@ -2,4 +2,4 @@ def f(List m) {
 
 }
 
-<ref>f(new String())
+<caret>f(new String())

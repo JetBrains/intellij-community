@@ -37,7 +37,7 @@ public class GitRepositoryCreator extends VcsRepositoryCreator {
   @Nullable
   public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = GitUtil.findGitDir(root);
-    return gitDir == null ? null : GitRepositoryImpl.getInstance(root, gitDir, myProject, parentDisposable, true);
+    return gitDir == null ? null : GitRepositoryImpl.createInstance(root, gitDir, myProject, parentDisposable, true);
   }
 
   @NotNull

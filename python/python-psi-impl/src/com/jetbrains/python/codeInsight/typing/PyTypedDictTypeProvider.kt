@@ -3,13 +3,11 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.*
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
-import com.jetbrains.python.psi.impl.stubs.PyClassElementType
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
@@ -31,34 +29,17 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
   companion object {
     val nameIsTypedDict = { name: String? -> name == TYPED_DICT || name == TYPED_DICT_EXT }
 
+    fun isTypedDict(expression: PyExpression, context: TypeEvalContext): Boolean {
+      return resolveToQualifiedNames(expression, context).any(nameIsTypedDict)
+    }
+
     fun isTypingTypedDictInheritor(cls: PyClass, context: TypeEvalContext): Boolean {
       val isTypingTD = { type: PyClassLikeType? ->
         type is PyTypedDictType || nameIsTypedDict(type?.classQName)
       }
       val ancestors = cls.getAncestorTypes(context)
 
-      if (ancestors.any(isTypingTD)) return true
-
-      val hasTDAsSuperclass = hasTypedDictAsSuperclass(cls, context)
-      val hasTDAncestors = ancestors.filterIsInstance<PyClassType>()
-        .any { hasTypedDictAsSuperclass(it.pyClass, context) }
-      return hasTDAsSuperclass || hasTDAncestors
-    }
-
-    private fun hasTypedDictAsSuperclass(cls: PyClass, context: TypeEvalContext): Boolean {
-      when {
-        context.maySwitchToAST(cls) -> return cls.superClassExpressions.any { superClassExpr ->
-        resolveToQualifiedNames(superClassExpr, context).any(nameIsTypedDict)
-      }
-        cls.stub != null -> {
-        return containsTypedDictQName(cls.stub.superClasses)
-      }
-        else -> return containsTypedDictQName(PyClassElementType.getSuperClassQNames(cls))
-      }
-    }
-
-    private fun containsTypedDictQName(map: Map<QualifiedName, QualifiedName>): Boolean {
-      return map.any { name -> name == QualifiedName.fromDottedString(TYPED_DICT) || name == QualifiedName.fromDottedString(TYPED_DICT_EXT) }
+      return ancestors.any(isTypingTD)
     }
 
     fun getTypedDictTypeForResolvedCallee(referenceTarget: PsiElement, context: TypeEvalContext): PyTypedDictType? {
@@ -103,7 +84,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
           }
         }
 
-        if (resolveToQualifiedNames(referenceExpression, context).contains(TYPED_DICT)) {
+        if (isTypedDict(referenceExpression, context)) {
           val parameters = mutableListOf<PyCallableParameter>()
 
           val builtinCache = PyBuiltinCache.getInstance(referenceExpression)
@@ -126,7 +107,9 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return getTypedDictTypeForTypingTDInheritorAsCallee(cls, context, false)
     }
 
-    private fun getTypedDictTypeForTypingTDInheritorAsCallee(cls: PyClass, context: TypeEvalContext, isInstance: Boolean): PyTypedDictType? {
+    private fun getTypedDictTypeForTypingTDInheritorAsCallee(cls: PyClass,
+                                                             context: TypeEvalContext,
+                                                             isInstance: Boolean): PyTypedDictType? {
       if (isTypingTypedDictInheritor(cls, context)) {
         val ancestors = cls.getAncestorTypes(context).filterIsInstance<PyTypedDictType>()
         val name = cls.name ?: return null

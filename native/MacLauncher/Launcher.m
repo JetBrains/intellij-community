@@ -92,11 +92,16 @@ void showWarning(NSString* messageText){
 
 
 BOOL appendBundle(NSString *path, NSMutableArray *sink) {
-    if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
-        NSBundle *bundle = [NSBundle bundleWithPath:path];
-        if (bundle != nil) {
-            [sink addObject:bundle];
-            return true;
+    if (! [[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
+    }
+    else {
+        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
+            NSBundle *bundle = [NSBundle bundleWithPath:path];
+            if (bundle != nil) {
+                [sink addObject:bundle];
+                return true;
+            }
         }
     }
     return false;
@@ -125,6 +130,7 @@ NSArray *allVms() {
         NSString* userJavaVersion =[inConfig objectForKey:@"JVMVersion"];
         if (userJavaVersion != nil && meetMinRequirements(userJavaVersion)) {
             JVMVersion = userJavaVersion;
+            NSLog(@"user JavaVersion from custom configs, which mentioned in idea.properties %@", userJavaVersion);
         }
     }
     NSString *required = requiredJvmVersions();
@@ -134,12 +140,13 @@ NSArray *allVms() {
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
-        if (!appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths)) {
-            if (! appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths)) {
-                appendBundle([appDir stringByAppendingPathComponent:@"/jbr"], jvmBundlePaths);
+        if (!appendBundle([appDir stringByAppendingPathComponent:@"/jbr"], jvmBundlePaths)) {
+            if (!appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths)) {
+                appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
             }
         }
         if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
+        NSLog(@"Can't get bundled java version. It is probably corrupted.");
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);
         appendJvmBundlesAt(@"/Library/Java/JavaVirtualMachines", jvmBundlePaths);

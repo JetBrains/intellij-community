@@ -118,7 +118,9 @@ public abstract class PyDocumentationSettings
   public static final class ServiceState {
     @NotNull
     private DocStringFormat myDocStringFormat;
+    @OptionTag("analyzeDoctest")
     public boolean myAnalyzeDoctest = true;
+    @OptionTag("renderExternalDocumentation")
     public boolean myRenderExternalDocumentation;
 
     ServiceState(@NotNull DocStringFormat docStringFormat) {

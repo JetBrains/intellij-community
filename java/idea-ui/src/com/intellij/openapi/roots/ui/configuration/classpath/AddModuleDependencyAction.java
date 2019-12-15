@@ -22,9 +22,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author nik
@@ -49,7 +52,7 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private List<Module> getNotAddedModules() {
     final ModifiableRootModel rootModel = myClasspathPanel.getRootModel();
-    Set<Module> addedModules = new HashSet<>(Arrays.asList(rootModel.getModuleDependencies(true)));
+    Set<Module> addedModules = ContainerUtil.set(rootModel.getModuleDependencies(true));
     addedModules.add(rootModel.getModule());
 
     final Module[] modules = myClasspathPanel.getModuleConfigurationState().getModulesProvider().getModules();

@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import traceback
 
@@ -10,15 +11,14 @@ from _pydev_bundle.pydev_stdin import StdIn, DebugConsoleStdIn
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR, Null
-from pydev_console.protocol import CompletionOption, CompletionOptionType
-import signal
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
+from pydev_console.protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
 
 try:
-    import cStringIO as StringIO #may not always be available @UnusedImport
+    import cStringIO as StringIO  # may not always be available @UnusedImport
 except:
     try:
-        import StringIO #@Reimport
+        import StringIO  # @Reimport
     except:
         import io as StringIO
 
@@ -265,14 +265,15 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             completer = Completer(self.get_namespace(), None)
             return completer.complete(act_tok)
         except:
-            import traceback
-
             traceback.print_exc()
             return []
 
     def getCompletions(self, text, act_tok):
-        words = self.do_get_completions(text, act_tok)
-        return [_to_completion_option(word) for word in words]
+        try:
+            words = self.do_get_completions(text, act_tok)
+            return [_to_completion_option(word) for word in words]
+        except:
+            raise PythonUnhandledException(traceback.format_exc())
 
     def loadFullValue(self, seq, scope_attrs):
         """

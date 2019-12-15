@@ -433,7 +433,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   protected void updateIcon(boolean errors, boolean disabled) {
-    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, PluginManagerConfigurable.isJBPlugin(myPlugin), errors, disabled));
+    myIconComponent.setIcon(PluginLogo.getIcon(myPlugin, false, false, errors, disabled));
   }
 
   public void showProgress() {

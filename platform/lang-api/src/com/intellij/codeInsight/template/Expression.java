@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class Expression {
@@ -40,5 +42,14 @@ public abstract class Expression {
    */
   public boolean requiresCommittedPSI() {
     return true;
+  }
+
+  /**
+   * @return focus degree to use for expression's lookup.
+   * @see LookupFocusDegree
+   */
+  @NotNull
+  public LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.FOCUSED;
   }
 }

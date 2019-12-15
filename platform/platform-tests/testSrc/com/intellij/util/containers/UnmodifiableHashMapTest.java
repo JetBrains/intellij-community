@@ -4,7 +4,6 @@ package com.intellij.util.containers;
 import one.util.streamex.IntStreamEx;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -161,7 +160,7 @@ public class UnmodifiableHashMapTest {
         assertTrue(content.isEmpty());
         continue;
       }
-      Set<String> parts = new java.util.HashSet<>(Arrays.asList(content.split(", ", -1)));
+      Set<String> parts = ContainerUtil.set(content.split(", ", -1));
       assertEquals(size, parts.size());
       assertEquals(IntStreamEx.range(size).mapToObj(i -> i + "=" + i).toSet(), parts);
     }

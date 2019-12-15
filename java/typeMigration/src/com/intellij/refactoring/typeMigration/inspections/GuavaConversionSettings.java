@@ -15,8 +15,9 @@
  */
 package com.intellij.refactoring.typeMigration.inspections;
 
+import com.intellij.util.containers.ContainerUtil;
+
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,11 +27,7 @@ public class GuavaConversionSettings {
   private final Set<String> myIgnoredAnnotations;
 
   public GuavaConversionSettings(boolean ignoreJavaxNullable) {
-    Set<String> ignoredAnnotations = new HashSet<>();
-    if (ignoreJavaxNullable) {
-      ignoredAnnotations.add("java.annotations.Nullable");
-    }
-    myIgnoredAnnotations = Collections.unmodifiableSet(ignoredAnnotations);
+    myIgnoredAnnotations = ignoreJavaxNullable ? ContainerUtil.immutableSet("java.annotations.Nullable") : Collections.emptySet();
   }
 
   public Set<String> getIgnoredAnnotations() {

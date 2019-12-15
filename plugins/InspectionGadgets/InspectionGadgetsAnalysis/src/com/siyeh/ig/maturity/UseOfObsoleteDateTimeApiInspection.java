@@ -17,6 +17,7 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -25,8 +26,6 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -34,8 +33,8 @@ import java.util.Set;
  */
 public class UseOfObsoleteDateTimeApiInspection extends BaseInspection {
 
-  static final Set<String> dateTimeNames = new HashSet<>(
-    Arrays.asList("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone"));
+  static final Set<String> dateTimeNames = ContainerUtil
+    .set("java.util.Date", "java.util.Calendar", "java.util.GregorianCalendar", "java.util.TimeZone", "java.util.SimpleTimeZone");
 
   @Nls
   @NotNull

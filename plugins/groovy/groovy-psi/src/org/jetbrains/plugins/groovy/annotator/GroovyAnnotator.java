@@ -860,13 +860,11 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final PsiReference constructorReference = listOrMap.getReference();
     if (constructorReference instanceof LiteralConstructorReference &&
         ((LiteralConstructorReference)constructorReference).getConstructedClassType() != null) {
-      final PsiElement startToken = listOrMap.getFirstChild();
-      if (startToken != null && startToken.getNode().getElementType() == GroovyTokenTypes.mLBRACK) {
-        myHolder.createInfoAnnotation(startToken, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
-      }
-      final PsiElement endToken = listOrMap.getLastChild();
-      if (endToken != null && endToken.getNode().getElementType() == GroovyTokenTypes.mRBRACK) {
-        myHolder.createInfoAnnotation(endToken, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
+      final PsiElement lBracket = listOrMap.getLBrack();
+      myHolder.createInfoAnnotation(lBracket, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
+      final PsiElement rBracket = listOrMap.getRBrack();
+      if (rBracket != null) {
+        myHolder.createInfoAnnotation(rBracket, null).setTextAttributes(GroovySyntaxHighlighter.LITERAL_CONVERSION);
       }
     }
 

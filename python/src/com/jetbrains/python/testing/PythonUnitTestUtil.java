@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.module.Module;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.extensions.python.PyClassExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -44,8 +43,8 @@ import java.util.Set;
  * @author Ilya.Kazakevich
  */
 public final class PythonUnitTestUtil {
-  public static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = Collections.unmodifiableSet(Sets.newHashSet("unittest.TestCase",
-                                                                                                              "unittest.case.TestCase"));
+  public static final Set<String> PYTHON_TEST_QUALIFIED_CLASSES = ContainerUtil.immutableSet("unittest.TestCase",
+                                                                                             "unittest.case.TestCase");
 
   private PythonUnitTestUtil() {
   }

@@ -1,2 +1,2 @@
 def copy = System.&arraycopy
-print copy.<ref>call()
+print copy.<caret>call()

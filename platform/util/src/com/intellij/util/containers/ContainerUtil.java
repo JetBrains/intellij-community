@@ -598,7 +598,7 @@ public class ContainerUtil extends ContainerUtilRt {
       case 1:
         return Collections.singleton(elements[0]);
       default:
-        return Collections.unmodifiableSet(new THashSet<>(Arrays.asList(elements)));
+        return Collections.unmodifiableSet(newTroveSet(elements));
     }
   }
 

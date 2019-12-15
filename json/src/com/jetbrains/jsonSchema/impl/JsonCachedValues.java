@@ -15,6 +15,7 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -75,6 +76,9 @@ public class JsonCachedValues {
   @Nullable
   public static String getSchemaId(@NotNull final VirtualFile schemaFile,
                                    @NotNull final Project project) {
+    //skip content loading for generated schema files (IntellijConfigurationJsonSchemaProviderFactory)
+    if (schemaFile instanceof LightVirtualFile) return null;
+    
     String value = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, ID_CACHE_KEY);
     if (value != null && !JsonSchemaFileValuesIndex.NULL.equals(value)) return JsonPointerUtil.normalizeId(value);
     String obsoleteValue = JsonSchemaFileValuesIndex.getCachedValue(project, schemaFile, OBSOLETE_ID_CACHE_KEY);

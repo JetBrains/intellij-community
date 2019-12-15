@@ -157,7 +157,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     Rectangle compBounds = comp.getBounds();
     boolean moved = bounds.x != compBounds.x || bounds.y != compBounds.y;
     boolean resized = bounds.width != compBounds.width || bounds.height != compBounds.height;
-    comp.setBounds(bounds);
+    //avoid fitToScreen() when moving DialogWrapperPeerImpl from screen to screen etc.
+    comp.reshape(bounds.x, bounds.y, bounds.width, bounds.height);
     comp.invalidate();
     comp.validate();
     comp.repaint();

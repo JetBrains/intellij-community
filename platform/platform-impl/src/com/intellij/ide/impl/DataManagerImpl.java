@@ -38,8 +38,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -304,13 +302,13 @@ public class DataManagerImpl extends DataManager {
     public static final NullResult INSTANCE = new NullResult();
   }
 
-  private static final Set<String> ourSafeKeys = new HashSet<>(Arrays.asList(
+  private static final Set<String> ourSafeKeys = ContainerUtil.set(
     CommonDataKeys.PROJECT.getName(),
     CommonDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
     PlatformDataKeys.CONTEXT_COMPONENT.getName(),
     PlatformDataKeys.MODALITY_STATE.getName()
-  ));
+  );
 
   /**
    * todo make private in 2020

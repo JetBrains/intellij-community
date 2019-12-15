@@ -77,8 +77,7 @@ private fun canDisableInputMethod(): Boolean {
     pr.waitFor()
 
     val buf = BufferedReader(InputStreamReader(pr.inputStream))
-    while (true) {
-      line = buf.readLine() ?: break
+    for (line in buf.lineSequence()) {
       //[('xkb', 'us'), ('xkb', 'ru'), ('ibus', 'bopomofo')]
       val parser = OutputParser(line)
       var first = true
@@ -106,7 +105,17 @@ private fun canDisableInputMethod(): Boolean {
   }
 
   val endMs = System.currentTimeMillis()
-  val canDisable = !layoutId2type.isEmpty() && !layoutId2type.values.contains("ibus")
+  var canDisable = !layoutId2type.isEmpty() && !layoutId2type.values.contains("ibus")
+  if (canDisable) {
+    var supportedLayouts = setOf("am", "ara", "by", "jp", "kg", "kr", "la", "mk", "np", "ru", "th", "us") // list of default gnome layouts without dead-keys
+    for (key in layoutId2type.keys) {
+      if (!supportedLayouts.contains(key)) {
+        canDisable = false
+        break
+      }
+    }
+  }
+
   val logInfo = StringBuilder("canDisableInputMethod spent ").append(endMs - startMs).append(" ms, found keyboard layouts: [")
   for ((key, value) in layoutId2type) {
     logInfo.append('(')

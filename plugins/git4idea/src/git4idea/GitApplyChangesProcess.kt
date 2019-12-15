@@ -15,8 +15,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -29,6 +27,7 @@ import git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT
 import git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector
 import git4idea.merge.GitConflictResolver
+import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUntrackedFilesHelper
@@ -367,21 +366,19 @@ class GitApplyChangesProcess(private val project: Project,
 private fun makeParams(project: Project, commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
   val params = GitConflictResolver.Params(project)
   params.setErrorNotificationTitle("${operationName.capitalize()}ed with conflicts")
-  params.setMergeDialogCustomizer(MergeDialogCustomizer(commitHash, commitAuthor, commitMessage, operationName))
+  params.setMergeDialogCustomizer(MergeDialogCustomizer(project, commitHash, commitAuthor, commitMessage, operationName))
   return params
 }
 
-private class MergeDialogCustomizer(private val commitHash: String,
-                                    private val commitAuthor: String,
-                                    private val commitMessage: String,
-                                    private val operationName: String) : MergeDialogCustomizer() {
+private class MergeDialogCustomizer(
+  project: Project,
+  private val commitHash: String,
+  private val commitAuthor: String,
+  private val commitMessage: String,
+  private val operationName: String
+) : GitDefaultMergeDialogCustomizer(project) {
 
-  override fun getMultipleFileMergeDescription(files: Collection<VirtualFile>) =
+  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) =
     "<html>Conflicts during ${operationName}ing commit <code>$commitHash</code> " +
     "made by $commitAuthor<br/><code>\"$commitMessage\"</code></html>"
-
-  override fun getLeftPanelTitle(file: VirtualFile) = "Local changes"
-
-  override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?) =
-    "<html>Changes from $operationName <code>$commitHash</code>"
 }

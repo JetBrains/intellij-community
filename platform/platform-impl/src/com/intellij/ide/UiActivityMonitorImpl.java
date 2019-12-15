@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -298,7 +299,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
     @NotNull
     public BusyImpl getOrCreateBusy(@NotNull UiActivity... activities) {
-      Set<UiActivity> key = new HashSet<>(Arrays.asList(activities));
+      Set<UiActivity> key = ContainerUtil.set(activities);
 
       if (myActivities2Object.containsKey(key)) {
         return myActivities2Object.get(key);

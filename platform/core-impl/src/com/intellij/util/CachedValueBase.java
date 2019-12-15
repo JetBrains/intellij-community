@@ -247,7 +247,7 @@ public abstract class CachedValueBase<T> {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         if (reuse) {
-          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass());
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData);
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {

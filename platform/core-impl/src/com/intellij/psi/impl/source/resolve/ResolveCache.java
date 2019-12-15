@@ -32,7 +32,7 @@ public class ResolveCache implements Disposable {
 
   public ResolveCache(@NotNull Project project) {
     this(project.getMessageBus());
-    LowMemoryWatcher.register(() -> onLowMemory(), this);  // Android Studio: to be replaced by commit 1d7fbebb
+    LowMemoryWatcher.register(() -> onLowMemory(), this);
   }
 
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})

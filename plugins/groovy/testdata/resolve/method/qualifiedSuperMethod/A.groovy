@@ -7,7 +7,7 @@ class SuperClass {
 class ThisClass extends SuperClass{
   class Inner{
     def foo(){
-      ThisClass.super.fo<ref>o();
+      ThisClass.super.fo<caret>o();
     }
   }
 

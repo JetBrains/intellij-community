@@ -7,27 +7,35 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 interface TerminalShellCommandHandler {
-  fun isAvailable(project: Project, command: String): Boolean
+  /**
+   * Returns true if handler allows to launch the {@param #command} in a smart way.
+   * E.g. open a particular UI in IDE and use parameters fetched from the {@param #command}
+   */
+  fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean
 
-  fun execute(project: Project, getWorkingDirectory: () -> String?, command: String): Boolean
+  /**
+   * Launches matched command, see {@see #matches}.
+   * Returns true if command has been successfully executed, false if failed.
+   */
+  fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean
 
   companion object {
     private val LOG = Logger.getInstance(TerminalShellCommandHandler::class.java)
-    @JvmStatic
-    val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
+    private val EP = ExtensionPointName.create<TerminalShellCommandHandler>("com.intellij.terminal.shellCommandHandler")
 
-    fun matches(project: Project, command: String): Boolean {
-      if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
-        return EP.extensionList.any { it.isAvailable(project, command) }
-      }
-      return false
+    fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
+      if (!Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) return false
+
+      return EP.extensionList.any { it.matches(project, workingDirectory, localSession, command) }
     }
 
-    fun executeShellCommandHandler(project: Project, command: String, getWorkingDirectory: () -> String?) {
-      if (Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) {
-        EP.extensionList.find { it.isAvailable(project, command) }?.execute(project, getWorkingDirectory, command)
-        ?: LOG.warn("Executing non matched command: $command")
-      }
+    fun executeShellCommandHandler(project: Project, workingDirectory: String?, localSession: Boolean, command: String) {
+      if (!Experiments.getInstance().isFeatureEnabled("terminal.shell.command.handling")) return
+
+      EP.extensionList
+        .find { it.matches(project, workingDirectory, localSession, command) }
+        ?.execute(project, workingDirectory, localSession, command)
+      ?: LOG.warn("Executing non matched command: $command")
     }
   }
 }

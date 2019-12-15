@@ -1,4 +1,4 @@
 Closure c = {
-  <ref>call(0)
+  <caret>call(0)
 }
 c.call()

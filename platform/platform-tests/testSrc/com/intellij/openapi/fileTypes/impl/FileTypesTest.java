@@ -380,7 +380,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testRemovedMappingsSerialization() {
-    HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    Set<FileType> fileTypes = ContainerUtil.set(myFileTypeManager.getRegisteredFileTypes());
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
 
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
@@ -405,7 +405,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testRemovedExactNameMapping() {
-    HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    Set<FileType> fileTypes = ContainerUtil.set(myFileTypeManager.getRegisteredFileTypes());
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
 
     FileType fileType = ArchiveFileType.INSTANCE;
@@ -442,14 +442,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.getName(), true);
 
     WriteAction.run(() -> myFileTypeManager
-      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+      .setPatternsTable(ContainerUtil.set(myFileTypeManager.getRegisteredFileTypes()), myFileTypeManager.getExtensionMap().copy()));
     assertEquals(0, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 
   public void testPreserveRemovedMappingForUnknownFileType() {
     myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), "Foo Files", true);
     WriteAction.run(() -> myFileTypeManager
-      .setPatternsTable(new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes())), myFileTypeManager.getExtensionMap().copy()));
+      .setPatternsTable(ContainerUtil.set(myFileTypeManager.getRegisteredFileTypes()), myFileTypeManager.getExtensionMap().copy()));
     assertEquals(1, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
   }
 

@@ -4,6 +4,7 @@ package com.intellij.completion.ml.common
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
+import com.intellij.completion.ngram.NGram
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -18,11 +19,20 @@ class CommonLocationFeatures : ContextFeatureProvider {
     val lineStartOffset = editor.document.getLineStartOffset(logicalPosition.line)
     val linePrefix = editor.document.getText(TextRange(lineStartOffset, caretOffset))
 
+    putNGramScorer(environment)
+
     return mapOf(
       "line_num" to MLFeatureValue.float(logicalPosition.line),
       "col_num" to MLFeatureValue.float(logicalPosition.column),
       "indent_level" to MLFeatureValue.float(LocationFeaturesUtil.indentLevel(linePrefix, EditorUtil.getTabSize(editor))),
       "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix))
     )
+  }
+
+  private fun putNGramScorer(environment: CompletionEnvironment) {
+    val scoringFunction = NGram.createScoringFunction(environment.parameters, 4)
+    if(scoringFunction != null) {
+      environment.putUserData(NGram.NGRAM_SCORER_KEY, scoringFunction)
+    }
   }
 }

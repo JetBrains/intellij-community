@@ -28,6 +28,7 @@ public class IdempotenceChecker {
   private static final Logger LOG = Logger.getInstance(IdempotenceChecker.class);
   private static final Set<Class> ourReportedValueClasses = Collections.synchronizedSet(new THashSet<>());
   private static final ThreadLocal<Integer> ourRandomCheckNesting = ThreadLocal.withInitial(() -> 0);
+  @SuppressWarnings("SSBasedInspection") private static final ThreadLocal<List<String>> ourLog = new ThreadLocal<>();
   private static final RegistryValue ourRateCheckProperty = Registry.get("platform.random.idempotence.check.rate");
 
   /**
@@ -41,6 +42,9 @@ public class IdempotenceChecker {
    *   <li>
    *     Start by looking carefully at the computation (which usually can be found by navigating the stack trace)
    *     and find out why it could be non-idempotent. See common culprits below.</li>
+   *   <li>
+   *     Add logging inside the computation by using {@link #logTrace}.
+   *   </li>
    *   <li>
    *     If the computation is complex and depends on other caches, you could try to perform
    *     {@code IdempotenceChecker.checkEquivalence()} for their results as well, localizing the error.</li>
@@ -62,12 +66,55 @@ public class IdempotenceChecker {
    * @param existing the value computed on the first invocation
    * @param fresh the value computed a bit later, expected to be equivalent
    * @param providerClass a class of the function performing the computation, used to prevent reporting the same error multiple times
+   * @param recomputeValue optionally, a way to recalculate the value one more time with {@link #isLoggingEnabled()} true,
+   *                       and include the log collected via {@link #logTrace} into exception report.
    */
-  public static <T> void checkEquivalence(@Nullable T existing, @Nullable T fresh, @NotNull Class providerClass) {
-    String s = checkValueEquivalence(existing, fresh);
-    if (s != null &&
+  public static <T> void checkEquivalence(@Nullable T existing,
+                                          @Nullable T fresh,
+                                          @NotNull Class<?> providerClass,
+                                          @Nullable Computable<? extends T> recomputeValue) {
+    String msg = checkValueEquivalence(existing, fresh);
+    if (msg != null &&
         ourReportedValueClasses.add(providerClass)) {
-      LOG.error(s);
+      if (recomputeValue != null) {
+        msg += recomputeWithLogging(existing, fresh, recomputeValue);
+      }
+      LOG.error(msg);
+    }
+  }
+
+  @NotNull
+  private static <T> String recomputeWithLogging(@Nullable T existing,
+                                                 @Nullable T fresh,
+                                                 @NotNull Computable<? extends T> recomputeValue) {
+    List<String> threadLog = ourLog.get();
+    boolean outermost = threadLog == null;
+    if (outermost) {
+      ourLog.set(threadLog = new ArrayList<>());
+    }
+    try {
+      int start = threadLog.size();
+      T freshest = recomputeValue.compute();
+      String msg = "\n\nRecomputation gives " + objAndClass(freshest);
+      if (checkValueEquivalence(existing, freshest) == null) {
+        msg += " which is equivalent to 'existing'";
+      }
+      else if (checkValueEquivalence(fresh, freshest) == null) {
+        msg += " which is equivalent to 'fresh'";
+      }
+      else {
+        msg += " which is different from both values";
+      }
+      List<String> log = threadLog.subList(start, threadLog.size());
+      if (!log.isEmpty()) {
+        msg += "\nRecomputation log:\n" + StringUtil.join(log, s -> "  " + s, "\n");
+      }
+      return msg;
+    }
+    finally {
+      if (outermost) {
+        ourLog.set(null);
+      }
     }
   }
 
@@ -271,7 +318,7 @@ public class IdempotenceChecker {
       try {
         T fresh = recomputeValue.compute();
         if (stamp.mayCacheNow()) {
-          checkEquivalence(data, fresh, provider.getClass());
+          checkEquivalence(data, fresh, provider.getClass(), recomputeValue);
         }
       }
       finally {
@@ -288,6 +335,24 @@ public class IdempotenceChecker {
   @TestOnly
   public static boolean isCurrentThreadInsideRandomCheck() {
     return ourRandomCheckNesting.get() > 0;
+  }
+
+  /**
+   * @return whether {@link #logTrace} will actually log anything
+   */
+  public static boolean isLoggingEnabled() {
+    return ourLog.get() != null;
+  }
+
+  /**
+   * Log a message to help debug {@link #checkEquivalence} failures. When such a failure occurs, the computation can be re-run again
+   * with this logging enabled, and the collected log will be included into exception message.
+   */
+  public static void logTrace(@NotNull String message) {
+    List<String> log = ourLog.get();
+    if (log != null) {
+      log.add(message);
+    }
   }
 
 }

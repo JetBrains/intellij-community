@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +88,7 @@ public abstract class PluginManagerMain {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
                                         List<? extends PluginId> allPlugins,
@@ -105,14 +106,22 @@ public abstract class PluginManagerMain {
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
+    return downloadPlugins(plugins, allPlugins, false, onSuccess, pluginEnabler, cleanup);
+  }
+
+  public static boolean downloadPlugins(List<PluginNode> plugins,
+                                        List<? extends IdeaPluginDescriptor> allPlugins,
+                                        boolean allowInstallWithoutRestart,
+                                        Runnable onSuccess,
+                                        PluginEnabler pluginEnabler,
+                                        @Nullable Runnable cleanup) throws IOException {
     boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, allPlugins, pluginEnabler, indicator)) {
-              ApplicationManager.getApplication().invokeLater(onSuccess);
+            if (PluginInstaller.prepareToInstall(plugins, allPlugins, allowInstallWithoutRestart, pluginEnabler, onSuccess, indicator)) {
               result[0] = true;
             }
           }
@@ -258,7 +267,7 @@ public abstract class PluginManagerMain {
       }
       List<PluginId> depends = node.getDepends();
       if (depends != null) {
-        Set<PluginId> optionalDeps = new HashSet<>(Arrays.asList(node.getOptionalDependentPluginIds()));
+        Set<PluginId> optionalDeps = ContainerUtil.set(node.getOptionalDependentPluginIds());
         for (PluginId dependantId : depends) {
           if (optionalDeps.contains(dependantId)) continue;
           IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);

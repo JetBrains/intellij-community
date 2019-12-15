@@ -4,7 +4,6 @@ package com.intellij.psi;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -17,9 +16,9 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
   String JAVA_BASE = "java.base";
 
   /* See http://openjdk.java.net/jeps/261#Class-loaders, "Class loaders" */
-  Set<String> UPGRADEABLE = Collections.unmodifiableSet(ContainerUtil.newTroveSet(
+  Set<String> UPGRADEABLE = ContainerUtil.immutableSet(
     "java.activation", "java.compiler", "java.corba", "java.transaction", "java.xml.bind", "java.xml.ws", "java.xml.ws.annotation",
-    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws"));
+    "jdk.internal.vm.compiler", "jdk.xml.bind", "jdk.xml.ws");
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();

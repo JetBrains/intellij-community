@@ -42,19 +42,15 @@ public class CompletionLists {
   private CompletionLists() {
   }
 
-  public static final Set<String> NODE_TYPE_FUNCS = new HashSet<>(Arrays.asList(
-    "text", "node", "comment", "processing-instruction"
-  ));
+  public static final Set<String> NODE_TYPE_FUNCS = ContainerUtil.set("text", "node", "comment", "processing-instruction");
 
-  public static final Set<String> NODE_TYPE_FUNCS_V2 = new HashSet<>(Arrays.asList(
-    "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute", "document-node"
-  ));
+  public static final Set<String> NODE_TYPE_FUNCS_V2 = ContainerUtil
+    .set("text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute",
+         "document-node");
 
-  public static final Set<String> OPERATORS = new HashSet<>(Arrays.asList(
-    "mul", "div", "and", "or"
-  ));
+  public static final Set<String> OPERATORS = ContainerUtil.set("mul", "div", "and", "or");
 
-  public static final Set<String> AXIS_NAMES = new HashSet<>(Arrays.asList(
+  public static final Set<String> AXIS_NAMES = ContainerUtil.set(
     "ancestor",
     "ancestor-or-self",
     "attribute",
@@ -68,7 +64,7 @@ public class CompletionLists {
     "preceding",
     "preceding-sibling",
     "self"
-  ));
+  );
 
   private static final com.intellij.util.Function<String,Lookup> FUNCTION_MAPPING = s -> {
     if (s.equals("processing-instruction")) {

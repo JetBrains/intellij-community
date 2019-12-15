@@ -338,7 +338,7 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
 
     val declaration = psiFactory.createStatementFromText("A a = new A();", newClass)
     val reference = psiFactory.createExpressionFromText("a", declaration)
-      .toUElementOfType<UReferenceExpression>() ?: fail("cannot create reference expression")
+                      .toUElementOfType<UReferenceExpression>() ?: fail("cannot create reference expression")
     val callExpression = uastElementFactory.createCallExpression(
       reference,
       "method",
@@ -347,10 +347,41 @@ class JavaUastGenerationTest : AbstractJavaUastLightTest() {
         "java.util.List<java.lang.Integer>",
         null
       ),
-      UastCallKind.METHOD_CALL
-      ) ?: fail("cannot create method call")
+      UastCallKind.METHOD_CALL,
+      context = reference.sourcePsi
+    ) ?: fail("cannot create method call")
 
     TestCase.assertEquals("a.<Integer>method()", callExpression.sourcePsi?.text)
+  }
+
+  fun `test removing unnecessary type parameters while replace`() {
+    val newClass = myFixture.addClass("""
+      class A {
+        public <T> java.util.List<T> method();
+      }
+    """.trimIndent())
+
+    val declaration = psiFactory.createStatementFromText("A a = new A();", newClass)
+    val reference = psiFactory.createExpressionFromText("a", declaration)
+                      .toUElementOfType<UReferenceExpression>() ?: fail("cannot create reference expression")
+    val callExpression = uastElementFactory.createCallExpression(
+      reference,
+      "method",
+      emptyList(),
+      psiFactory.createTypeFromText(
+        "java.util.List<java.lang.Integer>",
+        null
+      ),
+      UastCallKind.METHOD_CALL,
+      context = reference.sourcePsi
+    ) ?: fail("cannot create method call")
+
+    val listAssigment = (psiFactory.createStatementFromText("java.util.List<java.lang.Integer> list = kek;", declaration)
+      as PsiDeclarationStatement).declaredElements[0]
+                          .toUElementOfType<ULocalVariable>() ?: fail("cannot create local variable")
+
+    val methodCall = listAssigment.uastInitializer?.replace(callExpression) ?: fail("cannot replace!")
+    TestCase.assertEquals("a.method()", methodCall.sourcePsi?.text)
   }
 
   fun `test create if`() {

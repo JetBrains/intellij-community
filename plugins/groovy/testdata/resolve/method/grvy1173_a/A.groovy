@@ -1,1 +1,1 @@
-print Long.newInstance().<ref>longValue()
+print Long.newInstance().<caret>longValue()

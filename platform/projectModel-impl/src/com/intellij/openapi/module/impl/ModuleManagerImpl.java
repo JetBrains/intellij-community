@@ -916,7 +916,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     public void dispose() {
       assertWritable();
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      final Set<Module> existingModules = new THashSet<>(Arrays.asList(myManager.myModuleModel.getModules()));
+      final Set<Module> existingModules = ContainerUtil.set(myManager.myModuleModel.getModules());
       for (Module thisModule : getModules()) {
         if (!existingModules.contains(thisModule)) {
           Disposer.dispose(thisModule);

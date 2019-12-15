@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
@@ -70,8 +71,11 @@ public final class UpdateCheckerComponent implements Runnable {
           public void projectOpened(@NotNull Project project) {
             connection.disconnect();
             StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-              if (!updateFailed && Experiments.getInstance().isFeatureEnabled("whats.new.notification")) showWhatsNewNotification(project);
-              UpdateInstaller.cleanupPatch();
+              if (!updateFailed && Experiments.getInstance().isFeatureEnabled("whats.new.notification")) {
+                showWhatsNewNotification(project);
+              }
+
+              ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
             });
           }
         });

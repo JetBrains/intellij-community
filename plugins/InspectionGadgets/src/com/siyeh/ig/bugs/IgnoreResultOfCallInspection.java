@@ -196,7 +196,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private boolean shouldReport(PsiExpression call, PsiMethod method, @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType)) return false;
+      if (PsiType.VOID.equals(returnType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, returnType)) return false;
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;

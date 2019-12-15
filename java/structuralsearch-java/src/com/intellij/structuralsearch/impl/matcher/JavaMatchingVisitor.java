@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -99,7 +98,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiAnnotation[] annotations = list.getAnnotations();
     if (annotations.length > 0) {
-      final HashSet<PsiAnnotation> annotationSet = new HashSet<>(Arrays.asList(annotations));
+      Set<PsiAnnotation> annotationSet = ContainerUtil.set(annotations);
 
       for (PsiAnnotation annotation : annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();

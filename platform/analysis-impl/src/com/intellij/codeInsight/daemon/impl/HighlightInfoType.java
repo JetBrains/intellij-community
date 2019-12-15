@@ -15,15 +15,13 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public interface HighlightInfoType {
@@ -101,13 +99,13 @@ public interface HighlightInfoType {
   /**
    * @see com.intellij.openapi.editor.impl.RangeHighlighterImpl#VISIBLE_IF_FOLDED
    */
-  Set<HighlightInfoType> VISIBLE_IF_FOLDED = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+  Set<HighlightInfoType> VISIBLE_IF_FOLDED = ContainerUtil.immutableSet(
     ELEMENT_UNDER_CARET_READ, 
     ELEMENT_UNDER_CARET_WRITE,
     WARNING,
     ERROR,
     WRONG_REF
-  )));
+  );
 
   @NotNull
   HighlightSeverity getSeverity(@Nullable PsiElement psiElement);

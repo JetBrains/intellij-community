@@ -499,9 +499,6 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   }
 
   private void dispose() {
-    if (SystemInfo.isMac && isInFullScreen()) {
-      ((MacMainFrameDecorator)Objects.requireNonNull(myFrameDecorator)).toggleFullScreenNow();
-    }
 
     if (isTemporaryDisposed(myFrame)) {
       myFrame.doDispose();

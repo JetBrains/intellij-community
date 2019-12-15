@@ -183,7 +183,7 @@ fun splitToTextRanges(charSequence: CharSequence,
     while (true) {
       val start = charSequence.indexOf(pattern, lastMatch)
       if (start == -1) {
-        yield(TextRange(lastMatch, charSequence.length))
+        yield(TextRange(lastSplit, charSequence.length))
         return@sequence
       }
       lastMatch = start + pattern.length

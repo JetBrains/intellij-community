@@ -1,3 +1,3 @@
-def t = Thread.<ref>start {
+def t = Thread.<caret>start {
 
 }

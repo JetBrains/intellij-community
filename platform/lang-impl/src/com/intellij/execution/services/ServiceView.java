@@ -94,6 +94,8 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract void jumpToServices();
 
+  abstract boolean hasItems();
+
   static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
     ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
                               createSingleView(project, viewModel) :
@@ -140,7 +142,12 @@ abstract class ServiceView extends JPanel implements Disposable {
         ServiceViewContributor contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
         DataProvider delegate = contributor == null ? null : contributor.getViewDescriptor(serviceView.getProject()).getDataProvider();
         DeleteProvider deleteProvider = delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
-        return deleteProvider == null ? new ServiceViewDeleteProvider(serviceView) : deleteProvider;
+        if (deleteProvider == null) return new ServiceViewDeleteProvider(serviceView);
+
+        if (deleteProvider instanceof ServiceViewContributorDeleteProvider) {
+          ((ServiceViewContributorDeleteProvider)deleteProvider).setFallbackProvider(new ServiceViewDeleteProvider(serviceView));
+        }
+        return deleteProvider;
       }
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new ServiceViewCopyProvider(serviceView);

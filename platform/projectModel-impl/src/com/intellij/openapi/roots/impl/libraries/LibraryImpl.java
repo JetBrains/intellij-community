@@ -127,7 +127,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @NotNull
   private Set<OrderRootType> getAllRootTypes() {
-    Set<OrderRootType> rootTypes = new HashSet<>(Arrays.asList(OrderRootType.getAllTypes()));
+    Set<OrderRootType> rootTypes = ContainerUtil.set(OrderRootType.getAllTypes());
     if (myKind != null) {
       rootTypes.addAll(Arrays.asList(myKind.getAdditionalRootTypes()));
     }

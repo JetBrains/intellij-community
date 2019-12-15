@@ -4,6 +4,6 @@ class A {
     int getJ() { j }
 
     def r() {
-        int r = <ref>getJ()
+        int r = <caret>getJ()
     }
 }

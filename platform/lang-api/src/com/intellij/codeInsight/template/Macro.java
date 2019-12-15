@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,5 +58,14 @@ public abstract class Macro {
 
   public boolean isAcceptableInContext(TemplateContextType context) {
     return true;
+  }
+
+  /**
+   * @return focus degree to use for macro's lookup.
+   * @see LookupFocusDegree
+   */
+  @NotNull
+  public LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.FOCUSED;
   }
 }

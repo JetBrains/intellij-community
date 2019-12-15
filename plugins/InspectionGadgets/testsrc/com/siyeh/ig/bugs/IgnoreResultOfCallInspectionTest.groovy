@@ -397,4 +397,16 @@ class X{
   }
 }"""
   }
+  
+  void testVoidType() {
+    doTest """class X {
+  void a() {
+    b();
+  }
+  
+  static Void b() {
+    return null;
+  }
+}"""
+  }
 }

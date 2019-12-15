@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.application.Application;
@@ -34,6 +35,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private SamplingTask myDumpTask;
   final List<ThreadDump> myCurrentDumps = new ArrayList<>();
   List<StackTraceElement> myStacktraceCommonPart = null;
+  private volatile boolean myAppClosing;
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
@@ -41,7 +43,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    app.getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appWillBeClosed(boolean isRestart) {
+        myAppClosing = true;
+      }
+    });
+
+    app.executeOnPooledThread(() -> {
       PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
         try {
           // report deadly freeze
@@ -298,7 +307,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     if (!ContainerUtil.isEmpty(commonStack)) {
       String edtNote = allInEdt ? "in EDT " : "";
       String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
-                       (finished ? "" : "IDE KILLED! ") +
+                       (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
                        "Sampled time: " + sampledTime + "ms, sampling rate: " + dumpInterval + "ms";
       long total = dumpTask.getTotalTime();
       long gcTime = dumpTask.getGcTime();

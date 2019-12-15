@@ -32,6 +32,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1049,8 +1050,22 @@ public class TrackingRunner extends StandardDataFlowRunner {
       }
       if (factDef != null) {
         if (factDef.myInstruction instanceof CheckNotNullInstruction) {
-          PsiExpression dereferenced = ((CheckNotNullInstruction)factDef.myInstruction).getProblem().getDereferencedExpression();
+          NullabilityProblemKind.NullabilityProblem<?> problem = ((CheckNotNullInstruction)factDef.myInstruction).getProblem();
+          PsiExpression dereferenced = problem.getDereferencedExpression();
           String text = dereferenced == null ? factUse.myTopOfStack.toString() : dereferenced.getText();
+          if (dereferenced != null && problem.getKind() == NullabilityProblemKind.passingToNotNullParameter) {
+            PsiExpression arg = dereferenced;
+            while (arg.getParent() instanceof PsiParenthesizedExpression) {
+              arg = (PsiExpression)arg.getParent();
+            }
+            PsiParameter parameter = MethodCallUtils.getParameterForArgument(dereferenced);
+            if (parameter != null) {
+              CauseItem item =
+                new CauseItem("'" + text + "' was passed as an argument to a method accepting non-null parameter", dereferenced);
+              item.addChildren(fromMemberNullability(DfaNullability.NOT_NULL, parameter, "parameter", dereferenced));
+              return item;
+            }
+          }
           return new CauseItem("'" + text + "' was dereferenced", dereferenced);
         }
         if (factDef.myInstruction instanceof InstanceofInstruction) {

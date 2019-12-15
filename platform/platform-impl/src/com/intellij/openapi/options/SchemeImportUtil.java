@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class SchemeImportUtil {
@@ -25,7 +24,7 @@ public class SchemeImportUtil {
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect,
                                                @Nullable String description) {
-    final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
+    final Set<String> extensions = ContainerUtil.set(sourceExtensions);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {

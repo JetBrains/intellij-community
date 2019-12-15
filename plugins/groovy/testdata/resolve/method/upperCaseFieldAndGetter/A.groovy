@@ -6,4 +6,4 @@ class Foo {
   }
 }
 
-new Foo().getB<ref>ar()
+new Foo().getB<caret>ar()

@@ -1080,11 +1080,6 @@
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-cdi-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clouds.openShift/META-INF/plugin.xml">
-    <id>-OpenShift-</id>
-    <name>OpenShift integration</name>
-    <depends>com.intellij.modules.ultimate</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.errorProne/META-INF/plugin.xml">
     <id>-Error-prone plugin-</id>
     <name>Error Prone Compiler</name>

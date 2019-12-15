@@ -6,4 +6,4 @@ class B extends A {
   def foo() {}
 }
 
-new B().<ref>foo()
+new B().<caret>foo()

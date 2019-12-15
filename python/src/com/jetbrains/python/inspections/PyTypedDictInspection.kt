@@ -54,10 +54,7 @@ class PyTypedDictInspection : PyInspection() {
 
       if (node.hasAssignedValue()) {
         val value = node.findAssignedValue()
-        if (value is PyCallExpression && value.callee != null &&
-            PyTypingTypeProvider.resolveToQualifiedNames(value.callee!!, myTypeEvalContext).any {
-            PyTypedDictTypeProvider.nameIsTypedDict(it)
-          }) {
+        if (value is PyCallExpression && value.callee != null && PyTypedDictTypeProvider.isTypedDict(value.callee!!, myTypeEvalContext)) {
           if (value.arguments.isNotEmpty() && node.name != (value.arguments[0] as? PyStringLiteralExpression)?.stringValue) {
             registerProblem(value.arguments[0], "First argument has to match the variable name")
           }
@@ -72,8 +69,9 @@ class PyTypedDictInspection : PyInspection() {
         val arguments = node.arguments
         for (argument in arguments) {
           val type = myTypeEvalContext.getType(argument)
-          if (argument !is PyKeywordArgument && !PyTypingTypeProvider.isTypedDict(argument,
-                                                                                  myTypeEvalContext) && type !is PyTypedDictType) {
+          if (argument !is PyKeywordArgument
+              && type !is PyTypedDictType
+              && !PyTypedDictTypeProvider.isTypedDict(argument, myTypeEvalContext)) {
             registerProblem(argument, "TypedDict cannot inherit from a non-TypedDict base class")
           }
           if (argument is PyKeywordArgument && argument.keyword == "total" && !checkValidTotality(argument.valueExpression)) {
@@ -83,9 +81,7 @@ class PyTypedDictInspection : PyInspection() {
       }
       else if (node.callExpression != null) {
         val callee = node.callExpression!!.callee
-        if (callee != null && PyTypingTypeProvider.resolveToQualifiedNames(callee, myTypeEvalContext).any {
-            PyTypedDictTypeProvider.nameIsTypedDict(it)
-          }) {
+        if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
           val totality = node.getKeywordArgument("total")?.valueExpression
           if (!checkValidTotality(totality)) {
             registerProblem(totality, "Value of 'total' must be True or False")

@@ -25,6 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -48,8 +49,8 @@ import java.awt.event.ActionListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.function.BiFunction;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -89,8 +90,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
   private static class ComponentPanelTest extends DialogWrapper {
 
-    private static final HashSet<String> ALLOWED_VALUES = new HashSet<>(Arrays.asList("one", "two", "three", "four", "five", "six",
-              "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "abracadabra"));
+    private static final Set<String> ALLOWED_VALUES = ContainerUtil
+      .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
+           "fifteen", "sixteen", "abracadabra");
 
     private static final String[] STRING_VALUES = { "One", "Two", "Three", "Four", "Five", "Six" };
     private static final SimpleTextAttributes WARNING_CELL_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null);

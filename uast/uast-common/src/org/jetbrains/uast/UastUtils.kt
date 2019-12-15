@@ -233,6 +233,3 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
     else -> false
   }
 
-@ApiStatus.Experimental
-inline fun <reified T : UElement> toOriginalUElementOrSelf(uExpression: T) =
-  uExpression.sourcePsi?.let(CompletionUtilCoreImpl::getOriginalElement)?.toUElementOfType<T>() ?: uExpression

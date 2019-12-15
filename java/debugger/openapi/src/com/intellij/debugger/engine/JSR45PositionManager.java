@@ -43,7 +43,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
     myDebugProcess = debugProcess;
     myScope = scope;
     myStratumId = stratumId;
-    myFileTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(acceptedFileTypes)));
+    myFileTypes = ContainerUtil.immutableSet(acceptedFileTypes);
     mySourcesFinder = sourcesFinder;
     String generatedClassPattern = getGeneratedClassesPackage();
     if(generatedClassPattern.length() == 0) {

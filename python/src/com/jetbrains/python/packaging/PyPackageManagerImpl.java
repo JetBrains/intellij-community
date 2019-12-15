@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -209,7 +209,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs), 
+      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs),
                                      e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
     }
     finally {
@@ -472,7 +472,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.add(helperPath);
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(makeSafeToDisplayCommand(cmdline), " "));
-    
+
     try {
       final GeneralCommandLine commandLine =
         new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(PythonSdkType.activateVirtualEnv(getSdk()));

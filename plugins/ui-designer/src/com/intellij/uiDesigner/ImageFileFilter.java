@@ -8,11 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -27,7 +26,7 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
     for(int i=0; i<formatNames.length; i++) {
       formatNames [i] = StringUtil.toLowerCase(formatNames [i]);
     }
-    myExtensions = new HashSet<>(Arrays.asList(formatNames));
+    myExtensions = ContainerUtil.set(formatNames);
     if (module != null) {
       myModuleScope = module.getModuleWithDependenciesAndLibrariesScope(true);
     }

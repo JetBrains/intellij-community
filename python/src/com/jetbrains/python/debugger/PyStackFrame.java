@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -38,7 +39,7 @@ public class PyStackFrame extends XStackFrame {
   public static final String DOUBLE_UNDERSCORE = "__";
   public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
   public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
-  public static final HashSet<String> HIDE_TYPES = new HashSet<>(Arrays.asList("function", "type", "classobj", "module"));
+  public static final Set<String> HIDE_TYPES = ContainerUtil.set("function", "type", "classobj", "module");
   public static final int DUNDER_VALUES_IND = 0;
   public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;

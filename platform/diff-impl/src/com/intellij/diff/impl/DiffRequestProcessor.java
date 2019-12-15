@@ -890,7 +890,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     Shortcut[] originalShortcuts = keymap.getShortcuts(originalActionId);
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    Set<Shortcut> newShortcuts = new HashSet<>(Arrays.asList(shortcuts));
+    Set<Shortcut> newShortcuts = ContainerUtil.set(shortcuts);
     boolean hadOriginalShortcut = ContainerUtil.removeAll(newShortcuts, originalShortcuts);
     if (!hadOriginalShortcut) return;
 

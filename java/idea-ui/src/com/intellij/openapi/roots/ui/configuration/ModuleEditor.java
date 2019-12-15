@@ -350,10 +350,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<>(
-      Arrays.asList("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                    "removeOrderEntry", "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType",
-                    "rearrangeOrderEntries"));
+    @NonNls private final Set<String> myCheckedNames = ContainerUtil
+      .set("addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
+           "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
     ModifiableRootModelInvocationHandler(@NotNull ModifiableRootModel model) {
       myDelegateModel = model;

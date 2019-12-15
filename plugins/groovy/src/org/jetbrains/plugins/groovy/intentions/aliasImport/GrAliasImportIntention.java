@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -124,7 +125,10 @@ public class GrAliasImportIntention extends Intention {
     assert alias != null;
     final PsiElement aliasNameElement = alias.getNameElement();
     assert aliasNameElement != null;
-    templateBuilder.replaceElement(aliasNameElement, new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null));
+    MyLookupExpression lookupExpression =
+      new MyLookupExpression(resolved.getName(), names, (PsiNamedElement)resolved, resolved, true, null);
+    lookupExpression.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
+    templateBuilder.replaceElement(aliasNameElement, lookupExpression);
     Template built = templateBuilder.buildTemplate();
 
     final Editor newEditor = IntentionUtils.positionCursor(project, file, templateImport);

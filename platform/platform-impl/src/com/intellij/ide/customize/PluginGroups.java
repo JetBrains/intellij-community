@@ -131,9 +131,8 @@ public class PluginGroups {
       "com.intellij.spring.webflow," +
       "com.intellij.spring.ws,com.intellij.aop",
 
-      "Microservices:" +
-      "com.intellij.micronaut," +
-      "com.intellij.quarkus," +
+      "com.intellij.micronaut",
+      "com.intellij.quarkus",
       "com.intellij.helidon",
 
       "Java EE:com.intellij.javaee.batch," +
@@ -171,7 +170,8 @@ public class PluginGroups {
       "org.coffeescript",
       "com.intellij.flex",
       "com.intellij.plugins.html.instantEditing",
-      "com.jetbrains.restClient"
+      "com.jetbrains.restClient",
+      "com.intellij.swagger"
     )));
 
     addVcsGroup(tree);
@@ -196,10 +196,8 @@ public class PluginGroups {
       "com.intellij.dmserver",
       "JSR45Plugin"
     )));
-    tree.put("Clouds", Pair.create(PlatformImplIcons.Clouds, Arrays.asList(
-      "CloudFoundry",
-      "CloudBees",
-      "OpenShift"
+    tree.put("Clouds", Pair.create(PlatformImplIcons.Clouds, Collections.singletonList(
+      "CloudFoundry"
     )));
     //myTree.put("Groovy", Arrays.asList("org.intellij.grails"));
     //TODO Scala -> Play 2.x (Play 2.0 Support)

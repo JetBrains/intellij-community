@@ -25,6 +25,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,7 +164,7 @@ public class ControlFlowWrapper {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
-      final Set<PsiVariable> outputVariables = new HashSet<>(Arrays.asList(myOutputVariables));
+      final Set<PsiVariable> outputVariables = ContainerUtil.set(myOutputVariables);
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new JavaRecursiveElementVisitor() {
 

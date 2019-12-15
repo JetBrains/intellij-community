@@ -1,4 +1,4 @@
-<ref>foo(42)
+<caret>foo(42)
 
 
 private def foo(int i) {

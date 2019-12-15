@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -74,13 +77,17 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
-    final Runnable notifyRunnable = () -> PluginManagerMain.notifyPluginsUpdated(myProject);
+    Runnable notifyRunnable = () -> {
+      if (nodes.stream().anyMatch(o -> PluginManagerCore.getPlugin(o.getPluginId()) == null)) {
+        PluginManagerMain.notifyPluginsUpdated(myProject);
+      }
+    };
     for (String pluginId : pluginsToEnable) {
       PluginManagerCore.enablePlugin(pluginId);
     }
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, pluginHelper, null);
+        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, true, notifyRunnable, pluginHelper, null);
       }
       catch (IOException e) {
         LOG.error(e);

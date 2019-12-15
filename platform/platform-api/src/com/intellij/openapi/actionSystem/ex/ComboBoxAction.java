@@ -34,8 +34,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Path2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon = null;
@@ -147,7 +145,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed = false;
-    private PropertyChangeListener myButtonSynchronizer;
     private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
@@ -196,13 +193,20 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       });
 
-      myPresentation.addPropertyChangeListener(e -> {
-        if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
-          setText((String)e.getNewValue());
-        } else if (Presentation.PROP_ICON.equals(e.getPropertyName())) {
-          setIcon((Icon)e.getNewValue());
-        } else if (Presentation.PROP_ENABLED.equals(e.getPropertyName())) {
-          setEnabled((Boolean)e.getNewValue());
+      myPresentation.addPropertyChangeListener(evt -> {
+        String propertyName = evt.getPropertyName();
+        if (Presentation.PROP_TEXT.equals(propertyName)) {
+          setText((String)evt.getNewValue());
+        }
+        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+          myTooltipText = (String)evt.getNewValue();
+          updateTooltipText();
+        }
+        else if (Presentation.PROP_ICON.equals(propertyName)) {
+          setIcon((Icon)evt.getNewValue());
+        }
+        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+          setEnabled((Boolean)evt.getNewValue());
         }
       });
     }
@@ -255,10 +259,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void removeNotify() {
-      if (myButtonSynchronizer != null) {
-        myPresentation.removePropertyChangeListener(myButtonSynchronizer);
-        myButtonSynchronizer = null;
-      }
       HelpTooltip.dispose(this);
       super.removeNotify();
     }
@@ -266,10 +266,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void addNotify() {
       super.addNotify();
-      if (myButtonSynchronizer == null) {
-        myButtonSynchronizer = new MyButtonSynchronizer();
-        myPresentation.addPropertyChangeListener(myButtonSynchronizer);
-      }
       updateTooltipText();
     }
 
@@ -292,26 +288,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       @Override
       public boolean isArmed() {
         return myForcePressed || super.isArmed();
-      }
-    }
-
-    private class MyButtonSynchronizer implements PropertyChangeListener {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        String propertyName = evt.getPropertyName();
-        if (Presentation.PROP_TEXT.equals(propertyName)) {
-          setText((String)evt.getNewValue());
-        }
-        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          myTooltipText = (String)evt.getNewValue();
-          updateTooltipText();
-        }
-        else if (Presentation.PROP_ICON.equals(propertyName)) {
-          setIcon((Icon)evt.getNewValue());
-        }
-        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-          setEnabled(((Boolean)evt.getNewValue()).booleanValue());
-        }
       }
     }
 

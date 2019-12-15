@@ -24,7 +24,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SideEffectChecker {
-  private static final Set<String> ourSideEffectFreeClasses = new THashSet<>(Arrays.asList(
+  private static final Set<String> ourSideEffectFreeClasses = ContainerUtil.set(
     Object.class.getName(),
     Short.class.getName(),
     Character.class.getName(),
@@ -60,7 +60,7 @@ public class SideEffectChecker {
     TreeMap.class.getName(),
     TreeSet.class.getName(),
     Vector.class.getName(),
-    WeakHashMap.class.getName()));
+    WeakHashMap.class.getName());
 
   private SideEffectChecker() {
   }

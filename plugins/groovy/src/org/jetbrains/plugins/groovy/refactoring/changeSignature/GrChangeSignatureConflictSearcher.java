@@ -15,6 +15,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -24,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -45,7 +44,7 @@ class GrChangeSignatureConflictSearcher {
     addMethodConflicts(conflictDescriptions);
     UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = new HashSet<>(Arrays.asList(usagesIn));
+    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
     RenameUtil.removeConflictUsages(usagesSet);
     if (myChangeInfo.isVisibilityChanged()) {
       try {

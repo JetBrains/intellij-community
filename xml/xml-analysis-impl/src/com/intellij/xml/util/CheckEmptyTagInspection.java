@@ -18,13 +18,12 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -32,7 +31,7 @@ import java.util.Set;
  */
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @NonNls private static final Set<String> ourTagsWithEmptyEndsNotAllowed =
-    new THashSet<>(Arrays.asList(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe"));
+    ContainerUtil.set(HtmlUtil.SCRIPT_TAG_NAME, "div", "iframe");
 
   @Override
   public boolean isEnabledByDefault() {

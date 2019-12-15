@@ -960,11 +960,11 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedDependencyScopes() {
-    Set<String> result = new THashSet<>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
-                                                      MavenConstants.SCOPE_PROVIDED,
-                                                      MavenConstants.SCOPE_RUNTIME,
-                                                      MavenConstants.SCOPE_TEST,
-                                                      MavenConstants.SCOPE_SYSTEM));
+    Set<String> result = ContainerUtil.set(MavenConstants.SCOPE_COMPILE,
+                                           MavenConstants.SCOPE_PROVIDED,
+                                           MavenConstants.SCOPE_RUNTIME,
+                                           MavenConstants.SCOPE_TEST,
+                                           MavenConstants.SCOPE_SYSTEM);
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedDependencyScopes(result);
     }

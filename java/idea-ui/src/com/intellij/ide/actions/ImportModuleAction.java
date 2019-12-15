@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +44,7 @@ import java.util.List;
 public class ImportModuleAction extends AnAction implements NewProjectOrModuleAction {
 
   private static final String LAST_IMPORTED_LOCATION = "last.imported.location";
+  private static final Logger LOG = Logger.getInstance(ImportModuleAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -92,7 +95,7 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
       Project newProject;
       if (projectBuilder instanceof DeprecatedProjectBuilderForImport) {
         // The path to remove import action
-        newProject = ProjectUtil.openOrImport(wizard.getNewProjectFilePath(), null, false);
+        newProject = openProject((DeprecatedProjectBuilderForImport)projectBuilder, wizard.getNewProjectFilePath());
       }
       else {
         newProject = NewProjectUtil.createFromWizard(wizard);
@@ -117,6 +120,16 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
         projectBuilder.cleanup();
       }
     }
+  }
+
+  @Nullable
+  private static Project openProject(@NotNull DeprecatedProjectBuilderForImport projectBuilder, @NotNull String projectPath) {
+    VirtualFile file = ProjectUtil.getFileAndRefresh(Paths.get(projectPath));
+    if (file == null) {
+      LOG.warn(String.format("Cannot find project file in vfs `%s`", projectPath));
+      return null;
+    }
+    return projectBuilder.getProjectOpenProcessor().doOpenProject(file, null, false);
   }
 
   @Nullable

@@ -228,6 +228,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     if (node == null) return true;
     if (node.leafState == LeafState.ALWAYS) return true;
     if (node.leafState == LeafState.NEVER) return false;
+    if (node.leafState == LeafState.ASYNC && node.children == null) promiseChildren(node);
     List<Node> children = node.children;
     // leaf only if no children were loaded
     return children != null && children.isEmpty();

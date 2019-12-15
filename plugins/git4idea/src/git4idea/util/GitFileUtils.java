@@ -197,7 +197,7 @@ public class GitFileUtils {
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
     List<String> nonIgnoredFiles = new ArrayList<>(paths.size());
-    Set<String> ignoredPaths = new HashSet<>(Arrays.asList(StringUtil.splitByLines(output)));
+    Set<String> ignoredPaths = ContainerUtil.set(StringUtil.splitByLines(output));
     for (String pathToCheck : paths) {
       if (!ignoredPaths.contains(pathToCheck)) {
         nonIgnoredFiles.add(pathToCheck);

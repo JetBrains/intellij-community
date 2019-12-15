@@ -5,11 +5,9 @@ package com.intellij.facet.mock;
 import com.intellij.facet.Facet;
 import com.intellij.facet.ui.libraries.FacetLibrariesValidatorDescription;
 import com.intellij.openapi.roots.libraries.Library;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +26,4 @@ public class MockFacetLibrariesValidatorDescription extends FacetLibrariesValida
     myAddedLibraries.add(library);
   }
 
-  public void assertAdded(Library... libraries) {
-    Assert.assertEquals(new HashSet<>(Arrays.asList(libraries)), myAddedLibraries);
-  }
 }

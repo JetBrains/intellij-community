@@ -98,7 +98,7 @@ open class MultipleFileMergeDialog(
 
   init {
     StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
-    title = mergeDialogCustomizer.multipleFileDialogTitle
+    title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
 
     @Suppress("LeakingThis")
@@ -189,7 +189,7 @@ open class MultipleFileMergeDialog(
 
     val mergeInfoColumns = mergeSession?.mergeInfoColumns
     if (mergeInfoColumns != null) {
-      var customColumnNames = mergeDialogCustomizer.columnNames
+      var customColumnNames = mergeDialogCustomizer.getColumnNames()
       if (customColumnNames != null && customColumnNames.size != mergeInfoColumns.size) {
         LOG.error("Custom column names ($customColumnNames) don't match default columns ($mergeInfoColumns)")
         customColumnNames = null
@@ -376,13 +376,18 @@ open class MultipleFileMergeDialog(
       try {
         conflictData = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ConflictData, VcsException> {
           val mergeData = mergeProvider.loadRevisions(file)
-
-          val leftTitle = mergeDialogCustomizer.getLeftPanelTitle(file)
-          val baseTitle = mergeDialogCustomizer.getCenterPanelTitle(file)
-          val rightTitle = mergeDialogCustomizer.getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
           val title = mergeDialogCustomizer.getMergeWindowTitle(file)
 
-          ConflictData(mergeData, title, listOf(leftTitle, baseTitle, rightTitle))
+          val conflictTitles = mergeDialogCustomizer.run {
+            listOf(
+              getLeftPanelTitle(file),
+              getCenterPanelTitle(file),
+              getRightPanelTitle(file, mergeData.LAST_REVISION_NUMBER)
+            )
+          }
+
+          val filePath = VcsUtil.getFilePath(file)
+          ConflictData(mergeData, title, conflictTitles, mergeDialogCustomizer.getTitleCustomizerList(filePath))
         }, "Loading Revisions...", true, project)
       }
       catch (ex: VcsException) {
@@ -428,13 +433,8 @@ open class MultipleFileMergeDialog(
         }
         break
       }
-      val filePath = VcsUtil.getFilePath(file)
-      mergeDialogCustomizer.run {
-        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(
-          getLeftTitleCustomizer(filePath),
-          getCenterTitleCustomizer(filePath),
-          getRightTitleCustomizer(filePath)
-        ))
+      conflictData.contentTitleCustomizers.run {
+        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
       }
       DiffManager.getInstance().showMerge(project, request)
     }
@@ -459,7 +459,10 @@ open class MultipleFileMergeDialog(
     private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
-  private data class ConflictData(val mergeData: MergeData,
-                                  val title: String,
-                                  val contentTitles: List<String>)
+  private data class ConflictData(
+    val mergeData: MergeData,
+    val title: String,
+    val contentTitles: List<String>,
+    val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
+  )
 }

@@ -107,7 +107,7 @@ struct CompletionOption {
   4: CompletionOptionType type,
 }
 
-typedef list<CompletionOption> GetCompletionsReponse
+typedef list<CompletionOption> GetCompletionsResponse
 
 typedef string AttributeDescription
 
@@ -115,6 +115,10 @@ typedef list<DebugValue> DebugValues
 
 exception UnsupportedArrayTypeException {
   1: string type,
+}
+
+exception PythonUnhandledException {
+  1: string traceback,
 }
 
 /**
@@ -136,7 +140,7 @@ service PythonConsoleBackendService {
    */
   bool execMultipleLines(1: string lines),
 
-  GetCompletionsReponse getCompletions(1: string text, 2: string actTok),
+  GetCompletionsResponse getCompletions(1: string text, 2: string actTok) throws (1: PythonUnhandledException unhandledException),
 
   /**
    * The description of the given attribute in the shell.

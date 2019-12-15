@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectCache;
 import gnu.trove.THashMap;
 import org.junit.*;
@@ -85,7 +86,8 @@ public class BTreeEnumeratorTest {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2),
+                 new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   @Test
@@ -104,7 +106,7 @@ public class BTreeEnumeratorTest {
 
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(COLLISION_1, COLLISION_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(COLLISION_1, COLLISION_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   @Test
@@ -115,7 +117,7 @@ public class BTreeEnumeratorTest {
 
     assertEquals(UTF_1, myEnumerator.valueOf(id1));
     assertEquals(UTF_2, myEnumerator.valueOf(id2));
-    assertEquals(new HashSet<>(Arrays.asList(UTF_1, UTF_2)), new HashSet<>(myEnumerator.getAllDataObjects(null)));
+    assertEquals(ContainerUtil.set(UTF_1, UTF_2), new HashSet<>(myEnumerator.getAllDataObjects(null)));
   }
 
   @Test

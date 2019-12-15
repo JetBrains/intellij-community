@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.util
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import groovy.transform.InheritConstructors
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 @CompileStatic
+@InheritConstructors
 abstract class GroovyLatestTest extends LightProjectTest {
 
   @Override

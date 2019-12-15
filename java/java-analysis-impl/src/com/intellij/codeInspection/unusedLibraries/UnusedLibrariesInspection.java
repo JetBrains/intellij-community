@@ -103,7 +103,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
         if (entry instanceof LibraryOrderEntry && 
             !((LibraryOrderEntry)entry).isExported() && 
             ((LibraryOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
-          final Set<VirtualFile> files = new HashSet<>(Arrays.asList(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES)));
+          final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
             String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());

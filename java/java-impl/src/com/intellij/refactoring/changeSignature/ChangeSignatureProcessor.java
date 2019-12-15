@@ -17,11 +17,15 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -137,7 +141,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = new HashSet<>(Arrays.asList(usagesIn));
+    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

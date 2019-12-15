@@ -23,6 +23,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +126,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   public static Module detectTargetModule(Collection<? extends Module> survivedModules, Project project) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
-    final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
+    final Set<Module> allModules = ContainerUtil.set(moduleManager.getModules());
     survivedModules
       .forEach(module -> {
         final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
