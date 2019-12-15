@@ -1,50 +1,40 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.EditSourceAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ModalityState.NON_MODAL
+import com.intellij.openapi.vcs.VcsDataKeys.SELECTED_CHANGES
+import com.intellij.openapi.vcs.changes.ChangesUtil.getFiles
+import com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase.IN_AIR
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.pom.Navigatable
+import com.intellij.util.containers.stream
 
-import javax.swing.*;
-import java.util.stream.Stream;
+internal class EditSourceFromChangesBrowserAction : EditSourceAction() {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+    e.presentation.apply {
+      icon = AllIcons.Actions.EditSource
+      text = "Edit Source"
 
-class EditSourceFromChangesBrowserAction extends EditSourceAction {
-  private final Icon myEditSourceIcon;
-
-  EditSourceFromChangesBrowserAction() {
-    myEditSourceIcon = AllIcons.Actions.EditSource;
-  }
-
-  @Override
-  public void update(@NotNull final AnActionEvent event) {
-    super.update(event);
-    event.getPresentation().setIcon(myEditSourceIcon);
-    event.getPresentation().setText("Edit Source");
-    if (event.getData(ChangesBrowserBase.DATA_KEY) == null) {
-      event.getPresentation().setEnabledAndVisible(false);
-    }
-    else if ((!ModalityState.NON_MODAL.equals(ModalityState.current())) ||
-             CommittedChangesBrowserUseCase.IN_AIR.equals(event.getData(CommittedChangesBrowserUseCase.DATA_KEY))) {
-      event.getPresentation().setEnabled(false);
+      val changesBrowser = e.getData(ChangesBrowserBase.DATA_KEY)
+      isVisible = isVisible && changesBrowser != null
+      isEnabled = isEnabled && changesBrowser != null && ModalityState.current() == NON_MODAL &&
+                  e.getData(CommittedChangesBrowserUseCase.DATA_KEY) != IN_AIR
     }
   }
 
-  @Override
-  protected Navigatable[] getNavigatables(DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    Change[] changes = VcsDataKeys.SELECTED_CHANGES.getData(dataContext);
-    return changes != null && project != null ? getNavigatableArray(project, getFiles(Stream.of(changes))) : null;
+  override fun getNavigatables(dataContext: DataContext): Array<Navigatable>? {
+    val project = PROJECT.getData(dataContext) ?: return null
+    val changes = SELECTED_CHANGES.getData(dataContext) ?: return null
+
+    return getNavigatableArray(project, getFiles(changes.stream()))
   }
 }

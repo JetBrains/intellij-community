@@ -2,22 +2,20 @@
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import javax.swing.JComponent
 
 class ClearCommittedAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)!!
-    val panel = ChangesViewContentManager.getInstance(project).getActiveComponent(ProjectCommittedChangesPanel::class.java)!!
-
-    panel.clearCaches()
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.getSelectedChangesViewContent<ProjectCommittedChangesPanel>() != null
   }
 
-  override fun update(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT)
-    val panel = project?.let { ChangesViewContentManager.getInstance(it).getActiveComponent(ProjectCommittedChangesPanel::class.java) }
+  override fun actionPerformed(e: AnActionEvent) =
+    e.getSelectedChangesViewContent<ProjectCommittedChangesPanel>()!!.clearCaches()
 
-    e.presentation.isEnabledAndVisible = panel != null
+  companion object {
+    internal inline fun <reified T : JComponent> AnActionEvent.getSelectedChangesViewContent(): T? =
+      project?.let { ChangesViewContentManager.getInstance(it) }?.getActiveComponent(T::class.java)
   }
 }

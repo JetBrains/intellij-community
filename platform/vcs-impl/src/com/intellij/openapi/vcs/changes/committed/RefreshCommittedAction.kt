@@ -1,42 +1,24 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.changes.committed.ClearCommittedAction.Companion.getSelectedChangesViewContent
 
-/**
- * @author yole
- */
-public class RefreshCommittedAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-    assert panel != null;
-    if (panel instanceof RepositoryLocationCommittedChangesPanel) {
-      panel.refreshChanges();
-    }
-    else {
-      RefreshIncomingChangesAction.doRefresh(project);
-    }
+class RefreshCommittedAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    val panel = e.getSelectedChangesViewContent<CommittedChangesPanel>()
+    val isLoading = panel is RepositoryLocationCommittedChangesPanel<*> && panel.isLoading
+
+    e.presentation.isEnabled = panel != null && !isLoading
   }
 
-  @Override
-  public void update(@NotNull final AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project != null) {
-      CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-      boolean isLoading =
-        panel instanceof RepositoryLocationCommittedChangesPanel && ((RepositoryLocationCommittedChangesPanel)panel).isLoading();
-      e.getPresentation().setEnabled(panel != null && !isLoading);
-    }
-    else {
-      e.getPresentation().setEnabled(false);
-    }
+  override fun actionPerformed(e: AnActionEvent) {
+    val panel = e.getSelectedChangesViewContent<CommittedChangesPanel>()!!
+
+    if (panel is RepositoryLocationCommittedChangesPanel<*>)
+      panel.refreshChanges()
+    else
+      RefreshIncomingChangesAction.doRefresh(panel.project)
   }
 }

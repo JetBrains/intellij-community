@@ -44,15 +44,6 @@ internal class RepositoryLocationCommittedChangesPanel<S : ChangeBrowserSettings
     setup(extraActions, provider.createActions(browser, repositoryLocation))
   }
 
-  fun setChangesFilter() {
-    val dialog = CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings)
-    if (!dialog.showAndGet()) return
-
-    @Suppress("UNCHECKED_CAST")
-    settings = dialog.settings as S
-    refreshChanges()
-  }
-
   override fun refreshChanges() = LoadCommittedChangesTask().queue()
 
   override fun getData(dataId: String): Any? =

@@ -1,103 +1,80 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.components.ServiceKt;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.getQuestionIcon
+import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager.Companion.isCommittedChangesAvailable
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 
-import static com.intellij.CommonBundle.getCancelButtonText;
-import static com.intellij.openapi.ui.Messages.*;
-import static com.intellij.openapi.vcs.AbstractVcs.fileInVcsByFileStatus;
-import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
-import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverVersionControlView;
-import static com.intellij.util.ObjectUtils.notNull;
+class BrowseCommittedChangesAction : DumbAwareAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = false
 
-public class BrowseCommittedChangesAction extends AnAction implements DumbAware {
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
-    AbstractVcs vcs = notNull(getVcsForFile(file, project));
-    CommittedChangesProvider provider = notNull(vcs.getCommittedChangesProvider());
-    ChangeBrowserSettings settings = getChangeBrowserSettings(project, vcs, provider);
-    CommittedChangesFilterDialog dialog = new CommittedChangesFilterDialog(project, provider.createFilterUI(true), settings);
+    val project = e.project ?: return
+    val file = e.getData(VIRTUAL_FILE) ?: return
+    val vcs = getVcsForFile(file, project) ?: return
+    if (!isCommittedChangesAvailable(vcs)) return
 
-    if (dialog.showAndGet()) {
-      showChanges(vcs, provider, file, settings);
-    }
+    e.presentation.isVisible = true
+    e.presentation.isEnabled = vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(vcs.project, file)
   }
 
-  private static ChangeBrowserSettings getChangeBrowserSettings(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull CommittedChangesProvider provider) {
-    return vcs.getConfiguration().changeBrowserSettings.computeIfAbsent(vcs.getName(), key -> {
-      ChangeBrowserSettings result = provider.createDefaultSettings();
-      ServiceKt.getStateStore(project).initPersistencePlainComponent(result, "VcsManager.ChangeBrowser." + key);
-      return result;
-    });
-  }
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project!!
+    val file = e.getData(VIRTUAL_FILE)!!
+    val vcs = getVcsForFile(file, project)!!
+    val settings = getChangeBrowserSettings(vcs)
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    Presentation presentation = e.getPresentation();
-    if (project == null || file == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-    AbstractVcs vcs = getVcsForFile(file, project);
-    if (vcs == null || !CommittedChangesViewManager.Companion.isCommittedChangesAvailable(vcs)) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-    presentation.setVisible(true);
-    presentation.setEnabled(isEnabled(project, vcs, file));
-  }
-
-  private static boolean isEnabled(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
-    return vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(project, file);
-  }
-
-  private static void showChanges(@NotNull AbstractVcs vcs,
-                                  @NotNull CommittedChangesProvider<?, ?> provider,
-                                  @NotNull VirtualFile file,
-                                  @NotNull ChangeBrowserSettings settings) {
-    int maxCount = !settings.isAnyFilterSpecified() ? askMaxCount(vcs.getProject()) : 0;
-    if (maxCount < 0) return;
-
-    RepositoryLocationCache cache = CommittedChangesCache.getInstance(vcs.getProject()).getLocationCache();
-    RepositoryLocation location = cache.getLocation(vcs, VcsUtil.getFilePath(file), false);
-    if (location == null) {
-      showOverVersionControlView(vcs.getProject(), "Repository location not found for " + file.getPresentableUrl(), MessageType.ERROR);
-      return;
-    }
-
-    AbstractVcsHelper.getInstance(vcs.getProject()).openCommittedChangesTab(provider, location, settings, maxCount, null);
-  }
-
-  private static int askMaxCount(@NotNull Project project) {
-    switch (showYesNoCancelDialog(project, message("browse.changes.no.filter.prompt"), message("browse.changes.title"),
-                                  message("browse.changes.show.recent.button"), message("browse.changes.show.all.button"),
-                                  getCancelButtonText(), getQuestionIcon())) {
-      case CANCEL:
-        return -1;
-      case YES:
-        return 50;
-      default:
-        return 0;
+    if (CommittedChangesFilterDialog(project, vcs.committedChangesProvider!!.createFilterUI(true), settings).showAndGet()) {
+      showCommittedChanges(vcs, file, settings)
     }
   }
 }
+
+private fun getChangeBrowserSettings(vcs: AbstractVcs): ChangeBrowserSettings =
+  vcs.configuration.changeBrowserSettings.computeIfAbsent(vcs.name) { vcsName ->
+    vcs.committedChangesProvider!!.createDefaultSettings().also {
+      vcs.project.stateStore.initPersistencePlainComponent(it, "VcsManager.ChangeBrowser.$vcsName")
+    }
+  }
+
+private fun showCommittedChanges(vcs: AbstractVcs, file: VirtualFile, settings: ChangeBrowserSettings) {
+  val maxCount = if (!settings.isAnyFilterSpecified) askMaxCount(vcs.project) else 0
+  if (maxCount < 0) return
+
+  val repositoryLocation = CommittedChangesCache.getInstance(vcs.project).locationCache.getLocation(vcs, getFilePath(file), false)
+  if (repositoryLocation == null) {
+    showOverVersionControlView(vcs.project, "Repository location not found for ${file.presentableUrl}", MessageType.ERROR)
+    return
+  }
+
+  AbstractVcsHelper.getInstance(vcs.project).openCommittedChangesTab(
+    vcs.committedChangesProvider!!, repositoryLocation, settings, maxCount, null)
+}
+
+private fun askMaxCount(project: Project): Int =
+  when (
+    showYesNoCancelDialog(
+      project, message("browse.changes.no.filter.prompt"), message("browse.changes.title"), message("browse.changes.show.recent.button"),
+      message("browse.changes.show.all.button"), getCancelButtonText(), getQuestionIcon())
+    ) {
+    Messages.CANCEL -> -1
+    Messages.YES -> 50
+    else -> 0
+  }

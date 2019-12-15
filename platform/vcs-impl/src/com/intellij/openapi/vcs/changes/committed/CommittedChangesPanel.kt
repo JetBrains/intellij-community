@@ -14,7 +14,7 @@ import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
-abstract class CommittedChangesPanel(protected val project: Project) : BorderLayoutPanel(), DataProvider, Disposable {
+abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel(), DataProvider, Disposable {
 
   protected val browser: CommittedChangesTreeBrowser =
     CommittedChangesTreeBrowser(project, emptyList()).also { Disposer.register(this, it) }
