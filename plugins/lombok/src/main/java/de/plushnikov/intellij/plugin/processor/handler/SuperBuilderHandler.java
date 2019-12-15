@@ -60,7 +60,7 @@ public class SuperBuilderHandler extends BuilderHandler {
 
   @NotNull
   public String getBuilderClassName(@NotNull PsiClass psiClass) {
-    return StringUtil.capitalize(psiClass.getName() + BUILDER_CLASS_NAME);
+    return getBuilderClassName(psiClass, psiClass.getName());
   }
 
   @NotNull

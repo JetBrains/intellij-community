@@ -146,6 +146,7 @@ Developed By
 - [**@vanam** Martin Váňa](https://github.com/vanam)
 - [**@yiftizur** Yiftach Tzur](https://github.com/yiftizur)
 - [**@sluongng** Son Luong Ngoc](https://github.com/sluongng)
+- [**@tagae** Sebastián González](https://github.com/tagae)
 
 Supporters
 --------

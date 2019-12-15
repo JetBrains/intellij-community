@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.handler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
@@ -32,6 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.text.StringUtil.capitalize;
+import static com.intellij.openapi.util.text.StringUtil.replace;
+import static de.plushnikov.intellij.plugin.lombokconfig.ConfigKey.BUILDER_CLASS_NAME;
+
 /**
  * Handler methods for Builder-processing
  *
@@ -43,7 +48,6 @@ public class BuilderHandler {
   private static final String ANNOTATION_BUILD_METHOD_NAME = "buildMethodName";
   private static final String ANNOTATION_BUILDER_METHOD_NAME = "builderMethodName";
 
-  final static String BUILDER_CLASS_NAME = "Builder";
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
   private static final String TO_BUILDER_METHOD_NAME = "toBuilder";
@@ -253,14 +257,23 @@ public class BuilderHandler {
       return builderClassName;
     }
 
-    String rootBuilderClassName = psiClass.getName();
+    String relevantReturnType = psiClass.getName();
+
     if (null != psiMethod && !psiMethod.isConstructor()) {
       final PsiType psiMethodReturnType = psiMethod.getReturnType();
       if (null != psiMethodReturnType) {
-        rootBuilderClassName = PsiNameHelper.getQualifiedClassName(psiMethodReturnType.getPresentableText(), false);
+        relevantReturnType = PsiNameHelper.getQualifiedClassName(psiMethodReturnType.getPresentableText(), false);
       }
     }
-    return StringUtil.capitalize(rootBuilderClassName + BUILDER_CLASS_NAME);
+
+    return getBuilderClassName(psiClass, relevantReturnType);
+  }
+
+  @NotNull
+  String getBuilderClassName(@NotNull PsiClass psiClass, String returnTypeName) {
+    final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
+    final String builderClassNamePattern = configDiscovery.getStringLombokConfigProperty(BUILDER_CLASS_NAME, psiClass);
+    return replace(builderClassNamePattern, "*", capitalize(returnTypeName));
   }
 
   boolean hasMethod(@NotNull PsiClass psiClass, @NotNull String builderMethodName) {

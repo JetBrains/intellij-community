@@ -44,7 +44,9 @@ public enum ConfigKey {
   // Used for lombok from v1.18.8
   FIELD_NAME_CONSTANTS_UPPERCASE("lombok.fieldNameConstants.uppercase", "false"),
 
-  NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE("lombok.noArgsConstructor.extraPrivate", "false");
+  NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE("lombok.noArgsConstructor.extraPrivate", "false"),
+
+  BUILDER_CLASS_NAME("lombok.builder.className", "*Builder");
   /*
     ACCESSORS_FLAG_USAGE("lombok.accessors.flagUsage", ""),
     ALLARGSCONSTRUCTOR_FLAG_USAGE("lombok.allArgsConstructor.flagUsage", ""),
