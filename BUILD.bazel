@@ -389,6 +389,7 @@ iml_project(
         "//tools/idea/plugins/coverage:intellij.java.coverage",
         "//tools/idea/plugins/cucumber-jvm-formatter3:intellij.cucumber.jvmFormatter3",
         "//tools/idea/plugins/cucumber-jvm-formatter4:intellij.cucumber.jvmFormatter4",
+        "//tools/idea/plugins/cucumber-jvm-formatter5:intellij.cucumber.jvmFormatter5",
         "//tools/idea/plugins/cucumber-jvm-formatter:intellij.cucumber.jvmFormatter",
         "//tools/idea/plugins/cvs/cvs-core:intellij.vcs.cvs.core",
         "//tools/idea/plugins/cvs/cvs-plugin:intellij.vcs.cvs",

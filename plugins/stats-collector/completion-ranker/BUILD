@@ -37,6 +37,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0.0.2:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.0.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0.0.1:jar",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
     ],
 )
