@@ -1,121 +1,96 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.RepositoryLocation
+import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
+import com.intellij.ui.content.Content
+import com.intellij.util.NotNullFunction
 
-import javax.swing.*;
-import java.util.List;
+class IncomingChangesViewProvider(private val project: Project) : ChangesViewContentProvider {
+  private var browser: CommittedChangesTreeBrowser? = null
 
-import static com.intellij.openapi.vcs.VcsBundle.message;
-import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
-import static java.util.Collections.emptyList;
+  override fun initTabContent(content: Content) =
+    createIncomingChangesBrowser().let {
+      browser = it
+      content.component = it
+      content.disposer = Disposable { browser = null }
 
-/**
- * @author yole
- */
-public class IncomingChangesViewProvider implements ChangesViewContentProvider {
-  private final Project myProject;
-  private final MessageBus myBus;
-  private CommittedChangesTreeBrowser myBrowser;
-  private MessageBusConnection myConnection;
-  private final Consumer<List<CommittedChangeList>> myListConsumer;
+      project.messageBus.connect(it).subscribe(COMMITTED_TOPIC, IncomingChangesListener())
 
-  public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
-    myProject = project;
-    myBus = bus;
-    myListConsumer = lists -> UIUtil.invokeLaterIfNeeded(() -> {
-      setIncomingChanges(lists);
-    });
-  }
+      loadIncomingChanges(false)
+    }
 
-  @Override
-  public JComponent initContent() {
-    myBrowser = new CommittedChangesTreeBrowser(myProject, emptyList());
-    myBrowser.getEmptyText().setText(message("incoming.changes.not.loaded.message"));
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("IncomingChangesToolbar");
-    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null, emptyList());
-    myBrowser.setToolBar(toolbar.getComponent());
-    myBrowser.setTableContextMenu(group, emptyList());
-    myConnection = myBus.connect();
-    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
-    loadChangesToBrowser(false);
+  private fun createIncomingChangesBrowser(): CommittedChangesTreeBrowser =
+    CommittedChangesTreeBrowser(project, emptyList()).apply {
+      emptyText.text = message("incoming.changes.not.loaded.message")
 
-    return myBrowser;
-  }
+      val group = ActionManager.getInstance().getAction("IncomingChangesToolbar") as ActionGroup
+      setToolBar(createGroupFilterToolbar(project, group, null, emptyList()).component)
+      setTableContextMenu(group, emptyList())
+    }
 
-  @Override
-  public void disposeContent() {
-    myConnection.disconnect();
-    Disposer.dispose(myBrowser);
-    myBrowser = null;
-  }
+  private fun loadIncomingChanges(inBackground: Boolean) {
+    val cache = CommittedChangesCache.getInstance(project)
 
-  private void updateModel() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myProject.isDisposed()) return;
-      if (myBrowser != null) {
-        loadChangesToBrowser(true);
+    cache.hasCachesForAnyRoot { hasCaches: Boolean ->
+      if (!hasCaches) return@hasCachesForAnyRoot
+
+      val cachedIncomingChanges = cache.cachedIncomingChanges
+      if (cachedIncomingChanges != null) {
+        browser?.setIncomingChanges(cachedIncomingChanges)
       }
-    });
-  }
-
-  private void loadChangesToBrowser(final boolean inBackground) {
-    final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.hasCachesForAnyRoot(notEmpty -> {
-      if (Boolean.TRUE.equals(notEmpty)) {
-        final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
-        if (list != null) {
-          setIncomingChanges(list);
-        }
-        else {
-          cache.loadIncomingChangesAsync(myListConsumer, inBackground);
-        }
-      }
-    });
-  }
-
-  private void setIncomingChanges(@NotNull List<CommittedChangeList> changeLists) {
-    myBrowser.getEmptyText().setText(message("incoming.changes.empty.message"));
-    myBrowser.setItems(changeLists, CommittedChangesBrowserUseCase.INCOMING);
-  }
-
-  private class MyCommittedChangesListener implements CommittedChangesListener {
-    @Override
-    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
-      updateModel();
-    }
-
-    @Override
-    public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
-      updateModel();
-    }
-
-    @Override
-    public void changesCleared() {
-      setIncomingChanges(emptyList());
-    }
-
-    @Override
-    public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
-      if (lastError != null) {
-        showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
+      else {
+        cache.loadIncomingChangesAsync(
+          { incomingChanges -> runInEdt { browser?.setIncomingChanges(incomingChanges) } },
+          inBackground
+        )
       }
     }
+  }
+
+  private fun CommittedChangesTreeBrowser.setIncomingChanges(changeLists: List<CommittedChangeList>) {
+    emptyText.text = message("incoming.changes.empty.message")
+    setItems(changeLists, CommittedChangesBrowserUseCase.INCOMING)
+  }
+
+  private inner class IncomingChangesListener : CommittedChangesListener {
+    override fun changesLoaded(location: RepositoryLocation, changes: List<CommittedChangeList>) = updateModel()
+
+    override fun incomingChangesUpdated(receivedChanges: List<CommittedChangeList>?) = updateModel()
+
+    override fun changesCleared() {
+      browser?.setIncomingChanges(emptyList())
+    }
+
+    override fun refreshErrorStatusChanged(lastError: VcsException?) {
+      lastError?.let { showOverChangesView(project, it.message, MessageType.ERROR) }
+    }
+
+    private fun updateModel() =
+      runInEdt {
+        if (project.isDisposed || browser == null) return@runInEdt
+
+        loadIncomingChanges(true)
+      }
+  }
+
+  class VisibilityPredicate : NotNullFunction<Project, Boolean> {
+    override fun `fun`(project: Project): Boolean =
+      ProjectLevelVcsManager.getInstance(project).allActiveVcss
+        .map { it.committedChangesProvider }
+        .any { it is CachingCommittedChangesProvider<*, *> && it.supportsIncomingChanges() }
   }
 }

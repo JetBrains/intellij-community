@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager;
 import com.intellij.openapi.vcs.changes.committed.RepositoryLocationCache;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,7 +63,7 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
       return;
     }
     AbstractVcs vcs = getVcsForFile(file, project);
-    if (vcs == null || !CommittedChangesVisibilityPredicate.isCommittedChangesAvailable(vcs)) {
+    if (vcs == null || !CommittedChangesViewManager.Companion.isCommittedChangesAvailable(vcs)) {
       presentation.setEnabledAndVisible(false);
       return;
     }

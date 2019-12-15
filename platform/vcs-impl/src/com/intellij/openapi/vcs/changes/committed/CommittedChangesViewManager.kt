@@ -1,103 +1,82 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes.committed;
+package com.intellij.openapi.vcs.changes.committed
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache.COMMITTED_TOPIC
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED
+import com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.content.Content
+import com.intellij.util.NotNullFunction
 
-import javax.swing.*;
-import java.util.List;
+class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
+  private var panel: CommittedChangesPanel? = null
 
-import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED;
-import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE;
+  override fun initTabContent(content: Content) =
+    createCommittedChangesPanel().let {
+      panel = it
+      content.component = it
+      content.disposer = Disposable { panel = null }
 
-public class CommittedChangesViewManager implements ChangesViewContentProvider {
-  private final MessageBus myBus;
-  private MessageBusConnection myConnection;
-  private CommittedChangesPanel myComponent;
-  private final Project myProject;
-  private final VcsListener myVcsListener = new MyVcsListener();
-
-  public CommittedChangesViewManager(final Project project, final MessageBus bus) {
-    myProject = project;
-    myBus = bus;
-  }
-
-  private void updateChangesContent() {
-    final CommittedChangesProvider provider = CommittedChangesCache.getInstance(myProject).getProviderForProject();
-    if (provider == null) return;
-
-    if (myComponent == null) {
-      myComponent = new CommittedChangesPanel(myProject, provider, provider.createDefaultSettings(), null, null);
-      myConnection.subscribe(BRANCHES_CHANGED, (project, vcsRoot) -> sendUpdateCachedListsMessage(vcsRoot));
-    }
-    else {
-      myComponent.setProvider(provider);
-      // called from listener to notification of vcs root changes
-      sendUpdateCachedListsMessage(null);
-    }
-  }
-
-  private void sendUpdateCachedListsMessage(@Nullable VirtualFile vcsRoot) {
-    ApplicationManager.getApplication().invokeLater(
-      () -> myComponent.passCachedListsToListener(myBus.syncPublisher(BRANCHES_CHANGED_RESPONSE), vcsRoot),
-      o -> !myProject.isOpen() || myProject.isDisposed() || myComponent == null
-    );
-  }
-
-  @Override
-  public JComponent initContent() {
-    myConnection = myBus.connect();
-    myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
-    myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
-    updateChangesContent();
-    myComponent.refreshChanges(true);
-    return myComponent;
-  }
-
-  @Override
-  public void disposeContent() {
-    myConnection.disconnect();
-    Disposer.dispose(myComponent);
-    myComponent = null;
-  }
-
-  private class MyVcsListener implements VcsListener {
-    @Override
-    public void directoryMappingChanged() {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          updateChangesContent();
-        }
-      });
-    }
-  }
-
-  private class MyCommittedChangesListener implements CommittedChangesListener {
-    @Override
-    public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myComponent != null && !myProject.isDisposed()) {
-          myComponent.refreshChanges(true);
-        }
-      });
-    }
-
-    @Override
-    public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
-      if (lastError != null) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, lastError.getMessage(), MessageType.ERROR);
+      with(project.messageBus.connect(it)) {
+        subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
+        subscribe(COMMITTED_TOPIC, MyCommittedChangesListener())
+        subscribe(BRANCHES_CHANGED, VcsConfigurationChangeListener.Notification { _, vcsRoot ->
+          runInEdtIfNotDisposed { panel?.notifyBranchesChanged(vcsRoot) }
+        })
       }
+
+      it.refreshChanges(true)
     }
+
+  private fun createCommittedChangesPanel(): CommittedChangesPanel {
+    val provider = CommittedChangesCache.getInstance(project).providerForProject!!
+    return CommittedChangesPanel(project, provider, provider.createDefaultSettings(), null, null)
+  }
+
+  private fun updateCommittedChangesProvider() {
+    val provider = CommittedChangesCache.getInstance(project).providerForProject ?: return
+
+    panel?.run {
+      setProvider(provider)
+      notifyBranchesChanged(null)
+    }
+  }
+
+  private fun CommittedChangesPanel.notifyBranchesChanged(vcsRoot: VirtualFile?) =
+    passCachedListsToListener(project.messageBus.syncPublisher(BRANCHES_CHANGED_RESPONSE), vcsRoot)
+
+  private fun runInEdtIfNotDisposed(block: () -> Unit) =
+    runInEdt {
+      if (project.isDisposed || panel == null) return@runInEdt
+
+      block()
+    }
+
+  private inner class MyCommittedChangesListener : CommittedChangesListener {
+    override fun changesLoaded(location: RepositoryLocation, changes: List<CommittedChangeList>) =
+      runInEdtIfNotDisposed { panel?.refreshChanges(true) }
+
+    override fun refreshErrorStatusChanged(lastError: VcsException?) {
+      lastError?.let { showOverChangesView(project, it.message, MessageType.ERROR) }
+    }
+  }
+
+  class VisibilityPredicate : NotNullFunction<Project, Boolean> {
+    override fun `fun`(project: Project): Boolean =
+      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+  }
+
+  companion object {
+    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean =
+      vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
   }
 }

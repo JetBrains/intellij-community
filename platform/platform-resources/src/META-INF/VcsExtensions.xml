@@ -101,9 +101,9 @@
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangesViewToolWindowFactory"/>
 
     <changesViewContent tabName="Repository" className="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager"
-                        predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate"/>
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.CommittedChangesViewManager$VisibilityPredicate"/>
     <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
-                        predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
+                        predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider$VisibilityPredicate"/>
     <changesViewContent tabName="Local Changes" className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"/>
 
