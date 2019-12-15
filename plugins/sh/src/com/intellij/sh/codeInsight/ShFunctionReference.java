@@ -21,7 +21,7 @@ public class ShFunctionReference extends PsiReferenceBase<PsiElement> {
   @Override
   public PsiElement resolve() {
     if (myFile == null) return null;
-    return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ShFunctionResolver(myFile, myElement), false, false);
+    return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ShFunctionResolver(), false, false);
   }
 
   @Override
