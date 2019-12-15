@@ -36,7 +36,7 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showChangesBrowser(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, title: String?, parent: Component?) {
+  override fun showCommittedChangesBrowser(provider: CommittedChangesProvider<*, *>, location: RepositoryLocation, title: String?, parent: Component?) {
     throw UnsupportedOperationException()
   }
 

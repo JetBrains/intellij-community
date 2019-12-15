@@ -67,14 +67,14 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesBrowser(@NotNull CommittedChangesProvider provider,
-                                 @NotNull RepositoryLocation location,
-                                 @Nullable @Nls String title,
-                                 @Nullable Component parent) {
+  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
   }
 
   @Override
-  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
+  public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                          @NotNull RepositoryLocation location,
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent) {
   }
 
   @Override

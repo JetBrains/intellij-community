@@ -194,7 +194,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     group.add(new CheckoutAction());
     group.add(new DiffAction());
-    group.add(new BrowseChangesAction());
+    group.add(new BrowseCommittedChangesAction());
     group.addSeparator();
     group.add(new ImportAction());
     group.add(new ExportAction());
@@ -926,8 +926,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     e.getPresentation().setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().isDirectory()) && !isRunning);
   }
 
-  protected class BrowseChangesAction extends DumbAwareAction {
-    public BrowseChangesAction() {
+  protected class BrowseCommittedChangesAction extends DumbAwareAction {
+    public BrowseCommittedChangesAction() {
       super(SvnBundle.message("repository.browser.browse.changes.action"),
             SvnBundle.message("repository.browser.browse.changes.description"), null);
     }
@@ -939,8 +939,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       Url url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), new SvnRepositoryLocation(url),
-                                                                  "Changes in " + url.toString(), null);
+      AbstractVcsHelper.getInstance(myProject).showCommittedChangesBrowser(
+        myVCS.getCommittedChangesProvider(), new SvnRepositoryLocation(url), "Changes in " + url.toString(), null);
     }
 
     @Override

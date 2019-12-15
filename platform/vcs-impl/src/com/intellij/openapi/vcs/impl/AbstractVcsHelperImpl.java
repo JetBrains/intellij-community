@@ -412,10 +412,23 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesBrowser(@NotNull CommittedChangesProvider provider,
-                                 @NotNull RepositoryLocation location,
-                                 @Nullable @Nls String title,
-                                 @Nullable Component parent) {
+  @NotNull
+  public List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
+                                           @NotNull MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    if (files.isEmpty()) return Collections.emptyList();
+    VfsUtil.markDirtyAndRefresh(false, false, false, files.toArray(VirtualFile.EMPTY_ARRAY));
+    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
+    AppIcon.getInstance().requestAttention(myProject, true);
+    fileMergeDialog.show();
+    return fileMergeDialog.getProcessedFiles();
+  }
+
+  @Override
+  public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                          @NotNull RepositoryLocation location,
+                                          @Nullable @Nls String title,
+                                          @Nullable Component parent) {
     ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, filterUI, provider.createDefaultSettings());
 
@@ -457,19 +470,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         openCommittedChangesTab(provider, location, settings, 0, title);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
-                                           @NotNull MergeProvider provider,
-                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    if (files.isEmpty()) return Collections.emptyList();
-    VfsUtil.markDirtyAndRefresh(false, false, false, files.toArray(VirtualFile.EMPTY_ARRAY));
-    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
-    AppIcon.getInstance().requestAttention(myProject, true);
-    fileMergeDialog.show();
-    return fileMergeDialog.getProcessedFiles();
   }
 
   @Override

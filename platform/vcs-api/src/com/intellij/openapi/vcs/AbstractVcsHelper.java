@@ -62,12 +62,12 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title);
 
-  public abstract void showChangesBrowser(@NotNull CommittedChangesProvider provider,
-                                          @NotNull RepositoryLocation location,
-                                          @Nullable @Nls String title,
-                                          @Nullable Component parent);
-
   public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title);
+
+  public abstract void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
+                                                   @NotNull RepositoryLocation location,
+                                                   @Nullable @Nls String title,
+                                                   @Nullable Component parent);
 
   public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
                                                @NotNull RepositoryLocation location,

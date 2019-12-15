@@ -274,7 +274,7 @@
               icon="AllIcons.Actions.ListChanges" />
     </group>
 
-    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
+    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.committed.BrowseCommittedChangesAction"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
