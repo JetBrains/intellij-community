@@ -50,17 +50,25 @@ class JdkDownloadDialog(
 
     val vendorComboBox = ComboBox(items.map { it.product }.distinct().sorted().toTypedArray())
     vendorComboBox.selectedItem = defaultItem.product
-    vendorComboBox.renderer = listCellRenderer { it, _, _ -> setText(it.packagePresentationText) }
+    vendorComboBox.renderer = object: ColoredListCellRenderer<JdkProduct>() {
+      override fun customizeCellRenderer(list: JList<out JdkProduct>, value: JdkProduct?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        value ?: return
+        append(value.packagePresentationText)
+      }
+    }
+    vendorComboBox.isSwingPopup = false
 
     val versionModel = DefaultComboBoxModel<JdkItem>()
     val versionComboBox = ComboBox(versionModel)
     versionComboBox.renderer = object: ColoredListCellRenderer<JdkItem>() {
-      override fun customizeCellRenderer(list: JList<out JdkItem>, value: JdkItem, index: Int, selected: Boolean, hasFocus: Boolean) {
+      override fun customizeCellRenderer(list: JList<out JdkItem>, value: JdkItem?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        value ?: return
         append(value.versionPresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
         append(" ")
         append(value.downloadSizePresentationText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
+    versionComboBox.isSwingPopup = false
 
     fun selectVersions(newProduct: JdkProduct) {
       val newVersions = items.filter { it.product == newProduct }.sorted()
