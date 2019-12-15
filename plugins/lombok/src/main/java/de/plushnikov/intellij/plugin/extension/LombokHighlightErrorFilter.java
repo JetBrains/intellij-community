@@ -102,7 +102,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
   private enum LombokHighlightFixHook {
 
     UNHANDLED_EXCEPTION(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile("Unhandled exception: .+");
+      private final Pattern pattern = Pattern.compile("Unhandled exceptions?: .+");
 
       @Override
       public boolean descriptionCheck(@Nullable String description) {

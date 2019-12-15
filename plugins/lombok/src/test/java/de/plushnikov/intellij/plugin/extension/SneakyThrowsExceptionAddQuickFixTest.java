@@ -23,6 +23,14 @@ public class SneakyThrowsExceptionAddQuickFixTest extends AbstractLombokLightCod
       availableActions.stream().anyMatch(action -> action.getText().contains("@SneakyThrows")));
   }
 
+  public void testCheckedMultipleExceptionQuickFixExample() {
+    myFixture.configureByFile(getBasePath() + '/' + getTestName(false) + ".java");
+
+    final List<IntentionAction> availableActions = getAvailableActions();
+    assertTrue("Intention to add @SneakyThrows was not presented",
+      availableActions.stream().anyMatch(action -> action.getText().contains("@SneakyThrows")));
+  }
+
   protected List<IntentionAction> getAvailableActions() {
     final Editor editor = getEditor();
     final PsiFile file = getFile();

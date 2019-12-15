@@ -131,7 +131,7 @@ Developed By
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@juriad** Adam Juraszek](https://github.com/juriad)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
-- [**@Lekanich** Aleksandr Lekanich](https://github.com/Lekanich)
+- [**@Lekanich** Aleksandr Zhelezniak](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
 - [**@RohanTalip** Rohan Talip](https://github.com/RohanTalip)
