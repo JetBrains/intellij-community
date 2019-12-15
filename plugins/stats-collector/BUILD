@@ -14,6 +14,7 @@ iml_module(
         "//tools/idea/images:intellij.platform.images",
     ],
     visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2:jar"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
@@ -40,6 +41,7 @@ iml_module(
         "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents[module]",
         "//tools/idea/.idea/libraries:fluent-hc",
         "//tools/idea/plugins/stats-collector/completion-ranker:intellij.statsCollector.completionRanker[module]",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ngram-slp/0.0.2:jar",
     ],
 )
 
@@ -89,5 +91,6 @@ iml_module(
         "//tools/idea/.idea/libraries:commons-codec[test]",
         "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents[module, test]",
         "//tools/idea/plugins/stats-collector:intellij.statsCollector[module, test]",
+        "//tools/idea/plugins/stats-collector/completion-ranker:intellij.statsCollector.completionRanker[module, test]",
     ],
 )
