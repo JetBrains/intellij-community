@@ -37,6 +37,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     applicationInfoModule = "intellij.android.adt.branding"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
+    scrambleMainJar = false
     buildCrossPlatformDistribution = true
 
     allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
