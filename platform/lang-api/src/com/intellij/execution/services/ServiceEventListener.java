@@ -36,6 +36,12 @@ public interface ServiceEventListener {
       this.parent = parent;
     }
 
+    @Override
+    public String toString() {
+      return type + ": " + target.toString() + "; from contributor: " + contributorClass +
+             (parent == null ? "" : "; parent: " + parent);
+    }
+
     public static ServiceEvent createEvent(@NotNull EventType type,
                                            @NotNull Object target,
                                            @NotNull Class<?> rootContributorClass) {

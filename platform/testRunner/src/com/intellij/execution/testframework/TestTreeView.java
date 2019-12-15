@@ -26,27 +26,34 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.*;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.popup.HintUpdateSupply;
-import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
 
   private TestFrameworkRunningModel myModel;
+
+  public TestTreeView() {
+    setLargeModel(true);
+  }
 
   protected abstract TreeCellRenderer getRenderer(TestConsoleProperties properties);
 
@@ -79,12 +86,6 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     installHandlers();
     setCellRenderer(getRenderer(myModel.getProperties()));
     putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true);
-  }
-
-  @Override
-  public void setUI(final TreeUI ui) {
-    super.setUI(ui instanceof DefaultTreeUI ? ui : DefaultTreeUI.createUI(this));
-    setLargeModel(true);
   }
 
   @Override

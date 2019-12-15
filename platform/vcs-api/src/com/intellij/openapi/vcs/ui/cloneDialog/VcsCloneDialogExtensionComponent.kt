@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ui.cloneDialog
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
@@ -31,7 +32,7 @@ abstract class VcsCloneDialogExtensionComponent : Disposable {
    * in background
    */
   @CalledInAwt
-  abstract fun doClone()
+  abstract fun doClone(checkoutListener: CheckoutProvider.Listener)
 
   /**
    * would be called from [com.intellij.openapi.ui.DialogWrapper.doValidateAll] when extension is selected

@@ -181,9 +181,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   // if adt-branding is not on the classpath, then we should simply run as IDEA.
   private static final String[] PREFIX_CANDIDATES = {"AndroidStudio", "Idea"}; /*
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand",
+    "Rider", "GoLand", "CLion",
     null,
-    "AppCode", "CLion", "SwiftTests", "CidrCommonTests",
+    "AppCode", "SwiftTests", "CidrCommonTests",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",

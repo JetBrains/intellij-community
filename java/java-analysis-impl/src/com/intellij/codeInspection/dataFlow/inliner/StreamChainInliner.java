@@ -271,8 +271,13 @@ public class StreamChainInliner implements CallInliner {
       if (!(type instanceof PsiPrimitiveType)) {
         type = PsiPrimitiveType.getUnboxedType(type);
       }
-      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)))
-        .boxUnbox(myCall, type, myCall.getType());
+      if (type == null) {
+        // Invalid standard library or custom sum() method?
+        builder.pushUnknown();
+      } else {
+        builder.push(builder.getFactory().getConstFactory().createDefault(type))
+          .boxUnbox(myCall, type, myCall.getType());
+      }
     }
 
     private static LongRangeSet narrowCountResult(PsiMethodCallExpression call) {

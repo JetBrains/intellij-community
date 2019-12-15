@@ -99,7 +99,7 @@ class ClosureDriver private constructor(private val closureParameters: Map<GrPar
           typeParameterMapping.getValue(param) to list.map { if (it.marker == UPPER) BoundConstraint(it.type, INHABIT) else it }
         }.toMap()
         val newUsageInformation = usageInformation.run {
-          TypeUsageInformation(shiftedRequiredTypes, constraints, dependentTypes.map { typeParameterMapping.getValue(it) }.toSet())
+          TypeUsageInformation(shiftedRequiredTypes, constraints, dependentTypes.map { typeParameterMapping.getValue(it) }.toSet(), constrainingExpressions)
         }
         newUsageInformation
       }

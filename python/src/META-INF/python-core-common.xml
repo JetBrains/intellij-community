@@ -107,6 +107,8 @@
 
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
 
+    <projectService serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
+
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
 

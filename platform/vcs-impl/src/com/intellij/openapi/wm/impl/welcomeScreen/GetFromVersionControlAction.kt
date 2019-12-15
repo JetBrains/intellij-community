@@ -7,13 +7,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
 open class GetFromVersionControlAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions() && Registry.`is`("vcs.use.new.clone.dialog")
+    val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions()
     val presentation = e.presentation
     presentation.isEnabledAndVisible = isEnabled
     if (!isEnabled)
@@ -32,7 +32,7 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     val project = e.getData(CommonDataKeys.PROJECT) ?: ProjectManager.getInstance().defaultProject
     val cloneDialog = VcsCloneDialog.Builder(project).forExtension()
     if (cloneDialog.showAndGet()) {
-      cloneDialog.doClone()
+      cloneDialog.doClone(ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener)
     }
   }
 }

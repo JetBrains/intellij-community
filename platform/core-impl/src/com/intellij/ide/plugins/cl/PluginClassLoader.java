@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
@@ -50,7 +51,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     myParents = parents;
     myPluginId = pluginId;
     myPluginVersion = version;
-    myLibDirectories = ContainerUtil.newSmartList();
+    myLibDirectories = new SmartList<>();
     File libDir = new File(pluginRoot, "lib");
     if (libDir.exists()) {
       myLibDirectories.add(libDir.getAbsolutePath());

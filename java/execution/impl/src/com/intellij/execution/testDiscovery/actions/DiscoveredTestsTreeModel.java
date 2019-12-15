@@ -14,7 +14,6 @@ import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +64,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, classNode);
       myTests.put(classNode, methodNode == null
-                             ? ContainerUtil.newSmartList()
-                             : ContainerUtil.newSmartList(methodNode));
+                             ? new SmartList<>()
+                             : new SmartList<>(methodNode));
 
       treeStructureChanged(null, null, null);
       return;

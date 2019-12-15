@@ -46,7 +46,7 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     }
   }
 
-  override fun runAnything(dataContext: DataContext, commandLine: CommandLine): Boolean {
+  override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
     val project = fetchProject(dataContext)
     val context = dataContext.getData(EXECUTING_CONTEXT) ?: ProjectContext(project)
     val projectsManager = MavenProjectsManager.getInstance(project)

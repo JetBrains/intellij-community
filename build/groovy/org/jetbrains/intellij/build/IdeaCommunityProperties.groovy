@@ -14,6 +14,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
+    scrambleMainJar = false
     buildCrossPlatformDistribution = true
 
     productLayout.productApiModules = JAVA_IDE_API_MODULES
@@ -25,6 +26,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.buildAllCompatiblePlugins = false
     productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       JavaPluginLayout.javaPlugin(false),

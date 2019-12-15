@@ -78,7 +78,6 @@
       </group>
 
       <separator/>
-      <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" popup="true"/>
       <reference id="Vcs.VcsClone"/>
       <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
       <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
@@ -350,12 +349,8 @@
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Vcs.Diff.ExcludeChangedLinesFromCommit" anchor="after"/>
     </action>
 
-    <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
-            icon="AllIcons.Welcome.FromVCS">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </action>
     <reference ref="Vcs.VcsClone">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </reference>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
@@ -454,7 +449,6 @@
       <separator/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
-      <reference ref="WelcomeScreen.GetFromVcs"/>
       <reference ref="Vcs.VcsClone"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>

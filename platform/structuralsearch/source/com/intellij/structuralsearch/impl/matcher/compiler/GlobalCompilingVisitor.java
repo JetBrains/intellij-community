@@ -245,6 +245,7 @@ public class GlobalCompilingVisitor {
   }
 
   public void processTokenizedName(String name, boolean skipComments, GlobalCompilingVisitor.OccurenceKind kind) {
+    if (kind == OccurenceKind.LITERAL) name = StringUtil.unescapeStringCharacters(name);
     for (String word : StringUtil.getWordsInStringLongestFirst(name)) {
       addFilesToSearchForGivenWord(word, true, kind, getContext());
     }

@@ -41,7 +41,6 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
       "intellij.java.compiler.antTasks",
       "intellij.platform.testFramework"
     ]
-    productLayout.buildAllCompatiblePlugins = true
   }
 
   @Override

@@ -20,11 +20,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
@@ -121,7 +122,7 @@ public class JavaGenerateMemberCompletionContributor {
     for (PsiField field : parent.getFields()) {
       if (isConstant(field)) continue;
 
-      List<PsiMethod> prototypes = ContainerUtil.newSmartList();
+      List<PsiMethod> prototypes = new SmartList<>();
       try {
         Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {

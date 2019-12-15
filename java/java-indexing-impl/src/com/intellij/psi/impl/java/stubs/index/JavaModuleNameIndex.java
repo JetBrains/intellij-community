@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
   }
 
   private static List<VirtualFile> descriptorFiles(VirtualFile root, boolean checkAttribute, boolean filter) {
-    List<VirtualFile> results = ContainerUtil.newSmartList();
+    List<VirtualFile> results = new SmartList<>();
 
     ContainerUtil.addIfNotNull(results, root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE));
 

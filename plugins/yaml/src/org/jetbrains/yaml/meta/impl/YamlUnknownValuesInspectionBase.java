@@ -82,14 +82,17 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
 
     protected void validateMultiplicity(@NotNull YamlMetaTypeProvider.MetaTypeProxy meta, @NotNull YAMLValue value) {
       if (meta.getField().isMany()) {
-        requireMultiplicityMany(value);
+        requireMultiplicityMany(meta, value);
       }
-      else if (!meta.getField().hasRelationSpecificType(Field.Relation.SEQUENCE_ITEM)) {
-        requireMultiplicityOne(value);
+      else {
+        requireMultiplicityOne(meta, value);
       }
     }
 
-    protected void requireMultiplicityOne(@NotNull YAMLValue value) {
+    protected void requireMultiplicityOne(@NotNull YamlMetaTypeProvider.MetaTypeProxy meta, @NotNull YAMLValue value) {
+      if (meta.getField().hasRelationSpecificType(Field.Relation.SEQUENCE_ITEM)) {
+        return;
+      }
       if (value instanceof YAMLSequence) {
         for (YAMLSequenceItem next : ((YAMLSequence)value).getItems()) {
           if (next.getValue() == null || !next.getKeysValues().isEmpty()) {
@@ -102,8 +105,14 @@ public abstract class YamlUnknownValuesInspectionBase extends YamlMetaTypeInspec
       }
     }
 
-    protected void requireMultiplicityMany(@NotNull YAMLValue value) {
-      if (value instanceof YAMLScalar) {
+    protected void requireMultiplicityMany(@NotNull YamlMetaTypeProvider.MetaTypeProxy meta, @NotNull YAMLValue value) {
+      if (meta.getField().hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS)) {
+        return;
+      }
+      boolean actuallyOne = value instanceof YAMLScalar ||
+                            (value instanceof YAMLMapping && !meta.getField().isAnyNameAllowed());
+
+      if (actuallyOne) {
         myProblemsHolder.registerProblem(value,
                                          YAMLBundle.message("YamlUnknownValuesInspectionBase.error.array.is.required"));
       }

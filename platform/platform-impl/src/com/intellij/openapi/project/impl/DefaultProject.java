@@ -67,7 +67,7 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
 
-          registerComponents(PluginManagerCore.getLoadedPlugins());
+          registerComponents(PluginManagerCore.getLoadedPlugins(), false);
           createComponents(null);
         }
 

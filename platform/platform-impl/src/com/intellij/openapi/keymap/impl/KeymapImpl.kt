@@ -475,7 +475,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       if (parentScheme == null) {
         LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
         unknownParentName = parentSchemeName
-        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$name\" for \"$parentSchemeName\"")
+        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$parentSchemeName\" for \"$name\"")
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -739,7 +739,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
       "ReSharper OSX" -> "com.intellij.plugins.resharperkeymap"
       "Sublime Text",
       "Sublime Text (Mac OS X)" -> "com.intellij.plugins.sublimetextkeymap"
-      "Visual Studio",
+      "Visual Studio" -> "com.intellij.plugins.visualstudiokeymap"
       "Xcode" -> "com.intellij.plugins.xcodekeymap"
       else -> null
     }

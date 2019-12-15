@@ -322,7 +322,6 @@ class GuiTestRule(enableScreenshotsDuringTest: Boolean) : TestRule {
         throw AssumptionViolatedException("didn't find welcome frame", e)
       }
       GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any { it is Splash } }
-      Assume.assumeTrue("Only welcome frame is showing", GuiTestUtilKt.windowsShowing().size == 1)
     }
   }
 

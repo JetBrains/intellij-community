@@ -27,9 +27,11 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.html.HtmlEmbeddedContentImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +52,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
                                        @NotNull PsiElement psiElement,
                                        @NotNull Document document,
                                        boolean quick) {
-    XmlDocument xmlDocument = null;
+    XmlDocument xmlDocument;
 
     if (psiElement instanceof XmlFile) {
       XmlFile file = (XmlFile)psiElement;
@@ -58,6 +60,9 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     }
     else if (psiElement instanceof XmlDocument) {
       xmlDocument = (XmlDocument)psiElement;
+    } else {
+      // handle embedded templates
+      xmlDocument = PsiTreeUtil.getChildOfType(psiElement, XmlDocument.class);
     }
 
     XmlElement rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
@@ -103,7 +108,8 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       }
       else {
         final Language language = child.getLanguage();
-        if (!(language instanceof XMLLanguage) && language != Language.ANY) {
+        if (!(language instanceof XMLLanguage) && language != Language.ANY ||
+            child instanceof HtmlEmbeddedContentImpl) {
           final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
 
           if (foldingBuilder != null) {

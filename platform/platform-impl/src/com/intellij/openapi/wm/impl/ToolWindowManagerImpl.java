@@ -1468,7 +1468,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     setToolWindowAnchor(id, anchor, -1);
   }
 
-  private void setToolWindowAnchor(@NotNull String id, @NotNull ToolWindowAnchor anchor, final int order) {
+  public void setToolWindowAnchor(@NotNull String id, @NotNull ToolWindowAnchor anchor, final int order) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
     setToolWindowAnchorImpl(id, anchor, order, commandList);

@@ -36,8 +36,11 @@ interface DynamicPluginListener {
   fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
+  /**
+   * @param isUpdate true if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
+   */
   @JvmDefault
-  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor) {
+  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
   }
 
   companion object {
@@ -101,10 +104,11 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+  @JvmOverloads
+  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
-    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor)
+    application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, isUpdate)
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
     // We need to find the real plugin loaded into the current instance and unload its classloader.
@@ -165,7 +169,13 @@ object DynamicPlugins {
     jdomSerializer.clearSerializationCaches()
     BeanBinding.clearSerializationCaches()
 
-    PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+    if (disable) {
+      // Update list of disabled plugins
+      PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+    }
+    else {
+      PluginManagerCore.setPlugins(ArrayUtil.remove(PluginManagerCore.getPlugins(), loadedPluginDescriptor))
+    }
 
     UIUtil.dispatchAllInvocationEvents()
 
@@ -182,28 +192,34 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, enable: Boolean) {
     val coreLoader = ReflectionUtil.findCallerClass(1)!!.classLoader
     val pluginsWithNewPlugin = (PluginManagerCore.getPlugins().filterIsInstance<IdeaPluginDescriptorImpl>() + listOf(pluginDescriptor)).toTypedArray()
     PluginManagerCore.initClassLoader(pluginDescriptor, coreLoader, PluginManagerCore.pluginIdTraverser(pluginsWithNewPlugin))
 
     val application = ApplicationManager.getApplication() as ApplicationImpl
     application.runWriteAction {
-      application.registerComponents(listOf(pluginDescriptor))
+      application.registerComponents(listOf(pluginDescriptor), true)
       for (openProject in ProjectManager.getInstance().openProjects) {
-        (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor))
+        (openProject as ProjectImpl).registerComponents(listOf(pluginDescriptor), true)
       }
       (ActionManager.getInstance() as ActionManagerImpl).registerPluginActions(pluginDescriptor)
     }
 
-    PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    if (enable) {
+      // Update list of disabled plugins
+      PluginManagerCore.setPlugins(PluginManagerCore.getPlugins())
+    }
+    else {
+      PluginManagerCore.setPlugins(ArrayUtil.mergeArrays(PluginManagerCore.getPlugins(), arrayOf(pluginDescriptor)))
+    }
     application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
   }
 
   @JvmStatic
   fun onPluginUnload(parentDisposable: Disposable, callback: Runnable) {
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor) {
+      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         callback.run()
       }
     })

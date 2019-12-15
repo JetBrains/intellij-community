@@ -32,8 +32,9 @@ Suggested files are listed as <b>Related Files</b> in the <b>Local Changes</b> t
                  description="A maximum number of changes for which predictions are calculated"/>
     
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
-    <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="1"/>
+    <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="2"/>
     <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
     <projectService serviceImplementation="com.jetbrains.changeReminder.predict.PredictionService"/>
+    <checkinHandlerFactory implementation="com.jetbrains.changeReminder.stats.commit.ChangeReminderStatsCheckinHandler"/>
   </extensions>
 </idea-plugin>

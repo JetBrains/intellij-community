@@ -14,9 +14,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -541,7 +541,7 @@ public class GrClassImplUtil {
     if (method instanceof GrMethod) {
       GrReflectedMethod[] methods = ((GrMethod)method).getReflectedMethods();
       if (methods.length > 0) {
-        return ContainerUtil.newSmartList(methods);
+        return new SmartList<>(methods);
       }
     }
     return Collections.singletonList(method);

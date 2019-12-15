@@ -71,7 +71,7 @@ public class GCWatcher {
   public boolean tryCollect() {
     return LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       long startTime = System.currentTimeMillis();
-      GCUtil.allocateTonsOfMemory(new StringBuilder(), () -> isEverythingCollected() && System.currentTimeMillis() - startTime < 5000);
+      GCUtil.allocateTonsOfMemory(new StringBuilder(), () -> isEverythingCollected() || System.currentTimeMillis() - startTime > 5000);
       return isEverythingCollected();
     });
   }

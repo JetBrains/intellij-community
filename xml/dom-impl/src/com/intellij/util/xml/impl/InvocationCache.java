@@ -85,6 +85,9 @@ class InvocationCache {
       try {
         return handler.getScalarConverter();
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable e) {
         final Throwable cause = e.getCause();
         if (cause instanceof ProcessCanceledException) {

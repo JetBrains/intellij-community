@@ -15,7 +15,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,13 +104,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public void setUI(TreeUI ui) {
-    TreeUI actualUI = ui;
-    if (!isCustomUI() && !Registry.is("ide.tree.ui.experimental")) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
-        actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
-      }
-    }
-    super.setUI(actualUI);
+    super.setUI(ui);
   }
 
   @Override
@@ -123,6 +116,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return 0 >= getRowCount();
   }
 
+  /** @deprecated not used */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @Deprecated
   protected boolean isCustomUI() {
     return false;
   }

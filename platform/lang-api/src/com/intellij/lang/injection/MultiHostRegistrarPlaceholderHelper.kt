@@ -11,7 +11,6 @@ import java.util.*
 import java.util.function.Function
 
 
-@ApiStatus.Experimental
 class MultiHostRegistrarPlaceholderHelper(private val multiHostRegistrar: MultiHostRegistrar) {
 
   private val globalPlaceholders = mutableListOf<Pair<TextRange, String>>()

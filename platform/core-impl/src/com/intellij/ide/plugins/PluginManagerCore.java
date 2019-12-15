@@ -1034,7 +1034,7 @@ public class PluginManagerCore {
   @TestOnly
   public static List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
     throws ExecutionException, InterruptedException {
-    List<IdeaPluginDescriptorImpl> descriptors = ContainerUtil.newSmartList();
+    List<IdeaPluginDescriptorImpl> descriptors = new SmartList<>();
     LinkedHashMap<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(loader, urlsFromClassPath);
     loadDescriptorsFromClassPath(urlsFromClassPath, descriptors, new LoadDescriptorsContext(false), platformPluginURL);
@@ -1163,13 +1163,13 @@ public class PluginManagerCore {
 
     boolean parallel = SystemProperties.getBooleanProperty("parallel.pluginDescriptors.loading", true);
     try (LoadDescriptorsContext context = new LoadDescriptorsContext(parallel)) {
+      loadDescriptorsFromProperty(result, context);
+      
       loadDescriptorsFromClassPath(urlsFromClassPath, result, context, platformPluginURL);
       loadDescriptorsFromDir(new File(PathManager.getPluginsPath()), result, false, context);
       if (!isUnitTestMode) {
         loadDescriptorsFromDir(new File(PathManager.getPreInstalledPluginsPath()), result, true, context);
       }
-
-      loadDescriptorsFromProperty(result, context);
 
       if (isUnitTestMode && result.size() <= 1) {
         // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway

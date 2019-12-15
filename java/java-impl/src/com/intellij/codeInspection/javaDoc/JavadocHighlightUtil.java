@@ -17,6 +17,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -462,7 +463,7 @@ public class JavadocHighlightUtil {
   }
 
   private static <T> List<T> list(List<T> list) {
-    return list != null ? list : ContainerUtil.newSmartList();
+    return list != null ? list : new SmartList<>();
   }
 
   private static boolean emptyTag(PsiDocTag tag) {

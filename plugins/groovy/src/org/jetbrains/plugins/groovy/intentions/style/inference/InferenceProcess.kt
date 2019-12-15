@@ -43,7 +43,7 @@ private fun setUpGraph(virtualMethod: GrMethod,
                        constantTypes: List<PsiTypeParameter>,
                        typeUsage: TypeUsageInformation): InferenceUnitGraph {
   val inferenceSession = CollectingGroovyInferenceSession(virtualMethod.typeParameters, context = virtualMethod)
-  typeUsage.constraints.forEach { inferenceSession.addConstraint(it) }
+  typeUsage.fillSession(inferenceSession)
   inferenceSession.infer()
   return createGraphFromInferenceVariables(inferenceSession, virtualMethod, typeUsage, constantTypes)
 }

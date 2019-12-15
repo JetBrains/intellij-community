@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,7 +178,7 @@ public class WhiteListSimpleRuleFactory {
     if (currentRuleStart == -1) return Collections.singletonList(s);
     int lastRuleEnd = -1;
 
-    final List<String> nodes = ContainerUtil.newSmartList();
+    final List<String> nodes = new SmartList<>();
     if (currentRuleStart > 0) addNonEmpty(nodes, s.substring(0, currentRuleStart));
 
     while (currentRuleStart >= 0) {

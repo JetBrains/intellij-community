@@ -13,6 +13,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
@@ -48,7 +49,7 @@ public class JavaSharedImplUtil {
   // collects annotations bound to C-style arrays
   @Nullable
   private static List<PsiAnnotation[]> collectAnnotations(@NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
-    List<PsiAnnotation[]> annotations = ContainerUtil.newSmartList();
+    List<PsiAnnotation[]> annotations = new SmartList<>();
 
     List<PsiAnnotation> current = null;
     boolean found = stopAt == null;
@@ -57,7 +58,7 @@ public class JavaSharedImplUtil {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
       if (child instanceof PsiAnnotation) {
-        if (current == null) current = ContainerUtil.newSmartList();
+        if (current == null) current = new SmartList<>();
         current.add((PsiAnnotation)child);
         if (child == stopAt) found = stop = true;
         continue;

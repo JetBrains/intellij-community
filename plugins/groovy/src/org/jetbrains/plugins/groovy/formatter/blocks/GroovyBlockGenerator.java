@@ -55,6 +55,7 @@ import java.util.List;
 
 import static com.intellij.formatting.Indent.*;
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
@@ -81,7 +82,7 @@ public class GroovyBlockGenerator {
   private final AlignmentProvider myAlignmentProvider;
   private final GroovyWrappingProcessor myWrappingProcessor;
 
-  private final FormattingContext myContext;
+  private FormattingContext myContext;
 
   public GroovyBlockGenerator(GroovyBlock block) {
     myBlock = block;
@@ -135,8 +136,8 @@ public class GroovyBlockGenerator {
         elementType == GroovyElementTypes.REGEX ||
         elementType == GroovyTokenTypes.mREGEX_LITERAL ||
         elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
-      final FormattingContext context =
-        myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
+      boolean isPlainGString = myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString();
+      final FormattingContext context = isPlainGString ? myContext.createContext(true) : myContext;
 
       final ArrayList<Block> subBlocks = new ArrayList<>();
       ASTNode[] children = getGroovyChildren(myNode);
@@ -250,7 +251,9 @@ public class GroovyBlockGenerator {
       {
         Indent indent = getNormalIndent();
         ASTNode parameterListNode = closableBlock.getParameterList().getNode();
-        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), myContext);
+        boolean forbidWrapping = shouldHandleAsSimpleClosure(closableBlock, settings);
+        FormattingContext closureContext = myContext.createContext(forbidWrapping);
+        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), closureContext);
         blocks.add(bodyBlock);
       }
 
@@ -261,6 +264,17 @@ public class GroovyBlockGenerator {
       }
 
       return blocks;
+    }
+
+    if (blockPsi instanceof GrClosableBlock) {
+      FormattingContext oldContext = myContext;
+      try {
+        boolean forbidWrapping = shouldHandleAsSimpleClosure((GrClosableBlock)blockPsi, settings);
+        myContext = myContext.createContext(forbidWrapping);
+        return generateCodeSubBlocks(visibleChildren(myNode));
+      } finally {
+        myContext = oldContext;
+      }
     }
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile) {

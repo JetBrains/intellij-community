@@ -239,7 +239,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
                                                               int pathId, int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
-        changeDataList = ContainerUtil.newSmartList();
+        changeDataList = new SmartList<>();
         for (int i = 0; i < parentsCount; i++) {
           changeDataList.add(ChangeKind.NOT_CHANGED);
         }
@@ -277,7 +277,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     @Override
     public List<ChangeKind> read(@NotNull DataInput in) throws IOException {
-      List<ChangeKind> value = ContainerUtil.newSmartList();
+      List<ChangeKind> value = new SmartList<>();
 
       int size = DataInputOutputUtil.readINT(in);
       for (int i = 0; i < size; i++) {

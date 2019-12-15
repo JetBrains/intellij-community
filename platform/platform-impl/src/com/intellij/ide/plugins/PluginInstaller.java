@@ -105,8 +105,8 @@ public class PluginInstaller {
     StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
   }
 
-  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor) {
-    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor);
+  public static boolean uninstallDynamicPlugin(IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+    boolean uninstalledWithoutRestart = DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
     if (uninstalledWithoutRestart) {
       FileUtil.delete(pluginDescriptor.getPath());
     }
@@ -267,7 +267,7 @@ public class PluginInstaller {
     if (targetFile != null) {
       IdeaPluginDescriptorImpl targetDescriptor = PluginManagerCore.loadDescriptor(targetFile, PluginManagerCore.PLUGIN_XML);
       if (targetDescriptor != null) {
-        DynamicPlugins.loadPlugin(targetDescriptor);
+        DynamicPlugins.loadPlugin(targetDescriptor, false);
         return targetDescriptor;
       }
     }

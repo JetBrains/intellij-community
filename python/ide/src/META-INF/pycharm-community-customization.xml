@@ -1,8 +1,6 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
 
-  <xi:include href="/META-INF/python-community-configure-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
   <project-components>
     <component>
       <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
@@ -16,6 +14,23 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
+                         displayName="Project Structure"
+                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         displayName="Project Interpreter"
+                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
+    <projectConfigurable groupId="project"
+                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
+                         displayName="Project Dependencies"
+                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
+
+    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
+
+    <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
+
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
                          displayName="Buildout Support"
@@ -51,6 +66,7 @@
   </extensions>
 
   <actions>
+    <action id="PySwitchSdkAction" class="com.jetbrains.python.configuration.PySwitchSdkAction"/>
     <action id="NewDirectoryProject" class="com.jetbrains.python.newProject.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>
     </action>

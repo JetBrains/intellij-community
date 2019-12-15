@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.*;
 import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Attribute;
@@ -162,7 +163,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   private List<ArrangementGroupingRule> deserializeGropings(@NotNull Element element, @Nullable ArrangementSettings defaultSettings) {
     Element groups = element.getChild(GROUPS_ELEMENT_NAME);
     if (groups == null) {
-      return defaultSettings == null ? ContainerUtil.newSmartList() : defaultSettings.getGroupings();
+      return defaultSettings == null ? new SmartList<>() : defaultSettings.getGroupings();
     }
 
     final List<ArrangementGroupingRule> groupings = new ArrayList<>();
@@ -233,7 +234,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       }
 
       if (matcher == null) {
-        return ContainerUtil.newSmartList();
+        return new SmartList<>();
       }
 
       Element orderTypeElement = ruleElement.getChild(ORDER_TYPE_ELEMENT_NAME);

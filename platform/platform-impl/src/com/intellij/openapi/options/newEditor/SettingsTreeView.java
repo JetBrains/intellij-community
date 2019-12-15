@@ -776,11 +776,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
 
     @Override
-    protected boolean isCustomUI() {
-      return true;
-    }
-
-    @Override
     protected void configureUiHelper(TreeUIHelper helper) {
     }
 

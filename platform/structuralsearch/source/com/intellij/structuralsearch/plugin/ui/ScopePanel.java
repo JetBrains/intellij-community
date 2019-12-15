@@ -52,6 +52,7 @@ public class ScopePanel extends JPanel {
   @NotNull private SearchScope myScope;
   private NullableConsumer<? super SearchScope> myConsumer;
   Scopes.Type myScopeType;
+  private boolean myUpdating = false;
 
   final ActionToolbarImpl myToolbar;
   final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
@@ -153,35 +154,40 @@ public class ScopePanel extends JPanel {
 
   public void setScopesFromContext() {
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
-      final Module module = LangDataKeys.MODULE.getData(context);
-      if (module != null) {
-        myModulesComboBox.setSelectedModule(module);
-      }
-      final Editor editor = CommonDataKeys.HOST_EDITOR.getData(context);
-      if (editor != null) {
-        final Document document = editor.getDocument();
-        final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-        if (file != null) {
-          myDirectoryComboBox.setDirectory(file.getParent());
+      myUpdating = true;
+      try {
+        final Module module = LangDataKeys.MODULE.getData(context);
+        if (module != null) {
+          myModulesComboBox.setSelectedModule(module);
         }
-        myScopesComboBox.selectItem(IdeBundle.message("scope.current.file"));
-      }
-      else {
-        final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-        if (files != null && files.length > 0) {
-          boolean found = false;
-          for (VirtualFile file : files) {
-            if (file.isDirectory()) {
-              myDirectoryComboBox.setDirectory(file);
-              found = true;
-              break;
+        final Editor editor = CommonDataKeys.HOST_EDITOR.getData(context);
+        if (editor != null) {
+          final Document document = editor.getDocument();
+          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+          if (file != null) {
+            myDirectoryComboBox.setDirectory(file.getParent());
+          }
+          myScopesComboBox.selectItem(IdeBundle.message("scope.current.file"));
+        }
+        else {
+          final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+          if (files != null && files.length > 0) {
+            boolean found = false;
+            for (VirtualFile file : files) {
+              if (file.isDirectory()) {
+                myDirectoryComboBox.setDirectory(file);
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              myScopesComboBox.selectItem("Selected Files"); // this scope name is not available in a properties file
+              myDirectoryComboBox.setDirectory(files[0].getParent());
             }
           }
-          if (!found) {
-            myScopesComboBox.selectItem("Selected Files"); // this scope name is not available in a properties file
-            myDirectoryComboBox.setDirectory(files[0].getParent());
-          }
         }
+      } finally {
+        myUpdating = false;
       }
     });
   }
@@ -196,6 +202,7 @@ public class ScopePanel extends JPanel {
   }
 
   void setScopeFromUI(@NotNull Scopes.Type type, boolean requestFocus) {
+    if (myUpdating) return;
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);

@@ -318,21 +318,31 @@ public class ContainerUtil extends ContainerUtilRt {
     return Collections.unmodifiableMap(original);
   }
 
+  /**
+   * @deprecated Use {@link SmartList()}
+   */
   @NotNull
-  @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList() {
     return new SmartList<>();
   }
 
+  /**
+   * @deprecated Use {@link SmartList(T)}
+   */
   @NotNull
-  @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList(T element) {
     return new SmartList<>(element);
   }
 
+  /**
+    * @deprecated Use {@link SmartList(T)}
+    */
   @SafeVarargs
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList(@NotNull T... elements) {
     return new SmartList<>(elements);
   }

@@ -80,8 +80,8 @@ class VcsCloneDialog private constructor(private val project: Project,
 
   override fun getPreferredFocusedComponent(): JComponent? = getSelectedComponent()?.getPreferredFocusedComponent()
 
-  fun doClone() {
-    getSelectedComponent()?.doClone()
+  fun doClone(checkoutListener: CheckoutProvider.Listener) {
+    getSelectedComponent()?.doClone(checkoutListener)
   }
 
   private fun switchComponent(extension: VcsCloneDialogExtension) {

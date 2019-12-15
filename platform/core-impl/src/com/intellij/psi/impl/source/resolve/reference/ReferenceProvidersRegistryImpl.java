@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
     if (allReferencesMap.isEmpty()) return PsiReference.EMPTY_ARRAY;
 
-    final List<PsiReference> result = ContainerUtil.newSmartList();
+    final List<PsiReference> result = new SmartList<>();
     final double maxPriority = getMaxPriority(allReferencesMap.keySet());
     final List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
@@ -201,7 +202,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   private static List<PsiReference> getLowerPriorityReferences(@NotNull MultiMap<Double, PsiReference[]> allReferencesMap,
                                                                double maxPriority,
                                                                @NotNull List<? extends PsiReference> maxPriorityRefs) {
-    List<PsiReference> result = ContainerUtil.newSmartList();
+    List<PsiReference> result = new SmartList<>();
     for (Map.Entry<Double, Collection<PsiReference[]>> entry : allReferencesMap.entrySet()) {
       if (maxPriority != entry.getKey().doubleValue()) {
         for (PsiReference[] references : entry.getValue()) {
@@ -231,7 +232,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
   @NotNull
   private static List<PsiReference> collectReferences(@Nullable Collection<PsiReference[]> references) {
     if (references == null) return Collections.emptyList();
-    List<PsiReference> list = ContainerUtil.newSmartList();
+    List<PsiReference> list = new SmartList<>();
     for (PsiReference[] reference : references) {
       ContainerUtil.addAllNotNull(list, reference);
     }

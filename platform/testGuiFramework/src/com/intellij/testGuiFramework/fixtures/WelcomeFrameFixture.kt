@@ -3,7 +3,10 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.framework.Timeouts
-import com.intellij.testGuiFramework.impl.*
+import com.intellij.testGuiFramework.impl.GuiRobotHolder
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.actionLink
+import com.intellij.testGuiFramework.impl.popupMenu
 import com.intellij.testGuiFramework.util.step
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
@@ -27,7 +30,7 @@ class WelcomeFrameFixture private constructor(robot: Robot,
   }
 
   fun checkoutFrom(): WelcomeFrameFixture {
-    findActionLinkByActionId("WelcomeScreen.GetFromVcs").click()
+    findActionLinkByActionId("Vcs.VcsClone").click()
     return this
   }
 

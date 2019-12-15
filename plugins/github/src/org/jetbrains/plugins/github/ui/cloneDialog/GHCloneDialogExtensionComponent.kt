@@ -24,7 +24,7 @@ import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
@@ -351,7 +351,7 @@ internal class GHCloneDialogExtensionComponent(
     return list
   }
 
-  override fun doClone() {
+  override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val parent = Paths.get(directoryField.text).toAbsolutePath().parent
 
     val lfs = LocalFileSystem.getInstance()
@@ -365,8 +365,7 @@ internal class GHCloneDialogExtensionComponent(
     val directoryName = Paths.get(directoryField.text).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), ProjectLevelVcsManager.getInstance(project).compositeCheckoutListener,
-                              destinationParent, selectedUrl, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
   }
 
   override fun onComponentSelected() {

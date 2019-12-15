@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,8 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     if (!(tokenType instanceof TextMateElementType)) return PLAIN_SYNTAX_HIGHLIGHTER.getTokenHighlights(tokenType);
     TextMateService service = TextMateService.getInstance();
     Map<CharSequence, TextMateCustomTextAttributes> customHighlightingColors = service.getCustomHighlightingColors();
-    List<HighlightingRule> highlightingRules = ContainerUtil.newSmartList(new HighlightingRule(TextMateTheme.DEFAULT_ATTRIBUTES_NAME, TextMateWeigh.ZERO));
+    List<HighlightingRule> highlightingRules =
+      new SmartList<>(new HighlightingRule(TextMateTheme.DEFAULT_ATTRIBUTES_NAME, TextMateWeigh.ZERO));
     for (CharSequence currentRule : ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules())) {
       final TextMateWeigh weigh = mySelectorWeigher.weigh(currentRule, tokenType.toString());
       if (weigh.weigh > 0) {

@@ -284,7 +284,8 @@ public final class PerformanceWatcher implements Disposable {
     stopDumping();
 
     if (myFreezeStart != 0) {
-      int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
+      long durationMs = currentMillis - myFreezeStart;
+      int unresponsiveDuration = (int)durationMs / 1000;
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       File reportDir = null;
       if (dir.exists()) {
@@ -294,7 +295,8 @@ public final class PerformanceWatcher implements Disposable {
           reportDir = null;
         }
       }
-      getPublisher().uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
+      LOG.warn("UI freezed for " + durationMs + "ms, details saved to " + reportDir);
+      getPublisher().uiFreezeFinished(durationMs, reportDir);
       myFreezeStart = 0;
 
       myStacktraceCommonPart = null;

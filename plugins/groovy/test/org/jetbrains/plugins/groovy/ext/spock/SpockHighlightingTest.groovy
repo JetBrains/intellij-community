@@ -89,4 +89,17 @@ class FooSpec extends spock.lang.Specification {
 }
 '''
   }
+
+  @Test
+  void 'dot in method name'() {
+    highlightingTest '''\
+class FooSpec extends spock.lang.Specification {
+  def <warning descr="Method name contains illegal character(s): '.'">'not.a.feature'</warning>() {}
+  def 'a.feature'() {
+    when:
+    42
+  }    
+}
+'''
+  }
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -36,7 +37,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
-        List<ProviderBinding> result = ContainerUtil.newSmartList();
+      List<ProviderBinding> result = new SmartList<>();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
             result.add(myBindingsMap.get(bindingClass));
@@ -152,7 +153,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
-    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = ContainerUtil.newSmartList();
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = new SmartList<>();
     for (ProviderBinding binding : bindings) {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }

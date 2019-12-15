@@ -398,8 +398,11 @@ public class LambdaUtil {
 
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
-          LOG.assertTrue(!MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()));
           JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
+          PsiElement resultElement = resolveResult.getElement();
+          LOG.assertTrue(!(MethodCandidateInfo.isOverloadCheck(contextCall.getArgumentList()) &&
+                           resultElement instanceof PsiMethod &&
+                           ((PsiMethod)resultElement).hasTypeParameters()));
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }

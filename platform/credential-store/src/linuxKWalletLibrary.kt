@@ -33,12 +33,15 @@ internal class KWalletCredentialStore private constructor(private val connection
           LOG.info("No KWallet service", e)
         }
         catch (e: DBusException) {
-          LOG.warn("Filed to connect to KWallet", e)
+          LOG.warn("Failed to connect to KWallet", e)
+        }
+        catch (e: RuntimeException) {
+          LOG.warn("Failed to connect to KWallet", e)
         }
         connection.close()
       }
       catch (e: DBusException) {
-        LOG.warn("Filed to connect to dbus", e)
+        LOG.warn("Failed to connect to D-Bus", e)
       }
       return null
     }

@@ -369,7 +369,7 @@ public class PsiClassImplUtil {
             PsiUtilCore.ensureValid(element);
             allMembers.add((PsiMember)element);
             String currentName = ((PsiMember)element).getName();
-            List<PsiMember> listByName = map.computeIfAbsent(currentName, __ -> ContainerUtil.newSmartList());
+            List<PsiMember> listByName = map.computeIfAbsent(currentName, __ -> new SmartList<>());
             listByName.add((PsiMember)element);
           }
         }

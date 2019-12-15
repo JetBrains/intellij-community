@@ -40,7 +40,7 @@ import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +169,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     for (OrderEntry entry : index.getOrderEntriesForFile(file)) {
       if (entry instanceof LibraryOrderEntry) {
-        if (entries == null) entries = ContainerUtil.newSmartList();
+        if (entries == null) entries = new SmartList<>();
         entries.add((LibraryOrderEntry)entry);
       }
     }
