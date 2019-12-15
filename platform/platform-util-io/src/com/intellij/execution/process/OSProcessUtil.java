@@ -92,6 +92,7 @@ public final class OSProcessUtil {
    *
    * @see KillableProcessHandler#destroyProcessGracefully()
    */
+  @SuppressWarnings("CheckReturnValue")  // see comment added by commit e6a2f0f
   public static void terminateProcessGracefully(int pid) throws RuntimeException {
     if (SystemInfo.isWindows) {
       if (Registry.is("disable.winp")) {
