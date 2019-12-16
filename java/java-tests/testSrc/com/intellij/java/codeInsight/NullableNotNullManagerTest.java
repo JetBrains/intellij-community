@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.*;
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -17,6 +16,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;

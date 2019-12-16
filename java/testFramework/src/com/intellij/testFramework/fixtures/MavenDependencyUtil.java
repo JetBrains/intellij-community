@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.testutil;
+package com.intellij.testFramework.fixtures;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -17,8 +17,9 @@ import java.util.List;
 
 public class MavenDependencyUtil {
   /**
-   * Adds a Maven library to given model
-   * @param model root model to add a Maven library to
+   * Adds a Maven library to given model.
+   *
+   * @param model            root model to add a Maven library to
    * @param mavenCoordinates maven coordinates like groupID:artifactID:version
    */
   public static void addFromMaven(@NotNull ModifiableRootModel model, String mavenCoordinates) {
