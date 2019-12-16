@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -35,19 +34,16 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.AppUIUtil
-import com.intellij.ui.CustomProtocolHandler
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
-import com.intellij.util.io.exists
 import com.intellij.util.io.write
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.accessibility.ScreenReader
@@ -444,48 +440,7 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
 
 open class IdeStarter : ApplicationStarter {
   override fun isHeadless() = false
-
   override fun getCommandName(): String? = null
-
-  override fun canProcessExternalCommandLine() = true
-
-  override fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): Future<CliResult> {
-    LOG.info("Request to open in $currentDirectory with parameters: ${args.joinToString(separator = ",")}")
-    if (args.isEmpty()) {
-      return CliResult.OK_FUTURE
-    }
-
-    val filename = args[0]
-    val file = if (currentDirectory == null) Paths.get(filename) else Paths.get(currentDirectory, filename)
-    if (file.exists()) {
-      var line = -1
-      if (args.size > 2 && CustomProtocolHandler.LINE_NUMBER_ARG_NAME == args[1]) {
-        try {
-          line = args[2].toInt()
-        }
-        catch (ignore: NumberFormatException) {
-          LOG.error("Wrong line number: ${args[2]}")
-        }
-      }
-
-      var column = -1
-      if (args.size > 4 && CustomProtocolHandler.COLUMN_NUMBER_ARG_NAME == args[3]) {
-        try {
-          column = args[4].toInt()
-        }
-        catch (ignore: NumberFormatException) {
-          LOG.error("Wrong column number: ${args[4]}")
-        }
-      }
-
-      val openProjectTask = OpenProjectTask()
-      openProjectTask.line = line
-      openProjectTask.column = column
-
-      PlatformProjectOpenProcessor.doOpenProject(file, openProjectTask)
-    }
-    return CliResult.error(1, "Can't find file: $file")
-  }
 
   private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
     var project: Project? = null
