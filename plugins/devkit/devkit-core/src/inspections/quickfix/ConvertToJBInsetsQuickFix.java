@@ -69,7 +69,7 @@ public class ConvertToJBInsetsQuickFix extends LocalQuickFixBase {
       final PsiElement newElement = newExpression.replace(expression);
       final PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
       final int offset = el.getTextOffset() + el.getText().length() - 2;
-      final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(el);
+      final Editor editor = PsiEditorUtil.findEditor(el);
       if (editor != null) {
         editor.getCaretModel().moveToOffset(offset);
       }

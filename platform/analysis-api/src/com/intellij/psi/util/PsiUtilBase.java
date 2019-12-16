@@ -174,7 +174,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   @Deprecated
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {
-    return PsiEditorUtil.Service.getInstance().findEditorByPsiElement(element);
+    return PsiEditorUtil.findEditor(element);
   }
 
   public static boolean isSymLink(@NotNull final PsiFileSystemItem element) {

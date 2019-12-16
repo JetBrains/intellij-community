@@ -157,7 +157,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     final VirtualFile virtualFile = generator.getDocStringOwner().getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
     final Project project = generator.getDocStringOwner().getProject();
-    final Editor targetEditor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(generator.getDocStringOwner());
+    final Editor targetEditor = PsiEditorUtil.findEditor(generator.getDocStringOwner());
     if (targetEditor != null && template != null) {
       targetEditor.getCaretModel().moveToOffset(docStringExpression.getTextOffset());
       TemplateManager.getInstance(project).startTemplate(targetEditor, template);

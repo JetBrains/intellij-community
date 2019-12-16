@@ -28,6 +28,11 @@ public interface PsiEditorUtil {
   @Nullable
   Editor findEditorByPsiElement(@NotNull PsiElement element);
 
+  @Nullable
+  static Editor findEditor(@NotNull PsiElement element) {
+    return Service.getInstance().findEditorByPsiElement(element);
+  }
+
   class Service {
     public static PsiEditorUtil getInstance() {
       return ServiceManager.getService(PsiEditorUtil.class);

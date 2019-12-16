@@ -250,7 +250,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     if (stringPartInfo != null) {
       final GrExpression
         expr = mySettings.getStringPartInfo().replaceLiteralWithConcatenation(mySettings.getName());
-      final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(expr);
+      final Editor editor = PsiEditorUtil.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());

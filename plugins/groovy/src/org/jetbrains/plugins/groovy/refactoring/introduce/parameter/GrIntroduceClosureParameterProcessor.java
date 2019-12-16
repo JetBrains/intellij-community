@@ -290,7 +290,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final StringPartInfo info = settings.getStringPartInfo();
     if (info != null) {
       final GrExpression expr = info.replaceLiteralWithConcatenation(settings.getName());
-      final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(expr);
+      final Editor editor = PsiEditorUtil.findEditor(expr);
       if (editor != null) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(expr.getTextRange().getEndOffset());

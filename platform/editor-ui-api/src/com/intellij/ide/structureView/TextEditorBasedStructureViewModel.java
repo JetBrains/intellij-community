@@ -43,7 +43,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
    * @param psiFile the file for which the structure view model is requested.
    */
   protected TextEditorBasedStructureViewModel(@NotNull PsiFile psiFile) {
-    this(PsiEditorUtil.Service.getInstance().findEditorByPsiElement(psiFile), psiFile);
+    this(PsiEditorUtil.findEditor(psiFile), psiFile);
   }
 
   /**

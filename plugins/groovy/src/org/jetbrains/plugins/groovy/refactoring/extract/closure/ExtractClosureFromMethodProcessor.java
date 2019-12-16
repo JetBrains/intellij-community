@@ -206,7 +206,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final GrStatement newStatement = ExtractUtil.replaceStatement(myDeclarationOwner, myHelper);
 
-    final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(newStatement);
+    final Editor editor = PsiEditorUtil.findEditor(newStatement);
     if (editor != null) {
       PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
       editor.getSelectionModel().removeSelection();

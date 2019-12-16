@@ -60,7 +60,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
       anchorStatement = body.getStatements()[0];
     }
-    Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(anchorStatement);
+    Editor editor = PsiEditorUtil.findEditor(anchorStatement);
     if (editor == null) return;
     PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
