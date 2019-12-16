@@ -5,7 +5,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -75,7 +77,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document));
     ReadAction
       .nonBlocking(() -> commitUnderProgress(task, false))
-      .expireWhen(() -> isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid())
+      .expireWhen(() -> project.isDisposed() || isDisposed || !documentManager.isInUncommittedSet(document) || !task.isStillValid())
       .coalesceBy(task)
       .finishOnUiThread(modality, edtFinish -> {
         if (edtFinish != null) {
