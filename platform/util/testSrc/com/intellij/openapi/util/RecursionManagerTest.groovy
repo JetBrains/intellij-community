@@ -3,12 +3,15 @@ package com.intellij.openapi.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.UsefulTestCase
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.transform.Immutable
 import junit.framework.TestCase
 
 /**
  * @author peter
  */
+@CompileStatic
 class RecursionManagerTest extends TestCase {
   private final RecursionGuard myGuard = RecursionManager.createGuard("RecursionManagerTest")
   private final Disposable myDisposable = Disposer.newDisposable()
@@ -39,11 +42,12 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
+  @CompileDynamic
   void testAssertOnMissedCache() {
     assert "foo-return" == prevent("foo") {
       def stamp = RecursionManager.markStack()
       assert null == prevent("foo") { fail() }
-      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException) {stamp.mayCacheNow() }
+      UsefulTestCase.assertThrows(RecursionManager.CachingPreventedException) { stamp.mayCacheNow() }
       return "foo-return"
     }
   }
@@ -94,7 +98,7 @@ class RecursionManagerTest extends TestCase {
           return "bar-return"
         }
         assert !bar1.mayCacheNow()
-        
+
         def goo1 = RecursionManager.markStack()
         assert "goo-return" == prevent("goo") {
           return "goo-return"
@@ -185,7 +189,7 @@ class RecursionManagerTest extends TestCase {
     prevent(new RecursiveKey('a')) {
       prevent(new RecursiveKey('b')) {
         prevent(new RecursiveKey('a')) {
-          throw new AssertionError("shouldn't be called")
+          throw new AssertionError((Object)"shouldn't be called")
         }
       }
     }
@@ -239,5 +243,4 @@ class RecursionManagerTest extends TestCase {
       return super.equals(obj)
     }
   }
-
 }
