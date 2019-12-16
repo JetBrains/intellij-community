@@ -18,10 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 
-public class JdkPopup {
+public class SdkPopup {
   private final SdkListModelBuilder myModel;
   @NotNull private final JComponent myParentComponent;
   @Nullable private final Project myProject;
@@ -37,7 +36,7 @@ public class JdkPopup {
    * @param creationFilter a filter of SdkType that allowed to create a new Sdk with that control
    * @param onNewSdkAdded  a callback that is executed once a new Sdk is added to the list
    */
-  public JdkPopup(@NotNull JComponent parentComponent,
+  public SdkPopup(@NotNull JComponent parentComponent,
                   @Nullable Project project,
                   @NotNull ProjectSdksModel sdkModel,
                   @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
@@ -51,7 +50,7 @@ public class JdkPopup {
       project,
       sdkModel,
       sdkTypeFilter,
-      SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter),
+      creationFilter,
       sdkFilter);
 
     myModel.addModelListener(new ModelListener() {
@@ -141,5 +140,3 @@ public class JdkPopup {
     }
   }
 }
-
-

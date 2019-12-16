@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.SdkPopup;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LoadingDecorator;
@@ -44,7 +45,7 @@ import java.util.List;
 import java.util.*;
 
 /**
- * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.JdkPopup} instead
+ * @deprecated use {@link SdkPopup} instead
  */
 @Deprecated
 public class JdkChooserPanel extends JPanel {
