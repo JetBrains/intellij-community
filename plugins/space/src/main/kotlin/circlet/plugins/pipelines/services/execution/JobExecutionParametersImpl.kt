@@ -7,31 +7,31 @@ class JobExecutionParametersImpl : JobExecutionParameters {
     companion object : KLogging()
     private val keys = mutableMapOf<Long, MutableMap<String, String>>()
 
-    override fun set(taskExecutionId: Long, key: String, value: String, constValue: Boolean) {
-        logger.info { "set. taskExecutionId $taskExecutionId. key $key. value $value. constValue $constValue" }
-        val map = keys[taskExecutionId] ?: error("Can't find keys for $taskExecutionId")
+    override fun set(jobExecutionId: Long, key: String, value: String, constValue: Boolean) {
+        logger.info { "set. jobExecutionId $jobExecutionId. key $key. value $value. constValue $constValue" }
+        val map = keys[jobExecutionId] ?: error("Can't find keys for $jobExecutionId")
         map[key] = value
     }
 
-    override fun get(taskExecutionId: Long, key: String): String? {
-        logger.info { "get. taskExecutionId $taskExecutionId. key $key" }
-        val map = keys[taskExecutionId] ?: error("Can't find keys for $taskExecutionId")
+    override fun get(jobExecutionId: Long, key: String): String? {
+        logger.info { "get. jobExecutionId $jobExecutionId. key $key" }
+        val map = keys[jobExecutionId] ?: error("Can't find keys for $jobExecutionId")
         return map[key]
     }
 
-    override fun delete(taskExecutionId: Long, key: String) {
-        logger.info { "delete. taskExecutionId $taskExecutionId. key $key" }
-        val map = keys[taskExecutionId] ?: error("Can't find keys for $taskExecutionId")
+    override fun delete(jobExecutionId: Long, key: String) {
+        logger.info { "delete. jobExecutionId $jobExecutionId. key $key" }
+        val map = keys[jobExecutionId] ?: error("Can't find keys for $jobExecutionId")
         map.remove(key)
     }
 
-    override fun deleteAll(taskExecutionId: Long) {
-        logger.info { "deleteAll. taskExecutionId $taskExecutionId" }
-        keys.remove(taskExecutionId)
+    override fun deleteAll(jobExecutionId: Long) {
+        logger.info { "deleteAll. jobExecutionId $jobExecutionId" }
+        keys.remove(jobExecutionId)
     }
 
-    override fun initSystemParams(taskExecutionId: Long, jobContext: ActionStartContext) {
-        logger.info { "initSystemParams. taskExecutionId $taskExecutionId" }
-        keys[taskExecutionId] = mutableMapOf<String, String>()
+    override fun initSystemParams(jobExecutionId: Long, commit: String, branch: String, triggerData: TriggerData) {
+        logger.info { "initSystemParams. jobExecutionId $jobExecutionId" }
+        keys[jobExecutionId] = mutableMapOf<String, String>()
     }
 }
