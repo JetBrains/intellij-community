@@ -337,6 +337,35 @@ public class MavenJUnitPatcherTest extends MavenImportingTestCase {
                  javaParameters.getVMParametersList().getList());
   }
 
+  public void testArgLineProperty() {
+    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
+                                           "<artifactId>m1</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<properties>\n" +
+                                           "<argLine>-DsomeProp=Hello</argLine>\n" +
+                                           "</properties>" +
+                                           "<build><plugins>" +
+                                           "  <plugin>" +
+                                           "    <groupId>org.apache.maven.plugins</groupId>" +
+                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
+                                           "    <version>2.16</version>" +
+                                           "    <configuration>" +
+                                           "      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
+                                           "    </configuration>" +
+                                           "  </plugin>" +
+                                           "</plugins></build>");
+
+    importProjects(m1);
+    Module module = getModule("m1");
+
+    MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
+    JavaParameters javaParameters = new JavaParameters();
+    javaParameters.getVMParametersList().add("-ea");
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters);
+    assertEquals(asList("-ea", "-DsomeProp=Hello", "-Xmx2048M", "-XX:MaxPermSize=512M", "-Dargs=can have spaces"),
+                 javaParameters.getVMParametersList().getList());
+  }
+
   public void testResolvePropertiesUsingAt() {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>\n" +
                                            "<artifactId>m1</artifactId>\n" +
