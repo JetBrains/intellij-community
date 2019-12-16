@@ -58,7 +58,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     List<String> nsInfo = new ArrayList<>();
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
 
-    if (variants.isEmpty() && psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
+    if ((variants.isEmpty() || isFirstTag(tag)) && psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
       getRootTagsVariants(tag, elements);
       return;
     }
@@ -94,6 +94,10 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
       elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
+  }
+
+  private static boolean isFirstTag(XmlTag tag) {
+    return tag.getPrevSiblingInTag() == null;
   }
 
   private static void getRootTagsVariants(final XmlTag tag, final List<? super LookupElement> elements) {
