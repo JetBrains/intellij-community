@@ -319,16 +319,23 @@ internal object BranchesDashboardActions {
     }
   }
 
-  object RenameLocalBranchOnF2KeyPressHandler {
-    fun install(project: Project, treeComponent: BranchesTreeComponent) {
-      treeComponent.keyPressHandler = { clickedNode -> doRename(clickedNode, project) }
+  class RenameLocalBranch : BranchesActionBase() {
+
+    override fun update(e: AnActionEvent, project: Project, branches: Collection<BranchInfo>) {
+      if (branches.size > 1) {
+        e.presentation.isEnabled = false
+        return
+      }
+      val branch = branches.firstOrNull()
+      if (branch == null || !branch.isLocal || branch.repositories.any(Repository::isFresh)){
+        e.presentation.isEnabled = false
+      }
     }
 
-    private fun doRename(clickedNode: BranchTreeNode, project: Project) {
-      val branchInfo = clickedNode.getNodeDescriptor().branchInfo ?: return
-      if (!branchInfo.isLocal || branchInfo.repositories.any(Repository::isFresh)) return
-
-      GitBranchPopupActions.LocalBranchActions.RenameBranchAction.rename(project, branchInfo.repositories, branchInfo.branchName)
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project!!
+      val branch = e.getData(GIT_BRANCHES)!!.firstOrNull() ?: return
+      GitBranchPopupActions.LocalBranchActions.RenameBranchAction.rename(project, branch.repositories, branch.branchName)
     }
   }
 }

@@ -20,11 +20,9 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionG
 import icons.DvcsImplIcons
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
-import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.KeyStroke
 import javax.swing.TransferHandler
 import javax.swing.border.Border
 import javax.swing.event.TreeExpansionEvent
@@ -34,7 +32,6 @@ import javax.swing.tree.TreePath
 internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataProvider {
 
   var doubleClickHandler: (BranchTreeNode) -> Unit = {}
-  var keyPressHandler: (BranchTreeNode) -> Unit = {}
   var searchField: SearchTextField? = null
 
   init {
@@ -43,7 +40,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
     setShowsRootHandles(true)
     isOpaque = false
     installDoubleClickHandler()
-    installF2KeyPressHandler()
     initDnD()
   }
 
@@ -111,17 +107,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
     if (!GraphicsEnvironment.isHeadless()) {
       transferHandler = BRANCH_TREE_TRANSFER_HANDLER
     }
-  }
-
-  private fun installF2KeyPressHandler() {
-    registerKeyboardAction({
-                             val selectionPaths = selectionPaths ?: return@registerKeyboardAction
-                             if (selectionPaths.size != 1) return@registerKeyboardAction
-                             val node = selectionPaths.firstOrNull()?.lastPathComponent as? BranchTreeNode
-                             if (node != null) {
-                               keyPressHandler(node)
-                             }
-                           }, KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), JComponent.WHEN_FOCUSED)
   }
 
   override fun getData(dataId: String): Any? {

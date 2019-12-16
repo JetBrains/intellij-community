@@ -41,7 +41,6 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.CheckoutLocalBranch
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
-import git4idea.ui.branch.dashboard.BranchesDashboardActions.RenameLocalBranchOnF2KeyPressHandler
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
@@ -116,7 +115,6 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   private fun initMainUi() {
     CheckoutLocalBranchOnDoubleClickHandler.install(project, tree.component)
-    RenameLocalBranchOnF2KeyPressHandler.install(project, tree.component)
     val diffAction = ShowBranchDiffAction()
     diffAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Diff.ShowDiff"), branchesTreeWithLogPanel)
 

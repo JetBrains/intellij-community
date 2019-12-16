@@ -50,6 +50,8 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Edit Commit Message..."
             description="Change commit message via reword option of git rebase or amend" />
+    <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch" text="Rename..."
+            description="Rename a local branch"/>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
             description="Create a fixup commit"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
