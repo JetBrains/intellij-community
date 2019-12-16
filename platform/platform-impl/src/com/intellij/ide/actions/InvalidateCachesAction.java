@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.caches.CachesInvalidator;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -23,7 +24,9 @@ import java.util.List;
 
 public class InvalidateCachesAction extends AnAction implements DumbAware {
   public InvalidateCachesAction() {
-    getTemplatePresentation().setText(ApplicationManager.getApplication().isRestartCapable() ? "Invalidate Caches / Restart..." : "Invalidate Caches...");
+    String text = ApplicationManager.getApplication().isRestartCapable() ? ActionsBundle.message("action.InvalidateCachesRestart.text") 
+                                                                         : ActionsBundle.message("action.InvalidateCaches.text");
+    getTemplatePresentation().setText(text);
   }
 
   @Override
