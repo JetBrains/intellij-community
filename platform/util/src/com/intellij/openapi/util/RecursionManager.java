@@ -388,7 +388,6 @@ public class RecursionManager {
     "com.intellij.psi.impl.source.tree.java.MethodReferenceResolver.resolve(",
     "com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil.isPolyExpression(",
     // inner class imports
-    "com.intellij.psi.impl.source.resolve.ClassResolverProcessor.isAmbiguousInherited(",
     "com.intellij.psi.impl.source.PsiJavaFileBaseImpl.processDeclarations(",
     "com.intellij.psi.impl.PsiClassImplUtil.getScopeCorrectedSuperTypes(",
     "com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl.multiResolve(",

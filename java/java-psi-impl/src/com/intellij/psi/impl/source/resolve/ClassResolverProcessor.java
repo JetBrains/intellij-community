@@ -190,6 +190,9 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
     PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
+    if (psiClass instanceof PsiAnonymousClass && myPlace == ((PsiAnonymousClass)psiClass).getBaseClassReference()) {
+      psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass.class);
+    }
     while (psiClass != null) {
       if (psiClass.isInheritor(containingClass1, false)) {
         return true;
