@@ -85,6 +85,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     }
 
     try {
+      executableManager.dropExecutableCache()
       val pathToGit = executableManager.pathToGit
       val gitVersion = executableManager.identifyVersion(pathToGit)
 

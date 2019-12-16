@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
@@ -34,11 +33,11 @@ public class GitExecutableManager {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
-  @NotNull private final AtomicNotNullLazyValue<String> myDetectedExecutable;
+  @Nullable private String myDetectedExecutable;
+  @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
 
   public GitExecutableManager() {
-    myDetectedExecutable = AtomicNotNullLazyValue.createValue(new GitExecutableDetector()::detect);
     myVersionCache = new CachingFileTester<GitVersion>() {
       @NotNull
       @Override
@@ -80,7 +79,18 @@ public class GitExecutableManager {
 
   @NotNull
   public String getDetectedExecutable() {
-    return myDetectedExecutable.getValue();
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      if (myDetectedExecutable == null) {
+        myDetectedExecutable = new GitExecutableDetector().detect();
+      }
+      return myDetectedExecutable;
+    }
+  }
+
+  public void dropExecutableCache() {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      myDetectedExecutable = null;
+    }
   }
 
   /**
