@@ -807,7 +807,12 @@ public class GitBranchPopupActions {
         presentation.setDescription("Update is already running");
         return;
       }
-      presentation.setEnabled(isTrackingInfosExist(myBranchNameList, myRepositories));
+
+      boolean trackingInfosExist = isTrackingInfosExist(myBranchNameList, myRepositories);
+      presentation.setEnabled(trackingInfosExist);
+      if (!trackingInfosExist) {
+        presentation.setDescription(String.format("Tracking branch doesn't configured for %s", branchPresentation));
+      }
     }
 
     @Override

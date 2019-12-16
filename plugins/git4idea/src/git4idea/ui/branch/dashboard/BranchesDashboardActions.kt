@@ -139,7 +139,11 @@ internal object BranchesDashboardActions {
       val pluralizedBranchName = StringUtil.pluralize("branch", branchNames.size)
       presentation.description =
         "Fetch remote tracking $pluralizedBranchName and fast-forward selected local $pluralizedBranchName (like `git fetch branch:branch`)"
-      presentation.isEnabled = isTrackingInfosExist(branchNames, repositories)
+      val trackingInfosExist = isTrackingInfosExist(branchNames, repositories)
+      presentation.isEnabled = trackingInfosExist
+      if (!trackingInfosExist) {
+        presentation.description = "Tracking branch doesn't configured for selected $pluralizedBranchName"
+      }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
