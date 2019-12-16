@@ -154,7 +154,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   }
 
   override fun activate(runnable: Runnable?) {
-    activate(runnable, true)
+    activate(runnable, autoFocusContents = true)
   }
 
   override fun activate(runnable: Runnable?, autoFocusContents: Boolean) {

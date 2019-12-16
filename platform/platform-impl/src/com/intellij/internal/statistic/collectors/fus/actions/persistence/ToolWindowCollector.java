@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
+import com.intellij.build.BuildContentManager;
 import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.ide.actions.ToolWindowMoveAction;
 import com.intellij.ide.actions.ToolWindowViewModeAction;
@@ -53,7 +54,7 @@ public final class ToolWindowCollector {
     ourToolwindowWhitelist.put(ANT_BUILD, new ToolWindowInfo("Ant"));
     ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
     ourToolwindowWhitelist.put(RUN, new ToolWindowInfo("Run"));
-    ourToolwindowWhitelist.put(BUILD, new ToolWindowInfo("Build"));
+    ourToolwindowWhitelist.put(BuildContentManager.TOOL_WINDOW_ID, new ToolWindowInfo("Build"));
     ourToolwindowWhitelist.put(FIND, new ToolWindowInfo("Find"));
     ourToolwindowWhitelist.put(CVS, new ToolWindowInfo("CVS"));
     ourToolwindowWhitelist.put(HIERARCHY, new ToolWindowInfo("Hierarchy"));

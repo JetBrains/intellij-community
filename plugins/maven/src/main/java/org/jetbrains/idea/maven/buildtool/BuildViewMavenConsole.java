@@ -78,7 +78,7 @@ public class BuildViewMavenConsole extends MavenConsole {
     DefaultBuildDescriptor descriptor = new DefaultBuildDescriptor(taskId, title, workingDir, System.currentTimeMillis());
 
     BuildProgressListener buildProgressListener;
-    if (ToolWindowId.BUILD.equals(toolWindowId)) {
+    if (BuildContentManager.TOOL_WINDOW_ID.equals(toolWindowId)) {
       myBuildView = null;
       buildProgressListener = ServiceManager.getService(project, BuildViewManager.class);
     }
