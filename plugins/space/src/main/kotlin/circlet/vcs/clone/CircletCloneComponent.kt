@@ -42,8 +42,7 @@ import java.util.concurrent.*
 import javax.swing.*
 import javax.swing.event.*
 
-internal class CircletCloneComponent(val project: Project,
-                                     private val git: Git) : VcsCloneDialogExtensionComponent() {
+internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExtensionComponent() {
     // state
     private val uiLifetime = LifetimeSource()
 
@@ -126,25 +125,7 @@ internal class CircletCloneComponent(val project: Project,
     }
 
     override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-        val url = cloneView.getUrl()
-        url ?: return
-        val directory = cloneView.getDirectory()
-        val parent = Paths.get(directory).toAbsolutePath().parent
-        val lfs = LocalFileSystem.getInstance()
-        var destinationParent = lfs.findFileByIoFile(parent.toFile())
-        if (destinationParent == null) {
-            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-        }
-        destinationParent ?: return
-        val directoryName = Paths.get(directory).fileName.toString()
-        val parentDirectory = parent.toAbsolutePath().toString()
-        GitCheckoutProvider.clone(project,
-                                  git,
-                                  checkoutListener,
-                                  destinationParent,
-                                  url,
-                                  directoryName,
-                                  parentDirectory)
+        cloneView.doClone(checkoutListener)
     }
 
     override fun onComponentSelected() {
@@ -228,6 +209,8 @@ private class CloneView(
         client.repoService,
         client.star
     )
+
+    var createDirectoryError: ValidationInfo? = null
 
     init {
 
@@ -376,7 +359,34 @@ private class CloneView(
     fun doValidteAll(): List<ValidationInfo> {
         val list = ArrayList<ValidationInfo>()
         ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-        ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
         return list
+    }
+
+    fun doClone(checkoutListener: CheckoutProvider.Listener) {
+        val url = getUrl()
+        url ?: return
+        val directory = getDirectory()
+
+        createDirectoryError = CloneDvcsValidationUtils.createDestination(directory)
+        if (createDirectoryError != null) {
+            return
+        }
+
+        val parent = Paths.get(directory).toAbsolutePath().parent
+        val lfs = LocalFileSystem.getInstance()
+        var destinationParent = lfs.findFileByIoFile(parent.toFile())
+        if (destinationParent == null) {
+            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
+        }
+        destinationParent ?: return
+        val directoryName = Paths.get(directory).fileName.toString()
+        val parentDirectory = parent.toAbsolutePath().toString()
+        GitCheckoutProvider.clone(project,
+                                  Git.getInstance(),
+                                  checkoutListener,
+                                  destinationParent,
+                                  url,
+                                  directoryName,
+                                  parentDirectory)
     }
 }

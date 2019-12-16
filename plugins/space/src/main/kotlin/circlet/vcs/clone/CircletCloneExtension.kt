@@ -4,14 +4,13 @@ import circlet.components.*
 import circlet.ui.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vcs.ui.cloneDialog.*
-import git4idea.commands.*
 import icons.*
 import platform.common.*
 import javax.swing.*
 
 class CircletCloneExtension : VcsCloneDialogExtension {
     override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
-        return CircletCloneComponent(project, Git.getInstance())
+        return CircletCloneComponent(project)
     }
 
     override fun getIcon(): Icon = CircletIcons.mainIcon
