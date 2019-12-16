@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -10,6 +11,7 @@ import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
@@ -26,6 +28,7 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  * @author Eugene Zhuravlev
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
+  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
 
   @Nullable private JButton mySetUpButton;
@@ -258,7 +261,14 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
   private void resolveSuggestionsIfNeeded() {
     myModel.reloadActions(this, getSelectedJdk());
-    myModel.detectItems(this);
+
+    DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
+    if (dialogWrapper == null) {
+      LOG.warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
+      return;
+    }
+
+    myModel.detectItems(this, dialogWrapper.getDisposable());
   }
 
   @Override

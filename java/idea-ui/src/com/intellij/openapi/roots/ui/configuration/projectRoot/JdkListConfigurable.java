@@ -12,7 +12,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.SdkPopup;
+import com.intellij.openapi.roots.ui.configuration.SdkListModelBuilder;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
@@ -228,15 +229,16 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      new SdkPopup(
-        myTree,
+      new SdkPopupFactory(
         myProject,
         getJdksTreeModel(),
-        notSimpleJavaSdkType(),
-        sdk -> false,
-        null,
-        null
-      ).showPopup(e);
+        new SdkListModelBuilder(
+          myProject,
+          getJdksTreeModel(),
+          notSimpleJavaSdkType(),
+          null,
+          sdk -> false)
+      ).showPopup(e, () -> {});
     }
   }
 }
