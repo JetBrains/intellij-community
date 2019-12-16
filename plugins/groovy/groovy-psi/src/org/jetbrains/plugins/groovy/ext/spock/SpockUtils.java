@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Map;
 
@@ -30,11 +31,7 @@ public class SpockUtils {
 
   public static final String SPEC_CLASS_NAME = "spock.lang.Specification";
 
-  private static final LightCacheKey<Map<String, SpockVariableDescriptor>> KEY = LightCacheKey.create();
-
-  private SpockUtils() {
-
-  }
+  private SpockUtils() {}
 
   public static Map<String, SpockVariableDescriptor> getVariableMap(@NotNull GrMethod method) {
     GrMethod originalMethod;
@@ -50,14 +47,7 @@ public class SpockUtils {
       originalMethod = method;
     }
 
-    Map<String, SpockVariableDescriptor> cachedValue = KEY.getCachedValue(originalMethod);
-    if (cachedValue == null) {
-      cachedValue = createVariableMap(originalMethod);
-
-      cachedValue = KEY.putCachedValue(originalMethod, cachedValue);
-    }
-
-    return cachedValue;
+    return CachedValuesManager.getCachedValue(originalMethod, () -> Result.create(createVariableMap(originalMethod), originalMethod));
   }
 
   @Nullable

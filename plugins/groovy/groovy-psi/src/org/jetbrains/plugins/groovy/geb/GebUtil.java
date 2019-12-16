@@ -1,8 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -15,7 +17,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,8 +26,6 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class GebUtil {
-
-  private static final LightCacheKey<Map<String, PsiMember>> KEY = LightCacheKey.createByFileModificationCount();
 
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
                                                     PsiElement place,
@@ -48,13 +47,9 @@ public class GebUtil {
   }
 
   public static Map<String, PsiMember> getContentElements(@NotNull PsiClass pageOrModuleClass) {
-    Map<String, PsiMember> res = KEY.getCachedValue(pageOrModuleClass);
-    if (res == null) {
-      res = calculateContentElements(pageOrModuleClass);
-      res = KEY.putCachedValue(pageOrModuleClass, res);
-    }
-
-    return res;
+    return CachedValuesManager.getCachedValue(pageOrModuleClass, () -> Result.create(
+      calculateContentElements(pageOrModuleClass), pageOrModuleClass
+    ));
   }
 
   private static Map<String, PsiMember> calculateContentElements(@NotNull PsiClass pageOrModuleClass) {
