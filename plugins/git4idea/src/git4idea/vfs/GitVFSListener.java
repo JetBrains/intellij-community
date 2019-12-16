@@ -76,13 +76,13 @@ public class GitVFSListener extends VcsVFSListener {
                                           @NotNull Map<VirtualFile, VirtualFile> copyFromMap,
                                           @NotNull ExecuteAddCallback executeAddCallback) {
     saveUnsavedVcsIgnoreFiles();
-    // Filter added files before further processing
-    Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRootIgnoringMissing(myProject, addedFiles);
-    final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
+        // Filter added files before further processing
+        Map<VirtualFile, List<VirtualFile>> sortedFiles = GitUtil.sortFilesByGitRootIgnoringMissing(myProject, addedFiles);
+        final HashSet<VirtualFile> retainedFiles = new HashSet<>();
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
