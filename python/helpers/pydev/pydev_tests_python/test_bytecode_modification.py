@@ -2,6 +2,7 @@ import dis
 import sys
 import unittest
 from io import StringIO
+from types import CodeType
 import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
@@ -20,10 +21,17 @@ def call_tracing():
 def bar(a, b):
     return a + b
 
-IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
+
+IS_PY36_OR_GREATER = sys.version_info > (3, 6)
+IS_PY37_OR_GREATER = sys.version_info > (3, 7)
+
+LOAD_OPCODES = [dis.opmap[x] for x in ('LOAD_ATTR', 'LOAD_CONST', 'LOAD_FAST', 'LOAD_GLOBAL', 'LOAD_NAME')]
+
+if IS_PY37_OR_GREATER:
+    LOAD_OPCODES.append(dis.opmap['LOAD_METHOD'])
 
 
-@pytest.mark.skipif(not IS_PY36, reason='Test requires Python 3.6')
+@pytest.mark.skipif(not IS_PY36_OR_GREATER, reason='Test requires Python 3.6 or greater')
 class TestInsertCode(unittest.TestCase):
     lines_separator = "---Line tested---"
 
@@ -46,7 +54,7 @@ class TestInsertCode(unittest.TestCase):
         code_orig = func_to_modify.__code__
         code_to_insert = func_to_insert.__code__
         success, result = insert_code(code_orig, code_to_insert, line_number)
-        self.compare_bytes_sequence(list(result.co_code), list(code_for_check.co_code), len(code_to_insert.co_code))
+        self.compare_bytes_sequence(result, code_for_check, len(code_to_insert.co_code))
 
     def compare_bytes_sequence(self, code1, code2, inserted_code_size):
         """
@@ -57,8 +65,8 @@ class TestInsertCode(unittest.TestCase):
         :param code2: a real code for checking
         :param inserted_code_size: size of inserted code
         """
-        seq1 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code1)]
-        seq2 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(code2)]
+        seq1 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(list(code1.co_code))]
+        seq2 = [(offset, op, arg) for offset, op, arg in dis._unpack_opargs(list(code2.co_code))]
         assert len(seq1) == len(seq2), "Bytes sequences have different lengths %s != %s" % (len(seq1), len(seq2))
         for i in range(len(seq1)):
             of, op1, arg1 = seq1[i]
@@ -77,12 +85,29 @@ class TestInsertCode(unittest.TestCase):
                     continue
 
             self.assertEqual(op1, op2, "Different operators at offset {}".format(of))
-            if arg1 != arg2:
-                if op1 in (100, 101, 106, 116):
-                    # Sometimes indexes of variable names and consts may be different, when we insert them, it's ok
-                    continue
-                else:
-                    self.assertEquals(arg1, arg2, "Different arguments at offset {}".format(of))
+
+            if op1 in LOAD_OPCODES:
+                # When comparing arguments of the load operations we shouldn't rely only on arguments themselves,
+                # because their order may change. It's better to compare the actual values instead.
+                self.comapre_load_args(of, code1, code2, op1, arg1, arg2)
+            elif arg1 != arg2:
+                self.assertEquals(arg1, arg2, "Different arguments at offset {}".format(of))
+
+    def comapre_load_args(self, offset, code1, code2, opcode, arg1, arg2):
+        err_msg = "Different arguments at offset {}".format(offset)
+        if opcode == dis.opmap['LOAD_ATTR']:
+            assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
+        elif opcode == dis.opmap['LOAD_CONST']:
+            const1, const2 = code1.co_consts[arg1], code2.co_consts[arg2]
+            if isinstance(const1, CodeType) and isinstance(const2, CodeType):
+                if const1.co_filename != const2.co_filename:
+                    self.fail(err_msg)
+        elif opcode == dis.opmap['LOAD_FAST']:
+            assert code1.co_varnames[arg1] == code2.co_varnames[arg2], err_msg
+        elif opcode == dis.opmap['LOAD_GLOBAL']:
+            assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
+        elif opcode == dis.opmap['LOAD_NAME']:
+            assert code1.co_names[arg1] == code2.co_names[arg2], err_msg
 
     def test_line(self):
 

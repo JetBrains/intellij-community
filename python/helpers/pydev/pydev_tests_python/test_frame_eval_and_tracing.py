@@ -236,3 +236,18 @@ def test_frame_eval_change_breakpoints(case_setup_force_frame_eval):
 
         writer.finished_ok = True
 
+
+def test_frame_eval_ignored_breakpoint(case_setup_force_frame_eval):
+    with case_setup_force_frame_eval.test_file('_debugger_case_bytecode_overflow.py') as writer:
+        break1_line = writer.get_line_index_with_content('break 1')
+
+        break1_id = writer.write_add_breakpoint(break1_line, 'None')
+        writer.write_make_initial_run()
+
+        hit = writer.wait_for_breakpoint_hit(line=break1_line)
+        assert hit.suspend_type == "frame_eval"
+
+        writer.write_remove_breakpoint(break1_id)
+        writer.write_run_thread(hit.thread_id)
+
+        writer.finished_ok = True
