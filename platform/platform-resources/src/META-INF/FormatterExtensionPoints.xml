@@ -9,13 +9,13 @@
       <with attribute="implementationClass" implements="com.intellij.lang.ImportOptimizer"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.arrangement.Rearranger"/>
     </extensionPoint>
     <extensionPoint name="lang.formatting.extractor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor"/>
     </extensionPoint>
-    <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory"/>
+    <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory" dynamic="true"/>
 
     <extensionPoint name="externalFormatProcessor" interface="com.intellij.psi.codeStyle.ExternalFormatProcessor" dynamic="true"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor" dynamic="true"/>
