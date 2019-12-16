@@ -96,6 +96,10 @@ public class LightEditorManager implements Disposable {
     myEventDispatcher.addListener(listener);
   }
 
+  public void addListener(@NotNull LightEditorListener listener, @NotNull Disposable parent) {
+    myEventDispatcher.addListener(listener, parent);
+  }
+
   void fireEditorSelected(@Nullable LightEditorInfo editorInfo) {
     myEventDispatcher.getMulticaster().afterSelect(editorInfo);
   }
