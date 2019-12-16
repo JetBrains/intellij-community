@@ -41,10 +41,18 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   private final boolean myBatchMode;
 
+  /**
+   * Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   */
+  @ApiStatus.Internal
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     this(session, false);
   }
 
+  /**
+   * Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   */
+  @ApiStatus.Internal
   public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
     myBatchMode = batchMode;
