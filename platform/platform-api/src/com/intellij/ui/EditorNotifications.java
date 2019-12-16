@@ -48,7 +48,7 @@ public abstract class EditorNotifications {
   public abstract void updateAllNotifications();
 
   @ApiStatus.Internal
-  public abstract void logNotificationActionInvocation(Key<?> providerKey, Class<?> runnableClass);
+  public abstract void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass);
 
   public static void updateAll() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

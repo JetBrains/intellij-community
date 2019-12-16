@@ -49,7 +49,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(16)));
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
-  private Key<?> myProviderKey;
+  @Nullable private Key<?> myProviderKey;
   private Project myProject;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
@@ -80,7 +80,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myProject = project;
   }
 
-  public void setProviderKey(Key<?> key) {
+  public void setProviderKey(@Nullable Key<?> key) {
     myProviderKey = key;
   }
 

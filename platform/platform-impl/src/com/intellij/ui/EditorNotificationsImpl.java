@@ -180,7 +180,9 @@ public class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Override
-  public void logNotificationActionInvocation(Key<?> providerKey, Class<?> runnableClass) {
+  public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
+    if (providerKey == null || runnableClass == null) return;
+
     FeatureUsageData data = new FeatureUsageData()
       .addData("key", providerKey.toString())
       .addData("class_name", runnableClass.getName())
