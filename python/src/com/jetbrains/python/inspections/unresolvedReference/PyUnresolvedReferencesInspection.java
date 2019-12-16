@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider;
@@ -56,7 +57,7 @@ import java.util.*;
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  * User: dcheryasov
  */
-public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInspectionBase {
+public class PyUnresolvedReferencesInspection extends PyInspection {
   private static final Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");
   public static final Key<PyUnresolvedReferencesInspection> SHORT_NAME_KEY =
     Key.create(PyUnresolvedReferencesInspection.class.getSimpleName());
