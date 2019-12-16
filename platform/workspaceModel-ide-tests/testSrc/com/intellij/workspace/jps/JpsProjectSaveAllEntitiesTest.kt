@@ -24,6 +24,12 @@ class JpsProjectSaveAllEntitiesTest {
   }
 
   @Test
+  fun `test save facets`() {
+    val projectFile = File(PathManagerEx.getCommunityHomePath(), "platform/workspaceModel-ide-tests/testData/serialization/facets/facets.ipr")
+    checkLoadSave(projectFile)
+  }
+
+  @Test
   fun `add library to empty project`() {
     val projectDir = FileUtil.createTempDirectory("jpsSaveTest", null)
     val serializers = createSerializationData(projectDir)

@@ -189,6 +189,38 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("<sourceFolder />", sourceRoot.asCustomSourceRoot()?.propertiesXmlTag)
   }
 
+  fun `test load facets`() {
+    val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel-ide-tests/testData/serialization/facets/facets.ipr")
+    val storage = loadProject(projectDir)
+    val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
+    val single = modules.getValue("single").facets.single()
+    assertEquals("foo", single.facetType)
+    assertEquals("Foo", single.name)
+    assertEquals("""
+                    <configuration>
+                      <data />
+                    </configuration>""".trimIndent(), single.configurationXmlTag)
+
+    val two = modules.getValue("two").facets.toList()
+    assertEquals(setOf("a", "b"), two.mapTo(HashSet()) { it.name })
+
+    val twoReversed = modules.getValue("two.reversed").facets.toList()
+    assertEquals(setOf("a", "b"), twoReversed.mapTo(HashSet()) { it.name })
+
+    val subFacets = modules.getValue("subFacets").facets.sortedBy { it.name }.toList()
+    assertEquals(listOf("Bar", "Foo"), subFacets.map { it.name })
+    val (bar, foo) = subFacets
+    assertEquals("Foo", bar.underlyingFacet!!.name)
+    assertEquals("""
+                    <configuration>
+                      <data />
+                    </configuration>""".trimIndent(), foo.configurationXmlTag)
+    assertEquals("""
+                    <configuration>
+                      <data2 />
+                    </configuration>""".trimIndent(), bar.configurationXmlTag)
+  }
+
   private fun loadProject(projectFile: File): TypedEntityStorage {
     val storageBuilder = TypedEntityStorageBuilder.create()
     JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder)

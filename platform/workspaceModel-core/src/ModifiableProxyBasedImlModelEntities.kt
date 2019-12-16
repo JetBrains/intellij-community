@@ -180,6 +180,24 @@ fun TypedEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
   this.homeUrl = homeUrl
 }
 
+interface ModifiableFacetEntity : FacetEntity, ModifiableTypedEntity<FacetEntity> {
+  override var name: String
+  override var facetType: String
+  override var configurationXmlTag: String?
+  override var module: ModuleEntity
+  override var underlyingFacet: FacetEntity?
+}
+
+fun TypedEntityStorageDiffBuilder.addFacetEntity(name: String, facetType: String, configurationXmlTag: String?, module: ModuleEntity,
+                                                 underlyingFacet: FacetEntity?, source: EntitySource) =
+  addEntity(ModifiableFacetEntity::class.java, source) {
+    this.name = name
+    this.facetType = facetType
+    this.configurationXmlTag = configurationXmlTag
+    this.module = module
+    this.underlyingFacet = underlyingFacet
+  }
+
 interface ModifiableArtifactEntity : ArtifactEntity, ModifiableTypedEntity<ArtifactEntity> {
   override var name: String
   override var artifactType: String

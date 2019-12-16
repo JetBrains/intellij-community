@@ -130,7 +130,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
 
 internal fun createSerializationData(projectDir: File): JpsEntitiesSerializationData {
   val reader = CachingJpsFileContentReader(VfsUtilCore.pathToUrl(projectDir.systemIndependentPath))
-  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true)
+  return JpsProjectEntitiesLoader.createProjectSerializers(projectDir.asStoragePlace(), reader, true, true)
 }
 
 fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, storage: TypedEntityStorage) {
@@ -167,7 +167,9 @@ fun JpsEntitiesSerializationData.checkConsistency(projectBaseDirUrl: String, sto
 
   val allSources = storage.entitiesBySource { true }
   assertNull(allSources[IdeUiEntitySource])
-  assertEquals(allSources.keys.filterIsInstance<JpsFileEntitySource>().map { getNonNullActualFileUrl(it) }.sorted(), fileSerializersByUrl.keySet().sorted())
+  val urlsFromSources = allSources.keys.filterIsInstance<JpsFileEntitySource>().mapTo(HashSet()) { getNonNullActualFileUrl(it) }
+  urlsFromSources += fileSerializerFactoriesByUrl.keys
+  assertEquals(urlsFromSources.sorted(), (fileSerializersByUrl.keySet() + fileSerializerFactoriesByUrl.keys).sorted())
 
   val fileIdFromEntities = allSources.keys.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).mapTo(HashSet()) { it.fileNameId }
   val unregisteredIds = fileIdFromEntities - fileIdToFileName.keys().toSet()

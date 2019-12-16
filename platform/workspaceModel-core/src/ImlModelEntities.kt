@@ -193,6 +193,18 @@ interface SdkEntity : TypedEntity {
   val homeUrl: VirtualFileUrl
 }
 
+interface FacetEntity : TypedEntity {
+  val name: String
+  val facetType: String
+  val configurationXmlTag: String?
+  val module: ModuleEntity
+  val underlyingFacet: FacetEntity?
+}
+
+val ModuleEntity.facets: Sequence<FacetEntity>
+  get() = referrers(FacetEntity::module)
+
+
 data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null
