@@ -152,30 +152,16 @@ public final class CommandLineProcessor {
       if (arg.equals("-l") || arg.equals("--line")) {
         //noinspection AssignmentToForLoopParameter
         i++;
-        if (i == args.size()) {
-          break;
-        }
-        try {
-          line = Integer.parseInt(args.get(i));
-        }
-        catch (NumberFormatException e) {
-          line = -1;
-        }
+        if (i == args.size()) break;
+        line = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
       if (arg.equals("-c") || arg.equals("--column")) {
         //noinspection AssignmentToForLoopParameter
         i++;
-        if (i == args.size()) {
-          break;
-        }
-        try {
-          column = Integer.parseInt(args.get(i));
-        }
-        catch (NumberFormatException e) {
-          column = -1;
-        }
+        if (i == args.size()) break;
+        column = StringUtil.parseInt(args.get(i), -1);
         continue;
       }
 
@@ -183,6 +169,7 @@ public final class CommandLineProcessor {
         tempProject = true;
         continue;
       }
+
       if (arg.equals(WAIT_KEY)) {
         continue;
       }
@@ -220,6 +207,7 @@ public final class CommandLineProcessor {
     if (shouldWait && projectAndCallback == null) {
       return pair(null, error(1, "--wait must be supplied with file or project to wait for"));
     }
+
     return projectAndCallback == null ? pair(null, CliResult.OK_FUTURE) : projectAndCallback;
   }
 }
