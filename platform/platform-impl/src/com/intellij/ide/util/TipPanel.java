@@ -29,7 +29,7 @@ import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
 
-class TipPanel extends JPanel implements DoNotAskOption {
+public class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
@@ -44,7 +44,7 @@ class TipPanel extends JPanel implements DoNotAskOption {
   private final List<String> mySeenIds = new ArrayList<>();
   private TipAndTrickBean myCurrentTip = null;
 
-  TipPanel() {
+  public TipPanel() {
     setLayout(new BorderLayout());
     if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
