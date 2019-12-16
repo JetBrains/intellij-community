@@ -105,11 +105,6 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     }
 
     @Override
-    public void presentationChanged() {
-      updateModel(true, false);
-    }
-
-    @Override
     public void changesCleared() {
       myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
       myBrowser.setItems(Collections.emptyList(), CommittedChangesBrowserUseCase.INCOMING);

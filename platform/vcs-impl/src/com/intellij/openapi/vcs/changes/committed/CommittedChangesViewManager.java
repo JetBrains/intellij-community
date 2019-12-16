@@ -86,11 +86,6 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   private class MyCommittedChangesListener implements CommittedChangesListener {
     @Override
     public void changesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
-      presentationChanged();
-    }
-
-    @Override
-    public void presentationChanged() {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myComponent != null && !myProject.isDisposed()) {
           myComponent.refreshChanges(true);

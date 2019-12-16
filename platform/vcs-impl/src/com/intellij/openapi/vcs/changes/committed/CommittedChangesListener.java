@@ -19,9 +19,6 @@ public interface CommittedChangesListener {
   default void changesCleared() {
   }
 
-  default void presentationChanged() {
-  }
-
   default void refreshErrorStatusChanged(@Nullable VcsException lastError) {
   }
 }
