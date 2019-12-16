@@ -76,7 +76,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     boolean isDiffPreviewAsEditor = Registry.is("show.diff.preview.as.editor.tab");
     MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
     if (isDiffPreviewAsEditor) {
-      new VcsLogEditorDiffPreview(myProject, myUiProperties, myMainFrame);
+      new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);
     }
     return mainFrame;
   }
