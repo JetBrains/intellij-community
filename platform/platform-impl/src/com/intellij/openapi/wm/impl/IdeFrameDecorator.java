@@ -10,7 +10,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +47,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     try {
       if (SystemInfo.isMac) {
-        return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode(), parentDisposable);
+        return new MacMainFrameDecorator(frame, parentDisposable);
       }
       else if (SystemInfo.isWindows) {
         return new WinMainFrameDecorator(frame);

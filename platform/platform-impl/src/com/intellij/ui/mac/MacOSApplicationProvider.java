@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
+import com.apple.eawt.AppEvent;
 import com.apple.eawt.Application;
+import com.apple.eawt.OpenURIHandler;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
@@ -13,12 +15,15 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -91,6 +96,7 @@ public final class MacOSApplicationProvider {
 
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
+        installProtocolHandler();
       }
     }
 
@@ -166,6 +172,28 @@ public final class MacOSApplicationProvider {
               ENABLED.set(true);
             }
           });
+        }
+      }
+    }
+
+    private static void installProtocolHandler() {
+      ID mainBundle = Foundation.invoke("NSBundle", "mainBundle");
+      ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
+      if (!urlTypes.equals(ID.NIL)) {
+        CustomProtocolHandler handler = new CustomProtocolHandler();
+        Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
+          @Override
+          public void openURI(AppEvent.OpenURIEvent event) {
+            handler.openLink(event.getURI());
+          }
+        });
+      }
+      else {
+        BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
+        if (!(build == null || build.isSnapshot())) {
+          LOG.warn("No URL bundle (CFBundleURLTypes) is defined in the main bundle.\n" +
+                   "To be able to open external links, specify protocols in the app layout section of the build file.\n" +
+                   "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
         }
       }
     }
