@@ -1,13 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.MatchResult;
@@ -44,6 +47,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
   final Set<String> myProblemsReported = new HashSet<>(1);
+  private InspectionProfileImpl mySessionProfile = null;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -70,16 +74,31 @@ public class SSBasedInspection extends LocalInspectionTool {
     return SHORT_NAME;
   }
 
+  public void setSessionProfile(InspectionProfileImpl profile) {
+    mySessionProfile = profile;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final Project project = holder.getManager().getProject();
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
-    if (Registry.is("ssr.separate.inspections")) return PsiElementVisitor.EMPTY_VISITOR;
+
+    final List<Configuration> configurations;
+    final InspectionProfileImpl profile;
+    if (Registry.is("ssr.separate.inspections")) {
+      profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+      configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+      if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    else {
+      profile = null;
+      configurations = myConfigurations;
+    }
 
     final Matcher matcher = new Matcher(project);
     final Map<Configuration, MatchContext> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(myConfigurations, matcher);
+      SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, matcher);
     if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new PsiElementVisitor() {
@@ -87,9 +106,12 @@ public class SSBasedInspection extends LocalInspectionTool {
         final PsiElement element = matchResult.getMatch();
         final String name = configuration.getName();
         final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-        holder.registerProblem(
-          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)
-        );
+        final ProblemDescriptor descriptor =
+          holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+        if (Registry.is("ssr.separate.inspections")) {
+          descriptor.setFakeInspectionShortName(configuration.getUuid().toString());
+        }
+        holder.registerProblem(descriptor);
         return true;
       };
 
@@ -103,7 +125,8 @@ public class SSBasedInspection extends LocalInspectionTool {
             final MatchContext context = entry.getValue();
             if (context == null) continue;
 
-            if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
+            if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes) &&
+                (profile == null || profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element))) {
               final int nodeCount = context.getPattern().getNodeCount();
               try {
                 matcher.processMatchesInElement(context, configuration, new CountingNodeIterator(nodeCount, matchedNodes), processor);

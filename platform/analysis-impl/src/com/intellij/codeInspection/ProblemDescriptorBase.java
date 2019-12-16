@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
@@ -30,6 +30,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
   private ProblemGroup myProblemGroup;
+  private String myFakeInspectionShortName;
   @Nullable private final Throwable myCreationTrace;
 
   public ProblemDescriptorBase(@NotNull PsiElement startElement,
@@ -268,5 +269,15 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   public String toString() {
     PsiElement element = getPsiElement();
     return ProblemDescriptorUtil.renderDescriptionMessage(this, element);
+  }
+
+  @Override
+  public String getFakeInspectionShortName() {
+    return myFakeInspectionShortName;
+  }
+
+  @Override
+  public void setFakeInspectionShortName(String shortName) {
+    myFakeInspectionShortName = shortName;
   }
 }

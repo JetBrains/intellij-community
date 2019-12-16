@@ -2,6 +2,8 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -9,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.structuralsearch.inspection.highlightTemplate.SSBasedInspection;
-import com.intellij.structuralsearch.inspection.highlightTemplate.StructuralSearchFullInspection;
+import com.intellij.structuralsearch.inspection.highlightTemplate.StructuralSearchFakeInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +20,7 @@ import java.util.UUID;
 /**
  * @author Bas Leijdekkers
  */
-public class InspectionProvider implements StartupActivity {
+public class InspectionProvider implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -57,13 +59,27 @@ public class InspectionProvider implements StartupActivity {
 
   private static class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWrapper {
     StructuralSearchInspectionToolWrapper(Configuration configuration) {
-      super(new StructuralSearchFullInspection(configuration));
+      super(new StructuralSearchFakeInspection(configuration.getName(), configuration.getUuid()));
+    }
+
+    private StructuralSearchInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
+      super(tool);
     }
 
     @NotNull
     @Override
     public LocalInspectionToolWrapper createCopy() {
-      return this;
+      return new StructuralSearchInspectionToolWrapper(new StructuralSearchFakeInspection((StructuralSearchFakeInspection)getTool()));
+    }
+
+    @Override
+    public void initialize(@NotNull GlobalInspectionContext context) {
+      super.initialize(context);
+      final InspectionProfileImpl profile = ((GlobalInspectionContextBase)context).getCurrentProfile();
+      final InspectionToolWrapper<?, ?> tool = profile.getInspectionTool(SSBasedInspection.SHORT_NAME, context.getProject());
+      assert tool != null;
+      final SSBasedInspection inspection = (SSBasedInspection)tool.getTool();
+      inspection.setSessionProfile(profile);
     }
   }
 }
