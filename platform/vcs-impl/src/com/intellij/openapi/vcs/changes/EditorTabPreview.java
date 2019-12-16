@@ -3,10 +3,13 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
@@ -17,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -61,7 +65,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, true, true);
+        openEditorPreview();
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -69,10 +73,14 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   @Nullable
   protected abstract String getCurrentName();
 
-  protected abstract void doRefresh();
+  protected abstract void doRefresh(boolean fromModelRefresh);
 
   protected boolean skipPreviewUpdate() {
-    return ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+
+    //todo use Commit tw name when it will be in platform
+    return toolWindowManager.isEditorComponentActive()
+      || !Objects.equals(toolWindowManager.getActiveToolWindowId(), "Commit");
   }
 
   protected boolean isContentEmpty() {
@@ -82,7 +90,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   @Override
   public void updatePreview(boolean fromModelRefresh) {
     if (myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-      doRefresh();
+      doRefresh(fromModelRefresh);
     }
   }
 
@@ -94,7 +102,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
       FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
     }
     else {
-      FileEditorManager.getInstance(myProject).openFile(myPreviewDiffVirtualFile, false, true);
+      openEditorPreview();
     }
   }
 
@@ -105,7 +113,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
   }
 
   @NotNull
-  protected PreviewDiffVirtualFile getVcsContentFile() {
+  private PreviewDiffVirtualFile getVcsContentFile() {
     return myPreviewDiffVirtualFile;
   }
 
@@ -135,6 +143,42 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
     @Override
     public String getEditorTabName() {
       return notNullize(myGetName.get());
+    }
+  }
+
+  protected abstract boolean hasContent();
+
+  public void closeEditorPreviewIfEmpty() {
+    if (!hasContent()) closeEditorPreview();
+  }
+
+  public void closeEditorPreview() {
+    FileEditorManager.getInstance(myProject).closeFile(getVcsContentFile());
+  }
+
+  public void openEditorPreview() {
+    if (hasContent()) {
+      boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewDiffVirtualFile);
+
+      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), true, true);
+
+      if (!wasOpen) {
+        DumbAwareAction action = new DumbAwareAction() {
+          {
+            setShortcutSet(CommonShortcuts.ESCAPE);
+          }
+
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            ToolWindowManager.getInstance(myProject).getToolWindow("Commit").activate(() -> { });
+          }
+        };
+        action.registerCustomShortcutSet(fileEditors[0].getComponent(), null);
+
+        Disposer.register(fileEditors[0], () -> {
+          action.unregisterCustomShortcutSet(fileEditors[0].getComponent());
+        });
+      }
     }
   }
 }

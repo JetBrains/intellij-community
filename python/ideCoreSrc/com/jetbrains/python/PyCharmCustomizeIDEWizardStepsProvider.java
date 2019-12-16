@@ -4,6 +4,8 @@ package com.jetbrains.python;
 import com.intellij.ide.customize.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.python.conda.PyCharmCustomizeCondaSetupStep;
+import com.jetbrains.python.conda.PythonMinicondaLocator;
 
 import javax.swing.*;
 import java.util.List;
@@ -18,6 +20,7 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
         addVimPlugin(featuredPlugins);
         addMarkdownPlugin(featuredPlugins);
         addRPlugin(featuredPlugins);
+        featuredPlugins.put("AWS Toolkit", "Tools Integration:A plugin for interacting with Amazon Web Services:aws.toolkit");
       }
     };
 
@@ -32,5 +35,9 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
     }
 
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
+
+    if (PythonMinicondaLocator.isInstallerExists()) {
+      steps.add(new PyCharmCustomizeCondaSetupStep());
+    }
   }
 }

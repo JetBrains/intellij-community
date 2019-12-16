@@ -8,16 +8,16 @@ final class KeymapPluginsBuilder {
 
   static List<PluginRepositorySpec> buildKeymapPlugins(BuildContext buildContext, String targetDir) {
     return [
-      keymapPlugin(["Mac OS X", "Mac OS X 10.5+"], buildContext, targetDir),
-      keymapPlugin(["Default for GNOME"], buildContext, targetDir),
-      keymapPlugin(["Default for KDE"], buildContext, targetDir),
-      keymapPlugin(["Default for XWin"], buildContext, targetDir),
-      keymapPlugin(["Eclipse", "Eclipse (Mac OS X)"], buildContext, targetDir),
-      keymapPlugin(["Emacs"], buildContext, targetDir),
-      keymapPlugin(["NetBeans 6.5"], buildContext, targetDir),
+//      keymapPlugin(["Mac OS X", "Mac OS X 10.5+"], buildContext, targetDir),
+//      keymapPlugin(["Default for GNOME"], buildContext, targetDir),
+//      keymapPlugin(["Default for KDE"], buildContext, targetDir),
+//      keymapPlugin(["Default for XWin"], buildContext, targetDir),
+//      keymapPlugin(["Eclipse", "Eclipse (Mac OS X)"], buildContext, targetDir),
+//      keymapPlugin(["Emacs"], buildContext, targetDir),
+//      keymapPlugin(["NetBeans 6.5"], buildContext, targetDir),
       keymapPlugin(["ReSharper", "ReSharper OSX"], buildContext, targetDir),
-      keymapPlugin(["Sublime Text", "Sublime Text (Mac OS X)"], buildContext, targetDir),
-      keymapPlugin(["Visual Studio"], buildContext, targetDir),
+//      keymapPlugin(["Sublime Text", "Sublime Text (Mac OS X)"], buildContext, targetDir),
+//      keymapPlugin(["Visual Studio"], buildContext, targetDir),
       keymapPlugin(["Xcode"], buildContext, targetDir)
     ]
   }

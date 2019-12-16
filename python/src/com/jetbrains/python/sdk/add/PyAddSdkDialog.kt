@@ -37,6 +37,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import icons.PythonIcons
 import java.awt.CardLayout
@@ -74,9 +75,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val sdks = existingSdks
       .filter { it.sdkType is PythonSdkType && !PythonSdkUtil.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
-    val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, module, sdks),
-                                           createAnacondaPanel(project, module),
-                                           PyAddSystemWideInterpreterPanel(module, existingSdks, context))
+    val panels = createPanels(sdks).toMutableList()
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
       .mapNotNull {
         it.safeCreateView(project = project, module = module, existingSdks = existingSdks, context=context)
@@ -85,6 +84,16 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
+  }
+
+  private fun createPanels(sdks: List<Sdk>): List<PyAddSdkView> {
+    return mutableListOf(
+      PySdkTypeComparator.PySdkType.VirtualEnv to createVirtualEnvPanel(project, module, sdks),
+      PySdkTypeComparator.PySdkType.CondaEnv to createAnacondaPanel(project, module),
+      PySdkTypeComparator.PySdkType.SystemWide to PyAddSystemWideInterpreterPanel(module, existingSdks, context)
+    )
+      .sortBySdkTypes { it.first }
+      .map { it.second }
   }
 
   private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -68,7 +67,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.text.html.ObjectView;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -109,6 +107,7 @@ public class ShelvedChangesViewManager implements Disposable {
     DataKey.create("ShelveChangesManager.ShelvedDeletedChangeListData");
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
+  private ShelfToolWindowPanel myShelfToolWindowPanel;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return project.getComponent(ShelvedChangesViewManager.class);
@@ -144,6 +143,7 @@ public class ShelvedChangesViewManager implements Disposable {
     else {
       if (myContent == null) {
         ShelfToolWindowPanel panel = new ShelfToolWindowPanel(myProject);
+        myShelfToolWindowPanel = panel;
         myContent = new MyShelfContent(panel, VcsBundle.message("shelf.tab"), false);
         myContent.setCloseable(false);
         myContent.setDisposer(panel);
@@ -280,7 +280,34 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @Override
   public void dispose() {
+    myShelfToolWindowPanel = null;
     myUpdateQueue.cancelAllUpdates();
+  }
+
+  public void closeEditorPreview() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myShelfToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      ((EditorTabPreview)diffPreview).closeEditorPreview();
+    }
+  }
+
+  public void openEditorPreview() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (myShelfToolWindowPanel == null) {
+      return;
+    }
+
+    ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
+    if (diffPreview instanceof EditorTabPreview) {
+      ((EditorTabPreview)diffPreview).openEditorPreview();
+    }
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -694,12 +721,14 @@ public class ShelvedChangesViewManager implements Disposable {
           }
 
           @Override
-          protected void doRefresh() {
-            changeProcessor.refresh(false);
-            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
-            if (changeProcessor.myCurrentShelvedElement == null) {
-              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
-            }
+          protected void doRefresh(boolean fromModelRefresh) {
+            changeProcessor.refresh(fromModelRefresh);
+            closeEditorPreviewIfEmpty();
+          }
+
+          @Override
+          protected boolean hasContent() {
+            return changeProcessor.myCurrentShelvedElement != null;
           }
         };
 

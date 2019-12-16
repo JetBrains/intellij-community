@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
-import com.intellij.util.Consumer
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
@@ -34,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
+import java.util.SortedMap
 import java.util.regex.Pattern
 
 /**
@@ -353,24 +353,29 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
 
-  if (groupedResults.containsKey(Priority.NAMESPACE_PACKAGE) &&
-      groupedResults.headMap(Priority.NAMESPACE_PACKAGE).isEmpty()) return groupedResults[Priority.NAMESPACE_PACKAGE]!!
-
+  if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
-  return if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
-    // stub packages + next by priority
-    // because stub packages could be partial
-
-    val stub = groupedResults[Priority.STUB_PACKAGE]!!.first()
-    val nextByPriority = groupedResults.tailMap(Priority.STUB_PACKAGE).values.asSequence().drop(1).take(1).flatten().firstOrNull()
-
-    listOfNotNull(stub, nextByPriority)
+  val priorityResults =  when {
+    groupedResults.isEmpty() -> emptyList()
+    // stub packages can be partial
+    groupedResults.topResultIs(Priority.STUB_PACKAGE) -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)
+    else -> listOf(groupedResults.values.first().first())
   }
-  else {
-    listOf(groupedResults.values.first().first())
-  }
+  return priorityResults + skeletons
+}
+
+private fun SortedMap<Priority, MutableList<PsiElement>>.topResultIs(priority: Priority): Boolean {
+  return containsKey(priority) && headMap(priority).isEmpty()
+}
+
+private fun firstResultWithFallback(results: SortedMap<Priority, MutableList<PsiElement>>, priority: Priority): List<PsiElement> {
+  val first = results[priority]!!.first()
+  val nextByPriority = results.tailMap(priority).values.asSequence().drop(1).take(1).flatten().firstOrNull()
+
+  return listOfNotNull(first, nextByPriority)
 }
 
 /**
@@ -381,9 +386,16 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?) = when
   isUserFile(element, module) -> if (PyiUtil.isPyiFileOfPackage(element)) Priority.USER_STUB else Priority.USER_CODE
   isInStubPackage(element) -> Priority.STUB_PACKAGE
   isInTypeShed(element) -> Priority.TYPESHED
+  isInSkeletons(element) -> Priority.SKELETON
   PyiUtil.isPyiFileOfPackage(element) -> Priority.PROVIDED_STUB
   isInInlinePackage(element, module) -> Priority.INLINE_PACKAGE
   else -> Priority.OTHER
+}
+
+fun isInSkeletons(element: PsiElement): Boolean {
+  val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
+  val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
+  return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
 }
 
 private fun isNamespacePackage(element: PsiElement): Boolean {
@@ -431,5 +443,6 @@ private enum class Priority {
   INLINE_PACKAGE, // py file located in some inline package
   TYPESHED, // pyi file located in typeshed
   OTHER, // other cases, e.g. py file located inside installed lib
-  NAMESPACE_PACKAGE // namespace packag e has the lowest priority
+  NAMESPACE_PACKAGE, // namespace package but may contain several entries in resolve result
+  SKELETON // generated skeletons have lowest priority but are always included in the resolve result as a fallback
 }

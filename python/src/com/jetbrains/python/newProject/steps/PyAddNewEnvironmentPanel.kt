@@ -9,6 +9,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.sdk.PySdkSettings
+import com.jetbrains.python.sdk.PySdkTypeComparator
+import com.jetbrains.python.sdk.PySdkTypeComparator.Companion.sortBySdkTypes
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
@@ -32,13 +34,10 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
         panel.newProjectPath = newProjectPath
       }
     }
-  private val context:UserDataHolder = UserDataHolderBase()
+  private val context: UserDataHolder = UserDataHolderBase()
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
-  private val panels = listOf(PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath,context),
-                              PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context),
-                              PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context))
-
+  private val panels = createPanels(existingSdks, newProjectPath)
   var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == preferredType ?: PySdkSettings.instance.preferredEnvironmentType } ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
@@ -90,5 +89,15 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
       panel.addChangeListener(listener)
     }
     listeners += listener
+  }
+
+  private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
+    return mutableListOf(
+      PySdkTypeComparator.PySdkType.VirtualEnv to PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context),
+      PySdkTypeComparator.PySdkType.PipEnv to PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context),
+      PySdkTypeComparator.PySdkType.CondaEnv to PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
+    )
+      .sortBySdkTypes { it.first }
+      .map { it.second }
   }
 }

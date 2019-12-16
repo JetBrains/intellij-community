@@ -595,10 +595,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     public void visitPyClass(PyClass node) {
     }
 
-    @Override
-    public void visitPyFunction(PyFunction node) {
-    }
-
     @Nullable
     List<String> result() {
       return myDynamic || !myFoundDunderAll ? null : myResult;

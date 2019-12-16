@@ -68,10 +68,19 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction(), UpdateInBackgr
     }
     else {
       val roots = prepareRootsForCommit(getRoots(context), project)
-      ChangeListManager.getInstance(project).invokeAfterUpdate(
-        { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-        message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current())
+      queueCheckin(project, context, roots)
     }
+  }
+
+  protected open fun queueCheckin(
+    project: Project,
+    context: VcsContext,
+    roots: Array<FilePath>
+  ) {
+    ChangeListManager.getInstance(project).invokeAfterUpdate(
+      { performCheckIn(context, project, roots) }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+      message("waiting.changelists.update.for.show.commit.dialog.message"), ModalityState.current()
+    )
   }
 
   @Deprecated("getActionName() will be used instead")

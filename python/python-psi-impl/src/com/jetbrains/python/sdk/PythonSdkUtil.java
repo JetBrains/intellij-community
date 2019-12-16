@@ -158,6 +158,11 @@ public class PythonSdkUtil {
     }
   }
 
+  public static boolean isFileInSkeletons(@NotNull final VirtualFile virtualFile, @NotNull Sdk sdk) {
+    final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
+    return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
+  }
+
   public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file != null) {
