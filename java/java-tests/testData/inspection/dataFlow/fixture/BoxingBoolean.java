@@ -57,7 +57,7 @@ class S {
     boolean o;
     {
       Boolean c = Boolean.FALSE;
-      o = <warning descr="Condition '!c' is always 'true'">!c</warning>;
+      o = <warning descr="Condition '!c' is always 'true'">!<weak_warning descr="Value 'c' is always 'false'">c</weak_warning></warning>;
     }
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }
