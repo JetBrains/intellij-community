@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.stubs.*
 import com.intellij.testFramework.TestApplicationManager
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.ID
 import com.intellij.util.io.PersistentHashMap
 import com.intellij.util.io.write
 import junit.framework.TestCase
@@ -32,6 +34,11 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
   private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
+    // ensure indexes initialized
+    ReadAction.run<Throwable> {
+      FileBasedIndex.getInstance().ensureUpToDate(ID.create<Any, Any>("Stubs"), null, null)
+    }
+
     try {
       buildIndexForRoots(roots)
     }
