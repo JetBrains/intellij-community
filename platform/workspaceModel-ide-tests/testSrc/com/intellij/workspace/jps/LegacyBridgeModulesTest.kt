@@ -643,6 +643,35 @@ class LegacyBridgeModulesTest {
     assertEmpty(entityStorage.entities(ModuleEntity::class.java).toList())
     assertEmpty(entityStorage.entities(LibraryEntity::class.java).toList())
   }
+
+  @Test
+  fun `test remove module removes source roots`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryFolder = "ant-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      val tempDir = temporaryDirectoryRule.newPath().toFile()
+      val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
+      val contentEntry = model.addContentEntry(url)
+      contentEntry.addSourceFolder("$url/$antLibraryFolder", TestCustomSourceRootType.INSTANCE)
+    }
+    StoreUtil.saveDocumentsAndProjectSettings(project)
+    assertTrue(moduleFile.readText().contains(antLibraryFolder))
+    val entityStore = WorkspaceModel.getInstance(project).entityStore
+    assertEquals(1, entityStore.current.entities(ContentRootEntity::class.java).count())
+    assertEquals(1, entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).count())
+
+    ModuleManager.getInstance(project).disposeModule(module)
+    assertEmpty(entityStore.current.entities(ContentRootEntity::class.java).toList())
+    assertEmpty(entityStore.current.entities(CustomSourceRootPropertiesEntity::class.java).toList())
+  }
 }
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory,
