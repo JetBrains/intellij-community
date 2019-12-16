@@ -9,10 +9,10 @@
     <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar"/>
 
     <!--configurables?-->
-    <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP">
+    <extensionPoint name="errorOptionsProvider" beanClass="com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.profile.codeInspection.ui.ErrorOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP">
+    <extensionPoint name="codeFoldingOptionsProvider" beanClass="com.intellij.application.options.editor.CodeFoldingOptionsProviderEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.application.options.editor.CodeFoldingOptionsProvider"/>
     </extensionPoint>
     <extensionPoint name="codeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider"/>
@@ -25,7 +25,7 @@
     <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
+    <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
     <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
@@ -293,7 +293,7 @@
     <extensionPoint name="runDashboardGroupingRule" interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor"/>
 
-    <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
     <extensionPoint name="fileContextProvider" interface="com.intellij.psi.FileContextProvider" area="IDEA_PROJECT"/>
