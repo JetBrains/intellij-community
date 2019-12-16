@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.PropertyKey;
 /**
  * @author max
  */
-public class XmlErrorMessages extends AbstractBundle {
+public class XmlErrorMessages extends DynamicBundle {
 
   private static final XmlErrorMessages ourInstance = new XmlErrorMessages();
   @NonNls private static final String BUNDLE = "messages.XmlErrorMessages";

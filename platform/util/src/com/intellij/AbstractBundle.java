@@ -56,13 +56,13 @@ public abstract class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
     ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
-  public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  public ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> map = ourCache.get(loader);
     ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
       try {
         ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
-        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
+        result = findBundle(pathToBundle, loader, control);
       }
       catch (MissingResourceException e) {
         LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
@@ -72,5 +72,9 @@ public abstract class AbstractBundle {
       map.put(pathToBundle, result);
     }
     return result;
+  }
+
+  protected ResourceBundle findBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 }

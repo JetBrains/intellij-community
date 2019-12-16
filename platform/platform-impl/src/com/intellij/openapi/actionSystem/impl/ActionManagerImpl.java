@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
@@ -233,7 +233,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static ResourceBundle getActionsResourceBundle(@NotNull IdeaPluginDescriptor plugin) {
     String resBundleName = PluginManagerCore.CORE_ID != plugin.getPluginId()
                            ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
-    return resBundleName == null ? null : AbstractBundle.getResourceBundle(resBundleName, plugin.getPluginClassLoader());
+    return resBundleName == null ? null : DynamicBundle.INSTANCE.getResourceBundle(resBundleName, plugin.getPluginClassLoader());
   }
 
   private static boolean isSecondary(Element element) {

@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
@@ -82,7 +82,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     String pathToBundle = findPathToBundle();
     if (pathToBundle == null) return null; // a path to bundle is not specified or cannot be found
     ClassLoader loader = myPluginDescriptor == null ? null : myPluginDescriptor.getPluginClassLoader();
-    return AbstractBundle.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
+    return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
   }
 
   @Nullable

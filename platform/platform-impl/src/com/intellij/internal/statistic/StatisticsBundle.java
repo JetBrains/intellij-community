@@ -15,14 +15,14 @@
  */
 package com.intellij.internal.statistic;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
  * @author Denis Zhdanov
  */
-public class StatisticsBundle extends AbstractBundle {
+public class StatisticsBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return BUNDLE.getMessage(key, params);

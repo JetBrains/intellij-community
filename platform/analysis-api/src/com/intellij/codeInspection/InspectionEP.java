@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
@@ -189,7 +189,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
       }
       return null;
     }
-    ResourceBundle resourceBundle = AbstractBundle.getResourceBundle(baseName, getLoaderForClass());
+    ResourceBundle resourceBundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
     return CommonBundle.message(resourceBundle, key);
   }
 
