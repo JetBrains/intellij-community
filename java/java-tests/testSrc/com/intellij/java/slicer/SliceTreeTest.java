@@ -8,9 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -142,7 +143,7 @@ public class SliceTreeTest extends SliceTestCase {
     List<PsiElement> list = new ArrayList<>(leaves);
     String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY.computeHashCode(element) + ") ").toString();
     assertEquals(map.entrySet()+"\n"+message, 2, leaves.size());
-    Collections.sort(list, (o1, o2) -> o1.getText().compareTo(o2.getText()));
+    Collections.sort(list, Comparator.comparing(PsiElement::getText));
     assertTrue(list.get(0) instanceof PsiLiteralExpression);
     assertEquals(false, ((PsiLiteral)list.get(0)).getValue());
     assertTrue(list.get(1) instanceof PsiLiteralExpression);
@@ -210,6 +211,11 @@ public class SliceTreeTest extends SliceTestCase {
                             "      52|l| |=| |d|;\n" +
                             "        51|void| |set|(|String| |d|)| |{\n" +
                             "          15|set|(|o|)|;\n" +
+                            "  Value: other\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          24|set|(|other|)|;\n" +
                             "  Value: nu()\n" +
                             "    6|String| |l|;\n" +
                             "      52|l| |=| |d|;\n" +
@@ -221,12 +227,6 @@ public class SliceTreeTest extends SliceTestCase {
                             "        51|void| |set|(|String| |d|)| |{\n" +
                             "          46|x|.|set|(|t|)|;\n" +
                             "NotNull Values\n" +
-                            "  Value: \"\"\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          19|set|(|CON|)|;\n" +
-                            "            5|private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
                             "  Value: \"xxx\"\n" +
                             "    6|String| |l|;\n" +
                             "      52|l| |=| |d|;\n" +
@@ -242,6 +242,11 @@ public class SliceTreeTest extends SliceTestCase {
                             "      52|l| |=| |d|;\n" +
                             "        51|void| |set|(|String| |d|)| |{\n" +
                             "          18|set|(|nn|(|)|)|;\n" +
+                            "  Value: CON\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          19|set|(|CON|)|;\n" +
                             "  Value: nn\n" +
                             "    6|String| |l|;\n" +
                             "      52|l| |=| |d|;\n" +
@@ -252,18 +257,11 @@ public class SliceTreeTest extends SliceTestCase {
                             "      52|l| |=| |d|;\n" +
                             "        51|void| |set|(|String| |d|)| |{\n" +
                             "          27|set|(|g|)|;\n" +
-                            "  Value: \"null\"\n" +
+                            "  Value: t == null ? \"null\" : t\n" +
                             "    6|String| |l|;\n" +
                             "      52|l| |=| |d|;\n" +
                             "        51|void| |set|(|String| |d|)| |{\n" +
                             "          48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "            48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "  Value: t\n" +
-                            "    6|String| |l|;\n" +
-                            "      52|l| |=| |d|;\n" +
-                            "        51|void| |set|(|String| |d|)| |{\n" +
-                            "          48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "            48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: d\n" +
                             "    6|String| |l|;\n" +
                             "      55|l| |=| |d|;\n" +
@@ -285,35 +283,12 @@ public class SliceTreeTest extends SliceTestCase {
   }
 
   private static void checkStructure(final SliceNode root, @NonNls String dataExpected) {
-    List<SliceNode> actualNodes = new ArrayList<>(root.getChildren());
-    Collections.sort(actualNodes, SliceTreeBuilder.SLICE_NODE_COMPARATOR);
-
-    Object[] actualStrings = ContainerUtil.map2Array(actualNodes, SliceNode::toString);
-
-    String[] childrenExpected = dataExpected.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : dataExpected.split("\n");
-    String curChildren = "";
-    String curNode = null;
-    int iactual = 0;
-    for (int iexp = 0; iexp <= childrenExpected.length; iexp++) {
-      String e = iexp == childrenExpected.length ? null : childrenExpected[iexp];
-      boolean isTopLevel = e == null || e.charAt(0) != ' ';
-      if (isTopLevel) {
-        if (curNode != null) {
-          assertTrue(iactual < actualStrings.length);
-          Object actual = actualStrings[iactual];
-          assertEquals(curNode, actual);
-          checkStructure(actualNodes.get(iactual), curChildren);
-          iactual++;
-        }
-
-        curNode = e;
-        curChildren = "";
-      }
-      else {
-        curChildren += StringUtil.trimStart(e, "  ") + "\n";
-      }
-    }
-    assertEquals(dataExpected, actualNodes.size(), iactual);
+    String dataActual =
+      EntryStream.ofTree(root, (depth, node) -> StreamEx.of(node.getChildren()).sorted(SliceTreeBuilder.SLICE_NODE_COMPARATOR))
+        .skip(1)
+        .mapKeyValue((depth, node) -> StringUtil.repeat("  ", depth - 1) + node + "\n")
+        .joining();
+    assertEquals(dataExpected, dataActual);
   }
 
   public void testDoubleNullness() throws Exception {
