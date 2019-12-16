@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic.analytics;
 
 import com.intellij.openapi.util.io.FileUtil;
+import java.util.Scanner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,18 +32,24 @@ public class StudioCrashDetails {
   /**
    * Represents a crash for which there is no additional details. Assumed to be not a JVM crash.
    */
-  public final static StudioCrashDetails UNKNOWN = new StudioCrashDetails("<unknown>", false, -1);
+  public final static StudioCrashDetails UNKNOWN = new StudioCrashDetails("<unknown>", false, -1, "", "", "");
   private final static String JVM_CRASH_FILE_STRING_FORMAT =
     System.getProperty("user.home") + File.separator + "java_error_in_STUDIO_%d.log";
 
   private final String myDescription;
   private final boolean myJvmCrash;
   private final long myUptimeInMs;
+  private final String myErrorSignal;
+  private final String myErrorFrame;
+  private final String myErrorThread;
 
-  private StudioCrashDetails(String description, boolean isJvmCrash, long uptimeInMs) {
+  private StudioCrashDetails(String description, boolean isJvmCrash, long uptimeInMs, String errorSignal, String errorFrame, String errorThread) {
     myDescription = description;
     myJvmCrash = isJvmCrash;
     myUptimeInMs = uptimeInMs;
+    myErrorSignal = errorSignal;
+    myErrorFrame = errorFrame;
+    myErrorThread = errorThread;
   }
 
   @NotNull
@@ -68,6 +75,9 @@ public class StudioCrashDetails {
     }
     boolean isJvmCrash = false;
     long uptimeInMs = -1;
+    String errorSignal = "";
+    String errorFrame = "";
+    String errorThread = "";
     // Assume it was not a JVM crash if there is no startup time or pid
     if (startupDateInMs != -1 && pid >= 0) {
       // Check time of creation of the crash report file. If it happened after the app startup time then
@@ -79,11 +89,27 @@ public class StudioCrashDetails {
         if (crashDateInMs > startupDateInMs) {
           isJvmCrash = true;
           uptimeInMs = crashDateInMs - startupDateInMs;
+          try (Scanner scanner = new Scanner(jvmCrashReportFile)) {
+            while (scanner.hasNext() && (errorSignal.isEmpty() || errorFrame.isEmpty() || errorThread.isEmpty())) {
+              if (scanner.findInLine("#  SIG") != null) {
+                errorSignal = "SIG" + scanner.nextLine();
+              } else if (scanner.findInLine("#  EXCEPTION") != null) {
+                errorSignal = "EXCEPTION" + scanner.nextLine();
+              } else if (scanner.findInLine("# Problematic frame:") != null) {
+                scanner.nextLine();
+                errorFrame = scanner.nextLine().substring(2);
+              } else if (scanner.findInLine("Current thread \\(.+\\):") != null) {
+                errorThread = scanner.nextLine().trim();
+              } else {
+                scanner.nextLine();
+              }
+            }
+          }
         }
       }
     }
     String description = buildNumber + "\n" + runtimeVersion;
-    return new StudioCrashDetails(description, isJvmCrash, uptimeInMs);
+    return new StudioCrashDetails(description, isJvmCrash, uptimeInMs, errorSignal, errorFrame, errorThread);
   }
 
   public boolean isJvmCrash() {
@@ -96,5 +122,17 @@ public class StudioCrashDetails {
 
   public long getUptimeInMs() {
     return myUptimeInMs;
+  }
+
+  public String getErrorSignal() {
+    return myErrorSignal;
+  }
+
+  public String getErrorFrame() {
+    return myErrorFrame;
+  }
+
+  public String getErrorThread() {
+    return myErrorThread;
   }
 }
