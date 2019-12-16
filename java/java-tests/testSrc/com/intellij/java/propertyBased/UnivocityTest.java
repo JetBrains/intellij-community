@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
@@ -95,6 +96,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testRandomActivity() {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
