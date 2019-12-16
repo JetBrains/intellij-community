@@ -159,7 +159,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   /**
-   * @deprecated Use {@link PsiEditorUtil#findEditorByPsiElement(PsiElement)}
+   * @deprecated Use {@link PsiEditorUtil#findEditor(PsiElement)}
    */
   @Deprecated
   @Nullable
@@ -169,7 +169,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   }
 
   /**
-   * @deprecated Use {@link PsiEditorUtil#findEditorByPsiElement(PsiElement)}
+   * @deprecated Use {@link PsiEditorUtil#findEditor(PsiElement)}
    */
   @Deprecated
   @Nullable
