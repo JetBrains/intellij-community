@@ -353,7 +353,12 @@ public class RecursionManager {
      * Don't add rules for situation where caching prevention is expected, use {@link #disableMissedCacheAssertions} instead.
      */
     boolean isCurrentNonCachingStillTolerated() {
-      String trace = ExceptionUtil.getThrowableText(new Throwable());
+      return isCurrentNonCachingStillTolerated(new Throwable()) ||
+             ContainerUtil.exists(preventions.values(), CalculationStack::isCurrentNonCachingStillTolerated);
+    }
+
+    private static boolean isCurrentNonCachingStillTolerated(Throwable t) {
+      String trace = ExceptionUtil.getThrowableText(t);
       return ContainerUtil.exists(toleratedFrames, trace::contains);
     }
   }
@@ -372,11 +377,8 @@ public class RecursionManager {
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
     // IDEA-228815
-    "at org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter$Companion.computeInferredMethod(",
-    "at org.jetbrains.plugins.groovy.lang.resolve.processors.inference.FunctionalExpressionConstraint",
-    "org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference.resolve(",
-    "org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager.inferType(",
-    "at org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionMembersCache.getTransformationResult(",
+    "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
+    "org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.InferredClosureParamsEnhancer.getClosureParameterType(",
 
     // IDEA-228814
     // resolve & inference
