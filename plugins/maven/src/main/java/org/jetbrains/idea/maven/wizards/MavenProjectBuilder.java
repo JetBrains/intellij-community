@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
 import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
@@ -232,9 +233,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
 
         final VirtualFile file = getRootDirectory();
         if (file == null) throw new MavenProcessCanceledException();
-
         getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
-                                                          getImportingSettings().isLookForNested(),
+                                                          LookForNestedToggleAction.isSelected(),
                                                           indicator,
                                                           new ArrayList<>());
 

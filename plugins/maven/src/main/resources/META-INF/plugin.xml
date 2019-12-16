@@ -543,6 +543,11 @@
             icon="AllIcons.Actions.OfflineMode">
     </action>
 
+    <action id="Maven.ToggleLookNested"
+            class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction" text="Toggle Search For Maven Project Recursively"
+            description="Toggle Search for project recursively when importing Maven projects">
+    </action>
+
     <action id="Maven.ToggleSkipTests"
             class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
             description="Toggle 'Skip tests' mode for Maven builds"
