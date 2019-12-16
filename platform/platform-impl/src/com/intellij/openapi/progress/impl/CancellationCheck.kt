@@ -3,6 +3,7 @@ package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.TestOnly
 
@@ -26,7 +27,7 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
 
   private fun checkCancellationDiff(record: CanceledStatusRecord) {
     if (record.enabled) {
-      val now = System.currentTimeMillis()
+      val now = Clock.getTime()
       val diff = now - record.timestamp
       if (diff > thresholdMs()) {
         LOG.error("${Thread.currentThread().name} last checkCanceled was $diff ms ago")
@@ -40,7 +41,7 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
 
     if (enabled) progressManagerImpl.addCheckCanceledHook(hook) else progressManagerImpl.removeCheckCanceledHook(hook)
     record.enabled = enabled
-    record.timestamp = System.currentTimeMillis()
+    record.timestamp = Clock.getTime()
   }
 
   fun <T> withCancellationCheck(block: () -> T): T {
@@ -62,7 +63,7 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
     }
   }
 
-  private data class CanceledStatusRecord(var enabled: Boolean = false, var timestamp: Long = System.currentTimeMillis())
+  private data class CanceledStatusRecord(var enabled: Boolean = false, var timestamp: Long = Clock.getTime())
 
   companion object {
     private val LOG = Logger.getInstance(CancellationCheck::class.java)
