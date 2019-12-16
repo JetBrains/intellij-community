@@ -94,7 +94,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     val gitCommits = mutableListOf<GitCommit>()
     GitLogUtil.readFullDetails(project, gitRemote.repository.root, Consumer {
       gitCommits.add(it)
-    }, "${details.baseRefOid}...${details.headRefOid}")
+    }, "${details.baseRefOid}..${details.headRefOid}")
 
     gitCommits.asReversed()
   }
