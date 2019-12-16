@@ -880,7 +880,7 @@ internal class EntityImpl(override val data: EntityData,
       val propertyName = name.removePrefix("get").decapitalize()
       val value = data.properties[propertyName]
       return when (val propertyKind = data.metaData.properties.getValue(propertyName)) {
-        is EntityPropertyKind.EntityValue -> storage.createEntityInstance(storage.entityById.getValue(value as Long))
+        is EntityPropertyKind.EntityValue -> (value as Long?)?.let { storage.createEntityInstance(storage.entityById.getValue(it)) }
         is EntityPropertyKind.List -> when (propertyKind.itemKind) {
           is EntityPropertyKind.EntityValue -> {
             (value as List<Long>).map { id -> storage.createEntityInstance(storage.entityById.getValue(id)) }

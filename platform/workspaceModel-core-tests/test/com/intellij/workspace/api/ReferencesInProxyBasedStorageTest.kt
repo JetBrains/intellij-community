@@ -1,6 +1,7 @@
 package com.intellij.workspace.api
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal interface ChildEntity : TypedEntity {
@@ -22,6 +23,11 @@ internal interface ParentEntity : ReferableTypedEntity {
     get() = referrers(ChildEntity::parent)
 }
 
+internal interface ChildWithOptionalParentEntity : TypedEntity {
+  val optionalParent: ParentEntity?
+  val childProperty: String
+}
+
 internal data class DataClass(val stringProperty: String, val parent: EntityReference<ParentEntity>)
 
 private interface ModifiableChildEntity : ChildEntity, ModifiableTypedEntity<ChildEntity> {
@@ -38,6 +44,12 @@ private interface ModifiableChildChildEntity : ChildChildEntity, ModifiableTyped
 private interface ModifiableParentEntity : ParentEntity, ModifiableTypedEntity<ParentEntity> {
   override var parentProperty: String
 }
+
+private interface ModifiableChildWithOptionalParentEntity : ChildWithOptionalParentEntity, ModifiableTypedEntity<ChildWithOptionalParentEntity> {
+  override var optionalParent: ParentEntity?
+  override var childProperty: String
+}
+
 
 private fun TypedEntityStorageBuilder.addParentEntity(parentProperty: String = "parent") =
   addEntity(ModifiableParentEntity::class.java, SampleEntitySource("test")) {
@@ -58,6 +70,14 @@ private fun TypedEntityStorageBuilder.addChildChildEntity(parent1: ParentEntity,
     this.parent1 = parent1
     this.parent2 = parent2
   }
+
+private fun TypedEntityStorageBuilder.addChildWithOptionalEntity(parentEntity: ParentEntity?,
+                                                                 childProperty: String = "child") =
+  addEntity(ModifiableChildWithOptionalParentEntity::class.java, SampleEntitySource("test")) {
+    this.optionalParent = parentEntity
+    this.childProperty = childProperty
+  }
+
 
 private fun TypedEntityStorage.singleParent() = entities(ParentEntity::class.java).single()
 private fun TypedEntityStorage.singleChild() = entities(ChildEntity::class.java).single()
@@ -198,6 +218,24 @@ class ReferencesInProxyBasedStorageTest {
     assertEquals(newParent, child.parent)
     assertEquals(child, newParent.children.single())
     assertEquals("parent", oldParent.parentProperty)
+  }
+
+  @Test
+  fun `modify optional parent property`() {
+    val builder = TypedEntityStorageBuilder.create()
+    val child = builder.addChildWithOptionalEntity(null)
+    assertNull(child.optionalParent)
+    val newParent = builder.addParentEntity()
+    val newChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
+      optionalParent = newParent
+    }
+    builder.checkConsistency()
+    assertEquals(newParent, newChild.optionalParent)
+
+    val veryNewChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, newChild) {
+      optionalParent = null
+    }
+    assertNull(veryNewChild.optionalParent)
   }
 
   @Test
