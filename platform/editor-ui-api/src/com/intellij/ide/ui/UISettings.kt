@@ -231,7 +231,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   val hideTabsIfNeeded: Boolean
     get() = state.hideTabsIfNeeded
-
+  var showFileIconInTabs: Boolean
+    get() = state.showFileIconInTabs
+    set(value) {
+      state.showFileIconInTabs = value
+    }
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs
     set(value) {

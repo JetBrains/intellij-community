@@ -98,6 +98,8 @@ class UISettingsState : BaseState() {
   var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT")
   var editorTabPlacement: Int by property(SwingConstants.TOP)
+  @get:OptionTag("SHOW_FILE_ICONS_IN_TABS")
+  var showFileIconInTabs by property(true)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS")
   var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")

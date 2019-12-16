@@ -180,7 +180,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   void setIconAt(final int index, final Icon icon) {
-    myTabs.getTabAt(index).setIcon(icon);
+    myTabs.getTabAt(index).setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null);
   }
 
   public void setTitleAt(final int index, final String text) {
@@ -254,7 +254,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     tab = new TabInfo(component)
       .setText(EditorTabPresentationUtil.getEditorTabTitle(myProject, file, myWindow))
       .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file, myWindow))
-      .setIcon(icon)
+      .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
       .setDragOutDelegate(myDragOutDelegate);

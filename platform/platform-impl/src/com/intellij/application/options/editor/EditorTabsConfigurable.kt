@@ -36,6 +36,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
+        row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
