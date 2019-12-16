@@ -121,8 +121,11 @@ public class DfaAssist implements DebuggerContextListener {
     disposeInlays();
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
-    VirtualFile expectedFile = hints.keySet().iterator().next().getContainingFile().getVirtualFile();
-    if (editor == null || !expectedFile.equals(editor.getVirtualFile())) return;
+    if (editor == null) return;
+    PsiFile psiFile = hints.keySet().iterator().next().getContainingFile();
+    if (psiFile == null) return;
+    VirtualFile expectedFile = psiFile.getVirtualFile();
+    if (expectedFile == null || !expectedFile.equals(editor.getVirtualFile())) return;
     InlayModel model = editor.getInlayModel();
     List<Inlay<?>> newInlays = new ArrayList<>();
     AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction(context);
