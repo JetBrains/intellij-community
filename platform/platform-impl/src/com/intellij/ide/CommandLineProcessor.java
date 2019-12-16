@@ -39,7 +39,7 @@ import static com.intellij.openapi.util.Pair.pair;
  */
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
-  private static final String WAIT_KEY = "--wait";
+  private static final String OPTION_WAIT = "--wait";
 
   private CommandLineProcessor() { }
 
@@ -137,15 +137,15 @@ public final class CommandLineProcessor {
       return pair(null, CliResult.OK_FUTURE);
     }
 
-    final boolean shouldWait = args.contains(WAIT_KEY);
     Pair<Project, Future<CliResult>> projectAndCallback = null;
     int line = -1;
     int column = -1;
     boolean tempProject = false;
+    boolean shouldWait = args.contains(OPTION_WAIT);
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (arg.equals(SplashManager.NO_SPLASH)) {
+      if (SplashManager.NO_SPLASH.equals(arg) || OPTION_WAIT.equals(arg)) {
         continue;
       }
 
@@ -167,10 +167,6 @@ public final class CommandLineProcessor {
 
       if (arg.equals("--temp-project")) {
         tempProject = true;
-        continue;
-      }
-
-      if (arg.equals(WAIT_KEY)) {
         continue;
       }
 
