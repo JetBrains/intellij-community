@@ -51,6 +51,7 @@
     <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ProjectSdkUsages"/>
     <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ModuleSdkUsages"/>
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker$ActivityTracker"/>
+    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker$GlobalEditorNotification"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
