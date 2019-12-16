@@ -77,6 +77,7 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/org/checkerframework/checker-compat-qual/2.0.0:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/mojo/animal-sniffer-annotations/1.14:jar",
         "//prebuilts/tools/common/m2/repository/aopalliance/aopalliance/1.0:jar",
+        "//prebuilts/tools/common/m2/repository/com/google/inject/guice/4.2.1:no_aop.jar",
         "//prebuilts/tools/common/m2/repository/commons-cli/commons-cli/1.4:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-embedder/3.6.0:jar",
         "//prebuilts/tools/common/m2/repository/org/sonatype/plexus/plexus-cipher/1.7:jar",

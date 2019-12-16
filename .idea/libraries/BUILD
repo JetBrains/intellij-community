@@ -916,8 +916,8 @@ java_library(
 java_library(
     name = "tightvnc",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/tightvnc:jar"],
+    exports = ["//prebuilts/tools/common/tightvnc"],
+    runtime_deps = ["//prebuilts/tools/common/tightvnc"],
 )
 
 # managed by go/iml_to_build
