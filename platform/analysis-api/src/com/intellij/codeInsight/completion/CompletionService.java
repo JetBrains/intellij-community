@@ -129,6 +129,7 @@ public abstract class CompletionService {
 
   public abstract CompletionSorter emptySorter();
 
+  @ApiStatus.Internal
   public static boolean isStartMatch(LookupElement element, WeighingContext context) {
     return getItemMatcher(element, context).isStartMatch(element);
   }
