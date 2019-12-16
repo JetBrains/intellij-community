@@ -86,7 +86,17 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     updateVisibleRowCount();
     ((ListPopupModel<?>)popupList.getModel()).syncModel();
     popupList.setVisibleRowCount(Math.min(values.size(), myContext.getMaximumRowCount()));
-    setSize(popupList.getPreferredSize());
+
+    //AbstractPopup#show sets preferred size, we need to turn if off shortly
+    JComponent content = getContent();
+    content.setPreferredSize(null);
+
+    Dimension newSize = content.getPreferredSize();
+    content.setPreferredSize(newSize);
+    setSize(newSize);
+
+    //this method makes the popup drift towards SW because of the myContent#insets
+    moveToFitScreen();
   }
 
   @NotNull
