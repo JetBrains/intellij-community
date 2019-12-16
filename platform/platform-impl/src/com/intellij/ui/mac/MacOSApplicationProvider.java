@@ -14,7 +14,7 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -162,7 +162,7 @@ public final class MacOSApplicationProvider {
         }
         else {
           ENABLED.set(false);
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
             try {
               LOG.debug("MacMenu: init ", name);
               task.run();
@@ -171,7 +171,7 @@ public final class MacOSApplicationProvider {
               LOG.debug("MacMenu: done ", name);
               ENABLED.set(true);
             }
-          });
+          }, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
         }
       }
     }
