@@ -18,6 +18,7 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
 ) : ChangeNodeDecorator {
 
   override fun decorate(change: Change, renderer: SimpleColoredComponent, isShowFlatten: Boolean) {
+    if (project.isDisposed) return
     if (isVisible()) appendPartialCommitState(change, renderer)
     baseDecorator.decorate(change, renderer, isShowFlatten)
   }

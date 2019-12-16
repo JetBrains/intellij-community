@@ -177,6 +177,7 @@ public class RemoteRevisionsCache implements VcsListener {
    * @return false if not up to date
    */
   public boolean isUpToDate(@NotNull Change change) {
+    if (myProject.isDisposed()) return true;
     final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myProject);
     if (vcs == null) return true;
     final RemoteDifferenceStrategy strategy = vcs.getRemoteDifferenceStrategy();
