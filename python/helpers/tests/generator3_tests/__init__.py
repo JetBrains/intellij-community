@@ -8,8 +8,7 @@ from contextlib import contextmanager
 from io import open
 
 import six
-
-from pycharm_generator_utils.constants import ENV_TEST_MODE_FLAG
+from generator3.constants import ENV_TEST_MODE_FLAG
 
 _test_dir = os.path.dirname(__file__)
 _test_data_root_dir = os.path.join(_test_dir, 'data')
@@ -17,6 +16,27 @@ _override_test_data = False
 
 python3_only = unittest.skipUnless(six.PY3, 'Python 3 only test')
 python2_only = unittest.skipUnless(six.PY2, 'Python 2 only test')
+
+
+def test_data_dir(name):
+    """
+    Decorator allowing to customize test data directory for a test.
+
+    The specified name will be used only as the last component of the path
+    following the directory corresponding to the test class (by default
+    test name itself is used for this purpose).
+
+    Example::
+
+        @test_data_dir('common_test_data')
+        def test_scenario():
+            ...
+    """
+    def decorator(f):
+        f._test_data_dir = name
+        return f
+
+    return decorator
 
 
 class GeneratorTestCase(unittest.TestCase):
@@ -33,7 +53,7 @@ class GeneratorTestCase(unittest.TestCase):
         handler = logging.StreamHandler(sys.stderr)
         handler.setFormatter(logging.Formatter(fmt='%(levelname)s:%(name)s:%(message)s'))
         cls.log.addHandler(handler)
-        cls.log.setLevel(logging.DEBUG)
+        cls.log.setLevel(logging.WARN)
 
         os.environ[ENV_TEST_MODE_FLAG] = 'True'
 
@@ -48,8 +68,16 @@ class GeneratorTestCase(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp(prefix='{}_{}__'.format(self.test_class_name, self.test_name))
 
     def tearDown(self):
-        if not self._test_has_failed():
-            shutil.rmtree(self.temp_dir)
+        if self._test_has_failed():
+            self.tearDownForFailedTest()
+        else:
+            self.tearDownForSuccessfulTest()
+
+    def tearDownForSuccessfulTest(self):
+        shutil.rmtree(self.temp_dir)
+
+    def tearDownForFailedTest(self):
+        pass
 
     def _test_has_failed(self):
         try:
@@ -75,7 +103,9 @@ class GeneratorTestCase(unittest.TestCase):
 
     @property
     def test_data_dir(self):
-        return os.path.join(self.class_test_data_dir, self.test_name)
+        test_method = getattr(self, self._testMethodName)
+        dir_name = getattr(test_method, '_test_data_dir', self.test_name)
+        return os.path.join(self.class_test_data_dir, dir_name)
 
     @property
     def class_test_data_dir(self):
@@ -118,6 +148,8 @@ class GeneratorTestCase(unittest.TestCase):
 
     @contextmanager
     def comparing_dirs(self, subdir='', tmp_subdir=''):
+        self.assertTrue(os.path.exists(self.test_data_dir),
+                        "Test data directory {!r} doesn't exist".format(self.test_data_dir))
         before_dir = os.path.join(self.test_data_dir, subdir, 'before')
         after_dir = os.path.join(self.test_data_dir, subdir, 'after')
         dst_dir = os.path.join(self.temp_dir, tmp_subdir)
@@ -131,3 +163,19 @@ class GeneratorTestCase(unittest.TestCase):
                     shutil.copytree(child_path, child_dst_path)
         yield dst_dir
         self.assertDirsEqual(dst_dir, after_dir)
+
+    def assertContainsInRelativeOrder(self, expected, actual):
+        actual_list = list(actual)
+        prev_index, prev_item = -1, None
+        for item in expected:
+            try:
+                prev_index = actual_list.index(item, prev_index + 1)
+                prev_item = item
+            except ValueError:
+                try:
+                    index = actual_list.index(item)
+                    if index <= prev_index:
+                        raise AssertionError(
+                            'Item {!r} is expected after {!r} in {!r}'.format(item, prev_item, actual_list))
+                except ValueError:
+                    raise AssertionError('Item {!r} not found in {!r}'.format(item, actual_list))

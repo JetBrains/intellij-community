@@ -104,7 +104,7 @@
     <id>-com-android-tools-idea-smali-</id>
     <name>Smali Support</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends>com.intellij.modules.android-capable</depends>
+    <depends>com.intellij.modules.java-capable</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.guiForms.designer/META-INF/plugin.xml">
     <id>-com-intellij-uiDesigner-</id>
@@ -264,7 +264,6 @@
     <module value="com.intellij.modules.idea"/>
     <module value="com.intellij.modules.idea.ultimate"/>
     <module value="com.intellij.modules.java-capable"/>
-    <module value="com.intellij.modules.android-capable"/>
     <module value="com.intellij.modules.php-capable"/>
     <module value="com.intellij.modules.ruby-capable"/>
     <module value="com.intellij.modules.c-capable"/>
@@ -1183,7 +1182,7 @@
   <idea-plugin url="file://out/intellij.android.plugin/META-INF/plugin.xml">
     <id>-org-jetbrains-android-</id>
     <name>Android Support</name>
-    <depends>com.intellij.modules.android-capable</depends>
+    <depends>com.intellij.modules.java-capable</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>-org-intellij-intelliLang-</depends>
     <depends>-JUnit-</depends>

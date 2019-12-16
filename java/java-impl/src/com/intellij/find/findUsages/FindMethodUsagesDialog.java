@@ -3,7 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ImplicitToStringSearch;
@@ -47,7 +47,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
       options.isImplicitToString = isSelected(myCbImplicitToString);
     }
     options.isCheckDeepInheritance = true;
-    FUStateUsagesLogger.logStateEvent(myEventLogGroup, "FindMethodUsages", createFeatureUsageData(options));
+    FUCounterUsageLogger.getInstance().logEvent(EVENT_LOG_GROUP, "find.method.started", createFeatureUsageData(options));
   }
 
   @Override

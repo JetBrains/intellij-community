@@ -176,13 +176,13 @@ public class PythonSdkUpdater implements StartupActivity.Background {
                 final String sdkPresentableName = getSdkPresentableName(sdk);
                 LOG.info("Performing background update of skeletons for SDK " + sdkPresentableName);
                 indicator.setText("Updating skeletons...");
-                PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
-                updateRemoteSdkPaths(sdkInsideTask, getProject());
-                indicator.setIndeterminate(true);
-                indicator.setText("Scanning installed packages...");
-                indicator.setText2("");
-                LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                 try {
+                  PySkeletonRefresher.refreshSkeletonsOfSdk(project1, ownerComponent, skeletonsPath, sdkInsideTask);
+                  updateRemoteSdkPaths(sdkInsideTask, getProject());
+                  indicator.setIndeterminate(true);
+                  indicator.setText("Scanning installed packages...");
+                  indicator.setText2("");
+                  LOG.info("Performing background scan of packages for SDK " + sdkPresentableName);
                   PyPackageManager.getInstance(sdkInsideTask).refreshAndGetPackages(true);
                 }
                 catch (ExecutionException e) {

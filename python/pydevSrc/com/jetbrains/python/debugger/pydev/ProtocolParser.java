@@ -28,7 +28,8 @@ public class ProtocolParser {
     if (!"call_signature".equals(reader.getNodeName())) {
       throw new PyDebuggerException("Expected <call_signature>, found " + reader.getNodeName());
     }
-    final String file = readString(reader, "file", "");
+    String file = reader.getAttribute("file");
+    if (file == null) file = "";
     final String name = readString(reader, "name", "");
     PySignature signature = new PySignature(file, name);
 
@@ -209,7 +210,7 @@ public class ProtocolParser {
 
     final String id = readString(reader, "id", null);
     final String name = readString(reader, "name", null);
-    final String file = readString(reader, "file", null);
+    final String file = reader.getAttribute("file");
     final int line = readInt(reader, "line", 0);
 
     return new PyStackFrameInfo(threadId, id, name, positionConverter.convertPythonToFrame(file, line));

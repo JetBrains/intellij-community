@@ -139,6 +139,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     Disposer.register(myUi, this);
   }
 
+  @NotNull
   private void installEditorPreview() {
     myDiffPreviewProvider = new DiffPreviewProvider() {
       @NotNull
@@ -157,7 +158,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
       @Override
       public String getEditorTabName() {
-        return String.format("History for '%s'", myFilePath.getName());
+        return myFilePath.getName();
       }
     };
 

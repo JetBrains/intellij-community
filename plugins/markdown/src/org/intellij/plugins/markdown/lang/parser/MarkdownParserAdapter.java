@@ -19,9 +19,19 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownParserAdapter implements PsiParser {
+  @NotNull final MarkdownFlavourDescriptor myFlavour;
+
+  public MarkdownParserAdapter() {
+    this(MarkdownParserManager.FLAVOUR);
+  }
+
+  public MarkdownParserAdapter(@NotNull MarkdownFlavourDescriptor flavour) {
+    myFlavour = flavour;
+  }
 
   @Override
   @NotNull
@@ -29,7 +39,7 @@ public class MarkdownParserAdapter implements PsiParser {
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
-    final org.intellij.markdown.ast.ASTNode parsedTree = MarkdownParserManager.parseContent(builder.getOriginalText());
+    final org.intellij.markdown.ast.ASTNode parsedTree = MarkdownParserManager.parseContent(builder.getOriginalText(), myFlavour);
 
     assert builder.getCurrentOffset() == 0;
     new PsiBuilderFillingVisitor(builder).visitNode(parsedTree);

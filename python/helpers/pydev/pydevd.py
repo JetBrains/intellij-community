@@ -20,7 +20,7 @@ from collections import defaultdict
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE, dummy_excepthook
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -464,7 +464,7 @@ class PyDB(object):
             thread_trace_func = self.trace_dispatch
         return thread_trace_func
 
-    def enable_tracing(self, thread_trace_func=None):
+    def enable_tracing(self, thread_trace_func=None, apply_to_all_threads=False):
         '''
         Enables tracing.
 
@@ -477,6 +477,9 @@ class PyDB(object):
         if self.frame_eval_func is not None:
             self.frame_eval_func()
             pydevd_tracing.SetTrace(self.dummy_trace_dispatch)
+
+            if IS_CPYTHON and apply_to_all_threads:
+                pydevd_tracing.set_trace_to_threads(self.dummy_trace_dispatch)
             return
 
         if thread_trace_func is None:
@@ -485,6 +488,8 @@ class PyDB(object):
             self._local_thread_trace_func.thread_trace_func = thread_trace_func
 
         pydevd_tracing.SetTrace(thread_trace_func)
+        if IS_CPYTHON and apply_to_all_threads:
+            pydevd_tracing.set_trace_to_threads(thread_trace_func)
 
     def disable_tracing(self):
         pydevd_tracing.SetTrace(None)
@@ -510,24 +515,38 @@ class PyDB(object):
         if ignore_current_thread:
             ignore_thread = threading.current_thread()
 
-        threads = threadingEnumerate()
-        try:
-            for t in threads:
-                if getattr(t, 'is_pydev_daemon_thread', False) or t is ignore_thread or getattr(t, 'pydev_do_not_trace', False):
-                    continue
+        ignore_thread_ids = set(
+            t.ident for t in threadingEnumerate()
+            if getattr(t, 'is_pydev_daemon_thread', False) or getattr(t, 'pydev_do_not_trace', False)
+        )
 
-                additional_info = set_additional_thread_info(t)
-                frame = additional_info.get_topmost_frame(t)
-                try:
-                    if frame is not None:
-                        self.set_trace_for_frame_and_parents(frame)
-                finally:
-                    frame = None
-        finally:
-            frame = None
-            t = None
-            threads = None
-            additional_info = None
+        if IS_CPYTHON:
+            # Note: use sys._current_frames instead of threading.enumerate() because this way
+            # we also see C/C++ threads, not only the ones visible to the threading module.
+            tid_to_frame = sys._current_frames()
+
+            for thread_id, frame in tid_to_frame.items():
+                if thread_id not in ignore_thread_ids:
+                    self.set_trace_for_frame_and_parents(frame)
+        else:
+            threads = threadingEnumerate()
+            try:
+                for t in threads:
+                    if t.ident in ignore_thread_ids or t is ignore_thread:
+                        continue
+
+                    additional_info = set_additional_thread_info(t)
+                    frame = additional_info.get_topmost_frame(t)
+                    try:
+                        if frame is not None:
+                            self.set_trace_for_frame_and_parents(frame)
+                    finally:
+                        frame = None
+            finally:
+                frame = None
+                t = None
+                threads = None
+                additional_info = None
 
     @property
     def multi_threads_single_notification(self):
@@ -1689,7 +1708,7 @@ def _locked_settrace(
 
         debugger.start_auxiliary_daemon_threads()
 
-        debugger.enable_tracing()
+        debugger.enable_tracing(apply_to_all_threads=True)
 
         if not trace_only_current_thread:
             # Trace future threads?

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -679,18 +680,26 @@ public class ShelvedChangesViewManager implements Disposable {
         myDiffPreview = new EditorTabPreview(changeProcessor, pane, myTree){
 
           @Override
-          protected boolean shouldSkip() {
+          protected boolean skipPreviewUpdate() {
+            if (super.skipPreviewUpdate())
+              return true;
+
             return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }
 
           @Override
           protected String getCurrentName() {
-            return "Shelf";
+            ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
+            return myCurrentShelvedElement != null ? myCurrentShelvedElement.getRequestName() : "Shelf";
           }
 
           @Override
           protected void doRefresh() {
             changeProcessor.refresh(false);
+            PreviewDiffVirtualFile vcsContentFile = getVcsContentFile();
+            if (changeProcessor.myCurrentShelvedElement == null) {
+              FileEditorManager.getInstance(project).closeFile(vcsContentFile);
+            }
           }
         };
 

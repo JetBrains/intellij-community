@@ -227,26 +227,24 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
         instance.openFile(file, false, true);
       }
     }, this);
-
-    new AnAction() {
-      {
-        setShortcutSet(CommonShortcuts.ESCAPE);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openLogEditorTab();
-      }
-    }.registerCustomShortcutSet(myChangesBrowser, this);
   }
 
   private void installGraphView() {
     if (Registry.is("show.log.as.editor.tab")) {
       DataManager.registerDataProvider(myToolbarsAndTable, this);
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        openLogEditorTab();
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(this::openLogEditorTab, ModalityState.NON_MODAL);
+
+      new AnAction() {
+        {
+          setShortcutSet(CommonShortcuts.ESCAPE);
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          openLogEditorTab();
+        }
+      }.registerCustomShortcutSet(myChangesBrowser, this);
     }
     else {
       myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);

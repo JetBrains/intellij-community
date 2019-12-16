@@ -13,6 +13,17 @@ public class VcsEditorTabTitleProvider implements EditorTabTitleProvider {
   @Nullable
   @Override
   public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
+    return getEditorTabName(file);
+  }
+
+  @Nullable
+  @Override
+  public String getEditorTabTooltipText(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return getEditorTabName(virtualFile);
+  }
+
+  @Nullable
+  private static String getEditorTabName(@NotNull VirtualFile file) {
     if (file instanceof PreviewDiffVirtualFile) {
       return ((PreviewDiffVirtualFile)file).getProvider().getEditorTabName();
     }

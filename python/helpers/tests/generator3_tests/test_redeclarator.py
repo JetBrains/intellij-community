@@ -5,7 +5,7 @@ NOTE: does not work in Jython 2.2 or IronPython 1.x, because pyparsing does not.
 """
 
 import unittest
-from pycharm_generator_utils.module_redeclarator import *
+from generator3.module_redeclarator import *
 
 M = ModuleRedeclarator
 
@@ -287,7 +287,6 @@ class TestSpecialCases(unittest.TestCase):
     """
 
     def setUp(self):
-        import sys
 
         if VERSION >= (3, 0):
             import builtins as the_builtins

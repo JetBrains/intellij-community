@@ -8,7 +8,7 @@ import java.util.function.Consumer
 /**
  * @author nik
  */
-abstract class BaseIdeaProperties extends ProductProperties {
+abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   public static final List<String> JAVA_IDE_API_MODULES = [
     "intellij.xml.dom",
     "intellij.java.testFramework",

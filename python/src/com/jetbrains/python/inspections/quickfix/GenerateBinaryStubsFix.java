@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections.quickfix;
 import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ReadAction;
@@ -31,6 +32,7 @@ import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -52,10 +54,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -146,11 +145,15 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
         try {
           final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, mySdk, null, null, folder);
 
-          if (needBinaryList(myQualifiedName)) {
-            if (!generateSkeletonsForList(refresher, indicator, folder)) return;
+          if (isFromGiRepository(myQualifiedName)) {
+            if (!generateSkeletonsForGiRepository(refresher, indicator, folder)) return;
           }
           else {
-            refresher.generateSkeleton(myQualifiedName, "", assemblyRefs, EmptyConsumer.getInstance());
+            refresher.getGenerator()
+              .commandBuilder()
+              .assemblyRefs(assemblyRefs)
+              .targetModule(myQualifiedName, null)
+              .runGeneration(indicator);
           }
           final VirtualFile skeletonDir;
           skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
@@ -158,18 +161,16 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
             skeletonDir.refresh(true, true);
           }
         }
-        catch (InvalidSdkException e) {
+        catch (InvalidSdkException | ExecutionException e) {
           LOG.error(e);
         }
       }
     };
   }
 
-  private boolean generateSkeletonsForList(@NotNull final PySkeletonRefresher refresher,
-                                           ProgressIndicator indicator,
-                                           @Nullable final String currentBinaryFilesPath) throws InvalidSdkException {
-    final PySkeletonGenerator generator = new PySkeletonGenerator(refresher.getSkeletonsPath(), mySdk, currentBinaryFilesPath);
-    indicator.setIndeterminate(false);
+  private boolean generateSkeletonsForGiRepository(@NotNull PySkeletonRefresher refresher,
+                                                   @NotNull ProgressIndicator indicator,
+                                                   @Nullable String currentBinaryFilesPath) throws InvalidSdkException, ExecutionException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) return false;
     GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
@@ -177,27 +178,22 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
                                                                new File(homePath).getParent(),
                                                                PythonSdkType.activateVirtualEnv(mySdk), 5000
     );
-    if (runResult.getExitCode() == 0 && !runResult.isTimeout()) {
-      final String extraPath = runResult.getStdout();
-      final PySkeletonGenerator.ListBinariesResult binaries = generator.listBinaries(mySdk, extraPath);
-      final List<String> names = Lists.newArrayList(binaries.modules.keySet());
-      Collections.sort(names);
-      final int size = names.size();
-      for (int i = 0; i != size; ++i) {
-        final String name = names.get(i);
-        indicator.setFraction((double)i / size);
-        if (needBinaryList(name)) {
-          indicator.setText2(name);
-          final PySkeletonRefresher.PyBinaryItem item = binaries.modules.get(name);
-          final String modulePath = item != null ? item.getPath() : "";
-          refresher.generateSkeleton(name, modulePath, new ArrayList<>(), EmptyConsumer.getInstance());
-        }
+    if (runResult.checkSuccess(LOG)) {
+      final PySkeletonGenerator.Builder builder = refresher.getGenerator()
+        .commandBuilder()
+        .extraSysPath(StringUtil.split(runResult.getStdout(), File.pathSeparator))
+        .extraArgs("--name-pattern", "gi.repository.*");
+
+      if (currentBinaryFilesPath != null) {
+        builder.workingDir(currentBinaryFilesPath);
       }
+
+      builder.runGeneration(indicator);
     }
     return true;
   }
 
-  private static boolean needBinaryList(@NotNull final String qualifiedName) {
+  private static boolean isFromGiRepository(@NotNull final String qualifiedName) {
     return qualifiedName.startsWith("gi.repository");
   }
 

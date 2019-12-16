@@ -49,6 +49,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         mainJarName = "python-ide.jar"
       }
     ]
+    productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
   }
 
   @Override

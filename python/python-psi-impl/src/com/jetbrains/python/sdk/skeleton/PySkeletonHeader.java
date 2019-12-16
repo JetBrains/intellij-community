@@ -13,20 +13,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PySkeletonHeader {
-  public final static Pattern ONE_LINE =
-    Pattern.compile("^(?:(\\w+(?:\\.\\w+)*|\\(built-in\\)|\\(default\\))\\s+(\\d+\\.\\d+))?\\s*(?:#.*)?$");
-  public static final int PREGENERATED_VERSION = -1;
-  @NonNls public static final String REQUIRED_VERSION_FNAME = "required_gen_version";
-  @NonNls public static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
   @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
   @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
+
   // Path (the first component) may contain spaces, this header spec is deprecated
   private static final Pattern VERSION_LINE_V1 = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
   // Skeleton header spec v2
   private static final Pattern FROM_LINE_V2 = Pattern.compile("# from (.*)$");
   private static final Pattern BY_LINE_V2 = Pattern.compile("# by generator (.*)$");
 
-  
   @NotNull private final String myFile;
   private final int myVersion;
 

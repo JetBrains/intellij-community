@@ -734,7 +734,7 @@ class NetCommandFactory:
 
                 # Note: variables are all gotten 'on-demand'.
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(method_name)))
-                append('file="%s" line="%s">' % (quote(make_valid_xml_value(my_file), '/>_= \t'), lineno))
+                append('file="%s" line="%s">' % (make_valid_xml_value(my_file), lineno))
                 append("</frame>")
                 curr_frame = curr_frame.f_back
         except:

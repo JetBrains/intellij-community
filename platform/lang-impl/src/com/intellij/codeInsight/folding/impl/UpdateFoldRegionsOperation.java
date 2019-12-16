@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
@@ -271,16 +272,31 @@ class UpdateFoldRegionsOperation implements Runnable {
         FoldingDescriptor descriptor = regionInfo.descriptor;
         TextRange range = descriptor.getRange();
         if (TextRange.areSegmentsEqual(region, range)) {
-          if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
-            return true;
-          }
-          else if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
-            rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
-            return true;
+          if (Registry.is("folding.check.collapse.state.before.placeholder.text")) {
+            if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
+              rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
+              return true;
+            }
+            else if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
+              return true;
+            }
+            else {
+              matchingInfo.set(regionInfo);
+              return false;
+            }
           }
           else {
-            matchingInfo.set(regionInfo);
-            return false;
+            if (!region.getPlaceholderText().equals(descriptor.getPlaceholderText()) || range.getLength() < 2) {
+              return true;
+            }
+            else if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
+              rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
+              return true;
+            }
+            else {
+              matchingInfo.set(regionInfo);
+              return false;
+            }
           }
         }
       }

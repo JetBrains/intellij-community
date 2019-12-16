@@ -273,20 +273,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                ? toExpand -> reloadFor(hint, editor, p, editorPane, alignToRight, group, hintHint, toExpand)
                                : tooltipReloader;
 
-    actions.add(new AnAction() {
-      // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
-      {
-        registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
-        // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
-        hintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
-        TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), "shortcut", e.getInputEvent(), e.getPlace());
-        reloader.reload(!expanded);
-      }
-    });
+    ReloadHintAction reloadAction = new ReloadHintAction(hintHint, reloader, expanded);
+    // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
+    reloadAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
+    actions.add(reloadAction);
 
     editorPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
@@ -548,5 +538,25 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   @Nullable
   public String getText() {
     return myText;
+  }
+
+  private static class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    private final HintHint myHintHint;
+    private final TooltipReloader myReloader;
+    private final boolean myExpanded;
+
+    private ReloadHintAction(HintHint hintHint, TooltipReloader reloader, boolean expanded) {
+      myHintHint = hintHint;
+      myReloader = reloader;
+      myExpanded = expanded;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
+      myHintHint.setRequestFocus(ScreenReader.isActive() && e.getInputEvent() instanceof KeyEvent);
+      TooltipActionsLogger.INSTANCE.logShowDescription(e.getProject(), "shortcut", e.getInputEvent(), e.getPlace());
+      myReloader.reload(!myExpanded);
+    }
   }
 }
