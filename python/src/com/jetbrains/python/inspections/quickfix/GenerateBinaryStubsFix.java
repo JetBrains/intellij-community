@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.EmptyConsumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.*;
@@ -54,7 +53,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -73,9 +75,9 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
    * @return pack of fixes
    */
   @NotNull
-  public static Collection<GenerateBinaryStubsFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
+  public static Collection<LocalQuickFix> generateFixes(@NotNull final PyImportStatementBase importStatementBase) {
     final List<String> names = importStatementBase.getFullyQualifiedObjectNames();
-    final List<GenerateBinaryStubsFix> result = new ArrayList<>(names.size());
+    final List<LocalQuickFix> result = new ArrayList<>(names.size());
     if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
       final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
       if (qName != null) {

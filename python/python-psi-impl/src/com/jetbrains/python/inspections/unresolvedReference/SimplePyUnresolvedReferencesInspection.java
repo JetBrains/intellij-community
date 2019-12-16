@@ -32,12 +32,6 @@ public class SimplePyUnresolvedReferencesInspection extends PyUnresolvedReferenc
       super(holder, session, Collections.emptyList());
     }
 
-    @NotNull
-    @Override
-    PyUnresolvedReferencesQuickFixBuilder quickFixBuilder() {
-      return PyUnresolvedReferencesQuickFixBuilder.EMPTY;
-    }
-
     @Override
     boolean isEnabled(@NotNull PsiElement anchor) {
       return true;

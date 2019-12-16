@@ -7,6 +7,7 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
@@ -47,6 +48,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,9 +67,6 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
     super(holder, session);
     myIgnoredIdentifiers = ImmutableSet.copyOf(ignoredIdentifiers);
   }
-
-  @NotNull
-  abstract PyUnresolvedReferencesQuickFixBuilder quickFixBuilder();
 
   @Override
   public void visitPyTargetExpression(PyTargetExpression node) {
@@ -281,7 +280,7 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
     if (myIgnoredIdentifiers.contains(refName)) {
       return;
     }
-    PyUnresolvedReferencesQuickFixBuilder quickFixBuilder = quickFixBuilder();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       if (PyNames.COMPARISON_OPERATORS.contains(refName)) {
@@ -291,11 +290,11 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
         if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(expr)) {
           return;
         }
-        quickFixBuilder.addTrueFalseQuickFix(expr, refText);
-        quickFixBuilder.addAddSelfFix(myTypeEvalContext, node, expr);
-        quickFixBuilder.addCreateFunctionQuickFix(expr);
-        quickFixBuilder.addAddParameterQuickFix(refName, expr);
-        quickFixBuilder.addRenameUnresolvedRefQuickFix();
+        ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(expr, refText));
+        ContainerUtil.addAll(fixes, getAddSelfFixes(myTypeEvalContext, node, expr));
+        ContainerUtil.addIfNotNull(fixes, getCreateFunctionQuickFix(expr));
+        ContainerUtil.addIfNotNull(fixes, getAddParameterQuickFix(refName, expr));
+        ContainerUtil.addIfNotNull(fixes, getRenameUnresolvedRefQuickFix());
       }
       // unqualified:
       // may be module's
@@ -336,7 +335,7 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
           if (ignoreUnresolvedMemberForType(type, reference, refName) || isDeclaredInSlots(type, refName)) {
             return;
           }
-          quickFixBuilder.addCreateMemberFromUsageFixes(myTypeEvalContext, type, reference, refText);
+          ContainerUtil.addAll(fixes, getCreateMemberFromUsageFixes(myTypeEvalContext, type, reference, refText));
           if (type instanceof PyClassType) {
             final PyClassType classType = (PyClassType)type;
             if (reference instanceof PyOperatorReference) {
@@ -364,8 +363,8 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
       if (!markedQualified) {
         description = PyPsiBundle.message("INSP.unresolved.ref.$0", refText);
 
-        quickFixBuilder.addAutoImportFix(node, reference, element);
-        quickFixBuilder.addCreateClassFix(myTypeEvalContext, refText, element);
+        ContainerUtil.addAll(fixes, getAutoImportFixes(node, reference, element));
+        ContainerUtil.addIfNotNull(fixes, getCreateClassFix(myTypeEvalContext, refText, element));
       }
     }
     ProblemHighlightType hl_type;
@@ -379,16 +378,16 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
       hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
     }
 
-    quickFixBuilder.addImportStatementQuickFix(element);
-    quickFixBuilder.addAddIgnoredIdentifierQuickFix(qualifiedNames);
-    quickFixBuilder.addPluginQuickFixes(reference);
-    quickFixBuilder.addAddInstallPackageQuickFix(node, reference, refName);
+    ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
+    ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
+    ContainerUtil.addAll(fixes, getPluginQuickFixes(reference));
+    ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
     }
 
-    registerProblem(node, description, hl_type, null, rangeInElement, quickFixBuilder.build());
+    registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
   private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
@@ -759,5 +758,57 @@ abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor {
     }
 
     return false;
+  }
+
+  Iterable<LocalQuickFix> getInstallPackageQuickFixes(@NotNull PyElement node,
+                                                      @NotNull PsiReference reference,
+                                                      String refName) {
+    return Collections.emptyList();
+  }
+
+  Iterable<LocalQuickFix> getAddIgnoredIdentifierQuickFixes(List<QualifiedName> qualifiedNames) {
+    return Collections.emptyList();
+  }
+
+  Iterable<LocalQuickFix> getImportStatementQuickFixes(PsiElement element) {
+    return Collections.emptyList();
+  }
+
+  LocalQuickFix getRenameUnresolvedRefQuickFix() {
+    return null;
+  }
+
+  LocalQuickFix getAddParameterQuickFix(String refName, PyReferenceExpression expr) {
+    return null;
+  }
+
+  LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
+    return null;
+  }
+
+  LocalQuickFix getTrueFalseQuickFix(PyReferenceExpression expr, String refText) {
+    return null;
+  }
+
+  Iterable<LocalQuickFix> getCreateMemberFromUsageFixes(
+    TypeEvalContext typeEvalContext, PyType type, PsiReference reference, String refText
+  ) {
+    return Collections.emptyList();
+  }
+
+  Iterable<LocalQuickFix> getAddSelfFixes(TypeEvalContext typeEvalContext, PyElement node, PyReferenceExpression expr) {
+    return Collections.emptyList();
+  }
+
+  Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
+    return Collections.emptyList();
+  }
+
+  LocalQuickFix getCreateClassFix(TypeEvalContext typeEvalContext, @NonNls String refText, PsiElement element) {
+    return null;
+  }
+
+  Iterable<LocalQuickFix> getPluginQuickFixes(PsiReference reference) {
+    return Collections.emptyList();
   }
 }
