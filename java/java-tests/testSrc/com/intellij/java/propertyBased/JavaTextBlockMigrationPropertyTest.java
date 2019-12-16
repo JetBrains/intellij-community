@@ -143,7 +143,9 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
     // IDEA-226395
     String[] textBlockLines = getTextBlockLines(lines);
     if (textBlockLines == null) return null;
-    if (PsiLiteralUtil.getTextBlockIndent(textBlockLines, true) != 0) return null;
+    int indent = PsiLiteralUtil.getTextBlockIndent(textBlockLines, true, true);
+    if (indent > 0 && textBlockLines.length > 0 && textBlockLines[textBlockLines.length - 1].endsWith("\n")) indent = 0;
+    if (indent > 0) return null;
 
     return StringUtil.join(lines);
   }

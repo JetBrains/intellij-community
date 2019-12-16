@@ -380,19 +380,19 @@ public class PsiLiteralUtil {
    * @param lines text block content
    */
   public static int getTextBlockIndent(@NotNull String[] lines) {
-    return getTextBlockIndent(lines, false);
+    return getTextBlockIndent(lines, false, false);
   }
 
   /**
    * @see #getTextBlockIndent(String[])
    */
-  public static int getTextBlockIndent(@NotNull String[] lines, boolean preserveContent) {
+  public static int getTextBlockIndent(@NotNull String[] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       int indent = 0;
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && i < lines.length - 1) {
+      if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
         if (!preserveContent) lines[i] = "";
       }
       else if (indent < prefix) prefix = indent;

@@ -118,7 +118,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     private static String getTextBlock(@NotNull String[] lines) {
       lines = getTextBlockLines(lines);
-      int indent = PsiLiteralUtil.getTextBlockIndent(lines, true);
+      int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
       // we need additional indent call only when significant trailing line is missing
       if (indent > 0 && lines.length > 0 && lines[lines.length - 1].endsWith("\n")) indent = 0;
       return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
@@ -126,16 +126,16 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     @NotNull
     private static String[] getTextBlockLines(@NotNull String[] lines) {
-      String[] blockLines = new String[lines.length];
+      StringBuilder blockLines = new StringBuilder();
       boolean escapeStartQuote = false;
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
         boolean isLastLine = i == lines.length - 1;
         line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
         escapeStartQuote = line.endsWith("\"");
-        blockLines[i] = line;
+        blockLines.append(line);
       }
-      return blockLines;
+      return blockLines.toString().split("(?<=\n)");
     }
 
     private static String concatenateTextBlockLines(@NotNull String[] lines, int indent) {
