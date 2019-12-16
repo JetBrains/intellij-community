@@ -133,7 +133,8 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
 
   @Override
   public final boolean isLeaf(Object object) {
-    if (object != state && object instanceof Node) {
+    if (object instanceof Node) {
+      assert object != state;
       Entry<Node> entry = getEntry((Node)object, false);
       if (entry != null) return entry.isLeaf();
     }
