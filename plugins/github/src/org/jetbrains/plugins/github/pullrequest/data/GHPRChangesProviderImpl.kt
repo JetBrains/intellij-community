@@ -15,6 +15,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
+import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
@@ -30,6 +31,10 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   private val changesIndex: Map<Pair<String, String>, Change>
 
   init {
+    val mergeBaseRev =
+      GitHistoryUtils.getMergeBase(repository.project, repository.root, baseRef, headRef)?.rev
+      ?: error("Could not calculate merge base for PR branch")
+
     val changesWithRenames = buildChangesWithRenames(commits)
 
     val patchReader = PatchReader(diffFile, true)
@@ -46,7 +51,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
         continue
       }
 
-      val change = changeWithRenames.createVcsChange(repository.project, baseRef, headRef)
+      val change = changeWithRenames.createVcsChange(repository.project, mergeBaseRev, headRef)
       if (change == null) {
         LOG.info("Empty VCS change for patch $patch")
         continue
