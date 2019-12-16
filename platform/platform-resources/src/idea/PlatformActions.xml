@@ -521,6 +521,9 @@
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
+        <group id="FileMainSettingsGroup">
+          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
+        </group>
         <group id="FilePropertiesGroup" popup="true">
           <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
           <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
@@ -542,14 +545,24 @@
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
           <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
         </group>
-        <group id="FileMainSettingsGroup">
-          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
-          <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
-            <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-            <reference ref="RunConfigurationTemplatesForNewProjects"/>
-            <group id="FileSettingsGroup"/>
-          </group>
+        <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
+          <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+          <reference ref="RunConfigurationTemplatesForNewProjects"/>
+          <group id="FileSettingsGroup"/>
+        </group>
+        <separator/>
+        <group id="PrintExportGroup">
           <separator/>
+          <group id="FileExportGroup" popup="true">
+            <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction">
+              <override-text place="MainMenu"/>
+            </action>
+          </group>
+          <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.General.Print"/>
+        </group>
+        <group id="PowerSaveGroup">
+          <separator/>
+          <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
         </group>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>

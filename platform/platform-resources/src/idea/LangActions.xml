@@ -77,18 +77,6 @@
     <group id="NewProjectOrModuleGroup">
     </group>
 
-    <group id="PrintExportGroup">
-      <separator/>
-      <group id="FileExportGroup" popup="true">
-        <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction">
-          <override-text place="MainMenu"/>
-        </action>
-      </group>
-      <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.General.Print"/>
-
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileMainSettingsGroup"/>
-    </group>
-
     <reference ref="AddToFavorites">
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
     </reference>
@@ -98,12 +86,6 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
-
-    <group id="PowerSaveGroup">
-      <separator/>
-      <action id="TogglePowerSave" class="com.intellij.ide.actions.TogglePowerSaveAction"/>
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileMainSettingsGroup"/>
-    </group>
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
