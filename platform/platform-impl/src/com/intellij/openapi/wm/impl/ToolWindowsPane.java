@@ -850,7 +850,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       layeredPane.validate();
       layeredPane.repaint();
     }
-    transferFocus();
   }
 
   private void removeSlidingComponentCmd(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
@@ -894,7 +893,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       layeredPane.validate();
       layeredPane.repaint();
     }
-    transferFocus();
   }
 
   private static final class ImageRef extends SoftReference<BufferedImage> {

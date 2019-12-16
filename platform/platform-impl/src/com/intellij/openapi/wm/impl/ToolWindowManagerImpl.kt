@@ -103,8 +103,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun isToolWindowRegistered(id: String) = idToEntry.containsKey(id)
 
-  internal val commandProcessor = CommandProcessor { project.isDisposed }
-
   init {
     if (project.isDefault) {
       waiterForSecondPress = null
@@ -343,10 +341,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindowPane = rootPane.toolWindowPane
     toolWindowPane.initDocumentComponent(project)
     this.toolWindowPane = toolWindowPane
-
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      commandProcessor.activate()
-    }
   }
 
   private fun beforeProjectOpened() {
@@ -407,7 +401,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun initToolWindows(list: List<ToolWindowEP>) {
     runActivity("toolwindow creating") {
-      commandProcessor.activate()
       for (bean in list) {
         try {
           doInitToolWindow(bean, bean.toolWindowFactory)
@@ -506,7 +499,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun activateEditorComponent() {
-    focusDefaultElementInSelectedEditor()
+    if (!EditorsSplitters.focusDefaultComponentInSplittersIfPresent()) {
+      frame?.rootPane?.requestFocusInWindow()
+    }
   }
 
   /**
@@ -766,20 +761,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           showToolWindowImpl(idToEntry.get(info2.id!!)!!, false)
         }
       }
-      // If we hide currently active tool window then we should activate the previous
-      // one which is located in the tool window stack.
-      // Activate another tool window if no active tool window exists and
-      // window stack is enabled.
-      activeStack.remove(entry, false) // hidden window should be at the top of stack
-      if (wasActive && moveFocus && !activeStack.isEmpty) {
-        val toBeActivated = activeStack.pop()
-        if (info.isVisible || isStackEnabled) {
-          activateToolWindowImpl(toBeActivated, info, forced = false, autoFocusContents = true)
-        }
-        else {
-          focusToolWindowByDefault(entry)
-        }
-      }
+      activeStack.remove(entry, false)
+    }
+
+    if (moveFocus) {
+      activateEditorComponent()
     }
 
     return true
@@ -843,7 +829,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           otherEntry.toolWindow.decoratorComponent?.let { decorator ->
             toolWindowPane!!.removeDecorator(otherInfo, decorator, false, this)
           }
-          toolWindowPane!!.transferFocus()
 
           // store WindowInfo into the SideStack
           if (isStackEnabled && otherInfo.isDocked && !otherInfo.isAutoHide) {
@@ -989,42 +974,35 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun removeDecorator(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean) {
-    when (info.type) {
-      ToolWindowType.FLOATING -> {
-        val floatingDecorator = entry.floatingDecorator
-        if (floatingDecorator != null) {
-          info.floatingBounds = floatingDecorator.bounds
-          floatingDecorator.dispose()
-        }
-      }
-      ToolWindowType.WINDOWED -> {
-        val windowedDecorator = entry.windowedDecorator
-        if (windowedDecorator != null) {
-          entry.windowedDecorator = null
-          val frame = windowedDecorator.frame
-          if (frame.isShowing) {
-            val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
-            if (maximized) {
-              frame.extendedState = Frame.NORMAL
-              frame.invalidate()
-              frame.revalidate()
-            }
+    // do not check type from info — destroy any actual state
+    entry.floatingDecorator?.let {
+      info.floatingBounds = it.bounds
+      it.dispose()
+      return
+    }
 
-            val bounds = getRootBounds(frame)
-            info.floatingBounds = bounds
-            info.isMaximized = maximized
-          }
-          Disposer.dispose(windowedDecorator)
-        }
-      }
-      else -> {
-        if (entry.toolWindow.decoratorComponent == null) {
-          return
+    entry.windowedDecorator?.let { windowedDecorator ->
+      entry.windowedDecorator = null
+      val frame = windowedDecorator.frame
+      if (frame.isShowing) {
+        val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
+        if (maximized) {
+          frame.extendedState = Frame.NORMAL
+          frame.invalidate()
+          frame.revalidate()
         }
 
-        toolWindowPane!!.removeDecorator(info, entry.toolWindow.decoratorComponent, dirtyMode, this)
-        toolWindowPane!!.transferFocus()
+        val bounds = getRootBounds(frame)
+        info.floatingBounds = bounds
+        info.isMaximized = maximized
       }
+      Disposer.dispose(windowedDecorator)
+      return
+    }
+
+    entry.toolWindow.decoratorComponent?.let {
+      toolWindowPane!!.removeDecorator(info, it, dirtyMode, this)
+      return
     }
   }
 
@@ -1112,6 +1090,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     toolWindowPane!!.layeredPane.revalidate()
     toolWindowPane!!.layeredPane.repaint()
 
+    activateEditorComponent()
+
     val frame = frame!!
     val rootPane = frame.rootPane ?: return
     rootPane.revalidate()
@@ -1123,9 +1103,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun invokeLater(runnable: Runnable) {
-    commandProcessor.execute(listOf(Runnable {
-      ApplicationManager.getApplication().invokeLater(runnable, project.disposed)
-    }))
+    ApplicationManager.getApplication().invokeLater(runnable, project.disposed)
   }
 
   override val focusManager: IdeFocusManager
@@ -1272,7 +1250,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       // for docked and sliding windows we have to move buttons and window's decorators
       layoutInfo.isVisible = false
       toolWindowPane.removeDecorator(currentInfo, entry.toolWindow.decoratorComponent, false, this)
-      toolWindowPane.transferFocus()
 
       doSetAnchor(entry, currentInfo, layoutInfo, anchor, order)
 
@@ -1342,7 +1319,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val info = getRegisteredMutableInfoOrLogError(id)
 
-    doHide(entry, info, hideSide = false, moveFocus = true)
+    doHide(entry, info)
 
     info.isSplit = isSide
     setToolWindowAnchor(id, anchor, order)
@@ -1641,28 +1618,25 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       Disposer.register(toolWindow.disposable, Disposable { deinstall(component) })
     }
 
-    override fun isFocusedComponentChangeValid(component: Component?, cause: AWTEvent?): Boolean {
-      return component != null && toolWindow.toolWindowManager.commandProcessor.commandCount == 0
-    }
+    override fun isFocusedComponentChangeValid(component: Component?, cause: AWTEvent?) = component != null
 
     override fun focusedComponentChanged(component: Component?, cause: AWTEvent?) {
-      if (component == null || toolWindow.toolWindowManager.commandProcessor.commandCount > 0) {
+      if (component == null || !toolWindow.windowInfo.isActive) {
         return
       }
 
-      if (!toolWindow.windowInfo.isActive) {
-        IdeFocusManager.getInstance(toolWindow.toolWindowManager.project).doWhenFocusSettlesDown(object : EdtRunnable() {
+      IdeFocusManager.getInstance(toolWindow.toolWindowManager.project)
+        .doWhenFocusSettlesDown(object : EdtRunnable() {
           override fun runEdt() {
             val manager = toolWindow.toolWindowManager
-            val entry = manager.idToEntry.get(id)
-            val windowInfo = entry?.readOnlyWindowInfo
-            if (windowInfo == null || !windowInfo.isVisible) {
+            val entry = manager.idToEntry.get(id) ?: return
+            val windowInfo = entry.readOnlyWindowInfo
+            if (!windowInfo.isVisible) {
               return
             }
-            manager.activateToolWindow(entry, false, false)
+            manager.activateToolWindow(entry, forced = false, autoFocusContents = false)
           }
         })
-      }
     }
   }
 
@@ -1844,10 +1818,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
 private enum class KeyState {
   WAITING, PRESSED, RELEASED, HOLD
-}
-
-private fun focusDefaultElementInSelectedEditor() {
-  EditorsSplitters.findDefaultComponentInSplittersIfPresent { obj: JComponent -> obj.requestFocus() }
 }
 
 private fun areAllModifiersPressed(@JdkConstants.InputEventMask modifiers: Int, @JdkConstants.InputEventMask mask: Int): Boolean {

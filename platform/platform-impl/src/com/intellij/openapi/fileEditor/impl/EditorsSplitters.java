@@ -39,7 +39,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
@@ -1006,6 +1005,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return splitters == null ? fileEditorManager.getSplitters() : splitters;
   }
 
+  @Nullable
   public static JComponent findDefaultComponentInSplitters()  {
     EditorsSplitters splittersToFocus = getSplittersToFocus();
     if (splittersToFocus == null) {
@@ -1013,22 +1013,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     EditorWindow window = splittersToFocus.getCurrentWindow();
-    if (window != null) {
-      EditorWithProviderComposite editor = window.getSelectedEditor();
-      if (editor != null) {
-        JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-        if (defaultFocusedComponentInEditor != null) {
-          return defaultFocusedComponentInEditor;
-        }
+    EditorWithProviderComposite editor = window == null ? null : window.getSelectedEditor();
+    if (editor != null) {
+      JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+      if (defaultFocusedComponentInEditor != null) {
+        return defaultFocusedComponentInEditor;
       }
     }
     return null;
   }
 
-  public static void findDefaultComponentInSplittersIfPresent(Consumer<? super JComponent> componentConsumer) {
+  public static boolean focusDefaultComponentInSplittersIfPresent() {
     JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters();
     if (defaultFocusedComponentInEditor != null) {
-      componentConsumer.consume(defaultFocusedComponentInEditor);
+      defaultFocusedComponentInEditor.requestFocusInWindow();
+      return true;
     }
+    return false;
   }
 }

@@ -187,14 +187,12 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     val result = ActionCallback()
     showing.getReady(this)
       .doWhenDone {
-        toolWindowManager.commandProcessor.execute(listOf(Runnable {
-          toolWindowManager.focusManager.doWhenFocusSettlesDown {
-            if (contentManager.isInitialized() && contentManager.value.isDisposed) {
-              return@doWhenFocusSettlesDown
-            }
-            contentManager.value.getReady(requestor).notify(result)
+        toolWindowManager.focusManager.doWhenFocusSettlesDown {
+          if (contentManager.isInitialized() && contentManager.value.isDisposed) {
+            return@doWhenFocusSettlesDown
           }
-        }))
+          contentManager.value.getReady(requestor).notify(result)
+        }
       }
     return result
   }
