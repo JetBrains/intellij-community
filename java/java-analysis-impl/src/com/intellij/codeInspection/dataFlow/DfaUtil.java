@@ -15,12 +15,10 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +32,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Gregory.Shrago
  */
 public class DfaUtil {
-  private static final Object UNKNOWN_VALUE = ObjectUtils.sentinel("UNKNOWN_VALUE");
 
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
@@ -63,26 +60,15 @@ public class DfaUtil {
     });
   }
 
+  /**
+   * @deprecated use {@link NullabilityUtil#getExpressionNullability(PsiExpression, boolean)}
+   */
+  @Deprecated
   @NotNull
   public static Nullability checkNullability(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    Nullability nullability = tryCheckNullability(variable, context, null);
-    return nullability != null ? nullability : Nullability.UNKNOWN;
-  }
-
-  @Nullable("null means DFA analysis has failed (too complex to analyze)")
-  public static Nullability tryCheckNullability(@Nullable final PsiVariable variable,
-                                             @Nullable final PsiElement context,
-                                             @Nullable final PsiElement outerBlock) {
-    if (variable == null || context == null) return null;
-
-    final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;
-    Map<PsiElement, ValuableInstructionVisitor.PlaceResult> results = codeBlock == null ? null : getCachedPlaceResults(codeBlock);
-    ValuableInstructionVisitor.PlaceResult placeResult = results == null ? null : results.get(context);
-    if (placeResult == null) {
-      return null;
+    if (context instanceof PsiExpression) {
+      return NullabilityUtil.getExpressionNullability((PsiExpression)context, true);
     }
-    if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullability.NULLABLE;
-    if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullability.NOT_NULL;
     return Nullability.UNKNOWN;
   }
 
@@ -394,8 +380,6 @@ public class DfaUtil {
 
     static class PlaceResult {
       final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<>(true);
-      final Set<PsiVariable> myNulls = new THashSet<>();
-      final Set<PsiVariable> myNotNulls = new THashSet<>();
     }
 
     @Override
@@ -413,18 +397,6 @@ public class DfaUtil {
             }
           }
         });
-        DfaValue value = instruction.getValue();
-        if (value instanceof DfaVariableValue && isEffectivelyUnqualified((DfaVariableValue)value)) {
-          PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
-          if (element instanceof PsiVariable) {
-            if (memState.isNotNull(value)) {
-              result.myNotNulls.add((PsiVariable)element);
-            }
-            if (memState.isNull(value)) {
-              result.myNulls.add((PsiVariable)element);
-            }
-          }
-        }
       }
       return super.visitPush(instruction, runner, memState);
     }
