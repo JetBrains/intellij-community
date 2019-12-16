@@ -342,11 +342,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
     if (intentionAction == null) {
-      fail(String.format("Could not find action by name %s.\n" +
-                         "Actions: [%s]\n" +
-                         "HighlightInfos: [%s]", intentionActionName,
-                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                         StringUtil.join(infos, ", ")));
+      fail("Could not find action '" + intentionActionName+
+           "'.\nAvailable actions: [" +StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", ")+ "]\n" +
+           "HighlightInfos: [" +StringUtil.join(infos, ", ")+"]");
     }
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }

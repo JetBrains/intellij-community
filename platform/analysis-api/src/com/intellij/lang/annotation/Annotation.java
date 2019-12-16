@@ -246,26 +246,24 @@ public final class Annotation implements Segment {
   public TextAttributesKey getTextAttributes() {
     if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 
-    if (myHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
-      if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
-      if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
-      if (mySeverity == HighlightSeverity.WEAK_WARNING) return CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
+    switch (myHighlightType) {
+      case GENERIC_ERROR_OR_WARNING:
+        if (mySeverity == HighlightSeverity.ERROR) return CodeInsightColors.ERRORS_ATTRIBUTES;
+        if (mySeverity == HighlightSeverity.WARNING) return CodeInsightColors.WARNINGS_ATTRIBUTES;
+        if (mySeverity == HighlightSeverity.WEAK_WARNING) return CodeInsightColors.WEAK_WARNING_ATTRIBUTES;
+        return HighlighterColors.NO_HIGHLIGHTING;
+      case GENERIC_ERROR:
+        return CodeInsightColors.ERRORS_ATTRIBUTES;
+      case LIKE_DEPRECATED:
+        return CodeInsightColors.DEPRECATED_ATTRIBUTES;
+      case LIKE_UNUSED_SYMBOL:
+        return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
+      case LIKE_UNKNOWN_SYMBOL:
+      case ERROR:
+        return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
+      default:
+        return HighlighterColors.NO_HIGHLIGHTING;
     }
-
-    if (myHighlightType == ProblemHighlightType.GENERIC_ERROR) {
-      return CodeInsightColors.ERRORS_ATTRIBUTES;
-    }
-
-    if (myHighlightType == ProblemHighlightType.LIKE_DEPRECATED) {
-      return CodeInsightColors.DEPRECATED_ATTRIBUTES;
-    }
-    if (myHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
-      return CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES;
-    }
-    if (myHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL || myHighlightType == ProblemHighlightType.ERROR) {
-      return CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES;
-    }
-    return HighlighterColors.NO_HIGHLIGHTING;
   }
 
   public TextAttributes getEnforcedTextAttributes() {

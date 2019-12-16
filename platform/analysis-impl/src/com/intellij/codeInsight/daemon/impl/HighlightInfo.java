@@ -691,16 +691,22 @@ public class HighlightInfo implements Segment {
   @NotNull
   private static HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
-    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
-    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
-    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    if (type == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
-    return convertSeverity(annotation.getSeverity());
+    HighlightSeverity severity = annotation.getSeverity();
+    return toHighlightInfoType(type, severity);
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
+  private static HighlightInfoType toHighlightInfoType(ProblemHighlightType problemHighlightType, @NotNull HighlightSeverity severity) {
+    if (problemHighlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
+    if (problemHighlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
+    if (problemHighlightType == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    if (problemHighlightType == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
+    return convertSeverity(severity);
+  }
+
+  @NotNull
   public static HighlightInfoType convertSeverity(@NotNull HighlightSeverity severity) {
+    //noinspection deprecation
     return severity == HighlightSeverity.ERROR? HighlightInfoType.ERROR :
            severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
            severity == HighlightSeverity.INFO ? HighlightInfoType.INFO :
@@ -710,7 +716,7 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  public static ProblemHighlightType convertType(HighlightInfoType infoType) {
+  public static ProblemHighlightType convertType(@NotNull HighlightInfoType infoType) {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
     if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.WARNING;
     if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
@@ -718,8 +724,8 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
-  public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
+  public static ProblemHighlightType convertSeverityToProblemHighlight(@NotNull HighlightSeverity severity) {
+    //noinspection deprecation
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
