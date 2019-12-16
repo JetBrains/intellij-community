@@ -50,7 +50,7 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
-    <applicationService serviceImplementation="com.intellij.tools.ToolManager" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.tools.ToolManager" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
