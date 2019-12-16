@@ -802,9 +802,6 @@ internal inline class IdGenerator(val generator: AtomicLong) {
 internal val entityDataIdGenerator = IdGenerator.startGenerator()
 
 internal class EntityData(val entitySource: EntitySource, val id: Long, val metaData: EntityMetaData, val properties: MutableMap<String, Any?> = HashMap()) {
-  init {
-    entityDataIdGenerator.adjustId(id)
-  }
 
   constructor(
     entitySource: EntitySource,

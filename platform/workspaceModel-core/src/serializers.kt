@@ -299,8 +299,10 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       val builder = TypedEntityStorageBuilder.create() as TypedEntityStorageBuilderImpl
 
       val entitiesCount = input.readVarInt(true)
+      var maxId = -1L
       for (i in 0 until entitiesCount) {
         val id = input.readVarLong(true)
+        if (id > maxId) maxId = id
         val entitySource = sources[input.readVarInt(true)]
 
         @Suppress("UNCHECKED_CAST")
@@ -329,6 +331,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
           handleReferrers = true
         )
       }
+      entityDataIdGenerator.adjustId(maxId)
 
       return builder
     }
