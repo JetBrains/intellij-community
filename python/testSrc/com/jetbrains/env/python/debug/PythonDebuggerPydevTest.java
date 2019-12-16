@@ -38,7 +38,7 @@ public class PythonDebuggerPydevTest extends PyEnvTestCase {
 
   @Test
   public void testFrameEvalAndTracing() {
-    pytests("pydev_tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
+    pytests("pydev_tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron", "-python2.7"));
   }
 
   private void pytests(final String script, @Nullable Set<String> tags) {

@@ -4,6 +4,10 @@ import re
 import sys
 import traceback  # @Reimport
 
+# IFDEF CYTHON
+# import dis
+# ENDIF
+
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_dont_trace
 from _pydevd_bundle import pydevd_vars
@@ -115,9 +119,13 @@ class PyDBFrame:
     # IFDEF CYTHON
     # cdef tuple _args
     # cdef int should_skip
+    # cdef int _bytecode_offset
+    # cdef list _instructions
     # def __init__(self, tuple args):
     #     self._args = args # In the cython version we don't need to pass the frame
     #     self.should_skip = -1  # On cythonized version, put in instance.
+    #     self._bytecode_offset = 0
+    #     self._instructions = None
     # ELSE
     should_skip = -1  # Default value in class (put in instance on set).
 
@@ -125,6 +133,7 @@ class PyDBFrame:
         # args = main_debugger, filename, base, info, t, frame
         # yeap, much faster than putting in self and then getting it from self later on
         self._args = args
+        self._bytecode_offset = 0
     # ENDIF
 
     def set_suspend(self, *args, **kwargs):
@@ -451,6 +460,21 @@ class PyDBFrame:
             if main_debugger._finish_debugging_session:
                 if event != 'call': frame.f_trace = NO_FTRACE
                 return None
+
+            # IFDEF CYTHON
+            # if event == 'opcode':
+            #     instructions = self._get_instructions(frame)
+            #     for i, inst in enumerate(instructions):
+            #         if inst.offset == frame.f_lasti:
+            #             opname, arg, argval = inst.opname, inst.arg, str(inst.argval)
+            #             print('frame trace_dispatch %s %s %s %s %s %s %s %s' % (frame.f_lineno, frame.f_lasti, frame.f_code.co_name,
+            #                                                                     frame.f_code.co_filename, event, opname, arg, argval))
+            #             try:
+            #                 self._bytecode_offset = instructions[i + 1].offset
+            #             except IndexError:
+            #                 break
+            #     return self.trace_dispatch
+            # ENDIF
 
             plugin_manager = main_debugger.plugin
 
@@ -824,3 +848,10 @@ class PyDBFrame:
             info.is_tracing = False
 
         # end trace_dispatch
+
+    # IFDEF CYTHON
+    # cdef _get_instructions(self, frame):
+    #     if self._instructions is None:
+    #         self._instructions = list(dis.get_instructions(frame.f_code))
+    #     return self._instructions
+    # ENDIF

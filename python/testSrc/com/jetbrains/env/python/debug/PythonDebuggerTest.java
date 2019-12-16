@@ -1875,7 +1875,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPathWithAmpersand() {
-    runPythonTest(new PyDebuggerTask("/debug/", "test_path_with_&.py") {
+    runPythonTest(new PyDebuggerTask("/debug", "test_path_with_&.py") {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 3);

@@ -4,8 +4,8 @@
 {
     "distutils": {
         "depends": [
-            "_pydevd_frame_eval\\pycore_pystate.h",
-            "_pydevd_frame_eval\\release_mem.h"
+            "_pydevd_frame_eval/pycore_pystate.h",
+            "_pydevd_frame_eval/release_mem.h"
         ],
         "include_dirs": [
             "_pydevd_frame_eval"
@@ -826,9 +826,9 @@ static const char *__pyx_filename;
 
 
 static const char *__pyx_f[] = {
-  "_pydevd_frame_eval\\pydevd_frame_evaluator.pyx",
+  "_pydevd_frame_eval/pydevd_frame_evaluator.pyx",
   "stringsource",
-  "_pydevd_bundle\\pydevd_cython.pxd",
+  "_pydevd_bundle/pydevd_cython.pxd",
 };
 
 /*--- Type declarations ---*/
@@ -1506,7 +1506,7 @@ static const char __pyx_k_set_additional_thread_info_lock[] = "_set_additional_t
 static const char __pyx_k_Incompatible_checksums_s_vs_0x2c[] = "Incompatible checksums (%s vs 0x2ccfa67 = (additional_info, fully_initialized, inside_frame_eval, is_pydevd_thread, thread_trace_func))";
 static const char __pyx_k_Incompatible_checksums_s_vs_0xda[] = "Incompatible checksums (%s vs 0xdaf6aa4 = (always_skip_code, breakpoint_found, breakpoints_created, breakpoints_mtime, co_filename, new_code, real_path))";
 static const char __pyx_k_fix_top_level_trace_and_get_trac[] = "fix_top_level_trace_and_get_trace_func";
-static const char __pyx_k_pydevd_frame_eval_pydevd_frame_2[] = "_pydevd_frame_eval\\pydevd_frame_evaluator.pyx";
+static const char __pyx_k_pydevd_frame_eval_pydevd_frame_2[] = "_pydevd_frame_eval/pydevd_frame_evaluator.pyx";
 static const char __pyx_k_pydevd_frame_eval_pydevd_frame_3[] = "_pydevd_frame_eval.pydevd_frame_evaluator";
 static PyObject *__pyx_n_s_AttributeError;
 static PyObject *__pyx_n_s_DONT_TRACE;
@@ -6749,7 +6749,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
  *         if thread_info.thread_trace_func is None:
  *             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)             # <<<<<<<<<<<<<<
  *             if apply_to_global:
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  */
       __Pyx_GetModuleGlobalName(__pyx_t_9, __pyx_n_s_fix_top_level_trace_and_get_trac); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 309, __pyx_L23_error)
       __Pyx_GOTREF(__pyx_t_9);
@@ -6853,7 +6853,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
  *         if thread_info.thread_trace_func is None:
  *             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
  *             if apply_to_global:             # <<<<<<<<<<<<<<
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  * 
  */
       __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_apply_to_global); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 310, __pyx_L23_error)
@@ -6862,7 +6862,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
         /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":311
  *             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
  *             if apply_to_global:
- *                 thread_info.thread_trace_func = trace_func             # <<<<<<<<<<<<<<
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__             # <<<<<<<<<<<<<<
  * 
  *         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_SMART_STEP_INTO) or \
  */
@@ -6876,7 +6876,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
  *         if thread_info.thread_trace_func is None:
  *             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
  *             if apply_to_global:             # <<<<<<<<<<<<<<
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  * 
  */
       }
@@ -6891,7 +6891,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
     }
 
     /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":313
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  * 
  *         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_SMART_STEP_INTO) or \             # <<<<<<<<<<<<<<
  *                 main_debugger.break_on_caught_exceptions or \
@@ -7002,7 +7002,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
     __pyx_L35_bool_binop_done:;
 
     /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":313
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  * 
  *         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_SMART_STEP_INTO) or \             # <<<<<<<<<<<<<<
  *                 main_debugger.break_on_caught_exceptions or \
@@ -7062,7 +7062,7 @@ static PyObject *__pyx_f_18_pydevd_frame_eval_22pydevd_frame_evaluator_get_bytec
       __pyx_L45:;
 
       /* "_pydevd_frame_eval/pydevd_frame_evaluator.pyx":313
- *                 thread_info.thread_trace_func = trace_func
+ *                 thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
  * 
  *         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_SMART_STEP_INTO) or \             # <<<<<<<<<<<<<<
  *                 main_debugger.break_on_caught_exceptions or \

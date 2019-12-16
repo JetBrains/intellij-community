@@ -76,6 +76,9 @@ class LineBreakpoint(object):
                 ret = False
         return ret
 
+    def __repr__(self):
+        return '<LineBreakpoint(%s, %s, %s, %s)>' % (self.line, self.condition, self.func_name, self.expression)
+
 
 def get_exception_full_qname(exctype):
     if not exctype:
