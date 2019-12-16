@@ -34,8 +34,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Pavel.Dolgov
+ * @deprecated {@link com.intellij.openapi.projectRoots.impl.UnknownSdkTracker} shows the similar notification
  */
+@Deprecated
 public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
   public static final JavaProjectSdkSetupValidator INSTANCE = new JavaProjectSdkSetupValidator();
   @Override
