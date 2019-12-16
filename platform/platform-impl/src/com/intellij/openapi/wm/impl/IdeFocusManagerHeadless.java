@@ -44,7 +44,7 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
   }
 
   @Override
-  public Component getFocusedDescendantFor(final Component c) {
+  public Component getFocusedDescendantFor(@NotNull Component c) {
     return null;
   }
 

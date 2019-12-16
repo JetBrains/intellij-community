@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCommand
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.GuiUtils
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -715,7 +716,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, hideSide: Boolean = false, moveFocus: Boolean = true): Boolean {
-    val wasActive = info.isActive
+    // info.isActive is not reliable (not set to false on focus lost)
+    val wasActive = entry.toolWindow.isFocused
 
     if (!wasActive && !info.isVisible) {
       return false
@@ -764,7 +766,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       activeStack.remove(entry, false)
     }
 
-    if (moveFocus) {
+    if (wasActive && moveFocus) {
       activateEditorComponent()
     }
 
@@ -1625,16 +1627,18 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         return
       }
 
-      IdeFocusManager.getInstance(toolWindow.toolWindowManager.project)
-        .doWhenFocusSettlesDown(object : EdtRunnable() {
-          override fun runEdt() {
-            val manager = toolWindow.toolWindowManager
-            val entry = manager.idToEntry.get(id) ?: return
-            val windowInfo = entry.readOnlyWindowInfo
-            if (!windowInfo.isVisible) {
-              return
-            }
-            manager.activateToolWindow(entry, forced = false, autoFocusContents = false)
+      val toolWindowManager = toolWindow.toolWindowManager
+      toolWindowManager.focusManager
+        .doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(toolWindowManager.project) {
+          override fun run() {
+            GuiUtils.invokeLaterIfNeeded(Runnable {
+              val entry = toolWindowManager.idToEntry.get(id) ?: return@Runnable
+              val windowInfo = entry.readOnlyWindowInfo
+              if (!windowInfo.isVisible) {
+                return@Runnable
+              }
+              toolWindowManager.activateToolWindow(entry, forced = false, autoFocusContents = false)
+            }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
           }
         })
     }

@@ -70,7 +70,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
   @Nullable
-  public abstract Component getFocusedDescendantFor(final Component comp);
+  public abstract Component getFocusedDescendantFor(@NotNull Component comp);
 
   /**
    * @deprecated use {@link #typeAheadUntil(ActionCallback, String)} instead

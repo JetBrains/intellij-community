@@ -367,7 +367,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   }
 
   @Override
-  public Component getFocusedDescendantFor(Component comp) {
+  public Component getFocusedDescendantFor(@NotNull Component comp) {
     final Component focused = getFocusOwner();
     if (focused == null) return null;
 

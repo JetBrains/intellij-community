@@ -266,6 +266,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun getDecorator() = decorator!!
 
+  val isFocused: Boolean
+    get() = decorator?.isFocused ?: false
+
   override fun setAdditionalGearActions(value: ActionGroup?) {
     additionalGearActions = value
   }

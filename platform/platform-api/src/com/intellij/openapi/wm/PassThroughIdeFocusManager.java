@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class PassThroughIdeFocusManager extends IdeFocusManager {
   private static final PassThroughIdeFocusManager ourInstance = new PassThroughIdeFocusManager();
@@ -26,8 +25,8 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public JComponent getFocusTargetFor(@NotNull JComponent comp) {
-    return comp;
+  public JComponent getFocusTargetFor(@NotNull JComponent component) {
+    return component;
   }
 
   @Override
@@ -48,17 +47,13 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public Component getFocusedDescendantFor(Component comp) {
+  public Component getFocusedDescendantFor(@NotNull Component component) {
     final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focused == null) return null;
 
-    if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;
+    if (focused == component || SwingUtilities.isDescendingFrom(focused, component)) return focused;
 
     return null;
-  }
-
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return false;
   }
 
   @Override
