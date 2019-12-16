@@ -10,11 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -227,13 +223,12 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    AnnotationHolder annotationHolder = new AnnotationHolderImpl(new AnnotationSession(myFile));
     List<HighlightInfo> infos = new ArrayList<>(myUnusedDeclarations);
     for (GrImportStatement unusedImport : myUnusedImports) {
-      Annotation annotation = annotationHolder.createWarningAnnotation(calculateRangeToUse(unusedImport), GroovyInspectionBundle.message("unused.import"));
-      annotation.setHighlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-      annotation.registerFix(GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false));
-      infos.add(HighlightInfo.fromAnnotation(annotation));
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.UNUSED_SYMBOL).range(calculateRangeToUse(unusedImport))
+        .descriptionAndTooltip(GroovyInspectionBundle.message("unused.import")).create();
+      QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false));
+      infos.add(info);
     }
 
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
