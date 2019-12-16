@@ -18,9 +18,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Dimension
@@ -28,6 +28,7 @@ import java.awt.Frame
 import java.awt.Image
 import java.io.EOFException
 import java.nio.file.Path
+import kotlin.math.min
 
 internal open class ProjectFrameAllocator {
   open fun run(task: Runnable): Boolean {
@@ -236,13 +237,12 @@ fun createNewProjectFrame(): IdeFrameImpl {
   SplashManager.hideBeforeShow(frame)
 
   val size = ScreenUtil.getMainScreenBounds().size
-  size.width = Math.min(1400, size.width - 20)
-  size.height = Math.min(1000, size.height - 40)
+  size.width = min(1400, size.width - 20)
+  size.height = min(1000, size.height - 40)
   frame.size = size
   frame.setLocationRelativeTo(null)
 
-  if (UIUtil.DISABLE_AUTO_REQUEST_FOCUS &&
-      !ApplicationManager.getApplication().isActive) {
+  if (!ApplicationManager.getApplication().isActive && ComponentUtil.isDisableAutoRequestFocus()) {
     frame.isAutoRequestFocus = false
   }
   frame.minimumSize = Dimension(340, frame.minimumSize.height)

@@ -104,7 +104,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    if (ApplicationManager.getApplication().isActive() || !UIUtil.SUPPRESS_FOCUS_STEALING) {
+    if (ApplicationManager.getApplication().isActive() || !Registry.is("suppress.focus.stealing.active.window.checks")) {
       logFocusRequest(c, project, false);
       c.requestFocus();
     }

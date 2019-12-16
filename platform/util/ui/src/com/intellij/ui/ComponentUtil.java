@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,6 +11,10 @@ import java.awt.*;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
+  public static boolean isDisableAutoRequestFocus() {
+    return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true);
+  }
+
   public static boolean isMinimized(@Nullable Window window) {
     if (!(window instanceof Frame)) {
       return false;
