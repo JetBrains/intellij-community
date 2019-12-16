@@ -52,6 +52,36 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
+  private def 'method which should be present in prevention trace'() {
+    prevent("inner") {
+      assert null == prevent("outer") {
+        fail()
+      }
+      "inner-return"
+    }
+  }
+
+  void testMemoizedValueAccessDoesntClearPreventionTrace() {
+    assert "outer-return" == prevent("outer") {
+      def stamp = RecursionManager.markStack()
+      'method which should be present in prevention trace'()  // prevents caching until exited from 'outer'
+      assert "inner-return" == prevent("inner") {             // memoized value from previous call
+        fail()
+      }
+      try {
+        stamp.mayCacheNow()
+        fail()
+      }
+      catch (RecursionManager.CachingPreventedException e) {
+        def soe = UsefulTestCase.assertInstanceOf(e.cause, StackOverflowPreventedException)
+        assert soe.stackTrace.any { StackTraceElement ste ->
+          ste.methodName == 'method which should be present in prevention trace'
+        }
+      }
+      "outer-return"
+    }
+  }
+
   void testMemoization() {
     assert "foo-return" == prevent("foo") {
       assert "bar-return" == prevent("bar") {

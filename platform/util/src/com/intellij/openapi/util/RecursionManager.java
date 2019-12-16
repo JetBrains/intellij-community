@@ -323,7 +323,10 @@ public class RecursionManager {
       List<Map.Entry<MyKey, Integer>> stack = new ArrayList<>(progressMap.entrySet());
       int loopStart = ContainerUtil.indexOf(stack, entry -> entry.getKey().equals(realKey));
       if (loopStart >= 0) {
-        preventions.put(stack.get(loopStart).getKey(), ourAssertOnMissedCache.get() ? new StackOverflowPreventedException(null) : null);
+        MyKey loopStartKey = stack.get(loopStart).getKey();
+        if (!preventions.containsKey(loopStartKey)) {
+          preventions.put(loopStartKey, ourAssertOnMissedCache.get() ? new StackOverflowPreventedException(null) : null);
+        }
         for (int i = loopStart + 1; i < stack.size(); i++) {
           stack.get(i).setValue(reentrancyCount);
         }
