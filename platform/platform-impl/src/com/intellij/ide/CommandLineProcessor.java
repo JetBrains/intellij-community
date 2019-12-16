@@ -200,7 +200,7 @@ public final class CommandLineProcessor {
         break;
       }
 
-      line = -1;
+      line = column = -1;
       tempProject = false;
     }
 
