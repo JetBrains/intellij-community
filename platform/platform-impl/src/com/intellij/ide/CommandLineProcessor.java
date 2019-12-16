@@ -43,8 +43,7 @@ public final class CommandLineProcessor {
 
   private CommandLineProcessor() { }
 
-  @NotNull
-  private static Pair<Project, Future<CliResult>> doOpenFileOrProject(@NotNull Path file, boolean shouldWait) {
+  private static @NotNull Pair<Project, Future<CliResult>> doOpenFileOrProject(Path file, boolean shouldWait) {
     OpenProjectTask openProjectOptions = new OpenProjectTask();
     // do not check for .ipr files in specified directory (@develar: it is existing behaviour, I am not fully sure that it is correct)
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
@@ -57,8 +56,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  @NotNull
-  private static Pair<Project, Future<CliResult>> doOpenFile(@NotNull Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
+  private static @NotNull Pair<Project, Future<CliResult>> doOpenFile(Path ioFile, int line, int column, boolean tempProject, boolean shouldWait) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     assert file != null;
 
@@ -82,8 +80,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  @NotNull
-  private static Project findBestProject(VirtualFile file, Project[] projects) {
+  private static @NotNull Project findBestProject(VirtualFile file, Project[] projects) {
     for (Project project : projects) {
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         return project;
@@ -101,9 +98,7 @@ public final class CommandLineProcessor {
     return projects[0];
   }
 
-  @NotNull
-  public static Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args,
-                                                                            @Nullable String currentDirectory) {
+  public static @NotNull Pair<Project, Future<CliResult>> processExternalCommandLine(@NotNull List<String> args, @Nullable String currentDirectory) {
     LOG.info("External command line:");
     LOG.info("Dir: " + currentDirectory);
     for (String arg : args) LOG.info(arg);
