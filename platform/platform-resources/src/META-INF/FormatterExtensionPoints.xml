@@ -24,7 +24,7 @@
     <extensionPoint name="lineIndentProvider" interface="com.intellij.psi.codeStyle.lineIndent.LineIndentProvider" dynamic="true"/>
     <extensionPoint name="codeStyleSettingsModifier" interface="com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier" dynamic="true"/>
 
-    <extensionPoint name="lang.lineWrapStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="lang.lineWrapStrategy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.LineWrapPositionStrategy"/>
     </extensionPoint>
 

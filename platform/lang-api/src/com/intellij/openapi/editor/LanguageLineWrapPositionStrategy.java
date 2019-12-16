@@ -16,9 +16,11 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +30,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrapPositionStrategy> {
 
-  public static final String EP_NAME = "com.intellij.lang.lineWrapStrategy";
+  public static final ExtensionPointName<? extends KeyedLazyInstance<LineWrapPositionStrategy>> EP_NAME =
+    new ExtensionPointName<>("com.intellij.lang.lineWrapStrategy");
   public static final LanguageLineWrapPositionStrategy INSTANCE = new LanguageLineWrapPositionStrategy();
 
   private LanguageLineWrapPositionStrategy() {
