@@ -47,7 +47,7 @@ public final class EventsWatcher implements Disposable {
   private static final long ourStartTimestamp = System.currentTimeMillis();
   @NotNull
   private static final NotNullLazyValue<Boolean> ourIsEnabled =
-    NotNullLazyValue.createValue(() -> Registry.is("ide.event.queue.dispatch.enabled", false));
+    NotNullLazyValue.createValue(() -> Registry.is("ide.event.queue.dispatch.log.enabled", false));
   @NotNull
   private static final NotNullLazyValue<Field> ourRunnableField =
     NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
@@ -159,9 +159,9 @@ public final class EventsWatcher implements Disposable {
 
   public void edtEventStarted(@NotNull AWTEvent event) {
     Matcher matcher = DESCRIPTION_BY_EVENT.matcher(event.toString());
-    //noinspection ResultOfMethodCallIgnored
-    matcher.find();
-    myCurrentResult = matcher.toMatchResult();
+    myCurrentResult = matcher.find() ?
+                      matcher.toMatchResult() :
+                      null;
   }
 
   public void edtEventFinished(@NotNull AWTEvent event,
