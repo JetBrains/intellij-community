@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.extenstions
+package com.jetbrains.extensions
 
 import com.intellij.openapi.util.registry.RegistryValue
-import org.jetbrains.annotations.ApiStatus
 
 /**
- * @deprecated use [com.jetbrains.extensions]
+ * @return list of values in case they are comma separated
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
 fun RegistryValue.asList(): List<String> = this.asString().split(",")

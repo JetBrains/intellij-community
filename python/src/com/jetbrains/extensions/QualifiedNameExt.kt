@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.extenstions
+package com.jetbrains.extensions
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -27,7 +27,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -35,14 +34,8 @@ import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkType
-import org.jetbrains.annotations.ApiStatus
 
-//TODO: move to extensions
-/**
- * @deprecated use [com.jetbrains.extensions]
- */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
+
 interface ContextAnchor {
   val sdk: Sdk?
   val project: Project
@@ -52,11 +45,7 @@ interface ContextAnchor {
     return sdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: emptyArray()
   }
 }
-/**
- * @deprecated use [com.jetbrains.extensions]
- */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
+
 class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
   override val sdk: Sdk? = module.getSdk()
   override val project: Project = module.project
@@ -67,11 +56,7 @@ class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
     return super.getRoots() + manager.contentRoots + manager.sourceRoots
   }
 }
-/**
- * @deprecated use [com.jetbrains.extensions]
- */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
+
 class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
   override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
   override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
@@ -81,11 +66,7 @@ class ProjectSdkContextAnchor(override val project: Project, override val sdk: S
   }
 }
 
-/**
- * @deprecated use [com.jetbrains.extensions]
- */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
+
 data class QNameResolveContext(
   val contextAnchor: ContextAnchor,
   /**
@@ -103,37 +84,34 @@ data class QNameResolveContext(
    */
   val allowInaccurateResult: Boolean = false
 )
+
 /**
- * @deprecated use [com.jetbrains.extensions]
+ * @return qname part relative to root
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
 fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
   if (!toString().startsWith(root.toString())) {
     return null
   }
   return subQualifiedName(root.componentCount, componentCount)
 }
+
 /**
- * @deprecated use [com.jetbrains.extensions]
+ * Resolves qname of any symbol to appropriate PSI element.
+ * Shortcut for [getElementAndResolvableName]
+ * @see [getElementAndResolvableName]
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
 fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
   return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
 
-/**
- * @deprecated use [com.jetbrains.extensions]
- */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
+
 data class NameAndElement(val name: QualifiedName, val element: PsiElement)
+
 /**
- * @deprecated use [com.jetbrains.extensions]
+ * Resolves qname of any symbol to PSI element popping tail until element becomes resolved or only one time if stopOnFirstFail
+ * @return element and longest name that was resolved successfully.
+ * @see [resolveToElement]
  */
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-@Deprecated("Use com.jetbrains.extensions")
 fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 

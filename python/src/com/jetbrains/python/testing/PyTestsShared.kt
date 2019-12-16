@@ -34,10 +34,10 @@ import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.*
-import com.jetbrains.extenstions.ModuleBasedContextAnchor
-import com.jetbrains.extenstions.QNameResolveContext
-import com.jetbrains.extenstions.getElementAndResolvableName
-import com.jetbrains.extenstions.resolveToElement
+import com.jetbrains.extensions.ModuleBasedContextAnchor
+import com.jetbrains.extensions.QNameResolveContext
+import com.jetbrains.extensions.getElementAndResolvableName
+import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
