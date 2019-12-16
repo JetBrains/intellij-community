@@ -153,9 +153,11 @@ internal class LegacyBridgeModifiableModuleModel(
 
     val storage = entityStoreOnDiff.current
 
+    val removedModuleIds = mutableSetOf<ModuleId>()
     for (moduleToDispose in myModulesToDispose.values) {
       val moduleEntity = storage.resolve(moduleToDispose.moduleEntityId)
                          ?: error("Could not find module to remove by id: ${moduleToDispose.moduleEntityId}")
+      removedModuleIds += moduleToDispose.moduleEntityId
       diff.removeEntity(moduleEntity)
     }
 
@@ -170,22 +172,30 @@ internal class LegacyBridgeModifiableModuleModel(
         changedModuleIdsMap[entry.value.moduleEntityId] = this.persistentId()
       }
     }
-    updateModuleDependencyIfNeeded(changedModuleIdsMap)
+
+    updateModuleDependencyIfNeeded(changedModuleIdsMap, removedModuleIds)
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
   }
 
-  private fun updateModuleDependencyIfNeeded(changedModulesIdMap: Map<ModuleId, ModuleId>) {
-    if (changedModulesIdMap.isEmpty()) return
+  private fun updateModuleDependencyIfNeeded(changedModulesIdMap: Map<ModuleId, ModuleId>, removedModuleIds: Set<ModuleId>) {
+    if (changedModulesIdMap.isEmpty() && removedModuleIds.isEmpty()) return
 
     // Walkthrough the whole modules and update dependencies for them
     entityStoreOnDiff.current.entities(ModuleEntity::class.java).forEach { moduleEntity ->
       var containsOldDependency = false
-      val newDependencies = moduleEntity.dependencies.map {
+      val newDependencies = moduleEntity.dependencies.mapNotNull {
         when(it) {
           is ModuleDependencyItem.Exportable.ModuleDependency -> {
+            // Remove old dependency
+            if (removedModuleIds.contains(it.module)) {
+              containsOldDependency = true
+              return@mapNotNull null
+            }
+
+            // Update dependency after rename
             val newModuleId = changedModulesIdMap[it.module]
             if (newModuleId != null) {
               containsOldDependency = true
