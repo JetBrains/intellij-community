@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -74,7 +74,7 @@ import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
-private val LOG = Logger.getInstance(ToolWindowManagerImpl::class.java)
+private val LOG = logger<ToolWindowManagerImpl>()
 
 @State(
   name = "ToolWindowManager",
@@ -176,7 +176,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           process { manager ->
             val entry = manager.idToEntry.get(toolWindowId) ?: return@process
             val info = manager.layout.getInfo(toolWindowId) ?: return@process
-            manager.doDeactivateToolWindow(info, entry, shouldHide = true)
+            manager.doDeactivateToolWindow(info, entry)
           }
         }
         .bind(ApplicationManager.getApplication())
@@ -554,18 +554,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     ApplicationManager.getApplication().assertIsDispatchThread()
-    activateToolWindowImpl(entry, forced, autoFocusContents)
+    activateToolWindowImpl(entry, getRegisteredMutableInfoOrLogError(entry.id), forced, autoFocusContents)
   }
 
-  private fun activateToolWindowImpl(entry: ToolWindowEntry, forced: Boolean, autoFocusContents: Boolean) {
+  private fun activateToolWindowImpl(entry: ToolWindowEntry, info: WindowInfoImpl, forced: Boolean, autoFocusContents: Boolean) {
     var effectiveAutoFocusContents = autoFocusContents
-    val id = entry.id
-
-    val info = getRegisteredMutableInfoOrLogError(entry.id)
-
-    ToolWindowCollector.recordActivation(id, info)
+    ToolWindowCollector.recordActivation(entry.id, info)
     effectiveAutoFocusContents = effectiveAutoFocusContents && forced
-    LOG.debug { "enter: activateToolWindowImpl($id)" }
+    LOG.debug { "enter: activateToolWindowImpl(${entry.id})" }
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
       // when the user switched to another application. So we just need to bring
@@ -589,14 +585,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return info
   }
 
-  private fun doDeactivateToolWindow(info: WindowInfoImpl, entry: ToolWindowEntry, shouldHide: Boolean) {
-    LOG.debug { "enter: deactivateToolWindowImpl(${info.id}, $shouldHide)" }
+  private fun doDeactivateToolWindow(info: WindowInfoImpl, entry: ToolWindowEntry) {
+    LOG.debug { "enter: deactivateToolWindowImpl(${info.id})" }
 
     info.isActive = false
-    if (shouldHide) {
-      info.isVisible = false
-      removeDecorator(info, entry, false)
-    }
+    info.isVisible = false
+    removeDecorator(info, entry, dirtyMode = false)
 
     entry.applyWindowInfo(info.copy())
   }
@@ -720,15 +714,20 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ApplicationManager.getApplication().assertIsDispatchThread()
 
     val info = getRegisteredMutableInfoOrLogError(id)
-    doHide(idToEntry.get(id)!!, info, hideSide, moveFocus)
-
-    fireStateChanged()
+    if (doHide(idToEntry.get(id)!!, info, hideSide, moveFocus)) {
+      fireStateChanged()
+    }
   }
 
-  private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, hideSide: Boolean = false, moveFocus: Boolean = true) {
+  private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, hideSide: Boolean = false, moveFocus: Boolean = true): Boolean {
     val wasActive = info.isActive
+
+    if (!wasActive && !info.isVisible) {
+      return false
+    }
+
     // hide and deactivate
-    doDeactivateToolWindow(info, entry, shouldHide = true)
+    doDeactivateToolWindow(info, entry)
 
     if (hideSide && info.type != ToolWindowType.FLOATING && info.type != ToolWindowType.WINDOWED) {
       for (each in getVisibleToolWindowsOn(info.anchor)) {
@@ -739,10 +738,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           sideStack.pop(info.anchor)
         }
       }
-      idToEntry.forEach { (otherId, otherEntry) ->
-        val otherInfo = layout.getInfo(otherId) ?: return@forEach
+      for ((otherId, otherEntry) in idToEntry) {
+        val otherInfo = layout.getInfo(otherId) ?: continue
         if (otherInfo.isVisible && otherInfo.anchor == info.anchor) {
-          doDeactivateToolWindow(otherInfo, otherEntry, true)
+          doDeactivateToolWindow(otherInfo, otherEntry)
         }
       }
     }
@@ -775,13 +774,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       if (wasActive && moveFocus && !activeStack.isEmpty) {
         val toBeActivated = activeStack.pop()
         if (info.isVisible || isStackEnabled) {
-          activateToolWindowImpl(toBeActivated, false, true)
+          activateToolWindowImpl(toBeActivated, info, forced = false, autoFocusContents = true)
         }
         else {
           focusToolWindowByDefault(entry)
         }
       }
     }
+
+    return true
   }
 
   /**
@@ -850,7 +851,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }
         }
         else if (otherInfo.isActive) {
-          doDeactivateToolWindow(otherInfo, otherEntry, shouldHide = false)
+          otherInfo.isActive = false
+          otherEntry.applyWindowInfo(otherInfo.copy())
         }
       }
 
@@ -932,7 +934,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (contentFactory != null /* not null on init tool window from EP */) {
       // do not activate tool window that is the part of project frame - default component should be focused
       if (wasActive && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING)) {
-        activateToolWindowImpl(entry, forced = true, autoFocusContents = true)
+        activateToolWindowImpl(entry, info, forced = true, autoFocusContents = true)
       }
       else if (wasVisible) {
         showToolWindowImpl(entry, dirtyMode = false)
@@ -1322,7 +1324,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       showToolWindowImpl(entry, true)
     }
     if (wasActive) {
-      activateToolWindowImpl(entry, true, true)
+      activateToolWindowImpl(entry, info, true, true)
     }
     toolWindowPane!!.updateButtonPosition(entry.readOnlyWindowInfo.anchor)
   }
@@ -1893,10 +1895,6 @@ private val activateToolWindowVKsMask: Int
     // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
     return baseModifiers and (InputEvent.SHIFT_MASK or InputEvent.CTRL_MASK or InputEvent.META_MASK or InputEvent.ALT_MASK)
   }
-
-private fun isToHideOnDeactivation(info: WindowInfoImpl): Boolean {
-  return if (info.isFloating || info.type == ToolWindowType.WINDOWED) false else info.isAutoHide || info.isSliding
-}
 
 private val isStackEnabled: Boolean
   get() = Registry.`is`("ide.enable.toolwindow.stack")
