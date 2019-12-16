@@ -473,27 +473,31 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     PsiReturnStatement statementFromText = (PsiReturnStatement)myElementFactory.createStatementFromText("return " + exprText + ";", null);
     statementFromText = (PsiReturnStatement)block.add(statementFromText);
-    PsiExpression retValue = statementFromText.getReturnValue();
 
+    return inferNullability(block, Objects.requireNonNull(statementFromText.getReturnValue())) == Nullability.NOT_NULL;
+  }
+
+  private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final DataFlowRunner dfaRunner = new DataFlowRunner();
     
     class Visitor extends StandardInstructionVisitor {
-      ThreeState neverNull = ThreeState.UNSURE; 
+      DfaNullability myNullability = DfaNullability.NOT_NULL;
+      boolean myVisited = false;
       
       @Override
       protected void beforeExpressionPush(@NotNull DfaValue value,
                                           @NotNull PsiExpression expression,
                                           @Nullable TextRange range,
                                           @NotNull DfaMemoryState state) {
-        if (expression == retValue && range == null) {
-          boolean stateNull = state.isNotNull(value);
-          neverNull = ThreeState.fromBoolean(stateNull && neverNull != ThreeState.NO);
+        if (expression == expr && range == null) {
+          myVisited = true;
+          myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
       }
     }
     Visitor visitor = new Visitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
-    return rc == RunnerResult.OK && visitor.neverNull == ThreeState.YES;
+    return rc == RunnerResult.OK && visitor.myVisited ? DfaNullability.toNullability(visitor.myNullability) : Nullability.UNKNOWN;
   }
 
   protected boolean checkOutputVariablesCount() {
@@ -1691,8 +1695,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (AnnotationUtil.isAnnotated(variable, nullableAnnotations, CHECK_TYPE) ||
         AnnotationUtil.isAnnotated(variable, notNullAnnotations, CHECK_TYPE) ||
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
-      final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
-      if (isNotNull != null) {
+      final Nullability nullability = inferNullability(variable, myElements[0]);
+      if (nullability != Nullability.UNKNOWN) {
+        boolean isNotNull = nullability == Nullability.NOT_NULL;
         final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
         final List<String> toRemove = isNotNull ? nullableAnnotations : notNullAnnotations;
         final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
@@ -1710,10 +1715,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  @Nullable
-  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  @NotNull
+  private static Nullability inferNullability(@NotNull PsiVariable variable, PsiElement startElement) {
     String variableName = variable.getName();
-    if (variableName == null) return null;
+    if (variableName == null) return Nullability.UNKNOWN;
 
     PsiElement methodOrLambdaBody = null;
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
@@ -1739,7 +1744,6 @@ public class ExtractMethodProcessor implements MatchProvider {
         .createFileFromText(file.getName(), file.getFileType(), file.getText(), file.getModificationStamp(), false);
 
       PsiCodeBlock bodyCopy = findCopy(copy, methodOrLambdaBody, PsiCodeBlock.class);
-      PsiVariable variableCopy = findCopy(copy, variable, PsiVariable.class);
       if (startElement instanceof PsiExpression) {
         startElement = PsiTreeUtil.getParentOfType(startElement, PsiStatement.class);
       }
@@ -1756,20 +1760,16 @@ public class ExtractMethodProcessor implements MatchProvider {
           PsiElement parent = startStatementCopy.getParent();
           declarationStatement = (PsiDeclarationStatement)parent.addBefore(declarationStatement, startStatementCopy);
           PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-          PsiExpression initializer = ((PsiVariable)declaredElements[0]).getInitializer();
+          PsiExpression initializer = Objects.requireNonNull(((PsiVariable)declaredElements[0]).getInitializer());
 
-          Nullability nullability = DfaUtil.tryCheckNullability(variableCopy, initializer, bodyCopy);
-          if (nullability == null) {
-            return null;
-          }
-          return nullability == Nullability.NOT_NULL;
+          return inferNullability(bodyCopy, initializer);
         }
         catch (IncorrectOperationException ignore) {
-          return null;
+          return Nullability.UNKNOWN;
         }
       }
     }
-    return null;
+    return Nullability.UNKNOWN;
   }
 
   private static <T extends PsiElement> T findCopy(@NotNull PsiFile copy, @NotNull PsiElement element, @NotNull Class<T> clazz) {
