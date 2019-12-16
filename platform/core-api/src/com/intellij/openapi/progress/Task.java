@@ -17,6 +17,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -104,6 +105,14 @@ public abstract class Task implements TaskInfo, Progressive {
    * This callback will be invoked on AWT dispatch thread, after other specific handlers.
    */
   public void onFinished() {
+  }
+
+  /**
+   * Specifies the thread to run callbacks on. See {@link EdtReplacementThread} documentation for more info.
+   */
+  @NotNull
+  public EdtReplacementThread whereToRunCallbacks() {
+    return EdtReplacementThread.EDT_WITH_IW;
   }
 
   public final Project getProject() {

@@ -174,7 +174,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public void startBlocking(@NotNull Runnable init) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -184,11 +184,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     init.run();
 
     try {
-      IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-        if (isCancellationEvent(event)) {
-          cancel();
-        }
-        return wasStarted() && !isRunning();
+      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+        IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+          if (isCancellationEvent(event)) {
+            cancel();
+          }
+          return wasStarted() && !isRunning();
+        });
+        return null;
       });
     }
     finally {
@@ -319,7 +322,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     stopSystemActivity();
     if (isRunning()) {
       cancel();

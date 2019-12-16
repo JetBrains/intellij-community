@@ -343,7 +343,9 @@ public class LaterInvocator {
 
   @NotNull
   public static ModalityStateEx getCurrentModalityState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!SwingUtilities.isEventDispatchThread()) {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+    }
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
     }
@@ -394,6 +396,14 @@ public class LaterInvocator {
           .execute(() -> ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(ourFlushQueueRunnable));
       }
     }
+  }
+
+  public static void pollWriteThreadEventsOnce() {
+    LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
+    FLUSHER_SCHEDULED.getAndUpdate(value -> value | (1 << 2));
+    ourFlushQueueRunnable.run();
   }
 
   /**

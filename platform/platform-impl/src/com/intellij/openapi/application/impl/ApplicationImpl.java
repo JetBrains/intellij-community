@@ -24,7 +24,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.impl.ProgressResult;
+import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -40,7 +41,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
@@ -381,12 +381,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                      final boolean canBeCanceled,
                                                      @Nullable final Project project,
                                                      final JComponent parentComponent,
-                                                     final String cancelText) {
-    assertIsDispatchThread();
-    boolean writeAccessAllowed = isWriteAccessAllowed();
-    if (writeAccessAllowed // Disallow running process in separate thread from under write action.
-        // The thread will deadlock trying to get read action otherwise.
-        ) {
+                                                   final String cancelText) {
+    if (isDispatchThread() && isWriteAccessAllowed()
+      // Disallow running process in separate thread from under write action.
+      // The thread will deadlock trying to get read action otherwise.
+    ) {
       LOG.debug("Starting process with progress from within write action makes no sense");
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
@@ -402,34 +401,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed
     Disposer.register(this, progress);
-
     progress.setTitle(progressTitle);
 
-    final AtomicBoolean threadStarted = new AtomicBoolean();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      executeOnPooledThread(ConcurrencyUtil.underThreadNameRunnable(progressTitle, () -> {
-        try {
-          ProgressManager.getInstance().runProcess(process, progress);
-        }
-        catch (ProcessCanceledException e) {
-          progress.cancel();
-          // ok to ignore.
-        }
-        catch (RuntimeException e) {
-          progress.cancel();
-          throw e;
-        }
-      }));
-      threadStarted.set(true);
-    });
+    ProgressRunner<?, ?> progressRunner = new ProgressRunner<>(process)
+      .sync()
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(progress)
+      .withBlockingEdtStart(ProgressWindow::startBlocking);
 
-    progress.startBlocking();
+    ProgressResult<?> result = progressRunner.submitAndGet();
 
-    LOG.assertTrue(threadStarted.get());
-    LOG.assertTrue(!progress.isRunning());
-
-    return !progress.isCanceled();
+    Throwable exception = result.getThrowable();
+    if (!(exception instanceof ProcessCanceledException) && exception instanceof RuntimeException) {
+      throw ((RuntimeException)exception);
+    }
+    return !result.isCanceled();
   }
 
 
@@ -440,49 +426,30 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                                  final String cancelText,
                                                                  final JComponent parentComponent,
                                                                  @NotNull final Runnable process) {
-    assertIsDispatchThread();
     boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
-      // The thread will deadlock trying to get read action otherwise.
-    ) {
+                           // The thread will deadlock trying to get read action otherwise.
+      ) {
       throw new IncorrectOperationException("Starting process with progress from within write action makes no sense");
     }
+
 
     final ProgressWindow progress = new ProgressWindow(canBeCanceled, false, project, parentComponent, cancelText);
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed
     Disposer.register(this, progress);
-
     progress.setTitle(progressTitle);
 
-    final Semaphore readActionAcquired = new Semaphore();
-    readActionAcquired.down();
-    final Semaphore modalityEntered = new Semaphore();
-    modalityEntered.down();
-    executeOnPooledThread(() -> {
-      try {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          readActionAcquired.up();
-          modalityEntered.waitFor();
-          ProgressManager.getInstance().runProcess(process, progress);
-        });
-      }
-      catch (ProcessCanceledException e) {
-        progress.cancel();
-        // ok to ignore.
-      }
-      catch (RuntimeException e) {
-        progress.cancel();
-        throw e;
-      }
-    });
-
-    readActionAcquired.waitFor();
-    progress.startBlocking(modalityEntered::up);
+    ProgressResult<?> result = new ProgressRunner<>(() -> runReadAction(process))
+      .sync()
+      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .withProgress(progress)
+      .withBlockingEdtStart(ProgressWindow::startBlocking)
+      .submitAndGet();
 
     LOG.assertTrue(!progress.isRunning());
 
-    return !progress.isCanceled();
+    return !result.isCanceled();
   }
 
   @Override
@@ -925,11 +892,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
                                             @NotNull Consumer<? super ProgressIndicator> action) {
-    return runWriteActionWithClass(action.getClass(), ()->{
-      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInSwingThread(() -> action.consume(indicator));
-      return !indicator.isCanceled();
-    });
+    final ProgressWindow progress = new ProgressWindow(cancelText != null, false, project, parentComponent, cancelText);
+    // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
+    // does not have a chance to run, and as a result the progress won't be disposed
+    Disposer.register(this, progress);
+    progress.setTitle(title);
+
+    ProgressResult<Object> result = new ProgressRunner<>(() -> runWriteAction(() -> action.consume(progress)))
+      .sync()
+      .onThread(ProgressRunner.ThreadToUse.WRITE)
+      .withProgress(progress)
+      .withBlockingEdtStart(ProgressWindow::startBlocking)
+      .submitAndGet();
+
+    if (result.getThrowable() instanceof RuntimeException) {
+      throw ((RuntimeException)result.getThrowable());
+    }
+
+    return !(result.getThrowable() instanceof ProcessCanceledException);
   }
 
   private <T,E extends Throwable> T runWriteActionWithClass(@NotNull Class<?> clazz, @NotNull ThrowableComputable<T, E> computable) throws E {
@@ -1010,7 +990,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    assertIsDispatchThread("Access is allowed from event dispatch thread only.");
+    assertIsDispatchThread("Access is allowed from write thread only.");
   }
 
   @Override
