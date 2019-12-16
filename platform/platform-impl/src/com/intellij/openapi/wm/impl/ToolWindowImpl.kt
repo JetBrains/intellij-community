@@ -69,7 +69,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   private val pendingContentManagerListeners: List<ContentManagerListener>? = null
 
   private val showing = object : BusyObject.Impl() {
-    override fun isReady() = component != null && component.isShowing
+    override fun isReady(): Boolean {
+      return getComponentIfInitialized()?.isShowing ?: false
+    }
   }
 
   private var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
