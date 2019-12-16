@@ -17,11 +17,11 @@ import java.awt.*;
  *
  * @author Vladimir Kondratyev
  */
-public final class RequestFocusInToolWindowCmd implements Runnable {
-  private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCmd.class);
+public final class RequestFocusInToolWindowCommand implements Runnable {
+  private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCommand.class);
   private final ToolWindowImpl myToolWindow;
 
-  public RequestFocusInToolWindowCmd(@NotNull ToolWindowImpl toolWindow) {
+  public RequestFocusInToolWindowCommand(@NotNull ToolWindowImpl toolWindow) {
     myToolWindow = toolWindow;
   }
 

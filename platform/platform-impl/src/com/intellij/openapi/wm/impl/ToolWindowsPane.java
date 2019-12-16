@@ -57,7 +57,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.
    */
-  private MyLayeredPane layeredPane;
+  private final MyLayeredPane layeredPane;
   /*
    * Splitters.
    */
@@ -826,24 +826,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  void removeStripeButton(@NotNull StripeButton button, @NotNull ToolWindowAnchor anchor) {
-    if (ToolWindowAnchor.TOP == anchor) {
-      topStripe.removeButton(button);
+  void removeStripeButton(@NotNull StripeButton button) {
+    Container parent = button.getParent();
+    if (parent != null) {
+      ((Stripe)parent).removeButton(button);
     }
-    else if (ToolWindowAnchor.LEFT == anchor) {
-      leftStripe.removeButton(button);
-    }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
-      bottomStripe.removeButton(button);
-    }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
-      rightStripe.removeButton(button);
-    }
-    else {
-      LOG.error("unknown anchor: " + anchor);
-    }
-    validate();
-    repaint();
   }
 
   private void removeSplitAndDockedComponent(@NotNull WindowInfo info, boolean dirtyMode) {

@@ -44,17 +44,28 @@ class DesktopLayout {
   /**
    * Creates or gets `WindowInfo` for the specified `id`.
    */
-  fun getOrCreate(task: RegisterToolWindowTask): WindowInfoImpl {
-    var info = idToInfo.get(task.id)
-    if (info == null) {
-      info = WindowInfoImpl()
-      info.isFromPersistentSettings = false
-      info.id = task.id
+  internal fun getOrCreate(task: RegisterToolWindowTask): WindowInfoImpl {
+    return idToInfo.getOrPut(task.id) {
+      val info = createDefaultInfo(task.id)
       info.anchor = task.anchor
       info.isSplit = task.sideTool
-      info.order = getMaxOrder(info.anchor) + 1
-      idToInfo.put(task.id, info)
+      info
     }
+  }
+
+  internal fun getOrCreateDefault(id: String): WindowInfoImpl {
+    return idToInfo.getOrPut(id) { createDefaultInfo(id) }
+  }
+
+  internal fun getOrReturnDefault(id: String): WindowInfoImpl {
+    return idToInfo.getOrElse(id) { createDefaultInfo(id) }
+  }
+
+  private fun createDefaultInfo(id: String): WindowInfoImpl {
+    val info = WindowInfoImpl()
+    info.id = id
+    info.isFromPersistentSettings = false
+    info.order = getMaxOrder(info.anchor) + 1
     return info
   }
 
@@ -94,15 +105,14 @@ class DesktopLayout {
    * Sets new `anchor` and `id` for the specified tool window.
    * Also the method properly updates order of all other tool windows.
    */
-  fun setAnchor(id: String, newAnchor: ToolWindowAnchor, suppliedNewOrder: Int) {
+  fun setAnchor(info: WindowInfoImpl, newAnchor: ToolWindowAnchor, suppliedNewOrder: Int) {
     var newOrder = suppliedNewOrder
     // if order isn't defined then the window will the last in the stripe
     if (newOrder == -1) {
       newOrder = getMaxOrder(newAnchor) + 1
     }
 
-    val info = getInfo(id)
-    val oldAnchor = info!!.anchor
+    val oldAnchor = info.anchor
     // shift order to the right in the target stripe
     val infos = getAllInfos(newAnchor)
     for (i in infos.size - 1 downTo -1 + 1) {
@@ -120,10 +130,6 @@ class DesktopLayout {
     if (oldAnchor != newAnchor) {
       normalizeOrder(getAllInfos(newAnchor))
     }
-  }
-
-  fun setSplitMode(id: String, split: Boolean) {
-    getInfo(id)!!.isSplit = split
   }
 
   fun readExternal(layoutElement: Element) {
