@@ -26,6 +26,7 @@ import com.intellij.workspace.bracket
 import com.intellij.workspace.executeOrQueueOnDispatchThread
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
@@ -428,6 +429,21 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
   override fun findModuleByName(name: String): Module? = modulesMap[ModuleId(name)]
 
   override fun disposeModule(module: Module) = ApplicationManager.getApplication().runWriteAction {
+    module as LegacyBridgeModule
+
+    // Remove module libraries for that module
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    moduleRootManager.modifiableModel.let { rootModel ->
+      rootModel.moduleLibraryTable.libraries.forEach {
+        it as LegacyBridgeLibraryImpl
+        val libraryTableId = it.entityId.tableId
+        if (libraryTableId is LibraryTableId.ModuleLibraryTableId && libraryTableId.moduleId == module.moduleEntityId) {
+          rootModel.moduleLibraryTable.removeLibrary(it)
+        }
+      }
+      rootModel.commit()
+    }
+
     val modifiableModel = modifiableModel
     modifiableModel.disposeModule(module)
     modifiableModel.commit()
