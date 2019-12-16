@@ -17,6 +17,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 
+private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
+  ProjectLevelVcsManager.getInstance(this).allActiveVcss
+    .filter { it.committedChangesProvider != null }
+    .let {
+      when {
+        it.isEmpty() -> null
+        it.size == 1 -> it.first().committedChangesProvider!!
+        else -> CompositeCommittedChangesProvider(this, it)
+      }
+    }
+
 class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
   private var panel: CommittedChangesPanel? = null
 
@@ -38,12 +49,12 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
     }
 
   private fun createCommittedChangesPanel(): CommittedChangesPanel {
-    val provider = CommittedChangesCache.getInstance(project).providerForProject!!
+    val provider = project.getCommittedChangesProvider()!!
     return CommittedChangesPanel(project, provider, provider.createDefaultSettings(), null, null)
   }
 
   private fun updateCommittedChangesProvider() {
-    val provider = CommittedChangesCache.getInstance(project).providerForProject ?: return
+    val provider = project.getCommittedChangesProvider() ?: return
 
     panel?.run {
       setProvider(provider)

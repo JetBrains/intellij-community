@@ -30,10 +30,9 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
   private final Project myProject;
   private final List<AbstractVcs> myBaseVcss;
 
-  public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
+  public CompositeCommittedChangesProvider(@NotNull Project project, @NotNull Collection<AbstractVcs> vcses) {
     myProject = project;
-    myBaseVcss = new ArrayList<>();
-    Collections.addAll(myBaseVcss, baseVcss);
+    myBaseVcss = new ArrayList<>(vcses);
   }
 
   @Override

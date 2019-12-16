@@ -131,24 +131,6 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     updateRefreshTimer();
   }
 
-  @Nullable
-  public CommittedChangesProvider getProviderForProject() {
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    List<AbstractVcs> vcsWithProviders = new ArrayList<>();
-    for(AbstractVcs vcs: vcss) {
-      if (vcs.getCommittedChangesProvider() != null) {
-        vcsWithProviders.add(vcs);
-      }
-    }
-    if (vcsWithProviders.isEmpty()) {
-      return null;
-    }
-    if (vcsWithProviders.size() == 1) {
-      return vcsWithProviders.get(0).getCommittedChangesProvider();
-    }
-    return new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[0]));
-  }
-
   public boolean isMaxCountSupportedForProject() {
     for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
