@@ -311,6 +311,8 @@
 
     <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
                         predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
+
+    <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
   </extensions>
 
   <extensionPoints>

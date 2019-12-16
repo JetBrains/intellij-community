@@ -97,7 +97,7 @@ public class GitBranchUtil {
   }
 
   @Nullable
-  private static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
+  public static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REV_PARSE);
     handler.addParameters("--abbrev-ref", "HEAD");
     handler.setSilent(true);
