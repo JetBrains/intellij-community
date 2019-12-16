@@ -43,6 +43,10 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated use {@link com.intellij.openapi.roots.ui.configuration.JdkPopup} instead
+ */
+@Deprecated
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;
