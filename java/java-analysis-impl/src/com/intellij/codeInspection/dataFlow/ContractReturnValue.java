@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public abstract class ContractReturnValue {
   }
 
   /**
-   * @return a string which is used to represent this return value inside {@link org.jetbrains.annotations.Contract} annotation.
+   * @return a string which is used to represent this return value inside {@link Contract} annotation.
    */
   @Override
   public String toString() {
@@ -530,10 +531,10 @@ public abstract class ContractReturnValue {
         }
         PsiType parameterType = parameters[myParamNumber].getType();
         PsiType returnType = method.getReturnType();
-        if (returnType != null && !returnType.isAssignableFrom(parameterType)) {
+        if (returnType != null && !returnType.isConvertibleFrom(parameterType)) {
           return "return type '" +
                  returnType.getPresentableText() +
-                 "' must be assignable from parameter type '" +
+                 "' must be convertible from parameter type '" +
                  parameterType.getPresentableText() +
                  "'";
         }
