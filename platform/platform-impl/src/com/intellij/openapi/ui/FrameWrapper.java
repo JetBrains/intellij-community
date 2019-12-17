@@ -154,7 +154,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      myComponent = CustomFrameDialogContent.getContent(frame, myComponent);
+      myComponent = CustomFrameDialogContent.getCustomContentHolder(frame, myComponent);
     }
 
     ((RootPaneContainer)frame).getContentPane().add(myComponent, BorderLayout.CENTER);

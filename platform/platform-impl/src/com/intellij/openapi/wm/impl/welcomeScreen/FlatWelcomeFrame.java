@@ -37,7 +37,6 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameViewHolder;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
@@ -109,11 +108,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     int defaultHeight = DEFAULT_HEIGHT;
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      CustomFrameViewHolder holder =
+      JComponent holder =
         CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"));
-      setContentPane(holder.getContent());
+      setContentPane(holder);
 
-      defaultHeight+=holder.getHeaderHeight();
+      if(holder instanceof CustomFrameDialogContent)
+      defaultHeight+= ((CustomFrameDialogContent)holder).getHeaderHeight();
     }
     else {
       setContentPane(myScreen.getWelcomePanel());
