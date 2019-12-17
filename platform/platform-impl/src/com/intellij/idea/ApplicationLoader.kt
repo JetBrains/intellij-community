@@ -443,14 +443,9 @@ open class IdeStarter : ApplicationStarter {
   override fun getCommandName(): String? = null
 
   private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
-    var project: Project? = null
-    if (commandLineArgs.firstOrNull() != null) {
-      LOG.info("ApplicationLoader.loadProject")
-      val currentDirectory: String? = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
-      LOG.info("$LAUNCHER_INITIAL_DIRECTORY_ENV_VAR: $currentDirectory")
-      project = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).getFirst()
-    }
-    return project
+    val currentDirectory: String? = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR)
+    LOG.info("ApplicationLoader.loadProject (CWD=${currentDirectory})")
+    return CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory).first
   }
 
   override fun main(args: Array<String>) {
