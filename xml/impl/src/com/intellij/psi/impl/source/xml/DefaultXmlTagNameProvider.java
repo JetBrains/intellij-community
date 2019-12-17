@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
@@ -21,10 +20,7 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -58,9 +54,22 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     List<String> nsInfo = new ArrayList<>();
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
 
-    if ((variants.isEmpty() || isFirstTag(tag)) && psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
-      getRootTagsVariants(tag, elements);
-      return;
+    if (psiFile instanceof XmlFile && ((XmlFile) psiFile).getRootTag() == tag) {
+      if (Arrays.stream(tag.getParent().getChildren()).noneMatch(it -> it.getNode().getElementType() == XmlElementType.XML_PROCESSING_INSTRUCTION)) {
+        final LookupElementBuilder xmlDeclaration = LookupElementBuilder
+          .create("?xml version=\"1.0\" encoding=\"\" ?>")
+          .withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>")
+          .withInsertHandler((context, item) -> {
+            int offset = context.getEditor().getCaretModel().getOffset();
+            context.getEditor().getCaretModel().moveToOffset(offset - 4);
+            AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
+          });
+        elements.add(xmlDeclaration);
+      }
+      if (variants.isEmpty()) {
+        getRootTagsVariants(tag, elements);
+        return;
+      }
     }
 
     final Set<String> visited = new HashSet<>();
@@ -96,20 +105,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     }
   }
 
-  private static boolean isFirstTag(XmlTag tag) {
-    return tag.getPrevSiblingInTag() == null;
-  }
-
   private static void getRootTagsVariants(final XmlTag tag, final List<? super LookupElement> elements) {
-    elements.add(LookupElementBuilder.create("?xml version=\"1.0\" encoding=\"\" ?>").withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>").withInsertHandler(
-      new InsertHandler<LookupElement>() {
-        @Override
-        public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-          int offset = context.getEditor().getCaretModel().getOffset();
-          context.getEditor().getCaretModel().moveToOffset(offset - 4);
-          AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
-        }
-      }));
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
     Collection<String> result = new ArrayList<>();
     Processor<String> processor = Processors.cancelableCollectProcessor(result);
