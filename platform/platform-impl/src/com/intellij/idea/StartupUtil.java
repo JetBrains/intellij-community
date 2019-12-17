@@ -74,7 +74,6 @@ import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
-  public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
   @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
