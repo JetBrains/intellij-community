@@ -227,7 +227,7 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
 @ApiStatus.Experimental
 tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null): Boolean =
   when (val parent = this.uastParent) {
-    scopeElement -> true
+    scopeElement -> if (scopeElement is UBlockExpression) scopeElement.expressions.lastOrNull() == this else true
     is UBlockExpression -> if (parent.expressions.lastOrNull() == this) parent.isLastElementInControlFlow(scopeElement) else false
     is UElement -> parent.isLastElementInControlFlow(scopeElement)
     else -> false
