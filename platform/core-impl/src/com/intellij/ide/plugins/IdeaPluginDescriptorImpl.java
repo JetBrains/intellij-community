@@ -1104,7 +1104,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
         for (int j = 0; j < i; j++) {
           PluginDependency prev = dependencies.get(j);
-          if (!prev.optional && prev.pluginId == dependency.pluginId) {
+          if (prev != null && !prev.optional && prev.pluginId == dependency.pluginId) {
             dependency.optional = false;
             dependencies.set(j, null);
             size--;
