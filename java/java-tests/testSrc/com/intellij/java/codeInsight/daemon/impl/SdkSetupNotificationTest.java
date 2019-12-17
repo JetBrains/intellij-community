@@ -9,7 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -87,7 +87,7 @@ public class SdkSetupNotificationTest extends JavaCodeInsightFixtureTestCase {
     AssertionsForClassTypes.assertThat(editors).hasSize(1);
     EditorNotificationsImpl.completeAsyncTasks();
 
-    List<? extends EditorNotificationPanel> data = editors[0].getUserData(UnknownSdkTracker.GlobalEditorNotification.NOTIFICATIONS);
+    List<? extends EditorNotificationPanel> data = editors[0].getUserData(UnknownSdkEditorNotification.NOTIFICATIONS);
     if (data == null) return null;
     Assert.assertEquals("Only one notification was expected, but were " + data, 1, data.size());
     return data.iterator().next();
