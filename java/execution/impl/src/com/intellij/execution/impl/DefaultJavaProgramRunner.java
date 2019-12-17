@@ -85,7 +85,8 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner<RunnerS
   }
 
   @Override
-  public final void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) {
+  // cannot be final - overridden in YourKit plugin
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) {
     runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 
