@@ -11,13 +11,11 @@ import javax.swing.JComponent
 import javax.swing.event.ListSelectionListener
 
 class FileHistoryEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val fileHistoryPanel: FileHistoryPanel) :
-  EditorDiffPreview(uiProperties) {
+  EditorDiffPreview(uiProperties, fileHistoryPanel) {
 
   init {
     init(project)
   }
-
-  override fun getOwner(): Disposable = fileHistoryPanel
 
   override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable
 

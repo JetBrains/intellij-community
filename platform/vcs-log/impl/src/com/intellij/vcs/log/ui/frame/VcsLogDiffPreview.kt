@@ -64,7 +64,8 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
   }
 }
 
-abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties) : DiffPreviewProvider {
+abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
+                                 private val owner: Disposable) : DiffPreviewProvider {
 
   protected fun init(project: Project) {
     toggleDiffPreviewOnPropertyChange(uiProperties, owner) { state ->
@@ -85,7 +86,7 @@ abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties) :
     }
   }
 
-  abstract override fun getOwner(): Disposable
+  override fun getOwner(): Disposable = owner
 
   abstract fun getOwnerComponent(): JComponent
 
@@ -93,7 +94,7 @@ abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties) :
 }
 
 class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val mainFrame: MainFrame) :
-  EditorDiffPreview(uiProperties) {
+  EditorDiffPreview(uiProperties, mainFrame.changesBrowser) {
 
   init {
     init(project)
@@ -103,10 +104,6 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
     val preview = mainFrame.createDiffPreview(true, owner)
     preview.updatePreview(true)
     return preview
-  }
-
-  override fun getOwner(): Disposable {
-    return mainFrame.changesBrowser
   }
 
   override fun getEditorTabName(): String {
