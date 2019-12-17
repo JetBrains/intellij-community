@@ -124,7 +124,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         // but later, when getStateModificationCount or getState is called, may be no frame at all.
         defaultFrameInfoHelper.updateFrameInfo(frameHelper);
       }
-      else {
+      else if (!project.isDisposedOrDisposeInProgress()) {
         ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
         projectFrameBounds.markDirty(FrameInfoHelper.isMaximized(extendedState) ? null : bounds);
       }
