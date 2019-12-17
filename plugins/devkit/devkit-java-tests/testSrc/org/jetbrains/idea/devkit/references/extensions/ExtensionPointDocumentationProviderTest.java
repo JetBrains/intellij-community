@@ -20,7 +20,15 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
   }
 
   public void testBeanClassExtensionPointDocumentation() {
-    myFixture.configureByFiles("beanClassExtensionPointDocumentation.xml",
+    doBeanClassExtensionPointTest("beanClassExtensionPointDocumentation.xml");
+  }
+
+  public void testBeanClassExtensionPointQualifiedNameDocumentation() {
+    doBeanClassExtensionPointTest("beanClassExtensionPointQualifiedNameDocumentation.xml");
+  }
+
+  private void doBeanClassExtensionPointTest(String pluginXml) {
+    myFixture.configureByFiles(pluginXml,
                                "bar/MyExtensionPoint.java", "bar/MyExtension.java");
 
     final PsiElement docElement =
@@ -29,14 +37,14 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
     String epDefinition = "[" + getModule().getName() + "]" +
-                          "<br/><b>foo.bar</b> (beanClassExtensionPointDocumentation.xml)<br/>" +
+                          "<br/><b>foo.bar</b> (" + pluginXml + ")<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br/>" +
                           "<a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>";
     assertEquals(epDefinition,
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class='definition'><pre><b>foo.bar</b><br>beanClassExtensionPointDocumentation.xml<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div><div class='content'>\n" +
+      "<div class='definition'><pre><b>foo.bar</b><br>" + pluginXml +"<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div><div class='content'>\n" +
       "   MyExtensionPoint JavaDoc.\n" +
       " </div><table class='sections'><p></table><table class='sections'><tr><td valign='top' class='section'><p>implementationClass:</td><td valign='top'><a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a></td><tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td valign='top'><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table></pre></div><div class='content'><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
       "   My Extension Javadoc.\n" +

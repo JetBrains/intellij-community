@@ -9,18 +9,18 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -31,7 +31,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    ExtensionPoint extensionPoint = findExtensionPoint(originalElement);
+    ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
 
     final XmlFile epDeclarationFile = DomUtil.getFile(extensionPoint);
@@ -56,7 +56,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    ExtensionPoint extensionPoint = findExtensionPoint(originalElement);
+    ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
 
     StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
@@ -128,16 +128,24 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
   @Nullable
   private static ExtensionPoint findExtensionPoint(PsiElement element) {
-    if (element instanceof XmlToken) {
-      element = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-    }
-    if (element instanceof XmlTag &&
+    if (element instanceof PomTargetPsiElement &&
         DescriptorUtil.isPluginXml(element.getContainingFile())) {
+      final PomTarget pomTarget = ((PomTargetPsiElement)element).getTarget();
+      if (pomTarget instanceof DomTarget) {
+        final DomElement domElement = ((DomTarget)pomTarget).getDomElement();
+        if (domElement instanceof ExtensionPoint) {
+          return (ExtensionPoint)domElement;
+        }
+      }
+    } // via XmlTag for "qualifiedName"
+    else if (element instanceof XmlTag &&
+             DescriptorUtil.isPluginXml(element.getContainingFile())) {
       DomElement domElement = DomUtil.getDomElement(element);
-      if (domElement instanceof Extension) {
-        return ((Extension)domElement).getExtensionPoint();
+      if (domElement instanceof ExtensionPoint) {
+        return (ExtensionPoint)domElement;
       }
     }
+
     return null;
   }
 }
