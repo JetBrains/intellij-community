@@ -95,7 +95,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     Disposer.register(this, ui)
     uiController.registerDataPackListener(logManager.dataManager)
     branchViewSplitter.secondComponent = VcsLogPanel(logManager, ui)
-    val diffPreview = ui.mainFrame.createDiffPreview(false, ui.mainFrame.changesBrowser)
+    val diffPreview = ui.createDiffPreview()
     mainPanel.add(DiffPreviewSplitter(diffPreview, ui.properties, branchesTreeWithLogPanel).mainComponent)
     logUi = ui
     branchesSearchField.setVerticalSizeReferent(ui.toolbar)
@@ -228,6 +228,10 @@ private class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: Vc
 
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx): MainFrame {
     return MainFrame(logData, this, uiProperties, filterUi, false)
+  }
+
+  fun createDiffPreview(): VcsLogChangeProcessor {
+    return mainFrame.createDiffPreview(false, mainFrame.changesBrowser)
   }
 }
 
