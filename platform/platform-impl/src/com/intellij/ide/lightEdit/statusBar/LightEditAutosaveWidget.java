@@ -3,12 +3,14 @@ package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditorListener;
+import com.intellij.ide.lightEdit.LightEditorManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +23,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 
 public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget.TextPresentation, LightEditorListener {
-  private JComponent myComponent;
-  private MyModePanel myModePanel;
-  private LightEditStatusBar myStatusBar;
+  private final LightEditorManager myLightEditorManager;
+  private StatusBar myStatusBar;
+
+  public LightEditAutosaveWidget(@NotNull LightEditorManager editorManager) {
+    myLightEditorManager = editorManager;
+  }
 
   @NotNull
   @Override
@@ -33,16 +38,12 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    assert statusBar instanceof LightEditStatusBar : "Can be added only to LightEditStatusBar";
-    myStatusBar = (LightEditStatusBar)statusBar;
-    myComponent = myStatusBar.getWidgetComponent(ID());
-    myModePanel = new MyModePanel();
-    myStatusBar.getEditorManager().addListener(this);
+    myStatusBar = statusBar;
+    myLightEditorManager.addListener(this);
   }
 
   @Override
   public void dispose() {
-
   }
 
   @Nullable
@@ -55,19 +56,15 @@ public class LightEditAutosaveWidget implements StatusBarWidget, StatusBarWidget
   @Override
   public Consumer<MouseEvent> getClickConsumer() {
     return event -> {
-      if (myComponent != null) {
-        myModePanel.setAutosaveSelected(LightEditService.getInstance().isAutosaveMode());
-        ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myModePanel, null);
+      Component widgetComp = event.getComponent();
+      if (widgetComp != null) {
+        MyModePanel modePanel = new MyModePanel();
+        modePanel.setAutosaveSelected(LightEditService.getInstance().isAutosaveMode());
+        ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(modePanel, null);
         JBPopup popup = builder.createPopup();
-        popup.showInScreenCoordinates(myComponent, getPopupLocation(myComponent, myModePanel.getPreferredSize()));
+        popup.show(new RelativePoint(widgetComp, new Point(0, -modePanel.getPreferredSize().height)));
       }
     };
-  }
-
-  private static Point getPopupLocation(@NotNull JComponent widgetComponent, @NotNull Dimension popupSize) {
-    Point widgetLocation = widgetComponent.getVisibleRect().getLocation();
-    SwingUtilities.convertPointToScreen(widgetLocation, widgetComponent);
-    return new Point(widgetLocation.x, widgetLocation.y - popupSize.height);
   }
 
   @NotNull

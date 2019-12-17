@@ -44,7 +44,7 @@ import java.util.Objects;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeRootPane extends JRootPane implements UISettingsListener {
+public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**
    * Toolbar and status bar.
    */
@@ -55,7 +55,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
   private final JBBox myNorthPanel = JBBox.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<>();
 
-  private final ToolWindowsPane myToolWindowsPane;
+  private ToolWindowsPane myToolWindowsPane;
   private JBPanel<?> myContentPane;
 
   private final boolean myGlassPaneInitialized;
@@ -67,7 +67,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
   private MainFrameHeader myCustomFrameTitlePane;
   private final boolean myDecoratedMenu;
 
-  IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
+  protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
     if (SystemInfo.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
       try {
         setWindowDecorationStyle(FRAME);
@@ -120,8 +120,13 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateMainMenuVisibility();
 
+    myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
+  }
+
+  @NotNull
+  protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     myToolWindowsPane = new ToolWindowsPane(frame, parentDisposable);
-    myContentPane.add(myToolWindowsPane, BorderLayout.CENTER);
+    return myToolWindowsPane;
   }
 
   @NotNull
@@ -130,7 +135,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   public void init(@NotNull ProjectFrameHelper frame, @NotNull Disposable parentDisposable) {
-    createStatusBar(frame, parentDisposable);
+    createAndConfigureStatusBar(frame, parentDisposable);
   }
 
   private void updateScreenState(@NotNull IdeFrame helper) {
@@ -215,7 +220,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  void updateNorthComponents() {
+  protected void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.revalidate();
     }
@@ -242,8 +247,8 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     return toolBar.getComponent();
   }
 
-  private void createStatusBar(@NotNull IdeFrame frame, @NotNull Disposable parentDisposable) {
-    myStatusBar = new IdeStatusBarImpl(frame);
+  private void createAndConfigureStatusBar(@NotNull IdeFrame frame, @NotNull Disposable parentDisposable) {
+    myStatusBar = createStatusBar(frame);
     Disposer.register(parentDisposable, myStatusBar);
 
     setMemoryIndicatorVisible(UISettings.getInstance().getShowMemoryIndicator());
@@ -251,6 +256,11 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
 
     updateStatusBarVisibility();
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
+  }
+
+  @NotNull
+  protected IdeStatusBarImpl createStatusBar(@NotNull IdeFrame frame) {
+    return new IdeStatusBarImpl(frame);
   }
 
   private void setMemoryIndicatorVisible(boolean visible) {
@@ -304,7 +314,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  void installNorthComponents(@NotNull Project project) {
+  protected void installNorthComponents(@NotNull Project project) {
     if (myCustomFrameTitlePane != null) {
       myCustomFrameTitlePane.setProject(project);
     }
@@ -321,7 +331,7 @@ public final class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  void deinstallNorthComponents() {
+  protected void deinstallNorthComponents() {
     int count = myNorthPanel.getComponentCount();
     for (int i = count - 1; i >= 0; i--) {
       if (myNorthPanel.getComponent(i) != myToolbar) {

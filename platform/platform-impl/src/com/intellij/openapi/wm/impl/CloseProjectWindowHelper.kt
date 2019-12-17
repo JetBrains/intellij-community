@@ -23,7 +23,7 @@ open class CloseProjectWindowHelper {
   protected open val isShowWelcomeScreenFromSettings
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
-  fun windowClosing(project: Project?) {
+  open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.

@@ -2,33 +2,34 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
-import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.WindowWrapper;
-import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
+import java.lang.management.ManagementFactory;
 
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
 public class LightEditService implements Disposable, LightEditorListener, PersistentStateComponent<LightEditConfiguration> {
-  private WindowWrapper myWrapper;
+  private static final Logger LOG = Logger.getInstance(LightEditService.class);
+
+  private LightEditFrameWrapper myFrameWrapper;
   private boolean myWrapperIsStale;
   private final LightEditorManager myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
@@ -54,31 +55,17 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   private void init() {
-    if (myWrapper == null || myWrapperIsStale) {
+    if (myFrameWrapper == null || myWrapperIsStale) {
       final LightEditPanel editorPanel = new LightEditPanel(myEditorManager);
-      myWrapper =
-        new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, editorPanel)
-          .setOnCloseHandler(()-> closeEditorWindow())
-          .build();
-      setupMenuBar(myWrapper);
-      SplashManager.hideBeforeShow(myWrapper.getWindow());
+      myFrameWrapper = new LightEditFrameWrapper(editorPanel);
+      myFrameWrapper.setOnCloseHandler(()-> closeEditorWindow());
       myWrapperIsStale = false;
-    }
-  }
-
-  private static void setupMenuBar(@NotNull WindowWrapper wrapper) {
-    Window window = wrapper.getWindow();
-    if (window instanceof JFrame) {
-      ((JFrame)window).setJMenuBar(new LightEditMenuBar());
     }
   }
 
   public void showEditorWindow() {
     init();
-    if (!myWrapper.getWindow().isShowing()) {
-      myWrapper.show();
-      myWrapper.setTitle(getAppName());
-    }
+    myFrameWrapper.setTitle(getAppName());
   }
 
   private static String getAppName() {
@@ -97,6 +84,10 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     else {
       getEditPanel().getTabs().selectTab(openEditorInfo);
     }
+    JComponent component = getEditPanel().getTabs().getSelectedInfo().getComponent();
+    UiNotifyConnector.doWhenFirstShown(component, () -> ApplicationManager.getApplication().invokeLater(() -> {
+      LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
+    }));
   }
 
   public void createNewFile() {
@@ -111,7 +102,6 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
       myWrapperIsStale = true;
       Disposer.dispose(myEditorManager);
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
-        Disposer.dispose(myWrapper);
         try {
           ApplicationManager.getApplication().exit();
         }
@@ -145,7 +135,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   public LightEditPanel getEditPanel() {
-    return (LightEditPanel)myWrapper.getComponent();
+    return myFrameWrapper.getLightEditPanel();
   }
 
   private void disposeEditorPanel() {
@@ -155,17 +145,17 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
 
   @Override
   public void dispose() {
-    if (myWrapper != null && !myWrapperIsStale) {
+    if (myFrameWrapper != null) {
       disposeEditorPanel();
-      Disposer.dispose(myWrapper);
+      Disposer.dispose(myFrameWrapper);
       Disposer.dispose(myEditorManager);
     }
   }
 
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    if (myWrapper != null && !myWrapperIsStale ) {
-      myWrapper.setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
+    if (myFrameWrapper != null && !myWrapperIsStale) {
+      myFrameWrapper.setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
     }
   }
 
@@ -184,7 +174,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   public void saveToAnotherFile(@NotNull Editor editor) {
     LightEditorInfo editorInfo = myEditorManager.getEditorInfo(editor);
     if (editorInfo != null) {
-      VirtualFile targetFile = LightEditUtil.chooseTargetFile(myWrapper.getComponent(), editorInfo);
+      VirtualFile targetFile = LightEditUtil.chooseTargetFile(myFrameWrapper.getLightEditPanel(), editorInfo);
       if (targetFile != null) {
         LightEditorInfo newInfo = myEditorManager.saveAs(editorInfo, targetFile);
         getEditPanel().getTabs().replaceTab(editorInfo, newInfo);

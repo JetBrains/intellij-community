@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
-  private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
+  private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   @NotNull
   private final IdeFrame myFrame;
@@ -133,7 +133,8 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return this;
   }
 
-  private IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
+  @ApiStatus.Internal
+  public IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
     myFrame = frame;
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));

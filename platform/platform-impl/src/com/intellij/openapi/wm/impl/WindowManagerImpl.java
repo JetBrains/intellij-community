@@ -40,6 +40,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 @State(
   name = "WindowManager",
@@ -527,6 +528,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null));
+  }
+
+  @NotNull
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project,
+                                                @NotNull Supplier<? extends ProjectFrameHelper> projectFrameHelperSupplier) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -537,7 +544,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null);
+      frame = projectFrameHelperSupplier.get();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();

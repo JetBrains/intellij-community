@@ -4,6 +4,7 @@ package com.intellij.ide.lightEdit.statusBar;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.lightEdit.LightEditorInfo;
 import com.intellij.ide.lightEdit.LightEditorListener;
+import com.intellij.ide.lightEdit.LightEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
@@ -11,18 +12,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LightEditPositionWidget extends PositionPanel implements LightEditorListener {
+  private final LightEditorManager myEditorManager;
   private @Nullable Editor myEditor;
 
-  public LightEditPositionWidget() {
+  public LightEditPositionWidget(@NotNull LightEditorManager editorManager) {
     super(LightEditUtil.getProject());
+    myEditorManager = editorManager;
   }
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
-    if (statusBar instanceof LightEditStatusBar) {
-      ((LightEditStatusBar)statusBar).getEditorManager().addListener(this);
-    }
+    myEditorManager.addListener(this);
   }
 
   @Override

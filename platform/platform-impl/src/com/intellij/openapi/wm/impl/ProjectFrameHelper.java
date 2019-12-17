@@ -56,7 +56,7 @@ import java.util.Set;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
+public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
 
   private static boolean ourUpdatingTitle;
@@ -111,7 +111,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
   private void preInit() {
     updateTitle();
 
-    myRootPane = new IdeRootPane(myFrame, this, this);
+    myRootPane = createIdeRootPane();
     myFrame.setRootPane(myRootPane);
     // NB!: the root pane must be set before decorator,
     // which holds its own client properties in a root pane
@@ -179,6 +179,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     myFrame.setBackground(UIUtil.getPanelBackground());
   }
 
+  @NotNull
+  protected IdeRootPane createIdeRootPane() {
+    return new IdeRootPane(myFrame, this, this);
+  }
+
   public void releaseFrame() {
     myRootPane.removeToolbar();
     WindowManagerEx.getInstanceEx().releaseFrame(this);
@@ -213,7 +218,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private void setupCloseAction() {
     myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    CloseProjectWindowHelper helper = new CloseProjectWindowHelper();
+    CloseProjectWindowHelper helper = createCloseProjectWindowHelper();
     myFrame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosing(@NotNull WindowEvent e) {
@@ -227,6 +232,11 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
         }
       }
     });
+  }
+
+  @NotNull
+  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
+    return new CloseProjectWindowHelper();
   }
 
   @Nullable
@@ -377,7 +387,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
 
   private final Set<String> widgetIds = new THashSet<>();
 
-  private boolean addWidget(@NotNull Disposable disposable, @NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
+  protected boolean addWidget(@NotNull Disposable disposable, @NotNull IdeStatusBarImpl statusBar, @NotNull StatusBarWidget widget, @NotNull String anchor) {
     if (!widgetIds.add(widget.ID())) {
       LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
       return false;
@@ -393,7 +403,7 @@ public final class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAc
     return true;
   }
 
-  private void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+  protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
     addWidget(project, statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(project, statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
