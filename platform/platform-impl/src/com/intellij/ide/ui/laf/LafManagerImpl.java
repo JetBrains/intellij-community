@@ -73,6 +73,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
 
+  private static final String DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme";
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
 
@@ -95,9 +96,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return infos;
   });
 
-  private final UIManager.LookAndFeelInfo myDefaultLightTheme;
-  private final UIManager.LookAndFeelInfo myDefaultDarkTheme;
-  private final UIDefaults ourDefaults;
+  private final UIManager.LookAndFeelInfo myDefaultLightTheme = getDefaultLightTheme();
+  private final UIManager.LookAndFeelInfo myDefaultDarkTheme = new DarculaLookAndFeelInfo();
+  private final UIDefaults ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
+
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = new HashMap<>();
 
@@ -116,16 +118,25 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private boolean myUpdatingPlugin = false;
   private final Set<String> myThemesInUpdatedPlugin = new HashSet<>();
 
-  LafManagerImpl() {
-    ourDefaults = (UIDefaults)UIManager.getDefaults().clone();
-    myDefaultLightTheme = new IntelliJLookAndFeelInfo();
-    myDefaultDarkTheme = new DarculaLookAndFeelInfo();
+  private static UIManager.LookAndFeelInfo getDefaultLightTheme() {
+    for(UIThemeProvider provider: UIThemeProvider.EP_NAME.getExtensionList()) {
+      if (DEFAULT_LIGHT_THEME_ID.equals(provider.id)) {
+        UITheme theme = provider.createTheme();
+        if (theme != null) {
+          return new UIThemeBasedLookAndFeelInfo(theme);
+        }
+      }
+    }
+    LOG.error("Can't load " + DEFAULT_LIGHT_THEME_ID);
+    return new IntelliJLookAndFeelInfo();
   }
 
   @NotNull
   private List<UIManager.LookAndFeelInfo> computeLafList() {
     List<UIManager.LookAndFeelInfo> lafList = new ArrayList<>();
     lafList.add(myDefaultLightTheme);
+    lafList.add(myDefaultDarkTheme);
+
     if (!SystemInfo.isMac) {
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
@@ -140,35 +151,24 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
-    lafList.add(myDefaultDarkTheme);
-
     LafProvider.EP_NAME.forEachExtensionSafe(provider -> {
       lafList.add(provider.getLookAndFeelInfo());
     });
 
     UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      UITheme theme = provider.createTheme();
-      if (theme != null) {
-        lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
+      if (!DEFAULT_LIGHT_THEME_ID.equals(provider.id)) {
+        UITheme theme = provider.createTheme();
+        if (theme != null) {
+          lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
+        }
       }
     });
-
-    sortThemesIfNecessary(lafList);
+    sortThemes(lafList);
     return lafList;
   }
 
-  private static void sortThemesIfNecessary(@NotNull List<UIManager.LookAndFeelInfo> list) {
-    // do not sort LaFs on mac - the order is determined as Default, Darcula.
-    // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
-    if (SystemInfo.isMac) {
-      return;
-    }
-
-    list.sort((obj1, obj2) -> {
-      String name1 = obj1.getName();
-      String name2 = obj2.getName();
-      return name1.compareToIgnoreCase(name2);
-    });
+  private static void sortThemes(@NotNull List<UIManager.LookAndFeelInfo> list) {
+    list.sort((t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
   }
 
   @Override
@@ -1044,7 +1044,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       newLaFs.addAll(lafList);
       UIThemeBasedLookAndFeelInfo newTheme = new UIThemeBasedLookAndFeelInfo(theme);
       newLaFs.add(newTheme);
-      sortThemesIfNecessary(newLaFs);
+      sortThemes(newLaFs);
       myLaFs.setValue(newLaFs);
       if (myLafComboBoxModel != null) {
         myLafComboBoxModel.replaceAll(getLafReferences());
@@ -1110,7 +1110,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       newLaFs.addAll(lafList);
       newLaFs.add(newLaf);
 
-      sortThemesIfNecessary(newLaFs);
+      sortThemes(newLaFs);
 
       myLaFs.setValue(newLaFs);
       if (myLafComboBoxModel != null) {
