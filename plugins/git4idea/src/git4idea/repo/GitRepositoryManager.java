@@ -108,7 +108,6 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   }
 
   void notifyListenersAsync(@NotNull GitRepository repository) {
-    Project project = getVcs().getProject();
     myUpdateExecutor.execute(() -> {
       if (!Disposer.isDisposed(repository)) {
         syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
