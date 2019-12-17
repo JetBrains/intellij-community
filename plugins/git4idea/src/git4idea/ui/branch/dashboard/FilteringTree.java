@@ -8,6 +8,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -17,10 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBIterator;
-import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TIntArrayList;
@@ -41,6 +41,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
 import java.util.List;
 import java.util.*;
 
@@ -488,6 +489,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   private static class MySpeedSearch<Item> extends SpeedSearch {
     private boolean myUpdating = false;
     private final JTextComponent myField;
+    private final Set<MinusculeMatcher> wordMatchers = new HashSet<>();
 
     MySpeedSearch(@NotNull JComponent comp, @NotNull JTextComponent field) {
       myField = field;
@@ -497,7 +499,9 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           if (!myUpdating) {
             myUpdating = true;
             try {
-              updatePattern(myField.getText());
+              String text = myField.getText();
+              updatePattern(text);
+              buildWordMatchers(text);
               update();
             }
             finally {
@@ -517,6 +521,30 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       });
       comp.addKeyListener(this);
       installSupplyTo(comp);
+    }
+
+    private void buildWordMatchers(@Nullable String text) {
+      wordMatchers.clear();
+      if (text == null) return;
+
+      for (String word : StringUtil.split(text, " ")) {
+        wordMatchers.add(new FixingLayoutMatcher("*" + word, NameUtil.MatchingCaseSensitivity.NONE, ""));
+      }
+    }
+
+    @Nullable
+    @Override
+    public Iterable<TextRange> matchingFragments(@NotNull String text) {
+      Iterable<TextRange> allTextRanges = super.matchingFragments(text);
+      ArrayList<TextRange> wordRanges = new ArrayList<>();
+      for (MinusculeMatcher wordMatcher : wordMatchers) {
+        FList<TextRange> fragments = wordMatcher.matchingFragments(text);
+        if (fragments != null) {
+          wordRanges.addAll(fragments);
+        }
+      }
+
+      return allTextRanges != null ? ContainerUtil.concat(allTextRanges, wordRanges) : !wordRanges.isEmpty() ? wordRanges : null;
     }
 
     @Override
