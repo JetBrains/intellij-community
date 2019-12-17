@@ -23,8 +23,19 @@ public class MavenDependencyUtil {
    * @param mavenCoordinates maven coordinates like groupID:artifactID:version
    */
   public static void addFromMaven(@NotNull ModifiableRootModel model, String mavenCoordinates) {
+    addFromMaven(model, mavenCoordinates, true);
+  }
+
+  /**
+   * Adds a Maven library to given model.
+   *
+   * @param model                         root model to add a Maven library to
+   * @param mavenCoordinates              maven coordinates like groupID:artifactID:version
+   * @param includeTransitiveDependencies true for include transitive dependencies, false otherwise
+   */
+  public static void addFromMaven(@NotNull ModifiableRootModel model, String mavenCoordinates, boolean includeTransitiveDependencies) {
     List<RemoteRepositoryDescription> remoteRepositoryDescriptions = getRemoteRepositoryDescriptions();
-    RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(mavenCoordinates, true);
+    RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(mavenCoordinates, includeTransitiveDependencies);
     Collection<OrderRoot> roots = JarRepositoryManager
       .loadDependenciesModal(model.getProject(), libraryProperties, false, false, null, remoteRepositoryDescriptions);
     LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
