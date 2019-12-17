@@ -6,6 +6,7 @@ import com.siyeh.ig.junit.TestClassNamingConvention
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.naming.NewGroovyClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt
 
 /**
  * @author peter
@@ -21,6 +22,7 @@ class GroovyHighlightingTest extends GrHighlightingTestBase {
   }
 
   void testCircularInheritance() {
+    TransformationUtilKt.disableAssertOnRecursion(testRootDisposable)
     doTest()
   }
 
@@ -155,7 +157,10 @@ class A {
 
   void testDuplicateParameterInClosableBlock() { doTest() }
 
-  void testCyclicInheritance() { doTest() }
+  void testCyclicInheritance() {
+    TransformationUtilKt.disableAssertOnRecursion(testRootDisposable)
+    doTest()
+  }
 
   void testNoDefaultConstructor() { doTest() }
 
@@ -185,6 +190,7 @@ class A {
   }
 
   void testSOFInDelegate() {
+    TransformationUtilKt.disableAssertOnRecursion(testRootDisposable)
     doTest()
   }
 
@@ -1711,6 +1717,7 @@ A.foo = 3 //no error
   }
 
   void testSOEIfExtendsItself() {
+    TransformationUtilKt.disableAssertOnRecursion(testRootDisposable)
     testHighlighting('''\
 <error descr="Cyclic inheritance involving 'A'">class A extends A</error> {
   def foo
