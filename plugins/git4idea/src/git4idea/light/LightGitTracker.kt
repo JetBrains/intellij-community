@@ -6,21 +6,19 @@ import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.ide.lightEdit.LightEditorManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.vcs.log.BaseSingleTaskController
+import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
 import java.util.*
 
 internal class LightGitTracker(private val lightEditorManager: LightEditorManager) : Disposable {
   private val eventDispatcher = EventDispatcher.create(LightGitTrackerListener::class.java)
-  private val listener = object : LightEditorListener {
-    override fun afterSelect(editorInfo: LightEditorInfo?) {
-      editorInfo?.file?.let { update(it) } ?: clear()
-    }
-  }
+  private val singleTaskController = MySingleTaskController()
+  private val listener = MyLightEditorListener()
+
   var currentBranch: String? = null
 
   init {
@@ -28,23 +26,18 @@ internal class LightGitTracker(private val lightEditorManager: LightEditorManage
     Disposer.register(lightEditorManager, this)
   }
 
+  private fun setCurrentBranch(gitLocalBranch: Optional<GitLocalBranch>) {
+    currentBranch = gitLocalBranch.orElse(null)?.name
+    eventDispatcher.multicaster.update()
+  }
+
   private fun update(file: VirtualFile) {
     clear()
-
-    ApplicationManager.getApplication().executeOnPooledThread {
-      val gitLocalBranch = GitBranchUtil.getCurrentBranchFromGit(LightEditUtil.getProject(), file.parent)
-      invokeLater {
-        if (currentBranch == null) {
-          currentBranch = gitLocalBranch?.name
-          eventDispatcher.multicaster.update()
-        }
-      }
-    }
+    singleTaskController.request(file)
   }
 
   private fun clear() {
-    currentBranch = null
-    eventDispatcher.multicaster.update()
+    setCurrentBranch(Optional.ofNullable(null))
   }
 
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
@@ -52,6 +45,19 @@ internal class LightGitTracker(private val lightEditorManager: LightEditorManage
   }
 
   override fun dispose() {
+  }
+
+  private inner class MyLightEditorListener : LightEditorListener {
+    override fun afterSelect(editorInfo: LightEditorInfo?) {
+      editorInfo?.file?.let { update(it) } ?: clear()
+    }
+  }
+
+  private inner class MySingleTaskController :
+    BaseSingleTaskController<VirtualFile, Optional<GitLocalBranch>>("Light Git Tracker", this::setCurrentBranch, this) {
+    override fun process(requests: List<VirtualFile>): Optional<GitLocalBranch> {
+      return Optional.ofNullable(GitBranchUtil.getCurrentBranchFromGit(LightEditUtil.getProject(), requests.last().parent))
+    }
   }
 }
 
