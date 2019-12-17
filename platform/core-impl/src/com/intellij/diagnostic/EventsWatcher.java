@@ -13,6 +13,8 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +25,23 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApiStatus.Experimental
 public final class EventsWatcher implements Disposable {
+
+  private static final int PUBLISHER_INITIAL_DELAY = 100;
+  private static final int PUBLISHER_PERIOD = 1000;
 
   @NotNull
   private static final Logger LOG = Logger.getInstance(EventsWatcher.class);
@@ -71,13 +79,14 @@ public final class EventsWatcher implements Disposable {
   }
 
   @NotNull
-  private final Set<Class<?>> myWrappers = new HashSet<>();
+  private final ConcurrentMap<String, RunnablesListener.WrapperDescription> myWrappers = new ConcurrentHashMap<>();
   @NotNull
-  private final Map<String, InvocationInfo> myDurationsByFqn = new HashMap<>();
+  private final ConcurrentMap<String, RunnablesListener.InvocationsInfo> myDurationsByFqn = new ConcurrentHashMap<>();
   @NotNull
-  private final ConcurrentLinkedQueue<String> myRunnables = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<RunnablesListener.InvocationDescription> myRunnables = new ConcurrentLinkedQueue<>();
   @NotNull
-  private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<String>> myEventsByClass = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<RunnablesListener.InvocationDescription>> myEventsByClass =
+    new ConcurrentHashMap<>();
 
   @NotNull
   private final File myLogPath = new File(
@@ -92,33 +101,54 @@ public final class EventsWatcher implements Disposable {
   @NotNull
   private final ScheduledFuture<?> myThread = myExecutor.scheduleWithFixedDelay(
     this::dumpDescriptions,
-    getDelay(),
-    getDelay(),
+    PUBLISHER_INITIAL_DELAY,
+    PUBLISHER_PERIOD,
     TimeUnit.MILLISECONDS
   );
+
+  @NotNull
+  private final MessageBus myMessageBus;
+  @NotNull
+  private final MessageBusConnection myConnection;
 
   @Nullable
   private Object myCurrentInstance = null;
   @Nullable
   private MatchResult myCurrentResult = null;
 
-  public void logTimeMillis(@NotNull String processId, long startedAt) {
-    Duration duration = new Duration(startedAt);
-    if (!duration.shouldLog()) return;
+  public EventsWatcher(@NotNull MessageBus messageBus) {
+    myMessageBus = messageBus;
+    myConnection = myMessageBus.connect();
 
-    duration.log(processId);
+    myConnection.subscribe(
+      RunnablesListener.TOPIC,
+      new RunnablesListener() {
+        @Override
+        public void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
+                                    @NotNull Collection<InvocationDescription> descriptions) {
+          appendToLogFile(eventClass.getSimpleName(), descriptions.stream());
+        }
+
+        @Override
+        public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations) {
+          appendToLogFile("Runnables", invocations.stream());
+        }
+      }
+    );
+  }
+
+  public void logTimeMillis(@NotNull String processId, long startedAt) {
+    new InvocationLogger(processId, startedAt)
+      .log(() -> null);
   }
 
   public void logTimeMillis(@NotNull AWTEvent event, long startedAt) {
     if ("LaterInvocator.FlushQueue".equals(findGroupByName("runnable"))) return;
 
-    Duration duration = new Duration(startedAt);
-    if (!duration.shouldLog()) return;
-
-    Runnable runnable = event instanceof InvocationEvent ?
-                        (Runnable)getValue(event, ourRunnableField.getValue()) :
-                        null;
-    duration.log(runnable != null ? runnable : event);
+    new InvocationLogger(event, startedAt)
+      .log(() -> event instanceof InvocationEvent ?
+                 (Runnable)getValue(event, ourRunnableField.getValue()) :
+                 null);
   }
 
   public void runnableStarted(@NotNull Runnable runnable) {
@@ -129,7 +159,10 @@ public final class EventsWatcher implements Disposable {
       Field field = findTargetField(originalClass);
 
       if (field != null) {
-        myWrappers.add(originalClass);
+        myWrappers.compute(
+          originalClass.getName(),
+          RunnablesListener.WrapperDescription::computeNext
+        );
         current = getValue(current, field);
       }
       else {
@@ -142,19 +175,18 @@ public final class EventsWatcher implements Disposable {
 
   public void runnableFinished(@NotNull Runnable runnable,
                                long startedAt) {
-    Duration duration = new Duration(startedAt);
-    String representation = Objects.requireNonNull(myCurrentInstance).getClass().getName();
+    String fqn = Objects.requireNonNull(myCurrentInstance).getClass().getName();
     myCurrentInstance = null;
 
+    RunnablesListener.InvocationDescription description = new RunnablesListener.InvocationDescription(fqn, startedAt);
+    myRunnables.offer(description);
     myDurationsByFqn.compute(
-      representation,
-      (ignored, count) -> InvocationInfo.computeNext(count, duration)
+      fqn,
+      (ignored, info) -> RunnablesListener.InvocationsInfo.computeNext(fqn, description.getDuration(), info)
     );
 
-    myRunnables.offer(String.format("%tc,%s%n", startedAt, representation));
-
-    if (!duration.shouldLog()) return;
-    duration.log(runnable);
+    new InvocationLogger(description)
+      .log(() -> runnable);
   }
 
   public void edtEventStarted(@NotNull AWTEvent event) {
@@ -169,24 +201,24 @@ public final class EventsWatcher implements Disposable {
     String representation = findGroupByName("description");
     myCurrentResult = null;
 
-    String description = String.format(
-      "%dms %s%n",
-      System.currentTimeMillis() - startedAt,
-      representation != null ? representation : event.toString()
-    );
-
     Class<? extends AWTEvent> eventClass = event.getClass();
     myEventsByClass.putIfAbsent(eventClass, new ConcurrentLinkedQueue<>());
-    myEventsByClass.get(eventClass).offer(description);
+    myEventsByClass.get(eventClass)
+      .offer(new RunnablesListener.InvocationDescription(
+        representation != null ? representation : event.toString(),
+        startedAt
+      ));
   }
 
   @Override
   public void dispose() {
+    appendToLogFile("Wrappers", myWrappers);
+    appendToLogFile("Timings", myDurationsByFqn);
+
     myThread.cancel(true);
     myExecutor.shutdownNow();
 
-    appendToLogFile("Timing", joinSorted(myDurationsByFqn));
-    appendToLogFile("Wrapper", join(myWrappers));
+    myConnection.disconnect();
   }
 
   @Nullable
@@ -197,27 +229,32 @@ public final class EventsWatcher implements Disposable {
   }
 
   private void dumpDescriptions() {
-    myEventsByClass.forEach((eventClass, events) -> appendToLogFile(
-      eventClass.getSimpleName(),
-      join(events)
-    ));
+    if (myMessageBus.isDisposed()) return;
 
-    appendToLogFile("Runnable", join(myRunnables));
+    RunnablesListener publisher = myMessageBus.syncPublisher(RunnablesListener.TOPIC);
+    myEventsByClass.forEach((eventClass, events) ->
+                              publisher.eventsProcessed(eventClass, joinPolling(events)));
+    publisher.runnablesProcessed(joinPolling(myRunnables));
   }
 
-  private void appendToLogFile(@NotNull String kind, @NotNull String text) {
+  private <K, V> void appendToLogFile(@NotNull String kind,
+                                      @NotNull Map<K, V> entities) {
+    appendToLogFile(kind, entities.values().stream().sorted());
+  }
+
+  private <T> void appendToLogFile(@NotNull String kind,
+                                   @NotNull Stream<T> lines) {
     if (!(myLogPath.isDirectory() || myLogPath.mkdirs())) return;
 
     try {
-      File logFile = new File(myLogPath, kind + "s.log");
-      FileUtil.writeToFile(logFile, text, true);
+      FileUtil.writeToFile(
+        new File(myLogPath, kind + ".log"),
+        lines.map(Objects::toString).collect(JOINING_COLLECTOR),
+        true
+      );
     }
     catch (IOException ignored) {
     }
-  }
-
-  private static long getDelay() {
-    return 10000;
   }
 
   @Nullable
@@ -258,60 +295,53 @@ public final class EventsWatcher implements Disposable {
   }
 
   @NotNull
-  private static <T extends Comparable<T>> String joinSorted(@NotNull Map<String, T> map) {
-    return map
-      .entrySet()
-      .stream()
-      .sorted(Map.Entry.comparingByValue())
-      .map(Objects::toString)
-      .collect(JOINING_COLLECTOR);
-  }
-
-  @NotNull
-  private static String join(@NotNull Set<Class<?>> classes) {
-    return classes
-      .stream()
-      .map(Class::getName)
-      .sorted()
-      .collect(JOINING_COLLECTOR);
-  }
-
-  @NotNull
-  private static String join(@NotNull Queue<String> queue) {
-    StringBuilder builder = new StringBuilder();
+  private static <T> List<T> joinPolling(@NotNull Queue<T> queue) {
+    ArrayList<T> builder = new ArrayList<>();
     while (!queue.isEmpty()) {
-      builder.append(queue.poll());
+      builder.add(queue.poll());
     }
-    return builder.toString();
+    return Collections.unmodifiableList(builder);
   }
 
-  private static final class Duration {
+  private static final class InvocationLogger {
 
-    private final long myDuration;
+    @NotNull
+    private final RunnablesListener.InvocationDescription myDescription;
 
-    private Duration(long startedAt) {
-      myDuration = System.currentTimeMillis() - startedAt;
+    private InvocationLogger(@NotNull RunnablesListener.InvocationDescription description) {
+      myDescription = description;
     }
 
-    public long getDuration() {
-      return myDuration;
+    private InvocationLogger(@NotNull Object process,
+                             long startedAt) {
+      this(new RunnablesListener.InvocationDescription(process.toString(), startedAt));
     }
 
-    // do not measure a time if the threshold is too small
-    public boolean shouldLog() {
+    public void log(@NotNull Supplier<Runnable> lazyRunnable) {
       int threshold = Registry.intValue("ide.event.queue.dispatch.threshold", -1);
-      return myDuration >= threshold && threshold >= 0;
+      if (threshold < 0 ||
+          threshold > myDescription.getDuration()) {
+        return; // do not measure a time if the threshold is too small
+      }
+
+      Runnable runnable = lazyRunnable.get();
+      RunnablesListener.InvocationDescription description = runnable != null ?
+                                                            new RunnablesListener.InvocationDescription(
+                                                              runnable.toString(),
+                                                              myDescription.getStartedAt(),
+                                                              myDescription.getFinishedAt()
+                                                            ) :
+                                                            myDescription;
+      LOG.warn(description.toString());
+
+      if (runnable != null) {
+        addPluginCost(runnable.getClass(), description.getDuration());
+      }
     }
 
-    public void log(@NotNull Object process) {
-      LOG.warn(String.format("%dms to process %s", myDuration, process));
-
-      if (!(process instanceof Runnable)) return;
-      addPluginCost((Runnable)process);
-    }
-
-    private void addPluginCost(@NotNull Runnable runnable) {
-      ClassLoader loader = runnable.getClass().getClassLoader();
+    private static void addPluginCost(@NotNull Class<? extends Runnable> runnableClass,
+                                      long duration) {
+      ClassLoader loader = runnableClass.getClassLoader();
       String pluginId = loader instanceof PluginClassLoader ?
                         ((PluginClassLoader)loader).getPluginIdString() :
                         PluginManagerCore.CORE_PLUGIN_ID;
@@ -319,61 +349,7 @@ public final class EventsWatcher implements Disposable {
       StartUpMeasurer.addPluginCost(
         pluginId,
         "invokeLater",
-        TimeUnit.MILLISECONDS.toNanos(myDuration)
-      );
-    }
-  }
-
-  private static final class InvocationInfo implements Comparable<InvocationInfo> {
-
-    private final int myCount;
-    private final long myDuration;
-
-    private InvocationInfo(int count, long duration) {
-      myCount = count;
-      myDuration = duration;
-    }
-
-    @Override
-    public int compareTo(@NotNull InvocationInfo info) {
-      int result = Integer.compare(info.myCount, myCount);
-
-      return result != 0 ?
-             result :
-             Double.compare(info.myDuration, myDuration);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (this == other) return true;
-      if (other == null || getClass() != other.getClass()) return false;
-
-      InvocationInfo count = (InvocationInfo)other;
-      return myCount == count.myCount &&
-             myDuration == count.myDuration;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myCount, myDuration);
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return String.format(
-        "[average: %.2f; count: %d]",
-        (double)myDuration / myCount,
-        myCount
-      );
-    }
-
-    @NotNull
-    public static InvocationInfo computeNext(@Nullable InvocationInfo info,
-                                             @NotNull Duration duration) {
-      return new InvocationInfo(
-        1 + (info != null ? info.myCount : 0),
-        duration.getDuration() + (info != null ? info.myDuration : 0)
+        TimeUnit.MILLISECONDS.toNanos(duration)
       );
     }
   }
