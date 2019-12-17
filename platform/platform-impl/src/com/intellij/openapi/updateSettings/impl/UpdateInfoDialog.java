@@ -249,7 +249,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
+          UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
           return;
         }
@@ -265,7 +265,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("update.notifications.title");
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+            UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
                 restartLaterAndRunCommand(command);

@@ -12,7 +12,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.LogUtil
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -45,17 +45,28 @@ import java.util.*
 import kotlin.collections.HashSet
 import kotlin.collections.set
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
+private val LOG = logger<UpdateChecker>()
 
 private const val DISABLED_UPDATE = "disabled_update.txt"
 
-private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
+private enum class NotificationUniqueType {
+  PLATFORM, PLUGINS, EXTERNAL
+}
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  @JvmField val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
+  private val notificationGroupRef by lazy {
+    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true)
+  }
+
+  @JvmField
+  @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
+  val NOTIFICATIONS = notificationGroupRef
+
+  @JvmStatic
+  fun getNotificationGroup() = notificationGroupRef
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourAdditionalRequestOptions = THashMap<String, String>()
@@ -267,7 +278,9 @@ object UpdateChecker {
     return updateable
   }
 
-  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean,
+                                   updateSettings: UpdateSettings,
+                                   indicator: ProgressIndicator?): Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
@@ -306,7 +319,8 @@ object UpdateChecker {
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
+    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin,
+                                                                                                                      pluginVersion) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
       val oldDownloader = ourUpdatedPlugins[pluginId]
@@ -356,7 +370,8 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
-        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins, incompatiblePlugins).show()
+        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins,
+                         incompatiblePlugins).show()
       }
 
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
@@ -366,7 +381,8 @@ object UpdateChecker {
       }
       else {
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
-        val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
+        val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName,
+                                      newBuild.version)
         showNotification(project, title, "", {
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
           runnable()
@@ -419,8 +435,12 @@ object UpdateChecker {
     }
   }
 
-  private fun showNotification(project: Project?, title: String, message: String, action: () -> Unit, notificationType: NotificationUniqueType) {
-    val notification = NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
+  private fun showNotification(project: Project?,
+                               title: String,
+                               message: String,
+                               action: () -> Unit,
+                               notificationType: NotificationUniqueType) {
+    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()
@@ -526,7 +546,8 @@ object UpdateChecker {
     val newBuild: BuildInfo?
     val patches: UpdateChain?
     if (forceUpdate) {
-      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException(
+        "//channel missing")
       channel = UpdateChannel(node)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
       patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }

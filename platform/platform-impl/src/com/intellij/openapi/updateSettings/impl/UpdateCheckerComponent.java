@@ -106,7 +106,7 @@ public final class UpdateCheckerComponent implements Runnable {
     }
 
     String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.NOTIFICATIONS.createNotification(title, null, null, NotificationType.INFORMATION, null)
+    UpdateChecker.getNotificationGroup().createNotification(title, null, null, NotificationType.INFORMATION, null)
       .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
@@ -144,7 +144,7 @@ public final class UpdateCheckerComponent implements Runnable {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("update.notifications.title");
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
+        UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null).notify(null);
       }
     }
 
@@ -219,7 +219,7 @@ public final class UpdateCheckerComponent implements Runnable {
       String title = IdeBundle.message("update.notifications.title");
       String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                         : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
-      UpdateChecker.NOTIFICATIONS.createNotification(
+      UpdateChecker.getNotificationGroup().createNotification(
         title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
       UpdateSettings.getInstance().saveLastCheckedInfo();

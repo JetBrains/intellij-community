@@ -348,7 +348,7 @@ public abstract class PluginManagerMain {
     String title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification",
                                       IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action"));
-    Notification notification = UpdateChecker.NOTIFICATIONS.createNotification(title, "", NotificationType.INFORMATION, null);
+    Notification notification = UpdateChecker.getNotificationGroup().createNotification(title, "", NotificationType.INFORMATION, null);
     notification.addAction(new NotificationAction(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
