@@ -279,7 +279,9 @@ class CommunityRepositoryModules {
       withModule("intellij.android.wizard.model", "android.jar")
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
-      // TODO-ank: intellij.android.kotlin.* are currently pre-built libraries (should be project modules)
+      withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
       withModule("intellij.android.transportDatabase", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
@@ -339,7 +341,6 @@ class CommunityRepositoryModules {
       withResourceFromModule("intellij.android.core", "lib/asm-tree-5.0.3.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/commons-compress-1.8.1.jar", "lib")
       withResourceFromModule("intellij.android.core", "lib/javawriter-2.2.1.jar", "lib")
-      withProjectLibrary("intellij.android.kotlin.idea", "")
 
       withResourceFromModule("intellij.android.core", "lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("intellij.android.artwork", "resources/device-art-resources", "lib/device-art-resources")

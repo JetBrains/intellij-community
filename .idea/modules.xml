@@ -403,6 +403,9 @@
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" filepath="$PROJECT_DIR$/android/jps-plugin/intellij.android.jps.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" filepath="$PROJECT_DIR$/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" filepath="$PROJECT_DIR$/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-lang/intellij.android.lang.iml" filepath="$PROJECT_DIR$/android/android-lang/intellij.android.lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-lang/intellij.android.lang.tests.iml" filepath="$PROJECT_DIR$/android/android-lang/intellij.android.lang.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/layout-inspector/intellij.android.layoutInspector.iml" filepath="$PROJECT_DIR$/android/layout-inspector/intellij.android.layoutInspector.iml" />

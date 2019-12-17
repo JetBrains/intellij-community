@@ -97,7 +97,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-allopen-compiler-plugin-ij193/1.3.61-release-180/kotlin-allopen-compiler-plugin-ij193-1.3.61-release-180.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-noarg-compiler-plugin-ij193/1.3.61-release-180/kotlin-noarg-compiler-plugin-ij193-1.3.61-release-180.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-sam-with-receiver-compiler-plugin/1.3.61-release-180/kotlin-sam-with-receiver-compiler-plugin-1.3.61-release-180.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-ij193/1.3.61-release-180/android-extensions-compiler-ij193-1.3.61-release-180.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-ij193/1.3.61-release-180/kotlinx-serialization-compiler-plugin-ij193-1.3.61-release-180.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-ide-plugin-ij193/1.3.61-release-180/sam-with-receiver-ide-plugin-ij193-1.3.61-release-180.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-ide-ij193/1.3.61-release-180/android-extensions-ide-ij193-1.3.61-release-180.jar!/" />

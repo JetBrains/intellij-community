@@ -68,8 +68,6 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Java Lib Model Builder", libraryName: "precompiled-java-lib-model-builder",
                        license: "Apache 2.0", url: "http://source.android.com/"),
-    new LibraryLicense(name: "Android Kotlin Integration", libraryName: "intellij.android.kotlin.idea", license: "Apache 2.0",
-                       url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Layout Api Library", libraryName: "precompiled-layoutlib-api", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Layout Inspector", libraryName: "precompiled-layoutinspector",
