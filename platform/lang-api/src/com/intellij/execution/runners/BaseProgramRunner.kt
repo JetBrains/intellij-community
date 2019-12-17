@@ -2,7 +2,7 @@
 package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.RunManager.Companion.getInstance
+import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 
@@ -10,10 +10,15 @@ abstract class BaseProgramRunner<Settings : RunnerSettings?> : ProgramRunner<Set
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
     val state = environment.state ?: return
-    getInstance(environment.project).refreshUsagesList(environment.runProfile)
+    RunManager.getInstance(environment.project).refreshUsagesList(environment.runProfile)
     execute(environment, callback, state)
   }
 
   @Throws(ExecutionException::class)
   protected abstract fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState)
+
+  // prevent overriding
+  final override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, null)
+  }
 }

@@ -3,11 +3,13 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.RunManager
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
@@ -35,8 +37,11 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
   }
 }
 
-abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
-  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
+  @Throws(ExecutionException::class)
+  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+    val state = environment.state ?: return
+    RunManager.getInstance(environment.project).refreshUsagesList(environment.runProfile)
     startRunProfile(environment, state, callback) {
       execute(environment, state)
     }
@@ -44,9 +49,18 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner
 
   @Throws(ExecutionException::class)
   protected abstract fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?>
+
+  // prevent overriding
+  final override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, null)
+  }
 }
 
-internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
+/**
+ * Internal usage only. Maybe removed or changed in any moment. No backward compatibility.
+ */
+@ApiStatus.Internal
+fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
   ExecutionManager.getInstance(environment.project).startRunProfile(object : RunProfileStarter() {
     override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
       // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile

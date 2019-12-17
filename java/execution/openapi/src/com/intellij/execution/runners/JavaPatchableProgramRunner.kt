@@ -1,35 +1,34 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.runners;
+package com.intellij.execution.runners
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.ui.RunContentDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.Executor
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.ui.RunContentDescriptor
+import org.jetbrains.concurrency.resolvedPromise
 
-public abstract class JavaPatchableProgramRunner<Settings extends RunnerSettings> extends AsyncProgramRunner<Settings> {
-  public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution)
-    throws ExecutionException;
-
-  protected static void runCustomPatchers(JavaParameters javaParameters, Executor executor, RunProfile runProfile) {
-    if (runProfile != null) {
-      JavaProgramPatcher.EP_NAME.forEachExtensionSafe(patcher -> {
-        patcher.patchJavaParameters(executor, runProfile, javaParameters);
-      });
+// due to backward compatibility, we cannot get rid of GenericProgramRunner inheritance
+abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : GenericProgramRunner<Settings>() {
+  companion object {
+    @JvmStatic
+    protected fun runCustomPatchers(javaParameters: JavaParameters, executor: Executor, runProfile: RunProfile) {
+      JavaProgramPatcher.EP_NAME.forEachExtensionSafe {
+        it.patchJavaParameters(executor, runProfile, javaParameters)
+      }
     }
   }
 
-  @NotNull
-  @Override
-  protected final Promise<RunContentDescriptor> execute(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state)
-    throws ExecutionException {
-    return Promises.resolvedPromise(doExecute(state, environment));
+  @Throws(ExecutionException::class)
+  abstract fun patch(javaParameters: JavaParameters?, settings: RunnerSettings?, runProfile: RunProfile?, beforeExecution: Boolean)
+
+  @Throws(ExecutionException::class)
+  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+    startRunProfile(environment, state, callback, { resolvedPromise(doExecute(state, environment)) })
   }
 
-  protected abstract RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException;
+  @Throws(ExecutionException::class)
+  abstract override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor?
 }

@@ -89,9 +89,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
-  default void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    execute(environment, null);
-  }
+  void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
 
   void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }
