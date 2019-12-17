@@ -72,8 +72,9 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
-  void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException;
+  default void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+    throws RuntimeConfigurationException {
+  }
 
   /**
    * @deprecated Not used by platform.
@@ -88,7 +89,9 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
-  void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
+  default void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    execute(environment, null);
+  }
 
   void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }

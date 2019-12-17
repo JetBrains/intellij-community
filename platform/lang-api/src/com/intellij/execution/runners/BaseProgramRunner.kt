@@ -3,21 +3,10 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunManager.Companion.getInstance
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
-import com.intellij.execution.configurations.RuntimeConfigurationException
 
 abstract class BaseProgramRunner<Settings : RunnerSettings?> : ProgramRunner<Settings> {
-  @Throws(RuntimeConfigurationException::class)
-  override fun checkConfiguration(settings: RunnerSettings, configurationPerRunnerSettings: ConfigurationPerRunnerSettings?) {
-  }
-
-  @Throws(ExecutionException::class)
-  override fun execute(environment: ExecutionEnvironment) {
-    execute(environment, null)
-  }
-
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
     val state = environment.state ?: return
