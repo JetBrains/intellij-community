@@ -6,14 +6,14 @@ import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: TwosideTextDiffViewer,
                                                 private val linesMapper: GHPRChangedFileLinesMapper,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -48,14 +48,13 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
     commentableRangesRight.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, Side.RIGHT) }.orEmpty()
   }
 
-  override fun showThreads(threads: List<GHPullRequestReviewThread>?) {
-    val mappedThreads = threads?.let { GHPRCommentsUtil.mapThreadsToLines(linesMapper, it) }.orEmpty()
-    editorThreadsLeft.update(mappedThreads
-                               .filterKeys { it.first == Side.LEFT }
-                               .mapKeys { it.key.second })
-    editorThreadsRight.update(mappedThreads
-                                .filterKeys { it.first == Side.RIGHT }
-                                .mapKeys { it.key.second })
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreadsLeft.update(threads
+                               ?.filter { it.diffSide == Side.LEFT }
+                               ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
+    editorThreadsRight.update(threads
+                                ?.filter { it.diffSide == Side.RIGHT }
+                                ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
   }
 }
 

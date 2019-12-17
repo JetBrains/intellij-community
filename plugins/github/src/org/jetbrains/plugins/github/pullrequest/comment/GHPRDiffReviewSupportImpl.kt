@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
@@ -33,7 +32,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
 
-  private val reviewThreadsModel = SingleValueModel<List<GHPullRequestReviewThread>?>(null)
+  private val reviewThreadsModel = SingleValueModel<List<GHPRDiffReviewThreadMapping>?>(null)
 
   override var isLoadingReviewThreads: Boolean = false
     private set
@@ -64,19 +63,24 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     reviewService.resetReviewThreads()
   }
 
-  private fun loadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
+  private fun loadReviewThreads(threadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>, disposable: Disposable) {
     doLoadReviewThreads(threadsModel, disposable)
     reviewService.addReviewThreadsListener(disposable) {
       doLoadReviewThreads(threadsModel, disposable)
     }
   }
 
-  private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>, disposable: Disposable) {
+  private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>, disposable: Disposable) {
     isLoadingReviewThreads = true
     reviewService.loadReviewThreads().handleOnEdt(disposable) { result, error ->
       if (result != null) {
         if (showReviewThreads)
-          threadsModel.value = result.filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
+          threadsModel.value = result
+            .filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
+            .mapNotNull {
+              val (side, line) = fileLinesMapper.findFileLocation(it.position!!) ?: return@mapNotNull null
+              GHPRDiffReviewThreadMapping(side, line, it)
+            }
       }
       if (error != null) {
         LOG.info("Failed to load review threads", error)

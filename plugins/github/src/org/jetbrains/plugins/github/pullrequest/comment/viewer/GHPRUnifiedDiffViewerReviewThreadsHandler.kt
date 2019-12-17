@@ -8,8 +8,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -17,7 +16,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+                                                reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
                                                 private val linesMapper: GHPRChangedFileLinesMapper,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -64,9 +63,9 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
     commentableRanges.value = transferredRanges
   }
 
-  override fun showThreads(threads: List<GHPullRequestReviewThread>?) {
-    editorThreads.update(threads?.let { GHPRCommentsUtil.mapThreadsToLines(linesMapper, it) }
-                           ?.mapKeys { viewer.transferLineToOneside(it.key.first, it.key.second) }
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreads.update(threads
+                           ?.groupBy({ viewer.transferLineToOneside(it.diffSide, it.fileLineIndex) }, { it.thread })
                            ?.filterKeys { it >= 0 }.orEmpty())
   }
 }

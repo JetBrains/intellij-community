@@ -5,11 +5,11 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.util.Range
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(private val commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                                          private val reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+                                                                          private val reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                                           protected val viewer: T) {
 
   protected abstract val viewerReady: Boolean
@@ -44,5 +44,5 @@ abstract class GHPRDiffViewerBaseReviewThreadsHandler<T : DiffViewerBase>(privat
   abstract fun markCommentableRanges(ranges: List<Range>?)
 
   @CalledInAwt
-  abstract fun showThreads(threads: List<GHPullRequestReviewThread>?)
+  abstract fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?)
 }

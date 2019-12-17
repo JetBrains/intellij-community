@@ -5,14 +5,14 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
-                                                      reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+                                                      reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                       viewer: SimpleOnesideDiffViewer,
                                                       private val linesMapper: GHPRChangedFileLinesMapper,
                                                       componentsFactory: GHPRDiffEditorReviewComponentsFactory)
@@ -36,9 +36,9 @@ class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: Si
     commentableRanges.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, viewer.side) }.orEmpty()
   }
 
-  override fun showThreads(threads: List<GHPullRequestReviewThread>?) {
-    editorThreads.update(threads?.let { GHPRCommentsUtil.mapThreadsToLines(linesMapper, it) }
-                           ?.filterKeys { it.first == viewer.side }
-                           ?.mapKeys { it.key.second }.orEmpty())
+  override fun showThreads(threads: List<GHPRDiffReviewThreadMapping>?) {
+    editorThreads.update(threads
+                           ?.filter { it.diffSide == viewer.side }
+                           ?.groupBy({ it.fileLineIndex }, { it.thread }).orEmpty())
   }
 }
