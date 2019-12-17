@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
@@ -9,9 +10,11 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class RecordAugmentProvider extends PsiAugmentProvider {
   @NotNull
@@ -36,9 +39,9 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
     for (PsiRecordComponent component : components) {
-      String name = component.getName();
-      if (name == null) continue;
-      LightMethod method = new LightRecordMethod(element.getManager(), factory.createMethod(name, component.getType()), aClass, component);
+      PsiMethod recordMethod = createRecordMethod(component, factory);
+      if (recordMethod == null) continue;
+      LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
       //noinspection unchecked
       methods.add((Psi)method);
     }
@@ -64,9 +67,50 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (name == null) return null;
+    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForField);
+    if (typeText == null) return null;
+    PsiClass aClass = factory.createClassFromText("private final " + typeText + " " + name + ";", null);
+    return aClass.getFields()[0];
+  }
+
+  @Nullable
+  private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
+    String name = component.getName();
+    if (name == null) return null;
+    String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
+    if (typeText == null) return null;
+    PsiClass aClass = factory.createClassFromText("public " + typeText + " " + name + "(){}", null);
+    return aClass.getMethods()[0];
+  }
+
+  @Nullable
+  private static String getTypeText(@NotNull PsiRecordComponent component, Predicate<PsiAnnotation> annotationPredicate) {
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
-    PsiClass aClass = factory.createClassFromText("private final " + typeElement.getText() + " " + name + ";", null);
-    return aClass.getFields()[0];
+    String annotations = Arrays.stream(component.getAnnotations())
+        .filter(annotationPredicate)
+        .map(annotation -> annotation.getText())
+        .collect(Collectors.joining(" "));
+    return annotations + " " + typeElement.getText();
+  }
+
+  private static boolean hasTargetApplicableForField(PsiAnnotation annotation) {
+    Set<PsiAnnotation.TargetType> targets = getTargets(annotation);
+    if (targets == null) return false;
+    return targets.contains(PsiAnnotation.TargetType.TYPE) || targets.contains(PsiAnnotation.TargetType.FIELD);
+  }
+
+  private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
+    Set<PsiAnnotation.TargetType> targets = getTargets(annotation);
+    if (targets == null) return false;
+    return targets.contains(PsiAnnotation.TargetType.TYPE) || targets.contains(PsiAnnotation.TargetType.METHOD);
+  }
+
+  private static Set<PsiAnnotation.TargetType> getTargets(PsiAnnotation annotation) {
+    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+    if (element == null) return null;
+    PsiClass annotationClass = tryCast(element.resolve(), PsiClass.class);
+    if (annotationClass == null) return null;
+    return AnnotationTargetUtil.getAnnotationTargets(annotationClass);
   }
 }

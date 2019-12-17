@@ -22,7 +22,8 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
   public void testRecordComponent() {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiMethod);
-    assertEquals(PsiType.INT, ((PsiMethod)target).getReturnType());
+    PsiMethod targetMethod = (PsiMethod)target;
+    assertEquals(PsiType.INT, targetMethod.getReturnType());
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -31,12 +32,15 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiRecordComponent[] components = record.getRecordComponents();
     assertSize(1, components);
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
+    assertFalse(targetMethod.hasAnnotation("F"));
+    assertTrue(targetMethod.hasAnnotation("M"));
   }
 
   public void testRecordField() {
     PsiElement target = resolve();
     assertTrue(target instanceof PsiField);
-    assertEquals(PsiType.INT, ((PsiField)target).getType());
+    PsiField targetField = (PsiField)target;
+    assertEquals(PsiType.INT, targetField.getType());
 
     PsiJavaFile file = (PsiJavaFile)getFile();
 
@@ -44,5 +48,7 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiRecordComponent[] components = record.getRecordComponents();
     assertSize(1, components);
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
+    assertTrue(targetField.hasAnnotation("F"));
+    assertFalse(targetField.hasAnnotation("M"));
   }
 }
