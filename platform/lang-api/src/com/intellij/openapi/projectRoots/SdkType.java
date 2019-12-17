@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -210,6 +211,18 @@ public abstract class SdkType implements SdkTypeId {
     SdkType[] components = ApplicationManager.getApplication().getComponents(SdkType.class);
     List<SdkType> list1 = components.length == 0 ? Collections.emptyList() : Arrays.asList(components);
     return ContainerUtil.concat(list1, EP_NAME.getExtensionList()).toArray(new SdkType[0]);
+  }
+
+  @Nullable
+  public static SdkType findByName(@Nullable String sdkName) {
+    if (sdkName == null) return null;
+
+    for (SdkType sdkType : getAllTypes()) {
+      if (Comparing.strEqual(sdkType.getName(), sdkName)) {
+        return sdkType;
+      }
+    }
+    return null;
   }
 
   @NotNull
