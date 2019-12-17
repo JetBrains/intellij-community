@@ -70,24 +70,6 @@ public final class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
-  public GroovyDslFileIndex() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
-            VirtualFile file = event.getFile();
-            if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
-              continue;
-            }
-
-            disableFile(file, Status.MODIFIED, null);
-          }
-        }
-      }
-    });
-  }
-
   @Override
   @NotNull
   public ID<String, Void> getName() {
@@ -492,6 +474,22 @@ public final class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
 
       return null;
+    }
+  }
+
+  public static class MyFileListener implements BulkFileListener {
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      for (VFileEvent event : events) {
+        if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
+          VirtualFile file = event.getFile();
+          if (file == null || !GdslUtil.GDSL_FILTER.value(file) || getStatus(file) != Status.ACTIVE) {
+            continue;
+          }
+
+          disableFile(file, Status.MODIFIED, null);
+        }
+      }
     }
   }
 }

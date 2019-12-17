@@ -22,6 +22,11 @@
 
   <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex$MyFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
+
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
