@@ -24,6 +24,7 @@ public class CaptionPanel extends JPanel {
 
   public CaptionPanel() {
     setLayout(new BorderLayout());
+    setBackground(null);
   }
 
   @Override
@@ -31,8 +32,11 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
 
     Graphics2D g2d = (Graphics2D) g;
-
-    g2d.setPaint(JBUI.CurrentTheme.Popup.headerBackground(myActive));
+    Color background = getBackground();
+    if (background == null) {
+      background = JBUI.CurrentTheme.Popup.headerBackground(myActive);
+    }
+    g2d.setColor(background);
     g2d.fillRect(0, 0, getWidth(), getHeight());
   }
 

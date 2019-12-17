@@ -64,6 +64,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @Nullable String dimensionKey) {
     super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
+    getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     myKey = dimensionKey;
