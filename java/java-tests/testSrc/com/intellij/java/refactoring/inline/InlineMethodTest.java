@@ -546,6 +546,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testTypeParameterMethodRefArgument() {
     doTest();
   }
+  
+  public void testIgnoreReturnValue() {
+    doTest();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

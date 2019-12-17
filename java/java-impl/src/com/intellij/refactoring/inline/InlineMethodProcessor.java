@@ -604,14 +604,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
-    ChangeContextUtil.encodeContextInfo(myMethod, false);
     myMethodCopy = (PsiMethod)myMethod.copy();
-    ChangeContextUtil.clearContextInfo(myMethod);
 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
 
     InlineMethodHelper helper = new InlineMethodHelper(myProject, myMethod, myMethodCopy, methodCall);
     BlockData blockData = prepareBlock(ref, helper);
+    ChangeContextUtil.encodeContextInfo(blockData.block, false);
     InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
     helper.initializeParameters(blockData.parmVars);
     addThisInitializer(methodCall, blockData.thisVar);
