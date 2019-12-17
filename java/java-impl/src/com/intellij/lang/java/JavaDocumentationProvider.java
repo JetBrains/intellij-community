@@ -462,7 +462,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         for (final PsiDocTag param : params) {
           final PsiDocTagValue value = param.getValueElement();
           if (value instanceof PsiDocParamRef) {
-            if(((PsiDocParamRef)value).isTypeParamRef()) break;
+            if(((PsiDocParamRef)value).isTypeParamRef()) continue;
             final PsiReference reference = value.getReference();
             if (reference != null) {
               param2Tag.put(reference.getCanonicalText(), param);
