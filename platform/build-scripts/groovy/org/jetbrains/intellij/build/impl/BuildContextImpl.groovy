@@ -218,7 +218,7 @@ class BuildContextImpl extends BuildContext {
     if (proprietaryBuildTools.signTool != null) {
       messages.progress("Signing $path")
       proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signing done")
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
