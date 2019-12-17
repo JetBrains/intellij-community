@@ -12,7 +12,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,12 +75,7 @@ public class MyTestInjector {
       .addPlace(null, null, (PsiLanguageInjectionHost)operand, textRange)
       .doneInjecting();
     };
-    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,
@@ -120,12 +114,7 @@ public class MyTestInjector {
         injectionPlacesRegistrar.doneInjecting();
       }
     };
-    final ConcatenationInjectorManager injectorManager = ConcatenationInjectorManager.getInstance(project);
-    injectorManager.registerConcatenationInjector(injector);
-    Disposer.register(parent, () -> {
-      boolean b = injectorManager.unregisterConcatenationInjector(injector);
-      assert b;
-    });
+    ConcatenationInjectorManager.EP_NAME.getPoint(project).registerExtension(injector, parent);
   }
 
   private static void injectVariousStuffEverywhere(@NotNull Disposable parent, final PsiManager psiManager) {
