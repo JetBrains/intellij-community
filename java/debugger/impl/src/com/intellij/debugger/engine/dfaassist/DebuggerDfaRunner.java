@@ -73,37 +73,36 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private DfaInstructionState getStartingState(StackFrame frame) {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myStatement).getInstructionOffset();
-    if (offset >= 0) {
-      boolean changed = false;
-      DfaMemoryState state = super.createMemoryState();
-      PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(myProject);
-      DfaValueFactory factory = getFactory();
-      Map<Value, DfaVariableValue> canonicalMap = new HashMap<>();
-      for (DfaValue dfaValue : factory.getValues().toArray(new DfaValue[0])) {
-        if (dfaValue instanceof DfaVariableValue) {
-          DfaVariableValue var = (DfaVariableValue)dfaValue;
-          Value jdiValue = findJdiValue(frame, var);
-          if (jdiValue != null) {
-            DfaVariableValue canonicalVar = jdiValue instanceof ObjectReference ? canonicalMap.putIfAbsent(jdiValue, var) : null;
-            if (canonicalVar != null) {
-              state.applyCondition(var.eq(canonicalVar));
-            } else {
-              addToState(psiFactory, factory, state, var, jdiValue);
-            }
-            changed = true;
+    if (offset < 0) return null;
+    boolean changed = false;
+    DfaMemoryState state = super.createMemoryState();
+    PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(myProject);
+    DfaValueFactory factory = getFactory();
+    Map<Value, DfaVariableValue> canonicalMap = new HashMap<>();
+    for (DfaValue dfaValue : factory.getValues().toArray(new DfaValue[0])) {
+      if (dfaValue instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)dfaValue;
+        Value jdiValue = findJdiValue(frame, var);
+        if (jdiValue != null) {
+          DfaVariableValue canonicalVar = jdiValue instanceof ObjectReference ? canonicalMap.putIfAbsent(jdiValue, var) : null;
+          if (canonicalVar != null) {
+            state.applyCondition(var.eq(canonicalVar));
+          } else {
+            addToState(psiFactory, factory, state, var, jdiValue);
           }
+          changed = true;
         }
       }
-      if (changed) {
-        DfaVariableValue[] distinctValues =
-          StreamEx.ofValues(canonicalMap).filter(v -> v.getType() != null && !DfaUtil.isComparedByEquals(v.getType()))
-            .toArray(new DfaVariableValue[0]);
-        EntryStream.ofPairs(distinctValues)
-          .filterKeyValue((left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
-          .limit(20) // avoid too complex state
-          .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
-        return new DfaInstructionState(myFlow.getInstruction(offset), state);
-      }
+    }
+    if (changed) {
+      DfaVariableValue[] distinctValues =
+        StreamEx.ofValues(canonicalMap).filter(v -> v.getType() != null && !DfaUtil.isComparedByEquals(v.getType()))
+          .toArray(new DfaVariableValue[0]);
+      EntryStream.ofPairs(distinctValues)
+        .filterKeyValue((left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
+        .limit(20) // avoid too complex state
+        .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
+      return new DfaInstructionState(myFlow.getInstruction(offset), state);
     }
     return null;
   }
