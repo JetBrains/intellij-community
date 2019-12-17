@@ -21,7 +21,7 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
   protected TestFilesIndex(@NotNull File file) throws IOException {
     super(INDEX_EXTENSION,
           new MyIndexStorage(file),
-          new PersistentMapBasedForwardIndex(new File(file, "forward.idx")),
+          new PersistentMapBasedForwardIndex(new File(file, "forward.idx"), false),
           new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 

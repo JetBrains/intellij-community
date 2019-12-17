@@ -20,26 +20,31 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   @NotNull
   private final File myMapFile;
   private final boolean myUseChunks;
+  private final boolean myReadOnly;
 
-  public PersistentMapBasedForwardIndex(@NotNull File mapFile) throws IOException {
-    this(mapFile, true);
+  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean isReadOnly) throws IOException {
+    this(mapFile, true, isReadOnly);
   }
 
-  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean useChunks) throws IOException {
+  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean useChunks, boolean isReadOnly) throws IOException {
     myPersistentMap = createMap(mapFile);
     myMapFile = mapFile;
     myUseChunks = useChunks;
+    myReadOnly = isReadOnly;
   }
 
   @NotNull
   protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
     Boolean oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
     PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myUseChunks);
+    Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
+    PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(myReadOnly);
     try {
       return new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);
     }
     finally {
       PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(oldHasNoChunksValue);
+      PersistentHashMapValueStorage.CreationTimeOptions.READONLY.set(previousReadOnly);
     }
   }
 
