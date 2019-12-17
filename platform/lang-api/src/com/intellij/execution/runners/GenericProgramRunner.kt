@@ -46,13 +46,27 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner
   protected abstract fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?>
 }
 
-internal inline fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, crossinline starter: () -> Promise<RunContentDescriptor?>) {
+internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
   ExecutionManager.getInstance(environment.project).startRunProfile(object : RunProfileStarter() {
     override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
       // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
       return starter()
-        .then {
-          BaseProgramRunner.postProcess(environment, it, callback)
+        .then { descriptor ->
+          if (descriptor != null) {
+            descriptor.executionId = environment.executionId
+
+            val toolWindowId = ExecutionManager.getInstance(environment.project).contentManager.getContentDescriptorToolWindowId(environment)
+            if (toolWindowId != null) {
+              descriptor.contentToolWindowId = toolWindowId
+            }
+
+            val settings = environment.runnerAndConfigurationSettings
+            if (settings != null) {
+              descriptor.isActivateToolWindowWhenAdded = settings.isActivateToolWindowBeforeRun
+            }
+          }
+          callback?.processStarted(descriptor)
+          descriptor
         }
     }
   }, state, environment)
