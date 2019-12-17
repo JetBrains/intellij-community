@@ -74,10 +74,6 @@
         1903).
       </description>
     </experimentalFeature>
-    <experimentalFeature id="wsl.prefer.p9.support" percentOfUsers="0">
-      <description>Prefer P9 FS access protocol even if direct access to WSL FS is available.
-      </description>
-    </experimentalFeature>
     <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
       <description>Show P9 roots (\\wsl$\...) of available WSL distributions in the file chooser (available since Windows update 1903).
       </description>
