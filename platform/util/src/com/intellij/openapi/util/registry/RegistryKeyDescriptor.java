@@ -2,21 +2,22 @@
 package com.intellij.openapi.util.registry;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class RegistryKeyDescriptor {
   @NotNull private final String myName;
   @NotNull private final String myDefaultValue;
   @NotNull private final String myDescription;
   private final boolean myRestartRequired;
-  private final boolean myContributedByThirdPartyPlugin;
+  private final String myPluginId;
 
   RegistryKeyDescriptor(@NotNull String name, @NotNull String description, @NotNull String defaultValue,
-                        boolean restartRequired, boolean contributedByThirdPartyPlugin) {
+                        boolean restartRequired, @Nullable String pluginId) {
     myName = name;
     myDefaultValue = defaultValue;
     myDescription = description;
     myRestartRequired = restartRequired;
-    myContributedByThirdPartyPlugin = contributedByThirdPartyPlugin;
+    myPluginId = pluginId;
   }
 
   @NotNull
@@ -38,7 +39,8 @@ final class RegistryKeyDescriptor {
     return myRestartRequired;
   }
 
-  boolean isContributedByThirdPartyPlugin() {
-    return myContributedByThirdPartyPlugin;
+  @Nullable
+  String getPluginId() {
+    return myPluginId;
   }
 }
