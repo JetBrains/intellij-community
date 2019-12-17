@@ -41,6 +41,8 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -450,52 +452,69 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                                  CodeDocumentationAwareCommenter commenter,
                                                                  PsiMethod psiMethod) {
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    final Map<String, String> param2Description = new HashMap<>();
+    final Map<String, PsiDocTag> param2Tag = new HashMap<>();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
 
-    for (PsiMethod superMethod : superMethods) {
+    for (final PsiMethod superMethod : superMethods) {
       final PsiDocComment comment = superMethod.getDocComment();
       if (comment != null) {
         final PsiDocTag[] params = comment.findTagsByName("param");
-        for (PsiDocTag param : params) {
-          final PsiElement[] dataElements = param.getDataElements();
-          String paramName = null;
-          for (PsiElement dataElement : dataElements) {
-            if (dataElement instanceof PsiDocParamRef) {
-              //noinspection ConstantConditions
-              paramName = dataElement.getReference().getCanonicalText();
-              break;
+        for (final PsiDocTag param : params) {
+          final PsiDocTagValue value = param.getValueElement();
+          if (value instanceof PsiDocParamRef) {
+            if(((PsiDocParamRef)value).isTypeParamRef()) break;
+            final PsiReference reference = value.getReference();
+            if (reference != null) {
+              param2Tag.put(reference.getCanonicalText(), param);
             }
-          }
-          if (paramName != null) {
-            param2Description.put(paramName, param.getText());
           }
         }
       }
     }
 
-    for (PsiParameter parameter : parameters) {
-      String description = param2Description.get(parameter.getName());
-      if (description != null) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine("", psiMethod.getContainingFile(), commenter));
-        if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
-        builder.append(description);
-      }
-      else {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
-        builder.append(parameter.getName());
-      }
+    final PsiFile containingFile = psiMethod.getContainingFile();
+    for (final PsiParameter parameter : parameters) {
+      final String name = parameter.getName();
+      final String paramTagWithComment = createParamTagWithComment(name, param2Tag.get(name));
+      builder.append(CodeDocumentationUtil.createDocCommentLine(paramTagWithComment, containingFile, commenter));
       builder.append(LINE_SEPARATOR);
     }
+  }
+
+  @NotNull
+  private static String createParamTagWithComment(@NotNull final String parameterName, @Nullable final PsiDocTag docTag) {
+    final StringBuilder builder = new StringBuilder(PARAM_TAG).append(" ").append(parameterName);
+    if(docTag == null) return builder.toString();
+    final int indexAfterParameterName = builder.length();
+    boolean inComment = false;
+    for (final PsiElement element : docTag.getChildren()) {
+      if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+        inComment = true;
+      }
+      if(inComment) {
+        builder.append(element.getText());
+      }
+    }
+
+    if(builder.length() > indexAfterParameterName) {
+      final int lastNewlineIndex = builder.lastIndexOf(LINE_SEPARATOR);
+      if (lastNewlineIndex > -1) {
+        boolean lastLineContainsOnlyAsterisk = builder.substring(lastNewlineIndex).trim().equals("*");
+        if (lastLineContainsOnlyAsterisk) builder.delete(lastNewlineIndex, builder.length() - 1);
+      }
+      if (builder.charAt(indexAfterParameterName) != ' ') builder.insert(indexAfterParameterName, ' ');
+    }
+    return builder.toString();
   }
 
   public static void createTypeParamsListComment(final StringBuilder buffer,
                                                  final CodeDocumentationAwareCommenter commenter,
                                                  final PsiTypeParameterList typeParameterList) {
+    final PsiFile containingFile = typeParameterList.getContainingFile();
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
-      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, typeParameterList.getContainingFile(), commenter));
-      buffer.append("<").append(typeParameter.getName()).append(">");
+      final String paramTagWithoutComment = PARAM_TAG + " <" + typeParameter.getName() + ">";
+      buffer.append(CodeDocumentationUtil.createDocCommentLine(paramTagWithoutComment, containingFile, commenter));
       buffer.append(LINE_SEPARATOR);
     }
   }
