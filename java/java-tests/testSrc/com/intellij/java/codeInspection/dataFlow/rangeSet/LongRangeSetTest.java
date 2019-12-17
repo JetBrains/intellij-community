@@ -682,6 +682,7 @@ public class LongRangeSetTest {
     assertEquals("{-9223372036854775806..Long.MAX_VALUE-1}: <2> mod 4", modRange(Long.MIN_VALUE, Long.MAX_VALUE, 8, 0b01000100).toString());
     assertEquals("{2..15}: <2, 5> mod 10", modRange(0, 20, 10, 0b100100).toString());
     assertEquals("{0..100}", modRange(0, 100, 10, 0b1111111111).toString());
+    assertEquals("{9223372036854775803..Long.MAX_VALUE}", modRange(Long.MAX_VALUE-4, Long.MAX_VALUE, 8, 0xFE).toString());
   }
 
   @Test
