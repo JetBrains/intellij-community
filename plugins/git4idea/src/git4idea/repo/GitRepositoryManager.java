@@ -34,7 +34,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
   public static final Comparator<GitRepository> DEPENDENCY_COMPARATOR =
     (repo1, repo2) -> -VirtualFileHierarchicalComparator.getInstance().compare(repo1.getRoot(), repo2.getRoot());
 
-  private final ExecutorService myUpdatesExecutor =
+  private final ExecutorService myUpdateExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("GitRepositoryManager");
 
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
@@ -109,7 +109,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
 
   void notifyListenersAsync(@NotNull GitRepository repository) {
     Project project = getVcs().getProject();
-    myUpdatesExecutor.execute(() -> {
+    myUpdateExecutor.execute(() -> {
       if (!Disposer.isDisposed(repository)) {
         syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
       }
