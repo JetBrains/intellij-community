@@ -86,6 +86,8 @@ public class HighlightUtil extends HighlightUtilBase {
     ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
+  private static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = ContainerUtil.immutableSet(
+    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
@@ -915,6 +917,10 @@ public class HighlightUtil extends HighlightUtilBase {
           isAllowed &= !(PsiModifier.FINAL.equals(modifier) || PsiModifier.ABSTRACT.equals(modifier));
         }
 
+        if (aClass.isRecord()) {
+          isAllowed &= !PsiModifier.ABSTRACT.equals(modifier);
+        }
+
         if (aClass.getContainingClass() instanceof PsiAnonymousClass) {
           isAllowed &= !privateOrProtected;
         }
@@ -958,7 +964,8 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (modifierOwner instanceof PsiClassInitializer) {
       isAllowed = PsiModifier.STATIC.equals(modifier);
     }
-    else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter) {
+    else if (modifierOwner instanceof PsiLocalVariable || modifierOwner instanceof PsiParameter || 
+             modifierOwner instanceof PsiRecordComponent) {
       isAllowed = PsiModifier.FINAL.equals(modifier);
     }
     else if (modifierOwner instanceof PsiReceiverParameter) {
@@ -1462,6 +1469,26 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return infos;
+  }
+
+  static HighlightInfo checkRecordComponentName(PsiRecordComponent component) {
+    PsiIdentifier identifier = component.getNameIdentifier();
+    if (identifier != null) {
+      String name = identifier.getText();
+      if (RESTRICTED_RECORD_COMPONENT_NAMES.contains(name)) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+          .descriptionAndTooltip(JavaErrorMessages.message("record.component.restricted.name", name)).create();
+      }
+    }
+    return null;
+  }
+
+  static HighlightInfo checkRecordComponentVarArg(PsiRecordComponent recordComponent) {
+    if (recordComponent.isVarArgs() && PsiTreeUtil.getNextSiblingOfType(recordComponent, PsiRecordComponent.class) != null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(recordComponent)
+          .descriptionAndTooltip(JavaErrorMessages.message("record.component.vararg.not.last")).create();
+    }
+    return null;
   }
 
   private enum SelectorKind { INT, ENUM, STRING }

@@ -404,11 +404,14 @@ public class HighlightClassUtil {
   static HighlightInfo checkExtendsAllowed(@NotNull PsiReferenceList list) {
     if (list.getParent() instanceof PsiClass) {
       PsiClass aClass = (PsiClass)list.getParent();
-      if (aClass.isEnum()) {
+      if (aClass.isEnum() || aClass.isRecord()) {
         boolean isExtends = list.equals(aClass.getExtendsList());
         if (isExtends) {
-          String description = JavaErrorMessages.message("extends.after.enum");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
+          String description = JavaErrorMessages.message(aClass.isRecord() ? "record.extends" : "extends.after.enum");
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(list));
+          return info;
         }
       }
     }
@@ -870,6 +873,26 @@ public class HighlightClassUtil {
         );
       }
       return highlightInfo;
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkWellFormedRecord(PsiClass psiClass) {
+    PsiRecordHeader header = psiClass.getRecordHeader();
+    if (!psiClass.isRecord()) {
+      if (header != null) {
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(header)
+          .descriptionAndTooltip(JavaErrorMessages.message("record.header.regular.class")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(header));
+        return info;
+      }
+      return null;
+    }
+    PsiIdentifier identifier = psiClass.getNameIdentifier();
+    if (identifier == null) return null;
+    if (header == null) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+        .descriptionAndTooltip(JavaErrorMessages.message("record.no.header")).create();
     }
     return null;
   }

@@ -3,4 +3,13 @@ package com.intellij.psi;
 
 public interface PsiRecordComponent extends PsiMember, PsiVariable {
   PsiRecordComponent[] EMPTY_ARRAY = new PsiRecordComponent[]{};
+
+  /**
+   * Checks if the record component accepts a variable number of arguments in canonical constructor.
+   *
+   * @return true if the record component is a vararg, false otherwise
+   */
+  default boolean isVarArgs() {
+    return getType() instanceof PsiEllipsisType;
+  }
 }
