@@ -19,10 +19,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.*;
 
 public class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
@@ -100,14 +97,16 @@ public class ProblemDescriptorUtil {
     return message.trim();
   }
 
-  public static String unescapeTags(String message) {
+  @NotNull
+  public static String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : StringUtil.unescapeXmlEntities(message);
     return message;
   }
 
-  private static String unescapeXmlCode(final String message) {
+  @NotNull
+  private static String unescapeXmlCode(@NotNull String message) {
     List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
@@ -121,7 +120,8 @@ public class ProblemDescriptorUtil {
     for (String string : strings) {
       if (string.contains(XML_CODE_MARKER.second)) {
         builder.append(string.replace(XML_CODE_MARKER.second, ""));
-      } else {
+      }
+      else {
         builder.append(StringUtil.unescapeXmlEntities(string));
       }
     }
@@ -140,6 +140,7 @@ public class ProblemDescriptorUtil {
     return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
+  @NotNull
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,
                                                        @NotNull HighlightSeverity severity,
                                                        @NotNull SeverityRegistrar severityRegistrar) {
@@ -214,7 +215,7 @@ public class ProblemDescriptorUtil {
 
     final PsiElement startElement;
     final PsiElement endElement;
-    if (startOffset == endOffset && isAfterEndOfLine) {
+    if (startOffset == endOffset) {
       startElement = endElement = file.findElementAt(endOffset - 1);
     }
     else {
@@ -239,7 +240,7 @@ public class ProblemDescriptorUtil {
 
   @NotNull
   private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+                                                   @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }

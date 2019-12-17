@@ -231,6 +231,7 @@ public final class Annotation implements Segment {
    *
    * @return the common problem type.
    */
+  @NotNull
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
@@ -328,7 +329,7 @@ public final class Annotation implements Segment {
    *
    * @param highlightType the ID of the problem type.
    */
-  public void setHighlightType(final ProblemHighlightType highlightType) {
+  public void setHighlightType(@NotNull ProblemHighlightType highlightType) {
     myHighlightType = highlightType;
   }
 

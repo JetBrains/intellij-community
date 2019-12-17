@@ -91,6 +91,46 @@ public class HighlightInfo implements Segment {
   volatile RangeHighlighterEx highlighter; // modified in EDT only
   PsiElement psiElement;
 
+  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+                          @Nullable TextAttributesKey forcedTextAttributesKey,
+                          @NotNull HighlightInfoType type,
+                          int startOffset,
+                          int endOffset,
+                          @Nullable String escapedDescription,
+                          @Nullable String escapedToolTip,
+                          @NotNull HighlightSeverity severity,
+                          boolean afterEndOfLine,
+                          @Nullable Boolean needsUpdateOnTyping,
+                          boolean isFileLevelAnnotation,
+                          int navigationShift,
+                          ProblemGroup problemGroup,
+                          @Nullable String inspectionToolId,
+                          GutterMark gutterIconRenderer,
+                          int group) {
+    if (startOffset < 0 || startOffset > endOffset) {
+      LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
+    }
+    this.forcedTextAttributes = forcedTextAttributes;
+    this.forcedTextAttributesKey = forcedTextAttributesKey;
+    this.type = type;
+    this.startOffset = startOffset;
+    this.endOffset = endOffset;
+    fixStartOffset = startOffset;
+    fixEndOffset = endOffset;
+    description = escapedDescription;
+    // optimization: do not retain extra memory if can recompute
+    toolTip = encodeTooltip(escapedToolTip, escapedDescription);
+    this.severity = severity;
+    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
+    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
+    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
+    this.navigationShift = navigationShift;
+    myProblemGroup = problemGroup;
+    this.gutterIconRenderer = gutterIconRenderer;
+    this.inspectionToolId = inspectionToolId;
+    this.group = group;
+  }
+
   /**
    * Returns the HighlightInfo instance from which the given range highlighter was created, or null if there isn't any.
    */
@@ -268,46 +308,6 @@ public class HighlightInfo implements Segment {
 
   boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
-  }
-
-  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
-                @Nullable TextAttributesKey forcedTextAttributesKey,
-                @NotNull HighlightInfoType type,
-                int startOffset,
-                int endOffset,
-                @Nullable String escapedDescription,
-                @Nullable String escapedToolTip,
-                @NotNull HighlightSeverity severity,
-                boolean afterEndOfLine,
-                @Nullable Boolean needsUpdateOnTyping,
-                boolean isFileLevelAnnotation,
-                int navigationShift,
-                ProblemGroup problemGroup,
-                @Nullable String inspectionToolId,
-                GutterMark gutterIconRenderer,
-                int group) {
-    if (startOffset < 0 || startOffset > endOffset) {
-      LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
-    }
-    this.forcedTextAttributes = forcedTextAttributes;
-    this.forcedTextAttributesKey = forcedTextAttributesKey;
-    this.type = type;
-    this.startOffset = startOffset;
-    this.endOffset = endOffset;
-    fixStartOffset = startOffset;
-    fixEndOffset = endOffset;
-    description = escapedDescription;
-    // optimization: do not retain extra memory if can recompute
-    toolTip = encodeTooltip(escapedToolTip, escapedDescription);
-    this.severity = severity;
-    setFlag(AFTER_END_OF_LINE_MASK, afterEndOfLine);
-    setFlag(NEEDS_UPDATE_ON_TYPING_MASK, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
-    setFlag(FILE_LEVEL_ANNOTATION_MASK, isFileLevelAnnotation);
-    this.navigationShift = navigationShift;
-    myProblemGroup = problemGroup;
-    this.gutterIconRenderer = gutterIconRenderer;
-    this.inspectionToolId = inspectionToolId;
-    this.group = group;
   }
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
