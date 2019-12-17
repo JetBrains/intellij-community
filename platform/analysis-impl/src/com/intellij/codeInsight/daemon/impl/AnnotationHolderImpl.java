@@ -184,9 +184,16 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   PsiElement myCurrentElement;
-  public void whileAnnotating(@NotNull PsiElement element, @NotNull Runnable runnable) {
+  @ApiStatus.Internal
+  public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
     myCurrentElement = element;
-    runnable.run();
+    annotator.annotate(element, this);
+    myCurrentElement = null;
+  }
+  @ApiStatus.Internal
+  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
+    myCurrentElement = file;
+    annotator.apply(file, result, this);
     myCurrentElement = null;
   }
 }
