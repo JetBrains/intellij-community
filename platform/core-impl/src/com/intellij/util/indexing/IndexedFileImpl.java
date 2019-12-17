@@ -12,6 +12,10 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   protected final String myFileName;
   protected final FileType myFileType;
 
+  public IndexedFileImpl(@NotNull VirtualFile file) {
+    this(file, file.getFileType());
+  }
+
   public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type) {
     myFile = file;
     myFileName = file.getName();
