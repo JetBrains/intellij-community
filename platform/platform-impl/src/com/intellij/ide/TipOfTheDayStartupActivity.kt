@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class TipOfTheDayStartupActivity : StartupActivity.DumbAware {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode || !GeneralSettings.getInstance().isShowTipsOnStartup) {
+    if (ApplicationManager.getApplication().isUnitTestMode || PlatformUtils.isRider() || !GeneralSettings.getInstance().isShowTipsOnStartup) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }
