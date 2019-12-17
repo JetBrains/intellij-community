@@ -204,7 +204,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
   private class StateBuilder {
     private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
     private final @NotNull DfaValueFactory myFactory = getFactory();
-    private final @NotNull ClassLoaderReference myContextLoader;
+    private final @Nullable ClassLoaderReference myContextLoader;
     private final @NotNull DfaMemoryState myMemState;
     private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();
     private @Nullable List<ClassLoaderReference> myParentLoaders = null;
@@ -285,15 +285,17 @@ class DebuggerDfaRunner extends DataFlowRunner {
     private List<ClassLoaderReference> getParentLoaders() {
       if (myParentLoaders == null) {
         List<ClassLoaderReference> loaders = Collections.emptyList();
-        ClassType classLoaderClass = (ClassType)myContextLoader.referenceType();
-        while (classLoaderClass != null && !"java.lang.ClassLoader".equals(classLoaderClass.name())) {
-          classLoaderClass = classLoaderClass.superclass();
-        }
-        if (classLoaderClass != null) {
-          Field parent = classLoaderClass.fieldByName("parent");
-          if (parent != null) {
-            loaders = StreamEx.iterate(
-              myContextLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class)).toList();
+        if (myContextLoader != null) {
+          ClassType classLoaderClass = (ClassType)myContextLoader.referenceType();
+          while (classLoaderClass != null && !"java.lang.ClassLoader".equals(classLoaderClass.name())) {
+            classLoaderClass = classLoaderClass.superclass();
+          }
+          if (classLoaderClass != null) {
+            Field parent = classLoaderClass.fieldByName("parent");
+            if (parent != null) {
+              loaders = StreamEx.iterate(
+                myContextLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class)).toList();
+            }
           }
         }
         myParentLoaders = loaders;
