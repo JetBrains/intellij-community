@@ -64,8 +64,9 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
   }
 }
 
-abstract class EditorDiffPreview(project: Project, private val uiProperties: VcsLogUiProperties) : DiffPreviewProvider {
-  init {
+abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties) : DiffPreviewProvider {
+
+  protected fun init(project: Project) {
     toggleDiffPreviewOnPropertyChange(uiProperties, owner) { state ->
       if (state) {
         openPreviewInEditor(project, this, getOwnerComponent())
@@ -92,7 +93,11 @@ abstract class EditorDiffPreview(project: Project, private val uiProperties: Vcs
 }
 
 class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val mainFrame: MainFrame) :
-  EditorDiffPreview(project, uiProperties) {
+  EditorDiffPreview(uiProperties) {
+
+  init {
+    init(project)
+  }
 
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     val preview = mainFrame.createDiffPreview(true, owner)
