@@ -57,10 +57,6 @@ class DesktopLayout {
     return idToInfo.getOrPut(id) { createDefaultInfo(id) }
   }
 
-  internal fun getOrReturnDefault(id: String): WindowInfoImpl {
-    return idToInfo.getOrElse(id) { createDefaultInfo(id) }
-  }
-
   private fun createDefaultInfo(id: String): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.id = id

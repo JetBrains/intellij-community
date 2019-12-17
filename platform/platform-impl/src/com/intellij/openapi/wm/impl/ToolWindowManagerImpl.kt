@@ -329,8 +329,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
         focusManager.doWhenFocusSettlesDown(object : ExpirableRunnable.ForProject(project) {
           override fun run() {
-            if (FileEditorManager.getInstance(project).hasOpenFiles()) {
-              focusToolWindowByDefault(null)
+            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+              focusToolWindowByDefault()
             }
           }
         })
@@ -537,27 +537,19 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     ApplicationManager.getApplication().assertIsDispatchThread()
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.NON_MODAL)
-    activateToolWindow(idToEntry.get(id)!!, forced, autoFocusContents)
+    activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), forced, autoFocusContents)
     invokeLater(Runnable {
       runnable?.run()
       UiActivityMonitor.getInstance().removeActivity(project, activity)
     })
   }
 
-  internal fun activateToolWindow(entry: ToolWindowEntry, forced: Boolean, autoFocusContents: Boolean) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("enter: activateToolWindow($entry)")
-    }
+  private fun activateToolWindow(entry: ToolWindowEntry, info: WindowInfoImpl, forced: Boolean, autoFocusContents: Boolean) {
+    LOG.debug { "activateToolWindow($entry)" }
 
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    activateToolWindowImpl(entry, getRegisteredMutableInfoOrLogError(entry.id), forced, autoFocusContents)
-  }
-
-  private fun activateToolWindowImpl(entry: ToolWindowEntry, info: WindowInfoImpl, forced: Boolean, autoFocusContents: Boolean) {
-    var effectiveAutoFocusContents = autoFocusContents
     ToolWindowCollector.recordActivation(entry.id, info)
-    effectiveAutoFocusContents = effectiveAutoFocusContents && forced
-    LOG.debug { "enter: activateToolWindowImpl(${entry.id})" }
+
+    val effectiveAutoFocusContents = autoFocusContents && forced
     if (!entry.toolWindow.isAvailable) {
       // Tool window can be "logically" active but not focused. For example,
       // when the user switched to another application. So we just need to bring
@@ -921,7 +913,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (contentFactory != null /* not null on init tool window from EP */) {
       // do not activate tool window that is the part of project frame - default component should be focused
       if (wasActive && (info.type == ToolWindowType.WINDOWED || info.type == ToolWindowType.FLOATING)) {
-        activateToolWindowImpl(entry, info, forced = true, autoFocusContents = true)
+        activateToolWindow(entry, info, forced = true, autoFocusContents = true)
       }
       else if (wasVisible) {
         showToolWindowImpl(entry, dirtyMode = false)
@@ -1033,8 +1025,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // create a new default layout for each tool window that's not defined in a new layout
     for ((id, entry) in idToEntry) {
-      // use getOrReturnDefault for old layout to avoid any NPE
-      val old = layout.getOrReturnDefault(id)
+      val old = layout.getInfo(id) ?: entry.readOnlyWindowInfo as WindowInfoImpl
       val new = newLayout.getOrCreateDefault(id)
       if (old != new) {
         list.add(LayoutData(old = old, new = new, entry = entry))
@@ -1303,7 +1294,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       showToolWindowImpl(entry, true)
     }
     if (wasActive) {
-      activateToolWindowImpl(entry, info, true, true)
+      activateToolWindow(entry, info, true, true)
     }
     toolWindowPane!!.updateButtonPosition(entry.readOnlyWindowInfo.anchor)
   }
@@ -1637,7 +1628,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
               if (!windowInfo.isVisible) {
                 return@Runnable
               }
-              toolWindowManager.activateToolWindow(entry, forced = false, autoFocusContents = false)
+              toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id), forced = false, autoFocusContents = false)
             }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
           }
         })
@@ -1668,7 +1659,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   fun activated(toolWindow: ToolWindowImpl) {
-    activateToolWindow(idToEntry.get(toolWindow.id)!!, true, true)
+    activateToolWindow(idToEntry.get(toolWindow.id)!!, getRegisteredMutableInfoOrLogError(toolWindow.id), true, true)
   }
 
   /**
@@ -1731,12 +1722,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun fallbackToEditor() = activeStack.isEmpty
 
-  private fun focusToolWindowByDefault(toIgnore: ToolWindowEntry?) {
+  private fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {
-      if (toIgnore == each) {
-        continue
-      }
       if (each.readOnlyWindowInfo.isVisible) {
         toFocus = each
         break
@@ -1745,9 +1733,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     if (toFocus == null) {
       for (each in activeStack.persistentStack) {
-        if (toIgnore == each) {
-          continue
-        }
         if (each.readOnlyWindowInfo.isVisible) {
           toFocus = each
           break
@@ -1756,7 +1741,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     if (toFocus != null && !ApplicationManager.getApplication().isDisposed) {
-      activateToolWindow(toFocus, false, true)
+      activateToolWindow(toFocus, getRegisteredMutableInfoOrLogError(toFocus.id), false, true)
     }
   }
 
