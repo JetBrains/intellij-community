@@ -5,6 +5,7 @@ import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -12,6 +13,17 @@ public class PythonIdeLanguageCustomization extends IdeLanguageCustomization {
   @NotNull
   @Override
   public List<Language> getPrimaryIdeLanguages() {
-    return ContainerUtil.createMaybeSingletonList(Language.findLanguageByID("Python"));
+    return ContainerUtil.createMaybeSingletonList(findPythonLanguageByID());
+  }
+
+  public static boolean isMainlyPythonIde() {
+    Language python = findPythonLanguageByID();
+    if (python == null) return false;
+    return IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages().contains(python);
+  }
+
+  @Nullable
+  private static Language findPythonLanguageByID() {
+    return Language.findLanguageByID("Python");
   }
 }

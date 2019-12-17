@@ -22,8 +22,8 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetProvider
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidget
-import com.intellij.util.PlatformUtils
 import com.intellij.util.text.trimMiddle
+import com.jetbrains.python.PythonIdeLanguageCustomization
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
@@ -31,7 +31,8 @@ import com.jetbrains.python.sdk.add.PyAddSdkDialog
 import java.util.function.Consumer
 
 class PySdkStatusBarWidgetProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget? = if (PlatformUtils.isPyCharm()) PySdkStatusBar(project) else null
+  override fun getWidget(project: Project): StatusBarWidget? =
+    if (PythonIdeLanguageCustomization.isMainlyPythonIde()) PySdkStatusBar(project) else null
 
   override fun getAnchor(): String = StatusBar.Anchors.after(CodeStyleStatusBarWidget.WIDGET_ID)
 }
