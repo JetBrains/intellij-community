@@ -1,28 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
-import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.management.ManagementFactory;
 
 @State(name = "LightEdit", storages =  @Storage("lightEdit.xml"))
@@ -52,6 +51,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   public LightEditService() {
     myEditorManager = new LightEditorManager();
     myEditorManager.addListener(this);
+    Disposer.register(this, myEditorManager);
   }
 
   private void init() {
@@ -64,8 +64,10 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   public void showEditorWindow() {
-    init();
-    myFrameWrapper.setTitle(getAppName());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      init();
+      myFrameWrapper.setTitle(getAppName());
+    }
   }
 
   private static String getAppName() {
@@ -78,22 +80,46 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     if (openEditorInfo == null) {
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
       if (newEditorInfo != null) {
-        getEditPanel().getTabs().addEditorTab(newEditorInfo);
+        addEditorTab(newEditorInfo);
       }
     }
     else {
+      selectEditorTab(openEditorInfo);
+    }
+
+    logStartupTime();
+  }
+
+  private void logStartupTime() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ObjectUtils.consumeIfNotNull(
+        getEditPanel().getTabs().getSelectedInfo(),
+        tabInfo ->
+          UiNotifyConnector
+            .doWhenFirstShown(tabInfo.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
+              LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
+            }))
+      );
+    }
+  }
+
+
+  private void selectEditorTab(LightEditorInfo openEditorInfo) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getEditPanel().getTabs().selectTab(openEditorInfo);
     }
-    JComponent component = getEditPanel().getTabs().getSelectedInfo().getComponent();
-    UiNotifyConnector.doWhenFirstShown(component, () -> ApplicationManager.getApplication().invokeLater(() -> {
-      LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
-    }));
+  }
+
+  private void addEditorTab(LightEditorInfo newEditorInfo) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      getEditPanel().getTabs().addEditorTab(newEditorInfo);
+    }
   }
 
   public void createNewFile() {
     showEditorWindow();
     LightEditorInfo newEditorInfo = myEditorManager.createEditor();
-    getEditPanel().getTabs().addEditorTab(newEditorInfo);
+    addEditorTab(newEditorInfo);
   }
 
   public boolean closeEditorWindow() {
@@ -148,7 +174,6 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     if (myFrameWrapper != null) {
       disposeEditorPanel();
       Disposer.dispose(myFrameWrapper);
-      Disposer.dispose(myEditorManager);
     }
   }
 
