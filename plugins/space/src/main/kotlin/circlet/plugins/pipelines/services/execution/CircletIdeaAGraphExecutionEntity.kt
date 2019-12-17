@@ -7,15 +7,11 @@ import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAGraphExecutionEntity(
     override val id: Long,
-    override var triggerTime: Long,
-    override var startTime: Long?,
+    override var startTime: Long,
     override var endTime: Long?,
     override var status: ExecutionStatus,
-    override val graphMeta: AGraphMetaEntity,
     override var executionMeta: ScriptAction,
-    override val branch: String,
-    override val commit: String,
-    override val repoId: String,
+    override val graphContext: AGraphExecutionContext,
     val jobsList: MutableList<AStepExecutionEntity<*>>
 ) : AGraphExecutionEntity {
 
@@ -32,7 +28,4 @@ class CircletIdeaAGraphExecutionEntity(
     }
 
     override val problems = emptySet<Int>()
-
-    override val changesFromExclude: CommitHash = commit
-    override val changesCount: Int = 0
 }

@@ -39,7 +39,7 @@ class CircletIdeaStepExecutionProvider(
     }
 
     override suspend fun startExecution(stepExec: StepExecutionData<*>) = db("start-execution") {
-        val jobEntity = db.findJobExecution(stepExec.id) ?: error("Job execution [$stepExec] is not found")
+        val jobEntity = db.findStepExecution(stepExec.id) ?: error("Job execution [$stepExec] is not found")
         if (jobEntity !is CircletIdeaAContainerStepExecutionEntity) {
             error("unknown job $jobEntity")
         }

@@ -71,22 +71,16 @@ class CircletTaskRunner(val project: Project) {
             storage,
             CircletIdeaAutomationBootstrapper(),
             automationGraphEngineCommon,
-            JobExecutionParametersImpl(),
             tracer
         )
 
-        val currentTime = System.currentTimeMillis()
-        val metaTaskId : Long = 1
-        val principalId : Long = 1
-        val projectKey = "myProjectKey"
         val repositoryData = RepositoryData("repoId", null)
         val branch = "myBranch"
         val commit = "myCommit"
-        val trigger = TriggerData.ManualTriggerData(currentTime, principalId)
-        val context = JobStartContext(0L, repositoryData, branch, commit, commit, 0, task, trigger)
 
         async(lifetime, Ui) {
-            automationStarterCommon.createGraph(context)
+            val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
+            automationStarterCommon.startGraph(graphId)
         }.invokeOnCompletion {
             if (it != null) {
                 processHandler.notifyTextAvailable("Run task failed. ${it.message}$newLine", ProcessOutputTypes.STDERR)

@@ -5,20 +5,21 @@ import circlet.pipelines.config.api.*
 import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 import circlet.pipelines.provider.api.*
+import libraries.io.random.*
 import libraries.klogging.*
 
 class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : ExecutionProviderStorage {
     companion object : KLogging()
 
     private val idStorage = TaskLongIdStorage()
-    private val storedExecutions = mutableMapOf<Long, AStepExecutionEntity<*>>()
+    private val storedStepExecutions = mutableMapOf<Long, AStepExecutionEntity<*>>()
 
-    override fun findJobExecution(id: Long, forUpdate: Boolean): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
-        return storedExecutions[id]
+    override fun findStepExecution(id: Long, forUpdate: Boolean): AStepExecutionEntity<ScriptStep.Process<*, *>>? {
+        return storedStepExecutions[id]
     }
 
-    override fun findJobExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ScriptStep.Process<*, *>>> {
-        return storedExecutions.filterKeys { it in ids }.map { it.value }.asSequence()
+    override fun findStepExecutions(ids: List<Long>, forUpdate: Boolean): Sequence<AStepExecutionEntity<ScriptStep.Process<*, *>>> {
+        return storedStepExecutions.filterKeys { it in ids }.map { it.value }.asSequence()
     }
 
     override fun findAuthClient(graphExecution: AGraphExecutionEntity): ServiceCredentials? {
@@ -33,47 +34,49 @@ class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : Executio
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun findGraphMeta(graphMetaId: Long): AGraphMetaEntity? {
-        logger.debug { "findMetaTask $graphMetaId" }
-        return CircletIdeaAGraphMetaEntity(graphMetaId, job)
+    override fun findGraphExecutionById(graphExecutionId: Long): AGraphExecutionEntity? {
+        TODO("findGraphExecutionById not implemented")
     }
 
-    override fun findGraphExecutionByJobActionExecutionId(id: Long): AGraphExecutionEntity? {
-        TODO("findExecution not implemented")
-    }
+    override fun createGraphExecution(repoName: String,
+                                      branch: String,
+                                      commit: CommitHash,
+                                      actionMeta: ScriptAction,
+                                      bootstrapStepFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
 
-    override fun createJobExecution(metaTask: AGraphMetaEntity, jobStartContext: ActionStartContext, bootstrapJobFactory: (AGraphExecutionEntity) -> ScriptStep.Process.Container?): AGraphExecutionEntity {
-        logger.debug { "createTaskExecution $metaTask" }
+        logger.debug { "createJobExecution $actionMeta" }
         val now = System.currentTimeMillis()
         val jobs = mutableListOf<AStepExecutionEntity<*>>()
+        val graphContext = CircletIdeaAGraphExecutionContextEntity(
+            branch,
+            commit,
+            repoName
+        )
         val graphExecutionEntity = CircletIdeaAGraphExecutionEntity(
-            metaTask.id,
+            Random.nextLong(),
             now,
             null,
-            null,
             ExecutionStatus.PENDING,
-            metaTask,
-            metaTask.originalMeta,
-            "master",
-            "commit-hash",
-            "repoId",
+            actionMeta,
+            graphContext,
             jobs
         )
 
-        metaTask.originalMeta.jobs.flatten().forEach {
+        actionMeta.steps.flatten().forEach {
             if (it is ScriptStep.Process.Container) {
-                jobs.add(createAJobExecutionEntity(it, graphExecutionEntity))
-            } else {
+                jobs.add(createAStepExecutionEntity(it, graphExecutionEntity))
+            }
+            else {
                 logger.warn { "${it::class} is not supported" }
             }
         }
 
-        val bootstrapJob = bootstrapJobFactory(graphExecutionEntity)
-        if (bootstrapJob != null) {
+        val bootstrapStep = bootstrapStepFactory(graphExecutionEntity)
+        if (bootstrapStep != null) {
             graphExecutionEntity.jobsList.add(
-                createAJobExecutionEntity(bootstrapJob, graphExecutionEntity)
+                createAStepExecutionEntity(bootstrapStep, graphExecutionEntity)
             )
-            graphExecutionEntity.executionMeta = graphExecutionEntity.graphMeta.originalMeta.prependJobs(listOf(bootstrapJob))
+            graphExecutionEntity.executionMeta = graphExecutionEntity.executionMeta.prependSteps(listOf(bootstrapStep))
         }
 
         return graphExecutionEntity
@@ -87,12 +90,11 @@ class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : Executio
         return result
     }
 
-    private fun createAJobExecutionEntity(bootstrapJob: ScriptStep.Process.Container, graphExecution: AGraphExecutionEntity): AStepExecutionEntity<*> {
+    private fun createAStepExecutionEntity(bootstrapJob: ScriptStep.Process.Container, graphExecution: AGraphExecutionEntity): AStepExecutionEntity<*> {
         val jobExecId = idStorage.getOrCreateId(bootstrapJob.id)
         val entity = CircletIdeaAContainerStepExecutionEntity(
             jobExecId,
             System.currentTimeMillis(),
-            null,
             null,
             ExecutionStatus.SCHEDULED,
             graphExecution,
@@ -101,7 +103,7 @@ class CircletIdeaExecutionProviderStorage(private val job: ScriptJob) : Executio
             false,
             null
         )
-        storedExecutions[jobExecId] = entity
+        storedStepExecutions[jobExecId] = entity
         return entity
     }
 

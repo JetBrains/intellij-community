@@ -6,8 +6,7 @@ import circlet.pipelines.engine.api.storage.*
 
 class CircletIdeaAContainerStepExecutionEntity(
     override val id: Long,
-    override var triggerTime: Long,
-    override var startTime: Long?,
+    override var startTime: Long,
     override var endTime: Long?,
     override var status: ExecutionStatus,
     override val graph: AGraphExecutionEntity,
