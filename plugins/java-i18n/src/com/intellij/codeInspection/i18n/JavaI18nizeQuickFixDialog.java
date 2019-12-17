@@ -25,6 +25,7 @@ import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UI;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,12 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
         codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression, myResourceBundleType, true);
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(expressionCodeFragment);
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
-      myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
+      myResourceBundleSuggester.add(UI.PanelFactory.panel(myRBEditorTextField)
+                                      .withLabel(CodeInsightBundle.message("i18n.quickfix.code.panel.resource.bundle.expression.label"))
+                                      .withComment(
+                                        "If the resource bundle is invalid, either declare it as an object of the java.util.ResourceBundle class in the source code, " +
+                                        "or edit the internationalization template to point to the method of your custom resource bundle class.")
+                                      .createPanel(), BorderLayout.NORTH);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
