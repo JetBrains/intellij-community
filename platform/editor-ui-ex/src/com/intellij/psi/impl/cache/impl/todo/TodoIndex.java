@@ -78,8 +78,7 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
     @NotNull
     public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
-      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding
-        .getTodoIndexer(inputData.getFileType(), file);
+      final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding.getTodoIndexer(inputData.getFileType());
       if (indexer != null) {
         return indexer.map(inputData);
       }
