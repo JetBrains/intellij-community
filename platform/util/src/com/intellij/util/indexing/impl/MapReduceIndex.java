@@ -49,7 +49,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   protected final DataExternalizer<Value> myValueExternalizer;
   protected final IndexExtension<Key, Value, Input> myExtension;
   protected final AtomicLong myModificationStamp = new AtomicLong();
-  private final DataIndexer<Key, Value, Input> myIndexer;
+  protected final DataIndexer<Key, Value, Input> myIndexer;
 
   private final ForwardIndex myForwardIndex;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;
