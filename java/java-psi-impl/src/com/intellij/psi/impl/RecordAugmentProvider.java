@@ -70,7 +70,9 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForField);
     if (typeText == null) return null;
     PsiClass aClass = factory.createClassFromText("private final " + typeText + " " + name + ";", null);
-    return aClass.getFields()[0];
+    PsiField[] fields = aClass.getFields();
+    if (fields.length != 1) return null;
+    return fields[0];
   }
 
   @Nullable
@@ -80,7 +82,9 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
     if (typeText == null) return null;
     PsiClass aClass = factory.createClassFromText("public " + typeText + " " + name + "(){}", null);
-    return aClass.getMethods()[0];
+    PsiMethod[] methods = aClass.getMethods();
+    if (methods.length != 1) return null;
+    return methods[0];
   }
 
   @Nullable
