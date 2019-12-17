@@ -1,28 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.intention.IntentionActionWithOptions;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.SdkFixInfo;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotificationsImpl;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 
 import java.util.List;
 
@@ -32,24 +25,92 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Pavel.Dolgov
  */
 public class SdkSetupNotificationTest extends JavaCodeInsightFixtureTestCase {
+
   public void testProjectSdk() {
-    final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk18(), false, "Sample.java", "class Sample {}");
-    assertThat(panel).isNull();
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    setProjectSdk(sdk);
+    ModuleRootModificationUtil.setSdkInherited(getModule());
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .isEmpty();
+  }
+
+  public void testMissingProjectJdk() {
+    WriteAction.run(() -> {
+      ProjectRootManager.getInstance(getProject()).setProjectSdkName("missingSDK", JavaSdk.getInstance().getName());
+    });
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .hasSize(1)
+      .first()
+      .returns("missingSDK", SdkFixInfo::getSdkName);
+  }
+
+  public void testMissingModuleJdk() {
+    WriteAction.run(() -> {
+      ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+      model.setInvalidSdk("missingSDK", JavaSdk.getInstance().getName());
+      model.commit();
+    });
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .hasSize(1)
+      .first()
+      .returns("missingSDK", SdkFixInfo::getSdkName);
   }
 
   public void testNoProjectSdk() {
-    final EditorNotificationPanel panel = configureBySdkAndText(null, false, "Sample.java", "class Sample {}");
-    assertSdkSetupPanelShown(panel, "Setup SDK");
+    setProjectSdk(null);
+    ModuleRootModificationUtil.setSdkInherited(getModule());
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .isNotEmpty();
+
+    /*
+    final IntentionActionWithOptions action = fixes.getIntentionAction();
+    assertThat(action).isNotNull();
+    final String text = action.getText();
+    assertThat(text).isNotNull();
+    if (!text.startsWith("Setup SDK")) {
+      final int length = Math.min(text.length(), "Setup SDK".length());
+      assertThat(text.substring(0, length)).isEqualTo("Setup SDK");
+    }*/
   }
 
   public void testModuleSdk() {
-    final EditorNotificationPanel panel = configureBySdkAndText(IdeaTestUtil.getMockJdk18(), true, "Sample.java", "class Sample {}");
-    assertThat(panel).isNull();
+    Sdk sdk = IdeaTestUtil.getMockJdk18();
+    ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .isEmpty();
   }
 
   public void testNoModuleSdk() {
-    final EditorNotificationPanel panel = configureBySdkAndText(null, true, "Sample.java", "class Sample {}");
-    assertSdkSetupPanelShown(panel, "Setup SDK");
+    ModuleRootModificationUtil.setModuleSdk(getModule(), null);
+
+    final List<SdkFixInfo> fixes = detectMissingSdks();
+    assertThat(fixes)
+      .withFailMessage(String.valueOf(fixes))
+      .isNotEmpty();
+
+    /*final IntentionActionWithOptions action = panel.getIntentionAction();
+    assertThat(action).isNotNull();
+    final String text = action.getText();
+    assertThat(text).isNotNull();
+    if (!text.startsWith("Setup SDK")) {
+      final int length = Math.min(text.length(), "Setup SDK".length());
+      assertThat(text.substring(0, length)).isEqualTo("Setup SDK");
+    }*/
   }
 
   @Override
@@ -59,61 +120,25 @@ public class SdkSetupNotificationTest extends JavaCodeInsightFixtureTestCase {
     setProjectSdk(IdeaTestUtil.getMockJdk17());
   }
 
+  @NotNull
+  private List<SdkFixInfo> detectMissingSdks() {
+    UnknownSdkTracker.getInstance(getProject()).updateUnknownSdks();
 
-  @Nullable
-  @SuppressWarnings("SameParameterValue")
-  protected EditorNotificationPanel configureBySdkAndText(@Nullable Sdk sdk,
-                                                          boolean isModuleSdk,
-                                                          @NotNull String name,
-                                                          @NotNull String text) {
-    if (isModuleSdk) {
-      ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
-    }
-    else {
-      setProjectSdk(sdk);
-      ModuleRootModificationUtil.setSdkInherited(getModule());
-    }
-
-    final PsiFile psiFile = myFixture.configureByText(name, text);
-    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(getProject());
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    final FileEditor[] editors = fileEditorManager.openFile(virtualFile, true);
-    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        fileEditorManager.closeFile(virtualFile);
-      }
-    });
-    AssertionsForClassTypes.assertThat(editors).hasSize(1);
-    EditorNotificationsImpl.completeAsyncTasks();
-
-    List<? extends EditorNotificationPanel> data = editors[0].getUserData(UnknownSdkEditorNotification.NOTIFICATIONS);
-    if (data == null) return null;
-    Assert.assertEquals("Only one notification was expected, but were " + data, 1, data.size());
-    return data.iterator().next();
+    return UnknownSdkEditorNotification.getInstance(getProject()).getNotifications();
   }
 
   private void setProjectSdk(@Nullable Sdk sdk) {
-    if (sdk != null) {
-      final Sdk foundJdk = ReadAction.compute(() -> ProjectJdkTable.getInstance().findJdk(sdk.getName()));
-      if (foundJdk == null) {
-        WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, myFixture.getProjectDisposable()));
-      }
-    }
-    WriteAction.run(() -> ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk));
-  }
+    WriteAction.run(() -> {
+      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
 
-  @SuppressWarnings("SameParameterValue")
-  private static void assertSdkSetupPanelShown(@Nullable EditorNotificationPanel panel,
-                                               @NotNull String expectedMessagePrefix) {
-    AssertionsForClassTypes.assertThat(panel).isNotNull();
-    final IntentionActionWithOptions action = panel.getIntentionAction();
-    AssertionsForClassTypes.assertThat(action).isNotNull();
-    final String text = action.getText();
-    AssertionsForClassTypes.assertThat(text).isNotNull();
-    if (!text.startsWith(expectedMessagePrefix)) {
-      final int length = Math.min(text.length(), expectedMessagePrefix.length());
-      AssertionsForClassTypes.assertThat(text.substring(0, length)).isEqualTo(expectedMessagePrefix);
-    }
+      if (sdk != null) {
+        final Sdk foundJdk = jdkTable.findJdk(sdk.getName());
+        if (foundJdk == null) {
+          jdkTable.addJdk(sdk, myFixture.getProjectDisposable());
+        }
+      }
+
+      ProjectRootManager.getInstance(getProject()).setProjectSdk(sdk);
+    });
   }
 }
