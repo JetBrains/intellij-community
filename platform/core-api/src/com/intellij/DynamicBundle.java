@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.ResourceBundle;
@@ -42,7 +45,12 @@ public abstract class DynamicBundle extends AbstractBundle {
   }
 
   // todo: one language per application
+  @Nullable
   private static LanguageBundleEP findLanguageBundle() {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() && !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
+      return null;
+    }
     return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
   }
 
