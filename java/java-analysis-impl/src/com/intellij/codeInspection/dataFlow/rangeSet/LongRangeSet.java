@@ -763,7 +763,8 @@ public abstract class LongRangeSet {
       for (int newMod = (int)length; newMod <= intMod / 2; newMod++) {
         if (intMod % newMod == 0) {
           long newBits = 0;
-          for (long i = from; i <= to; i++) {
+          // `to` could be Long.MAX_VALUE; so `i >= from` condition is important to react on possible overflow
+          for (long i = from; i >= from && i <= to; i++) {
             if (isSet(bits, remainder(i, intMod))) {
               newBits = setBit(newBits, remainder(i, newMod));
             }
