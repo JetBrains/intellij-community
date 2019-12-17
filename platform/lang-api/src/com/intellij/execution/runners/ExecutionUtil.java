@@ -38,7 +38,7 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
-public class ExecutionUtil {
+public final class ExecutionUtil {
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
@@ -182,12 +182,10 @@ public class ExecutionUtil {
   /**
    * @param executionId Id that will be set for {@link ExecutionEnvironment} that is created to run configuration.
    */
-  public static void runConfiguration(
-    @NotNull RunnerAndConfigurationSettings configuration,
-    @NotNull Executor executor,
-    @NotNull ExecutionTarget target,
-    long executionId
-  ) {
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                      @NotNull Executor executor,
+                                      @NotNull ExecutionTarget target,
+                                      long executionId) {
     doRunConfiguration(configuration, executor, target, executionId, null);
   }
 
@@ -195,28 +193,29 @@ public class ExecutionUtil {
     doRunConfiguration(configuration, executor, null, executionId, null);
   }
 
-  public static void doRunConfiguration(
-    @NotNull RunnerAndConfigurationSettings configuration,
-    @NotNull Executor executor,
-    @Nullable ExecutionTarget targetOrNullForDefault,
-    @Nullable Long executionId,
-    @Nullable DataContext dataContext) {
+  public static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                        @NotNull Executor executor,
+                                        @Nullable ExecutionTarget targetOrNullForDefault,
+                                        @Nullable Long executionId,
+                                        @Nullable DataContext dataContext) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
-    if (builder != null) {
-      if (targetOrNullForDefault != null) {
-        builder.target(targetOrNullForDefault);
-      }
-      else {
-        builder.activeTarget();
-      }
-      if (executionId != null) {
-        builder.executionId(executionId);
-      }
-      if (dataContext != null) {
-        builder.dataContext(dataContext);
-      }
-      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+    if (builder == null) {
+      return;
     }
+
+    if (targetOrNullForDefault != null) {
+      builder.target(targetOrNullForDefault);
+    }
+    else {
+      builder.activeTarget();
+    }
+    if (executionId != null) {
+      builder.executionId(executionId);
+    }
+    if (dataContext != null) {
+      builder.dataContext(dataContext);
+    }
+    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
   }
 
   @Nullable
