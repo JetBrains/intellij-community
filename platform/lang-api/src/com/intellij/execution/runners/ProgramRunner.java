@@ -68,7 +68,9 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @return the per-runner settings, or null if this runner doesn't use any per-runner settings.
    */
   @Nullable
-  Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider);
+  default Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
+    return null;
+  }
 
   void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException;
@@ -82,7 +84,9 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   }
 
   @Nullable
-  SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
+  default SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration) {
+    return null;
+  }
 
   void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
 

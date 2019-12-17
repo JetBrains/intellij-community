@@ -1,49 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.runners;
+package com.intellij.execution.runners
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.*;
-import com.intellij.openapi.options.SettingsEditor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.RunManager.Companion.getInstance
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.RuntimeConfigurationException
 
-public abstract class BaseProgramRunner<Settings extends RunnerSettings> implements ProgramRunner<Settings> {
-  @Override
-  @Nullable
-  public Settings createConfigurationData(@NotNull ConfigurationInfoProvider settingsProvider) {
-    return null;
+abstract class BaseProgramRunner<Settings : RunnerSettings?> : ProgramRunner<Settings> {
+  @Throws(RuntimeConfigurationException::class)
+  override fun checkConfiguration(settings: RunnerSettings, configurationPerRunnerSettings: ConfigurationPerRunnerSettings?) {
   }
 
-  @Override
-  public void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException {
+  @Throws(ExecutionException::class)
+  override fun execute(environment: ExecutionEnvironment) {
+    execute(environment, null)
   }
 
-  @Override
-  @Nullable
-  public SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration) {
-    return null;
+  @Throws(ExecutionException::class)
+  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+    val state = environment.state ?: return
+    getInstance(environment.project).refreshUsagesList(environment.runProfile)
+    execute(environment, callback, state)
   }
 
-  @Override
-  public void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
-    execute(environment, null);
-  }
-
-  @Override
-  public void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException {
-    RunProfileState state = environment.getState();
-    if (state == null) {
-      return;
-    }
-
-    RunManager.getInstance(environment.getProject()).refreshUsagesList(environment.getRunProfile());
-    execute(environment, callback, state);
-  }
-
-  protected abstract void execute(@NotNull ExecutionEnvironment environment,
-                                  @Nullable Callback callback,
-                                  @NotNull RunProfileState state) throws ExecutionException;
+  @Throws(ExecutionException::class)
+  protected abstract fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState)
 }
