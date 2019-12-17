@@ -44,6 +44,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.RenameLocalBranchOnF2KeyPressHandler
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
+import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Component
@@ -126,6 +127,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
     createFocusFilterFieldAction(branchesSearchField)
 
+    val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
     val newBranchAction = NewBranchAction()
@@ -142,6 +144,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     group.add(diffAction)
     group.add(showMyBranchesAction)
     group.add(fetchAction)
+    group.add(toggleFavoriteAction)
     group.add(Separator())
     group.add(expandAllAction)
     group.add(collapseAllAction)

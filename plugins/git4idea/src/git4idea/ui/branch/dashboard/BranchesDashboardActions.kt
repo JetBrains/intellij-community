@@ -6,6 +6,7 @@ import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -14,6 +15,7 @@ import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.GitUtil
 import git4idea.actions.GitFetch
+import git4idea.branch.GitBranchType
 import git4idea.branch.GitBrancher
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
@@ -264,6 +266,21 @@ internal object BranchesDashboardActions {
 
     override fun onFetchFinished(result: GitFetchResult) {
       ui.stopLoadingBranches()
+    }
+  }
+
+  class ToggleFavoriteAction : BranchesActionBase(text = "Mark/Unmark As Favorite", icon = AllIcons.Nodes.Favorite) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project!!
+      val branches = e.getData(GIT_BRANCHES)!!
+
+      val gitBranchManager = project.service<GitBranchManager>()
+      for (branch in branches) {
+        val type = if (branch.isLocal) GitBranchType.LOCAL else GitBranchType.REMOTE
+        for (repository in branch.repositories) {
+          gitBranchManager.setFavorite(type, repository, branch.branchName, !branch.isFavorite)
+        }
+      }
     }
   }
 

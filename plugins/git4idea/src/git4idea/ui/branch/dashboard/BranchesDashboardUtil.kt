@@ -1,14 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchManager
 import gnu.trove.TIntHashSet
 
 internal object BranchesDashboardUtil {
@@ -24,8 +27,10 @@ internal object BranchesDashboardUtil {
         localMap.computeIfAbsent(currentBranch.name) { hashSetOf() }.add(repo)
       }
     }
+    val gitBranchManager = project.service<GitBranchManager>()
     val local = localMap.map { (branchName, repos) ->
       BranchInfo(branchName, true, repos.any { it.currentBranch?.name == branchName }, repos.toList())
+        .apply { isFavorite = repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branchName) } }
     }.toHashSet()
 
     return local
@@ -38,8 +43,11 @@ internal object BranchesDashboardUtil {
         remoteMap.computeIfAbsent(remoteBranch.name) { mutableListOf() }.add(repo)
       }
     }
-
-    return remoteMap.map { (branchName, repos) -> BranchInfo(branchName, false, false, repos) }.toHashSet()
+    val gitBranchManager = project.service<GitBranchManager>()
+    return remoteMap.map { (branchName, repos) ->
+      BranchInfo(branchName, false, false, repos)
+        .apply { isFavorite = repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branchName) } }
+    }.toHashSet()
   }
 
   fun checkIsMyBranchesSynchronously(log: VcsProjectLog,

@@ -14,6 +14,7 @@ internal data class BranchInfo(val branchName: String,
                                val isCurrent: Boolean,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
+  var isFavorite = false
   override fun toString() = branchName
 }
 

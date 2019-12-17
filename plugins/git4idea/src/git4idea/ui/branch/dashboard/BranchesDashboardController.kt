@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -10,6 +13,8 @@ import com.intellij.util.ThreeState
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsProjectLog
+import git4idea.branch.GitBranchType
+import git4idea.ui.branch.GitBranchManager
 import kotlin.properties.Delegates
 
 internal class BranchesDashboardController(private val project: Project,
@@ -23,6 +28,9 @@ internal class BranchesDashboardController(private val project: Project,
 
   init {
     Disposer.register(ui, this)
+    project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, DvcsBranchManagerListener {
+      updateBranchesIsFavoriteState()
+    })
   }
 
   override fun dispose() {
@@ -54,6 +62,25 @@ internal class BranchesDashboardController(private val project: Project,
       ui.stopLoadingBranches()
     }
     return changed
+  }
+
+  private fun updateBranchesIsFavoriteState() {
+    var changed = false
+    with(project.service<GitBranchManager>()) {
+      for (localBranch in localBranches) {
+        val isFavorite = localBranch.repositories.any { isFavorite(GitBranchType.LOCAL, it, localBranch.branchName) }
+        changed = changed or isFavorite
+        localBranch.apply { this.isFavorite = isFavorite }
+      }
+      for (remoteBranch in remoteBranches) {
+        val isFavorite = remoteBranch.repositories.any { isFavorite(GitBranchType.REMOTE, it, remoteBranch.branchName) }
+        changed = changed or isFavorite
+        remoteBranch.apply { this.isFavorite = isFavorite }
+      }
+    }
+    if (changed) {
+      ui.refreshTree()
+    }
   }
 
   private fun updateBranchesIsMyState() {

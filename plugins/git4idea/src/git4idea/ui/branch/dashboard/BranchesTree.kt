@@ -2,6 +2,7 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.actionSystem.ActionManager
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.tree.WideSelectionTreeUI
 import git4idea.repo.GitRepositoryManager
@@ -59,8 +61,18 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
       val descriptor = value.getNodeDescriptor()
 
       val branchInfo = descriptor.branchInfo
-      if (branchInfo?.isCurrent == true) {
-        icon = DvcsImplIcons.CurrentBranchLabel
+      if (branchInfo != null && descriptor.type == NodeType.BRANCH) {
+        when {
+          branchInfo.isCurrent -> {
+            icon = if (branchInfo.isFavorite) DvcsImplIcons.CurrentBranchFavoriteLabel else DvcsImplIcons.CurrentBranchLabel
+          }
+          branchInfo.isFavorite -> {
+            icon = AllIcons.Nodes.Favorite
+          }
+          else -> {
+            icon = EmptyIcon.ICON_16
+          }
+        }
       }
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
@@ -266,6 +278,8 @@ internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1
   if (b1 == null || b2 == null) d1.type.compareTo(d2.type)
   else if (b1.isCurrent && !b2.isCurrent) -1
   else if (!b1.isCurrent && b2.isCurrent) 1
+  else if (b1.isFavorite && !b2.isFavorite) -1
+  else if (!b1.isFavorite && b2.isFavorite) 1
   else if (b1.isLocal && !b2.isLocal) -1
   else if (!b1.isLocal && b2.isLocal) 1
   else {
