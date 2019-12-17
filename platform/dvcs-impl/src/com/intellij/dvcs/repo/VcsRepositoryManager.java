@@ -2,6 +2,7 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -139,7 +140,9 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   private Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
     if (root == null) return null;
 
-    if (updateIfNeeded && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    Application application = ApplicationManager.getApplication();
+    if (updateIfNeeded && application.isWriteAccessAllowed() &&
+        !application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
       updateIfNeeded = false;
       LOG.error("Do not call synchronous root update under write lock");
     }
