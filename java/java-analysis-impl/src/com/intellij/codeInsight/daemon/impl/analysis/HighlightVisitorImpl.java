@@ -749,7 +749,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       assert referenceNameElement != null : ref;
       final HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(referenceNameElement).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createSetupJDKFix());
       myHolder.add(info);
     }
     else {

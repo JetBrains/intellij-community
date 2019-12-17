@@ -36,11 +36,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
-    QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(containingFile, ref));
     registrar.register(new QualifyStaticConstantFix(containingFile, ref));
-    registrar.register(quickFixFactory.createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
 

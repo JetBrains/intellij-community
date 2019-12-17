@@ -205,12 +205,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createSetupJDKFix() {
-    return SetupJDKFix.getInstance();
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createAddExceptionToCatchFix() {
     return new AddExceptionToCatchFix(true);
   }

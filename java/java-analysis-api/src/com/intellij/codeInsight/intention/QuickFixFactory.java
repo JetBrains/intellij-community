@@ -142,9 +142,6 @@ public abstract class QuickFixFactory {
                                                                  @NotNull PsiAnnotation... annotations);
 
   @NotNull
-  public abstract IntentionAction createSetupJDKFix();
-
-  @NotNull
   public abstract IntentionAction createAddExceptionToCatchFix();
 
   @NotNull
