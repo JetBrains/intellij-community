@@ -390,7 +390,6 @@ public class RecursionManager {
     // inner class imports
     "com.intellij.psi.impl.source.PsiJavaFileBaseImpl.processDeclarations(",
     "com.intellij.psi.impl.PsiClassImplUtil.getScopeCorrectedSuperTypes(",
-    "com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl.multiResolve(",
 
     // IDEA-212671
     "com.intellij.xml.impl.schema.XmlNSDescriptorImpl.getRedefinedElementDescriptor(",

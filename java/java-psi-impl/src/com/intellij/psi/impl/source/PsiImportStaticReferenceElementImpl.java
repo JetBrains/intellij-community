@@ -221,8 +221,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     PsiFile file = getContainingFile();
-    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
-    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode,file);
+    ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
+    ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode, file);
     return results instanceof JavaResolveResult[] ? (JavaResolveResult[])results : JavaResolveResult.EMPTY_ARRAY;
   }
 
