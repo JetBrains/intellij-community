@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
@@ -122,18 +123,24 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       appendln("EP usage statistics (${epUsagesMap.size} non-dynamic EPs remaining):")
       val epUsagesList = epUsagesMap.toList().sortedByDescending { it.second }
       for (pair in epUsagesList) {
-        appendln("${pair.second}: ${pair.first} (${extensionPointOwners.getOwner(pair.first)})")
-      }
-
-      appendln()
-      appendln("EPs grouped by owner:")
-      for (owner in extensionPointOwners.getSortedOwners()) {
-        val owned = extensionPointOwners.getOwnedEPs(owner)
-        appendln("$owner: ${owned.size}")
-        for (ep in owned) {
-          appendln(ep)
+        append("${pair.second}: ${pair.first}")
+        if (Registry.`is`("analyze.unloadable.discover.owners")) {
+          append(" (${extensionPointOwners.getOwner(pair.first)})")
         }
         appendln()
+      }
+
+      if (Registry.`is`("analyze.unloadable.discover.owners")) {
+        appendln()
+        appendln("EPs grouped by owner:")
+        for (owner in extensionPointOwners.getSortedOwners()) {
+          val owned = extensionPointOwners.getOwnedEPs(owner)
+          appendln("$owner: ${owned.size}")
+          for (ep in owned) {
+            appendln(ep)
+          }
+          appendln()
+        }
       }
     }
 
@@ -172,7 +179,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
         continue
       }
-      extensionPointOwners.discoverOwner(ep)
+      if (Registry.`is`("analyze.unloadable.discover.owners")) {
+        extensionPointOwners.discoverOwner(ep)
+      }
 
       when (ep.dynamic.value) {
         false -> nonDynamicEPs.add(ep.effectiveQualifiedName)
