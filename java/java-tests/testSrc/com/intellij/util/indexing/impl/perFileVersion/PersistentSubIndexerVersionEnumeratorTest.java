@@ -155,7 +155,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      myMap.setIndexedState(((VirtualFileWithId) file).getId(), new IndexedFileImpl(file));
+      myMap.setIndexedState(((VirtualFileWithId) file).getId(), new IndexedFileImpl(file, getProject()));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -169,7 +169,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.isIndexed(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file));
+      return myMap.isIndexed(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject()));
     }
     catch (IOException e) {
       LOG.error(e);

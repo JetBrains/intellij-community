@@ -58,7 +58,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
                           byte[] content,
                           long stamp,
                           boolean physicalContent) {
-    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content));
+    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content), null);
     myContentAsText = contentAsText;
     myContent = content;
     myStamp = stamp;
@@ -253,5 +253,10 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
       psi = getFileFromText();
     }
     return psi;
+  }
+
+  @Override
+  public Project getProject() {
+    return getUserData(IndexingDataKeys.PROJECT);
   }
 }
