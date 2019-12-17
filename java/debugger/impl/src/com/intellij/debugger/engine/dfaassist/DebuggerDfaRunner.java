@@ -74,34 +74,19 @@ class DebuggerDfaRunner extends DataFlowRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myStatement).getInstructionOffset();
     if (offset < 0) return null;
-    boolean changed = false;
     DfaMemoryState state = super.createMemoryState();
-    PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(myProject);
-    DfaValueFactory factory = getFactory();
-    Map<Value, DfaVariableValue> canonicalMap = new HashMap<>();
-    for (DfaValue dfaValue : factory.getValues().toArray(new DfaValue[0])) {
+    StateBuilder builder = new StateBuilder(frame, state);
+    for (DfaValue dfaValue : getFactory().getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
         DfaVariableValue var = (DfaVariableValue)dfaValue;
         Value jdiValue = findJdiValue(frame, var);
         if (jdiValue != null) {
-          DfaVariableValue canonicalVar = jdiValue instanceof ObjectReference ? canonicalMap.putIfAbsent(jdiValue, var) : null;
-          if (canonicalVar != null) {
-            state.applyCondition(var.eq(canonicalVar));
-          } else {
-            addToState(psiFactory, factory, state, var, jdiValue);
-          }
-          changed = true;
+          builder.add(var, jdiValue);
         }
       }
     }
-    if (changed) {
-      DfaVariableValue[] distinctValues =
-        StreamEx.ofValues(canonicalMap).filter(v -> v.getType() != null && !DfaUtil.isComparedByEquals(v.getType()))
-          .toArray(new DfaVariableValue[0]);
-      EntryStream.ofPairs(distinctValues)
-        .filterKeyValue((left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
-        .limit(20) // avoid too complex state
-        .forKeyValue((left, right) -> state.applyCondition(left.cond(RelationType.NE, right)));
+    builder.finish();
+    if (builder.myChanged) {
       return new DfaInstructionState(myFlow.getInstruction(offset), state);
     }
     return null;
@@ -197,127 +182,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
     return null;
   }
 
-  private void addToState(PsiElementFactory psiFactory,
-                          DfaValueFactory factory,
-                          DfaMemoryState state, DfaVariableValue var,
-                          Value jdiValue) {
-    DfType val = getConstantValue(psiFactory, factory, jdiValue);
-    if (val != DfTypes.TOP) {
-      state.applyCondition(var.eq(factory.fromDfType(val)));
-    }
-    if (jdiValue instanceof ObjectReference) {
-      ObjectReference ref = (ObjectReference)jdiValue;
-      ReferenceType type = ref.referenceType();
-      PsiType psiType = getPsiReferenceType(psiFactory, type);
-      if (psiType == null) return;
-      TypeConstraint exactType = TypeConstraint.exact(factory.createDfaType(psiType));
-      String name = type.name();
-      state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
-      if (jdiValue instanceof ArrayReference) {
-        DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, var);
-        int jdiLength = ((ArrayReference)jdiValue).length();
-        state.applyCondition(dfaLength.eq(factory.getInt(jdiLength)));
-      }
-      else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
-        setSpecialField(psiFactory, factory, state, var, ref, type, "value", SpecialField.UNBOX);
-      }
-      else if (COLLECTIONS_WITH_SIZE_FIELD.contains(name)) {
-        setSpecialField(psiFactory, factory, state, var, ref, type, "size", SpecialField.COLLECTION_SIZE);
-      }
-      else if (name.startsWith("java.util.Collections$Empty")) {
-        state.applyCondition(SpecialField.COLLECTION_SIZE.createValue(factory, var).eq(factory.getInt(0)));
-      }
-      else if (name.startsWith("java.util.Collections$Singleton")) {
-        state.applyCondition(SpecialField.COLLECTION_SIZE.createValue(factory, var).eq(factory.getInt(1)));
-      }
-      else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
-        setSpecialField(psiFactory, factory, state, var, ref, type, "value", SpecialField.OPTIONAL_VALUE);
-      }
-    }
-  }
-
-  @Nullable
-  private PsiType getPsiReferenceType(PsiElementFactory psiFactory, ReferenceType jdiType) {
-    Type componentType = jdiType;
-    int depth = 0;
-    while (componentType instanceof ArrayType) {
-      try {
-        componentType = ((ArrayType)componentType).componentType();
-        depth++;
-      }
-      catch (ClassNotLoadedException e) {
-        return null;
-      }
-    }
-    PsiType psiType = psiFactory.createTypeByFQClassName(componentType.name(), myBody.getResolveScope());
-    while (depth > 0) {
-      psiType = psiType.createArrayType();
-      depth--;
-    }
-    return psiType;
-  }
-
-  private void setSpecialField(PsiElementFactory psiFactory,
-                               DfaValueFactory factory,
-                               DfaMemoryState state,
-                               DfaVariableValue dfaQualifier,
-                               ObjectReference jdiQualifier,
-                               ReferenceType type,
-                               String fieldName,
-                               SpecialField specialField) {
-    Field value = type.fieldByName(fieldName);
-    if (value != null) {
-      DfaVariableValue dfaUnboxed = ObjectUtils.tryCast(specialField.createValue(factory, dfaQualifier), DfaVariableValue.class);
-      Value jdiUnboxed = jdiQualifier.getValue(value);
-      if (jdiUnboxed != null && dfaUnboxed != null) {
-        addToState(psiFactory, factory, state, dfaUnboxed, jdiUnboxed);
-      }
-    }
-  }
-
-  @NotNull
-  private DfType getConstantValue(PsiElementFactory psiFactory, DfaValueFactory factory, Value jdiValue) {
-    if (jdiValue == NullConst) {
-      return DfTypes.NULL;
-    }
-    if (jdiValue instanceof BooleanValue) {
-      return DfTypes.booleanValue(((BooleanValue)jdiValue).value());
-    }
-    if (jdiValue instanceof LongValue) {
-      return DfTypes.longValue(((LongValue)jdiValue).longValue());
-    }
-    if (jdiValue instanceof ShortValue || jdiValue instanceof CharValue ||
-        jdiValue instanceof ByteValue || jdiValue instanceof IntegerValue) {
-      return DfTypes.intValue(((PrimitiveValue)jdiValue).intValue());
-    }
-    if (jdiValue instanceof FloatValue) {
-      return DfTypes.floatValue(((FloatValue)jdiValue).floatValue());
-    }
-    if (jdiValue instanceof DoubleValue) {
-      return DfTypes.doubleValue(((DoubleValue)jdiValue).doubleValue());
-    }
-    if (jdiValue instanceof StringReference) {
-      DfaPsiType dfaType =
-        factory.createDfaType(psiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope()));
-      return DfTypes.constant(((StringReference)jdiValue).value(), dfaType);
-    }
-    if (jdiValue instanceof ObjectReference) {
-      ReferenceType type = ((ObjectReference)jdiValue).referenceType();
-      String enumConstantName = getEnumConstantName((ObjectReference)jdiValue);
-      if (enumConstantName != null) {
-        PsiType psiType = getPsiReferenceType(psiFactory, type);
-        if (psiType instanceof PsiClassType) {
-          PsiClass enumClass = ((PsiClassType)psiType).resolve();
-          if (enumClass != null && enumClass.isEnum()) {
-            PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
-            if (enumConst instanceof PsiEnumConstant) {
-              return DfTypes.constant(enumConst, factory.createDfaType(psiType));
-            }
-          }
-        }
-      }
-    }
-    return DfTypes.TOP;
+  private static Value wrap(Value value) {
+    return value == null ? NullConst : value;
   }
 
   private static String getEnumConstantName(ObjectReference ref) {
@@ -335,7 +201,185 @@ class DebuggerDfaRunner extends DataFlowRunner {
     return nameValue instanceof StringReference ? ((StringReference)nameValue).value() : null;
   }
 
-  private static Value wrap(Value value) {
-    return value == null ? NullConst : value;
+  private class StateBuilder {
+    private final @NotNull PsiElementFactory myPsiFactory = JavaPsiFacade.getElementFactory(myProject);
+    private final @NotNull DfaValueFactory myFactory = getFactory();
+    private final @NotNull ClassLoaderReference myContextLoader;
+    private final @NotNull DfaMemoryState myMemState;
+    private final @NotNull Map<Value, DfaVariableValue> myCanonicalMap = new HashMap<>();
+    private @Nullable List<ClassLoaderReference> myParentLoaders = null;
+    private boolean myChanged;
+
+    StateBuilder(@NotNull StackFrame frame, @NotNull DfaMemoryState memState) {
+      myContextLoader = frame.location().declaringType().classLoader();
+      myMemState = memState;
+    }
+
+    void add(@NotNull DfaVariableValue var, @NotNull Value jdiValue) {
+      DfaVariableValue canonicalVar = jdiValue instanceof ObjectReference ? myCanonicalMap.putIfAbsent(jdiValue, var) : null;
+      if (canonicalVar != null) {
+        myMemState.applyCondition(var.eq(canonicalVar));
+      } else {
+        addConditions(var, jdiValue);
+      }
+      myChanged = true;
+    }
+
+    void finish() {
+      if (myChanged) {
+        DfaVariableValue[] distinctValues =
+          StreamEx.ofValues(myCanonicalMap).filter(v -> v.getType() != null && !DfaUtil.isComparedByEquals(v.getType()))
+            .toArray(new DfaVariableValue[0]);
+        EntryStream.ofPairs(distinctValues)
+          .filterKeyValue(
+            (left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
+          .limit(20) // avoid too complex state
+          .forKeyValue((left, right) -> myMemState.applyCondition(left.cond(RelationType.NE, right)));
+      }
+    }
+
+    private void addConditions(DfaVariableValue var, Value jdiValue) {
+      DfType val = getConstantValue(jdiValue);
+      if (val != DfTypes.TOP) {
+        myMemState.applyCondition(var.eq(myFactory.fromDfType(val)));
+      }
+      if (jdiValue instanceof ObjectReference) {
+        ObjectReference ref = (ObjectReference)jdiValue;
+        ReferenceType type = ref.referenceType();
+        ClassLoaderReference typeLoader = type.classLoader();
+        if (!isCompatibleClassLoader(typeLoader)) return;
+        PsiType psiType = getPsiReferenceType(myPsiFactory, type);
+        if (psiType == null) return;
+        TypeConstraint exactType = TypeConstraint.exact(myFactory.createDfaType(psiType));
+        String name = type.name();
+        myMemState.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
+        if (jdiValue instanceof ArrayReference) {
+          DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(myFactory, var);
+          int jdiLength = ((ArrayReference)jdiValue).length();
+          myMemState.applyCondition(dfaLength.eq(myFactory.getInt(jdiLength)));
+        }
+        else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
+          setSpecialField(var, ref, type, "value", SpecialField.UNBOX);
+        }
+        else if (COLLECTIONS_WITH_SIZE_FIELD.contains(name)) {
+          setSpecialField(var, ref, type, "size", SpecialField.COLLECTION_SIZE);
+        }
+        else if (name.startsWith("java.util.Collections$Empty")) {
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(0)));
+        }
+        else if (name.startsWith("java.util.Collections$Singleton")) {
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(1)));
+        }
+        else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
+          setSpecialField(var, ref, type, "value", SpecialField.OPTIONAL_VALUE);
+        }
+      }
+    }
+
+    private boolean isCompatibleClassLoader(ClassLoaderReference loader) {
+      if (loader == null || loader.equals(myContextLoader)) return true;
+      return getParentLoaders().contains(loader);
+    }
+
+    @NotNull
+    private List<ClassLoaderReference> getParentLoaders() {
+      if (myParentLoaders == null) {
+        List<ClassLoaderReference> loaders = Collections.emptyList();
+        ClassType classLoaderClass = (ClassType)myContextLoader.referenceType();
+        while (classLoaderClass != null && !"java.lang.ClassLoader".equals(classLoaderClass.name())) {
+          classLoaderClass = classLoaderClass.superclass();
+        }
+        if (classLoaderClass != null) {
+          Field parent = classLoaderClass.fieldByName("parent");
+          if (parent != null) {
+            loaders = StreamEx.iterate(
+              myContextLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class)).toList();
+          }
+        }
+        myParentLoaders = loaders;
+      }
+      return myParentLoaders;
+    }
+
+    @Nullable
+    private PsiType getPsiReferenceType(PsiElementFactory psiFactory, ReferenceType jdiType) {
+      Type componentType = jdiType;
+      int depth = 0;
+      while (componentType instanceof ArrayType) {
+        try {
+          componentType = ((ArrayType)componentType).componentType();
+          depth++;
+        }
+        catch (ClassNotLoadedException e) {
+          return null;
+        }
+      }
+      PsiType psiType = psiFactory.createTypeByFQClassName(componentType.name(), myBody.getResolveScope());
+      while (depth > 0) {
+        psiType = psiType.createArrayType();
+        depth--;
+      }
+      return psiType;
+    }
+
+    private void setSpecialField(DfaVariableValue dfaQualifier,
+                                 ObjectReference jdiQualifier,
+                                 ReferenceType type,
+                                 String fieldName,
+                                 SpecialField specialField) {
+      Field value = type.fieldByName(fieldName);
+      if (value != null) {
+        DfaVariableValue dfaUnboxed = ObjectUtils.tryCast(specialField.createValue(myFactory, dfaQualifier), DfaVariableValue.class);
+        Value jdiUnboxed = jdiQualifier.getValue(value);
+        if (jdiUnboxed != null && dfaUnboxed != null) {
+          addConditions(dfaUnboxed, jdiUnboxed);
+        }
+      }
+    }
+
+    @NotNull
+    private DfType getConstantValue(Value jdiValue) {
+      if (jdiValue == NullConst) {
+        return DfTypes.NULL;
+      }
+      if (jdiValue instanceof BooleanValue) {
+        return DfTypes.booleanValue(((BooleanValue)jdiValue).value());
+      }
+      if (jdiValue instanceof LongValue) {
+        return DfTypes.longValue(((LongValue)jdiValue).longValue());
+      }
+      if (jdiValue instanceof ShortValue || jdiValue instanceof CharValue ||
+          jdiValue instanceof ByteValue || jdiValue instanceof IntegerValue) {
+        return DfTypes.intValue(((PrimitiveValue)jdiValue).intValue());
+      }
+      if (jdiValue instanceof FloatValue) {
+        return DfTypes.floatValue(((FloatValue)jdiValue).floatValue());
+      }
+      if (jdiValue instanceof DoubleValue) {
+        return DfTypes.doubleValue(((DoubleValue)jdiValue).doubleValue());
+      }
+      if (jdiValue instanceof StringReference) {
+        DfaPsiType dfaType =
+          myFactory.createDfaType(myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope()));
+        return DfTypes.constant(((StringReference)jdiValue).value(), dfaType);
+      }
+      if (jdiValue instanceof ObjectReference) {
+        ReferenceType type = ((ObjectReference)jdiValue).referenceType();
+        String enumConstantName = getEnumConstantName((ObjectReference)jdiValue);
+        if (enumConstantName != null) {
+          PsiType psiType = getPsiReferenceType(myPsiFactory, type);
+          if (psiType instanceof PsiClassType) {
+            PsiClass enumClass = ((PsiClassType)psiType).resolve();
+            if (enumClass != null && enumClass.isEnum()) {
+              PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
+              if (enumConst instanceof PsiEnumConstant) {
+                return DfTypes.constant(enumConst, myFactory.createDfaType(psiType));
+              }
+            }
+          }
+        }
+      }
+      return DfTypes.TOP;
+    }
   }
 }
