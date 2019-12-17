@@ -185,18 +185,19 @@ int main(int argc, char **argv)
             break;
         }
 
-        VARIANT vtId;
-        pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
-        wcout << "pid:" << vtId.intVal << "\n";
-        VARIANT vtName;
-        pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
-        if (vtName.bstrVal != nullptr)
+        VARIANT vtId = { 0 };
+        hr = pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
+        INT pid = SUCCEEDED(hr) ? vtId.intVal : 0;
+        wcout << "pid:" << pid << "\n";
+        VARIANT vtName = { 0 };
+        hres = pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
+        if (SUCCEEDED(hr) && vtName.bstrVal != nullptr)
             wcout << L"name:" << escapeLineBreaks(vtName.bstrVal) << L"\n";
         else
             wcout << L"name:\n";
-        VARIANT vtCmd;
-        pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
-        if (vtCmd.bstrVal != nullptr)
+        VARIANT vtCmd = { 0 };
+        hr = pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
+        if (SUCCEEDED(hr) && vtCmd.bstrVal != nullptr)
             wcout << L"cmd:" << escapeLineBreaks(vtCmd.bstrVal) << L"\n";
         else
             wcout << L"cmd:\n";
