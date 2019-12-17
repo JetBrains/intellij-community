@@ -497,12 +497,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     if(builder.length() > indexAfterParameterName) {
+      if (builder.charAt(indexAfterParameterName) != ' ') builder.insert(indexAfterParameterName, ' ');
       final int lastNewlineIndex = builder.lastIndexOf(LINE_SEPARATOR);
       if (lastNewlineIndex > -1) {
         boolean lastLineContainsOnlyAsterisk = builder.substring(lastNewlineIndex).trim().equals("*");
         if (lastLineContainsOnlyAsterisk) builder.delete(lastNewlineIndex, builder.length() - 1);
       }
-      if (builder.charAt(indexAfterParameterName) != ' ') builder.insert(indexAfterParameterName, ' ');
     }
     return builder.toString();
   }
