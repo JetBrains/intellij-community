@@ -88,28 +88,31 @@ private fun executeInitAppInEdt(args: List<String>,
     return
   }
 
-  // ApplicationStarter it is extension, so, to find starter, extensions must be registered prior to that
-  registerFuture.thenRunOrHandleError {
-    val starter = findStarter(args.first()) ?: IdeStarter()
-    if (Main.isHeadless() && !starter.isHeadless) {
-      Main.showMessage("Startup Error", "Application cannot start in a headless mode", true)
-      exitProcess(Main.NO_GRAPHICS)
-    }
+  // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
+  registerFuture
+    .thenRun {
+      val starter = findStarter(args.first()) ?: IdeStarter()
+      if (Main.isHeadless() && !starter.isHeadless) {
+        Main.showMessage("Startup Error", "Application cannot start in a headless mode", true)
+        exitProcess(Main.NO_GRAPHICS)
+      }
 
-    starter.premain(args)
-    startApp(app, starter, initAppActivity, registerFuture, args)
-  }
+      starter.premain(args)
+      startApp(app, starter, initAppActivity, registerFuture, args)
+    }
+    .exceptionally {
+      StartupAbortedException.processException(it)
+      null
+    }
 }
 
 @ApiStatus.Internal
-fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>, app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
-  return pluginFuture
-    .thenApply {
-      runActivity("app component registration", ActivityCategory.MAIN) {
-        app.registerComponents(it, false)
-      }
-      it
-    }
+fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
+                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> = pluginFuture.thenApply {
+  runActivity("app component registration", ActivityCategory.MAIN) {
+    app.registerComponents(it, false)
+  }
+  it
 }
 
 private fun startApp(app: ApplicationImpl,
@@ -157,14 +160,9 @@ private fun startApp(app: ApplicationImpl,
         // ensure that TouchBarsManager is loaded before WelcomeFrame/project
         // do not wait completion - it is thread safe and not required for application start
         runActivity("mac touchbar") {
-          if (app.isDisposed) {
-            return@Runnable
-          }
+          if (app.isDisposed) return@Runnable
           Foundation.init()
-
-          if (app.isDisposed) {
-            return@Runnable
-          }
+          if (app.isDisposed) return@Runnable
           TouchBarsManager.initialize()
         }
       }, NonUrgentExecutor.getInstance())
@@ -174,8 +172,7 @@ private fun startApp(app: ApplicationImpl,
 
     NonUrgentExecutor.getInstance().execute {
       runActivity("migLayout") {
-        //IDEA-170295
-        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)  // IDEA-170295
       }
     }
 
@@ -201,8 +198,7 @@ private fun startApp(app: ApplicationImpl,
       }, edtExecutor)
 
       boundedExecutor.execute {
-        // execute in parallel to loading components - this functionality should be used only by plugin functionality,
-        // that used after start-up
+        // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
         runActivity("system properties setting") {
           SystemPropertyBean.initSystemProperties()
         }
@@ -210,19 +206,19 @@ private fun startApp(app: ApplicationImpl,
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
     }
-    .thenComposeAsync<Void?>(Function {
-      val activity = initAppActivity.startChild("app initialized callback")
-      val future = callAppInitialized(app, boundedExecutor)
+    .thenComposeAsync<Void?>(
+      Function {
+        val activity = initAppActivity.startChild("app initialized callback")
+        val future = callAppInitialized(app, boundedExecutor)
 
-      // should be after scheduling all app initialized listeners (because this activity is not important)
-      boundedExecutor.execute {
-        runActivity("project converter provider preloading") {
-          app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+        // should be after scheduling all app initialized listeners (because this activity is not important)
+        boundedExecutor.execute {
+          runActivity("project converter provider preloading") {
+            app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
+          }
         }
-      }
 
-      future
-        .thenRun {
+        future.thenRun {
           activity.end()
           if (!headless) {
             addActivateAndWindowsCliListeners()
@@ -230,18 +226,25 @@ private fun startApp(app: ApplicationImpl,
 
           initAppActivity.end()
         }
-    }, nonEdtExecutor /* if loadComponentInEdtFuture will be completed after preloadSyncServiceFuture, then this task will be executed in EDT — it is not good, so, force execution not in EDT */)
-    .thenRunAsync(Runnable {
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        starter.main(ArrayUtilRt.toStringArray(args))
-      }
-
-      if (PluginManagerCore.isRunningFromSources()) {
-        NonUrgentExecutor.getInstance().execute {
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      },
+      // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT —
+      // not good, so force execution out of EDT
+      nonEdtExecutor
+    )
+    .thenRunAsync(
+      Runnable {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+          starter.main(ArrayUtilRt.toStringArray(args))
         }
-      }
-    }, edtExecutor)
+
+        if (PluginManagerCore.isRunningFromSources()) {
+          NonUrgentExecutor.getInstance().execute {
+            AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+          }
+        }
+      },
+      edtExecutor
+    )
     .exceptionally {
       StartupAbortedException.processException(it)
       null
@@ -249,9 +252,8 @@ private fun startApp(app: ApplicationImpl,
 }
 
 @ApiStatus.Internal
-fun createExecutorToPreloadServices(): Executor {
-  return AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), /* changeThreadName = */ false)
-}
+fun createExecutorToPreloadServices(): Executor =
+  AppExecutorUtil.createBoundedApplicationPoolExecutor("preload services", Runtime.getRuntime().availableProcessors(), false)
 
 @ApiStatus.Internal
 @JvmOverloads
@@ -281,24 +283,20 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
 
 @ApiStatus.Internal
 fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
-                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
-  return registerFuture
-    .thenCompose { plugins ->
-      val future = CompletableFuture.runAsync(Runnable {
-        runActivity("add registry keys") {
-          RegistryKeyBean.addKeysFromPlugins()
-        }
-      }, AppExecutorUtil.getAppExecutorService())
-
-      // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-      initConfigurationStore(app, null)
-
-      future
-        .thenApply {
-          @Suppress("UNCHECKED_CAST")
-          plugins as List<IdeaPluginDescriptorImpl>
-        }
+                                 app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> = registerFuture.thenCompose { plugins ->
+  val future = CompletableFuture.runAsync(Runnable {
+    runActivity("add registry keys") {
+      RegistryKeyBean.addKeysFromPlugins()
     }
+  }, AppExecutorUtil.getAppExecutorService())
+
+  // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
+  initConfigurationStore(app, null)
+
+  future.thenApply {
+    @Suppress("UNCHECKED_CAST")
+    plugins as List<IdeaPluginDescriptorImpl>
+  }
 }
 
 private fun addActivateAndWindowsCliListeners() {
@@ -366,12 +364,12 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*> = Comp
           loadSystemFonts()
         }
 
-        // pre-load cursors used by drag'n'drop AWT subsystem
+        // pre-load cursors used by drag-n-drop AWT subsystem
         runActivity("DnD setup") {
           DragSource.getDefaultDragSource()
         }
       }
-    }, AppExecutorUtil.getAppExecutorService() /* must be not executed neither in idea main thread, nor in EDT */)
+    }, AppExecutorUtil.getAppExecutorService())  // must not be executed neither in IDE main thread nor in EDT
 
   val plugins = try {
     initAppActivity.runChild("plugin descriptors loading") {
@@ -394,18 +392,7 @@ private fun loadSystemFonts() {
   GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
 }
 
-fun findStarter(key: String): ApplicationStarter? {
-  for (starter in ApplicationStarter.EP_NAME.iterable) {
-    if (starter == null) {
-      break
-    }
-
-    if (starter.commandName == key) {
-      return starter
-    }
-  }
-  return null
-}
+fun findStarter(key: String): ApplicationStarter? = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 fun openFilesOnLoading(files: List<File>) {
   filesToLoad = files
@@ -574,17 +561,14 @@ private fun invokeLaterWithAnyModality(name: String, task: () -> Unit) {
 }
 
 /**
- * Method looks for `-Dkey=value` program arguments and stores some of them in system properties.
- * We should use it for a limited number of safe keys.
- * One of them is a list of ids of required plugins
+ * The method looks for `-Dkey=value` program arguments and stores some of them in system properties.
+ * We should use it for a limited number of safe keys; one of them is a list of IDs of required plugins.
  *
  * @see SAFE_JAVA_ENV_PARAMETERS
  */
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
-  if (args.isEmpty()) {
-    return emptyList()
-  }
+  if (args.isEmpty()) return emptyList()
 
   val arguments = mutableListOf<String>()
   for (arg in args) {
@@ -595,21 +579,11 @@ private fun processProgramArguments(args: List<String>): List<String> {
         continue
       }
     }
-    if (SplashManager.NO_SPLASH == arg) {
-      continue
+    if (SplashManager.NO_SPLASH != arg) {
+      arguments.add(arg)
     }
-
-    arguments.add(arg)
   }
   return arguments
-}
-
-private fun CompletableFuture<*>.thenRunOrHandleError(handler: () -> Unit): CompletableFuture<Void>? {
-  return thenRun(handler)
-    .exceptionally {
-      StartupAbortedException.processException(it)
-      null
-    }
 }
 
 private fun reportPluginError() {
