@@ -332,11 +332,11 @@ public class DfaUtil {
   public static Object computeValue(PsiExpression expression) {
     PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
     if (expressionToAnalyze == null) return null;
-    Object computed = ExpressionUtils.computeConstantExpression(expression);
+    Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
     if (computed != null) return computed;
-    CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expression);
+    CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expressionToAnalyze);
     if (dataflowResult != null) {
-      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expression));
+      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expressionToAnalyze));
     }
     return null;
   }

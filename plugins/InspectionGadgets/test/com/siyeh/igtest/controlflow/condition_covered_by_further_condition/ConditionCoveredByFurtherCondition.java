@@ -178,5 +178,10 @@ public class ConditionCoveredByFurtherCondition {
     static class Holder {
         static final Object x = new Object();
     }
+
+    void testChainInstanceof(String arg) {
+        if ((<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Integer'">arg instanceof Integer</error>) || <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Long'">arg instanceof Long</error>) {}
+        if (<error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Integer'">arg instanceof Integer</error> || <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.lang.Long'">arg instanceof Long</error>) {}
+    }
 }
 enum X {A, B, C}
