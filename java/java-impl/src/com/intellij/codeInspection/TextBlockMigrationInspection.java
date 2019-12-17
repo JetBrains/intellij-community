@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -63,20 +64,22 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
           }
         }
         if (nNewLines <= 1) return;
-        holder.registerProblem(expression, firstNewLineTextRange,
+        boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
+        holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
                                InspectionsBundle.message("inspection.text.block.migration.message", "Concatenation"),
                                new ReplaceWithTextBlockFix());
       }
 
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        if (!mySuggestLiteralReplacement) return;
+        boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
+        if (!mySuggestLiteralReplacement && !quickFixOnly) return;
         PsiLiteralExpressionImpl literal = getLiteralExpression(expression);
         if (literal == null) return;
         String text = literal.getText();
         int newLineIdx = getNewLineIndex(text, 0);
         if (newLineIdx == -1 || getNewLineIndex(text, newLineIdx + 1) == -1) return;
-        holder.registerProblem(expression, new TextRange(newLineIdx, newLineIdx + 2),
+        holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
                                InspectionsBundle.message("inspection.text.block.migration.message", "String"),
                                new ReplaceWithTextBlockFix());
       }
