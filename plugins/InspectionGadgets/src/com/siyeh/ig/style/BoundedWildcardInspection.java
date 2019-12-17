@@ -6,12 +6,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -156,8 +154,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       JavaChangeSignatureDialog
         dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, false, null/*todo?*/);
       dialog.setParameterInfos(parameterInfos);
-      TransactionGuard.submitTransaction(project, () -> dialog.show());
-      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      if (dialog.showAndGet()) {
         PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
         if (field != null) {
           replaceType(project, field.getTypeElement(), suggestMethodParameterType(candidate, isExtends));

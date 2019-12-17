@@ -8,7 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValues;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -192,7 +192,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
 
   private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
     project.putUserData(ANNOTATIONS_BEING_ATTACHED, Boolean.TRUE);
-    TransactionGuard.submitTransaction(project, () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       SdkModificator modificator = sdk.getSdkModificator();
       boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
       // daemon will restart automatically
@@ -201,7 +201,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       if (success) {
         project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
       }
-    });
+    }, project.getDisposed());
   }
 
   private static void checkExpression(@NotNull PsiExpression expression,

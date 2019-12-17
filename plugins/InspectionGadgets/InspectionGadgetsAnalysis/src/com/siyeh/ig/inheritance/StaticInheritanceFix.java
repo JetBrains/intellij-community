@@ -15,12 +15,10 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -102,9 +100,6 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
               if (!isInheritor) continue;
             }
             final Runnable runnable = () -> {
-              if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
-                return;
-              }
               final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
               final PsiReferenceExpression qualified = (PsiReferenceExpression)
                 elementFactory.createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
@@ -114,8 +109,8 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
               final PsiClass containingClass = field.getContainingClass();
               qualifier.bindToElement(containingClass);
             };
-            TransactionGuard.submitTransaction(project,
-                                               () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
+            WriteCommandAction.runWriteCommandAction(project, null, null, runnable,
+                                                     ReadAction.compute(() -> referenceExpression.getContainingFile()));
           }
         }
         final Runnable runnable = () -> {
@@ -123,7 +118,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
           IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(implementingClass, classType, false);
           fix.invoke(project, null, file);
         };
-        TransactionGuard.submitTransaction(project, () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
+        WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file);
       }
     });
   }

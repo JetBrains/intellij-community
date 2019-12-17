@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -55,7 +54,7 @@ public class SameErasureButDifferentMethodsFix extends LocalQuickFixAndIntention
     ChangeSignatureProcessor processor =
       new ChangeSignatureProcessor(project, method, false, null, method.getName(), method.getReturnType(), infos);
 
-    TransactionGuard.submitTransaction(project, processor);
+    processor.run();
   }
 
   @Override
