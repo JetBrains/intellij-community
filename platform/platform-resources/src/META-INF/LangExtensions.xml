@@ -969,7 +969,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
 
-    <statistics.counterUsagesCollector groupId="searchEverywhere" version="2"/>
+    <statistics.counterUsagesCollector groupId="searchEverywhere" version="3"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
     <statistics.counterUsagesCollector groupId="find" version="2"/>
