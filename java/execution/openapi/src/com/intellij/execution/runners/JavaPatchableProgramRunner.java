@@ -10,14 +10,11 @@ import com.intellij.execution.configurations.RunnerSettings;
 public abstract class JavaPatchableProgramRunner<Settings extends RunnerSettings> extends GenericProgramRunner<Settings> {
   public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException;
 
-
-  protected static void runCustomPatchers(JavaParameters javaParameters,
-                                          Executor executor,
-                                          RunProfile runProfile) {
+  protected static void runCustomPatchers(JavaParameters javaParameters, Executor executor, RunProfile runProfile) {
     if (runProfile != null) {
-      for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensionList()) {
+      JavaProgramPatcher.EP_NAME.forEachExtensionSafe(patcher -> {
         patcher.patchJavaParameters(executor, runProfile, javaParameters);
-      }
+      });
     }
   }
 }

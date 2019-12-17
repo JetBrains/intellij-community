@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -23,34 +23,24 @@ import org.jetbrains.annotations.Nullable;
  *   &lt;programRunner implementation="RunnerClassFQN"/&gt;
  * &lt;/extensions&gt;
  *
- * @param <Settings>
  * @see GenericProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
-  ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = ExtensionPointName.create("com.intellij.programRunner");
+  ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = new ExtensionPointName<>("com.intellij.programRunner");
 
   interface Callback {
     void processStarted(RunContentDescriptor descriptor);
   }
 
   @Nullable
-  static ProgramRunner findRunnerById(@NotNull String id) {
-    for (ProgramRunner registeredRunner : PROGRAM_RUNNER_EP.getExtensionList()) {
-      if (id.equals(registeredRunner.getRunnerId())) {
-        return registeredRunner;
-      }
-    }
-    return null;
+  static ProgramRunner<?> findRunnerById(@NotNull String id) {
+    return PROGRAM_RUNNER_EP.findFirstSafe(it -> id.equals(it.getRunnerId()));
   }
 
   @Nullable
   static ProgramRunner<RunnerSettings> getRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    for (ProgramRunner<? extends RunnerSettings> runner : PROGRAM_RUNNER_EP.getExtensionList()) {
-      if (runner.canRun(executorId, settings)) {
-        return (ProgramRunner<RunnerSettings>)runner;
-      }
-    }
-    return null;
+    //noinspection unchecked
+    return (ProgramRunner<RunnerSettings>)PROGRAM_RUNNER_EP.findFirstSafe(it -> it.canRun(executorId, settings));
   }
 
   /**
@@ -58,7 +48,8 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    *
    * @return the program runner ID.
    */
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getRunnerId();
 
   /**
@@ -68,7 +59,7 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
    * @param profile the configuration being run.
    * @return true if the runner can handle it, false otherwise.
    */
-  boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile);
+  boolean canRun(@NotNull String executorId, @NotNull RunProfile profile);
 
   /**
    * Creates a block of per-configuration settings used by this program runner.

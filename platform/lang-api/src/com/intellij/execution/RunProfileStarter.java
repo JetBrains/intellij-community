@@ -19,7 +19,6 @@ import org.jetbrains.concurrency.Promises;
  */
 @ApiStatus.Internal
 public abstract class RunProfileStarter {
-
   /**
    * @deprecated use {@link #executeAsync(RunProfileState, ExecutionEnvironment)}
    */
@@ -33,6 +32,7 @@ public abstract class RunProfileStarter {
    * You should NOT throw exceptions in this method.
    * Instead return {@link Promises#rejectedPromise(Throwable)} or call {@link org.jetbrains.concurrency.AsyncPromise#setError(Throwable)}
    */
+  @NotNull
   public Promise<RunContentDescriptor> executeAsync(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
     return Promises.resolvedPromise(execute(state, environment));
