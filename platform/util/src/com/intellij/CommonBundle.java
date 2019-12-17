@@ -67,10 +67,6 @@ public final class CommonBundle extends BundleBase {
     return message("button.cancel");
   }
 
-  public static String getBackgroundButtonText() {
-    return message("button.background");
-  }
-
   public static String getHelpButtonText() {
     return message("button.help");
   }
@@ -113,10 +109,6 @@ public final class CommonBundle extends BundleBase {
 
   public static String getCloseButtonText() {
     return message("button.close");
-  }
-
-  public static String getNoForAllButtonText() {
-    return message("button.no.for.all");
   }
 
   public static String getApplyButtonText() {
