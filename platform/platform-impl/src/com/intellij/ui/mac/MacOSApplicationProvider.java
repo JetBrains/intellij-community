@@ -27,7 +27,6 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -150,7 +149,7 @@ public final class MacOSApplicationProvider {
       return project;
     }
 
-    private static void submit(@NotNull String name, @NotNull Runnable task) {
+    private static void submit(String name, Runnable task) {
       LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread(), "; ENABLED = ", ENABLED.get());
       if (!ENABLED.get()) {
         LOG.debug("MacMenu: disabled");
@@ -171,7 +170,7 @@ public final class MacOSApplicationProvider {
               LOG.debug("MacMenu: done ", name);
               ENABLED.set(true);
             }
-          }, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
+          }, ModalityState.NON_MODAL);
         }
       }
     }
