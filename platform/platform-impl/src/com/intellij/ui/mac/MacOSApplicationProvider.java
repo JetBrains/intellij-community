@@ -5,6 +5,7 @@ import com.apple.eawt.AppEvent;
 import com.apple.eawt.Application;
 import com.apple.eawt.OpenURIHandler;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.ShowSettingsAction;
@@ -23,16 +24,20 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
+import io.netty.handler.codec.http.QueryStringDecoder;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MacOSApplicationProvider {
@@ -179,11 +184,33 @@ public final class MacOSApplicationProvider {
       ID mainBundle = Foundation.invoke("NSBundle", "mainBundle");
       ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
       if (!urlTypes.equals(ID.NIL)) {
-        CustomProtocolHandler handler = new CustomProtocolHandler();
         Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
           @Override
           public void openURI(AppEvent.OpenURIEvent event) {
-            handler.openLink(event.getURI());
+            Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+            String file = ContainerUtil.getFirstItem(parameters.get("file"));
+            if (file != null) {
+              if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+                String line = ContainerUtil.getFirstItem(parameters.get("line"));
+                String column = ContainerUtil.getFirstItem(parameters.get("column"));
+                List<String> args = new SmartList<>();
+                if (line != null) {
+                  args.add("--line");
+                  args.add(line);
+                }
+                if (column != null) {
+                  args.add("--column");
+                  args.add(column);
+                }
+                args.add(file);
+                ApplicationManager.getApplication().invokeLater(
+                  () -> CommandLineProcessor.processExternalCommandLine(args, null),
+                  ModalityState.NON_MODAL);
+              }
+              else {
+                ApplicationLoader.openFilesOnLoading(Collections.singletonList(new File(file)));
+              }
+            }
           }
         });
       }
