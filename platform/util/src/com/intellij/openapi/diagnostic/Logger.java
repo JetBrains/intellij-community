@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -142,13 +141,8 @@ public abstract class Logger {
 
   public abstract void warn(String message, @Nullable Throwable t);
 
-  // Android Studio: excluded from exception counts
-  public static class EmptyThrowable extends Throwable {}
-
   public void error(String message) {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
-    // Android Studio: exclude from exception counts
-    error(message, new EmptyThrowable(), ArrayUtil.EMPTY_STRING_ARRAY);
   }
   public void error(Object message) {
     error(String.valueOf(message));
@@ -165,8 +159,7 @@ public abstract class Logger {
   }
 
   public void error(String message, @NotNull String... details) {
-    // Android Studio: exclude from exception counts
-    error(message, new EmptyThrowable(), details);
+    error(message, new Throwable(message), details);
   }
 
   public void error(String message, @Nullable Throwable t) {
