@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *   &lt;programRunner implementation="RunnerClassFQN"/&gt;
  * &lt;/extensions&gt;
  *
- * @see GenericProgramRunner
+ * @see AsyncProgramRunner
  */
 public interface ProgramRunner<Settings extends RunnerSettings> {
   ExtensionPointName<ProgramRunner<? extends RunnerSettings>> PROGRAM_RUNNER_EP = new ExtensionPointName<>("com.intellij.programRunner");
@@ -73,11 +73,18 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
   void checkConfiguration(RunnerSettings settings, @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException;
 
-  void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult);
+  /**
+   * @deprecated Not used by platform.
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  default void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
+  }
 
   @Nullable
   SettingsEditor<Settings> getSettingsEditor(Executor executor, RunConfiguration configuration);
 
   void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException;
+
   void execute(@NotNull ExecutionEnvironment environment, @Nullable Callback callback) throws ExecutionException;
 }

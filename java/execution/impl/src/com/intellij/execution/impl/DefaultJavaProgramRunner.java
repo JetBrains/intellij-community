@@ -137,8 +137,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner<RunnerS
       return null;
     }
 
-    onProcessStarted(env.getRunnerSettings(), executionResult);
-
     RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);

@@ -2,7 +2,6 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.*;
@@ -20,10 +19,6 @@ public abstract class BaseProgramRunner<Settings extends RunnerSettings> impleme
   @Override
   public void checkConfiguration(RunnerSettings settings, ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException {
-  }
-
-  @Override
-  public void onProcessStarted(RunnerSettings settings, ExecutionResult executionResult) {
   }
 
   @Override
