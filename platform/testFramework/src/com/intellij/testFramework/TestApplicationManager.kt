@@ -62,7 +62,6 @@ import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAutoShutdown
 import java.awt.EventQueue
 import java.awt.Toolkit
-import java.util.*
 import java.util.concurrent.DelayQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -331,7 +330,7 @@ private fun checkJavaSwingTimersAreDisposed() {
   var text = "(delayed for ${delay}ms)"
   val getTimer = ReflectionUtil.getDeclaredMethod(timer.javaClass, "getTimer")
   val swingTimer = getTimer!!.invoke(timer) as Timer
-  text = "Timer (listeners: ${Arrays.asList(*swingTimer.actionListeners)}) $text"
+  text = "Timer (listeners: ${listOf(*swingTimer.actionListeners)}) $text"
   try {
     throw AssertionFailedError("Not disposed javax.swing.Timer: $text; queue:$timerQueue")
   }
