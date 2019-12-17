@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -176,9 +177,11 @@ public final class BootstrapClassLoaderUtil {
 
   @NotNull
   private static List<String> loadJarOrder() {
-    try {
-      try (BufferedReader stream = new BufferedReader(new InputStreamReader(BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE), StandardCharsets.UTF_8))) {
-        return FileUtilRt.loadLines(stream);
+    try (InputStream classpathOrderStream = BootstrapClassLoaderUtil.class.getResourceAsStream(CLASSPATH_ORDER_FILE)) {
+      if (classpathOrderStream != null) {
+        try (BufferedReader stream = new BufferedReader(new InputStreamReader(classpathOrderStream, StandardCharsets.UTF_8))) {
+          return FileUtilRt.loadLines(stream);
+        }
       }
     }
     catch (Exception ignored) {

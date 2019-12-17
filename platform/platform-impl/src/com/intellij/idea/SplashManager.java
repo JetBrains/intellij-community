@@ -79,6 +79,9 @@ public final class SplashManager {
   @Nullable
   private static IdeFrameImpl createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
+    if (!infoFile.toFile().exists()) {
+      return null;
+    }
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
       buffer = ByteBuffer.allocate((int)channel.size());

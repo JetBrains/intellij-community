@@ -39,7 +39,7 @@ class FileLoader extends Loader {
     }
 
     boolean containsClasses = false;
-    
+
     for (File file : files) {
       final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
       if (isClass) {
@@ -72,20 +72,20 @@ class FileLoader extends Loader {
   private static class DirEntry {
     static final int[] empty = new int[0];
     volatile int[] childrenNameHashes;
-    
+
     volatile DirEntry[] childrenDirectories;
     final int nameHash;
     @NotNull
     final String name;
-    
+
     DirEntry(int nameHash, @NotNull String name) {
       this.nameHash = nameHash;
       this.name = name;
     }
   }
-  
+
   private final DirEntry root = new DirEntry(0, "");
-  
+
   @Override
   @Nullable
   Resource getResource(@NotNull final String name) {
