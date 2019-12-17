@@ -25,7 +25,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewService: GHPRReviewServiceAdapter,
                                 private val diffRanges: List<Range>,
                                 private val fileLinesMapper: GHPRChangedFileLinesMapper,
-                                private val lastCommitSha: String,
+                                private val commitSha: String,
                                 private val filePath: String,
                                 private val reviewThreadsFilter: (String, String) -> Boolean,
                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
@@ -46,7 +46,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
     loadReviewThreads(reviewThreadsModel, viewer)
 
-    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService, lastCommitSha, filePath,
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService, commitSha, filePath,
                                                                       avatarIconsProviderFactory, currentUser)
     when (viewer) {
       is SimpleOnesideDiffViewer ->
