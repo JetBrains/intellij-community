@@ -28,7 +28,7 @@
       <with attribute="implementationClass" implements="com.intellij.lang.refactoring.InlineHandler"/>
     </extensionPoint>
     <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
-    <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="refactoring.extractIncludeHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.RefactoringActionHandler"/>
     </extensionPoint>
     

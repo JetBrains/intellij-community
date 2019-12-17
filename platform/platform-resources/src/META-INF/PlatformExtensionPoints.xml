@@ -193,7 +193,7 @@
 
     <extensionPoint name="statusBarWidgetProvider" interface="com.intellij.openapi.wm.StatusBarWidgetProvider"/>
 
-    <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory"/>
+    <extensionPoint name="checkinHandlerFactory" interface="com.intellij.openapi.vcs.checkin.CheckinHandlerFactory" dynamic="true"/>
 
     <extensionPoint name="eventLogCategory" interface="com.intellij.notification.EventLogCategory" dynamic="true"/>
 
