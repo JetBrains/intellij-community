@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
@@ -110,11 +111,8 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     if (variant instanceof GroovyMethodResult) {
       GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        substitutor =
-          new GroovyInferenceSessionBuilder(call, candidate, variant.getContextSubstitutor())
-            .skipClosureIn(call)
-            .resolveMode(false)
-            .build().inferSubst();
+        GroovyInferenceSessionBuilder builder = new GroovyInferenceSessionBuilder(call, candidate, variant.getContextSubstitutor());
+        substitutor = computeAnnotationBasedSubstitutor(call, builder);
       }
     }
     if (substitutor == null ) {
@@ -124,9 +122,13 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     return signatureHintProcessor.inferExpectedSignatures((PsiMethod)element, substitutor, SignatureHintProcessor.buildOptions(anno));
   }
 
+  @NotNull
+  protected static PsiSubstitutor computeAnnotationBasedSubstitutor(@NotNull GrCall call,
+                                                                    @NotNull GroovyInferenceSessionBuilder builder) {
+    return builder.skipClosureIn(call).resolveMode(false).build().inferSubst();
+  }
+
   private static boolean containsParametersWithDeclaredType(GrParameter[] parameters) {
     return ContainerUtil.find(parameters, parameter -> parameter.getDeclaredType() != null) != null;
   }
-
-
 }

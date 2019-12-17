@@ -33,15 +33,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 
-class GroovyInferenceSessionBuilder constructor(
+open class GroovyInferenceSessionBuilder constructor(
   private val context: PsiElement,
   private val candidate: GroovyMethodCandidate,
   private val contextSubstitutor: PsiSubstitutor
 ) {
 
-  private var expressionFilters = mutableSetOf<ExpressionPredicate>()
+  protected var expressionFilters = mutableSetOf<ExpressionPredicate>()
 
-  private var skipClosureBlock = true
+  protected var skipClosureBlock = true
 
   fun resolveMode(skipClosureBlock: Boolean): GroovyInferenceSessionBuilder {
     //TODO:add explicit typed closure constraints
@@ -63,12 +63,20 @@ class GroovyInferenceSessionBuilder constructor(
     return this
   }
 
-  fun build(): GroovyInferenceSession {
+  protected fun collectExpressionFilters() {
     if (skipClosureBlock) expressionFilters.add(ignoreFunctionalExpressions)
+  }
+
+  open fun build(): GroovyInferenceSession {
+    collectExpressionFilters()
 
     val session = GroovyInferenceSession(candidate.method.typeParameters, contextSubstitutor, context, skipClosureBlock, expressionFilters)
-    session.initArgumentConstraints(candidate.argumentMapping)
-    return session
+    return doBuild(session)
+  }
+
+  protected fun doBuild(basicSession: GroovyInferenceSession): GroovyInferenceSession {
+    basicSession.initArgumentConstraints(candidate.argumentMapping)
+    return basicSession
   }
 }
 
