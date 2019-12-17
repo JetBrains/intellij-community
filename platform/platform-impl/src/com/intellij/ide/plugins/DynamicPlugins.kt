@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.keymap.impl.BundledKeymapProvider
@@ -29,6 +31,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.UIUtil
@@ -64,6 +67,10 @@ interface DynamicPluginListener {
 object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
   private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
+
+  val pluginDisposables = ConcurrentFactoryMap.createWeakMap<PluginDescriptor, Disposable> {
+    plugin -> Disposer.newDisposable("Plugin disposable [${plugin.name}]")
+  }
 
   @JvmStatic
   fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
@@ -234,6 +241,10 @@ object DynamicPlugins {
 
       return classLoaderUnloaded
     } finally {
+      val disposable = pluginDisposables.remove(pluginDescriptor)
+      if (disposable != null) {
+        Disposer.dispose(disposable)
+      }
       application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(pluginDescriptor, isUpdate)
     }
   }
@@ -271,7 +282,30 @@ object DynamicPlugins {
     } finally {
       application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)
     }
+  }
 
+  @JvmStatic
+  fun pluginDisposable(clazz: Class<*>): Disposable? {
+    val classLoader = clazz.classLoader
+    if (classLoader is PluginClassLoader) {
+      val pluginDescriptor = classLoader.pluginDescriptor
+      if (pluginDescriptor != null) {
+        return pluginDisposables[pluginDescriptor]
+      }
+    }
+    return null
+  }
+
+  @JvmStatic
+  fun pluginDisposableWrapper(clazz: Class<*>, defaultValue: Disposable): Disposable {
+    val pluginDisposable = pluginDisposable(clazz)
+    if (pluginDisposable != null) {
+      val result = Disposer.newDisposable()
+      Disposer.register(pluginDisposable, result)
+      Disposer.register(defaultValue, result)
+      return result
+    }
+    return defaultValue
   }
 
   @JvmStatic

@@ -2,6 +2,7 @@
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.DynamicPlugins;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
@@ -70,6 +71,7 @@ public class _LastInSuiteTest extends TestCase {
 
     Map<ExtensionPoint<?>, Collection<WeakReference<Object>>> extensions = collectDynamicNonPlatformExtensions();
     unloadExtensionPoints(extensions.keySet());
+    disposePluginDisposables();
     ProjectManager pm = ProjectManager.getInstanceIfCreated();
     if (pm != null) {
       for (Project project : pm.getOpenProjects()) {
@@ -105,6 +107,10 @@ public class _LastInSuiteTest extends TestCase {
       String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
       fail("Some of dynamic extensions have not been unloaded. See individual tests for details. Heap dump: " + heapDump);
     }
+  }
+
+  private static void disposePluginDisposables() {
+    DynamicPlugins.INSTANCE.getPluginDisposables().forEach((plugin, disposable) -> Disposer.dispose(disposable));
   }
 
   @NotNull
