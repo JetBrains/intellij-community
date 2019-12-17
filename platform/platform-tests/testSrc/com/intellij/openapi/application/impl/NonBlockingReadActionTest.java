@@ -19,24 +19,26 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
+import org.apache.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.testFramework.PlatformTestUtil.waitForPromise;
 
@@ -329,4 +331,57 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       });
     }).assertTiming();
   }
+
+  public void testExceptionInsideComputationIsLogged() throws Exception {
+    BoundedTaskExecutor executor = (BoundedTaskExecutor)AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), 10);
+
+    AtomicReference<Throwable> loggedError = new AtomicReference<>();
+    LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+      @Override
+      public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+        assertNotNull(t);
+        loggedError.set(t);
+      }
+    });
+
+    Callable<Object> throwUOE = () -> {
+      throw new UnsupportedOperationException();
+    };
+
+    try {
+      CancellablePromise<Object> promise = ReadAction.nonBlocking(throwUOE).submit(executor);
+      assertLogsAndThrowsUOE(promise, loggedError, executor);
+
+      promise = ReadAction.nonBlocking(throwUOE).submit(executor);
+      promise.onProcessed(__ -> {});
+      assertLogsAndThrowsUOE(promise, loggedError, executor);
+
+      promise = ReadAction.nonBlocking(throwUOE).submit(executor).onProcessed(__ -> {});
+      assertLogsAndThrowsUOE(promise, loggedError, executor);
+
+      promise = ReadAction.nonBlocking(throwUOE).submit(AppExecutorUtil.getAppExecutorService());
+      promise.onError(__ -> {});
+      assertLogsAndThrowsUOE(promise, loggedError, executor);
+
+      promise = ReadAction.nonBlocking(throwUOE).submit(AppExecutorUtil.getAppExecutorService()).onError(__ -> {});
+      assertLogsAndThrowsUOE(promise, loggedError, executor);
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor();
+    }
+  }
+
+  private static void assertLogsAndThrowsUOE(CancellablePromise<Object> promise, AtomicReference<Throwable> loggedError, BoundedTaskExecutor executor) throws Exception {
+    Throwable cause = null;
+    try {
+      waitForFuture(promise);
+    }
+    catch (Throwable e) {
+      cause = ExceptionUtil.getRootCause(e);
+    }
+    assertInstanceOf(cause, UnsupportedOperationException.class);
+    executor.waitAllTasksExecuted(1, TimeUnit.SECONDS);
+    assertSame(cause, loggedError.getAndSet(null));
+  }
+
 }

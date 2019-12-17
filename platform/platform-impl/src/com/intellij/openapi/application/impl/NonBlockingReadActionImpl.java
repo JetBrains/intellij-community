@@ -237,6 +237,9 @@ public class NonBlockingReadActionImpl<T>
     public boolean setError(@NotNull Throwable error) {
       boolean result = super.setError(error);
       cleanupIfNeeded();
+      if (result) {
+        LOG.error(error);
+      }
       return result;
     }
 
