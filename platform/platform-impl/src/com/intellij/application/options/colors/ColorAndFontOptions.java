@@ -206,7 +206,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @NotNull
   @Override
   public Collection<BaseExtensionPointName<?>> getDependencies() {
-    return ContainerUtil.newArrayList(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME);
+    return ContainerUtil.newArrayList(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME, ColorAndFontDescriptorsProvider.EP_NAME);
   }
 
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
