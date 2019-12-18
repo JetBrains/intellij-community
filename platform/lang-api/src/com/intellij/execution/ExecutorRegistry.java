@@ -20,14 +20,15 @@ public abstract class ExecutorRegistry {
   public abstract Executor getExecutorById(@NotNull String executorId);
 
   /**
-   * Consider to use {@link #isStarting(ExecutionEnvironment)}
+   * Consider to use {@link ExecutionManager#isStarting(ExecutionEnvironment)}
    */
   @SuppressWarnings("MethodMayBeStatic")
   public final boolean isStarting(@NotNull Project project, @NotNull String executorId, @NotNull String runnerId) {
     return ExecutionManager.getInstance(project).isStarting(executorId, runnerId);
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public final boolean isStarting(@NotNull ExecutionEnvironment environment) {
-    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunner().getRunnerId());
+    return ExecutionManager.getInstance(environment.getProject()).isStarting(environment);
   }
 }

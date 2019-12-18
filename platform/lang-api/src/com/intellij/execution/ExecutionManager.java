@@ -8,6 +8,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,5 +74,10 @@ public abstract class ExecutionManager {
 
   public abstract void restartRunProfile(@NotNull ExecutionEnvironment environment);
 
+  public final boolean isStarting(@NotNull ExecutionEnvironment environment) {
+    return isStarting(environment.getExecutor().getId(), environment.getRunner().getRunnerId());
+  }
+
+  @ApiStatus.Internal
   public abstract boolean isStarting(@NotNull String executorId, @NotNull String runnerId);
 }

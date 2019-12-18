@@ -166,8 +166,9 @@ public final class ExecutionUtil {
   }
 
   public static void restart(@NotNull ExecutionEnvironment environment) {
-    if (!ExecutorRegistry.getInstance().isStarting(environment)) {
-      ExecutionManager.getInstance(environment.getProject()).restartRunProfile(environment);
+    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    if (!executionManager.isStarting(environment)) {
+      executionManager.restartRunProfile(environment);
     }
   }
 
