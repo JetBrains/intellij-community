@@ -82,6 +82,7 @@ public class _LastInSuiteTest extends TestCase {
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
     System.gc();
+    String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
 
     AtomicBoolean failed = new AtomicBoolean(false);
     extensions.forEach((ep, references) -> {
@@ -104,7 +105,6 @@ public class _LastInSuiteTest extends TestCase {
     });
 
     if (failed.get()) {
-      String heapDump = HeavyPlatformTestCase.publishHeapDump("dynamicExtension");
       fail("Some of dynamic extensions have not been unloaded. See individual tests for details. Heap dump: " + heapDump);
     }
   }
