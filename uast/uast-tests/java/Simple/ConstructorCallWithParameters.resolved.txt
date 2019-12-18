@@ -1,14 +1,14 @@
-        UField (name = number) -> UTypeReferenceExpression (name = int) -> null
-            UParameter (name = number) -> UTypeReferenceExpression (name = int) -> null
-        UMethod (name = Foo) -> UBlockExpression -> null
-            UBlockExpression -> UBinaryExpression (operator = =) -> null
-            UBlockExpression -> UBinaryExpression (operator = =) -> null
-            UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> [M] PsiFieldImpl
-            UQualifiedReferenceExpression -> UThisExpression (label = null) -> [M] 
-            UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = number) -> [M] PsiParameterImpl
-        UMethod (name = test) -> UTypeReferenceExpression (name = void) -> null
-        UMethod (name = test) -> UBlockExpression -> null
-            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> [M] PsiMethodImpl
-            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> [M] PsiMethodImpl
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> USimpleNameReferenceExpression (identifier = Foo) -> [M] PsiClassImpl
-            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> ULiteralExpression (value = 10) -> null
+        UField (name = number) -> UTypeReferenceExpression (name = int) -> [] ~= []
+            UParameter (name = number) -> UTypeReferenceExpression (name = int) -> [] ~= []
+        UMethod (name = Foo) -> UBlockExpression -> [] ~= []
+            UBlockExpression -> UBinaryExpression (operator = =) -> [] ~= []
+            UBlockExpression -> UBinaryExpression (operator = =) -> [] ~= []
+            UBinaryExpression (operator = =) -> UQualifiedReferenceExpression -> [M] PsiFieldImpl ~= PsiField:number
+            UQualifiedReferenceExpression -> UThisExpression (label = null) -> [M]  ~= []
+            UBinaryExpression (operator = =) -> USimpleNameReferenceExpression (identifier = number) -> [M] PsiParameterImpl ~= PsiParameter:number
+        UMethod (name = test) -> UTypeReferenceExpression (name = void) -> [] ~= []
+        UMethod (name = test) -> UBlockExpression -> [] ~= []
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> [M] PsiMethodImpl ~= PsiMethod:Foo
+            UBlockExpression -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> [M] PsiMethodImpl ~= PsiMethod:Foo
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> USimpleNameReferenceExpression (identifier = Foo) -> [M] PsiClassImpl ~= PsiClass:Foo
+            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) -> ULiteralExpression (value = 10) -> [] ~= []

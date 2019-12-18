@@ -24,18 +24,27 @@ abstract class AbstractJavaExpressionMultiResolveTest : AbstractJavaUastTest() {
             append(ref.asLogString())
             append(" -> ")
             append(multiResolve(ref))
+            append(" ~= ")
+            append(resolve(ref))
           }
         }
   }.visitUFileAndGetResult(this)
 
   private fun multiResolve(ref: UExpression): String {
     if (ref is UMultiResolvable) {
-      return "[M] " + ref.multiResolve().joinToString(",") { it.element?.javaClass?.simpleName ?: "null" }
+      return "[M] " + ref.multiResolve().joinToString(",") { it.element?.javaClass?.simpleName ?: "[]" }
     }
     if (ref is UResolvable) {
-      return "[S] " + (ref.resolve()?.toString() ?: "null")
+      return "[S] " + (ref.resolve()?.toString() ?: "[]")
     }
-    return "null"
+    return "[]"
+  }
+
+  private fun resolve(ref: UExpression): String {
+    if (ref is UResolvable) {
+      return (ref.resolve()?.toString() ?: "[]")
+    }
+    return "[]"
   }
 
   override fun check(testName: String, file: UFile) {

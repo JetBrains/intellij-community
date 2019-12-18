@@ -184,7 +184,7 @@ class JavaConstructorUCallExpression(
     val methodResolve = sourcePsi.resolveMethodGenerics()
     if (methodResolve != JavaResolveResult.EMPTY) {
       // if there is a non-default constructor
-      return arrayOf<ResolveResult>(methodResolve).asIterable()
+      return listOf<ResolveResult>(methodResolve)
     }
     // unable to resolve constructor method - resolve to class
     val classResolve = sourcePsi.classReference?.multiResolve(false) ?: emptyArray()
