@@ -155,7 +155,7 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void artifactBuilt(String relativeArtifactPath) {
-    processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
+    logger.processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
   }
 
   @Override
