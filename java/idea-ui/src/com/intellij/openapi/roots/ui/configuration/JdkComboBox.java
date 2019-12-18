@@ -109,12 +109,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   }
 
   @Override
-  protected void onNewSdkAdded(@NotNull Sdk sdk) {
-    setSelectedJdk(sdk);
-    myOnNewSdkAdded.consume(sdk);
-  }
-
-  @Override
   protected void onModelUpdated(@NotNull SdkListModel model) {
     Object previousSelection = getSelectedItem();
     JdkComboBoxModel newModel = new JdkComboBoxModel(model);
@@ -260,7 +254,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   }
 
   private void resolveSuggestionsIfNeeded() {
-    myModel.reloadActions(this, getSelectedJdk());
+    myModel.reloadActions();
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
     if (dialogWrapper == null) {
@@ -293,10 +287,12 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
     if (anObject instanceof InnerComboBoxItem) {
       SdkListItem item = ((InnerComboBoxItem)anObject).getItem();
-      if (item instanceof SdkListItem.ActionableItem) {
-        ((SdkListItem.ActionableItem)item).executeAction();
-        return;
-      }
+      if (myModel.executeAction(this, item, newItem -> {
+        setSelectedItem(newItem);
+        if (newItem instanceof SdkItem) {
+          myOnNewSdkAdded.consume(((SdkItem)newItem).getSdk());
+        }
+      })) return;
     }
 
     if (anObject instanceof SelectableComboBoxItem) {

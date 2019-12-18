@@ -3,8 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -87,7 +85,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
     //noinspection unchecked
     T selectedItem = (T)myComboBox.getSelectedItem();
-    myPopup = new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
+    myPopup = new ComboBoxPopup<T>(this, selectedItem) {
       @Override
       public void cancel(InputEvent e) {
         if (e instanceof MouseEvent) {
@@ -100,6 +98,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
         super.cancel(e);
       }
     };
+    myPopup.addItemSelectedListener(value -> myComboBox.setSelectedItem(value));
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
