@@ -482,8 +482,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @NotNull
-  private static String createParamTagWithComment(@NotNull final String parameterName, @Nullable final PsiDocTag docTag) {
-    final StringBuilder builder = new StringBuilder(PARAM_TAG).append(" ").append(parameterName);
+  private static String createParamTagWithComment(@NotNull final String paramName, @Nullable final PsiDocTag docTag) {
+    final StringBuilder builder = new StringBuilder(PARAM_TAG).append(" ").append(paramName);
     if(docTag == null) return builder.toString();
     final int indexAfterParameterName = builder.length();
     boolean inComment = false;
@@ -512,8 +512,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                  final PsiTypeParameterList typeParameterList) {
     final PsiFile containingFile = typeParameterList.getContainingFile();
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
-    for (PsiTypeParameter typeParameter : typeParameters) {
-      final String paramTagWithoutComment = PARAM_TAG + " <" + typeParameter.getName() + ">";
+    for (final PsiTypeParameter typeParameter : typeParameters) {
+      final String paramTagWithoutComment = createParamTagWithComment("<" + typeParameter.getName() + ">", null);
       buffer.append(CodeDocumentationUtil.createDocCommentLine(paramTagWithoutComment, containingFile, commenter));
       buffer.append(LINE_SEPARATOR);
     }
