@@ -910,11 +910,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       Renderer<Object> renderer = ObjectUtils.notNull(getRenderer(value.getClass()), DEFAULT_RENDERER);
 
-      JComponent result = renderer.setValue(value);
-      result.setOpaque(isSelected);
-      result.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-      result.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-      return result;
+      renderer.setOpaque(isSelected);
+      renderer.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+      renderer.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+      renderer.setValue(value);
+      return renderer;
     }
 
     @Nullable
@@ -939,39 +939,35 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private interface Renderer<T> {
-    JComponent setValue(@NotNull T value);
+  private static abstract class Renderer<T> extends JLabel{
+    abstract void setValue(@NotNull T value);
   }
 
-  private static class PointRenderer extends JLabel implements Renderer<Point> {
+  private static class PointRenderer extends Renderer<Point> {
     @Override
-    public JComponent setValue(@NotNull final Point value) {
+    public void setValue(@NotNull final Point value) {
       setText(String.valueOf(value.x) + ':' + value.y);
-      return this;
     }
   }
 
-  private static class DimensionRenderer extends JLabel implements Renderer<Dimension> {
+  private static class DimensionRenderer extends Renderer<Dimension> {
     @Override
-    public JComponent setValue(@NotNull final Dimension value) {
+    public void setValue(@NotNull final Dimension value) {
       setText(value.width + "x" + value.height);
-      return this;
     }
   }
 
-  private static class InsetsRenderer extends JLabel implements Renderer<Insets> {
+  private static class InsetsRenderer extends Renderer<Insets> {
     @Override
-    public JComponent setValue(@NotNull final Insets value) {
+    public void setValue(@NotNull final Insets value) {
       setText("top: " + value.top + " left:" + value.left + " bottom:" + value.bottom + " right:" + value.right);
-      return this;
     }
   }
 
-  private static class RectangleRenderer extends JLabel implements Renderer<Rectangle> {
+  private static class RectangleRenderer extends Renderer<Rectangle> {
     @Override
-    public JComponent setValue(@NotNull final Rectangle value) {
+    public void setValue(@NotNull final Rectangle value) {
       setText(toString(value));
-      return this;
     }
 
     @NotNull
@@ -980,9 +976,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class ColorRenderer extends JLabel implements Renderer<Color> {
+  private static class ColorRenderer extends Renderer<Color> {
     @Override
-    public JComponent setValue(@NotNull final Color value) {
+    public void setValue(@NotNull final Color value) {
       StringBuilder sb = new StringBuilder();
       sb.append(" r:").append(value.getRed());
       sb.append(" g:").append(value.getGreen());
@@ -997,37 +993,33 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
       setIcon(createColorIcon(value));
-      return this;
     }
   }
 
-  private static class FontRenderer extends JLabel implements Renderer<Font> {
+  private static class FontRenderer extends Renderer<Font> {
     @Override
-    public JComponent setValue(@NotNull final Font value) {
+    public void setValue(@NotNull final Font value) {
       StringBuilder sb = new StringBuilder();
       sb.append(value.getFontName()).append(" (").append(value.getFamily()).append("), ").append(value.getSize()).append("px");
       if (Font.BOLD == (Font.BOLD & value.getStyle())) sb.append(" bold");
       if (Font.ITALIC == (Font.ITALIC & value.getStyle())) sb.append(" italic");
       if (value instanceof UIResource) sb.append(" UIResource");
       setText(sb.toString());
-      return this;
     }
   }
 
-  private static class BooleanRenderer extends JLabel implements Renderer<Boolean> {
+  private static class BooleanRenderer extends Renderer<Boolean> {
     @Override
-    public JComponent setValue(@NotNull final Boolean value) {
+    public void setValue(@NotNull final Boolean value) {
       setText(value ? "Yes" : "No");
-      return this;
     }
   }
 
-  private static class IconRenderer extends JLabel implements Renderer<Icon> {
+  private static class IconRenderer extends Renderer<Icon> {
     @Override
-    public JComponent setValue(@NotNull final Icon value) {
+    public void setValue(@NotNull final Icon value) {
       setIcon(value);
       setText(getPathToIcon(value));
-      return this;
     }
 
     private static String getPathToIcon(@NotNull Icon value) {
@@ -1049,9 +1041,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class BorderRenderer extends JLabel implements Renderer<Border> {
+  private static class BorderRenderer extends Renderer<Border> {
     @Override
-    public JComponent setValue(@NotNull final Border value) {
+    public void setValue(@NotNull final Border value) {
       setText(getTextDescription(value));
 
       if (value instanceof CompoundBorder) {
@@ -1074,7 +1066,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Color color = getBorderColor(value);
         setIcon(color != null ? createColorIcon(color) : null);
       }
-      return this;
     }
 
     @Nullable
@@ -1131,12 +1122,12 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static class ObjectRenderer extends JLabel implements Renderer<Object> {
+  private static class ObjectRenderer extends Renderer<Object> {
     {
       putClientProperty("html.disable", Boolean.TRUE);
     }
     @Override
-    public JComponent setValue(@NotNull final Object value) {
+    public void setValue(@NotNull final Object value) {
       setText(getToStringValue(value));
       return this;
     }
