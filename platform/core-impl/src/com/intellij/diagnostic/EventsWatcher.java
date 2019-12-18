@@ -130,7 +130,9 @@ public final class EventsWatcher implements Disposable {
         }
 
         @Override
-        public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations) {
+        public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
+                                       @NotNull Collection<InvocationsInfo> infos,
+                                       @NotNull Collection<WrapperDescription> wrappers) {
           appendToLogFile("Runnables", invocations.stream());
         }
       }
@@ -234,7 +236,11 @@ public final class EventsWatcher implements Disposable {
     RunnablesListener publisher = myMessageBus.syncPublisher(RunnablesListener.TOPIC);
     myEventsByClass.forEach((eventClass, events) ->
                               publisher.eventsProcessed(eventClass, joinPolling(events)));
-    publisher.runnablesProcessed(joinPolling(myRunnables));
+    publisher.runnablesProcessed(
+      joinPolling(myRunnables),
+      myDurationsByFqn.values(),
+      myWrappers.values()
+    );
   }
 
   private <K, V> void appendToLogFile(@NotNull String kind,

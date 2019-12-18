@@ -19,7 +19,9 @@ public interface RunnablesListener {
   default void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
                                @NotNull Collection<InvocationDescription> descriptions) {}
 
-  default void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations) {}
+  default void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
+                                  @NotNull Collection<InvocationsInfo> infos,
+                                  @NotNull Collection<WrapperDescription> wrappers) {}
 
   final class InvocationDescription implements Comparable<InvocationDescription> {
 
