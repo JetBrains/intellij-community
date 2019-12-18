@@ -14,9 +14,9 @@ import org.jetbrains.annotations.PropertyKey;
  */
 public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public static int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
-  public static int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
-  public static int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
+  public static final int DO_NOT_ALIGN_PROPERTY = PropertyAlignment.DO_NOT_ALIGN.getId();
+  public static final int ALIGN_PROPERTY_ON_VALUE = PropertyAlignment.ALIGN_ON_VALUE.getId();
+  public static final int ALIGN_PROPERTY_ON_COLON = PropertyAlignment.ALIGN_ON_COLON.getId();
 
   public boolean SPACE_AFTER_COLON = true;
   public boolean SPACE_BEFORE_COLON = false;
@@ -24,7 +24,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
   // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
   /**
-   * Contains value of {@link com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment#getId()}
+   * Contains value of {@link JsonCodeStyleSettings.PropertyAlignment#getId()}
    *
    * @see #DO_NOT_ALIGN_PROPERTY
    * @see #ALIGN_PROPERTY_ON_VALUE

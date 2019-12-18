@@ -90,9 +90,9 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
   private boolean confirmUndeploy() {
     final Ref<Boolean> confirmed = new Ref<>(false);
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      String title = CloudBundle.getText("cloud.undeploy.confirm.title");
+      String title = CloudBundle.message("cloud.undeploy.confirm.title");
       while (true) {
-        String password = Messages.showPasswordDialog(CloudBundle.getText("cloud.undeploy.confirm.message", getApplicationName()), title);
+        String password = Messages.showPasswordDialog(CloudBundle.message("cloud.undeploy.confirm.message", getApplicationName()), title);
         if (password == null) {
           return;
         }
@@ -100,7 +100,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
           confirmed.set(true);
           return;
         }
-        Messages.showErrorDialog(CloudBundle.getText("cloud.undeploy.confirm.password.incorrect"), title);
+        Messages.showErrorDialog(CloudBundle.message("cloud.undeploy.confirm.password.incorrect"), title);
       }
     });
     return confirmed.get();

@@ -82,7 +82,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
                                              type -> type.getPresentableName(), ", ");
 
     if (typeNames.length() > 0) {
-      return CloudBundle.getText("clouds.configure.empty.selection.string", typeNames);
+      return CloudBundle.message("clouds.configure.empty.selection.string", typeNames);
     }
     return null;
   }
