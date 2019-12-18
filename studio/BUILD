@@ -1,3 +1,5 @@
+exports_files(["kotlin_known_problems.txt"])
+
 java_binary(
     name = "BazelAntLauncher",
     srcs = ["src/main/java/com/android/tools/BazelAntLauncher.java"],

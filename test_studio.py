@@ -2,6 +2,8 @@ import argparse
 import glob
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tarfile
 import unittest
@@ -174,8 +176,36 @@ class StudioTests(unittest.TestCase):
     kotlin_plugin_count = sum(name.endswith("kotlin-plugin.jar") for name in mac_zip.namelist())
     self.assertEqual(kotlin_plugin_count, 1)
 
+  def test_kotlin_binary_compatibility(self):
+    dist_all = os.path.join(out_dir, "dist.all")
+
+    for output_dir in glob.glob("verification-*"):
+        shutil.rmtree(output_dir)
+
+    args = [
+        os.path.join(java_home, "bin", "java"),
+        "-Dplugin.verifier.home.dir=plugin-verifier",
+        "-jar", "prebuilts/tools/common/intellij-plugin-verifier/verifier-cli-1.191-all.jar",
+        "-ignored-problems", "tools/idea/studio/kotlin_known_problems.txt",
+        "-verification-reports-dir", "plugin-verifier/reports",
+        "-runtime-dir", java_home,
+        "-ide-version", "AI-" + build.replace(".-", "."),  # for AB presubmit; see build_studio.sh
+        "check-plugin", os.path.join(dist_all, "plugins", "Kotlin"), dist_all,
+    ]
+    subprocess.check_call(args)
+
+    output_dirs = glob.glob("verification-*")
+    self.assertEqual(len(output_dirs), 1, msg="should be exactly one output dir")
+    verification_verdicts = glob.glob(output_dirs[0] + "/*/plugins/org.jetbrains.kotlin/*/verification-verdict.txt")
+    problems_files = glob.glob(output_dirs[0] + "/*/plugins/org.jetbrains.kotlin/*/compatibility-problems.txt")
+    self.assertEqual(len(verification_verdicts), 1, msg="should be exactly one verification verdict")
+    if problems_files:
+        shutil.copyfile(problems_files[0], os.path.join(dist_dir, "compatibility-problems.txt"))
+        self.fail(msg="See compatibility-problems.txt")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--java_home', required = True)
     parser.add_argument('--out', required = True)
     parser.add_argument('--dist', required = True)
     parser.add_argument('--build', required = True)
@@ -183,6 +213,7 @@ if __name__ == '__main__':
     parser.add_argument('unittest_args', nargs='*')
 
     args = parser.parse_args()
+    java_home = args.java_home
     out_dir = args.out
     dist_dir = args.dist
     build = args.build

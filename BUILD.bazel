@@ -824,6 +824,10 @@ iml_module(
 py_test(
     name = "test_studio",
     srcs = ["test_studio.py"],
+    data = [
+        "//prebuilts/tools/common/intellij-plugin-verifier:verifier-cli-1.191-all.jar",
+        "//tools/idea/studio:kotlin_known_problems.txt",
+    ],
     python_version = "PY2",
     tags = ["manual"],
 )

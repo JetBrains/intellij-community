@@ -112,7 +112,7 @@ fi
 # execute a bunch of sanity checks on the final artifacts
 $BAZEL test \
     //tools/idea:test_studio \
-    --test_output=streamed \
+    --test_arg=--java_home="$JAVA_HOME" \
     --test_arg=--out="$OUT" \
     --test_arg=--dist="$DIST" \
     --test_arg=--build=$AS_BUILD_NUMBER \
