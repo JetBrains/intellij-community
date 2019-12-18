@@ -2151,6 +2151,11 @@ public final class UIUtil {
     }
   }
 
+  //Whitelist for component types that provide obvious 'focused' view
+  public static boolean canDisplayFocusedState(@NotNull Component component) {
+    return component instanceof JTextComponent || component instanceof AbstractButton || component instanceof JComboBox;
+  }
+
   //todo maybe should do for all kind of listeners via the AWTEventMulticaster class
 
   public static void dispose(final Component c) {
