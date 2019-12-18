@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
-import com.intellij.diff.util.Range
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
@@ -24,11 +23,8 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
                               commits: List<GitCommit>, diffFile: String)
   : GHPRChangesProvider {
 
-  override val lastCommitSha = headRef
-
   override val changes: List<Change>
-  private val patchesByChanges: Map<Change, TextFilePatch>
-  private val changesIndex: Map<Pair<String, String>, Change>
+  private val diffDataByChange: Map<Change, GHPRChangesProvider.DiffData>
 
   init {
     val mergeBaseRev =
@@ -41,8 +37,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     patchReader.parseAllPatches()
 
     changes = mutableListOf()
-    patchesByChanges = mutableMapOf()
-    changesIndex = mutableMapOf()
+    diffDataByChange = mutableMapOf()
 
     for (patch in patchReader.allPatches) {
       val changeWithRenames = findChangeForPatch(changesWithRenames, patch)
@@ -59,15 +54,17 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
 
       changes.add(change)
       if (patch is TextFilePatch) {
-        patchesByChanges[change] = patch
-        for ((commit, filePath) in changeWithRenames.pathsByCommit) {
-          changesIndex[commit to convertFilePath(filePath)] = change
-        }
+        diffDataByChange[change] = DiffDataImpl(headRef,
+                                                convertFilePath(ChangesUtil.getFilePath(change)),
+                                                patch,
+                                                changeWithRenames.pathsByCommit.mapValues {
+                                                  convertFilePath(it.value)
+                                                })
       }
     }
   }
 
-  override fun getFilePath(change: Change) = convertFilePath(ChangesUtil.getFilePath(change))
+  override fun findChangeDiffData(change: Change) = diffDataByChange[change]
 
   private fun convertFilePath(filePath: FilePath): String {
     val root = repository.root.path
@@ -142,20 +139,6 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
     return changes.values
   }
 
-  override fun findDiffRanges(change: Change): List<Range>? {
-    val patch = patchesByChanges[change] ?: return null
-    return patch.hunks.map(GHPatchHunkUtil::getRange)
-  }
-
-  override fun findChange(commitSha: String, filePath: String) = changesIndex[commitSha to filePath]
-
-  override fun findFileLinesMapper(change: Change) = patchesByChanges[change]?.let { GHPRChangedFileLinesMapperImpl(it) }
-
-  override fun findDiffRangesWithoutContext(change: Change): List<Range>? {
-    val patch = patchesByChanges[change] ?: return null
-    return patch.hunks.map(GHPatchHunkUtil::getChangeOnlyRanges).flatten()
-  }
-
   private fun findChangeForPatch(changes: Collection<MutableChange>, patch: FilePatch): MutableChange? {
     val beforeName = if (patch.isNewFile) null else patch.beforeName
     val afterName = if (patch.isDeletedFile) null else patch.afterName
@@ -182,5 +165,23 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       val lastVcsRevision = lastRevision?.let { GitContentRevision.createRevision(it.file, GitRevisionNumber(headRef), project) }
       return Change(firstVcsRevision, lastVcsRevision)
     }
+  }
+
+  private class DiffDataImpl(override val commitSha: String,
+                             override val filePath: String,
+                             private val patch: TextFilePatch,
+                             private val filePathsMap: Map<String, String>) : GHPRChangesProvider.DiffData {
+
+    override val diffRanges by lazy(LazyThreadSafetyMode.NONE) {
+      patch.hunks.map(GHPatchHunkUtil::getRange)
+    }
+    override val diffRangesWithoutContext by lazy(LazyThreadSafetyMode.NONE) {
+      patch.hunks.map(GHPatchHunkUtil::getChangeOnlyRanges).flatten()
+    }
+    override val linesMapper by lazy(LazyThreadSafetyMode.NONE) {
+      GHPRChangedFileLinesMapperImpl(patch)
+    }
+
+    override fun contains(commitSha: String, filePath: String) = filePathsMap[commitSha] == filePath
   }
 }

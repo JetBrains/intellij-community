@@ -9,13 +9,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: TwosideTextDiffViewer,
-                                                private val linesMapper: GHPRChangedFileLinesMapper,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<TwosideTextDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
@@ -31,14 +29,14 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
     val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
 
     GHPREditorCommentableRangesController(commentableRangesLeft, componentsFactory, inlaysManagerLeft) {
-      linesMapper.findDiffLine(Side.LEFT, it)
+      Side.LEFT to it
     }
     GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, inlaysManagerLeft)
 
     val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
 
     GHPREditorCommentableRangesController(commentableRangesRight, componentsFactory, inlaysManagerRight) {
-      linesMapper.findDiffLine(Side.RIGHT, it)
+      Side.RIGHT to it
     }
     GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, inlaysManagerRight)
   }

@@ -10,7 +10,6 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import kotlin.math.max
 import kotlin.math.min
@@ -18,7 +17,6 @@ import kotlin.math.min
 class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
                                                 reviewThreadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>,
                                                 viewer: UnifiedDiffViewer,
-                                                private val linesMapper: GHPRChangedFileLinesMapper,
                                                 componentsFactory: GHPRDiffEditorReviewComponentsFactory)
   : GHPRDiffViewerBaseReviewThreadsHandler<UnifiedDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
@@ -35,7 +33,7 @@ class GHPRUnifiedDiffViewerReviewThreadsHandler(commentableRangesModel: SingleVa
       val (indices, side) = viewer.transferLineFromOneside(fileLine)
       val line = side.select(indices).takeIf { it >= 0 } ?: return@GHPREditorCommentableRangesController null
 
-      linesMapper.findDiffLine(side, line)
+      side to line
     }
     GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
   }

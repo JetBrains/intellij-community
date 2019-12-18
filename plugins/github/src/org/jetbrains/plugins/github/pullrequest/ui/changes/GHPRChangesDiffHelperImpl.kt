@@ -9,9 +9,11 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
@@ -37,18 +39,27 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
 
   override fun getReviewSupport(change: Change): GHPRDiffReviewSupport? {
     val reviewService = dataProvider?.let { GHPRReviewServiceAdapter.create(reviewService, it) } ?: return null
-    val diffRanges = changesProvider?.findDiffRanges(change) ?: return null
-    val fileLinesMapper = changesProvider?.findFileLinesMapper(change) ?: return null
-    val lastCommitSha = changesProvider?.lastCommitSha ?: return null
-    val filePath = changesProvider?.getFilePath(change) ?: return null
 
-    return GHPRDiffReviewSupportImpl(project, reviewService, diffRanges, fileLinesMapper, lastCommitSha, filePath,
-                                     { commitSha, path -> changesProvider?.findChange(commitSha, path) == change },
-                                     avatarIconsProviderFactory, currentUser)
+    return changesProvider?.let { provider ->
+      val diffData = provider.findChangeDiffData(change) ?: return null
+      val createReviewCommentHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
+
+      return GHPRDiffReviewSupportImpl(project, reviewService, diffData.diffRanges,
+                                       { mapThread(diffData, it) },
+                                       createReviewCommentHelper,
+                                       avatarIconsProviderFactory, currentUser)
+    }
+  }
+
+  private fun mapThread(diffData: GHPRChangesProvider.DiffData, thread: GHPullRequestReviewThread): GHPRDiffReviewThreadMapping? {
+    if (thread.originalCommit?.oid?.let { diffData.contains(it, thread.path) } == false) return null
+    val (side, line) = thread.position?.let { diffData.linesMapper.findFileLocation(it) } ?: return null
+
+    return GHPRDiffReviewThreadMapping(side, line, thread)
   }
 
   override fun getDiffComputer(change: Change): DiffUserDataKeysEx.DiffComputer? {
-    val diffRanges = changesProvider?.findDiffRangesWithoutContext(change) ?: return null
+    val diffRanges = changesProvider?.findChangeDiffData(change)?.diffRangesWithoutContext ?: return null
 
     return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
       val comparisonManager = ComparisonManagerImpl.getInstanceImpl()

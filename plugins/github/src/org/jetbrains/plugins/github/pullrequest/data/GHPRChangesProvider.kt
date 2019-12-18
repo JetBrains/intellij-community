@@ -5,12 +5,17 @@ import com.intellij.diff.util.Range
 import com.intellij.openapi.vcs.changes.Change
 
 interface GHPRChangesProvider {
-  val lastCommitSha: String
   val changes: List<Change>
 
-  fun getFilePath(change: Change): String
-  fun findDiffRanges(change: Change): List<Range>?
-  fun findDiffRangesWithoutContext(change: Change): List<Range>?
-  fun findChange(commitSha: String, filePath: String): Change?
-  fun findFileLinesMapper(change: Change): GHPRChangedFileLinesMapper?
+  fun findChangeDiffData(change: Change): DiffData?
+
+  interface DiffData {
+    val commitSha: String
+    val filePath: String
+    val diffRanges: List<Range>
+    val diffRangesWithoutContext: List<Range>
+    val linesMapper: GHPRChangedFileLinesMapper
+
+    fun contains(commitSha: String, filePath: String): Boolean
+  }
 }

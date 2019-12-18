@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -22,7 +23,7 @@ import javax.swing.KeyStroke
 class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<List<LineRange>>,
                                             private val componentFactory: GHPRDiffEditorReviewComponentsFactory,
                                             private val inlaysManager: EditorComponentInlaysManager,
-                                            private val diffLineCalculator: (Int) -> Int?) {
+                                            private val lineLocationCalculator: (Int) -> Pair<Side, Int>?) {
 
   private val editor = inlaysManager.editor
   private val commentableLines = TIntHashSet()
@@ -61,10 +62,10 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
             override fun actionPerformed(e: AnActionEvent) {
               if (inlay?.let { GithubUIUtil.focusPanel(it.first) } != null) return
 
-              val diffLine = diffLineCalculator(i) ?: return
+              val (side, line) = lineLocationCalculator(i) ?: return
 
               val component =
-                componentFactory.createCommentComponent(diffLine) {
+                componentFactory.createCommentComponent(side, line) {
                   inlay?.let { Disposer.dispose(it.second) }
                   inlay = null
                 }

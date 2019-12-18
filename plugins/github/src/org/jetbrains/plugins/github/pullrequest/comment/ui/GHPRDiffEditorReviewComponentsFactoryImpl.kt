@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.*
@@ -22,8 +24,7 @@ import javax.swing.JComponent
 class GHPRDiffEditorReviewComponentsFactoryImpl
 internal constructor(private val project: Project,
                      private val reviewService: GHPRReviewServiceAdapter,
-                     private val lastCommitSha: String,
-                     private val filePath: String,
+                     private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
@@ -51,12 +52,15 @@ internal constructor(private val project: Project,
     return wrapper
   }
 
-  override fun createCommentComponent(diffLine: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
+  override fun createCommentComponent(side: Side, line: Int, onSuccess: (GithubPullRequestCommentWithHtml) -> Unit): JComponent {
     val wrapper = RoundedPanel()
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, wrapper)
 
     val commentField = GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Comment") { text ->
-      reviewService.addComment(EmptyProgressIndicator(), text, lastCommitSha, filePath, diffLine).successOnEdt {
+      val commitSha = createCommentParametersHelper.commitSha
+      val filePath = createCommentParametersHelper.filePath
+      val diffLine = createCommentParametersHelper.findPosition(side, line) ?: error("Can't determine comment position")
+      reviewService.addComment(EmptyProgressIndicator(), text, commitSha, filePath, diffLine).successOnEdt {
         onSuccess(it)
       }
     }.apply {

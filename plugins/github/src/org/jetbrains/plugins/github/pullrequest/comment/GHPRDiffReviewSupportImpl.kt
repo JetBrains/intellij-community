@@ -10,13 +10,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRDiffEditorReviewComponentsFactoryImpl
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
 import kotlin.properties.Delegates
@@ -24,10 +25,8 @@ import kotlin.properties.Delegates
 class GHPRDiffReviewSupportImpl(private val project: Project,
                                 private val reviewService: GHPRReviewServiceAdapter,
                                 private val diffRanges: List<Range>,
-                                private val fileLinesMapper: GHPRChangedFileLinesMapper,
-                                private val commitSha: String,
-                                private val filePath: String,
-                                private val reviewThreadsFilter: (String, String) -> Boolean,
+                                private val reviewThreadMapper: (GHPullRequestReviewThread) -> GHPRDiffReviewThreadMapping?,
+                                private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRDiffReviewSupport {
@@ -46,15 +45,16 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     val diffRangesModel = SingleValueModel(if (reviewService.canComment()) diffRanges else null)
     loadReviewThreads(reviewThreadsModel, viewer)
 
-    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService, commitSha, filePath,
+    val componentsFactory = GHPRDiffEditorReviewComponentsFactoryImpl(project, reviewService,
+                                                                      createCommentParametersHelper,
                                                                       avatarIconsProviderFactory, currentUser)
     when (viewer) {
       is SimpleOnesideDiffViewer ->
-        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
+        GHPRSimpleOnesideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, componentsFactory)
       is UnifiedDiffViewer ->
-        GHPRUnifiedDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
+        GHPRUnifiedDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, componentsFactory)
       is TwosideTextDiffViewer ->
-        GHPRTwosideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, fileLinesMapper, componentsFactory)
+        GHPRTwosideDiffViewerReviewThreadsHandler(diffRangesModel, reviewThreadsModel, viewer, componentsFactory)
       else -> return
     }
   }
@@ -75,12 +75,7 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
     reviewService.loadReviewThreads().handleOnEdt(disposable) { result, error ->
       if (result != null) {
         if (showReviewThreads)
-          threadsModel.value = result
-            .filter { it.position != null && reviewThreadsFilter(it.commit.oid, it.path) }
-            .mapNotNull {
-              val (side, line) = fileLinesMapper.findFileLocation(it.position!!) ?: return@mapNotNull null
-              GHPRDiffReviewThreadMapping(side, line, it)
-            }
+          threadsModel.value = result.mapNotNull(reviewThreadMapper)
       }
       if (error != null) {
         LOG.info("Failed to load review threads", error)
