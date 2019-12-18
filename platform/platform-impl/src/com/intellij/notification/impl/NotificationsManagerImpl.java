@@ -312,6 +312,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         frame = frame.getOwner();
       }
     }
+    if (frame == null && project == null) {
+      frame = WindowManager.getInstance().findVisibleFrame();
+    }
     return frame;
   }
 
