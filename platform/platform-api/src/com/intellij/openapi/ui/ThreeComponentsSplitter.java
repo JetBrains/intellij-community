@@ -688,7 +688,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
-      Window window = UIUtil.getWindow(this);
+      Window window = ComponentUtil.getWindow(this);
       if (window != null) {
         Point point = SwingUtilities.convertPoint(this, p, window);
         Component component = UIUtil.getDeepestComponentAt(window, point.x, point.y);

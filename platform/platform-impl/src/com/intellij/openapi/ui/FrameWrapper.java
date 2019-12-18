@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.FrameState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -488,7 +489,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private final IdeFrame myParent;
 
     private MyJDialog(FrameWrapper owner, IdeFrame parent) throws HeadlessException {
-      super(UIUtil.getWindow(parent.getComponent()));
+      super(ComponentUtil.getWindow(parent.getComponent()));
       myOwner = owner;
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));

@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.WeakFocusStackManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.ui.jcef.HwFacadeNonOpaquePanel;
@@ -209,9 +208,9 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   };
 
   private boolean isWithinChildWindow(@NotNull MouseEvent event) {
-    Component owner = UIUtil.getWindow(myContent);
+    Component owner = ComponentUtil.getWindow(myContent);
     if (owner != null) {
-      Component child = UIUtil.getWindow(event.getComponent());
+      Component child = ComponentUtil.getWindow(event.getComponent());
       if (child != owner) {
         for (; child != null; child = child.getParent()) {
           if (child == owner) {
@@ -808,7 +807,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
   @Override
   public Window getUnderlyingWindow() {
-    return UIUtil.getWindow(myLayeredPane);
+    return ComponentUtil.getWindow(myLayeredPane);
   }
 
   @NotNull

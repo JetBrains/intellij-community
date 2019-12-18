@@ -89,7 +89,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private boolean dispatchMouseEvent(@NotNull MouseEvent me) {
     JRootPane eventRootPane = myRootPane;
 
-    Window eventWindow = UIUtil.getWindow(me.getComponent());
+    Window eventWindow = ComponentUtil.getWindow(me.getComponent());
 
     if (isContextMenu(eventWindow)) return false;
 
@@ -254,7 +254,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
-      if (UIUtil.getWindow(this) != UIUtil.getWindow(e.getComponent())) return false;
+      if (ComponentUtil.getWindow(this) != ComponentUtil.getWindow(e.getComponent())) return false;
 
       final MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
       if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {

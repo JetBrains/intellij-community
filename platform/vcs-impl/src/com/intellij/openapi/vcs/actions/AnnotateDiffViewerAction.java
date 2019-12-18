@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -48,9 +48,9 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -328,7 +328,7 @@ public class AnnotateDiffViewerAction {
   private static void showNotification(@NotNull DiffViewerBase viewer, @NotNull Notification notification) {
     JComponent component = viewer.getComponent();
 
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window instanceof IdeFrame && NotificationsManagerImpl.findWindowForBalloon(viewer.getProject()) == window) {
       notification.notify(viewer.getProject());
       return;

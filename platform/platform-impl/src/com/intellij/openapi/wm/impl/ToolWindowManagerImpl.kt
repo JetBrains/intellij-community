@@ -691,8 +691,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   fun showToolWindow(id: String) {
     LOG.debug { "enter: showToolWindow($id)" }
     ApplicationManager.getApplication().assertIsDispatchThread()
-    showToolWindowImpl(idToEntry.get(id)!!, false)
-    fireStateChanged()
+    if (showToolWindowImpl(idToEntry.get(id)!!, dirtyMode = false)) {
+      checkInvariants("id: $id")
+      fireStateChanged()
+    }
   }
 
   override fun hideToolWindow(id: String, hideSide: Boolean) {
@@ -769,15 +771,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * @param dirtyMode if `true` then all UI operations are performed in dirty mode.
    */
-  private fun showToolWindowImpl(entry: ToolWindowEntry, dirtyMode: Boolean) {
+  private fun showToolWindowImpl(entry: ToolWindowEntry, dirtyMode: Boolean): Boolean {
     val id = entry.id
 
     if (entry.readOnlyWindowInfo.isVisible || !entry.toolWindow.isAvailable) {
-      return
-    }
-
-    if (entry.readOnlyWindowInfo.type == ToolWindowType.WINDOWED && entry.toolWindow.getComponentIfInitialized() != null) {
-      UIUtil.toFront(UIUtil.getWindow(entry.toolWindow.component))
+      return false
     }
 
     val toBeShownInfo = layout.getInfo(id) ?: throw IllegalThreadStateException("window with id=\"$id\" is unknown")
@@ -788,7 +786,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     entry.applyWindowInfo(snapshotInfo)
     doShowWindow(entry, snapshotInfo, dirtyMode)
 
-    checkInvariants("Id: $id; dirtyMode: $dirtyMode")
+    if (entry.readOnlyWindowInfo.type == ToolWindowType.WINDOWED && entry.toolWindow.getComponentIfInitialized() != null) {
+      UIUtil.toFront(ComponentUtil.getWindow(entry.toolWindow.component))
+    }
+    return true
   }
 
   private fun doShowWindow(entry: ToolWindowEntry, info: WindowInfo, dirtyMode: Boolean) {

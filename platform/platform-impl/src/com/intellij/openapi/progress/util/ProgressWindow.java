@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
@@ -100,7 +101,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       parent = JOptionPane.getRootFrame();
     }
     if (parent != null) {
-      return UIUtil.getWindow(parent);
+      return ComponentUtil.getWindow(parent);
     }
     Window parentWindow = WindowManager.getInstance().suggestParentWindow(myProject);
     return parentWindow != null ? parentWindow : WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();

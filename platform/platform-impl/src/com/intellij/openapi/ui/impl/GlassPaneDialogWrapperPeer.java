@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
@@ -82,7 +83,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
 
-    Window owner = UIUtil.getWindow(parent);
+    Window owner = ComponentUtil.getWindow(parent);
     if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
       owner = JOptionPane.getRootFrame();
     }

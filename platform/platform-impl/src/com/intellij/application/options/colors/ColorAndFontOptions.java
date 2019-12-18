@@ -35,8 +35,8 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -1466,7 +1466,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     try {
       if (page != null) {
         Runnable runnable = search == null ? null : page.enableSearch(search);
-        Window window = UIUtil.getWindow(CONTEXT_COMPONENT.getData(context));
+        Window window = ComponentUtil.getWindow(CONTEXT_COMPONENT.getData(context));
         if (window != null) {
           ShowSettingsUtil.getInstance().editConfigurable(window, page, runnable);
         }

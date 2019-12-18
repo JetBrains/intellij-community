@@ -1777,11 +1777,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (owner == null) return false;
 
-    Window wnd = UIUtil.getWindow(owner);
+    Window wnd = ComponentUtil.getWindow(owner);
 
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
-        Window eachWindow = UIUtil.getWindow(each);
+        Window eachWindow = ComponentUtil.getWindow(each);
         if (eachWindow == wnd) {
           return true;
         }

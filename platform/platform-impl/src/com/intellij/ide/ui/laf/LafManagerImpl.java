@@ -1034,9 +1034,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       Popup popup = myDelegate.getPopup(owner, contents, point.x, point.y);
-      Window window = UIUtil.getWindow(contents);
+      Window window = ComponentUtil.getWindow(contents);
       String cleanupKey = "LafManagerImpl.rootPaneCleanup";
-      boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != UIUtil.getWindow(owner);
+      boolean isHeavyWeightPopup = window instanceof RootPaneContainer && window != ComponentUtil.getWindow(owner);
       if (isHeavyWeightPopup) {
         UIUtil.markAsTypeAheadAware(window);
         window.setMinimumSize(null); // clear min-size from prev invocations on JBR11

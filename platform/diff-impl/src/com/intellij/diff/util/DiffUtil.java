@@ -83,10 +83,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
@@ -745,7 +742,7 @@ public class DiffUtil {
 
   public static boolean isFocusedComponentInWindow(@Nullable Component component) {
     if (component == null) return false;
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window == null) return false;
     Component windowFocusOwner = window.getMostRecentFocusOwner();
     return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);

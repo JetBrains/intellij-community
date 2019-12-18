@@ -26,7 +26,10 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -39,10 +42,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ComponentWithMnemonics;
-import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -256,7 +256,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
       Component pane = ((JFrame)window).getGlassPane();
@@ -535,7 +535,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
-    Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
+    Container container = focusOwner == null ? null : ComponentUtil.getWindow(focusOwner);
     if (container instanceof JFrame) {
       ComponentWithMnemonics componentWithMnemonics = UIUtil.getParentOfType(ComponentWithMnemonics.class, focusOwner);
       if (componentWithMnemonics instanceof Container) {
