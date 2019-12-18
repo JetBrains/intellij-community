@@ -10,14 +10,12 @@ import com.intellij.openapi.roots.impl.ClonableOrderEntry
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.ArrayUtil
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
-import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryViaTypedEntity(
@@ -173,7 +171,7 @@ internal class LibraryOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
   internal val libraryDependencyItem: ModuleDependencyItem.Exportable.LibraryDependency,
-  private val moduleLibraryTable: LibraryTable,
+  private val moduleLibrary: Library?,
   itemUpdater: (((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?
 ) : LibraryOrderEntryBaseViaTypedEntity(model, index, libraryDependencyItem, itemUpdater), LibraryOrderEntry, ClonableOrderEntry {
 
@@ -197,8 +195,7 @@ internal class LibraryOrderEntryViaTypedEntity(
           .getLibraryTableByLevel(LibraryTablesRegistrar.PROJECT_LEVEL, project)
           ?.getLibraryByName(libraryId.name)
       }
-      is LibraryTableId.ModuleLibraryTableId ->
-        moduleLibraryTable.libraries.firstOrNull { (it as LegacyBridgeLibrary).libraryId == libraryId }
+      is LibraryTableId.ModuleLibraryTableId -> moduleLibrary
       is LibraryTableId.GlobalLibraryTableId -> {
         LibraryTablesRegistrar.getInstance()
           ?.getLibraryTableByLevel(parentId.level, project)
@@ -239,7 +236,7 @@ internal class LibraryOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), rootModel.moduleLibraryTable, if (isModifiable) updater else null)
+  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), library, if (isModifiable) updater else null)
 
   override fun isSynthetic(): Boolean = isModuleLevel
 }

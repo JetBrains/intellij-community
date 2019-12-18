@@ -18,6 +18,7 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvider
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
@@ -131,7 +132,10 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
 
     return when (item) {
       is ModuleDependencyItem.Exportable.ModuleDependency -> ModuleOrderEntryViaTypedEntity(this, index, item, updater)
-      is ModuleDependencyItem.Exportable.LibraryDependency -> LibraryOrderEntryViaTypedEntity(this, index, item, moduleLibraryTable, updater)
+      is ModuleDependencyItem.Exportable.LibraryDependency -> {
+        val library = moduleLibraryTable.libraries.firstOrNull { (it as? LegacyBridgeLibrary)?.libraryId == item.library }
+        LibraryOrderEntryViaTypedEntity(this, index, item, library, updater)
+      }
       is ModuleDependencyItem.SdkDependency -> SdkOrderEntryViaTypedEntity(this, index, item)
       is ModuleDependencyItem.InheritedSdkDependency -> InheritedSdkOrderEntryViaTypedEntity(this, index, item)
       is ModuleDependencyItem.ModuleSourceDependency -> ModuleSourceOrderEntryViaTypedEntity(this, index, item)
