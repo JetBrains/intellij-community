@@ -313,8 +313,7 @@ class LegacyBridgeModifiableRootModel(
 
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.clear()
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
-    moduleLibraryTable.librariesToAdd.clear()
-    moduleLibraryTable.librariesToRemove.clear()
+    // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
     dispose()
 
@@ -577,6 +576,7 @@ class LegacyBridgeModifiableRootModel(
     }
 
     override fun removeLibrary(library: Library) {
+      modifiableModel.assertModelIsLive()
       library as LegacyBridgeLibrary
 
       val moduleLibraryTableId = library.libraryId.tableId as LibraryTableId.ModuleLibraryTableId
