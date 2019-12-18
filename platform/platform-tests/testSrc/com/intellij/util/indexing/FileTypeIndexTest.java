@@ -27,13 +27,14 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     FileType foo = registerFakeFileType();
     int version = index.getVersion();
     try {
-      assertNotSame(version, index.getVersion());
+      assertSame(!InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED,version == index.getVersion());
       Collection<VirtualFile> files = FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject()));
       assertEquals(1, files.size());
     }
     finally {
       FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
     }
+    assertEmpty(FileTypeIndex.getFiles(foo, GlobalSearchScope.allScope(getProject())));
   }
 
   @NotNull

@@ -4,12 +4,16 @@ package com.intellij.psi.search;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collections;
 
-public final class FileTypeIndexImpl extends ScalarIndexExtension<FileType> {
+public final class FileTypeIndexImpl
+        extends ScalarIndexExtension<FileType>
+        implements CustomImplementationFileBasedIndexExtension<FileType, Void> {
   static final ID<FileType, Void> NAME = FileTypeIndex.NAME;
 
   @NotNull
@@ -43,16 +47,26 @@ public final class FileTypeIndexImpl extends ScalarIndexExtension<FileType> {
 
   @Override
   public int getVersion() {
-    FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
     int version = 2;
-    for (FileType type : types) {
-      version += type.getName().hashCode();
+
+    if (!InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
+      FileType[] types = FileTypeRegistry.getInstance().getRegisteredFileTypes();
+      for (FileType type : types) {
+        version += type.getName().hashCode();
+      }
+
+      version *= 31;
+      for (FileTypeRegistry.FileTypeDetector detector : FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList()) {
+        version += detector.getVersion();
+      }
     }
 
-    version *= 31;
-    for (FileTypeRegistry.FileTypeDetector detector : FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList()) {
-      version += detector.getVersion();
-    }
     return version;
+  }
+
+  @NotNull
+  @Override
+  public UpdatableIndex<FileType, Void, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<FileType, Void> extension, @NotNull IndexStorage<FileType, Void> storage) throws StorageException, IOException {
+    return new FileTypeMapReduceIndex(extension, storage);
   }
 }

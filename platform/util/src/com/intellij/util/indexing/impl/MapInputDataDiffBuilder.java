@@ -21,7 +21,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.StorageException;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key, Value> {
   private static final boolean ourDiffUpdateEnabled = SystemProperties.getBooleanProperty("idea.disable.diff.index.update", true);
 
+  @NotNull
   private final Map<Key, Value> myMap;
 
   public MapInputDataDiffBuilder(int inputId, @Nullable Map<Key, Value> map) {
@@ -127,6 +127,11 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
         removeProcessor.process(key, myInputId);
       }
     }
+  }
+
+  @NotNull
+  public Map<Key, Value> getMap() {
+    return myMap;
   }
 
   private static final AtomicInteger requests = new AtomicInteger();
