@@ -283,7 +283,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.invokeLater(() -> application.exit(true, true, true, command));
+    application.invokeLater(() -> application.exit(false, true, true, command));
   }
 
   private String downloadUrl() {
