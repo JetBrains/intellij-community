@@ -579,3 +579,31 @@ class SynchronizedTest {
     }
   }
 }
+class Idea229050 {
+  private final Collection<String> collection = new ArrayList<>();
+  private final Collection<String> <warning descr="Contents of collection 'collection2' are updated, but never queried">collection2</warning> = new ArrayList<>();
+  private final Collection<String> <warning descr="Contents of collection 'collection3' are updated, but never queried">collection3</warning> = new ArrayList<>();
+  public void add(String value) {
+    collection.add(value);
+    collection2.add(value);
+    collection3.add(value);
+  }
+  public void printAndRemoveLongStrings() {
+    collection.removeIf(s -> {
+      if (s.length() > 10) {
+        System.out.println(s);
+        return true;
+      } else {
+        return false;
+      }
+    });
+    collection2.removeIf(s -> {
+      if (s.length() > 10) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+    collection3.removeIf(Objects::isNull);
+  }
+}
