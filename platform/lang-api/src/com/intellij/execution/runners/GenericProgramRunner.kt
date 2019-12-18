@@ -3,7 +3,6 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.RunManager
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
@@ -41,7 +40,6 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Set
   @Throws(ExecutionException::class)
   final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
     val state = environment.state ?: return
-    RunManager.getInstance(environment.project).refreshUsagesList(environment.runProfile)
     startRunProfile(environment, callback) {
       execute(environment, state)
     }
