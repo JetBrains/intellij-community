@@ -12,9 +12,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.SdkListModelBuilder;
-import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -238,7 +236,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
           notSimpleJavaSdkType(),
           null,
           sdk -> false)
-      ).showPopup(e, () -> {});
+      ).createPopup(new SdkPopup.SdkPopupListener() { })
+       .showPopup(e);
     }
   }
 }

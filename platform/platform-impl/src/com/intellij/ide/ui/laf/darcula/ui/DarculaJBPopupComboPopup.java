@@ -67,14 +67,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   }
 
   @Override
-  public void setSelectedItem(T selectedValue) {
-    // this call could show some more controls...
-    ApplicationManager.getApplication().invokeLater(() -> {
-      myComboBox.setSelectedItem(selectedValue);
-    }, ModalityState.stateForComponent(myComboBox));
-  }
-
-  @Override
   public int getMaximumRowCount() {
     return Math.max(10, myComboBox.getMaximumRowCount());
   }
@@ -93,7 +85,9 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
       myPopup.cancel();
     }
 
-    myPopup = new ComboBoxPopup<T>(this, myComboBox.getSelectedItem()) {
+    //noinspection unchecked
+    T selectedItem = (T)myComboBox.getSelectedItem();
+    myPopup = new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
       @Override
       public void cancel(InputEvent e) {
         if (e instanceof MouseEvent) {

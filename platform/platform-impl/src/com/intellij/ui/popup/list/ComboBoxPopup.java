@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -9,6 +10,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
+import java.util.function.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +19,17 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 import java.util.function.Supplier;
 
 public class ComboBoxPopup<T> extends ListPopupImpl {
   private final Context<T> myContext;
 
-  public ComboBoxPopup(@NotNull Context<T> context, @Nullable Object selectedItem) {
-    this(context, null, popupStateFromContext(context, selectedItem), null);
+  public ComboBoxPopup(@NotNull Context<T> context,
+                       @Nullable T selectedItem,
+                       @NotNull Consumer<T> onItemSelected) {
+    this(context, null, popupStateFromContext(context, onItemSelected, selectedItem), null);
   }
 
   private ComboBoxPopup(@NotNull Context<T> context,
@@ -38,8 +43,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   @NotNull
   private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
+                                                               @NotNull Consumer<T> onItemSelected,
                                                                @Nullable Object selectedItem) {
-    MyBasePopupState<T> step = new MyBasePopupState<T>(context, () -> context.getModel()) {
+    MyBasePopupState<T> step = new MyBasePopupState<T>(onItemSelected,
+                                                       () -> context.getModel(),
+                                                       () -> context.getRenderer()) {
       @Override
       public void canceled() {
         context.onPopupStepCancelled();
@@ -63,12 +71,14 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @NotNull
     ListCellRenderer<? super T> getRenderer();
 
-    void setSelectedItem(T value);
-
     default int getMaximumRowCount() { return 10; }
     default void onPopupStepCancelled() {}
     default void configureList(@NotNull JList<T> list) {}
     default void customizeListRendererComponent(JComponent component) {}
+  }
+
+  public interface SelectionListener<T> extends EventListener {
+    void setSelectedItem(@NotNull T value);
   }
 
   public void syncWithModelChange() {
@@ -163,14 +173,17 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   private static class MyBasePopupState<T> extends BaseListPopupStep<T> {
     private final JBList<T> myProxyList = new JBList<>();
-    private final Context<T> myContext;
+    private final Consumer<T> myOnItemSelected;
     private final Supplier<ListModel<T>> myGetComboboxModel;
+    private final Supplier<ListCellRenderer<? super T>> myGetRenderer;
 
-    private MyBasePopupState(@NotNull Context<T> context,
-                             @NotNull Supplier<ListModel<T>> getComboboxModel) {
+    private MyBasePopupState(@NotNull Consumer<T> onItemSelected,
+                             @NotNull Supplier<ListModel<T>> getComboboxModel,
+                             @NotNull Supplier<ListCellRenderer<? super T>> getRenderer) {
       super(null, copyItemsFromModel(getComboboxModel.get()));
+      myOnItemSelected = onItemSelected;
       myGetComboboxModel = getComboboxModel;
-      myContext = context;
+      myGetRenderer = getRenderer;
     }
 
     @Nullable
@@ -182,11 +195,14 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         //noinspection unchecked
         ListModel<T> nextModel = ((ComboBoxPopupState<T>)model).onChosen(selectedValue);
         if (nextModel != null) {
-          return new MyBasePopupState<>(myContext, () -> nextModel);
+          return new MyBasePopupState<>(myOnItemSelected, () -> nextModel, myGetRenderer);
         }
       }
 
-      myContext.setSelectedItem(selectedValue);
+      if (selectedValue != null) {
+        ApplicationManager.getApplication().invokeLater(() -> myOnItemSelected.accept(selectedValue));
+      }
+
       return FINAL_CHOICE;
     }
 
@@ -208,7 +224,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @NotNull
     @Override
     public String getTextFor(T value) {
-      Component component = myContext.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
+      Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
       return component instanceof TitledSeparator || component instanceof JSeparator ? "" :
              component instanceof JLabel ? ((JLabel)component).getText() :
              component instanceof SimpleColoredComponent
@@ -218,7 +234,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public boolean isSelectable(T value) {
-      Component component = myContext.getRenderer().getListCellRendererComponent(myProxyList, value, -1, false, false);
+      Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
       return !(component instanceof TitledSeparator || component instanceof JSeparator);
     }
   }
