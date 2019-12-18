@@ -56,6 +56,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
         return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
+    JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener((e, pd) -> reset(), myProject);
+
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
     MessageBusConnection connection = project.getMessageBus().connect();
