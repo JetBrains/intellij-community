@@ -3,9 +3,10 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecordComponent;
+import com.intellij.psi.SyntheticElement;
 import org.jetbrains.annotations.NotNull;
 
-public interface LightRecordMember extends PsiElement {
+public interface LightRecordMember extends PsiElement, SyntheticElement {
   @NotNull
   PsiRecordComponent getRecordComponent();
 }
