@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -17,12 +17,14 @@ public abstract class ExecutorRegistry {
   @NotNull
   public abstract Executor[] getRegisteredExecutors();
 
-  public abstract Executor getExecutorById(final String executorId);
+  public abstract Executor getExecutorById(@NotNull String executorId);
 
   /**
    * Consider to use {@link #isStarting(ExecutionEnvironment)}
    */
-  public abstract boolean isStarting(Project project, String executorId, String runnerId);
+  public abstract boolean isStarting(@NotNull Project project, @NotNull String executorId, @NotNull String runnerId);
 
-  public abstract boolean isStarting(@NotNull ExecutionEnvironment environment);
+  public final boolean isStarting(@NotNull ExecutionEnvironment environment) {
+    return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunner().getRunnerId());
+  }
 }
