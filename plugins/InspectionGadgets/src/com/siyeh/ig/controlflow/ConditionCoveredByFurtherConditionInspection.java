@@ -109,7 +109,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     private static int[] getRedundantOperandIndices(PsiPolyadicExpression context, List<PsiExpression> operands, boolean and) {
       assert !operands.isEmpty();
       if (operands.size() == 1) {
-        Object value = DfaUtil.computeValue(operands.get(0));
+        Object value = CommonDataflow.computeValue(operands.get(0));
         return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtilRt.EMPTY_INT_ARRAY;
       }
       String text = StreamEx.ofReversed(operands)

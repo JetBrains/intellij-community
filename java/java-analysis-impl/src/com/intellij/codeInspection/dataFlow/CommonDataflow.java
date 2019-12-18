@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -265,6 +266,25 @@ public class CommonDataflow {
     if (rangeSet != null) return rangeSet;
     DfType dfType = getDfType(expression);
     return dfType instanceof DfIntegralType ? ((DfIntegralType)dfType).getRange() : null;
+  }
+
+  /**
+   * Returns the value of given expression calculated via dataflow; or null if value is null or unknown.
+   *
+   * @param expression expression to analyze
+   * @return expression value if known
+   */
+  @Contract("null -> null")
+  public static Object computeValue(@Nullable PsiExpression expression) {
+    PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expressionToAnalyze == null) return null;
+    Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
+    if (computed != null) return computed;
+    DataflowResult dataflowResult = getDataflowResult(expressionToAnalyze);
+    if (dataflowResult != null) {
+      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expressionToAnalyze));
+    }
+    return null;
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {

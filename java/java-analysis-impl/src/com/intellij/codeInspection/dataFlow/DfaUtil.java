@@ -322,25 +322,6 @@ public class DfaUtil {
     return value;
   }
 
-  /**
-   * Returns the value of given expression calculated via dataflow; or null if value is null or unknown.
-   * The expression context is not taken into account; only expression itself.
-   *
-   * @param expression expression to analyze
-   * @return expression value if known
-   */
-  public static Object computeValue(PsiExpression expression) {
-    PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expressionToAnalyze == null) return null;
-    Object computed = ExpressionUtils.computeConstantExpression(expressionToAnalyze);
-    if (computed != null) return computed;
-    CommonDataflow.DataflowResult dataflowResult = CommonDataflow.getDataflowResult(expressionToAnalyze);
-    if (dataflowResult != null) {
-      return ContainerUtil.getOnlyItem(dataflowResult.getExpressionValues(expressionToAnalyze));
-    }
-    return null;
-  }
-
   @NotNull
   public static List<? extends MethodContract> addRangeContracts(@Nullable PsiMethod method,
                                                                  @NotNull List<? extends MethodContract> contracts) {
