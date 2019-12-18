@@ -485,9 +485,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     updateModel();
   }
 
-  public void append(final List<? extends CommittedChangeList> list) {
+  public void append(@NotNull List<? extends CommittedChangeList> list) {
     final TreeState state = myChangeLists.isEmpty() && myState != null ? myState :
-      TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+                            TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     state.setScrollToSelection(false);
     myChangeLists.addAll(list);
 

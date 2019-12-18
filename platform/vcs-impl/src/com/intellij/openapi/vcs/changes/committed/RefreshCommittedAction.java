@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -18,9 +18,9 @@ public class RefreshCommittedAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
     assert panel != null;
-    if (panel.isInLoad()) return;
-    if (panel.getRepositoryLocation() != null) {
-      panel.refreshChanges(false);
+    if (isLoading(panel)) return;
+    if (panel instanceof RepositoryLocationCommittedChangesPanel) {
+      panel.refreshChanges();
     }
     else {
       RefreshIncomingChangesAction.doRefresh(project);
@@ -32,10 +32,14 @@ public class RefreshCommittedAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-      e.getPresentation().setEnabled(panel != null && (! panel.isInLoad()));
+      e.getPresentation().setEnabled(panel != null && !isLoading(panel));
     }
     else {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  private static boolean isLoading(@NotNull CommittedChangesPanel panel) {
+    return panel instanceof RepositoryLocationCommittedChangesPanel && ((RepositoryLocationCommittedChangesPanel)panel).isLoading();
   }
 }

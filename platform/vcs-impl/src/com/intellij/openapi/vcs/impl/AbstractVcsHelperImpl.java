@@ -37,8 +37,8 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.ChangesBrowserDialog;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTableModel;
+import com.intellij.openapi.vcs.changes.committed.RepositoryLocationCommittedChangesPanel;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.FileHistoryRefresher;
 import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
@@ -479,9 +479,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       int maxCount,
                                       @Nullable String title) {
     DefaultActionGroup extraActions = new DefaultActionGroup();
-    CommittedChangesPanel panel = new CommittedChangesPanel(myProject, provider, settings, location, extraActions);
+    //noinspection unchecked
+    RepositoryLocationCommittedChangesPanel panel =
+      new RepositoryLocationCommittedChangesPanel(myProject, provider, location, extraActions);
     panel.setMaxCount(maxCount);
-    panel.refreshChanges(false);
+    //noinspection unchecked
+    panel.setSettings(settings);
+    panel.refreshChanges();
     final ContentFactory factory = ContentFactory.SERVICE.getInstance();
     if (title == null) {
       title = VcsBundle.message("browse.changes.content.title", location.toPresentableString());

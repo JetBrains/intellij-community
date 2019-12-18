@@ -29,7 +29,7 @@ private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *
     }
 
 class CommittedChangesViewManager(private val project: Project) : ChangesViewContentProvider {
-  private var panel: CommittedChangesPanel? = null
+  private var panel: ProjectCommittedChangesPanel? = null
 
   override fun initTabContent(content: Content) =
     createCommittedChangesPanel().let {
@@ -45,24 +45,22 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
         })
       }
 
-      it.refreshChanges(true)
+      it.refreshChanges()
     }
 
-  private fun createCommittedChangesPanel(): CommittedChangesPanel {
-    val provider = project.getCommittedChangesProvider()!!
-    return CommittedChangesPanel(project, provider, provider.createDefaultSettings(), null, null)
-  }
+  private fun createCommittedChangesPanel(): ProjectCommittedChangesPanel =
+    ProjectCommittedChangesPanel(project, project.getCommittedChangesProvider()!!)
 
   private fun updateCommittedChangesProvider() {
-    val provider = project.getCommittedChangesProvider() ?: return
+    val projectProvider = project.getCommittedChangesProvider() ?: return
 
     panel?.run {
-      setProvider(provider)
+      provider = projectProvider
       notifyBranchesChanged(null)
     }
   }
 
-  private fun CommittedChangesPanel.notifyBranchesChanged(vcsRoot: VirtualFile?) =
+  private fun ProjectCommittedChangesPanel.notifyBranchesChanged(vcsRoot: VirtualFile?) =
     passCachedListsToListener(project.messageBus.syncPublisher(BRANCHES_CHANGED_RESPONSE), vcsRoot)
 
   private fun runInEdtIfNotDisposed(block: () -> Unit) =
@@ -74,7 +72,7 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
 
   private inner class MyCommittedChangesListener : CommittedChangesListener {
     override fun changesLoaded(location: RepositoryLocation, changes: List<CommittedChangeList>) =
-      runInEdtIfNotDisposed { panel?.refreshChanges(true) }
+      runInEdtIfNotDisposed { panel?.refreshChanges() }
 
     override fun refreshErrorStatusChanged(lastError: VcsException?) {
       lastError?.let { showOverChangesView(project, it.message, MessageType.ERROR) }

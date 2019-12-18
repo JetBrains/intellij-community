@@ -640,11 +640,11 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     myTaskQueue.run(task);
   }
 
-  public void clearCaches(final Runnable continuation) {
+  public void clearCaches(@Nullable Runnable continuation) {
     myTaskQueue.run(() -> {
       myCachesHolder.clearAllCaches();
       myCachedIncomingChangeLists = null;
-      continuation.run();
+      if (continuation != null) continuation.run();
       MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
     });
   }
