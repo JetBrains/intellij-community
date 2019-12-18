@@ -6,7 +6,7 @@
 
     <description>
         <![CDATA[
-            Lets you connect your IDE to your organization in JetBrains Space.
+            Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
         ]]>
     </description>
 
@@ -69,12 +69,16 @@
     </application-components>
 
     <actions>
-        <action id="circlet.actions.CircletMainToolBarAction"
-                class="circlet.actions.CircletMainToolBarAction"
-                icon="CircletIcons.mainIcon"
-                text="Space Toolbar Menu">
+        <group id="circlet.actions.MainToolbarActionGroup">
+            <separator/>
+            <action id="circlet.actions.CircletMainToolBarAction"
+                    class="circlet.actions.CircletMainToolBarAction"
+                    icon="CircletIcons.mainIcon"
+                    text="Space Toolbar Menu">
+            </action>
             <add-to-group group-id="NavBarToolBar" anchor="last"/>
-        </action>
+        </group>
+
 
         <action id="circlet.ui.clone.CircletCloneAction"
                 class="circlet.ui.clone.CircletCloneAction"

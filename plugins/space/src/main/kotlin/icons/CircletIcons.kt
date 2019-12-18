@@ -9,7 +9,9 @@ object CircletIcons {
     val mainToolWindowIcon = IconLoader.getIcon("/icons/main_toolwindow.svg", CircletIcons::class.java) // 13x13
 
     @JvmField
-    val statusOnline = IconLoader.getIcon("/icons/online.svg", CircletIcons::class.java) // 6x6
+    val user = IconLoader.getIcon("/icons/user.svg", CircletIcons::class.java)
     @JvmField
-    val statusOffline = IconLoader.getIcon("/icons/offline.svg", CircletIcons::class.java) // 6x6
+    val userOnline = IconLoader.getIcon("/icons/userOnline.svg", CircletIcons::class.java)
+    @JvmField
+    val userOffline = IconLoader.getIcon("/icons/userOffline.svg", CircletIcons::class.java)
 }

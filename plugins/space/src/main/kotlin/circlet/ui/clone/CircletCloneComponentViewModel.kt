@@ -20,7 +20,7 @@ class CircletCloneComponentViewModel(
 
     val me: MutableProperty<TD_MemberProfile> = workspace.me
 
-    val repos = xTransformedPagedListOnFlux<PR_Project, CircletCloneListItem>(
+    val repos = xTransformedPagedListOnFlux<PR_Project, CircletCloneListItem?>(
         client = workspace.client,
         batchSize = 10,
         keyFn = { it.id },
@@ -30,7 +30,7 @@ class CircletCloneComponentViewModel(
 
             val starredProjectKeys = starService.starredProjects().map(PR_Project::key).toHashSet()
 
-            val result = mutableListOf<CircletCloneListItem>()
+            val result = mutableListOf<CircletCloneListItem?>()
             allProjects.forEach { project ->
                 val projectRepos = projectsWithRepos[project.key]
                 if (projectRepos != null) {
@@ -52,6 +52,9 @@ class CircletCloneComponentViewModel(
                         }
                     }
                 }
+            }
+            while(result.size < allProjects.size) {
+                result.add(null)
             }
             result
         }

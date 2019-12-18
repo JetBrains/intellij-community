@@ -87,8 +87,8 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                 }
 
                 val avatarLabel = JLabel()
-                CircletUserAvatarProvider.getInstance().avatar.forEach(uiLifetime) { icon ->
-                    avatarLabel.icon = resizeIcon(icon, 50)
+                CircletUserAvatarProvider.getInstance().avatars.forEach(uiLifetime) { avatars ->
+                    avatarLabel.icon = resizeIcon(avatars.circle, 50)
                 }
                 return JPanel(GridBagLayout()).apply {
                     var gbc = GridBag().nextLine().next().anchor(GridBag.LINE_START).insetRight(UIUtil.DEFAULT_HGAP)

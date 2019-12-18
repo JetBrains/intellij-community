@@ -16,7 +16,7 @@ plugins {
 applyKotlinJVM()
 
 if (hasProperty("teamcity")) {
-    version = "2019-alpha.${teamcity["build.number"]}"
+    version = "2019.${teamcity["build.number"]}"
 }
 
 dependencies {
@@ -70,7 +70,7 @@ buildPlugin {
 <plugins>
     <plugin id="com.jetbrains.space" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
         <name>Space</name>
-        <description>Lets you connect your IDE to your organization in JetBrains Space.</description>
+        <description>Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.</description>
     </plugin>
 </plugins>""")
             println "##teamcity[publishArtifacts 'app/app-idea/build/distributions/update.xml']"
@@ -79,6 +79,5 @@ buildPlugin {
 }
 
 publishPlugin {
-    channels 'super-early-bird'
     token System.getenv('IDEA_PLUGIN_DEPLOY_TOKEN')
 }

@@ -1,12 +1,14 @@
 package circlet.ui.clone
 
+import circlet.actions.AccountMenuItem
+import circlet.actions.AccountMenuPopupStep
+import circlet.actions.AccountsMenuListPopup
 import circlet.client.*
 import circlet.client.api.*
 import circlet.components.*
 import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.settings.*
-import circlet.settings.log
 import circlet.ui.*
 import com.intellij.dvcs.*
 import com.intellij.dvcs.repo.*
@@ -243,15 +245,16 @@ private class CloneView(
 
         cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
             launch(lifetime, Ui) {
-                val toAdd = allProjectsWithReposAndDetails.drop(listModel.items.count())
+                val allRepos =  allProjectsWithReposAndDetails.filterNotNull()
+                val toAdd = allRepos.drop(listModel.items.count())
                 val selection = circletProjectListWithSearch.list.selectedIndex
                 listModel.addAll(listModel.items.count(), toAdd)
                 circletProjectListWithSearch.list.selectedIndex = selection
             }
         }
 
-        CircletUserAvatarProvider.getInstance().avatar.forEach(lifetime) { avatarIcon: Icon ->
-            accountLabel.icon = resizeIcon(avatarIcon, VcsCloneDialogUiSpec.Components.avatarSize)
+        CircletUserAvatarProvider.getInstance().avatars.forEach(lifetime) { avatars ->
+            accountLabel.icon = resizeIcon(avatars.circle, VcsCloneDialogUiSpec.Components.avatarSize)
         }
 
         cloneViewModel.isLoading.forEach(lifetime, list::setPaintBusy)
@@ -264,17 +267,16 @@ private class CloneView(
             private fun showPopupMenu() {
                 val serverUrl = cleanupUrl(st.server)
                 val menuItems: MutableList<AccountMenuItem> = mutableListOf()
-                menuItems += AccountMenuItem.Account(
-                    st.workspace.me.value.englishFullName(),
-                    serverUrl,
-                    resizeIcon(accountLabel.icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize))
-                menuItems += AccountMenuItem.Action("Open $serverUrl",
-                                                    { BrowserUtil.browse(st.server) },
-                                                    AllIcons.Ide.External_link_arrow,
-                                                    showSeparatorAbove = true)
+                menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
+                                                     serverUrl,
+                                                     resizeIcon(accountLabel.icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
+                                                     listOf(AccountMenuItem.Action("Open $serverUrl",
+                                                                                   { BrowserUtil.browse(st.server) },
+                                                                                   AllIcons.Ide.External_link_arrow)))
                 menuItems += AccountMenuItem.Action("Projects",
                                                     { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
-                                                    AllIcons.Ide.External_link_arrow)
+                                                    AllIcons.Ide.External_link_arrow,
+                                                    showSeparatorAbove = true)
                 menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() }, showSeparatorAbove = true)
 
                 AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))

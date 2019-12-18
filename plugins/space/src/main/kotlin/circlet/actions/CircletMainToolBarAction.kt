@@ -24,7 +24,6 @@ import com.intellij.ui.popup.*
 import com.intellij.ui.popup.list.*
 import com.intellij.util.ui.*
 import com.intellij.util.ui.cloneDialog.*
-import icons.*
 import libraries.coroutines.extra.*
 import runtime.*
 import runtime.reactive.*
@@ -42,19 +41,15 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
 
         val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
         if (component is JBLabel) {
-            val avatar = CircletUserAvatarProvider.getInstance().avatar.value
-            val statusIcon = if (circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected)
-            CircletIcons.statusOnline else CircletIcons.statusOffline
-            val layeredIcon = LayeredIcon(2).apply {
-                setIcon(resizeIcon(avatar, 16), 0)
-                setIcon(statusIcon, 1, SwingConstants.SOUTH_EAST)
-            }
-            component.icon = layeredIcon
+            val avatars = CircletUserAvatarProvider.getInstance().avatars.value
+            val avatar = if (circletWorkspace.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected)
+                avatars.online else avatars.offline
+            component.icon = resizeIcon(avatar, 16)
         }
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-        return JBLabel(CircletUserAvatarProvider.getInstance().avatar.value).apply {
+        return JBLabel(CircletUserAvatarProvider.getInstance().avatars.value.offline).apply {
             text = " "
             addMouseListener(object :MouseAdapter(){
                 override fun mouseClicked(e: MouseEvent?) {
@@ -70,7 +65,7 @@ class CircletMainToolBarAction : DumbAwareAction(), CustomComponentAction{
         val component = e.inputEvent.component
         val workspace = circletWorkspace.workspace.value
         if (workspace != null) {
-            buildMenu(workspace, CircletUserAvatarProvider.getInstance().avatar.value, e.project!!)
+            buildMenu(workspace, CircletUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
                 .showUnderneathOf(component)
         }
         else {
