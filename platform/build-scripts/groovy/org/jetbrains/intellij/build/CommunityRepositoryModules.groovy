@@ -398,7 +398,6 @@ class CommunityRepositoryModules {
       //todo[nik] move to module libraries
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
       withProjectLibrary("SceneBuilderKit", "rt/java8")
-      withProjectLibrary("SceneBuilderKit11", "rt/java11")
     }
   }
 
