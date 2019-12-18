@@ -32,7 +32,7 @@ public abstract class DynamicBundle extends AbstractBundle {
 
     ResourceBundle pluginBundle = super.findBundle(pathToBundle, langBundle.getLoaderForClass(), control);
     if (pluginBundle == null) return base;
-    
+
     try {
       if (SET_PARENT != null) {
         SET_PARENT.invoke(pluginBundle, base);
@@ -40,6 +40,7 @@ public abstract class DynamicBundle extends AbstractBundle {
     }
     catch (Exception e) {
       LOG.warn(e);
+      return base;
     }
     return pluginBundle;
   }
@@ -47,11 +48,18 @@ public abstract class DynamicBundle extends AbstractBundle {
   // todo: one language per application
   @Nullable
   private static LanguageBundleEP findLanguageBundle() {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
+    try {
+      Application application = ApplicationManager.getApplication();
+      if (application == null) return null;
+      if (application.isUnitTestMode() && !application.getExtensionArea().hasExtensionPoint(LanguageBundleEP.EP_NAME)) {
+        return null;
+      }
+      return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
+    }
+    catch (Exception e) {
+      LOG.error(e);
       return null;
     }
-    return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
   }
 
   public static final DynamicBundle INSTANCE = new DynamicBundle("") {
@@ -61,5 +69,3 @@ public abstract class DynamicBundle extends AbstractBundle {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
   }
 }
-
-
