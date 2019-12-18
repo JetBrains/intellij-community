@@ -60,24 +60,6 @@ runIde {
     jbrVersion = '11_0_2b159'
 }
 
-buildPlugin {
-    doLast {
-        def buildSettings = Build.buildSettings
-        if (buildSettings.isCIRun()){
-            def buildNumber = buildSettings.buildNumber
-
-            new File("$projectDir/build/distributions/update.xml").write("""<!-- Plugin repository URL: "http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Space_IdeaSpaceIntegration),tag:release/artifacts/content/update.xml" -->
-<plugins>
-    <plugin id="com.jetbrains.space" url="http://buildserver.labs.intellij.net/guestAuth/app/rest/builds/buildType:(id:Circlet_IdeaIntegration),number:${buildNumber}/artifacts/content/app-idea-${buildNumber}.zip" version="$buildNumber">
-        <name>Space</name>
-        <description>Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.</description>
-    </plugin>
-</plugins>""")
-            println "##teamcity[publishArtifacts 'app/app-idea/build/distributions/update.xml']"
-        }
-    }
-}
-
 publishPlugin {
     token System.getenv('IDEA_PLUGIN_DEPLOY_TOKEN')
 }
