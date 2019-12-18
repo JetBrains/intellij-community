@@ -94,13 +94,4 @@ class A<T> {
 }
 '''
   }
-
-  // this issue affects almost all PsiTypeVisitors that meet GrClosureType returning itself
-  void 'test infinite type'() {
-    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    testHighlighting '''\
-  def foo() {
-    ({ foo() })
-  }'''
-  }
 }
