@@ -35,7 +35,6 @@ public abstract class ExecutionManager {
    *
    * @param startRunnable    the runnable to actually start the process for the run configuration.
    * @param environment              the execution environment describing the process to be started.
-   * @param state            the ready-to-start process
    * @param onCancelRunnable the callback to call if one of the before launch tasks cancels the process execution.
    */
   public abstract void compileAndRun(@NotNull Runnable startRunnable,
@@ -54,10 +53,17 @@ public abstract class ExecutionManager {
    * Prepares the run or debug tab for running the specified process and calls a callback to start it.
    *
    * @param starter the callback to start the process execution.
-   * @param state   the ready-to-start process
    * @param environment     the execution environment describing the process to be started.
    */
-  public abstract void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state, @NotNull ExecutionEnvironment environment);
+  public abstract void startRunProfile(@NotNull RunProfileStarter starter, @NotNull ExecutionEnvironment environment);
+
+  /**
+   * @deprecated Use {@link #startRunProfile(RunProfileStarter, ExecutionEnvironment)}
+   */
+  @Deprecated
+  public void startRunProfile(@NotNull RunProfileStarter starter, @SuppressWarnings("unused") @NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) {
+    startRunProfile(starter, environment);
+  }
 
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,

@@ -62,7 +62,7 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Set
 @ApiStatus.Internal
 fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
   ExecutionManager.getInstance(environment.project).startRunProfile(object : RunProfileStarter() {
-    override fun executeAsync(state: RunProfileState, environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
+    override fun executeAsync(environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
       // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
       return starter()
         .then { descriptor ->
@@ -83,5 +83,5 @@ fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, c
           descriptor
         }
     }
-  }, state, environment)
+  }, environment)
 }

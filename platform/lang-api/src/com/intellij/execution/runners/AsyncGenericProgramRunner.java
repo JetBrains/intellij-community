@@ -28,7 +28,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
           if (!environment.getProject().isDisposed()) {
             startRunProfile(environment, state, callback, () -> {
               try {
-                return result.executeAsync(state, environment);
+                return result.executeAsync(environment);
               }
               catch (ExecutionException e) {
                 throw new RuntimeException(e);
