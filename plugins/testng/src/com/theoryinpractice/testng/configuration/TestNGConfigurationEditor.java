@@ -25,10 +25,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -89,6 +87,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private JPanel myPropertiesPanel;
   private JPanel myListenersPanel;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
+  private LabeledComponent<JCheckBox> myUseModulePath;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -175,6 +174,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
     myShortenCommandLineCombo.setAnchor(moduleClasspath.getLabel());
+    myUseModulePath.setAnchor(moduleClasspath.getLabel());
+    myUseModulePath.getComponent().setSelected(true);
+    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
   }
 
   private void evaluateModuleClassPath() {
@@ -272,6 +274,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     listenerModel.setListenerList(data.TEST_LISTENERS);
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
+    myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
+    myUseModulePath.getComponent().setSelected(config.isUseModulePath());
   }
 
   @Override
@@ -306,6 +310,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
     config.setShortenCommandLine(myShortenCommandLineCombo.getComponent().getSelectedItem());
+
+    config.setUseModulePath(myUseModulePath.isVisible() && myUseModulePath.getComponent().isSelected());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {
