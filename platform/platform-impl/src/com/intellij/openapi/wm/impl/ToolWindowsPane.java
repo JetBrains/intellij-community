@@ -198,12 +198,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
       if (sideInfo == null) {
-          ToolWindowAnchor anchor = info.getAnchor();
-          setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
-          if (!dirtyMode) {
-            layeredPane.validate();
-            layeredPane.repaint();
-          }
+        ToolWindowAnchor anchor = info.getAnchor();
+        setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
+        if (!dirtyMode) {
+          layeredPane.validate();
+          layeredPane.repaint();
+        }
       }
       else {
         addAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
@@ -223,13 +223,25 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
       if (sideInfo == null) {
         setComponent(null, info.getAnchor(), 0);
-        if (!dirtyMode) {
-          layeredPane.validate();
-          layeredPane.repaint();
-        }
       }
       else {
-        removeSplitAndDockedComponent(info, dirtyMode);
+        ToolWindowAnchor anchor = info.getAnchor();
+        JComponent c = getComponentAt(anchor);
+        if (c instanceof Splitter) {
+          Splitter splitter = (Splitter)c;
+          InternalDecorator component1 = (InternalDecorator)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
+          state.addSplitProportion(info, component1, splitter);
+          setComponent(component1, anchor,
+                       component1 == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component1).getWeight());
+        }
+        else {
+          setComponent(null, anchor, 0);
+        }
+      }
+
+      if (!dirtyMode) {
+        layeredPane.validate();
+        layeredPane.repaint();
       }
     }
     else if (info.isSliding()) {
@@ -267,6 +279,16 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @NotNull
   public final JComponent getLayeredPane() {
     return layeredPane;
+  }
+
+  public void validateAndRepaint() {
+    layeredPane.validate();
+    layeredPane.repaint();
+
+    for (Stripe stripe : stripes) {
+      stripe.revalidate();
+      stripe.repaint();
+    }
   }
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
@@ -830,25 +852,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     Container parent = button.getParent();
     if (parent != null) {
       ((Stripe)parent).removeButton(button);
-    }
-  }
-
-  private void removeSplitAndDockedComponent(@NotNull WindowInfo info, boolean dirtyMode) {
-    ToolWindowAnchor anchor = info.getAnchor();
-    JComponent c = getComponentAt(anchor);
-    if (c instanceof Splitter) {
-      Splitter splitter = (Splitter)c;
-      InternalDecorator component = (InternalDecorator)(info.isSplit() ? splitter.getFirstComponent() : splitter.getSecondComponent());
-      state.addSplitProportion(info, component, splitter);
-      setComponent(component, anchor,
-                   component == null ? 0 : ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(component).getWeight());
-    }
-    else {
-      setComponent(null, anchor, 0);
-    }
-    if (!dirtyMode) {
-      layeredPane.validate();
-      layeredPane.repaint();
     }
   }
 

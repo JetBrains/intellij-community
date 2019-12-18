@@ -49,7 +49,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * @return suitable component to focus
    */
   @Nullable
-  public abstract JComponent getFocusTargetFor(@NotNull final JComponent comp);
+  public abstract JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
    * Executes given runnable after all focus activities are finished.

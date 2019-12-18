@@ -19,32 +19,32 @@ import java.awt.*;
  */
 public final class RequestFocusInToolWindowCommand implements Runnable {
   private static final Logger LOG = Logger.getInstance(RequestFocusInToolWindowCommand.class);
-  private final ToolWindowImpl myToolWindow;
+  private final ToolWindowImpl toolWindow;
 
   public RequestFocusInToolWindowCommand(@NotNull ToolWindowImpl toolWindow) {
-    myToolWindow = toolWindow;
+    this.toolWindow = toolWindow;
   }
 
   @Override
   public void run() {
-    Alarm checkerAlarm = new Alarm(myToolWindow.getDisposable());
+    Alarm checkerAlarm = new Alarm(toolWindow.getDisposable());
     checkerAlarm.addRequest(new Runnable() {
       final long startTime = System.currentTimeMillis();
 
       @Override
       public void run() {
         if (System.currentTimeMillis() - startTime > 10000) {
-          LOG.debug(myToolWindow.getId(), " tool window - cannot wait for showing component");
+          LOG.debug(toolWindow.getId(), " tool window - cannot wait for showing component");
           return;
         }
 
-        Component component = getShowingComponentToRequestFocus();
+        Component component = getShowingComponentToRequestFocus(toolWindow);
         if (component == null) {
           checkerAlarm.addRequest(this, 100);
         }
         else {
           Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
-          ToolWindowManagerImpl manager = myToolWindow.getToolWindowManager();
+          ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
           if (owner != component) {
             manager.getFocusManager().requestFocusInProject(component, manager.getProject());
             bringOwnerToFront();
@@ -56,12 +56,14 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
   }
 
   private void bringOwnerToFront() {
-    final Window owner = SwingUtilities.getWindowAncestor(myToolWindow.getComponent());
+    final Window owner = SwingUtilities.getWindowAncestor(toolWindow.getComponent());
     //Toolwindow component shouldn't take focus back if new dialog or frame appears
     //Example: Ctrl+D on file history brings a diff dialog to front and then hides it by main frame by calling
     // toFront on toolwindow window
     Window activeFrame = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (activeFrame != null && activeFrame != owner) return;
+    if (activeFrame != null && activeFrame != owner) {
+      return;
+    }
     //if (owner == null) {
     //  System.out.println("owner = " + owner);
     //  return;
@@ -74,7 +76,7 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
     // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
     // isn't active.
     if (owner != null && owner.getFocusOwner() == null) {
-      final Window activeWindow = getActiveWindow(owner.getOwnedWindows());
+      Window activeWindow = getActiveWindow(owner.getOwnedWindows());
       if (activeWindow == null || activeWindow instanceof FloatingDecorator) {
         LOG.debug("owner.toFront()");
         //Thread.dumpStack();
@@ -85,20 +87,22 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
   }
 
   @Nullable
-  private Component getShowingComponentToRequestFocus() {
-    JComponent container = myToolWindow.getComponent();
+  public static Component getShowingComponentToRequestFocus(@NotNull ToolWindowImpl toolWindow) {
+    JComponent container = toolWindow.getComponentIfInitialized();
     if (container == null || !container.isShowing()) {
-      LOG.debug(myToolWindow.getId(), " tool window - parent container is hidden: ", container);
+      LOG.debug(toolWindow.getId(), " tool window: parent container is hidden: ", container);
       return null;
     }
+
     FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
     if (policy == null) {
-      LOG.warn(myToolWindow.getId() + " tool window does not provide focus traversal policy");
+      LOG.warn(toolWindow.getId() + " tool window does not provide focus traversal policy");
       return null;
     }
-    Component component = myToolWindow.getToolWindowManager().getFocusManager().getFocusTargetFor(container);
+
+    Component component = toolWindow.getToolWindowManager().getFocusManager().getFocusTargetFor(container);
     if (component == null || !component.isShowing()) {
-      LOG.debug(myToolWindow.getId(), " tool window - default component is hidden: ", container);
+      LOG.debug(toolWindow.getId(), " tool window: default component is hidden: ", container);
       return null;
     }
     return component;
@@ -106,9 +110,9 @@ public final class RequestFocusInToolWindowCommand implements Runnable {
 
   private void updateToolWindow(@NotNull Component component) {
     if (component.isFocusOwner()) {
-      myToolWindow.setFocusedComponent(component);
-      if (myToolWindow.isAvailable() && !myToolWindow.isActive()) {
-        myToolWindow.activate(null, true, false);
+      toolWindow.setFocusedComponent(component);
+      if (toolWindow.isAvailable() && !toolWindow.isActive()) {
+        toolWindow.activate(null, true, false);
       }
     }
 

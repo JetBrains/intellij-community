@@ -4,18 +4,17 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.lang.reflect.Field;
 
 import static com.intellij.util.ui.FocusUtil.findFocusableComponentIn;
 
 public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
-
   @Override
   public Component getDefaultComponent(Container focusCycleRoot) {
     if (!(focusCycleRoot instanceof JComponent)) {
@@ -24,7 +23,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return getPreferredFocusedComponent((JComponent)focusCycleRoot, this);
   }
 
-  public static JComponent getPreferredFocusedComponent(@NotNull final JComponent component) {
+  public static JComponent getPreferredFocusedComponent(@NotNull JComponent component) {
     return getPreferredFocusedComponent(component, null);
   }
 
@@ -63,34 +62,56 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
    * (JTextField)focusable
    *
    */
-  public static JComponent getPreferredFocusedComponent(@NotNull final JComponent component, final FocusTraversalPolicy policyToIgnore) {
+  @Nullable
+  public static JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore) {
+    return getPreferredFocusedComponent(component, policyToIgnore, null);
+  }
+
+  @Nullable
+  private static JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore, @Nullable Field focusTraversalPolicyField) {
     if (!component.isVisible()) {
       return null;
     }
 
-    final FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicyAwtImpl(component);
+    FocusTraversalPolicy focusTraversalPolicy = null;
+    if (component.isFocusTraversalPolicySet()) {
+      try {
+        focusTraversalPolicyField = Container.class.getDeclaredField("focusTraversalPolicy");
+        focusTraversalPolicyField.setAccessible(true);
+      }
+      catch (ReflectiveOperationException e) {
+        focusTraversalPolicyField = null;
+      }
+
+      try {
+        focusTraversalPolicy = focusTraversalPolicyField != null && component.isFocusTraversalPolicySet() ? (FocusTraversalPolicy)focusTraversalPolicyField.get(component) : null;
+      }
+      catch (IllegalAccessException e) {
+        focusTraversalPolicy = null;
+      }
+    }
+
     if (focusTraversalPolicy != null && focusTraversalPolicy != policyToIgnore) {
       if (focusTraversalPolicy.getClass().getName().contains("LegacyGlueFocusTraversalPolicy")) {
         return component;
       }
 
       Component defaultComponent = focusTraversalPolicy.getDefaultComponent(component);
-
       if (defaultComponent instanceof JComponent) {
         return (JComponent)defaultComponent;
       }
     }
 
     if (component instanceof JTabbedPane) {
-      final JTabbedPane tabbedPane = (JTabbedPane)component;
-      final Component selectedComponent = tabbedPane.getSelectedComponent();
+      JTabbedPane tabbedPane = (JTabbedPane)component;
+      Component selectedComponent = tabbedPane.getSelectedComponent();
       if (selectedComponent instanceof JComponent) {
         return getPreferredFocusedComponent((JComponent)selectedComponent);
       }
       return null;
     }
 
-    if(_accept(component)) {
+    if (_accept(component)) {
       return component;
     }
 
@@ -98,7 +119,8 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       if (!(ca instanceof JComponent)) {
         continue;
       }
-      final JComponent c = getPreferredFocusedComponent((JComponent)ca);
+
+      JComponent c = getPreferredFocusedComponent((JComponent)ca, null, focusTraversalPolicyField);
       if (c != null) {
         return c;
       }
@@ -106,19 +128,15 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return null;
   }
 
-  private static FocusTraversalPolicy getFocusTraversalPolicyAwtImpl(final JComponent component) {
-    return ReflectionUtil.getField(Container.class, component, FocusTraversalPolicy.class, "focusTraversalPolicy");
-  }
-
   @Override
-  protected final boolean accept(final Component aComponent) {
+  protected final boolean accept(Component aComponent) {
     if (aComponent instanceof JComponent) {
       return _accept((JComponent)aComponent);
     }
     return super.accept(aComponent);
   }
 
-  private static boolean _accept(final JComponent component) {
+  private static boolean _accept(@NotNull JComponent component) {
     if (!component.isEnabled() || !component.isVisible() || !component.isFocusable()) {
       return false;
     }
@@ -128,7 +146,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       return true;
     }
 
-    if(component instanceof JTextComponent){
+    if (component instanceof JTextComponent) {
       return ((JTextComponent)component).isEditable();
     }
 
