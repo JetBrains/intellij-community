@@ -22,7 +22,10 @@ public abstract class ExecutorRegistry {
   /**
    * Consider to use {@link #isStarting(ExecutionEnvironment)}
    */
-  public abstract boolean isStarting(@NotNull Project project, @NotNull String executorId, @NotNull String runnerId);
+  @SuppressWarnings("MethodMayBeStatic")
+  public final boolean isStarting(@NotNull Project project, @NotNull String executorId, @NotNull String runnerId) {
+    return ExecutionManager.getInstance(project).isStarting(executorId, runnerId);
+  }
 
   public final boolean isStarting(@NotNull ExecutionEnvironment environment) {
     return isStarting(environment.getProject(), environment.getExecutor().getId(), environment.getRunner().getRunnerId());

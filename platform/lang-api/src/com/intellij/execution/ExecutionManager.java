@@ -72,4 +72,6 @@ public abstract class ExecutionManager {
                                          @Nullable ProcessHandler processHandler);
 
   public abstract void restartRunProfile(@NotNull ExecutionEnvironment environment);
+
+  public abstract boolean isStarting(@NotNull String executorId, @NotNull String runnerId);
 }
