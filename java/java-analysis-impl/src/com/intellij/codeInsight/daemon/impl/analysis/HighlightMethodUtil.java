@@ -1937,7 +1937,18 @@ public class HighlightMethodUtil {
   public static HighlightInfo checkRecordConstructorDeclaration(PsiMethod method) {
     if (!method.isConstructor()) return null;
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null || !aClass.isRecord()) return null;
+    if (aClass == null) return null;
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return null;
+    if (!aClass.isRecord()) {
+      if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+          identifier).descriptionAndTooltip(JavaErrorMessages.message("compact.constructor.in.regular.class")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddParameterListFix(method));
+        return info;
+      }
+      return null;
+    }
     if (JavaPsiRecordUtil.isCanonicalConstructor(method)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       PsiRecordComponent[] components = aClass.getRecordComponents();
@@ -1961,12 +1972,9 @@ public class HighlightMethodUtil {
       // Non-canonical constructor
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
       if (call == null || JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-        PsiIdentifier identifier = method.getNameIdentifier();
-        if (identifier != null) {
-          String message = JavaErrorMessages.message("record.no.constructor.call.in.non.canonical");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-            .descriptionAndTooltip(message).create();
-        }
+        String message = JavaErrorMessages.message("record.no.constructor.call.in.non.canonical");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+          .descriptionAndTooltip(message).create();
       }
       return null;
     }

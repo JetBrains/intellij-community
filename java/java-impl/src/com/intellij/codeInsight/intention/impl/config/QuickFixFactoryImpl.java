@@ -907,4 +907,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
     return new WrapSwitchRuleStatementsIntoBlockFix(rule);
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddParameterListFix(PsiMethod method) {
+    return new AddParameterListFix(method);
+  }
 }

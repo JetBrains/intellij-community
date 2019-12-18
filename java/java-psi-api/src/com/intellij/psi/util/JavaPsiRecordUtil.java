@@ -46,7 +46,16 @@ public class JavaPsiRecordUtil {
   }
 
   /**
-   * @param method to check
+   * @param method method to check
+   * @return true if given method is a compact constructor (has no parameter list),
+   * regardless whether it's declared in the record or not
+   */
+  public static boolean isCompactConstructor(@NotNull PsiMethod method) {
+    return method.isConstructor() && method.getParameterList().textMatches("");
+  }
+
+  /**
+   * @param method method to check
    * @return true if given method is a canonical constructor for a record class
    */
   public static boolean isCanonicalConstructor(@NotNull PsiMethod method) {

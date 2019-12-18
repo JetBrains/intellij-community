@@ -480,4 +480,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule);
+  
+  @NotNull
+  public abstract IntentionAction createAddParameterListFix(PsiMethod method);
 }

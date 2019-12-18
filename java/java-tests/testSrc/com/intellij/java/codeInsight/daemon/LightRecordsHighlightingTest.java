@@ -27,6 +27,9 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRecordConstructors() {
     doTest();
   }
+  public void testRecordCompactConstructors() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
