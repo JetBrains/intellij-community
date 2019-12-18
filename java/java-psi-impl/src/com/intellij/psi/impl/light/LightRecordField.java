@@ -43,4 +43,9 @@ public class LightRecordField extends LightField implements LightRecordMember {
     if (containingClass == null) return null;
     return containingClass.getContainingFile();
   }
+
+  @Override
+  public PsiElement getContext() {
+    return getContainingClass();
+  }
 }

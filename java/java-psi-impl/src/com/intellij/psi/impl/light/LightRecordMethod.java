@@ -42,4 +42,9 @@ public class LightRecordMethod extends LightMethod implements LightRecordMember 
     PsiClass containingClass = getContainingClass();
     return containingClass.getContainingFile();
   }
+
+  @Override
+  public PsiElement getContext() {
+    return getContainingClass();
+  }
 }
