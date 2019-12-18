@@ -390,6 +390,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" filepath="$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/debugz/aswb.debugz.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/debugz/aswb.debugz.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/aswb/aswb.jcgdi.blaze.plugin.aswb.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/aswb/aswb.jcgdi.blaze.plugin.aswb.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/base/aswb.jcgdi.blaze.plugin.base.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/base/aswb.jcgdi.blaze.plugin.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/cpp/aswb.jcgdi.blaze.plugin.cpp.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/com/google/devtools/intellij/blaze/plugin/cpp/aswb.jcgdi.blaze.plugin.cpp.iml" />
