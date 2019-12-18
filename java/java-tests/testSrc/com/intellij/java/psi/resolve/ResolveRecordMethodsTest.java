@@ -2,6 +2,7 @@
 package com.intellij.java.psi.resolve;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightResolveTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -50,5 +51,13 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
     assertTrue(targetField.hasAnnotation("F"));
     assertFalse(targetField.hasAnnotation("M"));
+  }
+
+  public void testExistingMethod() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiMethod);
+    assertFalse(target instanceof LightRecordMethod);
+    PsiClass aClass = ((PsiMethod)target).getContainingClass();
+    assertEquals(2, aClass.getMethods().length);
   }
 }

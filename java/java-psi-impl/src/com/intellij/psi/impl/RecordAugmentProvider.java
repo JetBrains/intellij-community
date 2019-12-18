@@ -7,6 +7,7 @@ import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
+import com.intellij.psi.impl.source.PsiExtensibleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,8 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   @NotNull
   @Override
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
-    if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
+    if (element instanceof PsiExtensibleClass) {
+      PsiExtensibleClass aClass = (PsiExtensibleClass)element;
       if (!aClass.isRecord()) return Collections.emptyList();
       if (type == PsiMethod.class) {
         return getAccessorsAugments(element, aClass);
@@ -34,11 +35,12 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
   }
 
   @NotNull
-  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiClass aClass) {
+  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(@NotNull PsiElement element, PsiExtensibleClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     ArrayList<Psi> methods = new ArrayList<>(components.length);
     for (PsiRecordComponent component : components) {
+      if (!shouldGenerateMethod(aClass, component)) continue;
       PsiMethod recordMethod = createRecordMethod(component, factory);
       if (recordMethod == null) continue;
       LightMethod method = new LightRecordMethod(element.getManager(), recordMethod, aClass, component);
@@ -46,6 +48,17 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
       methods.add((Psi)method);
     }
     return methods;
+  }
+
+  private static boolean shouldGenerateMethod(PsiExtensibleClass aClass, PsiRecordComponent component) {
+    String componentName = component.getName();
+    if (componentName == null) return false;
+    List<PsiMethod> methods = aClass.getOwnMethods();
+    for (PsiMethod method : methods) {
+      // Return type is not checked to avoid unnecessary warning about clashing signatures in case of different return types
+      if (componentName.equals(method.getName())) return false;
+    }
+    return true;
   }
 
   @NotNull
