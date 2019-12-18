@@ -66,9 +66,7 @@ public class MavenProjectsManagerWatcher {
 
   @TestOnly
   public synchronized void enableAutoImportInTests() {
-    AutoImportProjectTracker projectTracker = AutoImportProjectTracker.getInstance(myProject);
-    projectTracker.initialize();
-    projectTracker.enableAutoImportInTests();
+    AutoImportProjectTracker.getInstance(myProject).enableAutoImportInTests();
   }
 
   public synchronized void stop() {
