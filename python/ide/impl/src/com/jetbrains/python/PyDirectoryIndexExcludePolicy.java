@@ -4,19 +4,19 @@ package com.jetbrains.python;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author traff
@@ -65,13 +65,5 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
 
       return result;
     };
-  }
-
-  @NotNull
-  @Override
-  public VirtualFilePointer[] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) {
-
-
-    return VirtualFilePointer.EMPTY_ARRAY;
   }
 }
