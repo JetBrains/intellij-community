@@ -12,7 +12,7 @@ record Throws(int x) {
   public Throws<error descr="Identifier expected"> </error><error descr="Unexpected token">throws</error> <error descr="Invalid method declaration; return type required">Throwable</error> {}
 }
 record Generic() {
-  public <error descr="Canonical constructor cannot have type parameters"><T></error> Generic() {}
+  public <error descr="Compact constructor cannot have type parameters"><T></error> Generic {}
 }
 record Delegate(int x) {
   public Delegate {
