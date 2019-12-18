@@ -61,7 +61,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   public JdkListConfigurable(@NotNull Project project) {
     super(project);
     myJdksTreeModel = ProjectStructureConfigurable.getInstance(project).getProjectJdksModel();
-    myJdksTreeModel.addListener(myListener);
   }
 
   @Override
@@ -135,6 +134,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Override
   public void reset() {
     super.reset();
+    myJdksTreeModel.addListener(myListener);
     myTree.setRootVisible(false);
   }
 
