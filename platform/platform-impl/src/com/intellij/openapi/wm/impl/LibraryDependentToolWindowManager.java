@@ -13,6 +13,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
+import com.intellij.openapi.wm.ext.LibrarySearchHelper;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,7 +55,10 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
     List<LibraryDependentToolWindow> extensions = LibraryDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList();
 
     ReadAction
-      .nonBlocking(() -> new HashSet<>(ContainerUtil.findAll(extensions, ltw -> ltw.getLibrarySearchHelper().isLibraryExists(project))))
+      .nonBlocking(() -> new HashSet<>(ContainerUtil.findAll(extensions, ltw -> {
+        LibrarySearchHelper helper = ltw.getLibrarySearchHelper();
+        return helper != null && helper.isLibraryExists(project);
+      })))
       .inSmartMode(project)
       .coalesceBy(this)
       .finishOnUiThread(currentModalityState, existing -> {
@@ -68,12 +72,11 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
           }
           else {
             if (toolWindow != null) {
-              toolWindowManagerEx.unregisterToolWindow(libraryToolWindow.id);
+              toolWindow.remove();
             }
           }
         }
       })
       .submit(ourExecutor);
   }
-
 }
