@@ -3,8 +3,8 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.execution.junit2.info.LocationUtil;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -19,7 +19,7 @@ public class AbstractTestNGPackageConfigurationProducer extends TestNGConfigurat
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = context.getPsiLocation();
-    PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(element);
+    PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(element);
     if (aPackage == null) {
       return false;
     }

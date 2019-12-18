@@ -7,6 +7,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -104,7 +105,7 @@ class TestDirectory extends TestPackage {
   protected void searchTests5(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
     if (module != null) {
       PsiDirectory directory = getDirectory(getConfiguration().getPersistentData());
-      PsiPackage aPackage = JavaRuntimeConfigurationProducerBase.checkPackage(directory);
+      PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(directory);
       if (aPackage != null) {
         GlobalSearchScope projectScope = GlobalSearchScopesCore.projectTestScope(getConfiguration().getProject());
         PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope(true).intersectWith(projectScope));
