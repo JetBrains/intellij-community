@@ -1191,7 +1191,7 @@
               class="com.intellij.execution.dashboard.actions.RestoreHiddenConfigurationsAction"
               text="Restore Hidden Configurations"/>
       <action id="RunDashboard.RemoveType" class="com.intellij.execution.dashboard.actions.RemoveRunConfigurationTypeAction"
-              text="Remove Selected Types from Services"/>
+              text="Remove Configuration Type from Services"/>
       <separator/>
       <action id="RunDashboard.ClearContent" class="com.intellij.execution.dashboard.actions.ClearContentAction"
               text="Clear Content" icon="AllIcons.Actions.Cancel"/>
@@ -1266,6 +1266,9 @@
             class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
       <add-to-group group-id="ServiceView.AddService"/>
     </action>
+    <reference id="RunDashboard.RestoreHiddenConfigurations">
+      <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddType"/>
+    </reference>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
