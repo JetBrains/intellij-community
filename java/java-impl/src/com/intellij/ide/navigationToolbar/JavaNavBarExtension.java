@@ -60,7 +60,7 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
 
   @Nullable
   @Override
-  public PsiElement adjustElement(final PsiElement psiElement) {
+  public PsiElement adjustElement(@NotNull final PsiElement psiElement) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
