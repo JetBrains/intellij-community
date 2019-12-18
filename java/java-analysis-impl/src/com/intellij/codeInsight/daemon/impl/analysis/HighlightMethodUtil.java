@@ -1277,7 +1277,8 @@ public class HighlightMethodUtil {
     if (codeBlock instanceof PsiCodeBlock) {
       PsiMethod ctor = ObjectUtils.tryCast(codeBlock.getParent(), PsiMethod.class);
       if (ctor != null && ctor.isConstructor()) {
-        if (JavaPsiRecordUtil.isCanonicalConstructor(ctor)) {
+        if (JavaPsiRecordUtil.isCompactConstructor(ctor) ||
+            JavaPsiRecordUtil.isCanonicalConstructor(ctor)) {
           String message = JavaErrorMessages.message("record.constructor.call.in.canonical");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message).create();
         }
@@ -1967,6 +1968,8 @@ public class HighlightMethodUtil {
         }
       }
       return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.canonical.constructor"));
+    } else if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+      return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.compact.constructor"));
     }
     else {
       // Non-canonical constructor

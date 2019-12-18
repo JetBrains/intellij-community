@@ -1648,11 +1648,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       try {
         PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiFile.class, PsiClassInitializer.class,
                                                         PsiLambdaExpression.class, PsiMethod.class);
-        HighlightInfo info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
-        if (info != null && parent instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)parent;
-          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
-          if (expectedType != null && !PsiType.VOID.equals(expectedType)) HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
+        HighlightInfo info;
+        if (parent instanceof PsiMethod && JavaPsiRecordUtil.isCompactConstructor((PsiMethod)parent)) {
+          info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
+            .descriptionAndTooltip(JavaErrorMessages.message("record.compact.constructor.return")).create();
+        } else {
+          info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
+          if (info != null && parent instanceof PsiMethod) {
+            PsiMethod method = (PsiMethod)parent;
+            PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
+            if (expectedType != null && !PsiType.VOID.equals(expectedType))
+              HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
+          }
         }
         myHolder.add(info);
       }

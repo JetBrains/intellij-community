@@ -56,7 +56,7 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param method method to check
-   * @return true if given method is a canonical constructor for a record class
+   * @return true if given method is a canonical (non-compact) constructor for a record class
    */
   public static boolean isCanonicalConstructor(@NotNull PsiMethod method) {
     if (!method.isConstructor()) return false;
@@ -78,8 +78,8 @@ public class JavaPsiRecordUtil {
 
   /**
    * @param recordClass record class
-   * @return first explicitly declared canonical constructor; 
-   * null if no canonical constructor declared or the supplied class is not a record
+   * @return first explicitly declared canonical or compact constructor; 
+   * null if no canonical and compact constructor declared or the supplied class is not a record
    */
   @Nullable
   public static PsiMethod findCanonicalConstructor(@NotNull PsiClass recordClass) {
@@ -88,7 +88,7 @@ public class JavaPsiRecordUtil {
     if (constructors.length == 0) return null;
     PsiRecordComponent[] components = recordClass.getRecordComponents();
     for (PsiMethod constructor : constructors) {
-      if (hasCanonicalSignature(constructor, components)) {
+      if (isCompactConstructor(constructor) || hasCanonicalSignature(constructor, components)) {
         return constructor;
       }
     }

@@ -247,6 +247,7 @@ public class HighlightControlFlowUtil {
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
     if (field == null) return null;
     if (variableDefinitelyAssignedIn(field, body)) return null;
+    if (JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor) && variableDefinitelyNotAssignedIn(field, body)) return null;
     String description = JavaErrorMessages.message("record.component.not.initialized", field.getName());
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
   }

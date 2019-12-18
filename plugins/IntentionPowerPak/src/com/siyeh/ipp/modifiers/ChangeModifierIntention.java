@@ -129,9 +129,11 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return ALL_MODIFIERS;
     }
     if (member instanceof PsiMethod) {
-      if (containingClass == null || containingClass.isEnum() && ((PsiMethod)member).isConstructor()) return Collections.emptyList();
-      if (JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)member) != null ||
-          JavaPsiRecordUtil.isCanonicalConstructor((PsiMethod)member)) {
+      PsiMethod method = (PsiMethod)member;
+      if (containingClass == null || containingClass.isEnum() && method.isConstructor()) return Collections.emptyList();
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null ||
+          JavaPsiRecordUtil.isCompactConstructor(method) ||
+          JavaPsiRecordUtil.isCanonicalConstructor(method)) {
         return Collections.singletonList(AccessModifier.PUBLIC);
       }
       if (containingClass.isInterface()) {
@@ -140,7 +142,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
         }
         return Collections.singletonList(AccessModifier.PUBLIC);
       }
-      AccessModifier minAccess = getMinAccess((PsiMethod)member);
+      AccessModifier minAccess = getMinAccess(method);
       if (minAccess != AccessModifier.PRIVATE) {
         return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
       }

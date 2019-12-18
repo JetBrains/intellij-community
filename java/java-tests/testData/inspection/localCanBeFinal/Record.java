@@ -1,5 +1,5 @@
 record A(String s) {
-    A {
+    public A {
 
     }
 }
