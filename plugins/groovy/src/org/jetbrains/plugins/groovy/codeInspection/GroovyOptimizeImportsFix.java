@@ -23,7 +23,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,8 +132,8 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
                                                    @NotNull final Editor editor) {
     final long stamp = editor.getDocument().getModificationStamp();
     Project project = file.getProject();
-    TransactionGuard.submitTransaction(project, () -> {
-      if (editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
       if (UndoManager.getInstance(project).isUndoOrRedoInProgress()) return;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
