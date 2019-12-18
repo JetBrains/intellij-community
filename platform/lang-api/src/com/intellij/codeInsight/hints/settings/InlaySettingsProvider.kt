@@ -23,7 +23,7 @@ interface InlaySettingsProvider {
   fun getSupportedLanguages(project: Project): Collection<Language>
 
   object EP {
-    private val EXTENSION_POINT_NAME =
+    val EXTENSION_POINT_NAME =
       ExtensionPointName.create<InlaySettingsProvider>("com.intellij.config.inlaySettingsProvider")
 
     fun getExtensions(): Array<out InlaySettingsProvider> {
