@@ -1271,17 +1271,22 @@ public class HighlightMethodUtil {
     return info;
   }
 
-  static HighlightInfo checkConstructorCallMustBeFirstStatement(@NotNull PsiMethodCallExpression methodCall) {
+  static HighlightInfo checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
-    if (codeBlock instanceof PsiCodeBlock
-        && codeBlock.getParent() instanceof PsiMethod
-        && ((PsiMethod)codeBlock.getParent()).isConstructor()) {
-      PsiElement prevSibling = methodCall.getParent().getPrevSibling();
-      while (true) {
-        if (prevSibling == null) return null;
-        if (prevSibling instanceof PsiStatement) break;
-        prevSibling = prevSibling.getPrevSibling();
+    if (codeBlock instanceof PsiCodeBlock) {
+      PsiMethod ctor = ObjectUtils.tryCast(codeBlock.getParent(), PsiMethod.class);
+      if (ctor != null && ctor.isConstructor()) {
+        if (JavaPsiRecordUtil.isCanonicalConstructor(ctor)) {
+          String message = JavaErrorMessages.message("record.constructor.call.in.canonical");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message).create();
+        }
+        PsiElement prevSibling = methodCall.getParent().getPrevSibling();
+        while (true) {
+          if (prevSibling == null) return null;
+          if (prevSibling instanceof PsiStatement) break;
+          prevSibling = prevSibling.getPrevSibling();
+        }
       }
     }
     PsiReferenceExpression expression = methodCall.getMethodExpression();
@@ -1926,17 +1931,62 @@ public class HighlightMethodUtil {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, componentType, false));
       return info;
     }
+    return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.accessor"));
+  }
+
+  public static HighlightInfo checkRecordConstructorDeclaration(PsiMethod method) {
+    if (!method.isConstructor()) return null;
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null || !aClass.isRecord()) return null;
+    if (JavaPsiRecordUtil.isCanonicalConstructor(method)) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiRecordComponent[] components = aClass.getRecordComponents();
+      assert parameters.length == components.length;
+      for (int i = 0; i < parameters.length; i++) {
+        PsiType componentType = components[i].getType();
+        PsiType parameterType = parameters[i].getType();
+        if (!parameterType.equals(componentType)) {
+          String message =
+            JavaErrorMessages.message("record.canonical.constructor.wrong.parameter.type", components[i].getName(),
+                                      componentType.getPresentableText(), parameterType.getPresentableText());
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
+            Objects.requireNonNull(parameters[i].getTypeElement())).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodParameterTypeFix(method, i, componentType, false));
+          return info;
+        }
+      }
+      return checkRecordSpecialMethodDeclaration(method, JavaErrorMessages.message("record.canonical.constructor"));
+    }
+    else {
+      // Non-canonical constructor
+      PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (call == null || JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
+        PsiIdentifier identifier = method.getNameIdentifier();
+        if (identifier != null) {
+          String message = JavaErrorMessages.message("record.no.constructor.call.in.non.canonical");
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+            .descriptionAndTooltip(message).create();
+        }
+      }
+      return null;
+    }
+  }
+
+  @Nullable
+  private static HighlightInfo checkRecordSpecialMethodDeclaration(PsiMethod method, String methodTitle) {
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return null;
     PsiTypeParameterList typeParameterList = method.getTypeParameterList();
     if (typeParameterList != null && typeParameterList.getTypeParameters().length > 0) {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameterList)
-        .descriptionAndTooltip(JavaErrorMessages.message("record.accessor.type.parameters"))
+        .descriptionAndTooltip(JavaErrorMessages.message("record.special.method.type.parameters", methodTitle))
         .create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(typeParameterList));
       return info;
     }
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
-        .descriptionAndTooltip(JavaErrorMessages.message("record.accessor.non.public"))
+        .descriptionAndTooltip(JavaErrorMessages.message("record.special.method.non.public", methodTitle))
         .create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.PUBLIC, true, false));
       return info;
@@ -1944,7 +1994,7 @@ public class HighlightMethodUtil {
     PsiReferenceList throwsList = method.getThrowsList();
     if (throwsList.getReferenceElements().length > 0) {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(throwsList)
-        .descriptionAndTooltip(JavaErrorMessages.message("record.accessor.throws"))
+        .descriptionAndTooltip(JavaErrorMessages.message("record.special.method.throws", methodTitle))
         .create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(throwsList));
       return info;

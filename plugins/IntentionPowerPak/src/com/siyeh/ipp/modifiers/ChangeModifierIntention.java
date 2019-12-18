@@ -130,7 +130,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
     if (member instanceof PsiMethod) {
       if (containingClass == null || containingClass.isEnum() && ((PsiMethod)member).isConstructor()) return Collections.emptyList();
-      if (JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)member) != null) {
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)member) != null ||
+          JavaPsiRecordUtil.isCanonicalConstructor((PsiMethod)member)) {
         return Collections.singletonList(AccessModifier.PUBLIC);
       }
       if (containingClass.isInterface()) {

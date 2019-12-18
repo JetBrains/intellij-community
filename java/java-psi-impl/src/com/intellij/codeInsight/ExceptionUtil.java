@@ -927,6 +927,7 @@ public class ExceptionUtil {
    * @return true if given method can declare thrown exceptions, according to the specification; false otherwise
    */
   public static boolean canDeclareThrownExceptions(@NotNull PsiMethod method) {
-    return JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null;
+    return JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null &&
+           !JavaPsiRecordUtil.isCanonicalConstructor(method);
   }
 }
