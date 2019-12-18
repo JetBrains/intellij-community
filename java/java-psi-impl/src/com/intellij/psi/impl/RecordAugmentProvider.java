@@ -11,11 +11,12 @@ import com.intellij.psi.impl.source.PsiExtensibleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public class RecordAugmentProvider extends PsiAugmentProvider {
   @NotNull
@@ -91,37 +92,27 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     if (name == null) return null;
     String typeText = getTypeText(component, RecordAugmentProvider::hasTargetApplicableForMethod);
     if (typeText == null) return null;
-    return factory.createMethodFromText("public " + typeText + " " + name + "(){}", component.getContainingClass());
+    return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
   }
 
   @Nullable
   private static String getTypeText(@NotNull PsiRecordComponent component, Predicate<PsiAnnotation> annotationPredicate) {
+    PsiType type = component.getType();
+    if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
     String annotations = Arrays.stream(component.getAnnotations())
         .filter(annotationPredicate)
         .map(annotation -> annotation.getText())
         .collect(Collectors.joining(" "));
-    return annotations + " " + typeElement.getText();
+    return annotations + " " + type.getCanonicalText();
   }
 
   private static boolean hasTargetApplicableForField(PsiAnnotation annotation) {
-    Set<PsiAnnotation.TargetType> targets = getTargets(annotation);
-    if (targets == null) return false;
-    return targets.contains(PsiAnnotation.TargetType.TYPE) || targets.contains(PsiAnnotation.TargetType.FIELD);
+    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.FIELD) != null;
   }
 
   private static boolean hasTargetApplicableForMethod(PsiAnnotation annotation) {
-    Set<PsiAnnotation.TargetType> targets = getTargets(annotation);
-    if (targets == null) return false;
-    return targets.contains(PsiAnnotation.TargetType.TYPE) || targets.contains(PsiAnnotation.TargetType.METHOD);
-  }
-
-  private static Set<PsiAnnotation.TargetType> getTargets(PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
-    if (element == null) return null;
-    PsiClass annotationClass = tryCast(element.resolve(), PsiClass.class);
-    if (annotationClass == null) return null;
-    return AnnotationTargetUtil.getAnnotationTargets(annotationClass);
+    return AnnotationTargetUtil.findAnnotationTarget(annotation, PsiAnnotation.TargetType.TYPE_USE, PsiAnnotation.TargetType.METHOD) != null;
   }
 }
