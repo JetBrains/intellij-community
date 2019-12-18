@@ -26,7 +26,7 @@ abstract class JavaPatchableProgramRunner<Settings : RunnerSettings> : GenericPr
 
   @Throws(ExecutionException::class)
   final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    startRunProfile(environment, state, callback, { resolvedPromise(doExecute(state, environment)) })
+    startRunProfile(environment, callback, { resolvedPromise(doExecute(state, environment)) })
   }
 
   @Throws(ExecutionException::class)

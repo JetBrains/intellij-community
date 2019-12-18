@@ -26,7 +26,7 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
       .onSuccess(result -> {
         UIUtil.invokeLaterIfNeeded(() -> {
           if (!environment.getProject().isDisposed()) {
-            startRunProfile(environment, state, callback, () -> {
+            startRunProfile(environment, callback, () -> {
               try {
                 return result.executeAsync(environment);
               }

@@ -16,7 +16,7 @@ import org.jetbrains.concurrency.resolvedPromise
 abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
   @Throws(ExecutionException::class)
   override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
-    startRunProfile(environment, state, callback) {
+    startRunProfile(environment, callback) {
       resolvedPromise(doExecute(state, environment))
     }
   }
@@ -42,7 +42,7 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Set
   final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
     val state = environment.state ?: return
     RunManager.getInstance(environment.project).refreshUsagesList(environment.runProfile)
-    startRunProfile(environment, state, callback) {
+    startRunProfile(environment, callback) {
       execute(environment, state)
     }
   }
@@ -60,7 +60,7 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Set
  * Internal usage only. Maybe removed or changed in any moment. No backward compatibility.
  */
 @ApiStatus.Internal
-fun startRunProfile(environment: ExecutionEnvironment, state: RunProfileState, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
+fun startRunProfile(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, starter: () -> Promise<RunContentDescriptor?>) {
   ExecutionManager.getInstance(environment.project).startRunProfile(object : RunProfileStarter() {
     override fun executeAsync(environment: ExecutionEnvironment): Promise<RunContentDescriptor> {
       // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
