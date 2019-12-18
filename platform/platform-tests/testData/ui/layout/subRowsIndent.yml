@@ -4,7 +4,7 @@ layoutConstraints:
     min: &id001 {horizontal: true, unit: 0, value: 0.0}
     preferred: *id001
   gridGapY:
-    min: &id002 {horizontal: false, value: 10.0}
+    min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
   hideMode: 2
   insets:
@@ -37,7 +37,7 @@ componentConstrains:
   Bar 1 [label]:
     horizontal:
       gapBefore:
-        min: &id005 {horizontal: true, value: 24.0}
+        min: &id005 {horizontal: true, value: 20.0}
         preferred: *id005
     spanX: INF
     wrap: true
@@ -45,7 +45,7 @@ componentConstrains:
   Bar 2 [label]:
     horizontal:
       gapBefore:
-        min: &id006 {horizontal: true, value: 48.0}
+        min: &id006 {horizontal: true, value: 40.0}
         preferred: *id006
     spanX: INF
     wrap: true

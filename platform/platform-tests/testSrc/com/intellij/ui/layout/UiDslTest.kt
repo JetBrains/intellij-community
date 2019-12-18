@@ -33,8 +33,6 @@ abstract class UiDslTest {
     System.clearProperty("idea.ui.comment.copyable")
   }
 
-  private val dummyTextBinding = PropertyBinding({ "" }, {})
-
   @Test
   fun `align fields in the nested grid`() {
     doTest { alignFieldsInTheNestedGrid() }
@@ -86,6 +84,11 @@ abstract class UiDslTest {
   }
 
   @Test
+  fun `sample configurable panel`() {
+    doTest { sampleConfigurablePanel() }
+  }
+
+  @Test
   fun scrollPaneNoGrow() {
     doTest {
       panel {
@@ -100,17 +103,8 @@ abstract class UiDslTest {
   }
 
   @Test
-  fun hideableRow() {
-    doTest {
-      panel {
-        row("Foo") {
-          textField(dummyTextBinding)
-        }
-        hideableRow("Bar") {
-          textField(dummyTextBinding)
-        }
-      }
-    }
+  fun `hideable row`() {
+    doTest { hideableRow() }
   }
 
   @Test

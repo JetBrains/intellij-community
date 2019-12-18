@@ -4,7 +4,7 @@ layoutConstraints:
     min: &id001 {horizontal: true, unit: 0, value: 0.0}
     preferred: *id001
   gridGapY:
-    min: &id002 {horizontal: false, value: 10.0}
+    min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
   hideMode: 2
   insets:
@@ -36,20 +36,13 @@ componentConstrains:
   Bar [titledSeparator]:
     horizontal: {grow: 100.0}
     spanX: INF
-    vertical:
-      gapAfter:
-        min: &id005 {horizontal: false, value: 10.0}
-        preferred: *id005
-      gapBefore:
-        min: &id006 {horizontal: false, value: 12.0}
-        preferred: *id006
     wrap: true
   'JTextField #3':
     hideMode: 0
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 24.0}
-        preferred: *id007
+        min: &id005 {horizontal: true, value: 20.0}
+        preferred: *id005
       grow: 100.0
     spanX: INF
     wrap: true

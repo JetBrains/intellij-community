@@ -250,6 +250,19 @@ fun titledRows(): JPanel {
   }
 }
 
+fun hideableRow(): JPanel {
+  val dummyTextBinding = PropertyBinding({ "" }, {})
+
+  return panel {
+    row("Foo") {
+      textField(dummyTextBinding)
+    }
+    hideableRow("Bar") {
+      textField(dummyTextBinding)
+    }
+  }
+}
+
 fun spannedCheckbox(): JPanel {
   return panel {
     buttonGroup {
@@ -283,6 +296,36 @@ fun titledRow(): JPanel {
     titledRow("Remote settings") {
       row("Default notebook name:") { JTextField("")() }
       row("Spark version:") { JTextField("")() }
+    }
+  }
+}
+
+fun sampleConfigurablePanel(): JPanel {
+  return panel {
+    titledRow("Settings") {
+      row { checkBox("Some test option") }
+      row { checkBox("Another test option") }
+    }
+    titledRow("Options") {
+      row { checkBox("Some test option") }
+      row {
+        buttonGroup("Radio group") {
+          row { radioButton("Option 1") }
+          row { radioButton("Option 2") }
+        }
+      }
+      row {
+        buttonGroup("Radio group") {
+          row { radioButton("Option 1", comment = "Comment for the Option 1") }
+          row { radioButton("Option 2") }
+        }
+      }
+    }
+    titledRow("Test") {
+      row("Header") { JTextField()() }
+      row("Longer Header") { checkBox("Some long description", comment = "Comment for the checkbox with longer header.") }
+      row("Header") { JPasswordField()() }
+      row("Header") { comboBox(DefaultComboBoxModel(arrayOf("Option 1", "Option 2")), { null }, {}) }
     }
   }
 }
