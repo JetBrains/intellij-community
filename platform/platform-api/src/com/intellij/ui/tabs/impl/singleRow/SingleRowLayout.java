@@ -6,7 +6,6 @@ import com.intellij.ui.tabs.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -20,15 +19,6 @@ public abstract class SingleRowLayout extends TabLayout {
   private final SingleRowLayoutStrategy myLeft;
   private final SingleRowLayoutStrategy myBottom;
   private final SingleRowLayoutStrategy myRight;
-
-  public final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
-    @Override
-    @Nullable
-    protected Rectangle getIconRec() {
-      return myLastSingRowLayout != null ? myLastSingRowLayout.moreRect : null;
-    }
-  };
-  public JPopupMenu myMorePopup;
 
   @Override
   public boolean isSideComponentOnTabs() {
@@ -135,8 +125,6 @@ public abstract class SingleRowLayout extends TabLayout {
       getStrategy().layoutComp(data);
     }
 
-    updateMoreIconVisibility(data);
-
     data.tabRectangle = new Rectangle();
 
     if (data.toLayout.size() > 0) {
@@ -171,11 +159,6 @@ public abstract class SingleRowLayout extends TabLayout {
     data.vToolbar =
       new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
-  }
-
-  protected void updateMoreIconVisibility(SingleRowPassInfo data) {
-    int counter = (int)data.myVisibleInfos.stream().filter(this::isTabHidden).count();
-    myMoreIcon.updateCounter(counter);
   }
 
   protected void layoutMoreButton(SingleRowPassInfo data) {

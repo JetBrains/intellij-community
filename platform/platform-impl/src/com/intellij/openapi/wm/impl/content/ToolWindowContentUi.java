@@ -24,6 +24,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.JBIterable;
@@ -621,6 +622,9 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Data
     }
     else if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
+    } else if (MorePopupAware.KEY.is(dataId)) {
+      ContentLayout layout = getCurrentLayout();
+      return  (layout instanceof TabContentLayout) ? layout : null;
     }
     return null;
   }

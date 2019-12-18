@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.rd.RdIdeaKt;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -52,7 +53,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class JBTabsImpl extends JComponent
   implements JBTabsEx, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable,
-             UISettingsListener, QuickActionProvider, Accessible {
+             UISettingsListener, QuickActionProvider, MorePopupAware, Accessible {
 
   public static final Key<Integer> SIDE_TABS_SIZE_LIMIT_KEY = Key.create("SIDE_TABS_SIZE_LIMIT_KEY");
   static final int MIN_TAB_WIDTH = JBUIScale.scale(75);
@@ -69,6 +70,7 @@ public class JBTabsImpl extends JComponent
   private TabInfo mySelectedInfo;
   public final Map<TabInfo, TabLabel> myInfo2Label = new HashMap<>();
   public final Map<TabInfo, Toolbar> myInfo2Toolbar = new HashMap<>();
+  public final ActionToolbar myMoreToolbar;
   public Dimension myHeaderFitSize;
 
   private Insets myInnerInsets = JBUI.emptyInsets();
@@ -243,17 +245,13 @@ public class JBTabsImpl extends JComponent
         disposePopupListener();
       }
     };
-
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(final MouseEvent e) {
-        if (mySingleRowLayout.myLastSingRowLayout != null &&
-            mySingleRowLayout.myLastSingRowLayout.moreRect != null &&
-            mySingleRowLayout.myLastSingRowLayout.moreRect.contains(e.getPoint())) {
-          showMorePopup(e);
-        }
-      }
-    });
+    AnAction tabListAction = myActionManager.getAction("TabList");
+    myMoreToolbar = myActionManager
+      .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(tabListAction), true);
+    myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty());
+    myMoreToolbar.getComponent().setOpaque(false);
+    myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    add(myMoreToolbar.getComponent());
     addMouseWheelListener(event -> {
       int units = event.getUnitsToScroll();
       if (units == 0) return;
@@ -332,7 +330,7 @@ public class JBTabsImpl extends JComponent
         myGlassPane = gp;
 
         UIUtil.addAwtListener(__ -> {
-          if (mySingleRowLayout.myMorePopup != null) return;
+          if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
           processFocusChange();
         }, AWTEvent.FOCUS_EVENT_MASK, child);
 
@@ -712,53 +710,35 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  @Override
-  public boolean canShowMorePopup() {
-    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
-    return lastLayout != null && lastLayout.moreRect != null;
+  private Rectangle getMoreRect() {
+    SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
+    return lastLayout != null ? lastLayout.moreRect : null;
   }
 
   @Override
-  public void showMorePopup(@Nullable final MouseEvent e) {
-    final SingleRowPassInfo lastLayout = mySingleRowLayout.myLastSingRowLayout;
-    if (lastLayout == null) {
-      return;
-    }
-    mySingleRowLayout.myMorePopup = new JBPopupMenu();
+  public boolean canShowMorePopup() {
+    return getMoreRect() != null;
+  }
+
+  @Override
+  public void showMorePopup() {
+    Rectangle rect = getMoreRect();
+    if (rect == null) return;
+
+    JBPopupMenu menu = new JBPopupMenu();
     for (final TabInfo each : getVisibleInfos()) {
       if (!mySingleRowLayout.isTabHidden(each)) continue;
-      final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
-      item.setForeground(each.getDefaultForeground());
-      item.setBackground(each.getTabColor());
-      mySingleRowLayout.myMorePopup.add(item);
-      item.addActionListener(__ -> select(each, true));
+      menu.add(createMenuItem(each));
     }
+    menu.show(this, rect.x, rect.y + rect.height);
+  }
 
-    mySingleRowLayout.myMorePopup.addPopupMenuListener(new PopupMenuListener() {
-      @Override
-      public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
-      }
-
-      @Override
-      public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-        mySingleRowLayout.myMorePopup = null;
-      }
-
-      @Override
-      public void popupMenuCanceled(final PopupMenuEvent e) {
-        mySingleRowLayout.myMorePopup = null;
-      }
-    });
-
-    if (e != null) {
-      mySingleRowLayout.myMorePopup.show(this, e.getX(), e.getY());
-    }
-    else {
-      final Rectangle rect = lastLayout.moreRect;
-      if (rect != null) {
-        mySingleRowLayout.myMorePopup.show(this, rect.x, rect.y + rect.height);
-      }
-    }
+  private JBMenuItem createMenuItem(@NotNull TabInfo tabInfo) {
+    final JBMenuItem item = new JBMenuItem(tabInfo.getText(), tabInfo.getIcon());
+    item.setForeground(tabInfo.getDefaultForeground());
+    item.setBackground(tabInfo.getTabColor());
+    item.addActionListener(__ -> select(tabInfo, true));
+    return item;
   }
 
 
@@ -1512,6 +1492,20 @@ public class JBTabsImpl extends JComponent
       if (isSingleRow()) {
         mySingleRowLayout.scrollSelectionInView();
         myLastLayoutPass = mySingleRowLayout.layoutSingleRow(visible);
+        Rectangle moreRect = getMoreRect();
+        if (moreRect != null) {
+          Dimension preferredSize = myMoreToolbar.getComponent().getPreferredSize();
+          Rectangle bounds = new Rectangle(moreRect);
+          int xDiff = (bounds.width - preferredSize.width) / 2;
+          int yDiff = (bounds.height - preferredSize.height) / 2;
+          bounds.x += xDiff + 1;
+          bounds.width -= 2 * xDiff;
+          bounds.y += yDiff;
+          bounds.height -= 2* yDiff;
+          myMoreToolbar.getComponent().setBounds(bounds);
+        } else {
+          myMoreToolbar.getComponent().setBounds(new Rectangle());
+        }
         myTableLayout.myLastTableLayout = null;
         OnePixelDivider divider = mySplitter.getDivider();
         if (divider.getParent() == this) {
@@ -1714,12 +1708,6 @@ public class JBTabsImpl extends JComponent
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-  }
-
-  @Override
-  protected void paintChildren(final Graphics g) {
-    super.paintChildren(g);
-    mySingleRowLayout.myMoreIcon.paintIcon(this, g);
   }
 
   protected void drawBorder(Graphics g) {
@@ -2528,6 +2516,9 @@ public class JBTabsImpl extends JComponent
     }
 
     if (QuickActionProvider.KEY.getName().equals(dataId)) {
+      return this;
+    }
+    if (MorePopupAware.KEY.is(dataId)) {
       return this;
     }
 

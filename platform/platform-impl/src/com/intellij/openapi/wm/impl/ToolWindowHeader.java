@@ -14,11 +14,13 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.PanelUI;
@@ -32,7 +34,7 @@ import java.util.function.Supplier;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements UISettingsListener {
+public abstract class ToolWindowHeader extends JPanel implements UISettingsListener, DataProvider {
   @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
   @NotNull
@@ -63,9 +65,11 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
 
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
-    myToolbar = ActionManager.getInstance().createActionToolbar(
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction tabListAction = actionManager.getAction("TabList");
+    myToolbar = actionManager.createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
-      new DefaultActionGroup(myActionGroup, new ShowOptionsAction(), new HideAction()),
+      new DefaultActionGroup(tabListAction, myActionGroup, new ShowOptionsAction(), new HideAction()),
       true);
     myToolbar.setTargetComponent(this);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -129,6 +133,15 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
         SwingUtilities.invokeLater(runnable);
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (MorePopupAware.KEY.is(dataId) && myToolWindow instanceof ToolWindowImpl) {
+      return ((ToolWindowImpl)myToolWindow).getContentUI().getData(dataId);
+    }
+    return null;
   }
 
   private void initWestToolBar(JPanel westPanel) {
