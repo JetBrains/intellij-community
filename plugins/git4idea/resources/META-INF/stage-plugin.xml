@@ -1,5 +1,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <changesViewContent id="git.stage" tabName="Staging Area" className="git4idea.index.GitStageContentProvider"
+                        predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
+                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"/>
+
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
   </extensions>
 </idea-plugin>

@@ -1,0 +1,117 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.index.ui
+
+import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vfs.VirtualFile
+import git4idea.i18n.GitBundle
+import git4idea.index.GitFileStatus
+import git4idea.index.GitStageTracker
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.PropertyKey
+
+abstract class GitStageTree(project: Project) : ChangesTree(project, false, true) {
+  protected abstract val state: GitStageTracker.State
+
+  fun update() {
+    val state = TreeState.createOn(this, root)
+    state.setScrollToSelection(false)
+    rebuildTree()
+    state.applyTo(this)
+  }
+
+  override fun rebuildTree() {
+    val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
+    val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
+
+    state.gitState.forEach { (root, statuses) ->
+      statuses.forEach { status ->
+        NodeKind.values().forEach { kind ->
+          if (kind.`is`(status)) {
+            val parentNode = parentNodes.getOrPut(kind) { ChangesBrowserKindNode(kind) }
+            val fileStatusInfo = GitFileStatusNode(root, status.path, kind, kind.status(status))
+            builder.insertPath(fileStatusInfo, parentNode)
+          }
+        }
+      }
+    }
+
+    parentNodes.values.forEach { builder.insertIntoRootNode(it) }
+
+    updateTreeModel(builder.build())
+  }
+
+
+  private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory) :
+    TreeModelBuilder(project, grouping) {
+
+    fun insertPath(node: GitFileStatusNode, parentNode: ChangesBrowserNode<*>) {
+      insertChangeNode(node.filePath, parentNode, ChangesBrowserGitFileStatusNode(node))
+    }
+
+    fun insertIntoRootNode(node: ChangesBrowserNode<*>) {
+      myModel.insertNodeInto(node, myRoot, myRoot.childCount)
+    }
+  }
+
+  private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
+    AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.status) {
+    override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
+  }
+
+  private class ChangesBrowserKindNode(kind: NodeKind) : ChangesBrowserNode<NodeKind>(kind) {
+    private val sortOrder = listOf(NodeKind.CONFLICTED, NodeKind.STAGED,
+                                   NodeKind.UNSTAGED, NodeKind.UNTRACKED,
+                                   NodeKind.IGNORED).zip(NodeKind.values().indices).toMap()
+
+    internal val kind: NodeKind
+      get() = userObject as NodeKind
+
+    init {
+      markAsHelperNode()
+    }
+
+    @Nls
+    override fun getTextPresentation(): String = GitBundle.message(kind.key)
+    override fun compareUserObjects(o2: NodeKind?): Int {
+      return Comparing.compare(sortOrder[kind], sortOrder[o2])
+    }
+  }
+}
+
+enum class NodeKind(@PropertyKey(resourceBundle = GitBundle.BUNDLE) @NonNls val key: String) {
+  STAGED("stage.tree.node.staged") {
+    override fun `is`(status: GitFileStatus) = status.getStagedStatus() != null
+    override fun status(status: GitFileStatus) = status.getStagedStatus()!!
+  },
+  UNSTAGED("stage.tree.node.unstaged") {
+    override fun `is`(status: GitFileStatus): Boolean = status.getUnStagedStatus() != null
+    override fun status(status: GitFileStatus) = status.getUnStagedStatus()!!
+  },
+  CONFLICTED("stage.tree.node.unmerged") {
+    override fun `is`(status: GitFileStatus): Boolean = status.isConflicted()
+    override fun status(status: GitFileStatus) = FileStatus.MERGED_WITH_CONFLICTS
+  },
+  UNTRACKED("stage.tree.node.untracked") {
+    override fun `is`(status: GitFileStatus): Boolean = status.isUntracked()
+    override fun status(status: GitFileStatus) = FileStatus.UNKNOWN
+  },
+  IGNORED("stage.tree.node.ignored") {
+    override fun `is`(status: GitFileStatus): Boolean = status.isIgnored()
+    override fun status(status: GitFileStatus) = FileStatus.IGNORED
+  };
+
+  abstract fun `is`(status: GitFileStatus): Boolean
+  abstract fun status(status: GitFileStatus): FileStatus
+  open fun origPath(status: GitFileStatus): FilePath? = null
+}
+
+data class GitFileStatusNode(val root: VirtualFile,
+                             val filePath: FilePath,
+                             val kind: NodeKind,
+                             val status: FileStatus)

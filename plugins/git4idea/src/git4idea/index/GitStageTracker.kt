@@ -59,6 +59,10 @@ class GitStageTracker(val project: Project) : Disposable {
     })
   }
 
+  fun scheduleUpdateAll() {
+    scheduleUpdateRoots(gitRoots())
+  }
+
   private fun scheduleUpdateRoots(roots: List<@NotNull VirtualFile>): Boolean {
     if (roots.isNotEmpty()) {
       singleTaskController.request(Request(roots))

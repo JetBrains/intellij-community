@@ -2,6 +2,7 @@
 package git4idea.index
 
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
@@ -12,4 +13,13 @@ data class GitFileStatus(val index: StatusCode,
 
   constructor(root: VirtualFile, record: LightFileStatus.StatusRecord) :
     this(record.index, record.workTree, VcsUtil.getFilePath(root, record.path), record.origPath?.let { VcsUtil.getFilePath(root, it) })
+
+  fun isConflicted(): Boolean = isConflicted(index, workTree)
+
+  fun isUntracked() = isUntracked(index) || isUntracked(workTree)
+  fun isIgnored() = isIgnored(index) || isIgnored(workTree)
+
+  fun getStagedStatus(): FileStatus? = if (isIgnored(index) || isUntracked(index)) null else getFileStatus(index)
+  fun getUnStagedStatus(): FileStatus? = if (isIgnored(workTree) || isUntracked(workTree)) null
+  else getFileStatus(workTree)
 }

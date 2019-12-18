@@ -165,7 +165,14 @@ internal fun getFileStatus(status: StatusCode): FileStatus? {
 
 typealias StatusCode = Char
 
+internal fun isIgnored(status: StatusCode) = status == '!'
+internal fun isUntracked(status: StatusCode) = status == '?'
 private fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
+internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
+  return (index == 'D' && workTree == 'D') ||
+         (index == 'A' && workTree == 'A') ||
+         (index == 'U' || workTree == 'U')
+}
 
 sealed class LightFileStatus {
   internal abstract fun getFileStatus(): FileStatus
@@ -187,11 +194,7 @@ sealed class LightFileStatus {
       return getFileStatus(index) ?: getFileStatus(workTree) ?: FileStatus.NOT_CHANGED
     }
 
-    internal fun isConflicted(): Boolean {
-      return (index == 'D' && workTree == 'D') ||
-             (index == 'A' && workTree == 'A') ||
-             (index == 'U' || workTree == 'U')
-    }
+    internal fun isConflicted(): Boolean = isConflicted(index, workTree)
   }
 }
 
@@ -199,7 +202,7 @@ fun LightFileStatus.isTracked(): Boolean {
   return when (this) {
     LightFileStatus.Blank -> false
     is LightFileStatus.NotChanged -> true
-    is LightFileStatus.StatusRecord -> !setOf('?', '!').contains(index)
+    is LightFileStatus.StatusRecord -> !isIgnored(index) && !isUntracked(index)
   }
 }
 

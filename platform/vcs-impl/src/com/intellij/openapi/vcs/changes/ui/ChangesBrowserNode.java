@@ -271,7 +271,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-    renderer.append(userObject.toString(), myAttributes);
+    renderer.append(getTextPresentation(), myAttributes);
     appendCount(renderer);
   }
 

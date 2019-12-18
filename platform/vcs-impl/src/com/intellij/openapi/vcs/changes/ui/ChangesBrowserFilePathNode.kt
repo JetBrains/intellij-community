@@ -12,11 +12,11 @@ import com.intellij.ui.SimpleTextAttributes
 /**
  * @author yole
  */
-open class ChangesBrowserFilePathNode(userObject: FilePath, val status: FileStatus?) : ChangesBrowserNode<FilePath>(userObject) {
-  constructor(userObject: FilePath) : this(userObject, null)
-
+abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
   private val filePath: FilePath
-    get() = getUserObject()
+    get() = filePath(getUserObject())
+
+  protected abstract fun filePath(userObject: U): FilePath
 
   override fun isFile(): Boolean {
     return !filePath.isDirectory
@@ -64,8 +64,8 @@ open class ChangesBrowserFilePathNode(userObject: FilePath, val status: FileStat
     return if (filePath.isDirectory) DIRECTORY_PATH_SORT_WEIGHT else FILE_PATH_SORT_WEIGHT
   }
 
-  override fun compareUserObjects(o2: FilePath): Int {
-    return compareFilePaths(filePath, o2)
+  override fun compareUserObjects(o2: U): Int {
+    return compareFilePaths(filePath, filePath(o2))
   }
 
   companion object {
@@ -88,4 +88,11 @@ open class ChangesBrowserFilePathNode(userObject: FilePath, val status: FileStat
       return if (isLocal) FileUtil.toSystemDependentName(result) else result
     }
   }
+}
+
+open class ChangesBrowserFilePathNode(userObject: FilePath, status: FileStatus?) :
+  AbstractChangesBrowserFilePathNode<FilePath>(userObject, status) {
+  constructor(userObject: FilePath) : this(userObject, null)
+
+  override fun filePath(userObject: FilePath) = userObject
 }

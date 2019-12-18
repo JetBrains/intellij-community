@@ -1,0 +1,52 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package git4idea.index.ui
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
+import git4idea.index.GitStageTracker
+import git4idea.index.GitStageTrackerListener
+import java.awt.BorderLayout
+import javax.swing.JPanel
+
+internal class GitStagePanel(private val tracker: GitStageTracker, disposableParent: Disposable) : JPanel(BorderLayout()), Disposable {
+  private val project = tracker.project
+
+  private val tree: GitStageTree
+
+  private val state: GitStageTracker.State
+    get() = tracker.state
+
+  init {
+    tree = MyChangesTree(project)
+
+    val scrolledTree = ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP)
+    add(scrolledTree, BorderLayout.CENTER)
+
+    tracker.addListener(MyGitStageTrackerListener(), this)
+    tracker.scheduleUpdateAll()
+
+    Disposer.register(disposableParent, this)
+  }
+
+  fun update() {
+    tree.update()
+  }
+
+  override fun dispose() {
+  }
+
+  inner class MyChangesTree(project: Project) : GitStageTree(project) {
+    override val state
+      get() = this@GitStagePanel.state
+  }
+
+  inner class MyGitStageTrackerListener : GitStageTrackerListener {
+    override fun update() {
+      this@GitStagePanel.update()
+    }
+  }
+}
