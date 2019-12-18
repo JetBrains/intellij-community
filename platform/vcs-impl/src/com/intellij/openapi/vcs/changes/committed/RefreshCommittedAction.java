@@ -18,7 +18,6 @@ public class RefreshCommittedAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
     assert panel != null;
-    if (isLoading(panel)) return;
     if (panel instanceof RepositoryLocationCommittedChangesPanel) {
       panel.refreshChanges();
     }
@@ -32,14 +31,12 @@ public class RefreshCommittedAction extends AnAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       CommittedChangesPanel panel = ChangesViewContentManager.getInstance(project).getActiveComponent(CommittedChangesPanel.class);
-      e.getPresentation().setEnabled(panel != null && !isLoading(panel));
+      boolean isLoading =
+        panel instanceof RepositoryLocationCommittedChangesPanel && ((RepositoryLocationCommittedChangesPanel)panel).isLoading();
+      e.getPresentation().setEnabled(panel != null && !isLoading);
     }
     else {
       e.getPresentation().setEnabled(false);
     }
-  }
-
-  private static boolean isLoading(@NotNull CommittedChangesPanel panel) {
-    return panel instanceof RepositoryLocationCommittedChangesPanel && ((RepositoryLocationCommittedChangesPanel)panel).isLoading();
   }
 }
