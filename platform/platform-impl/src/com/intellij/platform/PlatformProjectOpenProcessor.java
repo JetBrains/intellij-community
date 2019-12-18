@@ -194,6 +194,7 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   @ApiStatus.Internal
   public static Project doOpenProject(@NotNull Path file, @NotNull OpenProjectTask options) {
+    LOG.info("Opening " + file);
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
       baseDir = file.getParent();
@@ -203,12 +204,16 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
 
       // no reasonable directory -> create new temp one or use parent
       if (baseDir == null) {
+        LOG.info("No project directory found");
         if (Registry.is("ide.open.file.in.temp.project.dir")) {
           return createTempProjectAndOpenFile(file, options);
         }
 
         baseDir = file.getParent();
         options.isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER));
+      }
+      else {
+        LOG.info("Project directory found: " + baseDir);
       }
     }
 

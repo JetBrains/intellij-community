@@ -60,6 +60,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
       myFrameWrapper = new LightEditFrameWrapper(editorPanel);
       myFrameWrapper.setOnCloseHandler(()-> closeEditorWindow());
       myWrapperIsStale = false;
+      LOG.info("Frame created");
     }
   }
 
@@ -81,10 +82,12 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
       LightEditorInfo newEditorInfo = myEditorManager.createEditor(file);
       if (newEditorInfo != null) {
         addEditorTab(newEditorInfo);
+        LOG.info("Opened new tab for " + file.getPresentableUrl());
       }
     }
     else {
       selectEditorTab(openEditorInfo);
+      LOG.info("Selected tab for " + file.getPresentableUrl());
     }
 
     logStartupTime();
@@ -127,7 +130,9 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
       disposeEditorPanel();
       myWrapperIsStale = true;
       Disposer.dispose(myEditorManager);
+      LOG.info("Window closed");
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
+        LOG.info("No open projects or welcome frame, exiting");
         try {
           ApplicationManager.getApplication().exit();
         }
@@ -138,6 +143,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
       return true;
     }
     else {
+      LOG.info("Close cancelled");
       return false;
     }
   }
@@ -174,6 +180,7 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
     if (myFrameWrapper != null) {
       disposeEditorPanel();
       Disposer.dispose(myFrameWrapper);
+      LOG.info("Frame disposed");
     }
   }
 
