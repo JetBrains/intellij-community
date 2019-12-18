@@ -380,6 +380,13 @@ public abstract class NotNullVerifyingInstrumenterTest {
     verifyNotInstrumented();
   }
 
+  @Test
+  public void testInterfaceStaticMethodParameter() throws Exception {
+    Class<?> testClass = prepareTest();
+    Method method = testClass.getMethod("test");
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of InterfaceStaticMethodParameter$I.test must not be null", null, method);
+  }
+
   protected static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
