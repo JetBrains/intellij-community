@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -74,6 +75,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
     .setRestartTimerOnAdd(true);
+  
+  private final MyRoot myRoot;
 
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
@@ -164,7 +167,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       MyNode node = extractNode(event.getNewLeadSelectionPath());
       select(node == null ? null : node.myConfigurable);
     });
-    myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(new MyRoot(groups)));
+    myRoot = new MyRoot(groups);
+    myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
   }
@@ -1009,5 +1013,19 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;
     }
+  }
+
+  void reloadWithSelection(@Nullable Configurable toSelect) {
+    myRoot.cleanUpCache();
+    myQueuedConfigurable = null;
+    myQueue.cancelAllUpdates();
+    myConfigurableToNodeMap.clear();
+    AbstractTreeUi ui = myBuilder.getUi();
+    AbstractTreeStructure structure = ui != null ? ui.getTreeStructure() : null;
+    if (structure instanceof FilteringTreeStructure) {
+      ((FilteringTreeStructure)structure).rebuild();
+    }
+    MyNode node = findNode(toSelect);
+    myBuilder.refilterNow(node, true);
   }
 }

@@ -161,4 +161,11 @@ public class OptionsEditorContext {
   public void addColleague(@NotNull OptionsEditorColleague colleague) {
     myColleagues.add(colleague);
   }
+
+  public void reload() {
+    myCurrentConfigurable = null;
+    myErrors.clear();
+    myConfigurableToParentMap.clear();
+    myParentToChildrenMap.clear();
+  }
 }

@@ -126,7 +126,11 @@ public class ConfigurableExtensionPointUtil {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
+
+    Project finalProject = project;
+    return new EpBasedConfigurableGroup(finalProject, () -> {
+      return getConfigurableGroup(getConfigurables(finalProject, withIdeSettings), finalProject);
+    });
   }
 
   /**

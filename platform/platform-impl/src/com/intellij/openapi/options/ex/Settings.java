@@ -74,4 +74,8 @@ public abstract class Settings {
    * Used to handle programmatic settings changes when no UI events are sent.
    */
   public void revalidate() {}
+
+  public void reload() {
+    myMap.clear();
+  }
 }

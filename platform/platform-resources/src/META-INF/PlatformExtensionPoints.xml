@@ -30,6 +30,7 @@
     </extensionPoint>
 
     <extensionPoint name="applicationConfigurable"
+                    dynamic="true"
                     beanClass="com.intellij.openapi.options.ConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>

@@ -27,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -329,5 +330,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       }
     }
     return null;
+  }
+
+  @Nullable
+  Configurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  void reload() {
+    myCardPanel.removeAll();
+    myConfigurable = null;
   }
 }
