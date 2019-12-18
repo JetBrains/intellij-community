@@ -22,10 +22,10 @@
     <extensionPoint dynamic="true" name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
+    <extensionPoint dynamic="true" name="editorOptionsProvider" beanClass="com.intellij.application.options.editor.EditorOptionsProviderEP">
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorOptionsProvider"/>
     </extensionPoint>
-    <extensionPoint name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP" dynamic="true">
+    <extensionPoint dynamic="true" name="editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
     <extensionPoint dynamic="true" name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
@@ -345,7 +345,7 @@
     </extensionPoint>
 
     <extensionPoint name="colorSettingsPage" interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
-    <extensionPoint name="colorAndFontPanelFactory" interface="com.intellij.application.options.colors.ColorAndFontPanelFactory"/>
+    <extensionPoint dynamic="true" name="colorAndFontPanelFactory" interface="com.intellij.application.options.colors.ColorAndFontPanelFactory"/>
     <extensionPoint name="colorAndFontDescriptorProvider" interface="com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider"/>
 
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

@@ -158,5 +158,6 @@ class EpBasedConfigurableGroup
   @Override
   public void dispose() {
     myValue.drop();
+    myListeners.clear();
   }
 }

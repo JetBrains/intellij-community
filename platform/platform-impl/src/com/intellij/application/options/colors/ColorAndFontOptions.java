@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
@@ -37,6 +38,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -61,7 +63,7 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
-  implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
+  implements EditorOptionsProvider, SchemesModel<EditorColorsScheme>, Configurable.WithEpDependencies {
   private static final Logger LOG = Logger.getInstance(ColorAndFontOptions.class);
 
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
@@ -199,6 +201,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  public Collection<BaseExtensionPointName<?>> getDependencies() {
+    return ContainerUtil.newArrayList(ColorSettingsPage.EP_NAME, ColorAndFontPanelFactory.EP_NAME);
   }
 
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
