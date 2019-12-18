@@ -548,8 +548,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      toolWindowManager.setShowStripeButton(id, visibleOnPanel = false)
-      toolWindowManager.hideToolWindow(id, hideSide = false)
+      toolWindowManager.removeFromSideBar(id)
     }
   }
 

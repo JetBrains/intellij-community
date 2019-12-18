@@ -703,6 +703,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
+  internal fun removeFromSideBar(id: String) {
+    val info = getRegisteredMutableInfoOrLogError(id)
+    if (!info.isShowStripeButton) {
+      return
+    }
+
+    val entry = idToEntry.get(info.id!!)!!
+
+    info.isShowStripeButton = false
+    info.isActive = false
+    info.isVisible = false
+    activeStack.remove(entry, true)
+    removeDecorator(info, entry, dirtyMode = false)
+    entry.applyWindowInfo(info.copy())
+
+    fireStateChanged()
+  }
+
   override fun hideToolWindow(id: String, hideSide: Boolean) {
     hideToolWindow(id, hideSide, moveFocus = true)
   }
