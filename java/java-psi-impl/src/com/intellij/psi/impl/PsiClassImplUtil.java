@@ -173,17 +173,8 @@ public class PsiClassImplUtil {
 
   @NotNull
   private static <T extends PsiMember> List<T> getAllByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
-    List<Pair<T, PsiSubstitutor>> pairs = getAllWithSubstitutorsByMap(aClass, type);
-
-    final List<T> ret = new ArrayList<>(pairs.size());
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < pairs.size(); i++) {
-      Pair<T, PsiSubstitutor> pair = pairs.get(i);
-      T t = pair.getFirst();
-      LOG.assertTrue(t != null, aClass);
-      ret.add(t);
-    }
-    return ret;
+    //noinspection unchecked
+    return Arrays.asList((T[])getMap(aClass, type).get(ALL));
   }
 
   @NonNls private static final String ALL = "Intellij-IDEA-ALL";
