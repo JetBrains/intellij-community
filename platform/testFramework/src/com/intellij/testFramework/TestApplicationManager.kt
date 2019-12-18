@@ -284,11 +284,11 @@ fun disposeApplicationAndCheckForLeaks() {
         LeakHunter.checkNonDefaultProjectLeak()
       }
       catch (e: AssertionError) {
-        PlatformTestUtil.captureMemorySnapshot()
+        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
         throw e
       }
       catch (e: Exception) {
-        PlatformTestUtil.captureMemorySnapshot()
+        HeavyPlatformTestCase.publishHeapDump("leakedProjects")
         throw e
       }
     }
@@ -302,11 +302,11 @@ fun disposeApplicationAndCheckForLeaks() {
       Disposer.assertIsEmpty(true)
     }
     catch (e: AssertionError) {
-      PlatformTestUtil.captureMemorySnapshot()
+      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
       throw e
     }
     catch (e: Exception) {
-      PlatformTestUtil.captureMemorySnapshot()
+      HeavyPlatformTestCase.publishHeapDump("disposerNonEmpty")
       throw e
     }
   }
