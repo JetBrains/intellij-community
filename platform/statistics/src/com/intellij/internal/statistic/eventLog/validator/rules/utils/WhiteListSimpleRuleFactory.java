@@ -5,14 +5,16 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilExpressionWhiteListRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

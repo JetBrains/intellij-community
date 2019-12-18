@@ -15,7 +15,6 @@
  */
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.facet.frameworks.SettingsConnectionService;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
-import com.intellij.facet.frameworks.SettingsConnectionService;
+import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.service.fus.FUSWhitelist;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.StatisticsTestHelper;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +87,7 @@ public class EventLogExternalSettingsService extends SettingsConnectionService i
 
   @Override
   public boolean isInternal() {
-    return StatisticsUploadAssistant.isTestStatisticsEnabled();
+    return StatisticsTestHelper.isTestStatisticsEnabled();
   }
 
   @Nullable

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.persistence;
 
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
@@ -13,9 +12,11 @@ import java.util.Map;
 
 @State(
   name = "EventLogWhitelist",
-  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = EventLogWhitelistSettingsPersistence.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
 )
 public class EventLogWhitelistSettingsPersistence implements PersistentStateComponent<Element> {
+  public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
+
   private final Map<String, Long> myLastModifications = new HashMap<>();
   private final Map<String, WhitelistPathSettings> myRecorderToPathSettings = new HashMap<>();
 

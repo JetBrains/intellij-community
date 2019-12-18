@@ -1,9 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator;
 
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -55,7 +52,7 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  *     <li>
  *       <b>Custom rule</b>: class which inherits {@link CustomWhiteListRule} and validates dynamic data like action id or file type, e.g.
  *       <i>"{util#class_name}"</i> checks that the value is a class name from platform, JB plugin or a plugin from JB plugin repository.<br/>
- *       See: {@link ClassNameRuleValidator}
+ *       See: {@link com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator}
  *     </li>
  * </ol>
  * </p>
@@ -67,7 +64,9 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  *
  * <p>Example:</p>
  * <ul>
- * <li><i>"actions"</i> collector records invoked actions ({@link ActionsCollectorImpl}).<br/>
+ * <li><i>"actions"</i> collector records invoked actions
+ * ({@link com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl}).<br/>
+ *
  * It is validated by the following rules:
  * <pre>
  * {
@@ -85,7 +84,9 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  * }
  * </pre></li>
  *
- * <li><i>"file.types"</i> collector records information about project files ({@link FileTypeUsagesCollector}).<br/>
+ * <li><i>"file.types"</i> collector records information about project files
+ * ({@link com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector}).<br/>
+ *
  * It is validated by the following rules:
  * <pre>
  * {

@@ -29,7 +29,7 @@ class MavenActionsUsagesCollector {
       if (place != null) {
         data.addPlace(place).addData("context_menu", isFromContextMenu)
       }
-      executor?.let { data.addExecutor(it) }
+      executor?.let { data.addData("executor", it.id) }
 
       FUCounterUsageLogger.getInstance().logEvent(GROUP_ID, actionID.name, data)
     }

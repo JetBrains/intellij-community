@@ -17,8 +17,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LOCK;
-
 /**
  * <p>Called by a scheduler once a day and records IDE/project state.</p> <br/>
  *
@@ -28,6 +26,8 @@ import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LO
  * <p>To record IDE events (e.g. invoked action, opened dialog) use {@link FUCounterUsageLogger}</p>
  */
 public class FUStateUsagesLogger implements UsagesCollectorConsumer {
+  public static final Object LOCK = new Object();
+
   /**
    * System event which indicates that the collector was called.
    * Used to calculate metric baseline.

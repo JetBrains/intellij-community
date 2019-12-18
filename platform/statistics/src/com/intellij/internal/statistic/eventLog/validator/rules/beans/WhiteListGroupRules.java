@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumWhiteListRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory;

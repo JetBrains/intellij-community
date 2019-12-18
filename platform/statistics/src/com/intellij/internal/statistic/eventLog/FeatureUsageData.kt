@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
-import com.intellij.execution.Executor
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.addPluginInfoTo
@@ -186,11 +185,6 @@ class FeatureUsageData {
 
   private fun isCommonPlace(place: String): Boolean {
     return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
-  }
-
-  @FeatureUsageDataBuilder(additionalDataFields = ["executor:util#run_config_executor"])
-  fun addExecutor(executor: Executor): FeatureUsageData {
-    return addData("executor", executor.id)
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])

@@ -1,13 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
+import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -203,7 +204,7 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
 private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
   try {
-    val cached = RepositoryHelper.loadCachedPlugins()
+    val cached = getPluginInfoProvider()?.loadCachedPlugins()
     if (cached != null) {
       return@TimeoutCachedValue cached.mapNotNullTo(HashSet(cached.size)) { it.pluginId }
     }
@@ -214,7 +215,7 @@ private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCa
   // schedule plugins loading, will take them the next time
   ApplicationManager.getApplication().executeOnPooledThread {
     try {
-      RepositoryHelper.loadPlugins(null)
+      getPluginInfoProvider()?.loadPlugins(null) ?: emptySet<PluginId>()
     }
     catch (ignored: IOException) {
     }
@@ -222,6 +223,10 @@ private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCa
 
   //report nothing until repo plugins loaded
   emptySet<PluginId>()
+}
+
+fun getPluginInfoProvider(): PluginInfoProvider? {
+  return ApplicationManager.getApplication()?.let { ServiceManager.getService(PluginInfoProvider::class.java) }
 }
 
 /**

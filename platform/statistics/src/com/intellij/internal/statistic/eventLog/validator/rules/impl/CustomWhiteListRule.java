@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
-import com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator;
-import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -25,7 +23,9 @@ import org.jetbrains.annotations.Nullable;
  *   For more information see {@link SensitiveDataValidator}.
  * </p>
  *
- * <p><i>Example:</i> {@link ClassNameRuleValidator}, {@link LangCustomRuleValidator}, etc.</p>
+ * <p><i>Example:</i>
+ * {@link com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator},
+ * {@link com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator}, etc.</p>
  *
  * @see SensitiveDataValidator
  */
