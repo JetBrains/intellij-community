@@ -1013,7 +1013,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return true;
         }
         if (methodClassName != null) {
-          return process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
+          boolean res = process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
+          if (res) {
+            return true;
+          }
+          PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope());
+          return aClass != null && aClass.isInheritor(containingClass, true);
         }
       }
     }
