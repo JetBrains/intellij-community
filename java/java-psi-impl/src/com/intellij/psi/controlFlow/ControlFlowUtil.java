@@ -1254,7 +1254,8 @@ public class ControlFlowUtil {
   }
 
   public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
-    final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+    PsiElement parent = variable.getParent();
+    final int variableDeclarationOffset = parent == null ? -1 : flow.getStartOffset(parent);
     int offset = variableDeclarationOffset > -1 ? variableDeclarationOffset : 0;
     boolean[] unassignedOffsets = getVariablePossiblyUnassignedOffsets(variable, flow);
     return !unassignedOffsets[offset];

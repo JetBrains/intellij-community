@@ -1072,6 +1072,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitRecordComponent(recordComponent);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkRecordComponentVarArg(recordComponent));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkRecordComponentName(recordComponent));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkRecordComponentInitialized(recordComponent));
   }
 
   @Override

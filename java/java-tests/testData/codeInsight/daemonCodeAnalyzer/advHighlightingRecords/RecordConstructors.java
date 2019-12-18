@@ -18,6 +18,7 @@ record TypeMismatch<T>(T t) {
 record Delegate(int x) {
   public Delegate(int x) {
     <error descr="Canonical constructor cannot delegate to another constructor">this()</error>;
+    this.x = 0;
   }
   
   public <error descr="Non-canonical record constructor must delegate to another constructor">Delegate</error>() {
@@ -25,5 +26,13 @@ record Delegate(int x) {
   
   public <error descr="Non-canonical record constructor must delegate to another constructor">Delegate</error>(int x, int y) {
     super();
+  }
+}
+record NotInitializedField(int <error descr="Record component 'x' might not be initialized in canonical constructor">x</error>,
+                           int <error descr="Record component 'y' might not be initialized in canonical constructor">y</error>,
+                           int z) {
+  public NotInitializedField(int x, int y, int z) {
+    if (Math.random() > 0.5) this.y = y;
+    this.z = z;
   }
 }

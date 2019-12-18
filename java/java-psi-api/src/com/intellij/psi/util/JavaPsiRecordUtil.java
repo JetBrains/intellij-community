@@ -29,6 +29,23 @@ public class JavaPsiRecordUtil {
   }
 
   /**
+   * @param component record component
+   * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class) 
+   */
+  @Nullable
+  public static PsiField getFieldForComponent(@NotNull PsiRecordComponent component) {
+    PsiClass aClass = component.getContainingClass();
+    if (aClass == null) return null;
+    String name = component.getName();
+    for (PsiField field : aClass.getFields()) {
+      if (field.getName().equals(name) && !field.hasModifierProperty(PsiModifier.STATIC)) {
+        return field;
+      }
+    }
+    return null;
+  }
+
+  /**
    * @param method to check
    * @return true if given method is a canonical constructor for a record class
    */
@@ -36,7 +53,10 @@ public class JavaPsiRecordUtil {
     if (!method.isConstructor()) return false;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null || !aClass.isRecord()) return false;
-    PsiRecordComponent[] components = aClass.getRecordComponents();
+    return hasCanonicalSignature(method, aClass.getRecordComponents());
+  }
+
+  private static boolean hasCanonicalSignature(@NotNull PsiMethod method, PsiRecordComponent[] components) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (components.length != parameters.length) return false;
     for (int i = 0; i < parameters.length; i++) {
@@ -45,5 +65,24 @@ public class JavaPsiRecordUtil {
       if (!TypeConversionUtil.erasure(componentType).equals(TypeConversionUtil.erasure(parameterType))) return false;
     }
     return true;
+  }
+
+  /**
+   * @param recordClass record class
+   * @return first explicitly declared canonical constructor; 
+   * null if no canonical constructor declared or the supplied class is not a record
+   */
+  @Nullable
+  public static PsiMethod findCanonicalConstructor(@NotNull PsiClass recordClass) {
+    if (!recordClass.isRecord()) return null;
+    PsiMethod[] constructors = recordClass.getConstructors();
+    if (constructors.length == 0) return null;
+    PsiRecordComponent[] components = recordClass.getRecordComponents();
+    for (PsiMethod constructor : constructors) {
+      if (hasCanonicalSignature(constructor, components)) {
+        return constructor;
+      }
+    }
+    return null;
   }
 }
