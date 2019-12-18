@@ -1088,7 +1088,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
 
-    toolWindowPane!!.validateAndRepaint()
+    toolWindowPane!!.validate()
+    toolWindowPane!!.repaint()
 
     activateEditorComponent()
 
