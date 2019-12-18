@@ -550,6 +550,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testIgnoreReturnValue() {
     doTest();
   }
+  
+  public void testSingleReturnComplexQualifier() {
+    doTestAssertBadReturn();
+  }
 
   @Override
   protected Sdk getProjectJDK() {
