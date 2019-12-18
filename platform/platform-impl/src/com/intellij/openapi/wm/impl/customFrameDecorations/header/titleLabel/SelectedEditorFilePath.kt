@@ -16,6 +16,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.Alarm
@@ -168,6 +171,12 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
         override fun selectionChanged(event: FileEditorManagerEvent) {
           updatePath()
+        }
+      })
+
+      it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun after(events: MutableList<out VFileEvent>) {
+            updatePath()
         }
       })
     }
