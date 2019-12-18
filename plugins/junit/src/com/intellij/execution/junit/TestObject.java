@@ -215,7 +215,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final Project project = getConfiguration().getProject();
       GlobalSearchScope globalSearchScope = getScopeForJUnit(module, project);
-      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope, module != null && findJavaModule(module,true) != null);
+      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope, useModulePath() && module != null && findJavaModule(module,true) != null);
     }
   }
 
@@ -422,6 +422,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                  : repeatMode;
       getJavaParameters().getProgramParametersList().add(countString);
     }
+  }
+
+  @Override
+  protected boolean useModulePath() {
+    return getConfiguration().isUseModulePath();
   }
 
   @Override
