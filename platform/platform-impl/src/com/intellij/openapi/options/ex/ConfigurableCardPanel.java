@@ -77,6 +77,9 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
+    //for the dynamic configurations we have to update the whole tree
+    if (wrapper.getExtensionPoint().dynamic) return;
+    
     Configurable.WithEpDependencies configurable = ConfigurableWrapper.cast(Configurable.WithEpDependencies.class, wrapper);
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();

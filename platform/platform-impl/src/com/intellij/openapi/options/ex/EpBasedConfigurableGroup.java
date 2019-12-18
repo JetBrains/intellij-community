@@ -3,17 +3,21 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -25,17 +29,32 @@ import java.util.function.Supplier;
 class EpBasedConfigurableGroup
   implements Configurable.NoScroll, MutableConfigurableGroup, Weighted, SearchableConfigurable, Disposable {
 
-  @NotNull
-  private final AtomicClearableLazyValue<ConfigurableGroup> myValue;
   @Nullable
   private final Project myProject;
+
+  @NotNull
+  private final AtomicClearableLazyValue<ConfigurableGroup> myValue;
   @NotNull
   private final CopyOnWriteArrayList<Listener> myListeners = new CopyOnWriteArrayList<>();
+  @NotNull
+  private final List<ConfigurableWrapper> myExtendableEp;
 
   EpBasedConfigurableGroup(@Nullable Project project,
                            @NotNull Supplier<ConfigurableGroup> delegate) {
     myValue = AtomicClearableLazyValue.create(delegate::get);
     myProject = project;
+
+    List<Configurable> all = new ConfigurableVisitor() {
+
+      @Override
+      protected boolean accept(@NotNull Configurable configurable) {
+        if (!(configurable instanceof ConfigurableWrapper)) return false;
+        ConfigurableEP<?> ep = ((ConfigurableWrapper)configurable).getExtensionPoint();
+        return (ep.childrenEPName != null || ep.dynamic);
+      }
+    }.findAll(Collections.singletonList(myValue.getValue()));
+
+    myExtendableEp = StreamEx.of(all).select(ConfigurableWrapper.class).toImmutableList();
   }
 
   @Override
@@ -67,14 +86,34 @@ class EpBasedConfigurableGroup
     return false;
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public synchronized void addListener(@NotNull Listener listener) {
     if (myListeners.isEmpty()) {
       Project project = myProject;
       if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-      ExtensionPointListener<ConfigurableEP<Configurable>> epListener = createListener();
+      ExtensionPointListener epListener = createListener();
       Configurable.APPLICATION_CONFIGURABLE.addExtensionPointListener(epListener, this);
       Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this);
+
+      for (ConfigurableWrapper wrapper : myExtendableEp) {
+        ConfigurableEP<?> ep = wrapper.getExtensionPoint();
+        Project areaProject = wrapper.getProject();
+        ExtensionsArea area = areaProject == null ? ApplicationManager.getApplication().getExtensionArea() : areaProject.getExtensionArea();
+        if (ep.childrenEPName != null) {
+          ExtensionPoint point = area.getExtensionPointIfRegistered(ep.childrenEPName);
+          if (point != null) {
+            point.addExtensionPointListener(epListener, false, this);
+          }
+        }
+        else if (ep.dynamic) {
+          WithEpDependencies cast = ConfigurableWrapper.cast(WithEpDependencies.class, wrapper);
+          if (cast != null) {
+            Collection<BaseExtensionPointName<?>> dependencies = cast.getDependencies();
+            dependencies.forEach(el -> area.getExtensionPoint(el.getName()).addExtensionPointListener(epListener, false, this));
+          }
+        }
+      }
     }
 
     myListeners.add(listener);
@@ -92,15 +131,16 @@ class EpBasedConfigurableGroup
   }
 
   @NotNull
-  private ExtensionPointListener<ConfigurableEP<Configurable>> createListener() {
-    return new ExtensionPointListener<ConfigurableEP<Configurable>>() {
+  private ExtensionPointListener<?> createListener() {
+    return new ExtensionPointListener<Object>() {
+
       @Override
-      public void extensionAdded(@NotNull ConfigurableEP<Configurable> extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         handle();
       }
 
       @Override
-      public void extensionRemoved(@NotNull ConfigurableEP<Configurable> extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionRemoved(@NotNull Object extension, @NotNull PluginDescriptor pluginDescriptor) {
         handle();
       }
 
