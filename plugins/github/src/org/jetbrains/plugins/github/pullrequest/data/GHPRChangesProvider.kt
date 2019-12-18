@@ -12,5 +12,5 @@ interface GHPRChangesProvider {
   fun findDiffRanges(change: Change): List<Range>?
   fun findDiffRangesWithoutContext(change: Change): List<Range>?
   fun findChange(commitSha: String, filePath: String): Change?
-  fun findFileLinesMapper(change: Change): GHPRChangedFileLinesMapperImpl?
+  fun findFileLinesMapper(change: Change): GHPRChangedFileLinesMapper?
 }
