@@ -11,11 +11,7 @@ import javax.swing.Icon
 private const val ICONS_DIR_PREFIX = "/com/intellij/ide/ui/laf/icons/"
 
 open class DirProvider {
-  open fun dir() : String = ICONS_DIR_PREFIX + when {
-    UIUtil.isUnderDarcula() -> "darcula/"
-    UIUtil.isUnderIntelliJLaF() -> "intellij/"
-    else -> ""
-  }
+  open fun dir() : String = ICONS_DIR_PREFIX + if (UIUtil.isUnderDarcula()) "darcula/" else "intellij/"
 }
 
 object LafIconLookup {
