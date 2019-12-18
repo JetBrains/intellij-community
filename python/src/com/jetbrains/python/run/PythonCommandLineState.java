@@ -128,7 +128,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     return execute(executor, (CommandLinePatcher[])null);
   }
 

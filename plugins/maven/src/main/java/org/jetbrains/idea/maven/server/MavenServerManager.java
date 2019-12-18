@@ -794,7 +794,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
 
     @NotNull
     @Override
-    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
       ProcessHandler processHandler = startProcess();
       return new DefaultExecutionResult(processHandler);
     }

@@ -52,7 +52,7 @@ public class SMTestRunnerConnectionUtil {
    *   // ...
    *
    *   @Override
-   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+   *   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
    *     ProcessHandler processHandler = startProcess();
    *     RunConfiguration runConfiguration = getConfiguration();
    *     ExecutionEnvironment environment = getEnvironment();

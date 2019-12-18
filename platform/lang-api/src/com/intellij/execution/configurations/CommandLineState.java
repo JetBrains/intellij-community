@@ -57,7 +57,7 @@ public abstract class CommandLineState implements RunProfileState {
 
   @Override
   @NotNull
-  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner<?> runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
     final ConsoleView console = createConsole(executor);
     if (console != null) {

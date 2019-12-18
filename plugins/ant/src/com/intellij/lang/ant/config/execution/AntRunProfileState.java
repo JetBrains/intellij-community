@@ -27,7 +27,7 @@ public class AntRunProfileState implements RunProfileState {
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
     final RunProfile profile = myEnvironment.getRunProfile();
     if (profile instanceof AntRunConfiguration) {
       final AntRunConfiguration runConfig = (AntRunConfiguration)profile;

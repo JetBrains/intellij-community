@@ -54,7 +54,7 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);
