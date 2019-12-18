@@ -395,6 +395,9 @@ public abstract class NotNullVerifyingInstrumenterTest {
       if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
         exceptionText = cause.getMessage();
       }
+      else {
+        throw ex;
+      }
     }
     assertEquals(expectedError, exceptionText);
   }
