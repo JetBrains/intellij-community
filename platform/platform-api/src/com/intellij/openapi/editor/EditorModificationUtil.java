@@ -287,6 +287,16 @@ public class EditorModificationUtil {
           buf.append(properIndent.charAt(i));
           if (afterLineEnd == 0) break;
         }
+      } else {
+        EditorSettings editorSettings = editor.getSettings();
+        boolean useTab = editorSettings.isUseTabCharacter(editor.getProject());
+        if (useTab) {
+          int tabSize = editorSettings.getTabSize(project);
+          while (afterLineEnd >= tabSize) {
+            buf.append('\t');
+            afterLineEnd -= tabSize;
+          }
+        }
       }
     }
 
