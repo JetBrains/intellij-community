@@ -13,26 +13,23 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public abstract class NewRunConfigurationTreePopupFactory {
-  protected final Project myProject;
-
-  protected NewRunConfigurationTreePopupFactory(@NotNull Project project) {
-    myProject = project;
-  }
+  //This method initializes structure according to actual state just before popup showing
+  public abstract void initStructure(@NotNull Project project);
 
   @NotNull
   public abstract NodeDescriptor getRootElement();
 
   @NotNull
-  protected final NodeDescriptor[] convertToDescriptors(NodeDescriptor parent, Object[] elements) {
+  protected final NodeDescriptor[] convertToDescriptors(@NotNull Project project, NodeDescriptor parent, Object[] elements) {
     ArrayList<NodeDescriptor> descriptors = new ArrayList<>();
     for (Object element : elements) {
-      descriptors.add(createDescriptor(element, parent));
+      descriptors.add(createDescriptor(project, element, parent));
     }
     return descriptors.toArray(NodeDescriptor.EMPTY_ARRAY);
   }
 
   //This method is supposed to be called just once for each node, the result goes to cache
-  public abstract NodeDescriptor[] createChildElements(@NotNull NodeDescriptor nodeDescriptor);
+  public abstract NodeDescriptor[] createChildElements(@NotNull Project project, @NotNull NodeDescriptor nodeDescriptor);
 
   public Pair<Icon, String> createIconAndText(@NotNull Object element) {
     if (element instanceof ConfigurationFactory) {
@@ -47,18 +44,23 @@ public abstract class NewRunConfigurationTreePopupFactory {
   }
 
   @NotNull
-  public final NodeDescriptor createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor) {
-    return createDescriptor(element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
+  public final NodeDescriptor createDescriptor(@NotNull Project project,
+                                               @NotNull Object element,
+                                               @Nullable NodeDescriptor parentDescriptor) {
+    return createDescriptor(project, element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
   }
 
   @NotNull
-  public  NodeDescriptor createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor, int weight) {
+  public NodeDescriptor createDescriptor(@NotNull Project project,
+                                         @NotNull Object element,
+                                         @Nullable NodeDescriptor parentDescriptor,
+                                         int weight) {
     if (element instanceof NodeDescriptor) {
       return (NodeDescriptor)element;
     }
 
     Pair<Icon, String> iconAndText = createIconAndText(element);
-    return new NodeDescriptor(myProject, parentDescriptor) {
+    return new NodeDescriptor(project, parentDescriptor) {
       {
         myClosedIcon = iconAndText.first;
         myName = iconAndText.second;
