@@ -235,7 +235,7 @@ class LegacyBridgeModuleLibraryTest {
     }
 
     StoreUtil.saveDocumentsAndProjectSettings(project)
-    assertFalse(moduleFile.readText().contains(antLibraryName))
+    assertTrue(!moduleFile.readText().contains(antLibraryName))
   }
 
   private fun assertModuleLibraryDependency(moduleRootManager: ModuleRootManager, libraryName: String) {

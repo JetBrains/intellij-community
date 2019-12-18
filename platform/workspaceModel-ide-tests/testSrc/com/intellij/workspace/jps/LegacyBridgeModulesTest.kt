@@ -573,48 +573,6 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  fun `test remove module which is a dependency`() = WriteCommandAction.runWriteCommandAction(project) {
-    val antModuleName = "ant"
-    val mavenModuleName = "maven"
-    val moduleManager = ModuleManager.getInstance(project)
-
-    val iprFile = File(project.projectFilePath!!)
-    val antModuleFile = File(project.basePath, "$antModuleName.iml")
-    val mavenModuleFile = File(project.basePath, "$mavenModuleName.iml")
-
-    val (antModule, mavenModule) = moduleManager.modifiableModel.let { model ->
-      val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
-      val mavenModule = model.newModule(mavenModuleFile.path, ModuleType.EMPTY.id)
-      model.commit()
-      Pair(antModule, mavenModule)
-    }
-    ModuleRootModificationUtil.addDependency(mavenModule, antModule)
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-
-    val fileText = iprFile.readText()
-    assertEquals(2, listOf(antModuleName, mavenModuleName).filter { fileText.contains(it) }.size)
-    assertTrue(antModuleFile.exists())
-    assertTrue(mavenModuleFile.exists())
-    assertTrue(mavenModuleFile.readText().contains(antModuleName))
-
-    moduleManager.disposeModule(antModule)
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-
-    assertFalse(iprFile.readText().contains(antModuleName))
-    assertTrue(iprFile.readText().contains(mavenModuleName))
-    assertFalse(mavenModuleFile.readText().contains(antModuleName))
-
-    assertNull(moduleManager.findModuleByName(antModuleName))
-    val entityStorage = WorkspaceModel.getInstance(project).entityStore.current
-    val modulesEntities = entityStorage.entities(ModuleEntity::class.java)
-    assertEquals(1, modulesEntities.count())
-    val mavenModuleEntity = modulesEntities.iterator().next()
-    assertEquals(mavenModuleName, mavenModuleEntity.name)
-    assertEquals(1, mavenModuleEntity.dependencies.size)
-    assertTrue(mavenModuleEntity.dependencies[0] is ModuleDependencyItem.ModuleSourceDependency)
-  }
-
-  @Test
   fun `test remove module removes source roots`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val antLibraryFolder = "ant-lib"
