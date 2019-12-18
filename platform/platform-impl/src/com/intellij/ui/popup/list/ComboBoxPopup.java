@@ -28,8 +28,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
   private final Context<T> myContext;
 
   public ComboBoxPopup(@NotNull Context<T> context,
-                       @Nullable T selectedItem) {
-    this(context, null, popupStateFromContext(context, selectedItem), null);
+                       @Nullable T selectedItem,
+                       @NotNull Consumer<T> onItemSelected) {
+    this(context, null, popupStateFromContext(context, onItemSelected, selectedItem), null);
   }
 
   private ComboBoxPopup(@NotNull Context<T> context,
@@ -41,15 +42,11 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     configurePopup();
   }
 
-  public void addItemSelectedListener(@NotNull Consumer<T> callback) {
-    //noinspection unchecked
-    ((MyBasePopupState<T>)getStep()).addItemSelectedListener(callback);
-  }
-
   @NotNull
   private static <T> MyBasePopupState<T> popupStateFromContext(@NotNull Context<T> context,
-                                                               @Nullable Object selectedItem) {
-    MyBasePopupState<T> step = new MyBasePopupState<T>(t -> {},
+                                                               @NotNull Consumer<T> onItemSelected,
+                                                               @Nullable T selectedItem) {
+    MyBasePopupState<T> step = new MyBasePopupState<T>(onItemSelected,
                                                        () -> context.getModel(),
                                                        () -> context.getRenderer()) {
       @Override
@@ -59,7 +56,6 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     };
 
     if (selectedItem != null) {
-      //noinspection SuspiciousMethodCalls
       step.setDefaultOptionIndex(step.getValues().indexOf(selectedItem));
     }
     return step;
@@ -177,7 +173,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
   private static class MyBasePopupState<T> extends BaseListPopupStep<T> {
     private final JBList<T> myProxyList = new JBList<>();
-    private Consumer<T> myOnItemSelected;
+    private final Consumer<T> myOnItemSelected;
     private final Supplier<ListModel<T>> myGetComboboxModel;
     private final Supplier<ListCellRenderer<? super T>> myGetRenderer;
 
@@ -190,10 +186,6 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       myGetRenderer = getRenderer;
     }
 
-    private void addItemSelectedListener(@NotNull Consumer<T> callback) {
-      myOnItemSelected = myOnItemSelected.andThen(callback);
-    }
-
     @Nullable
     @Override
     @SuppressWarnings("rawtypes")
@@ -203,7 +195,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         //noinspection unchecked
         ListModel<T> nextModel = ((ComboBoxPopupState<T>)model).onChosen(selectedValue);
         if (nextModel != null) {
-          return new MyBasePopupState<>(t -> myOnItemSelected.accept(t) /* mutable callback! */,
+          return new MyBasePopupState<>(myOnItemSelected /* mutable callback! */,
                                         () -> nextModel, myGetRenderer);
         }
       }

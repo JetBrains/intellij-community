@@ -85,7 +85,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
     //noinspection unchecked
     T selectedItem = (T)myComboBox.getSelectedItem();
-    myPopup = new ComboBoxPopup<T>(this, selectedItem) {
+    myPopup = new ComboBoxPopup<T>(this, selectedItem, value -> myComboBox.setSelectedItem(value)) {
       @Override
       public void cancel(InputEvent e) {
         if (e instanceof MouseEvent) {
@@ -98,7 +98,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
         super.cancel(e);
       }
     };
-    myPopup.addItemSelectedListener(value -> myComboBox.setSelectedItem(value));
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {

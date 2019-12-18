@@ -236,7 +236,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
           notSimpleJavaSdkType(),
           null,
           sdk -> false)
-      ).createPopup(new SdkPopup.SdkPopupListener() { })
+      ).createPopup(myTree, new SdkPopup.SdkPopupListener() { })
        .showPopup(e);
     }
   }
