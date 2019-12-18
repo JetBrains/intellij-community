@@ -1129,7 +1129,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     public void setValue(@NotNull final Object value) {
       setText(getToStringValue(value));
-      return this;
+      if (!getText().equals(getText().trim())) {
+        setForeground(JBColor.RED);
+      }
     }
   }
 
