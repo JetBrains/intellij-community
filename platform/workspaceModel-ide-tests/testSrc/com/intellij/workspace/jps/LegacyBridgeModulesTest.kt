@@ -615,36 +615,6 @@ class LegacyBridgeModulesTest {
   }
 
   @Test
-  fun `test module with library remove`() = WriteCommandAction.runWriteCommandAction(project) {
-    val moduleName = "build"
-    val antLibraryName = "ant-lib"
-
-    val iprFile = File(project.projectFilePath!!)
-    val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
-      moduleModel.commit()
-      module
-    }
-    ModuleRootModificationUtil.addModuleLibrary(module, antLibraryName,
-                                                listOf(File(project.basePath, "$antLibraryName.jar").path),
-                                                emptyList())
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-    assertTrue(iprFile.readText().contains(moduleName))
-    assertTrue(moduleFile.readText().contains(antLibraryName))
-
-    ModuleManager.getInstance(project).disposeModule(module)
-    StoreUtil.saveDocumentsAndProjectSettings(project)
-    assertFalse(iprFile.readText().contains(moduleName))
-    assertTrue(moduleFile.exists())
-
-    assertNull(ModuleManager.getInstance(project).findModuleByName(antLibraryName))
-    val entityStorage = WorkspaceModel.getInstance(project).entityStore.current
-    assertEmpty(entityStorage.entities(ModuleEntity::class.java).toList())
-    assertEmpty(entityStorage.entities(LibraryEntity::class.java).toList())
-  }
-
-  @Test
   fun `test remove module removes source roots`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val antLibraryFolder = "ant-lib"
