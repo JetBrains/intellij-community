@@ -510,9 +510,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * But it doesn't deactivate other tool windows. Use `prepareForActivation` method to
    * deactivates other tool windows.
    */
-  private fun showAndActivate(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean) {
+  private fun showAndActivate(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean): Boolean {
     if (!entry.toolWindow.isAvailable) {
-      return
+      return false
     }
 
     // show activated
@@ -531,6 +531,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
       RequestFocusInToolWindowCommand(entry.toolWindow).run()
     }
+
+    return true
   }
 
   internal fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean) {
@@ -538,11 +540,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val activity = UiActivity.Focus("toolWindow:$id")
     UiActivityMonitor.getInstance().addActivity(project, activity, ModalityState.NON_MODAL)
+
     activateToolWindow(idToEntry.get(id)!!, getRegisteredMutableInfoOrLogError(id), autoFocusContents)
-    invokeLater(Runnable {
+
+    ApplicationManager.getApplication().invokeLater(Runnable {
       runnable?.run()
       UiActivityMonitor.getInstance().removeActivity(project, activity)
-    })
+    }, project.disposed)
   }
 
   private fun activateToolWindow(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean = true) {
@@ -561,7 +565,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return
     }
 
-    showAndActivate(entry, info, autoFocusContents)
+    if (showAndActivate(entry, info, autoFocusContents)) {
+      fireStateChanged()
+    }
   }
 
   // mutate operation must use info from layout and not from decorator
@@ -1341,11 +1347,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   fun setToolWindowAutoHide(id: String, autoHide: Boolean) {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    setToolWindowAutoHideImpl(id, autoHide)
-    fireStateChanged()
-  }
 
-  private fun setToolWindowAutoHideImpl(id: String, autoHide: Boolean) {
     val info = getRegisteredMutableInfoOrLogError(id)
     if (info.isAutoHide == autoHide) {
       return
@@ -1359,6 +1361,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     if (info.isVisible) {
       showAndActivate(entry, info, autoFocusContents = true)
     }
+
+    fireStateChanged()
   }
 
   fun setToolWindowType(id: String, type: ToolWindowType) {
