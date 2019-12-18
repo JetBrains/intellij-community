@@ -5,7 +5,7 @@ class Test {
   }
 
   public void foo(String s) {
-    bar(new InnerTest(<warning descr="Hard coded string literal: \"Literal\"">"Literal"</warning>) { public void run() { } });
+    bar(new InnerTest(<warning descr="Hardcoded string literal: \"Literal\"">"Literal"</warning>) { public void run() { } });
   }
 
   public void bar(InnerTest t) {

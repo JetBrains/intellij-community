@@ -49,7 +49,7 @@
     <localInspection language="TEXT" displayName="Typo in a UI form"
                      groupKey="form.inspections.group" alternativeId="SpellCheckingInspection" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.FormSpellCheckingInspection"/>
-    <localInspection language="TEXT" displayName="Hard coded string literal in a UI form"
+    <localInspection language="TEXT" displayName="Hardcoded string literal in a UI form"
                      groupKey="form.inspections.group" alternativeId="HardCodedStringLiteral" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <localInspection language="TEXT" shortName="DuplicateMnemonic" bundle="messages.UIDesignerBundle" key="inspection.duplicate.mnemonics"

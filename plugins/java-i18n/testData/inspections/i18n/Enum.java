@@ -1,6 +1,6 @@
 enum Test {
-    CHECKIN(<warning descr="Hard coded string literal: \"Text1\"">"Text1"</warning>),
-    ADD(<warning descr="Hard coded string literal: \"Rext2\"">"Rext2"</warning>);
+    CHECKIN(<warning descr="Hardcoded string literal: \"Text1\"">"Text1"</warning>),
+    ADD(<warning descr="Hardcoded string literal: \"Rext2\"">"Rext2"</warning>);
 
     Test(final String id) {
         myId = id;
