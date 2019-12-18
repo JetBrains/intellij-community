@@ -190,7 +190,7 @@ int main(int argc, char **argv)
         INT pid = SUCCEEDED(hr) ? vtId.intVal : 0;
         wcout << "pid:" << pid << "\n";
         VARIANT vtName = { 0 };
-        hres = pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
+        hr = pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
         if (SUCCEEDED(hr) && vtName.bstrVal != nullptr)
             wcout << L"name:" << escapeLineBreaks(vtName.bstrVal) << L"\n";
         else
