@@ -3,7 +3,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -23,7 +22,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -125,15 +126,7 @@ public class HighlightUtils {
 
   private static boolean checkEditor(@Nullable Editor editor) {
     //don't need to highlight occurrences in the intention preview editor
-    if (editor != null) {
-      try {
-        editor.getMarkupModel();
-      }
-      catch (IntentionPreviewUnsupportedOperationException e) {
-        return false;
-      }
-    }
-    return true;
+    return editor != null && !editor.isViewer();
   }
 
   public static void showRenameTemplate(PsiElement context,
