@@ -38,6 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -129,6 +130,9 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
     if (member instanceof PsiMethod) {
       if (containingClass == null || containingClass.isEnum() && ((PsiMethod)member).isConstructor()) return Collections.emptyList();
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor((PsiMethod)member) != null) {
+        return Collections.singletonList(AccessModifier.PUBLIC);
+      }
       if (containingClass.isInterface()) {
         if (PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;

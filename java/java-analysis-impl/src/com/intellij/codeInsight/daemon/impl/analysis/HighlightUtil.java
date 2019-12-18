@@ -946,13 +946,17 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed &= !isInterface;
       }
 
-      if (containingClass != null && containingClass.isInterface()) {
+      if (containingClass != null && (containingClass.isInterface() || containingClass.isRecord())) {
         isAllowed &= !PsiModifier.NATIVE.equals(modifier);
       }
 
       if (containingClass != null && containingClass.isAnnotationType()) {
         isAllowed &= !PsiModifier.STATIC.equals(modifier);
         isAllowed &= !PsiModifier.DEFAULT.equals(modifier);
+      }
+
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+        isAllowed &= !PsiModifier.STATIC.equals(modifier);
       }
     }
     else if (modifierOwner instanceof PsiField) {

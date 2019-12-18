@@ -35,3 +35,19 @@ record AnnotatedComponents(
   @SimpleAnno int x, 
   <error descr="'@ConstructorAnno' not applicable to record component">@ConstructorAnno</error> int y,
   @MethodAnno int z) {}
+  
+class Outer {
+  record NestedRecord() {}
+  class Inner {
+    <error descr="Inner classes cannot have static declarations">record InnerRecord()</error> {}
+  }
+}
+
+record ProhibitedMembers() {
+  <error descr="Instance field is not allowed in record">int x = 5;</error>
+  
+  <error descr="Instance initializer is not allowed in record">{
+    System.out.println("initializer");
+  }</error>
+  <error descr="Modifier 'native' not allowed here">native</error> void test();
+}

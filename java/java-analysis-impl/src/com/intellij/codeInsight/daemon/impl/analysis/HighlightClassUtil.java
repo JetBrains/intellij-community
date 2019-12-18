@@ -896,4 +896,18 @@ public class HighlightClassUtil {
     }
     return null;
   }
+
+  public static HighlightInfo checkIllegalInstanceMemberInRecord(PsiMember member) {
+    if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass aClass = member.getContainingClass();
+      if (aClass != null && aClass.isRecord()) {
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(member)
+          .descriptionAndTooltip(JavaErrorMessages.message(member instanceof PsiClassInitializer ? 
+                                                           "record.instance.initializer" : "record.instance.field")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(member, PsiModifier.STATIC, true, false));
+        return info;
+      }
+    }
+    return null;
+  }
 }
