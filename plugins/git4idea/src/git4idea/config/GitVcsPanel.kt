@@ -1,21 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
-import com.intellij.CommonBundle
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
@@ -39,8 +37,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
+import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
-import javax.swing.JComponent
 import javax.swing.JLabel
 
 
@@ -65,6 +63,12 @@ internal class GitVcsPanel(private val project: Project,
   private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
     val pathToGit = path ?: executableManager.detectedExecutable
     object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+
+      val errorNotifier = InlineErrorNotifierFromSettings(
+        GitExecutableInlineComponent(pathSelector.errorComponent, null),
+        ModalityState.stateForComponent(pathSelector.mainPanel), disposable!!
+      )
+
       private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
@@ -74,60 +78,32 @@ internal class GitVcsPanel(private val project: Project,
 
       override fun onThrowable(error: Throwable) {
         val problemHandler = findGitExecutableProblemHandler(project)
-        problemHandler.showError(error, ModalErrorNotifierFromSettings(project, pathSelector.mainPanel))
+        problemHandler.showError(error, errorNotifier)
       }
 
       override fun onSuccess() {
         if (gitVersion.isSupported) {
-          Messages.showInfoMessage(pathSelector.mainPanel,
-                                   GitBundle.message("git.executable.version.is", gitVersion.presentation),
-                                   GitBundle.getString("git.executable.version.success.title"))
+          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
         }
         else {
-          showUnsupportedVersionError(project, gitVersion, ModalErrorNotifierFromSettings(project, pathSelector.mainPanel))
+          showUnsupportedVersionError(project, gitVersion, errorNotifier)
         }
       }
     }.queue()
   }
 
-  private class ModalErrorNotifierFromSettings(val project: Project, val parentComponent: JComponent) : ErrorNotifier {
-    val genericTitle = GitBundle.message("git.executable.validation.error.start.title")
-
+  private class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
+                                                modalityState: ModalityState,
+                                                disposable: Disposable) :
+    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
+    @CalledInAny
     override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
-      val errorTitle = getErrorTitle(text, description)
-      val errorMessage = getErrorMessage(text, description)
-
-      // no sense to show the "Configure" button when already invoked from the Settings
       if (fixOption is ErrorNotifier.FixOption.Configure) {
-        Messages.showErrorDialog(parentComponent, errorMessage, errorTitle)
+        showError(text)
       }
       else {
-        val answer: Int = Messages.showOkCancelDialog(parentComponent, errorMessage, errorTitle,
-                                                      fixOption.text, CommonBundle.getCancelButtonText(),
-                                                      Messages.getErrorIcon())
-        if (answer == Messages.OK) {
-          fixOption.fix()
-        }
+        super.showError(text, description, fixOption)
       }
-    }
-
-    override fun showError(text: String) {
-      Messages.showErrorDialog(parentComponent, text, genericTitle)
-    }
-
-    override fun executeTask(title: String, cancellable: Boolean, action: () -> Unit) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, title, cancellable, project)
-    }
-
-    override fun changeProgressTitle(text: String) {
-      ProgressManager.getInstance().progressIndicator?.text = text
-    }
-
-    override fun showMessage(text: String) {
-      Messages.showInfoMessage(parentComponent, text, genericTitle)
-    }
-
-    override fun hideProgress() {
     }
   }
 

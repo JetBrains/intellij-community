@@ -11,19 +11,13 @@ import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Alarm
-import com.intellij.util.ui.AsyncProcessIcon
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.config.*
 import git4idea.remote.GitRememberedInputs
 import java.nio.file.Paths
-import javax.swing.JComponent
-import javax.swing.SwingConstants
 
 class GitCloneDialogComponent(project: Project, private val modalityState: ModalityState) :
   DvcsCloneDialogComponent(project,
@@ -31,7 +25,7 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
                            GitRememberedInputs.getInstance()) {
 
   private val executableManager get() = GitExecutableManager.getInstance()
-  private val inlineComponent = GitCloneDialogInlineComponent()
+  private val inlineComponent = GitExecutableInlineComponent(errorComponent, mainPanel)
   private val errorNotifier = InlineErrorNotifier(inlineComponent, modalityState, this)
 
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
@@ -107,62 +101,4 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
       }
     }
   }
-
-  inner class GitCloneDialogInlineComponent : InlineComponent {
-    private val busyIcon: AsyncProcessIcon = createBusyIcon()
-
-    override fun showProgress(text: String) {
-      errorComponent.removeAll()
-      busyIcon.resume()
-
-      val label = JBLabel(text).apply {
-        foreground = JBColor.GRAY
-      }
-
-      errorComponent.addToLeft(busyIcon)
-      errorComponent.addToCenter(label)
-      mainPanel.validate()
-    }
-
-    override fun showError(errorText: String, link: LinkLabel<*>?) {
-      busyIcon.suspend()
-      errorComponent.removeAll()
-
-      val label = multilineLabel(errorText).apply {
-        foreground = JBColor.RED
-      }
-
-      errorComponent.addToCenter(label)
-      if (link != null) {
-        link.verticalAlignment = SwingConstants.TOP
-        errorComponent.addToRight(link)
-      }
-      mainPanel.validate()
-    }
-
-    override fun showMessage(text: String) {
-      busyIcon.suspend()
-      errorComponent.removeAll()
-
-      errorComponent.addToLeft(JBLabel(text))
-      mainPanel.validate()
-    }
-
-    override fun hideProgress() {
-      busyIcon.suspend()
-      errorComponent.removeAll()
-
-      mainPanel.validate()
-    }
-
-    private fun createBusyIcon(): AsyncProcessIcon = AsyncProcessIcon(toString()).apply {
-      isOpaque = false
-      setPaintPassiveIcon(false)
-    }
-  }
-}
-
-private fun multilineLabel(text: String): JComponent = JBLabel(text).apply {
-  setAllowAutoWrapping(true)
-  setCopyable(true)
 }
