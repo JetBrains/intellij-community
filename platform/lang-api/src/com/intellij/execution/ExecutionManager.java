@@ -40,7 +40,6 @@ public abstract class ExecutionManager {
    */
   public abstract void compileAndRun(@NotNull Runnable startRunnable,
                                      @NotNull ExecutionEnvironment environment,
-                                     @Nullable RunProfileState state,
                                      @Nullable Runnable onCancelRunnable);
 
   /**
