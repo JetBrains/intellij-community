@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
+  </extensions>
+</idea-plugin>

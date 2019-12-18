@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Git</name>
   <id>Git4Idea</id>
   <description>
@@ -19,6 +19,9 @@
 
   <depends>com.intellij.modules.vcs</depends>
   <depends optional="true" config-file="git-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <xi:include href="/META-INF/stage-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">
