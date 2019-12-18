@@ -5,13 +5,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 import com.intellij.psi.*
 
 open class GrTypeMapper(val context: PsiElement): PsiTypeMapper() {
+  private val visitedClassTypes = mutableSetOf<PsiClassType>()
 
   override fun visitClassType(classType: PsiClassType): PsiType? {
     val result = classType.resolveGenerics()
     val element = result.element ?: return null
+    visitedClassTypes.add(classType)
 
     val parameters = classType.parameters
-    val replacedParams = parameters.map { arg -> arg?.accept(this) }.toTypedArray()
+    val replacedParams = parameters.map { arg ->
+      if (arg in visitedClassTypes) {
+        PsiWildcardType.createUnbounded(element.manager)
+      }
+      else {
+        arg?.accept(this)
+      }
+    }.toTypedArray()
     return JavaPsiFacade.getElementFactory(context.project).createType(element, *replacedParams)
   }
 }
