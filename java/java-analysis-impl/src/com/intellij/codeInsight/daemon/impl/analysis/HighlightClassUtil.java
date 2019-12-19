@@ -74,10 +74,9 @@ public class HighlightClassUtil {
 
     String baseClassName = HighlightUtil.formatClass(aClass, false);
     String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
-    String message = JavaErrorMessages.message(aClass instanceof PsiEnumConstantInitializer || implementsFixElement instanceof PsiEnumConstant ? "enum.constant.should.implement.method" : "class.must.be.abstract",
-                                               baseClassName,
-                                               methodName,
-                                               HighlightUtil.formatClass(superClass, false));
+    String messageKey = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant ?
+                 "class.must.implement.method" : "class.must.be.abstract";
+    String message = JavaErrorMessages.message(messageKey, baseClassName, methodName, HighlightUtil.formatClass(superClass, false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -105,7 +104,7 @@ public class HighlightClassUtil {
     if (aClass.isEnum()) {
       if (hasEnumConstantsWithInitializer(aClass)) return null; 
     }
-    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isRecord()) {
+    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null) {
       return null;
     }
     return checkClassWithAbstractMethods(aClass, textRange);

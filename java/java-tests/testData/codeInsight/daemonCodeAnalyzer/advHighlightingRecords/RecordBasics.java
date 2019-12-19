@@ -15,6 +15,10 @@ class AnonymousExtendsJLR {
     public String toString() {return "";}
   };
 }
+<error descr="Class 'SuperInterface' must implement abstract method 'run()' in 'Runnable'">record SuperInterface() implements Runnable</error> {}
+interface I1 { default void run() {}}
+interface I2 { void run();}
+record <error descr="Class 'UnrelatedDefaults' must implement abstract method 'run()' in 'I2'">UnrelatedDefaults</error>() implements I1, I2 {}
 
 record ComponentModifiers(
   <error descr="Modifier 'public' not allowed here">public</error> int x, 

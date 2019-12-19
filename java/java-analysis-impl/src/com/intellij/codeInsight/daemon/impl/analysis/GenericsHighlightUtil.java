@@ -467,7 +467,8 @@ public class GenericsHighlightUtil {
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
             continue;
           }
-          final String key = aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract";
+          final String key = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() ? 
+                             "class.must.implement.method" : "class.must.be.abstract";
           final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(abstracts.get(0)),
                                                            HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
           final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
