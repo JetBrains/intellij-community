@@ -19,7 +19,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.xml</depends>
-  
+
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
 
@@ -37,7 +37,6 @@
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
-    <programRunner implementation="org.intellij.lang.xpath.xslt.run.XsltRunner"/>
     <runConfigurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
 
     <applicationService
@@ -95,7 +94,7 @@
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
-    
+
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XPathRefactoringSupportProvider" />
     <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
