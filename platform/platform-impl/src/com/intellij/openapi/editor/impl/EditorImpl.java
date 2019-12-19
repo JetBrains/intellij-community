@@ -4686,17 +4686,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.validateState();
   }
 
-  private class DefaultPopupHandler extends ContextMenuPopupHandler.ById {
+  private class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Nullable
     @Override
-    public String getActionGroupId(@NotNull EditorMouseEvent event) {
+    public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
       String contextMenuGroupId = myContextMenuGroupId;
       Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
       if (inlay != null) {
+        ActionGroup group = inlay.getRenderer().getContextMenuGroup(inlay);
+        if (group != null) return group;
         String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
       }
-      return contextMenuGroupId;
+      return ContextMenuPopupHandler.getGroupForId(contextMenuGroupId);
     }
   }
 

@@ -43,7 +43,7 @@ public abstract class ContextMenuPopupHandler implements EditorPopupHandler {
   }
 
   @Nullable
-  private static ActionGroup getGroupForId(@Nullable String groupId) {
+  static ActionGroup getGroupForId(@Nullable String groupId) {
     return groupId == null ? null : ObjectUtils.tryCast(CustomActionsSchema.getInstance().getCorrectedAction(groupId), ActionGroup.class);
   }
 

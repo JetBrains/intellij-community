@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -83,11 +84,26 @@ public interface EditorCustomElementRenderer {
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
-   * If {@code null} is returned, standard editor's context menu will be displayed upon corresponding mouse event.
+   * If {@code null} is returned (and {@link #getContextMenuGroup(Inlay)} also returns {@code null}), standard editor's context menu will be
+   * displayed upon corresponding mouse event.
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
     return getContextMenuGroupId();
+  }
+
+  /**
+   * Returns an action group, which is to be used for the given custom element's context menu. If {@code null} is returned (and
+   * {@link #getContextMenuGroupId(Inlay)} also returns {@code null}), standard editor's context menu will be displayed upon corresponding
+   * mouse event.
+   * <p>
+   * This method takes preference over {@link #getContextMenuGroupId(Inlay)}, i.e. if it returns a non-null value, the latter method won't
+   * be called.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
+    return null;
   }
 
   /**
