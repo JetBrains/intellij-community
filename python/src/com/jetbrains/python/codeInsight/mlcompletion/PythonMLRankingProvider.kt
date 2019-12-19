@@ -17,5 +17,5 @@ class PythonMLRankingProvider : JarCompletionModelProvider("Python", "python_fea
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("python", ignoreCase = true) == 0
 
-  override fun isEnabledByDefault() = true
+  override fun isEnabledByDefault() = false
 }
