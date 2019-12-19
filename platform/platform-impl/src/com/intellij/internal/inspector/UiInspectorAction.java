@@ -323,10 +323,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       JComponent glassPane = getGlassPane(component);
       if (glassPane == null) return null;
 
-      JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
-      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBUI.emptyInsets();
-      HighlightComponent highlightComponent = new HighlightComponent(color, insets);
-
       if (bounds != null) {
         bounds = SwingUtilities.convertRectangle(component, bounds, glassPane);
       }
@@ -334,6 +330,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Point pt = SwingUtilities.convertPoint(component, new Point(0, 0), glassPane);
         bounds = new Rectangle(pt.x, pt.y, component.getWidth(), component.getHeight());
       }
+
+      JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
+      if (bounds.width == 0 || bounds.height == 0) {
+        bounds.width = Math.max(bounds.width, 1);
+        bounds.height = Math.max(bounds.height, 1);
+        color = JBColor.BLUE;
+      }
+
+      Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBUI.emptyInsets();
+      HighlightComponent highlightComponent = new HighlightComponent(color, insets);
       highlightComponent.setBounds(bounds);
 
       glassPane.add(highlightComponent);
