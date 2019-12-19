@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
@@ -22,11 +21,10 @@ import java.util.List;
  * @see com.intellij.execution.ExecutionManager#getContentManager()
  */
 public interface RunContentManager {
-  Topic<RunContentWithExecutorListener> TOPIC =
-    Topic.create("Run Content", RunContentWithExecutorListener.class);
+  Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);
 
-  static RunContentManager getInstance(Project project) {
-    return ServiceManager.getService(project, RunContentManager.class);
+  static RunContentManager getInstance(@NotNull Project project) {
+    return project.getService(RunContentManager.class);
   }
 
   /**
