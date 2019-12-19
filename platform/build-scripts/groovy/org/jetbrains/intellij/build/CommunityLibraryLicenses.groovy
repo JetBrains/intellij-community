@@ -640,6 +640,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-stdlib-jdk8"),
     jetbrainsLibrary("kotlin-test"),
+    jetbrainsLibrary("kotlinx-coroutines-guava"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),

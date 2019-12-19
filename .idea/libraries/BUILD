@@ -1885,3 +1885,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/snakeyaml/snakeyaml-engine/2.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/snakeyaml/snakeyaml-engine/2.0:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "kotlinx-coroutines-guava",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-guava/1.2.1:jar"],
+)
