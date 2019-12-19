@@ -84,6 +84,10 @@ public abstract class CodeStyleManager  {
    */
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
+  @NotNull
+  public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks)
+    throws IncorrectOperationException;
+
   /**
    * Reformats part of the contents of the specified PSI element, enforces braces
    * and splits import statements according to the user's code style.
@@ -116,6 +120,12 @@ public abstract class CodeStyleManager  {
                                            int startOffset,
                                            int endOffset,
                                            boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+
+  public abstract PsiElement reformatRange(@NotNull PsiElement element,
+                                           int startOffset,
+                                           int endOffset,
+                                           boolean canChangeWhiteSpacesOnly,
+                                           boolean keepLineBreaks) throws IncorrectOperationException;
 
   /**
    * Delegates to the {@link #reformatText(PsiFile, Collection)} with the single range defined by the given offsets.
