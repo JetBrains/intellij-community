@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,30 +31,34 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     Component after = super.getComponentAfter(aContainer, aComponent);
-    Component defaultFocusableComponent = findDefaultFocusedComponentIfSplitters(after);
-    if (defaultFocusableComponent != null) return defaultFocusableComponent;
-    if (after != null) return after.isFocusable() ? after : findFocusableComponentIn((JComponent)after, null);
-    return findFocusableComponentIn(aContainer, aComponent);
+    return doFind(aContainer, aComponent, after);
   }
 
   @Override
   public Component getComponentBefore(Container aContainer, Component aComponent) {
     Component before = super.getComponentBefore(aContainer, aComponent);
-    Component defaultFocusableComponent = findDefaultFocusedComponentIfSplitters(before);
-    if (defaultFocusableComponent != null) return defaultFocusableComponent;
-    if (before != null) return before.isFocusable() ? before : findFocusableComponentIn((JComponent)before, null);
-    return findFocusableComponentIn(aContainer, aComponent);
+    return doFind(aContainer, aComponent, before);
   }
 
   @Nullable
-  private static Component findDefaultFocusedComponentIfSplitters(Component componentToSearchInto) {
-    if (componentToSearchInto instanceof EditorsSplitters) {
-      JComponent defaultFocusableComponent = EditorsSplitters.findDefaultComponentInSplitters();
+  protected Project getProject() {
+    return null;
+  }
+
+  @Nullable
+  private Component doFind(Container aContainer, Component aComponent, @Nullable Component siblingComponent) {
+    if (siblingComponent == null) {
+      return findFocusableComponentIn(aContainer, aComponent);
+    }
+
+    if (siblingComponent instanceof EditorsSplitters) {
+      Component defaultFocusableComponent = EditorsSplitters.findDefaultComponentInSplitters(getProject());
       if (defaultFocusableComponent != null) {
         return defaultFocusableComponent;
       }
     }
-    return null;
+
+    return siblingComponent.isFocusable() ? siblingComponent : findFocusableComponentIn((JComponent)siblingComponent, null);
   }
 
   /**
@@ -141,7 +146,6 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
       return false;
     }
 
-    /* TODO[anton,vova] implement Policy in Editor component instead */
     if (component instanceof EditorComponentImpl || component instanceof EditorWindowHolder) {
       return true;
     }

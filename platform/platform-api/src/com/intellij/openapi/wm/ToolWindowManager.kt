@@ -19,19 +19,6 @@ abstract class ToolWindowManager {
     fun getInstance(project: Project): ToolWindowManager = project.getService(ToolWindowManager::class.java)
 
     @JvmStatic
-    fun getActiveToolWindow(): ToolWindow? {
-      val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-      val project = frame?.project
-      if (project == null || project.isDisposed || project.isDefault) {
-        return null
-      }
-
-      val toolWindowManager = getInstance(project)
-      val activeId = toolWindowManager.activeToolWindowId
-      return activeId?.let { toolWindowManager.getToolWindow(it) }
-    }
-
-    @JvmStatic
     fun getActiveId(): String? {
       val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null
       return if (project.isDisposed || project.isDefault) null else getInstance(project).activeToolWindowId
@@ -112,8 +99,6 @@ abstract class ToolWindowManager {
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   abstract fun unregisterToolWindow(id: String)
 
-  /**
-   */
   abstract fun activateEditorComponent()
 
   /**

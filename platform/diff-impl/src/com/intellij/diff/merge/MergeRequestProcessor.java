@@ -546,6 +546,12 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (component == null) return null;
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(component, this);
     }
+
+    @Nullable
+    @Override
+    protected Project getProject() {
+      return myProject;
+    }
   }
 
   private class MyDiffContext extends MergeContextEx {

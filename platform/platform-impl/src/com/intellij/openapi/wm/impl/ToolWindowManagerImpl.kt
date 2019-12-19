@@ -70,7 +70,6 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Predicate
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
@@ -167,18 +166,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       })
 
-      Windows.ToolWindowProvider(Windows.Signal(Predicate { event ->
-        event.id == FocusEvent.FOCUS_LOST || event.id == FocusEvent.FOCUS_GAINED || event.id == MouseEvent.MOUSE_PRESSED || event.id == KeyEvent.KEY_PRESSED
-      }))
-        .withEscAction()
-        .handleFocusLostOnPinned { toolWindowId ->
+      addFocusLostListener(pinnedWindowFocusLostHandler = { toolWindowId ->
           process { manager ->
             val entry = manager.idToEntry.get(toolWindowId) ?: return@process
             val info = manager.layout.getInfo(toolWindowId) ?: return@process
             manager.doDeactivateToolWindow(info, entry)
           }
         }
-        .bind(ApplicationManager.getApplication())
+      )
 
       connection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
         override fun activeKeymapChanged(keymap: Keymap?) {
@@ -500,8 +495,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun activateEditorComponent() {
-    if (!EditorsSplitters.focusDefaultComponentInSplittersIfPresent()) {
-      frame?.rootPane?.requestFocusInWindow()
+    if (!EditorsSplitters.focusDefaultComponentInSplittersIfPresent(project)) {
+      // see note about requestFocus in focusDefaultComponentInSplittersIfPresent
+      frame?.rootPane?.requestFocus()
     }
   }
 
@@ -1907,4 +1903,52 @@ private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 
 internal enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
+}
+
+private fun addFocusLostListener(pinnedWindowFocusLostHandler: (String) -> Unit) {
+  val listener = AWTEventListener { event ->
+    val eventId = event.id
+    if (event !is FocusEvent || !(eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_GAINED)) {
+      return@AWTEventListener
+    }
+
+    val id = ToolWindowManager.getActiveId() ?: return@AWTEventListener
+
+    // let's check that it is a toolwindow who loses the focus
+    if (event.oppositeComponent != null && isInActiveToolWindow(event.source) && !isInActiveToolWindow(event.oppositeComponent)) {
+      // a toolwindow lost focus
+      val activeToolWindow = getActiveToolWindow()
+      val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
+      if (!event.isTemporary &&
+          !focusGoesToPopup && activeToolWindow != null &&
+          (activeToolWindow.isAutoHide || activeToolWindow.type == ToolWindowType.SLIDING)) {
+        pinnedWindowFocusLostHandler(id)
+      }
+    }
+  }
+  Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
+}
+
+private fun isInActiveToolWindow(component: Any?): Boolean {
+  val activeToolWindow = getActiveToolWindow() ?: return false
+  var source = if (component is JComponent) component else null
+  val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
+  if (activeToolWindowComponent != null) {
+    while (source != null && source !== activeToolWindowComponent) {
+      source = if (source.parent != null && source.parent is JComponent) source.parent as JComponent else null
+    }
+  }
+  return source != null
+}
+
+private fun getActiveToolWindow(): ToolWindowImpl? {
+  val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
+  val project = frame?.project
+  if (project == null || project.isDisposed || project.isDefault) {
+    return null
+  }
+
+  val toolWindowManager = ToolWindowManager.getInstance(project)
+  val activeId = toolWindowManager.activeToolWindowId
+  return activeId?.let { toolWindowManager.getToolWindow(it) as ToolWindowImpl }
 }

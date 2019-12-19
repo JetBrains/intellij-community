@@ -54,7 +54,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.reference.SoftReference;
@@ -902,7 +901,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         Window windowAncestor = SwingUtilities.getWindowAncestor(window.myPanel);
         if (windowAncestor != null &&
             windowAncestor.equals(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow())) {
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          EditorsSplitters.focusDefaultComponentInSplittersIfPresent(myProject);
           IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
         }
       }
@@ -1458,23 +1457,21 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return;
       }
 
-      ToolWindowManager.getInstance(myProject).invokeLater(() -> {
-        if (!myProject.isDisposed()) {
-          CommandProcessor.getInstance().executeCommand(myProject, () -> {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              long currentTime = System.nanoTime();
-              Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
-              if (startTime != null) {
-                long time = (currentTime - startTime.longValue()) / 1000000;
-                LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            long currentTime = System.nanoTime();
+            Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
+            if (startTime != null) {
+              long time = (currentTime - startTime.longValue()) / 1000000;
+              LifecycleUsageTriggerCollector.onProjectOpenFinished(myProject, time);
 
-                LOG.info("Project opening took " + time + " ms");
-              }
-            }, myProject.getDisposed());
-            // group 1
-          }, "", null);
-        }
-      });
+              LOG.info("Project opening took " + time + " ms");
+            }
+          }, myProject.getDisposed());
+          // group 1
+        }, "", null);
+      }, myProject.getDisposed());
     });
   }
 
@@ -1602,9 +1599,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final FileEditor selectedEditor = editor.getSelectedEditor();
     for (int i = editors.length - 1; i >= 0; i--) {
-      final FileEditor editor1 = editors[i];
-      final FileEditorProvider provider = providers[i];
-      if (!editor.equals(selectedEditor)) { // we already notified the myEditor (when fire event)
+      FileEditor editor1 = editors[i];
+      FileEditorProvider provider = providers[i];
+      if (!editor.equals(selectedEditor)) {
+        // we already notified the myEditor (when fire event)
         if (selectedEditor.equals(editor1)) {
           editor1.deselectNotify();
         }

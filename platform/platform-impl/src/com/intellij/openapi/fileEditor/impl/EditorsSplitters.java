@@ -557,6 +557,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       }
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
     }
+
+    @NotNull
+    @Override
+    protected Project getProject() {
+      return myManager.getProject();
+    }
   }
 
   @Nullable
@@ -964,16 +970,17 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @Nullable
-  private static EditorsSplitters getSplittersToFocus() {
+  private static EditorsSplitters getSplittersToFocus(@Nullable Project project) {
     Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     if (activeWindow instanceof FloatingDecorator) {
-      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
-      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
+      IdeFrame lastFocusedFrame = IdeFocusManager.findInstanceByComponent(activeWindow).getLastFocusedFrame();
       JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
-      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
+      Window lastFocusedWindow = frameComponent == null ? null : SwingUtilities.getWindowAncestor(frameComponent);
       activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
-      Project project = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+      if (project == null) {
+        project = lastFocusedFrame == null ? null : lastFocusedFrame.getProject();
+      }
       FileEditorManagerEx fileEditorManager = project == null || project.isDisposed() ? null : FileEditorManagerEx.getInstanceEx(project);
       if (fileEditorManager == null) {
         return null;
@@ -983,7 +990,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
 
     if (activeWindow instanceof IdeFrame.Child) {
-      Project project = ((IdeFrame.Child)activeWindow).getProject();
+      if (project == null) {
+        project = ((IdeFrame.Child)activeWindow).getProject();
+      }
       return getSplittersForProject(WindowManager.getInstance().getFrame(project), project);
     }
 
@@ -1006,8 +1015,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @Nullable
-  public static JComponent findDefaultComponentInSplitters()  {
-    EditorsSplitters splittersToFocus = getSplittersToFocus();
+  public static JComponent findDefaultComponentInSplitters(@Nullable Project project)  {
+    EditorsSplitters splittersToFocus = getSplittersToFocus(project);
     if (splittersToFocus == null) {
       return null;
     }
@@ -1023,10 +1032,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return null;
   }
 
-  public static boolean focusDefaultComponentInSplittersIfPresent() {
-    JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters();
+  public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {
+    JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters(project);
     if (defaultFocusedComponentInEditor != null) {
-      defaultFocusedComponentInEditor.requestFocusInWindow();
+      // not requestFocus because if floating or windowed tool window is deactivated (or, ESC pressed to focus editor), then we should focus our window
+      defaultFocusedComponentInEditor.requestFocus();
       return true;
     }
     return false;

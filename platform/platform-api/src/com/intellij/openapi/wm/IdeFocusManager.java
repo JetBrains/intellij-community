@@ -10,7 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,18 +166,15 @@ public abstract class IdeFocusManager implements FocusRequestor {
   }
 
   @NotNull
-  public static IdeFocusManager findInstanceByComponent(@NotNull Component c) {
-    final IdeFocusManager instance = findByComponent(c);
-    return instance != null ? instance : findInstanceByContext(null);
+  public static IdeFocusManager findInstanceByComponent(@NotNull Component component) {
+    IdeFocusManager instance = findByComponent(component);
+    return instance == null ? findInstanceByContext(null) : instance;
   }
 
   @Nullable
-  private static IdeFocusManager findByComponent(Component c) {
-    final Component parent = UIUtil.findUltimateParent(c);
-    if (parent instanceof IdeFrame) {
-      return getInstanceSafe(((IdeFrame)parent).getProject());
-    }
-    return null;
+  private static IdeFocusManager findByComponent(@NotNull Component component) {
+    Component parent = ComponentUtil.findUltimateParent(component);
+    return parent instanceof IdeFrame ? getInstanceSafe(((IdeFrame)parent).getProject()) : null;
   }
 
 
