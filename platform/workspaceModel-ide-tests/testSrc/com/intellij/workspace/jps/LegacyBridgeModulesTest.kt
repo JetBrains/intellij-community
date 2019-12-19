@@ -27,6 +27,7 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import org.junit.Assert.*
 import org.junit.Before
@@ -331,29 +332,18 @@ class LegacyBridgeModulesTest {
 
     StoreUtil.saveDocumentsAndProjectSettings(project)
 
-    assertEquals(
-      "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-      "  <component name=\"NewModuleRootManager\">\n" +
-      "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "  </component>\n" +
-      "</module>",
-      JDOMUtil.writeElement(JDOMUtil.load(moduleFile))
-    )
+    assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
     TestModuleComponent.getInstance(module).testString = "My String"
 
     StoreUtil.saveSettings(module, true)
 
     assertEquals(
-      "<module type=\"JAVA_MODULE\" version=\"4\">\n" +
-      "  <component name=\"NewModuleRootManager\">\n" +
-      "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n" +
-      "  </component>\n" +
-      "  <component name=\"XXX\">\n" +
-      "    <option name=\"testString\" value=\"My String\" />\n" +
-      "  </component>\n" +
-      "</module>",
-      JDOMUtil.writeElement(JDOMUtil.load(moduleFile))
+      """  
+       <component name="XXX">
+         <option name="testString" value="My String" />
+       </component>
+""".trimIndent(), JDOMUtil.write(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX")!!)
     )
   }
 
@@ -555,20 +545,15 @@ class LegacyBridgeModulesTest {
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
 
+      val rootManagerComponent = JDomSerializationUtil.findComponent(JDOMUtil.load(moduleImlFile), "NewModuleRootManager")!!
       assertEquals("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <module type="WEB_MODULE" version="4">
-          <component name="NewModuleRootManager">
             <content url="file://${'$'}MODULE_DIR${'$'}">
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root1" type="custom-source-root-type" testString="default properties" />
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root2" type="custom-source-root-type" testString="" />
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root3" type="custom-source-root-type" testString="some data" />
               <sourceFolder url="file://${'$'}MODULE_DIR${'$'}/root4" type="custom-source-root-type" />
             </content>
-            <orderEntry type="sourceFolder" forTests="false" />
-          </component>
-        </module>
-      """.trimIndent().replace("\r", ""), moduleImlFile.readText().replace("\r", ""))
+      """.trimIndent(), JDOMUtil.write(rootManagerComponent.getChild("content")!!))
     }
   }
 
