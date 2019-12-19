@@ -5,6 +5,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ExecutorRegistry {
   public static ExecutorRegistry getInstance() {
@@ -22,6 +23,7 @@ public abstract class ExecutorRegistry {
     return Executor.EXECUTOR_EXTENSION_NAME.getExtensionList().toArray(new Executor[0]);
   }
 
+  @Nullable
   public abstract Executor getExecutorById(@NotNull String executorId);
 
   /**
