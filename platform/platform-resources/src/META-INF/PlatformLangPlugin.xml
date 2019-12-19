@@ -52,6 +52,8 @@
     <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ModuleSdkUsages"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <registryKey key="sdk.auto.check.unknown.sdk" defaultValue="true" description="Check unknown SDKs on project open"/>
+
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
