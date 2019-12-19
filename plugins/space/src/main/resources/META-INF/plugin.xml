@@ -26,15 +26,14 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <registryKey key="space.automation.enabled" defaultValue="false" restartRequired="true" description="Enable Space Automation"/>
-        <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
+        <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
         <applicationConfigurable
             groupId="tools"
             groupWeight="239"
             displayName="Space"
-            instance="circlet.settings.CircletConfigurable"
-        />
+            instance="circlet.settings.CircletSettingsPanel"/>
 
         <toolWindow id="Space"
                     icon="CircletIcons.mainToolWindowIcon"
@@ -53,7 +52,7 @@
 
         <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="circlet.ui.clone.CircletCloneExtension"/>
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="circlet.vcs.clone.CircletCloneExtension"/>
 
         <postStartupActivity implementation="circlet.vcs.PostStartupActivity"/>
     </extensions>
@@ -80,8 +79,8 @@
         </group>
 
 
-        <action id="circlet.ui.clone.CircletCloneAction"
-                class="circlet.ui.clone.CircletCloneAction"
+        <action id="circlet.vcs.clone.CircletCloneAction"
+                class="circlet.vcs.clone.CircletCloneAction"
                 text="Clone Repository..."/>
 
         <action id="circlet.actions.CircletLoginAction"
@@ -98,7 +97,7 @@
 
         <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="circlet.ui.clone.CircletCloneAction"/>
+            <reference id="circlet.vcs.clone.CircletCloneAction"/>
             <separator/>
             <reference id="circlet.vcs.OpenReviews"/>
             <reference id="circlet.vcs.OpenChecklists"/>

@@ -21,7 +21,7 @@ class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
                 if (resolveResult != null) {
                     val fqnName = resolveResult.getKotlinFqName()
                     if (fqnName != null) {
-                        if (fqnName.asString() == "circlet.pipelines.config.dsl.api.Project.task") {
+                        if (fqnName.asString() == "circlet.pipelines.config.dsl.api.Project.job") {
                             val valueArgumentList = element.nextSibling as KtValueArgumentList
                             val taskName = valueArgumentList.arguments.firstOrNull()?.children?.firstOrNull()?.reference?.canonicalText
                             if (taskName != null) {

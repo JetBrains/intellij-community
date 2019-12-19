@@ -1,6 +1,8 @@
 package circlet.vcs
 
 import circlet.actions.*
+import circlet.client.api.*
+import circlet.client.api.Navigator
 import circlet.components.*
 import com.intellij.dvcs.repo.*
 import com.intellij.ide.*
@@ -17,6 +19,7 @@ import git4idea.*
 import git4idea.history.*
 import git4idea.repo.*
 import icons.*
+import runtime.routing.Location
 import com.intellij.openapi.util.Ref as Ref1
 
 abstract class CircletOpenInBrowserActionGroup<T>(groupName: String) :
@@ -70,40 +73,36 @@ abstract class CircletOpenInBrowserAction(groupName: String) :
         }
 
     companion object {
-        internal fun getProjectAwareUrls(endpoint: String, context: DataContext): List<Pair<CircletProjectDescription, String>>? {
+        internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location, context: DataContext): List<Pair<CircletProjectDescription, String>>? {
             val project = context.getData(CommonDataKeys.PROJECT) ?: return null
             val server = circletWorkspace.workspace.value?.client?.server?.removeSuffix("/") ?: return null
             val description = CircletProjectContext.getInstance(project).projectDescriptions ?: return null
 
             return description.second.map {
-                it to "$server/p/${it.projectKey.key}/$endpoint"
+                val projectLocation = Navigator.p.project(it.projectKey)
+                val url = endpoint(projectLocation).absoluteHref(server)
+
+                it to url
             }.toList()
         }
     }
 }
-//
-//class OpenProjects : CircletOpenInBrowserAction("Projects") {
-//    override fun getUrls(context: DataContext): List<Pair<CircletProjectDescription, String>>? {
-//        val server = circletWorkspace.workspace.value?.client?.server?.removeSuffix("/") ?: return null
-//        return listOf(ProjectKey()"$server/p")
-//    }
-//}
 
 class OpenReviews : CircletOpenInBrowserAction("Code reviews") {
     override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
-        return getProjectAwareUrls("review", dataContext)
+        return getProjectAwareUrls(ProjectLocation::reviews, dataContext)
     }
 }
 
 class OpenChecklists : CircletOpenInBrowserAction("Checklists") {
     override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
-        return getProjectAwareUrls("checklists", dataContext)
+        return getProjectAwareUrls(ProjectLocation::checklists, dataContext)
     }
 }
 
 class OpenIssues : CircletOpenInBrowserAction("Issues") {
     override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
-        return getProjectAwareUrls("issues", dataContext)
+        return getProjectAwareUrls(ProjectLocation::issues, dataContext)
     }
 }
 
@@ -197,7 +196,9 @@ class CircletVcsOpenInBrowserActionGroup :
 
                 override val url: String?
                     get() {
-                        return "$server/p/${description.projectKey.key}/code/${repo}/commits?commits=${commit.hash.asString()}"
+                        return Navigator.p.project(description.projectKey)
+                            .commits(repo, "", commit.hash.asString())
+                            .absoluteHref(server)
                     }
             }
 
@@ -209,7 +210,9 @@ class CircletVcsOpenInBrowserActionGroup :
 
                 override val url: String?
                     get() {
-                        return "$server/p/${description.projectKey.key}/code/${repo}/revision/${vcsFileRevisionEx.revisionNumber.asString()}"
+                        return Navigator.p.project(description.projectKey)
+                            .revision(repo, vcsFileRevisionEx.revisionNumber.asString())
+                            .absoluteHref(server)
                     }
             }
 
@@ -223,7 +226,9 @@ class CircletVcsOpenInBrowserActionGroup :
                         val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
                         val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
-                        return "$server/p/${description.projectKey.key}/code/${repo}/file/$hash/$relativePath"
+                        return Navigator.p.project(description.projectKey)
+                            .file(repo, hash, relativePath)
+                            .absoluteHref(server)
                     }
 
                 private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
