@@ -121,6 +121,8 @@ public interface ExtensionPoint<T> {
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+  
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 

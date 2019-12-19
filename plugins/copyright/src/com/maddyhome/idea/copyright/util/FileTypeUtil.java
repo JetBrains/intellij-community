@@ -39,19 +39,7 @@ public class FileTypeUtil {
         types = null;
       }
     });
-    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint())
-      .addExtensionPointListener(
-        new ExtensionPointListener<KeyedLazyInstance<UpdateCopyrightsProvider >> () {
-          @Override
-          public void extensionAdded(@NotNull KeyedLazyInstance<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
-            types = null;
-          }
-
-          @Override
-          public void extensionRemoved(@NotNull KeyedLazyInstance<UpdateCopyrightsProvider> extension, @NotNull PluginDescriptor pluginDescriptor) {
-            types = null;
-          }
-        }, false, application);
+    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint()).addExtensionPointListener((e, pd) -> types = null, false, application);
   }
 
   public static String buildComment(FileType type, String template, LanguageOptions options) {

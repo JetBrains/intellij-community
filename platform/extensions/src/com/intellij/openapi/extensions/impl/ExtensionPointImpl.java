@@ -720,6 +720,21 @@ public abstract class ExtensionPointImpl<T> implements ExtensionPoint<T>, Iterab
   }
 
   @Override
+  public void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable) {
+    addExtensionPointListener(new ExtensionPointListener<T>() {
+      @Override
+      public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
+        listener.extensionChanged(extension, pluginDescriptor);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
+        listener.extensionChanged(extension, pluginDescriptor);
+      }
+    }, invokeForLoadedExtensions, parentDisposable);
+  }
+  
+  @Override
   public synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     removeListener(listener);
   }
