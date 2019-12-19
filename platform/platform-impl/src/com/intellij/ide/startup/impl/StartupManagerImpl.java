@@ -122,7 +122,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   public final void projectOpened(@Nullable ProgressIndicator indicator) {
     if (indicator != null && ApplicationManager.getApplication().isInternal()) {
-      indicator.setText("Running Startup Activities...");
+      indicator.setText("Running startup activities...");
     }
 
     doRunStartUpActivities(indicator);
