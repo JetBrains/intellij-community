@@ -82,8 +82,23 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the file to reformat is read-only.
    * @see #reformatText(PsiFile, int, int)
    */
+  @Deprecated
   @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
+  /**
+   * Reformats the contents of the specified PSI element, and optionally enforces braces
+   * and splits import statements according to the user's code style.
+   *
+   * @param element                  the element to reformat.
+   * @param canChangeWhiteSpacesOnly if {@code true}, only reformatting is performed; if {@code false},
+   *                                 braces and import statements also can be modified if necessary.
+   * @param keepLineBreaks           if {@code true}, no new or empty lines are removed if {@code false},
+   *                                 the default formatting is performed.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(PsiFile, int, int)
+   */
   @NotNull
   public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks)
     throws IncorrectOperationException;
@@ -116,11 +131,28 @@ public abstract class CodeStyleManager  {
    * @throws IncorrectOperationException if the file to reformat is read-only.
    * @see #reformatText(PsiFile, int, int)
    */
+  @Deprecated
   public abstract PsiElement reformatRange(@NotNull PsiElement element,
                                            int startOffset,
                                            int endOffset,
                                            boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
 
+  /**
+   * Reformats part of the contents of the specified PSI element, and optionally enforces braces
+   * and splits import statements according to the user's code style.
+   *
+   * @param element                  the element to reformat.
+   * @param startOffset              the start offset in the document of the text range to reformat.
+   * @param endOffset                the end offset in the document of the text range to reformat.
+   * @param canChangeWhiteSpacesOnly if {@code true}, only reformatting is performed; if {@code false},
+   *                                 braces and import statements also can be modified if necessary.
+   * @param keepLineBreaks           if {@code true}, no new or empty lines are removed if {@code false},
+   *                                 the default formatting is performed.
+   * @return the element in the PSI tree after the reformat operation corresponding to the
+   *         original element.
+   * @throws IncorrectOperationException if the file to reformat is read-only.
+   * @see #reformatText(PsiFile, int, int)
+   */
   public abstract PsiElement reformatRange(@NotNull PsiElement element,
                                            int startOffset,
                                            int endOffset,
