@@ -380,18 +380,3 @@ private val testDataPath: String
 private fun loadDescriptorInTest(dirName: String): IdeaPluginDescriptorImpl {
   return loadDescriptorInTest(Paths.get(testDataPath, dirName))
 }
-
-internal fun loadDescriptorInTest(dir: Path): IdeaPluginDescriptorImpl {
-  assertThat(dir).exists()
-  PluginManagerCore.ourPluginError = null
-  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())
-  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
-    PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
-  }
-  if (result == null) {
-    @Suppress("USELESS_CAST")
-    assertThat(PluginManagerCore.ourPluginError as String?).isNotNull()
-    PluginManagerCore.ourPluginError = null
-  }
-  return result!!
-}

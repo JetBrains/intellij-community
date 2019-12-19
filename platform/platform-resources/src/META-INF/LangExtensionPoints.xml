@@ -411,7 +411,7 @@
 
     <extensionPoint name="codeInsight.surroundWithRangeAdjuster" interface="com.intellij.codeInsight.generation.surroundWith.SurroundWithRangeAdjuster" dynamic="true"/>
 
-    <extensionPoint name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint dynamic="true" name="lang.substitutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.LanguageSubstitutor"/>
     </extensionPoint>
 
