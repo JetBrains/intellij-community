@@ -457,7 +457,7 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
-  private long calcDataOffset() throws IOException {
+  public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
     myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];

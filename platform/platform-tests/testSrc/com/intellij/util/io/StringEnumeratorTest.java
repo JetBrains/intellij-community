@@ -180,7 +180,7 @@ public class StringEnumeratorTest extends TestCase {
   private static final StringBuilder builder = new StringBuilder(100);
   private static final Random random = new Random(2_71828);
 
-  static String createRandomString() {
+  public static String createRandomString() {
     return createRandomString(random);
   }
 
