@@ -67,5 +67,6 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
   </component>
 </module>

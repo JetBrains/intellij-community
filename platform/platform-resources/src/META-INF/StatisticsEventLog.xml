@@ -30,7 +30,6 @@
               text="Configure Whitelist"
               description="Configure whitelist from the custom folder"/>
       <add-to-group group-id="Internal" anchor="last"/>
-    <!--  Internal.PMM-->
     </group>
   </actions>
 </idea-plugin>
