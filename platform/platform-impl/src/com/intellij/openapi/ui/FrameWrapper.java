@@ -20,10 +20,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
-import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
@@ -42,10 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class FrameWrapper implements Disposable, DataProvider {
   private String myDimensionKey;
@@ -108,7 +103,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   public void show(boolean restoreBounds) {
-    final Window frame = getFrame();
+     Window frame = getFrame();
     if (frame instanceof JFrame) {
       ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     }
@@ -128,7 +123,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       UIUtil.setCustomTitleBar(frame, ((JFrame)frame).getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
     }
 
-    final WindowAdapter focusListener = new WindowAdapter() {
+    WindowAdapter focusListener = new WindowAdapter() {
       @Override
       public void windowOpened(WindowEvent e) {
         IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
@@ -146,13 +141,17 @@ public class FrameWrapper implements Disposable, DataProvider {
     if (Registry.is("ide.perProjectModality")) {
       frame.setAlwaysOnTop(true);
     }
+
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         frame.removeWindowListener(focusListener);
       }
     });
-    if (myCloseOnEsc) addCloseOnEsc((RootPaneContainer)frame);
+
+    if (myCloseOnEsc) {
+      addCloseOnEsc((RootPaneContainer)frame);
+    }
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       myComponent = CustomFrameDialogContent.getCustomContentHolder(frame, myComponent);
@@ -177,7 +176,9 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState(state);
     }
 
-    IdeMenuBar.bindAppMenuOfParent(frame, WindowManager.getInstance().getIdeFrame(myProject));
+    if (SystemInfo.isLinux && frame instanceof JFrame) {
+      LinuxIdeMenuBar.doBindAppMenuOfParent((JFrame)frame, WindowManager.getInstance().getIdeFrame(myProject));
+    }
 
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
@@ -245,7 +246,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     return myDisposed;
   }
 
-  private void addCloseOnEsc(final RootPaneContainer frame) {
+  private void addCloseOnEsc(@NotNull RootPaneContainer frame) {
     JRootPane rootPane = frame.getRootPane();
     ActionListener closeAction = new ActionListener() {
       @Override
@@ -259,17 +260,19 @@ public class FrameWrapper implements Disposable, DataProvider {
     ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow());
   }
 
+  @NotNull
   public Window getFrame() {
     assert !myDisposed : "Already disposed!";
 
     if (myFrame == null) {
       IdeFrame parent = WindowManager.getInstance().getIdeFrame(myProject);
-      myFrame = myIsDialog ? createJDialog(parent) : createJFrame(parent);
+      myFrame = myIsDialog ? createJDialog(parent) : createJFrame(Objects.requireNonNull(parent));
     }
     return myFrame;
   }
 
-  protected JFrame createJFrame(IdeFrame parent) {
+  @NotNull
+  protected JFrame createJFrame(@NotNull IdeFrame parent) {
     return new MyJFrame(this, parent);
   }
 
@@ -361,15 +364,13 @@ public class FrameWrapper implements Disposable, DataProvider {
     private String myFileTitle;
     private File myFile;
 
-    private MyJFrame(FrameWrapper owner, IdeFrame parent) throws HeadlessException {
+    private MyJFrame(@NotNull FrameWrapper owner, @NotNull IdeFrame parent) throws HeadlessException {
       myOwner = owner;
       myParent = parent;
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      final boolean setMenuOnFrame = SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR;
-
-      if (setMenuOnFrame) {
+      if (SystemInfo.isMac && !USE_SINGLE_SYSTEM_MENUBAR) {
         setJMenuBar(IdeMenuBar.createMenuBar());
       }
 

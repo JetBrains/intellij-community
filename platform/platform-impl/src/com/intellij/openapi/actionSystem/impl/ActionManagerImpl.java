@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.DynamicBundle;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
@@ -139,6 +140,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private boolean myPreloadComplete;
 
   ActionManagerImpl() {
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode()) {
+      LoadingState.COMPONENTS_LOADED.checkOccurred();
+      LOG.assertTrue(!app.isDispatchThread());
+    }
+
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getLoadedPlugins(null)) {
       registerPluginActions(plugin);
     }
