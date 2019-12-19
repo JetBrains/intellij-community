@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,6 +72,7 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       return myIncludeAnonymous;
     }
 
+    @ApiStatus.Experimental
     public boolean searchInLanguage(@NotNull Language language) {
       return true;
     }
