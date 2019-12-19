@@ -45,6 +45,7 @@ public class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   public IdeaPluginDescriptor myPlugin;
   private boolean myUninstalled;
+  private boolean myOnlyUpdateMode;
   public IdeaPluginDescriptor myUpdateDescriptor;
 
   private final JLabel myNameComponent = new JLabel();
@@ -149,7 +150,8 @@ public class ListPluginComponent extends JPanel {
       else {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
-        myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
+        myInstallButton
+          .addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
         myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null, "Installed");
         ColorButton.setWidth72(myInstallButton);
       }
@@ -295,6 +297,17 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
+  public void setOnlyUpdateMode(@Nullable IdeaPluginDescriptor descriptor) {
+    myOnlyUpdateMode = true;
+
+    if (myEnableDisableButton != null) {
+      myLayout.removeButtonComponent(myEnableDisableButton);
+      myEnableDisableButton = null;
+    }
+
+    setUpdateDescriptor(descriptor);
+  }
+
   public void setUpdateDescriptor(@Nullable IdeaPluginDescriptor descriptor) {
     if (myUpdateDescriptor == null && descriptor == null) {
       return;
@@ -337,9 +350,11 @@ public class ListPluginComponent extends JPanel {
       }
       if (myUpdateButton == null) {
         myLayout.addButtonComponent(myUpdateButton = new UpdateButton(), 0);
-        myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
+        myUpdateButton.addActionListener(
+          e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
       }
       else {
+        myUpdateButton.setEnabled(true);
         myUpdateButton.setVisible(true);
       }
       if (myAlignButton != null) {
@@ -350,9 +365,7 @@ public class ListPluginComponent extends JPanel {
     doLayout();
   }
 
-  public void setListeners(@NotNull LinkListener<? super IdeaPluginDescriptor> listener,
-                           @NotNull LinkListener<String> searchListener,
-                           @NotNull EventHandler eventHandler) {
+  public void setListeners(@NotNull EventHandler eventHandler) {
     myEventHandler = eventHandler;
     eventHandler.addAll(this);
   }
@@ -520,7 +533,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updatePlugin() {
-    if (!myMarketplace && myUpdateButton != null && myUpdateButton.isVisible()) {
+    if (!myMarketplace && myUpdateButton != null && myUpdateButton.isVisible() && myUpdateButton.isEnabled()) {
       myUpdateButton.doClick();
     }
   }
@@ -531,6 +544,18 @@ public class ListPluginComponent extends JPanel {
 
   public boolean isMarketplace() {
     return myMarketplace;
+  }
+
+  public boolean isRestartEnabled() {
+    return myRestartButton != null && myRestartButton.isVisible();
+  }
+
+  public boolean isUpdatedWithoutRestart() {
+    return myUpdateButton != null && myUpdateButton.isVisible() && !myUpdateButton.isEnabled();
+  }
+
+  public boolean underProgress() {
+    return myIndicator != null;
   }
 
   public void close() {
@@ -581,7 +606,7 @@ public class ListPluginComponent extends JPanel {
 
     for (int i = 0; i < size; i++) {
       JButton button = selection.get(i).myUpdateButton;
-      if (button == null || !button.isVisible()) {
+      if (button == null || !button.isVisible() || !button.isEnabled()) {
         updateButtons = null;
         break;
       }
@@ -593,6 +618,10 @@ public class ListPluginComponent extends JPanel {
       if (size > 1) {
         return;
       }
+    }
+
+    if (myOnlyUpdateMode) {
+      return;
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
@@ -663,7 +692,7 @@ public class ListPluginComponent extends JPanel {
     boolean update = true;
     for (ListPluginComponent component : selection) {
       JButton button = component.myUpdateButton;
-      if (button == null || !button.isVisible()) {
+      if (button == null || !button.isVisible() || !button.isEnabled()) {
         update = false;
         break;
       }
@@ -680,6 +709,9 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else if (!restart && !update) {
+      if (myOnlyUpdateMode) {
+        return;
+      }
       if (keyCode == KeyEvent.VK_SPACE) {
         if (selection.size() == 1) {
           myPluginModel.changeEnableDisable(selection.get(0).myPlugin);

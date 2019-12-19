@@ -64,6 +64,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.lang.System.out;
+
 /**
  * @author Alexander Lobas
  */
@@ -103,9 +105,6 @@ public class PluginManagerConfigurable
 
   private SearchResultPanel myMarketplaceSearchPanel;
   private SearchResultPanel myInstalledSearchPanel;
-
-  private LinkListener<IdeaPluginDescriptor> myNameListener;
-  private LinkListener<String> mySearchListener;
 
   private final LinkLabel<Object> myUpdateAll = new LinkLabel<>("Update All", null);
   private final JLabel myUpdateCounter = new CountComponent();
@@ -197,13 +196,6 @@ public class PluginManagerConfigurable
       myTabHeaderComponent.update();
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
-
-    myNameListener = (aSource, aLinkData) -> {
-      // TODO: unused
-    };
-    mySearchListener = (aSource, aLinkData) -> {
-      // TODO: unused
-    };
 
     createMarketplaceTab();
     createInstalledTab();
@@ -359,8 +351,7 @@ public class PluginManagerConfigurable
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
-                                                PluginManagerConfigurable.this.mySearchListener,
+          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
                                                 d -> new ListPluginComponent(myPluginModel, d, mySearchListener, true));
 
         myMarketplacePanel.setSelectionListener(selectionListener);
@@ -623,10 +614,8 @@ public class PluginManagerConfigurable
         marketplaceController.setSearchResultEventHandler(eventHandler);
 
         PluginsGroupComponentWithProgress panel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler, myNameListener,
-                                                PluginManagerConfigurable.this.mySearchListener,
-                                                descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener,
-                                                                                      true));
+          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
+                                                descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true));
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -775,8 +764,7 @@ public class PluginManagerConfigurable
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
-                                    PluginManagerConfigurable.this.mySearchListener,
+          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
                                     descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         myInstalledPanel.setSelectionListener(selectionListener);
@@ -922,8 +910,7 @@ public class PluginManagerConfigurable
         installedController.setSearchResultEventHandler(eventHandler);
 
         PluginsGroupComponent panel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler, myNameListener,
-                                    PluginManagerConfigurable.this.mySearchListener,
+          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
                                     descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
 
         panel.setSelectionListener(selectionListener);

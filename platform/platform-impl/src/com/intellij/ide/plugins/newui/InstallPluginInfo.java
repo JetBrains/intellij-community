@@ -54,7 +54,7 @@ public class InstallPluginInfo {
     if (myPluginModel == null) {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
-      if (success && restartRequired) {
+      if (success && !cancel && restartRequired) {
         ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
       }
     }

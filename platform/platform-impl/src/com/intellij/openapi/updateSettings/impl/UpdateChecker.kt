@@ -147,7 +147,8 @@ object UpdateChecker {
     val updatedPlugins: Collection<PluginDownloader>?
     val externalUpdates: Collection<ExternalUpdate>?
     try {
-      updatedPlugins = checkPluginsUpdate(indicator, incompatiblePlugins, buildNumber)
+      updatedPlugins = checkPluginsUpdate(indicator, incompatiblePlugins,
+                                          buildNumber)?.filter { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
       externalUpdates = checkExternalUpdates(showDialog, updateSettings, indicator)
     }
     catch (e: IOException) {
@@ -395,7 +396,7 @@ object UpdateChecker {
 
     if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
       updateFound = true
-      val runnable = { PluginUpdateInfoDialog(updatedPlugins, showSettingsLink).show() }
+      val runnable = { PluginUpdateDialog(updatedPlugins).show() }
 
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 

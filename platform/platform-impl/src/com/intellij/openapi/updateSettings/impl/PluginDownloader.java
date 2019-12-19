@@ -58,7 +58,7 @@ public final class PluginDownloader {
 
   private boolean myShownErrors;
 
-  private PluginDownloader(IdeaPluginDescriptor descriptor, String url, BuildNumber buildNumber) {
+  private PluginDownloader(@NotNull IdeaPluginDescriptor descriptor, @NotNull String url, @Nullable BuildNumber buildNumber) {
     myPluginId = descriptor.getPluginId();
     myPluginName = descriptor.getName();
     myProductCode = descriptor.getProductCode();

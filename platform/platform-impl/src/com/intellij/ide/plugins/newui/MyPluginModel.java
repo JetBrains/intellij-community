@@ -422,10 +422,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     });
   }
 
-  public void toBackground() {
+  public boolean toBackground() {
     for (InstallPluginInfo info : myInstallingInfos.values()) {
       info.toBackground(myStatusBar);
     }
+    return !myInstallingInfos.isEmpty();
   }
 
   @NotNull
