@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,10 @@ public class TabListAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setIcon(AllIcons.Actions.FindAndShowNextMatches);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
     boolean available = isTabListAvailable(e) || e.getPlace() == ActionPlaces.TABS_MORE_TOOLBAR;
     e.getPresentation().setEnabledAndVisible(available);
   }
