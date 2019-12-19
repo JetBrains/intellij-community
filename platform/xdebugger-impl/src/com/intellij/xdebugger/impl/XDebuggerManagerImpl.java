@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
@@ -261,7 +260,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
         !myProject.isDisposed() &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
         XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
-      ExecutionManager.getInstance(myProject).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
+      RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
                                                                                  sessionTab.getRunContentDescriptor());
     }
     if (myActiveSession.compareAndSet(session, null)) {

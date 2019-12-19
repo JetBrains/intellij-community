@@ -4,7 +4,6 @@ package com.jetbrains.python.console;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -20,6 +19,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ConsoleTitleGen;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.idea.ActionsBundle;
@@ -317,8 +317,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PythonConsoleToolWindow.getInstance(myProject).init(toolwindow, contentDescriptor);
     }
     else {
-      ExecutionManager
-        .getInstance(myProject).getContentManager().showRunContent(getExecutor(), contentDescriptor);
+      RunContentManager.getInstance(myProject).showRunContent(getExecutor(), contentDescriptor);
     }
   }
 

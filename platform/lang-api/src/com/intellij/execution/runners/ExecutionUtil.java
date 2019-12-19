@@ -54,7 +54,7 @@ public final class ExecutionUtil {
 
   public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
     handleExecutionError(environment.getProject(),
-                         ExecutionManager.getInstance(environment.getProject()).getContentManager().getToolWindowIdByEnvironment(environment),
+                         RunContentManager.getInstance(environment.getProject()).getToolWindowIdByEnvironment(environment),
                          environment.getRunProfile().getName(), e);
   }
 
@@ -227,7 +227,7 @@ public final class ExecutionUtil {
     catch (ExecutionException e) {
       RunConfiguration configuration = settings.getConfiguration();
       Project project = configuration.getProject();
-      RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
+      RunContentManager manager = RunContentManager.getInstance(project);
       String toolWindowId = manager.getContentDescriptorToolWindowId(configuration);
       if (toolWindowId == null) {
         toolWindowId = executor.getToolWindowId();

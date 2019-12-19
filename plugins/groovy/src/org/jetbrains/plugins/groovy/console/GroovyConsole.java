@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
@@ -12,6 +11,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -74,8 +74,10 @@ public final class GroovyConsole {
   }
 
   public void execute(@NotNull String command) {
-    if (!StringUtil.isEmptyOrSpaces(command)) doExecute(command);
-    ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(defaultExecutor, myContentDescriptor);
+    if (!StringUtil.isEmptyOrSpaces(command)) {
+      doExecute(command);
+    }
+    RunContentManager.getInstance(myProject).toFrontRunContent(defaultExecutor, myContentDescriptor);
   }
 
   public void stop() {
@@ -185,7 +187,7 @@ public final class GroovyConsole {
     consoleView.attachToProcess(processHandler);
     processHandler.startNotify();
 
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
+    RunContentManager.getInstance(project).showRunContent(defaultExecutor, descriptor);
     return console;
   }
 

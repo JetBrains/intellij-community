@@ -5,7 +5,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -20,15 +19,14 @@ public abstract class ExecutionManager {
     Topic.create("configuration executed", ExecutionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static ExecutionManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExecutionManager.class);
+    return project.getService(ExecutionManager.class);
   }
 
   /**
-   * Returns the manager of running process tabs in Run and Debug toolwindows.
-   *
-   * @return the run content manager instance.
+   * @deprecated Use {@link RunContentManager#getInstance(Project)}
    */
   @NotNull
+  @Deprecated
   public abstract RunContentManager getContentManager();
 
   /**

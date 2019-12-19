@@ -17,8 +17,6 @@ import java.util.List;
 
 /**
  * The manager of tabs in the Run/Debug toolwindows.
- *
- * @see com.intellij.execution.ExecutionManager#getContentManager()
  */
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC = Topic.create("Run Content", RunContentWithExecutorListener.class);

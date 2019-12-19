@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -385,7 +384,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myRunContentDescriptor != null) {
-        RunContentManager manager = ExecutionManager.getInstance(myProject).getContentManager();
+        RunContentManager manager = RunContentManager.getInstance(myProject);
         ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
         if (toolWindow != null) {
           if (!toolWindow.isVisible()) {

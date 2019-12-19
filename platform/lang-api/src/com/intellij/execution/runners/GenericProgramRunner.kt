@@ -7,6 +7,7 @@ import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
@@ -67,7 +68,7 @@ fun startRunProfile(environment: ExecutionEnvironment, callback: ProgramRunner.C
           if (descriptor != null) {
             descriptor.executionId = environment.executionId
 
-            val toolWindowId = ExecutionManager.getInstance(environment.project).contentManager.getContentDescriptorToolWindowId(environment)
+            val toolWindowId = RunContentManager.getInstance(environment.project).getContentDescriptorToolWindowId(environment)
             if (toolWindowId != null) {
               descriptor.contentToolWindowId = toolWindowId
             }
