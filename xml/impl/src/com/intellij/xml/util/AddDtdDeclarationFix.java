@@ -40,7 +40,7 @@ public class AddDtdDeclarationFix implements LocalQuickFix {
   private final String myReference;
 
   public AddDtdDeclarationFix(
-    @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
+    @PropertyKey(resourceBundle = XmlBundle.BUNDLE) String messageKey,
     @NotNull String elementDeclarationName,
     @NotNull PsiReference reference) {
     myMessageKey = messageKey;

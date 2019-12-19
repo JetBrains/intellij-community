@@ -37,7 +37,7 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
       );
     }
     else if (ref.getType() != null) {
-      @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String key = null;
+      @PropertyKey(resourceBundle = XmlBundle.BUNDLE) String key = null;
       @NonNls String declarationTagName = null;
 
       if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.ElementReference) {

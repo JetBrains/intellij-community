@@ -61,18 +61,18 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
     throws DiffRequestProducerException {
     try {
       Change propertiesChange = getSvnChangeLayer(change);
-      if (propertiesChange == null) throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
+      if (propertiesChange == null) throw new DiffRequestProducerException(SvnBundle.message("diff.cant.get.properties.changes"));
 
       ContentRevision bRevRaw = propertiesChange.getBeforeRevision();
       ContentRevision aRevRaw = propertiesChange.getAfterRevision();
 
       if (bRevRaw != null && !(bRevRaw instanceof PropertyRevision)) {
         LOG.warn("Before change is not PropertyRevision");
-        throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
+        throw new DiffRequestProducerException(SvnBundle.message("diff.cant.get.properties.changes"));
       }
       if (aRevRaw != null && !(aRevRaw instanceof PropertyRevision)) {
         LOG.warn("After change is not PropertyRevision");
-        throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
+        throw new DiffRequestProducerException(SvnBundle.message("diff.cant.get.properties.changes"));
       }
 
       PropertyRevision bRev = (PropertyRevision)bRevRaw;
@@ -84,7 +84,7 @@ public class SvnChangeDiffViewerProvider implements ChangeDiffViewerWrapperProvi
       indicator.checkCanceled();
       List<PropertyData> aContent = aRev != null ? aRev.getProperties() : null;
 
-      if (aRev == null && bRev == null) throw new DiffRequestProducerException(SvnBundle.getString("diff.cant.get.properties.changes"));
+      if (aRev == null && bRev == null) throw new DiffRequestProducerException(SvnBundle.message("diff.cant.get.properties.changes"));
 
       ContentRevision bRevMain = change.getBeforeRevision();
       ContentRevision aRevMain = change.getAfterRevision();
