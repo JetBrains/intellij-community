@@ -35,16 +35,12 @@
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
 
-    <!--suppress PluginXmlValidity -->
-    <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true"/>
-
     <extensionPoint name="indexPatternProvider" interface="com.intellij.psi.search.IndexPatternProvider"/>
 
     <extensionPoint name="refGraphAnnotator" interface="com.intellij.codeInspection.reference.RefGraphAnnotator"/>
 
     <!-- Code Insight -->
     <extensionPoint name="highlightVisitor" interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="highlightErrorFilter" interface="com.intellij.codeInsight.highlighting.HighlightErrorFilter" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="errorQuickFixProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider" dynamic="true"/>
 
     <extensionPoint name="pathReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
@@ -87,10 +83,6 @@
 
     <extensionPoint name="lang.syntaxHighlighter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
-    </extensionPoint>
-
-    <extensionPoint name="lang.documentationProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.lang.documentation.DocumentationProvider"/>
     </extensionPoint>
 
     <extensionPoint name="lang.findUsagesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -158,7 +150,6 @@
       <with attribute="forClass" implements="com.intellij.model.search.SearchParameters"/>
       <with attribute="implementationClass" implements="com.intellij.model.search.Searcher"/>
     </extensionPoint>
-    <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="indexPatternSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 
@@ -241,7 +232,6 @@
     <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT"/>
 
     <!-- File-Based Index-->
-    <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension" dynamic="true"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
     <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter" dynamic="true"/>
     <extensionPoint name="indexImporterFactory" interface="com.intellij.index.IndexImporterFactory"/>
@@ -422,9 +412,6 @@
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.BinaryFileStubBuilder"/>
     </extensionPoint>
 
-    <!--suppress PluginXmlValidity -->
-    <extensionPoint name="stubElementTypeHolder" beanClass="com.intellij.psi.stubs.StubElementTypeHolderEP" dynamic="true"/>
-
     <extensionPoint name="moduleType" beanClass="com.intellij.openapi.module.ModuleTypeEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.module.ModuleType"/>
     </extensionPoint>
@@ -510,8 +497,6 @@
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider" dynamic="true"/>
 
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
-
-    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
 
     <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension"/>
 

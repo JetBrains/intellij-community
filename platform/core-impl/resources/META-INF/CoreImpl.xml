@@ -14,6 +14,7 @@
     <extensionPoint name="lang.ast.factory" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ASTFactory"/>
     </extensionPoint>
+    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.diagnostic.PluginProblemReporter"

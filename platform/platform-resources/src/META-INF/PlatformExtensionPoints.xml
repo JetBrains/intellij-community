@@ -36,7 +36,6 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.FileType"/>
     </extensionPoint>
-
     <extensionPoint name="selectInTarget"
                     interface="com.intellij.ide.SelectInTarget"
                     area="IDEA_PROJECT"

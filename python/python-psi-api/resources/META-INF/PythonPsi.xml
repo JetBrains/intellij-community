@@ -14,6 +14,8 @@
     <extensionPoint qualifiedName="Pythonid.resolveResultRater" interface="com.jetbrains.python.psi.impl.PyResolveResultRater"/>
     <extensionPoint qualifiedName="Pythonid.thirdPartySdkDetector" interface="com.jetbrains.python.psi.resolve.PyThirdPartySdkDetector"/>
     <extensionPoint qualifiedName="Pythonid.inspectionExtension" interface="com.jetbrains.python.inspections.PyInspectionExtension"/>
+    <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Python"

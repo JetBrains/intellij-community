@@ -68,11 +68,6 @@
 
 
     <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
-    <fileType name="PythonStub"
-              language="PythonStub"
-              extensions="pyi"
-              implementationClass="com.jetbrains.python.pyi.PyiFileType"
-              fieldName="INSTANCE"/>
 
     <controlFlowProvider implementation="com.jetbrains.python.codeInsight.controlflow.PyControlFlowProvider"/>
 
