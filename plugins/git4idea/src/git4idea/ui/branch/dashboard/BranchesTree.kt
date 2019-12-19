@@ -219,9 +219,11 @@ internal class FilteringBranchesTree(project: Project,
 
   fun refreshTree() {
     expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
+    val selectionPaths = tree.selectionModel.selectionPaths
     refreshTreeNodesFromModel()
     searchModel.updateStructure()
     restorePreviouslyExpandedPaths()
+    tree.selectionModel.selectionPaths = selectionPaths
   }
 
   private fun buildTreeNodesIfNeeded(): Boolean {
