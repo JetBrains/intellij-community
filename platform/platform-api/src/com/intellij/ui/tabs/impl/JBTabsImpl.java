@@ -248,6 +248,7 @@ public class JBTabsImpl extends JComponent
     AnAction tabListAction = myActionManager.getAction("TabList");
     myMoreToolbar = myActionManager
       .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(tabListAction), true);
+    myMoreToolbar.setTargetComponent(this);
     myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty());
     myMoreToolbar.getComponent().setOpaque(false);
     myMoreToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -1498,7 +1499,7 @@ public class JBTabsImpl extends JComponent
           Rectangle bounds = new Rectangle(moreRect);
           int xDiff = (bounds.width - preferredSize.width) / 2;
           int yDiff = (bounds.height - preferredSize.height) / 2;
-          bounds.x += xDiff + 1;
+          bounds.x += xDiff + 2;
           bounds.width -= 2 * xDiff;
           bounds.y += yDiff;
           bounds.height -= 2* yDiff;

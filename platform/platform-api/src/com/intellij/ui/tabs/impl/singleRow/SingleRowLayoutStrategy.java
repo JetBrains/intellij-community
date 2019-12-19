@@ -89,7 +89,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getMoreRectAxisSize() {
-      return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + 2;
+      return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + 6;
     }
 
     @Override
