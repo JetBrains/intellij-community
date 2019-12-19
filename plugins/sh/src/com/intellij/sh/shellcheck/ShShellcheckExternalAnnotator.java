@@ -19,6 +19,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
@@ -103,11 +105,19 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     if (document == null) {
       return;
     }
+
+    Collection<OuterLanguageElement> outerElements = PsiTreeUtil.findChildrenOfType(file, OuterLanguageElement.class);
+    List<TextRange> rangesOfOuterElements = ContainerUtil.map(outerElements, el -> el.getTextRange());
+
     for (Result result : shellcheckResponse.results) {
       CharSequence sequence = document.getCharsSequence();
       int startOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.line - 1), result.column);
       int endOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
+
+      boolean isInOuter = ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range));
+      if (isInOuter) continue;
+
       long code = result.code;
       String message = result.message;
       String scCode = "SC" + code;
