@@ -178,6 +178,7 @@ public class FoldingDescriptor {
                            @Nullable("null means FoldingBuilder.getPlaceholderText will be used") String placeholderText,
                            @Nullable("null means FoldingBuilder.isCollapsedByDefault will be used") Boolean collapsedByDefault) {
     assert range.getLength() > 0 : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
+    if (neverExpands && group != null) throw new IllegalArgumentException("'Never-expanding' region cannot be part of a group");
     myElement = node;
     myRange = range;
     myGroup = group;

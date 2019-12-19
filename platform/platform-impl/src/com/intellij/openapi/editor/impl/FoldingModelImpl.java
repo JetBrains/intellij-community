@@ -564,14 +564,25 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return null;
     }
-    if (!isFoldingEnabled() || startOffset >= endOffset ||
+    if (!isFoldingEnabled() ||
+        startOffset >= endOffset ||
+        neverExpands && group != null ||
         DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
         DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
-        !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
+        !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) {
+      return null;
+    }
 
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
     LOG.assertTrue(region.isValid());
+    if (neverExpands) {
+      collapseFoldRegion(region, false);
+      if (region.isExpanded()) {
+        myRegionTree.removeInterval(region);
+        return null;
+      }
+    }
     myFoldRegionsProcessed = true;
     if (group != null) {
       myGroups.putValue(group, region);

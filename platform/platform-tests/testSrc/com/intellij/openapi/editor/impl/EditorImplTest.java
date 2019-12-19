@@ -442,7 +442,7 @@ public class EditorImplTest extends AbstractEditorTest {
       FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      region.setExpanded(false);
+      assertFalse(region.isExpanded());
       regionRef.set(region);
     });
     runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));

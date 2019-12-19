@@ -230,7 +230,7 @@ public class FoldingTest extends AbstractEditorTest {
       FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      region.setExpanded(false);
+      assertFalse(region.isExpanded());
       regionRef.set(region);
     });
     List<FoldRegion> notifications = new ArrayList<>();

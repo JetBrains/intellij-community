@@ -40,6 +40,12 @@ public interface FoldRegion extends RangeMarker {
   @Nullable
   FoldingGroup getGroup();
 
+  /**
+   * If {@code true}, this region is always in a collapsed state, {@link #setExpanded(boolean)} does nothing for it. No marker is displayed
+   * in gutter for such a region.
+   *
+   * @see com.intellij.openapi.editor.ex.FoldingModelEx#createFoldRegion(int, int, String, FoldingGroup, boolean)
+   */
   boolean shouldNeverExpand();
 
   /**

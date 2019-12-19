@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -253,10 +252,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     if (foldPos >= 0) {
       FoldingModelEx foldingModel = editor.getFoldingModel();
       foldingModel.runBatchFoldingOperation(() -> {
-        FoldRegion region = foldingModel.createFoldRegion(foldPos, foldPos + STRING_TO_FOLD.length(), STRING_TO_FOLD, null, true);
-        if (region != null) {
-          region.setExpanded(false);
-        }
+        foldingModel.createFoldRegion(foldPos, foldPos + STRING_TO_FOLD.length(), STRING_TO_FOLD, null, true);
       });
     }
   }
