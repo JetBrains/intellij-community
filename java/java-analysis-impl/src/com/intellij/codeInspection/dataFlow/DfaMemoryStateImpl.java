@@ -1479,7 +1479,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfType result = state.myDfType.join(otherState.myDfType);
       Nullability nullability = state.getNullability();
       Nullability otherNullability = otherState.getNullability();
-      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE)) {
+      if (nullability != otherNullability && (nullability == Nullability.NULLABLE || otherNullability == Nullability.NULLABLE) &&
+          result instanceof DfReferenceType) {
         // When merging nullable with something we cannot warn about nullability violation anymore
         // because we lose the information about coherent state, thus noise warnings could be produced
         result = ((DfReferenceType)result).dropNullability().meet(DfaNullability.FLUSHED.asDfType());
