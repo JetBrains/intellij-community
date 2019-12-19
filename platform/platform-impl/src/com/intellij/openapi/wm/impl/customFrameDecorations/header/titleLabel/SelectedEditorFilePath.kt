@@ -246,6 +246,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
   protected var isClipped = false
   var titleString = ""
+  data class Pattern(val preferredWidth: Int, val createTitle: () -> String)
 
   private fun update() {
     updater.cancelAllRequests()
@@ -255,100 +256,69 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
     val fm = label.getFontMetrics(label.font)
 
-    components.forEach{it.refresh(label, fm)}
+    components.forEach { it.refresh(label, fm) }
 
     isClipped = true
 
-    titleString = when {
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + superUserSuffix.longWidth + productVersion.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.showLong")
+    val testSimple = testSimple(listOf<TitlePart>(productTitle, productVersion, superUserSuffix), width - (projectTitle.longWidth + classTitle.longWidth))
 
-        isClipped = components.any{!it.active}
 
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()+
-        superUserSuffix.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth + productVersion.longWidth + superUserSuffix.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()+
-        superUserSuffix.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productVersion.longWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, superUserSuffix.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productVersion.shortWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()+
-        productVersion.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.showLong, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth + productTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.SHOW_SHORT")
-
-        projectTitle.getLong()+
-        classTitle.getLong()+
-        productTitle.getShort()
-      }
-
-      width > projectTitle.longWidth + classTitle.longWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.showLong, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.getLong()
-      }
-
-      width > projectTitle.longWidth + classTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.SHRINK: ${width - projectTitle.longWidth}, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.getLong()+
-        classTitle.shrink(label, fm,width - projectTitle.longWidth)
-      }
-
-      width > projectTitle.shortWidth + classTitle.shortWidth -> {
-        //LOGGER.info("projectTitle.showLong, classTitle.SHOW_SHORT, productTitle.HIDE, productVersion.HIDE")
-
-        projectTitle.shrink(label, fm,width - classTitle.shortWidth)+
+    val listOf = listOf(
+      Pattern(projectTitle.longWidth + classTitle.shortWidth) {
+        projectTitle.getLong() +
+        classTitle.shrink(label, fm, width - projectTitle.longWidth)
+      },
+      Pattern(projectTitle.shortWidth + classTitle.shortWidth) {
+        projectTitle.shrink(label, fm, width - classTitle.shortWidth) +
         classTitle.getShort()
-      }
-
-      else -> {
-        //LOGGER.info("projectTitle.SHOW_SHORT, classTitle.HIDE, productTitle.HIDE, productVersion.HIDE")
+      },
+      Pattern(0) {
         projectTitle.getShort()
-      }
+      })
+
+    titleString = testSimple?.let {
+      projectTitle.getLong() +
+      classTitle.getLong() + it
+    } ?: listOf.first { it.preferredWidth < width }.let {
+        it.createTitle()
     }
 
     label.text = titleString
-    label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
+    label.toolTipText = if (!isClipped) null else components.joinToString(separator = "", transform = { it.toolTipPart })
 
     label.revalidate()
     label.repaint()
 
     onBoundsChanged?.invoke()
   }
+
+  private fun testSimple(simplePaths: List<TitlePart>, simpleWidth: Int): String? {
+    isClipped = simplePaths.sumBy { it.longWidth } > simpleWidth
+
+
+    for (i in simplePaths.size - 1 downTo 0) {
+      var beforeWidth = 0
+      var beforeString = ""
+
+      for (j in 0 until i) {
+        val titlePart = simplePaths[j]
+        beforeWidth += titlePart.longWidth
+        beforeString += titlePart.getLong()
+      }
+
+      val testWidth = simpleWidth - beforeWidth
+      val path = simplePaths[i]
+
+      if (testWidth < 0) continue
+
+      return when {
+        testWidth > path.longWidth -> beforeString + path.getLong()
+        testWidth > path.shortWidth -> beforeString + path.getShort()
+        else -> beforeString
+      }
+    }
+
+    return null
+  }
+
 }
