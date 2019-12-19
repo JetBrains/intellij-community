@@ -22,8 +22,7 @@ object LafIconLookup {
               focused: Boolean = false,
               enabled: Boolean = true,
               editable: Boolean = false,
-              pressed: Boolean = false,
-              dirProvider: DirProvider = DirProvider()) : Icon {
+              pressed: Boolean = false) : Icon {
 
     return findIcon(name,
                     selected = selected,
@@ -32,7 +31,7 @@ object LafIconLookup {
                     editable = editable,
                     pressed = pressed,
                     isThrowErrorIfNotFound = true,
-                    dirProvider = dirProvider)
+                    dirProvider = DirProvider())
            ?: AllIcons.Actions.Stub
   }
 
