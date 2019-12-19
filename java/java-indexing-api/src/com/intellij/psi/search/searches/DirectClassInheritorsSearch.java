@@ -73,7 +73,7 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     }
 
     @ApiStatus.Experimental
-    public boolean searchInLanguage(@NotNull Language language) {
+    public boolean shouldSearchInLanguage(@NotNull Language language) {
       return true;
     }
   }

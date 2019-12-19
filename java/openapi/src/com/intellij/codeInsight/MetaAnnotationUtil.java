@@ -149,7 +149,7 @@ public abstract class MetaAnnotationUtil {
       DirectClassInheritorsSearch.SearchParameters parameters =
         new DirectClassInheritorsSearch.SearchParameters(javaLangAnnotation, allScope, false, true) {
           @Override
-          public boolean searchInLanguage(@NotNull Language language) {
+          public boolean shouldSearchInLanguage(@NotNull Language language) {
             return language != JavaLanguage.INSTANCE;
           }
         };
