@@ -19,5 +19,6 @@
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
+  <module value="com.intellij.modules.jsp.base"/>
   <module value="com.intellij.modules.python-core-capable"/>
 </idea-plugin>
