@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * A listener for VFS events, invoked inside write-action.
  * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
- * or define the listener in plugin.xml as an application or project listener (the prefered way):
+ * or define the listener in plugin.xml as an application (the prefered way):
  * <pre>
  *     	&#60;applicationListeners>
  *     	  &#60;listener class="org.jetbrains...MyListener"
