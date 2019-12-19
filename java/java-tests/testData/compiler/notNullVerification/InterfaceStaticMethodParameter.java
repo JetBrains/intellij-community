@@ -4,8 +4,8 @@ public class InterfaceStaticMethodParameter {
   public static void test() {
     I.test(null);
   }
+}
 
-  interface I {
-    static void test(@NotNull String s) { }
-  }
+interface I {
+  static void test(@NotNull String s) { }
 }

@@ -7,13 +7,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -384,7 +383,14 @@ public abstract class NotNullVerifyingInstrumenterTest {
   public void testInterfaceStaticMethodParameter() throws Exception {
     Class<?> testClass = prepareTest();
     Method method = testClass.getMethod("test");
-    verifyCallThrowsException("Argument 0 for @NotNull parameter of InterfaceStaticMethodParameter$I.test must not be null", null, method);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of I.test must not be null", null, method);
+  }
+
+  @Test
+  public void testInterfaceDefaultMethodParameter() throws Exception {
+    Class<?> testClass = prepareTest();
+    Method method = testClass.getMethod("test");
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of I.test must not be null", null, method);
   }
 
   protected static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
@@ -427,7 +433,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
     File classesDir = tempDir.newFolder("output");
     List<String> args = ContainerUtil.newArrayList("-cp", annotation.classes.getPath());
     if (withDebugInfo) args.add("-g");
-    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtilRt.toStringArray(args));
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
     File[] files = classesDir.listFiles();
     assertNotNull(files);
@@ -440,7 +446,7 @@ public abstract class NotNullVerifyingInstrumenterTest {
       int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
       ClassWriter writer = new ClassWriter(reader, flags);
       modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-      String className = FileUtilRt.getNameWithoutExtension(file.getName());
+      String className = FileUtil.getNameWithoutExtension(file.getName());
       Class<?> aClass = classLoader.doDefineClass(className, writer.toByteArray());
       if (className.equals(testName)) {
         mainClass = aClass;
