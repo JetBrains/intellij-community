@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author max
  */
-public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
+public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private static final Logger LOG = Logger.getInstance(JavaPsiFacadeImpl.class);
 
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
