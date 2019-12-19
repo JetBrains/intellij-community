@@ -13,8 +13,8 @@
 // limitations under the License.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
-import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
@@ -143,10 +142,18 @@ public abstract class MetaAnnotationUtil {
 
   @NotNull
   private static GlobalSearchScope searchForAnnotationInheritorsInOtherLanguages(Project project) {
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     Set<VirtualFile> allAnnotationFiles = new HashSet<>();
     for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
-      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, GlobalSearchScope.allScope(project))) {
-      DirectClassInheritorsSearch.search(javaLangAnnotation, new NonJavaScope(project), false).forEach(annotationClass -> {
+      .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, allScope)) {
+      DirectClassInheritorsSearch.SearchParameters parameters =
+        new DirectClassInheritorsSearch.SearchParameters(javaLangAnnotation, allScope, false, true) {
+          @Override
+          public boolean searchInLanguage(@NotNull Language language) {
+            return language != JavaLanguage.INSTANCE;
+          }
+        };
+      DirectClassInheritorsSearch.search(parameters).forEach(annotationClass -> {
         ProgressManager.checkCanceled();
         ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
         return true;
@@ -188,35 +195,6 @@ public abstract class MetaAnnotationUtil {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return file instanceof VirtualFileWithId && myIdSet.contains(((VirtualFileWithId)file).getId());
-    }
-  }
-
-  private static class NonJavaScope extends GlobalSearchScope {
-    NonJavaScope(Project project) {
-      super(project);
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      if (FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.JAVA)) {
-        return false;
-      }
-
-      if (FileTypeManager.getInstance().isFileOfType(file, StdFileTypes.CLASS)) {
-        return ClassFileDecompilers.find(file) instanceof ClassFileDecompilers.Full;
-      }
-
-      return true;
     }
   }
 
