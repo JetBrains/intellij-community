@@ -107,11 +107,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   public static final String WINDOW_ALPHA = "Window.alpha";
 
   private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
+  private static final Map<String, Integer> lafNameOrder = new HashMap<>();
 
   private CollectionComboBoxModel<LafReference> myLafComboBoxModel;
 
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
+
+    lafNameOrder.put("IntelliJ Light", 0);
+    lafNameOrder.put("macOS Light", 1);
+    lafNameOrder.put("Windows 10 Light", 1);
+    lafNameOrder.put("Darcula", 2);
+    lafNameOrder.put("High contrast", 3);
   }
 
   private boolean myFirstSetup = true;
@@ -168,7 +175,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void sortThemes(@NotNull List<UIManager.LookAndFeelInfo> list) {
-    list.sort((t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
+    list.sort((t1, t2) -> {
+      String n1 = t1.getName();
+      String n2 = t2.getName();
+      if (Objects.equals(n1, n2)) return 0;
+
+      Integer o1 = lafNameOrder.get(n1);
+      Integer o2 = lafNameOrder.get(n2);
+      if (o1 != null && o2 != null) return o1 - o2;
+      else if (o1 != null) return -1;
+      else if (o2 != null) return 1;
+      else return n1.compareToIgnoreCase(n2);
+    });
   }
 
   @Override
