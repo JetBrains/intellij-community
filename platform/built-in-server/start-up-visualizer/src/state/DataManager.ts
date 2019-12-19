@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {CompleteTraceEvent, InputData, InputDataV11AndLess, Item} from "./data"
 import {markerNames} from "./StateStorageManager"
-import * as semver from "semver"
-import {SemVer} from "semver"
+import compareVersions from "compare-versions"
 import {serviceSourceNames} from "@/charts/ActivityChartDescriptor"
 
 const markerNameToRangeTitle = new Map<string, string>([["app initialized callback", "app initialized"], ["module loading", "project initialized"]])
@@ -12,18 +11,18 @@ export interface ItemStats {
   readonly reportedServiceCount: number
 }
 
-const statSupportMinVersion = semver.coerce("3")!!
-const instantEventSupportMinVersion = semver.coerce("11")!!
-const isNewServiceFormat = semver.coerce("12")!!
+const statSupportMinVersion = "3"
+const instantEventSupportMinVersion = "11"
+const isNewServiceFormat = "12"
 
 export const SERVICE_WAITING = "serviceWaiting"
 const serviceEventCategorySet = new Set(serviceSourceNames.concat(SERVICE_WAITING))
 
 export class DataManager {
-  private readonly version: SemVer | null
+  private readonly version: string | null
 
   constructor(readonly data: InputData) {
-    this.version = semver.coerce(data.version)
+    this.version = data.version
   }
 
   private _markerItems: Array<Item | null> | null = null
@@ -31,17 +30,17 @@ export class DataManager {
 
   get isStatSupported(): boolean {
     const version = this.version
-    return version != null && semver.gte(version, statSupportMinVersion)
+    return version != null && compareVersions.compare(version, statSupportMinVersion, ">=")
   }
 
   get isInstantEventProvided(): boolean {
     const version = this.version
-    return version != null && semver.gte(version, instantEventSupportMinVersion)
+    return version != null && compareVersions.compare(version, instantEventSupportMinVersion, ">=")
   }
 
   private get isNewServiceFormat(): boolean {
     const version = this.version
-    return version != null && semver.gte(version, isNewServiceFormat)
+    return version != null && compareVersions.compare(version, isNewServiceFormat, ">=")
   }
 
   get itemStats(): ItemStats {
