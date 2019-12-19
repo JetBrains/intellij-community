@@ -3,6 +3,7 @@ package com.intellij;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -57,6 +58,7 @@ public abstract class DynamicBundle extends AbstractBundle {
       return LanguageBundleEP.EP_NAME.findExtension(LanguageBundleEP.class);
     }
     catch (Exception e) {
+      if (e instanceof ControlFlowException) throw e;
       LOG.error(e);
       return null;
     }
