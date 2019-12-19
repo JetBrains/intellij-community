@@ -32,7 +32,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     val hashing = FileContentHashing()
     val storage = createStorage(indexStorageFilePath)
 
-    println("Writing indices to ${storage.baseFile.absolutePath}")
+    println("Writing indices to ${storage.baseFile}")
 
     storage.use {
       val map = HashMap<HashCode, String>()

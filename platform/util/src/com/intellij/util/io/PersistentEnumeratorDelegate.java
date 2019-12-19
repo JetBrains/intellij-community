@@ -22,24 +22,34 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 
 public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
-  public PersistentEnumeratorDelegate(@NotNull final File file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
+  public PersistentEnumeratorDelegate(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null);
+  }
+
+  public PersistentEnumeratorDelegate(@NotNull final Path file,
+                                      @NotNull KeyDescriptor<Data> dataDescriptor,
+                                      final int initialSize,
+                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    myEnumerator = useBtree() ?
+                   new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
+                   new PersistentEnumerator<>(file, dataDescriptor, initialSize);
   }
 
   public PersistentEnumeratorDelegate(@NotNull final File file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
-                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext) :
-                   new PersistentEnumerator<>(file, dataDescriptor, initialSize);
+                                      @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                      int version) throws IOException {
+    this(file.toPath(), dataDescriptor, initialSize, lockContext, version);
   }
 
-  public PersistentEnumeratorDelegate(@NotNull final File file,
+  public PersistentEnumeratorDelegate(@NotNull Path file,
                                       @NotNull KeyDescriptor<Data> dataDescriptor,
                                       final int initialSize,
                                       @Nullable PagedFileStorage.StorageLockContext lockContext,

@@ -32,22 +32,22 @@ import java.util.concurrent.atomic.AtomicLong
 class CompressedAppendableFileTest : TestCase() {
   @Throws
   fun testCreateParentDirWhenSave() {
-    val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
+    val randomTemporaryPath = FileUtil.generateRandomTemporaryPath().toPath().resolve("Test.compressed")
     try {
       val appendableFile = CompressedAppendableFile(randomTemporaryPath)
       val byteArray: ByteArray = ByteArray(1)
       appendableFile.append(byteArray, 1)
       appendableFile.force()
-      FileUtil.delete(randomTemporaryPath.parentFile)
+      FileUtil.delete(randomTemporaryPath.parent)
       appendableFile.append(byteArray, 1)
       appendableFile.dispose()
     } finally {
-      FileUtil.delete(randomTemporaryPath.parentFile)
+      FileUtil.delete(randomTemporaryPath.parent)
     }
   }
 
   fun testSizeUpdateBug() {
-    val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
+    val randomTemporaryPath = FileUtil.generateRandomTemporaryPath().toPath().resolve("Test.compressed")
     try {
       var appendableFile = CompressedAppendableFile(randomTemporaryPath)
       val singleByteArray: ByteArray = ByteArray(1)
@@ -64,12 +64,12 @@ class CompressedAppendableFileTest : TestCase() {
       assertEquals(CompressedAppendableFile.PAGE_LENGTH, appendableFile.length().toInt())
       appendableFile.dispose()
     } finally {
-      FileUtil.delete(randomTemporaryPath.parentFile)
+      FileUtil.delete(randomTemporaryPath.parent)
     }
   }
 
   fun testConcurrencyStress() {
-    val randomTemporaryPath = File(FileUtil.generateRandomTemporaryPath(), "Test.compressed")
+    val randomTemporaryPath = FileUtil.generateRandomTemporaryPath().toPath().resolve("Test.compressed")
     try {
       val appendableFile = CompressedAppendableFile(randomTemporaryPath)
       val max = 1000 * CompressedAppendableFile.PAGE_LENGTH
@@ -127,7 +127,7 @@ class CompressedAppendableFileTest : TestCase() {
       }
     }
     finally {
-      FileUtil.delete(randomTemporaryPath.parentFile)
+      FileUtil.delete(randomTemporaryPath.parent)
     }
   }
 }

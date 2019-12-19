@@ -258,7 +258,7 @@ public class FSRecords {
         }
 
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
-        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
+        myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
 
         myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
           @Override
@@ -276,11 +276,11 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
+        myRecords = new ResizeableMappedFile(recordsFile.toPath(), 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
 
         boolean initial = myRecords.length() == 0;

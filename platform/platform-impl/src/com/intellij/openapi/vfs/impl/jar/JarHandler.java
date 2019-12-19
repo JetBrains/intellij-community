@@ -273,7 +273,7 @@ public class JarHandler extends ZipHandler {
       PersistentHashMap<String, CacheLibraryInfo> info = null;
       for (int i = 0; i < 2; ++i) {
         try {
-          info = new PersistentHashMap<>(snapshotInfoFile, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
+          info = new PersistentHashMap<>(snapshotInfoFile.toPath(), EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
               IOUtil.writeUTF(out, value.mySnapshotPath);

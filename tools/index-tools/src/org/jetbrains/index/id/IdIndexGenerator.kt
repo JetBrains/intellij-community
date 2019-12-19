@@ -18,7 +18,7 @@ open class IdIndexGenerator(private val idIndexStorageFilePath: String) : IndexG
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, Map<IdIndexEntry, Int>> {
-    return PersistentHashMap(File("$idIndexStorageFilePath.input"), HashCodeDescriptor.instance, IdIndexMapDataExternalizer())
+    return PersistentHashMap(File("${idIndexStorageFilePath}.input").toPath(), HashCodeDescriptor.instance, IdIndexMapDataExternalizer())
   }
 
   fun buildIdIndexForRoots(rootFiles: Collection<VirtualFile>) {

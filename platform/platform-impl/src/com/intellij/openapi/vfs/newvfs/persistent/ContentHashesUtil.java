@@ -8,10 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -39,11 +39,11 @@ public class ContentHashesUtil {
   public static final Charset HASHER_CHARSET = StandardCharsets.UTF_8;
 
   public static class HashEnumerator extends PersistentBTreeEnumerator<byte[]> {
-    public HashEnumerator(@NotNull File contentsHashesFile) throws IOException {
+    public HashEnumerator(@NotNull Path contentsHashesFile) throws IOException {
       this(contentsHashesFile, null);
     }
 
-    public HashEnumerator(@NotNull File contentsHashesFile, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+    public HashEnumerator(@NotNull Path contentsHashesFile, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
       super(contentsHashesFile, new ContentHashesDescriptor(), 64 * 1024, storageLockContext);
     }
 

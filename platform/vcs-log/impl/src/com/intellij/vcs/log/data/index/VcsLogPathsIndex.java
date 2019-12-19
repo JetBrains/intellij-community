@@ -35,6 +35,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
@@ -76,7 +77,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull StorageId storageId) throws IOException {
-    File storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
+    Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentBTreeEnumerator<>(storageFile, new LightFilePathKeyDescriptor(),
                                            Page.PAGE_SIZE, null, storageId.getVersion());
   }
@@ -84,7 +85,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   @NotNull
   private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId)
     throws IOException {
-    File storageFile = storageId.getStorageFile(RENAMES_MAP);
+    Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
                                    storageId.getVersion());
   }

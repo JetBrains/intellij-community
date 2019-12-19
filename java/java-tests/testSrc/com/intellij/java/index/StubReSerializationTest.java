@@ -13,6 +13,7 @@ import com.intellij.util.io.PersistentStringEnumerator;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
@@ -20,8 +21,8 @@ public class StubReSerializationTest extends JavaCodeInsightFixtureTestCase {
     SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
     serializationManager.flushNameStorage();
 
-    File externalStubEnumerator =
-      VfsUtilCore.virtualToIoFile(myFixture.getTempDirFixture().createFile("external_stub_serializer_enumerator/serializer.names"));
+    Path externalStubEnumerator =
+      VfsUtilCore.virtualToIoFile(myFixture.getTempDirFixture().createFile("external_stub_serializer_enumerator/serializer.names")).toPath();
 
     // ensure we have different serializer's enumeration
     try (PersistentStringEnumerator enumerator = new PersistentStringEnumerator(externalStubEnumerator)) {

@@ -12,21 +12,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class PersistentMapBasedForwardIndex implements ForwardIndex {
   private static final Logger LOG = Logger.getInstance(PersistentMapBasedForwardIndex.class);
   @NotNull
   private volatile PersistentHashMap<Integer, ByteArraySequence> myPersistentMap;
   @NotNull
-  private final File myMapFile;
+  private final Path myMapFile;
   private final boolean myUseChunks;
   private final boolean myReadOnly;
 
-  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean isReadOnly) throws IOException {
+  public PersistentMapBasedForwardIndex(@NotNull Path mapFile, boolean isReadOnly) throws IOException {
     this(mapFile, true, isReadOnly);
   }
 
-  public PersistentMapBasedForwardIndex(@NotNull File mapFile, boolean useChunks, boolean isReadOnly) throws IOException {
+  public PersistentMapBasedForwardIndex(@NotNull Path mapFile, boolean useChunks, boolean isReadOnly) throws IOException {
     myPersistentMap = createMap(mapFile);
     myMapFile = mapFile;
     myUseChunks = useChunks;
@@ -34,7 +35,7 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
   }
 
   @NotNull
-  protected PersistentHashMap<Integer, ByteArraySequence> createMap(File file) throws IOException {
+  protected PersistentHashMap<Integer, ByteArraySequence> createMap(Path file) throws IOException {
     Boolean oldHasNoChunksValue = PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.get();
     PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(!myUseChunks);
     Boolean previousReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get();
@@ -71,14 +72,14 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex {
 
   @Override
   public void clear() throws IOException {
-    File baseFile = myPersistentMap.getBaseFile();
+    Path baseFile = myPersistentMap.getBaseFile();
     try {
       myPersistentMap.close();
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    PersistentHashMap.deleteFilesStartingWith(baseFile);
+    PersistentHashMap.deleteFilesStartingWith(baseFile.toFile());
     myPersistentMap = createMap(myMapFile);
   }
 

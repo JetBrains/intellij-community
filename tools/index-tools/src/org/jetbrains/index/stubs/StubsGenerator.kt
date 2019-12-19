@@ -31,7 +31,7 @@ private val STUB_EXTERNALIZER = StubForwardIndexExternalizer.FileLocalStubForwar
 open class StubsGenerator(private val stubsVersion: String, private val stubsStorageFilePath: String) :
   IndexGenerator<SerializedStubTree>(stubsStorageFilePath) {
 
-  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names"), false)
+  private val serializationManager = SerializationManagerImpl(File("$stubsStorageFilePath.names").toPath(), false)
 
   fun buildStubsForRoots(roots: Collection<VirtualFile>) {
     // ensure indexes initialized
@@ -59,7 +59,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
   }
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
-    return PersistentHashMap(File("$stubsStorageFilePath.input"),
+    return PersistentHashMap(File("$stubsStorageFilePath.input").toPath(),
                              HashCodeDescriptor.instance, FullStubExternalizer())
   }
 
@@ -86,14 +86,14 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     storageFile.delete()
   }
 
-  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile, HashCodeDescriptor.instance, stubExternalizer)
+  val storage = PersistentHashMap<HashCode, SerializedStubTree>(storageFile.toPath(), HashCodeDescriptor.instance, stubExternalizer)
 
   val stringEnumeratorFile = File(stubsFilePath, "$stubsFileName.names")
   if (stringEnumeratorFile.exists()) {
     stringEnumeratorFile.delete()
   }
 
-  val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile, false)
+  val newSerializationManager = SerializationManagerImpl(stringEnumeratorFile.toPath(), false)
 
   val map = HashMap<HashCode, Int>()
 
@@ -105,7 +105,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
     val fromStorageFile = File(path, "$stubsFileName.input")
     val fromStorage = PersistentHashMap<HashCode, SerializedStubTree>(fromStorageFile, HashCodeDescriptor.instance, stubExternalizer)
 
-    val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names"), true)
+    val serializationManager = SerializationManagerImpl(File(path, "$stubsFileName.names").toPath(), true)
     try {
       fromStorage.processKeysWithExistingMapping { key ->
         count++

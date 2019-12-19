@@ -39,6 +39,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -71,9 +72,9 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
 
-    File storageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
+    Path storageFile = new StorageId(HASHES_STORAGE, logId, VERSION).getStorageFile();
     myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(storageFile, commitIdKeyDescriptor),
-                                                         storageFile);
+                                                         storageFile.toFile());
     myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
                                                                  new StorageId(REFS_STORAGE, logId, VERSION + REFS_VERSION));
     Disposer.register(parent, this);
@@ -315,7 +316,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(File storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+    MyPersistentBTreeEnumerator(Path storageFile, MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
       super(storageFile, commitIdKeyDescriptor, Page.PAGE_SIZE, null, VERSION);
     }
 

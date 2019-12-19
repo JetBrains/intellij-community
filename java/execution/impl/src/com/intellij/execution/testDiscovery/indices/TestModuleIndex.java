@@ -22,11 +22,11 @@ public class TestModuleIndex {
   private final PersistentEnumeratorDelegate<String> myModuleNameEnumerator;
 
   public TestModuleIndex(@NotNull Path basePath, @NotNull PersistentObjectSeq persistentObjectSeq) throws IOException {
-    File moduleNameEnumeratorFile = basePath.resolve("moduleName.enum").toFile();
+    Path moduleNameEnumeratorFile = basePath.resolve("moduleName.enum");
     myModuleNameEnumerator = new PersistentEnumeratorDelegate<>(moduleNameEnumeratorFile, EnumeratorStringDescriptor.INSTANCE, 64);
     persistentObjectSeq.add(myModuleNameEnumerator);
 
-    File testModuleIndexFile = basePath.resolve("testModule.index").toFile();
+    Path testModuleIndexFile = basePath.resolve("testModule.index");
     myTestNameToRunModule = new PersistentHashMap<>(testModuleIndexFile, EnumeratorIntegerDescriptor.INSTANCE,
                                                     new IntSeqExternalizer());
   }

@@ -38,6 +38,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -311,13 +313,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         boolean forwardIndexRequired = VcsLogPathsIndex.isPathsForwardIndexRequired();
         StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
 
-        File commitsStorage = storageId.getStorageFile(COMMITS);
-        myIsFresh = !commitsStorage.exists();
+        Path commitsStorage = storageId.getStorageFile(COMMITS);
+        myIsFresh = !Files.exists(commitsStorage);
         commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null,
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        File messagesStorage = new StorageId(INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
+        Path messagesStorage = new StorageId(INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
         messages = new PersistentHashMap<>(messagesStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(this, () -> catchAndWarn(messages::close));
@@ -326,17 +328,17 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
         paths = new VcsLogPathsIndex(storageId, storage, fatalErrorHandler, this);
 
-        File parentsStorage = storageId.getStorageFile(PARENTS);
+        Path parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
                                           new IntListDataExternalizer(), Page.PAGE_SIZE, storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(parents::close));
 
-        File committersStorage = storageId.getStorageFile(COMMITTERS);
+        Path committersStorage = storageId.getStorageFile(COMMITTERS);
         committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
                                              Page.PAGE_SIZE, storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(committers::close));
 
-        File timestampsStorage = storageId.getStorageFile(TIMESTAMPS);
+        Path timestampsStorage = storageId.getStorageFile(TIMESTAMPS);
         timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
                                              Page.PAGE_SIZE, storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(timestamps::close));

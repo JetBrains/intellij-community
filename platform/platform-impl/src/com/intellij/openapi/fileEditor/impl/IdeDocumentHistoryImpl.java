@@ -171,13 +171,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
     PersistentHashMap<String, Long> map;
     try {
-      map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
     }
     catch (IOException e) {
       LOG.info("Cannot create PersistentHashMap in "+file, e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+        map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
       }
       catch (IOException e1) {
         LOG.error("Cannot create PersistentHashMap in " + file + " even after deleting old files", e1);

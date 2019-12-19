@@ -22,6 +22,7 @@ import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.file.Path;
 
 /**
  * @author Dmitry Avdeev
@@ -30,7 +31,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
 
-  ValueContainerMap(@NotNull final File file,
+  ValueContainerMap(@NotNull Path file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,

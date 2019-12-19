@@ -20,33 +20,34 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
   @Nullable private final CachingEnumerator<String> myCache;
 
-  public PersistentStringEnumerator(@NotNull final File file) throws IOException {
+  public PersistentStringEnumerator(@NotNull Path file) throws IOException {
     this(file, null);
   }
 
-  public PersistentStringEnumerator(@NotNull final File file, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+  public PersistentStringEnumerator(@NotNull Path file, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
     this(file, 1024 * 4, storageLockContext);
   }
 
-  public PersistentStringEnumerator(@NotNull final File file, boolean cacheLastMappings) throws IOException {
+  public PersistentStringEnumerator(@NotNull Path file, boolean cacheLastMappings) throws IOException {
     this(file, 1024 * 4, cacheLastMappings, null);
   }
 
-  public PersistentStringEnumerator(@NotNull final File file, final int initialSize) throws IOException {
+  public PersistentStringEnumerator(@NotNull Path file, final int initialSize) throws IOException {
     this(file, initialSize, null);
   }
 
-  public PersistentStringEnumerator(@NotNull final File file,
+  public PersistentStringEnumerator(@NotNull Path file,
                                     final int initialSize,
                                     @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
     this(file, initialSize, false, lockContext);
   }
 
-  private PersistentStringEnumerator(@NotNull final File file,
+  private PersistentStringEnumerator(@NotNull Path file,
                                      final int initialSize,
                                      boolean cacheLastMappings,
                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {

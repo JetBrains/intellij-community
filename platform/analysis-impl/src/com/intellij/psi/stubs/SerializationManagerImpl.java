@@ -4,7 +4,6 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.psi.tree.IElementType;
@@ -14,6 +13,8 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,7 +25,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
-  private final File myFile;
+  private final Path myFile;
   private final boolean myUnmodifiable;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
   private PersistentStringEnumerator myNameStorage;
@@ -34,12 +35,18 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
 
   @SuppressWarnings("unused") // used from componentSets/Lang.xml:14
   public SerializationManagerImpl() {
-    this(new File(PathManager.getIndexRoot(), "rep.names"), false);
+    this(new File(PathManager.getIndexRoot(), "rep.names").toPath(), false);
   }
 
-  public SerializationManagerImpl(@NotNull File nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@NotNull Path nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
-    myFile.getParentFile().mkdirs();
+    if (!Files.exists(myFile)) {
+      try {
+        Files.createDirectories(myFile);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
     myUnmodifiable = unmodifiable;
     try {
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
@@ -79,7 +86,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
           LOG.error("Data provided by unmodifiable serialization manager can be invalid after repair");
         }
 
-        IOUtil.deleteAllFilesStartingWith(myFile);
+        IOUtil.deleteAllFilesStartingWith(myFile.toFile());
         myNameStorage = new PersistentStringEnumerator(myFile, true);
         myStubSerializationHelper = new StubSerializationHelper(myNameStorage, myUnmodifiable, this);
         myStubSerializationHelper.copyFrom(prevHelper);

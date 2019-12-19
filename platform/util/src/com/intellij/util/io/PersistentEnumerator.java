@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * @author max
@@ -47,11 +48,11 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   static final int VERSION = 6;
   private static final Version ourVersion = new Version(VERSION);
 
-  public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null, 0);
   }
 
-  public PersistentEnumerator(@NotNull File file,
+  public PersistentEnumerator(@NotNull Path file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
                               int initialSize,
                               @Nullable PagedFileStorage.StorageLockContext storageLockContext,

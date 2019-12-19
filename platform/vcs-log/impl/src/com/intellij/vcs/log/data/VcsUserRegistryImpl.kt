@@ -37,7 +37,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
   private fun initEnumerator(): Boolean {
     try {
       val enumerator = IOUtil.openCleanOrResetBroken({
-                                                       PersistentBTreeEnumerator(mapFile, VcsUserKeyDescriptor(this), Page.PAGE_SIZE, null,
+                                                       PersistentBTreeEnumerator(mapFile.toPath(), VcsUserKeyDescriptor(this), Page.PAGE_SIZE, null,
                                                                                  STORAGE_VERSION)
                                                      }, mapFile)
       val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)

@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -37,7 +37,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
-  protected final File myBaseStorageFile;
+  protected final Path myBaseStorageFile;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   private final int myCacheSize;
 
@@ -47,7 +47,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   private final boolean myReadOnly;
   @NotNull private final IntIntFunction myInputRemapping;
 
-  protected MapIndexStorage(@NotNull File storageFile,
+  protected MapIndexStorage(@NotNull Path storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
@@ -55,7 +55,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false, null);
   }
 
-  protected MapIndexStorage(@NotNull File storageFile,
+  protected MapIndexStorage(@NotNull Path storageFile,
                             @NotNull KeyDescriptor<Key> keyDescriptor,
                             @NotNull DataExternalizer<Value> valueExternalizer,
                             final int cacheSize,
@@ -153,7 +153,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   protected abstract void checkCanceled();
 
   @NotNull
-  private File getStorageFile() {
+  private Path getStorageFile() {
     return getIndexStorageFile(myBaseStorageFile);
   }
 
@@ -194,7 +194,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       LOG.info(e);
     }
     try {
-      IOUtil.deleteAllFilesStartingWith(getStorageFile());
+      IOUtil.deleteAllFilesStartingWith(getStorageFile().toFile());
       initMapAndCache();
     }
     catch (IOException e) {
@@ -314,7 +314,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   }
 
   @NotNull
-  public static File getIndexStorageFile(@NotNull File baseFile) {
-    return new File(baseFile.getPath() + ".storage");
+  public static Path getIndexStorageFile(@NotNull Path baseFile) {
+    return baseFile.resolveSibling(baseFile.getFileName() + ".storage");
   }
 }

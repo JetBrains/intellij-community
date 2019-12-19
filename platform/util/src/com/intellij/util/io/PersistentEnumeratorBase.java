@@ -28,9 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.Flushable;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -51,7 +53,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
   private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
-  protected final File myFile;
+  protected final Path myFile;
   private final Version myVersion;
   private final boolean myDoCaching;
 
@@ -141,8 +143,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public static class CorruptedException extends IOException {
-    public CorruptedException(File file) {
-      this("PersistentEnumerator storage corrupted " + file.getPath());
+    public CorruptedException(Path file) {
+      this("PersistentEnumerator storage corrupted " + file);
     }
 
     protected CorruptedException(String message) {
@@ -151,12 +153,12 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public static class VersionUpdatedException extends CorruptedException {
-    VersionUpdatedException(@NotNull File file) {
-      super("PersistentEnumerator storage corrupted " + file.getPath());
+    VersionUpdatedException(@NotNull Path file) {
+      super("PersistentEnumerator storage corrupted " + file);
     }
   }
 
-  public PersistentEnumeratorBase(@NotNull File file,
+  public PersistentEnumeratorBase(@NotNull Path file,
                                   @NotNull ResizeableMappedFile storage,
                                   @NotNull KeyDescriptor<Data> dataDescriptor,
                                   int initialSize,
@@ -169,9 +171,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
     myDoCaching = doCaching;
 
-    if (!file.exists()) {
+    if (!Files.exists(file)) {
+      assert file.getFileSystem() == FileSystems.getDefault();
       FileUtil.delete(keyStreamFile());
-      if (!FileUtil.createIfDoesntExist(file)) {
+      if (!FileUtil.createIfDoesntExist(file.toFile())) {
         throw new IOException("Cannot create empty file: " + file);
       }
     }
@@ -461,8 +464,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     return myKeyStorage.processAll(processor, myDataDescriptor);
   }
 
-  private File keyStreamFile() {
-    return new File(myFile.getPath() + ".keystream");
+  private Path keyStreamFile() {
+    return myFile.resolveSibling(myFile.getFileName() + ".keystream");
   }
 
   public Data valueOf(int idx) throws IOException {

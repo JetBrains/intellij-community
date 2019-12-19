@@ -48,7 +48,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
 
         myPrebuiltIndexStorage = openIndexStorage(indexesRoot)
 
-        LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.absolutePath)
+        LOG.info("Using prebuilt $indexName from " + myPrebuiltIndexStorage?.baseFile?.toAbsolutePath())
       }
       else {
         LOG.info("Prebuilt $indexName indices are missing for $dirName")
@@ -72,7 +72,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
           return myPrebuiltIndexStorage!!.get(hashCode)
         }
         catch (e: Exception) {
-          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile.path, e)
+          LOG.error("Error reading prebuilt stubs from " + myPrebuiltIndexStorage!!.baseFile, e)
           myPrebuiltIndexStorage = null
         }
       }
