@@ -144,7 +144,7 @@
     </option>
     <option name="DEFAULT_TAG">
       <value>
-        <option name="BACKGROUND" value="f2f2f2" />
+        <option name="BACKGROUND" />
       </value>
     </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">
