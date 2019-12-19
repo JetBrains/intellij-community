@@ -65,16 +65,16 @@
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          displayName="Maven" order="last">
       <configurable instance="org.jetbrains.idea.maven.project.MavenImportingConfigurable" id="reference.settings.project.maven.importing"
-                    key="maven.tab.importing" bundle="ProjectBundle"/>
+                    key="maven.tab.importing" bundle="messages.MavenProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable"
-                    id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="ProjectBundle"/>
+                    id="reference.settings.project.maven.ignored.files" key="maven.tab.ignored.files" bundle="messages.MavenProjectBundle"/>
       <configurable instance="org.jetbrains.idea.maven.utils.MavenSettings$MyMavenRunnerConfigurable"
-                    id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="RunnerBundle"/>
+                    id="reference.settings.project.maven.runner" key="maven.tab.runner" bundle="messages.MavenRunnerBundle"/>
       <configurable instance="org.jetbrains.idea.maven.project.MavenTestRunningConfigurable"
-                    id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="ProjectBundle"
+                    id="reference.settings.project.maven.testRunning" key="maven.testRunning" bundle="messages.MavenProjectBundle"
                     nonDefaultProject="true"/>
       <configurable instance="org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable"
-                    id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="IndicesBundle"
+                    id="reference.settings.project.maven.repository.indices" key="maven.repositories.title" bundle="messages.MavenIndicesBundle"
                     nonDefaultProject="true"/>
     </projectConfigurable>
 

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class TasksBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.TasksBundle";
+  @NonNls private static final String BUNDLE = "messages.MavenTasksBundle";
   private static final TasksBundle INSTANCE = new TasksBundle();
 
   private TasksBundle() { super(BUNDLE); }

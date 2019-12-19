@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class ProjectBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.ProjectBundle";
-  private static final ProjectBundle INSTANCE = new ProjectBundle();
+public class MavenProjectBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.MavenProjectBundle";
+  private static final MavenProjectBundle INSTANCE = new MavenProjectBundle();
 
-  private ProjectBundle() { super(BUNDLE); }
+  private MavenProjectBundle() { super(BUNDLE); }
 
   @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {

@@ -72,7 +72,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Override
   @NotNull
   public String getName() {
-    return ProjectBundle.message("maven.name");
+    return MavenProjectBundle.message("maven.name");
   }
 
   @Override
@@ -223,10 +223,10 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     // We cannot determinate project in non-EDT thread.
     getParameters().myProjectToUpdate = projectToUpdate != null ? projectToUpdate : ProjectManager.getInstance().getDefaultProject();
 
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
-        indicator.setText(ProjectBundle.message("maven.locating.files"));
+        indicator.setText(MavenProjectBundle.message("maven.locating.files"));
 
         getParameters().myImportRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
         if (getParameters().myImportRoot == null) throw new MavenProcessCanceledException();
@@ -249,7 +249,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public boolean setSelectedProfiles(MavenExplicitProfiles profiles) {
-    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+    return runConfigurationProcess(MavenProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       @Override
       public void run(MavenProgressIndicator indicator) {
         readMavenProjectTree(indicator);

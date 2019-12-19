@@ -68,7 +68,7 @@ public class MavenImportingSettingsForm {
     };
     mySeparateModulesDirCheckBox.addActionListener(listener);
 
-    mySeparateModulesDirChooser.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
+    mySeparateModulesDirChooser.addBrowseFolderListener(MavenProjectBundle.message("maven.import.title.module.dir"), "", null,
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myUpdateFoldersOnImportPhaseComboBox.setModel(new DefaultComboBoxModel<>(MavenImportingSettings.UPDATE_FOLDERS_PHASES));

@@ -26,7 +26,7 @@ public class RunnerBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "messages.RunnerBundle";
+  private static final String PATH_TO_BUNDLE = "messages.MavenRunnerBundle";
   private static final AbstractBundle ourInstance = new RunnerBundle();
 
   private RunnerBundle() {

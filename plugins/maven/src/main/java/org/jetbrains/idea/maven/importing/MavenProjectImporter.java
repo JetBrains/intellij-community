@@ -380,16 +380,16 @@ public class MavenProjectImporter {
 
     final int[] result = new int[1];
     MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), () -> {
-      String message = ProjectBundle.message("maven.import.incompatible.modules",
-                                             incompatibleNotMavenized.size(),
-                                             formatProjectsWithModules(incompatibleNotMavenized));
+      String message = MavenProjectBundle.message("maven.import.incompatible.modules",
+                                                  incompatibleNotMavenized.size(),
+                                                  formatProjectsWithModules(incompatibleNotMavenized));
       String[] options = {
-        ProjectBundle.message("maven.import.incompatible.modules.recreate"),
-        ProjectBundle.message("maven.import.incompatible.modules.ignore")
+        MavenProjectBundle.message("maven.import.incompatible.modules.recreate"),
+        MavenProjectBundle.message("maven.import.incompatible.modules.ignore")
       };
 
       result[0] = Messages.showOkCancelDialog(myProject, message,
-                                              ProjectBundle.message("maven.project.import.title"),
+                                              MavenProjectBundle.message("maven.project.import.title"),
                                               options[0], options[1], Messages.getQuestionIcon());
     });
 
@@ -449,9 +449,9 @@ public class MavenProjectImporter {
     final int[] result = new int[1];
     MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                             () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                       ProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                             formatModules(obsoleteModules)),
-                                                                       ProjectBundle.message("maven.project.import.title"),
+                                                                       MavenProjectBundle.message("maven.import.message.delete.obsolete",
+                                                                                                  formatModules(obsoleteModules)),
+                                                                       MavenProjectBundle.message("maven.project.import.title"),
                                                                        Messages.getQuestionIcon()));
 
     if (result[0] == Messages.NO) return false;// NO
@@ -687,7 +687,7 @@ public class MavenProjectImporter {
         String name = myMavenProjectToModuleName.get(each);
 
         if (shouldCreateGroup(each)) {
-          groups.push(ProjectBundle.message("module.group.name", name));
+          groups.push(MavenProjectBundle.message("module.group.name", name));
         }
 
         if (!shouldCreateModuleFor(each)) {

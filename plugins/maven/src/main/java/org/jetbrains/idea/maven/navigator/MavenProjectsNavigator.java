@@ -273,7 +273,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         myPane.setOpaque(false);
         String addIconText = "'+'";
         String refreshIconText = "'Reimport'";
-        String message = ProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
+        String message = MavenProjectBundle.message("maven.navigator.nothing.to.display", addIconText, refreshIconText);
         int firstEol = message.indexOf("\n");
         int addIconMarkerIndex = message.indexOf(addIconText);
         myPane.replaceSelection(message.substring(0, addIconMarkerIndex));

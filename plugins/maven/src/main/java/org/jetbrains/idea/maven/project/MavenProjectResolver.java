@@ -127,7 +127,7 @@ public class MavenProjectResolver {
     process.checkCanceled();
     final List<String> names = ContainerUtil.mapNotNull(mavenProjects, p -> p.getDisplayName());
     final String text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200);
-    process.setText(ProjectBundle.message("maven.resolving.pom", text));
+    process.setText(MavenProjectBundle.message("maven.resolving.pom", text));
     process.setText2("");
 
     final MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(new LinkedHashSet<>(), new LinkedHashSet<>());
@@ -176,7 +176,7 @@ public class MavenProjectResolver {
     Set<File> filesToRefresh = new HashSet<>();
 
     try {
-      process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
+      process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
 
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
         process.checkCanceled();
@@ -222,7 +222,7 @@ public class MavenProjectResolver {
                           @Override
                           public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
                             process.checkCanceled();
-                            process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
+                            process.setText(MavenProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
                             process.setText2("");
 
                             Pair<Boolean, MavenProjectChanges> resolveResult = mavenProject.resolveFolders(embedder,

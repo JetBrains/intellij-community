@@ -12,7 +12,7 @@ public class SyncBundle extends DynamicBundle {
     return ourInstance.getMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "messages.SyncBundle";
+  private static final String PATH_TO_BUNDLE = "messages.MavenSyncBundle";
   private static final AbstractBundle ourInstance = new SyncBundle();
 
   private SyncBundle() {

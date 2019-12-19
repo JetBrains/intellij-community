@@ -221,8 +221,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     for (VirtualFile file : pomFiles) {
       showBalloon(
-        ProjectBundle.message("maven.orphan.notification.title"),
-        ProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
+        MavenProjectBundle.message("maven.orphan.notification.title"),
+        MavenProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
         NON_MANAGED_POM_NOTIFICATION_GROUP, NotificationType.INFORMATION, new NotificationListener.Adapter() {
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
@@ -372,15 +372,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void initWorkers() {
-    myReadingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.reading"), false, myEmbeddersManager);
-    myResolvingProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
+    myReadingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.reading"), false, myEmbeddersManager);
+    myResolvingProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.resolving"), true, myEmbeddersManager);
     myPluginsResolvingProcessor =
-      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true, myEmbeddersManager);
     myFoldersResolvingProcessor =
-      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.updating.folders"), true, myEmbeddersManager);
     myArtifactsDownloadingProcessor =
-      new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
-    myPostProcessor = new MavenProjectsProcessor(myProject, ProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
+      new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.downloading"), true, myEmbeddersManager);
+    myPostProcessor = new MavenProjectsProcessor(myProject, MavenProjectBundle.message("maven.post.processing"), true, myEmbeddersManager);
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
@@ -1284,7 +1284,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       r.run();
     }
     else {
-      MavenUtil.runInBackground(myProject, ProjectBundle.message("maven.project.importing"), false, new MavenTask() {
+      MavenUtil.runInBackground(myProject, MavenProjectBundle.message("maven.project.importing"), false, new MavenTask() {
         @Override
         public void run(MavenProgressIndicator indicator) {
           r.run();

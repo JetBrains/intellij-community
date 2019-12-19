@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
@@ -517,7 +516,7 @@ public class MavenProjectsTree {
       return;
     }
     updateStack.push(mavenProject);
-    process.setText(ProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
+    process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProject.getPath()));
     process.setText2("");
 
     List<MavenProject> prevModules = getModules(mavenProject);

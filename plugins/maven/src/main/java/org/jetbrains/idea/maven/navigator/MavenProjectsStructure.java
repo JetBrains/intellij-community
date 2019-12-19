@@ -64,7 +64,7 @@ import java.util.concurrent.ExecutorService;
 
 import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
-import static org.jetbrains.idea.maven.project.ProjectBundle.message;
+import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
