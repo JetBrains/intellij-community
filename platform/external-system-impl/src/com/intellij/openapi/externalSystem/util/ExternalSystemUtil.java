@@ -553,6 +553,8 @@ public class ExternalSystemUtil {
                                        @NotNull Ref<Supplier<FinishBuildEvent>> finishSyncEventSupplier) {
         if (project.isDisposed()) return;
 
+        // Android Studio: Allow ProjectSetUpTask to generate a new FinishBuildEvent
+        boolean useFinishEvent = true;
         try {
           final Throwable error = resolveProjectTask.getError();
           if (error == null) {
@@ -564,6 +566,8 @@ public class ExternalSystemUtil {
                 if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
                   externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
                 }
+                // Android Studio: ProjectSetUpTask will generate the finish event (could still fail if project setup fails)
+                useFinishEvent = false;
                 callback.onSuccess(resolveProjectTask.getId(), externalProject);
               }
             }
@@ -600,8 +604,10 @@ public class ExternalSystemUtil {
             project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, null);
             /* Android Studio: don't send finish sync events, which will be created by PostSyncProjectSetup::finishSuccessfulSync or finishFailedSync. See b/132566912.
             The finish events here are duplicated and don't reflect the actual sync results. For example, if there're sync issues in the Gradle model, this reports "sync finished".
-            eventDispatcher.onEvent(resolveProjectTask.getId(), getSyncFinishEvent(finishSyncEventSupplier));
             */
+            if (useFinishEvent) {
+              eventDispatcher.onEvent(resolveProjectTask.getId(), getSyncFinishEvent(finishSyncEventSupplier));
+            }
           }
         }
       }
