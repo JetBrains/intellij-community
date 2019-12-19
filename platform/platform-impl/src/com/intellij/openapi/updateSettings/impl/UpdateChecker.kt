@@ -260,7 +260,7 @@ object UpdateChecker {
     val marketplacePlugins = PluginsMetaLoader.getMarketplacePlugins(indicator)
     for ((id, descriptor) in updateable) {
       if (id.idString !in marketplacePlugins) continue
-      val lastUpdate = getLastCompatiblePluginUpdate(id, buildNumber) ?: continue
+      val lastUpdate = PluginsMetaLoader.getLastCompatiblePluginUpdate(id, buildNumber) ?: continue
       val isOutdated = descriptor == null || PluginDownloader.comparePluginVersions(lastUpdate.version, descriptor.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
@@ -274,23 +274,6 @@ object UpdateChecker {
       }
     }
     toUpdate.keys.forEach { updateable.remove(it) }
-  }
-
-  private fun getLastCompatiblePluginUpdate(pluginId: PluginId, buildNumber: BuildNumber?): IdeCompatibleUpdate? {
-    val url = Urls
-      .newFromEncoded(ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/') + "/api/getCompatibleUpdates")
-      .addParameters(mapOf(
-        "build" to PluginDownloader.getBuildNumberForDownload(buildNumber),
-        "pluginXmlId" to pluginId.idString,
-        "max" to "1"
-      ))
-    return HttpRequests.request(url).connect {
-      ObjectMapper()
-        .readValue(
-          it.inputStream,
-          object : TypeReference<List<IdeCompatibleUpdate>>() {}
-        ).firstOrNull()
-    }
   }
 
   private fun buildDownloaderAndPrepareToInstall(

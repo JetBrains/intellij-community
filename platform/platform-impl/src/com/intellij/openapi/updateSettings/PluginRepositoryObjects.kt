@@ -2,16 +2,19 @@
 package com.intellij.openapi.updateSettings
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.ide.plugins.PluginNode
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
- * @param id        - update ID from Plugin Repository database.
- * @param pluginId  - plugin ID from Plugin Repository database.
+ * @param externalUpdateId        - update ID from Plugin Repository database.
+ * @param externalPluginId  - plugin ID from Plugin Repository database.
  */
 data class IdeCompatibleUpdate(
-  val id: String = "",
-  val pluginId: String = "",
+  @JsonProperty("id")
+  val externalUpdateId: String = "",
+  @JsonProperty("pluginId")
+  val externalPluginId: String = "",
   val version: String = ""
 )
 
@@ -20,7 +23,8 @@ data class IdeCompatibleUpdate(
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijUpdateMetadata(
-  val xmlId: String = "",
+  @JsonProperty("xmlId")
+  val id: String = "",
   val name: String = "",
   val description: String = "",
   val tags: List<String> = emptyList(),
@@ -34,7 +38,7 @@ data class IntellijUpdateMetadata(
 ) {
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode()
-    pluginNode.setId(xmlId)
+    pluginNode.setId(id)
     pluginNode.name = name
     pluginNode.description = description
     pluginNode.vendor = vendor

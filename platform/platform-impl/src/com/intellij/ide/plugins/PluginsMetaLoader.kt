@@ -7,10 +7,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.IdeCompatibleUpdate
 import com.intellij.openapi.updateSettings.IntellijUpdateMetadata
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
 import org.xml.sax.InputSource
@@ -33,14 +37,16 @@ object PluginsMetaLoader {
 
   private val AVAILABLE_PLUGINS_XML_IDS_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
+  private val COMPATIBLE_UPDATE_URL = "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')}/api/getCompatibleUpdates"
+
   private val objectMapper = ObjectMapper()
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
 
-  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(update.id + ".json")
+  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(update.externalUpdateId + ".json")
 
   private fun getUpdateMetadataUrl(update: IdeCompatibleUpdate) =
-    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/${update.pluginId}/${update.id}/meta.json"
+    "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
 
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
@@ -98,6 +104,23 @@ object PluginsMetaLoader {
           return@connect request.reader.use(parser)
         }
       }
+  }
+
+  fun getLastCompatiblePluginUpdate(pluginId: PluginId, buildNumber: BuildNumber?): IdeCompatibleUpdate? {
+    val url = Urls
+      .newFromEncoded(COMPATIBLE_UPDATE_URL)
+      .addParameters(mapOf(
+        "build" to PluginDownloader.getBuildNumberForDownload(buildNumber),
+        "pluginXmlId" to pluginId.idString,
+        "max" to "1"
+      ))
+    return HttpRequests.request(url).connect {
+      ObjectMapper()
+        .readValue(
+          it.inputStream,
+          object : TypeReference<List<IdeCompatibleUpdate>>() {}
+        ).firstOrNull()
+    }
   }
 
   @JvmStatic
