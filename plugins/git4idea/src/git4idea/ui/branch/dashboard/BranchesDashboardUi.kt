@@ -176,7 +176,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
       else {
         IdeFocusManager.getInstance(project).requestFocus(tree.component, true)
       }
-    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Find"), branchesTreeWithLogPanel)
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Find"), branchesTreePanel)
   }
 
   fun getMainComponent(): JComponent {
