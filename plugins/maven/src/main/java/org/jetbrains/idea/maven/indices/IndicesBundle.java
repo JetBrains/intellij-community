@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class IndicesBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "IndicesBundle";
+  @NonNls private static final String BUNDLE = "messages.IndicesBundle";
   private static final IndicesBundle INSTANCE = new IndicesBundle();
 
   private IndicesBundle() { super(BUNDLE); }

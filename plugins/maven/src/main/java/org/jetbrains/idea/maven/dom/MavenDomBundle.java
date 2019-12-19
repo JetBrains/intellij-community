@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class MavenDomBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "MavenDomBundle";
+  @NonNls private static final String BUNDLE = "messages.MavenDomBundle";
   private static final MavenDomBundle INSTANCE = new MavenDomBundle();
 
   private MavenDomBundle() { super(BUNDLE); }

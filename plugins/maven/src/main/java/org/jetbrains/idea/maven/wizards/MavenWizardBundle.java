@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class MavenWizardBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "MavenWizardBundle";
+  @NonNls private static final String BUNDLE = "messages.MavenWizardBundle";
   private static final MavenWizardBundle INSTANCE = new MavenWizardBundle();
 
   private MavenWizardBundle() { super(BUNDLE); }

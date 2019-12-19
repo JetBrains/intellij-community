@@ -280,7 +280,7 @@
         <properties>
           <labelFor value="83bca"/>
           <text value="Dependency types:"/>
-          <toolTipText resource-bundle="ProjectBundle" key="maven.import.dependency.type.description"/>
+          <toolTipText resource-bundle="messages/ProjectBundle" key="maven.import.dependency.type.description"/>
         </properties>
       </component>
       <component id="83bca" class="javax.swing.JTextField" binding="myDependencyTypes">

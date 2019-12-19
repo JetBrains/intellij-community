@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class ProjectBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "ProjectBundle";
+  @NonNls private static final String BUNDLE = "messages.ProjectBundle";
   private static final ProjectBundle INSTANCE = new ProjectBundle();
 
   private ProjectBundle() { super(BUNDLE); }
