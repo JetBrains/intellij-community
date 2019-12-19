@@ -161,6 +161,9 @@
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
     <lang.findUsagesProvider language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltFindUsagesProvider"/>
     <lang.refactoringSupport language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltRefactoringSupportProvider"/>
+
+    <projectService serviceInterface="org.intellij.lang.xpath.xslt.associations.FileAssociationsManager"
+                    serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -170,15 +173,6 @@
     <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt2ContextProviderExtension" />
 
   </extensions>
-
-  <!-- Plugin's project components -->
-  <project-components>
-    <!-- XSLT integration -->
-    <component>
-      <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
-      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
-    </component>
-  </project-components>
 
   <!-- Component's actions -->
   <actions>
