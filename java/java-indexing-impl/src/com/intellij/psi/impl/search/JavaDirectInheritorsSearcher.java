@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
-    if (!parameters.searchInLanguage(JavaLanguage.INSTANCE)) {
+    if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
       return true;
     }
 
