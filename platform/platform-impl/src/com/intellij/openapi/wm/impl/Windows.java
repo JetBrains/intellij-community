@@ -39,13 +39,13 @@ public final class Windows {
     }
 
     public static boolean isInActiveToolWindow(@Nullable Object component) {
-      ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
+      ToolWindowImpl activeToolWindow = (ToolWindowImpl)ToolWindowManager.getActiveToolWindow();
       if (activeToolWindow == null) {
         return false;
       }
 
       JComponent source = component instanceof JComponent ? (JComponent)component : null;
-      JComponent activeToolWindowComponent = activeToolWindow.getComponent();
+      JComponent activeToolWindowComponent = activeToolWindow.getComponentIfInitialized();
       if (activeToolWindowComponent != null) {
         while (source != null && source != activeToolWindowComponent) {
           source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
