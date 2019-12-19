@@ -6,7 +6,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -248,16 +247,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(jarRoot);
     String crazyDir = "src\\core\\log";
     String crazyEntry = "/log4sql_conf.jsp";
-    if (SystemInfo.isWindows) {
-      assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
-      assertNull(jarRoot.findChild(crazyDir));
-    }
-    else {
-      assertNull(JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
-      VirtualFile dir = jarRoot.findChild(crazyDir);
-      assertNotNull(dir);
-      assertNotNull(dir.findChild(crazyEntry));
-    }
+    assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
+    assertNull(jarRoot.findChild(crazyDir));
   }
 
   @Test

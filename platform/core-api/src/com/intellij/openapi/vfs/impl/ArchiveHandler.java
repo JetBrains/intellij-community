@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -237,21 +236,18 @@ public abstract class ArchiveHandler {
   @NotNull
   protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
     int p = entryName.lastIndexOf('/');
-    if (SystemInfo.isWindows) {
-      // under Windows we can't create files with backslash in the name
-      // and still there are cases of crazy jar files with backslash-containing entries inside (IDEA-228441)
-      p = Math.max(p, entryName.lastIndexOf('\\'));
-    }
+    // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
+    // Under Windows we can't create files with backslash in the name
+    // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
+    p = Math.max(p, entryName.lastIndexOf('\\'));
+
     String parentName = p > 0 ? entryName.substring(0, p) : "";
     String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
-    if (SystemInfo.isWindows) {
-      // see above
-      String fixedParent = parentName.replace('\\', '/');
-      //noinspection StringEquality
-      if (fixedParent != parentName) {
-        parentName = fixedParent;
-        entryName = parentName + '/' + shortName;
-      }
+    String fixedParent = parentName.replace('\\', '/');
+    //noinspection StringEquality
+    if (fixedParent != parentName) {
+      parentName = fixedParent;
+      entryName = parentName + '/' + shortName;
     }
     return Trinity.create(parentName, shortName, entryName);
   }
