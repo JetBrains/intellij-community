@@ -677,7 +677,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  public static class ActionItem implements ShortcutProvider {
+  public static class ActionItem implements ShortcutProvider, AnActionHolder {
     private final AnAction myAction;
     private String myText;
     private final boolean myIsEnabled;
@@ -711,6 +711,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     @NotNull
+    @Override
     public AnAction getAction() {
       return myAction;
     }
