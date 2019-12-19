@@ -15,41 +15,24 @@
  */
 package com.intellij.dvcs.ui;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+public class DvcsBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "com.intellij.dvcs.ui.DvcsBundle";
+  private static final DvcsBundle INSTANCE = new DvcsBundle();
 
-/**
- * @author Nadya Zabrodina
- */
-public class DvcsBundle {
+  private DvcsBundle() { super(BUNDLE); }
 
+  @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return INSTANCE.getMessage(key, params);
   }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
-  private static final String BUNDLE = "com.intellij.dvcs.ui.DvcsBundle";
-
-  private DvcsBundle() {
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
-  }
-
-  public static String getString(@PropertyKey(resourceBundle = BUNDLE) final String key) {
-    return getBundle().getString(key);
+  
+  @NotNull
+  public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+    return message(key);
   }
 }

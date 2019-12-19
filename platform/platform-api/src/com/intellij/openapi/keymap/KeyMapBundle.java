@@ -16,34 +16,19 @@
 
 package com.intellij.openapi.keymap;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
+public class KeyMapBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.KeyMapBundle";
+  private static final KeyMapBundle INSTANCE = new KeyMapBundle();
 
-public class KeyMapBundle {
+  private KeyMapBundle() { super(BUNDLE); }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = "messages.KeyMapBundle") String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
-  protected static final String PATH_TO_BUNDLE = "messages.KeyMapBundle";
-
-  private KeyMapBundle() {
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 }
