@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.ui.AppUIUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
 
@@ -33,22 +35,9 @@ class PythonSdkConfigurator {
     }
 
     private fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
-      // TODO: Move all interpreter detection away from EDT & use proper synchronization for that
-      val progress = ProgressManager.getInstance()
-      return progress.run(object : Task.WithResult<PyDetectedSdk?, Exception>(module.project,
-                                                                              "Looking for Virtual Environments",
-                                                                              false) {
-        override fun compute(indicator: ProgressIndicator): PyDetectedSdk? {
-          indicator.isIndeterminate = true
-          detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let {
-            return it
-          }
-          detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let {
-            return it
-          }
-          return null
-        }
-      })
+      detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
+      detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
+      return null
     }
 
     private fun getDefaultProjectSdk(): Sdk? {
@@ -60,61 +49,92 @@ class PythonSdkConfigurator {
 
     private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder) =
       detectSystemWideSdks(module, existingSdks, context).firstOrNull()
+
+    private fun <T> guardIndicator(indicator: ProgressIndicator, computable: () -> T): T {
+      return ProgressManager.getInstance().runProcess(computable, SensitiveProgressWrapper(indicator))
+    }
+
+    private fun onEdt(project: Project, runnable: () -> Unit) = AppUIUtil.invokeOnEdt(Runnable { runnable() }, project.disposed)
   }
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectOpened(project: Project) {
-        if (!project.isDefault) {
-          configureSdk(project)
-        }
+        ProgressManager.getInstance().run(
+          object : Task.Backgroundable(project, "Configuring a Python Interpreter", true) {
+            override fun run(indicator: ProgressIndicator) = configureSdk(project, indicator)
+          }
+        )
       }
     })
   }
 
-  private fun configureSdk(project: Project) {
+  private fun configureSdk(project: Project, indicator: ProgressIndicator) {
+    indicator.isIndeterminate = true
+
+    if (project.isDefault || project.pythonSdk != null) return
+
     val context = UserDataHolderBase()
-    if (project.pythonSdk != null) {
-      return
-    }
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
     val existingSdks = ProjectSdksModel().apply { reset(project) }.sdks.filter { it.sdkType is PythonSdkType }
 
-    findExistingAssociatedSdk(module, existingSdks)?.let {
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
-      module.excludeInnerVirtualEnv(it)
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for the previously used interpreter"
+    guardIndicator(indicator) { findExistingAssociatedSdk(module, existingSdks) }?.let {
+      onEdt(project) {
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+        module.excludeInnerVirtualEnv(it)
+      }
       return
     }
 
-    findDetectedAssociatedEnvironment(module, existingSdks, context)?.let {
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for a virtual environment related to the project"
+    guardIndicator(indicator) { findDetectedAssociatedEnvironment(module, existingSdks, context) }?.let {
       val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
-      SdkConfigurationUtil.addSdk(newSdk)
-      newSdk.associateWithModule(module, null)
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
-      module.excludeInnerVirtualEnv(it)
+
+      onEdt(project) {
+        SdkConfigurationUtil.addSdk(newSdk)
+        newSdk.associateWithModule(module, null)
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
+        module.excludeInnerVirtualEnv(it)
+      }
+
       return
     }
 
     // TODO: Introduce an extension for configuring a project via a Python SDK provider
-    detectAndSetupPipEnv(project, module, existingSdks)?.let {
-      SdkConfigurationUtil.addSdk(it)
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for a Pipfile"
+    guardIndicator(indicator) { detectAndSetupPipEnv(project, module, existingSdks) }?.let {
+      onEdt(project) {
+        SdkConfigurationUtil.addSdk(it)
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+      }
       return
     }
 
-    getDefaultProjectSdk()?.let {
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for the default interpreter setting for a new project"
+    guardIndicator(indicator) { getDefaultProjectSdk() }?.let {
+      onEdt(project) { SdkConfigurationUtil.setDirectoryProjectSdk(project, it) }
       return
     }
 
-    findExistingSystemWideSdk(existingSdks)?.let {
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for the previously used system-wide interpreter"
+    guardIndicator(indicator) { findExistingSystemWideSdk(existingSdks) }?.let {
+      onEdt(project) { SdkConfigurationUtil.setDirectoryProjectSdk(project, it) }
       return
     }
 
-    findDetectedSystemWideSdk(module, existingSdks, context)?.let {
-      SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
-        SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
+    if (indicator.isCanceled) return
+    indicator.text = "Looking for a system-wide interpreter"
+    guardIndicator(indicator) { findDetectedSystemWideSdk(module, existingSdks, context) }?.let {
+      onEdt(project) {
+        SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
+          SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
+        }
       }
     }
   }
