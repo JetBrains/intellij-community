@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,10 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
+    if (!parameters.searchInLanguage(JavaLanguage.INSTANCE)) {
+      return true;
+    }
+
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
 

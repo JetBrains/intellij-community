@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,6 +70,10 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
     public boolean includeAnonymous() {
       return myIncludeAnonymous;
     }
+
+    public boolean searchInLanguage(@NotNull Language language) {
+      return true;
+    }
   }
 
   private DirectClassInheritorsSearch() {
@@ -86,7 +91,12 @@ public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
 
   @NotNull
   public static Query<PsiClass> search(@NotNull PsiClass aClass, @NotNull SearchScope scope, boolean includeAnonymous) {
-    return INSTANCE.createUniqueResultsQuery(new SearchParameters(aClass, scope, includeAnonymous, true));
+    return search(new SearchParameters(aClass, scope, includeAnonymous, true));
+  }
+
+  @NotNull
+  public static Query<PsiClass> search(@NotNull SearchParameters parameters) {
+    return INSTANCE.createUniqueResultsQuery(parameters);
   }
 
   /**
