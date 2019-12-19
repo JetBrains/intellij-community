@@ -43,7 +43,8 @@ object PluginsMetaLoader {
 
   private fun getUpdatesMetadataFilesDirectory() = File(PathManager.getPluginsPath()).resolve("meta")
 
-  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(update.externalUpdateId + ".json")
+  private fun getUpdateMetadataFile(update: IdeCompatibleUpdate) = getUpdatesMetadataFilesDirectory().resolve(
+    update.externalUpdateId + ".json")
 
   private fun getUpdateMetadataUrl(update: IdeCompatibleUpdate) =
     "${ApplicationInfoImpl.getShadowInstance().pluginManagerUrl}/files/${update.externalPluginId}/${update.externalUpdateId}/meta.json"
@@ -96,7 +97,7 @@ object PluginsMetaLoader {
         if (file != null) {
           synchronized(PluginsMetaLoader) {
             request.saveToFile(file, indicator)
-            connection.getHeaderField("ETag")?.let {  saveETagForFile(file, it) }
+            connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }
           return@connect file.bufferedReader().use(parser)
         }
@@ -149,7 +150,7 @@ object PluginsMetaLoader {
     val eTagFile = getETagFile(file)
     if (eTagFile.exists()) {
       try {
-        val lines = FileUtil.loadLines(eTagFile)
+        val lines = eTagFile.readLines()
         if (lines.size != 1) {
           LOG.warn("Can't load ETag from '" + eTagFile.absolutePath + "'. Unexpected number of lines: " + lines.size)
           FileUtil.delete(eTagFile)
