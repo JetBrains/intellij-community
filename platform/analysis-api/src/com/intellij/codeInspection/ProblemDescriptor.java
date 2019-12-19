@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +59,12 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
    * @return the shortName of the fake inspection
    * @see InspectionEP#shortName
    */
+  @ApiStatus.Experimental
   @Nullable
   default String getFakeInspectionShortName() {
     return null;
   }
 
+  @ApiStatus.Experimental
   default void setFakeInspectionShortName(String shortName) {}
 }

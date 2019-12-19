@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,11 +272,14 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return ProblemDescriptorUtil.renderDescriptionMessage(this, element);
   }
 
+  @ApiStatus.Experimental
   @Override
+  @Nullable
   public String getFakeInspectionShortName() {
     return myFakeInspectionShortName;
   }
 
+  @ApiStatus.Experimental
   @Override
   public void setFakeInspectionShortName(String shortName) {
     myFakeInspectionShortName = shortName;
