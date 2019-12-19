@@ -2,6 +2,7 @@
 package git4idea.index
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -14,6 +15,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
@@ -55,22 +57,25 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
  * -------------------------------------------------
  */
 
+fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
+              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<GitFileStatus.StatusRecord> {
+  val h = GitLineHandler(project, root, GitCommand.STATUS)
+  h.setSilent(true)
+  h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
+                     withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)
+  h.endOptions()
+  h.addRelativePaths(files)
+
+  val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
+  return parseGitStatusOutput(output)
+}
+
 @Throws(VcsException::class)
 fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): GitFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
-  h.addParameters("--porcelain", "-z")
-
-  val gitVersion = GitExecutableManager.getInstance().getVersion(executable)
-  if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
-    h.addParameters("--no-renames")
-  }
-  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(gitVersion)) {
-    h.addParameters("--ignored=matching")
-  }
-  else {
-    h.addParameters("--ignored")
-  }
+  h.appendParameters(GitExecutableManager.getInstance().getVersion(executable),
+                     withRenames = false, withUntracked = true, withIgnored = true)
   h.endOptions()
   h.addRelativePaths(filePath)
 
@@ -79,9 +84,31 @@ fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): Gi
     val gitStatusOutput = parseGitStatusOutput(output)
     return gitStatusOutput.firstOrNull() ?: GitFileStatus.Blank
   }
-  
+
   val repositoryPath = getFilePath(root, filePath, executable) ?: return GitFileStatus.Blank
   return GitFileStatus.NotChanged(repositoryPath)
+}
+
+private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
+                                            withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false) {
+  addParameters("--porcelain", "-z")
+  if (!withRenames) {
+    if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
+      addParameters("--no-renames")
+    }
+  }
+  addParameters("--untracked-files=${if (withUntracked) "all" else "no"}")
+  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(gitVersion)) {
+    if (withIgnored) {
+      addParameters("--ignored=matching")
+    }
+    else {
+      addParameters("--ignored=no")
+    }
+  }
+  else if (withIgnored) {
+    addParameters("--ignored")
+  }
 }
 
 @Throws(VcsException::class)
@@ -100,7 +127,7 @@ fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
 
   val split = output.split(NUL).toTypedArray()
   val it = split.iterator()
-  while (it.hasNext()){
+  while (it.hasNext()) {
     val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue
     if (line.length < 4 || line[2] != ' ') {
@@ -118,7 +145,8 @@ fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
       }
       val origPath = it.next()
       result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart, origPath = origPath))
-    } else {
+    }
+    else {
       result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart))
     }
   }
@@ -141,6 +169,7 @@ private fun getFileStatus(status: StatusCode): FileStatus? {
 }
 
 typealias StatusCode = Char
+
 private fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
 
 sealed class GitFileStatus {
