@@ -29,9 +29,9 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
- * a Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
- * NOT THREAD SAFE.
- * For thread-safe alternative please use {@link ConcurrentFactoryMap}
+ * Map which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
+ * This map is NOT THREAD SAFE.
+ * For the thread-safe alternative please use {@link ConcurrentFactoryMap} instead.
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
   private Map<K, V> myMap;
@@ -173,6 +173,11 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public Set<Entry<K, V>> entrySet() {
     return ContainerUtil.map2Set(getMap().entrySet(),
                                  entry -> new AbstractMap.SimpleEntry<>(nullize(entry.getKey()), nullize(entry.getValue())));
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(myMap);
   }
 
   @NotNull
