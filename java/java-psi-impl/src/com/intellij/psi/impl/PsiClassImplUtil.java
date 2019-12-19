@@ -704,6 +704,9 @@ public class PsiClassImplUtil {
     if (psiClass.isEnum()) {
       return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_ENUM);
     }
+    if (psiClass.isRecord()) {
+      return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_RECORD);
+    }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
@@ -940,6 +943,14 @@ public class PsiClassImplUtil {
     if (psiClass.isEnum()) {
       PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()));
       return enumSuperType == null ? PsiClassType.EMPTY_ARRAY : new PsiClassType[]{enumSuperType};
+    }
+    if (psiClass.isRecord()) {
+      final PsiClass recordClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_RECORD);
+      if (recordClass != null) {
+        return new PsiClassType[]{new PsiImmediateClassType(recordClass, PsiSubstitutor.EMPTY)};
+      }
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+      return new PsiClassType[]{factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_RECORD, psiClass.getResolveScope())};
     }
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()))};

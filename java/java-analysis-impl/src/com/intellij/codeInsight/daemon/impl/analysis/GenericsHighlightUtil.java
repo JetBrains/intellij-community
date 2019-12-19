@@ -1206,16 +1206,6 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkCannotInheritFromEnum(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
-    HighlightInfo errorResult = null;
-    if (Comparing.strEqual("java.lang.Enum", superClass.getQualifiedName())) {
-      String message = JavaErrorMessages.message("classes.extends.enum");
-      errorResult =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
-    }
-    return errorResult;
-  }
-
   static HighlightInfo checkGenericCannotExtendException(@NotNull PsiReferenceList list) {
     PsiElement parent = list.getParent();
     if (parent instanceof PsiClass) {

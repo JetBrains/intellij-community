@@ -105,7 +105,7 @@ public class HighlightClassUtil {
     if (aClass.isEnum()) {
       if (hasEnumConstantsWithInitializer(aClass)) return null; 
     }
-    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null ) {
+    else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isRecord()) {
       return null;
     }
     return checkClassWithAbstractMethods(aClass, textRange);
@@ -906,6 +906,27 @@ public class HighlightClassUtil {
                                                            "record.instance.initializer" : "record.instance.field")).create();
         QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(member, PsiModifier.STATIC, true, false));
         return info;
+      }
+    }
+    return null;
+  }
+
+  static HighlightInfo checkExtendsProhibitedClass(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
+    String qualifiedName = superClass.getQualifiedName();
+    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) || CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName)) {
+      String message = JavaErrorMessages.message("classes.extends.prohibited.super", qualifiedName);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkAnonymousInheritProhibited(PsiNewExpression expression) {
+    PsiAnonymousClass aClass = expression.getAnonymousClass();
+    if (aClass != null) {
+      PsiClass superClass = aClass.getSuperClass();
+      PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+      if (superClass != null && reference != null) {
+        return checkExtendsProhibitedClass(superClass, reference);
       }
     }
     return null;

@@ -32,6 +32,11 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   }
 
   private void doTest() {
+    myFixture.addClass("package java.lang; public abstract class Record {" +
+                       "public abstract boolean equals(Object obj);" +
+                       "public abstract int hashCode();" +
+                       "public abstract String toString();" +
+                       "}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
