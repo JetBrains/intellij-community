@@ -71,6 +71,8 @@ public class MessageBusImpl implements MessageBus {
 
   private final Map<PluginDescriptor, MessageBusConnectionImpl> myLazyConnections;
 
+  private boolean myIgnoreParentLazyListeners;
+
   public MessageBusImpl(@NotNull MessageBusOwner owner, @NotNull MessageBusImpl parentBus) {
     myOwner = owner;
     myConnectionDisposable = createConnectionDisposable(owner);
@@ -102,6 +104,10 @@ public class MessageBusImpl implements MessageBus {
     myParentBus = null;
   }
 
+  public void setIgnoreParentLazyListeners(boolean ignoreParentLazyListeners) {
+    myIgnoreParentLazyListeners = ignoreParentLazyListeners;
+  }
+
   /**
    * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
    */
@@ -109,7 +115,7 @@ public class MessageBusImpl implements MessageBus {
   public void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map) {
     if (myTopicClassToListenerClass != Collections.<String, List<ListenerDescriptor>>emptyMap()) {
       myTopicClassToListenerClass.putAll(map);
-      myPublishers.clear();
+      clearSubscriberCache();
     }
     else {
       myTopicClassToListenerClass = map;
@@ -192,31 +198,14 @@ public class MessageBusImpl implements MessageBus {
 
     Class<L> listenerClass = topic.getListenerClass();
 
-    if (myTopicClassToListenerClass.isEmpty()) {
-      Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
-      Object prev = myPublishers.putIfAbsent(topic, newInstance);
-      //noinspection unchecked
-      return (L)(prev == null ? newInstance : prev);
-    }
-    else {
-      // remove is atomic operation, so, even if topic concurrently created and our topic instance will be not used, still, listeners will be added,
-      // but problem is that if another topic will be returned earlier, then these listeners will not get fired event
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (topic) {
-        return subscribeLazyListeners(topic, listenerClass);
-      }
-    }
+    Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
+    Object prev = myPublishers.putIfAbsent(topic, newInstance);
+    //noinspection unchecked
+    return (L)(prev == null ? newInstance : prev);
   }
 
-  @NotNull
-  private <L> L subscribeLazyListeners(@NotNull Topic<L> topic, @NotNull Class<L> listenerClass) {
-    //noinspection unchecked
-    L publisher = (L)myPublishers.get(topic);
-    if (publisher != null) {
-      return publisher;
-    }
-
-    List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(listenerClass.getName());
+  private <L> void subscribeLazyListeners(@NotNull Topic<L> topic) {
+    List<ListenerDescriptor> listenerDescriptors = myTopicClassToListenerClass.remove(topic.getListenerClass().getName());
     if (listenerDescriptors != null) {
       MultiMap<PluginDescriptor, Object> listenerMap = new MultiMap<>();
       for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
@@ -239,11 +228,6 @@ public class MessageBusImpl implements MessageBus {
         }
       }
     }
-
-    //noinspection unchecked
-    publisher = (L)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
-    myPublishers.put(topic, publisher);
-    return publisher;
   }
 
   @ApiStatus.Internal
@@ -339,7 +323,12 @@ public class MessageBusImpl implements MessageBus {
     return myOwner.toString();
   }
 
-  private void calcSubscribers(@NotNull Topic<?> topic, @NotNull List<? super MessageBusConnectionImpl> result) {
+  private void calcSubscribers(@NotNull Topic<?> topic,
+                               @NotNull List<? super MessageBusConnectionImpl> result,
+                               boolean subscribeLazyListeners) {
+    if (subscribeLazyListeners) {
+      subscribeLazyListeners(topic);
+    }
     final List<MessageBusConnectionImpl> topicSubscribers = mySubscribers.get(topic);
     if (topicSubscribers != null) {
       result.addAll(topicSubscribers);
@@ -349,12 +338,14 @@ public class MessageBusImpl implements MessageBus {
 
     if (direction == Topic.BroadcastDirection.TO_CHILDREN) {
       for (MessageBusImpl childBus : myChildBuses) {
-        childBus.calcSubscribers(topic, result);
+        if (!childBus.isDisposed()) {
+          childBus.calcSubscribers(topic, result, !childBus.myIgnoreParentLazyListeners);
+        }
       }
     }
 
     if (direction == Topic.BroadcastDirection.TO_PARENT && myParentBus != null) {
-      myParentBus.calcSubscribers(topic, result);
+      myParentBus.calcSubscribers(topic, result, true);
     }
   }
 
@@ -383,7 +374,7 @@ public class MessageBusImpl implements MessageBus {
     List<MessageBusConnectionImpl> topicSubscribers = mySubscriberCache.get(topic);
     if (topicSubscribers == null) {
       topicSubscribers = new ArrayList<>();
-      calcSubscribers(topic, topicSubscribers);
+      calcSubscribers(topic, topicSubscribers, true);
       mySubscriberCache.put(topic, topicSubscribers);
       myRootBus.myClearedSubscribersCache = false;
     }

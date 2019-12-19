@@ -396,7 +396,7 @@ abstract class PlatformComponentManagerImpl @JvmOverloads constructor(internal v
   }
 
   @Synchronized
-  private fun getOrCreateMessageBusUnderLock(): MessageBusImpl {
+  protected open fun getOrCreateMessageBusUnderLock(): MessageBusImpl {
     var messageBus = this.messageBus
     if (messageBus != null) {
       return messageBus

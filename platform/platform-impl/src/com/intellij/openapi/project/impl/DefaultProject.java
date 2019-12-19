@@ -18,6 +18,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -89,6 +90,14 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
         @Override
         public int hashCode() {
           return DEFAULT_HASH_CODE;
+        }
+
+        @NotNull
+        @Override
+        protected synchronized MessageBusImpl getOrCreateMessageBusUnderLock() {
+          MessageBusImpl messageBus = super.getOrCreateMessageBusUnderLock();
+          messageBus.setIgnoreParentLazyListeners(true);
+          return messageBus;
         }
       };
     }
