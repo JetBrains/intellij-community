@@ -616,13 +616,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     synchronized (myRegisteredRootProviders) {
       if (!myRegisteredRootProviders.isEmpty()) {
         StringBuilder details = new StringBuilder();
+        int count = 0;
         for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
+          if (count++ >= 10) {
+            details.append(myRegisteredRootProviders.entrySet().size() - 10).append(" more providers.\n");
+            break;
+          }
           details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
           for (OrderEntry orderEntry : entry.getValue()) {
-            details.append("   ").append(orderEntry).append("\n");
+            details.append("   ").append(orderEntry);
+            if (orderEntry instanceof RootModelComponentBase) {
+              details.append(", isDisposed = ").append(((RootModelComponentBase)orderEntry).isDisposed());
+              details.append(", root model = ").append(((RootModelComponentBase)orderEntry).getRootModel());
+              details.append(", module.isDisposed = ").append(((RootModelComponentBase)orderEntry).getRootModel().getModule().isDisposed());
+            }
+            details.append("\n");
           }
         }
-        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
+        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers in " + myProject + " aren't disposed:" + details);
         for (RootProvider provider : myRegisteredRootProviders.keySet()) {
           provider.removeRootSetChangedListener(myRootProviderChangeListener);
         }
