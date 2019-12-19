@@ -14,9 +14,4 @@ abstract class BaseProgramRunner<Settings : RunnerSettings?> : ProgramRunner<Set
 
   @Throws(ExecutionException::class)
   protected abstract fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState)
-
-  // prevent overriding
-  final override fun execute(environment: ExecutionEnvironment) {
-    execute(environment, null)
-  }
 }

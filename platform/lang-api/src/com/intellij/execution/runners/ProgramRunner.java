@@ -89,6 +89,10 @@ public interface ProgramRunner<Settings extends RunnerSettings> {
     return null;
   }
 
+  /**
+   * @deprecated Use {@link #execute(ExecutionEnvironment, Callback)}
+   */
+  @Deprecated
   default void execute(@NotNull ExecutionEnvironment environment) throws ExecutionException {
     execute(environment, null);
   }

@@ -13,9 +13,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
-abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
+abstract class GenericProgramRunner<Settings : RunnerSettings> : ProgramRunner<Settings> {
   @Throws(ExecutionException::class)
-  override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?) {
+    val state = environment.state ?: return
+    execute(environment, callback, state)
+  }
+
+  @Throws(ExecutionException::class)
+  protected open fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
     startRunProfile(environment, callback) {
       resolvedPromise(doExecute(state, environment))
     }
@@ -48,11 +54,6 @@ abstract class AsyncProgramRunner<Settings : RunnerSettings> : ProgramRunner<Set
 
   @Throws(ExecutionException::class)
   protected abstract fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?>
-
-  // prevent overriding
-  final override fun execute(environment: ExecutionEnvironment) {
-    execute(environment, null)
-  }
 }
 
 /**
