@@ -19,7 +19,6 @@ import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.UIBundle
@@ -169,8 +168,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   override fun isActive(): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val frame = WindowManagerEx.getInstanceEx().getFrame(toolWindowManager.project)
-    if (frame == null || !frame.isActive || toolWindowManager.isEditorComponentActive) {
+    val frameHelper = toolWindowManager.getFrame() ?: return false
+    val frame = frameHelper.frame
+    if (!frame.isActive || toolWindowManager.isEditorComponentActive) {
       return false
     }
 
@@ -179,7 +179,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       return false
     }
     else {
-      return windowInfo.isActive || (decorator?.isFocused ?: false)
+      return windowInfo.isActive || (windowInfo.isVisible && (decorator?.isFocused(frameHelper) ?: false))
     }
   }
 
@@ -267,7 +267,9 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
   override fun getDecorator() = decorator!!
 
   val isFocused: Boolean
-    get() = decorator?.isFocused ?: false
+    get() {
+      return decorator?.isFocused(toolWindowManager.getFrame() ?: return false) ?: false
+    }
 
   override fun setAdditionalGearActions(value: ActionGroup?) {
     additionalGearActions = value

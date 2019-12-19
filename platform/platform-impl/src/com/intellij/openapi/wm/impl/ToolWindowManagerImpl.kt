@@ -124,6 +124,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
+  internal fun getFrame() = frame
+
   @Service
   private class ToolWindowManagerAppLevelHelper {
     private var awtFocusListener: AWTEventListener? = null
