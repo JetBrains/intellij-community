@@ -172,7 +172,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
   }
 
   @Nullable
-  private static IdeFocusManager findByComponent(@NotNull Component component) {
+  private static IdeFocusManager findByComponent(@Nullable Component component) {
+    if (component == null) return null;
     Component parent = ComponentUtil.findUltimateParent(component);
     return parent instanceof IdeFrame ? getInstanceSafe(((IdeFrame)parent).getProject()) : null;
   }
