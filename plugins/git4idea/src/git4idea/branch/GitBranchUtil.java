@@ -12,6 +12,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
@@ -97,23 +100,38 @@ public class GitBranchUtil {
   }
 
   @Nullable
-  public static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile root) {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REV_PARSE);
-    handler.addParameters("--abbrev-ref", "HEAD");
-    handler.setSilent(true);
+  public static GitLocalBranch getCurrentBranchFromGit(@NotNull Project project, @NotNull VirtualFile directory) {
     try {
-      String name = Git.getInstance().runCommand(handler).getOutputOrThrow();
-      if (!name.equals("HEAD")) {
-        return new GitLocalBranch(name);
-      }
-      else {
-        return null;
-      }
+      return getCurrentBranchFromGitOrThrow(project, directory);
     }
     catch (VcsException e) {
       LOG.info("git rev-parse --abbrev-ref HEAD", e);
       return null;
     }
+  }
+
+  @Nullable
+  public static GitLocalBranch getCurrentBranchFromGitOrThrow(@NotNull Project project, @NotNull VirtualFile directory) throws VcsException {
+    GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.REV_PARSE);
+    handler.addParameters("--abbrev-ref", "HEAD");
+    handler.setSilent(true);
+    String name = Git.getInstance().runCommand(handler).getOutputOrThrow();
+    if (!name.equals("HEAD")) {
+      return new GitLocalBranch(name);
+    }
+    return null;
+  }
+
+  @NotNull
+  public static Hash getCurrentRevisionFromGitOrThrow(@NotNull Project project, @NotNull VirtualFile directory) throws VcsException {
+    GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.REV_PARSE);
+    handler.addParameters("HEAD");
+    handler.setSilent(true);
+    String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
+    if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+      return HashImpl.build(output);
+    }
+    throw new VcsException("Could not find current revision for " + directory.getPath());
   }
 
   @NotNull

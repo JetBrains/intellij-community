@@ -28,11 +28,11 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
   override fun getPresentation(): StatusBarWidget.WidgetPresentation? = this
 
   override fun getText(): String {
-    return lightGitTracker.currentBranch?.let { "Git: $it" } ?: ""
+    return lightGitTracker.currentLocation?.let { "Git: $it" } ?: ""
   }
 
   override fun getTooltipText(): String? {
-    return lightGitTracker.currentBranch?.let { "Current Git Branch: $it" } ?: ""
+    return lightGitTracker.currentLocation?.let { "Current Git Branch: $it" } ?: ""
   }
 
   override fun getAlignment(): Float = Component.LEFT_ALIGNMENT

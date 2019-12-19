@@ -5,12 +5,13 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.ide.lightEdit.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
-import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
 import java.util.*
 
@@ -23,7 +24,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
   private val tabs: JBEditorTabs
     get() = lightEditService.editPanel.tabs
 
-  var currentBranch: String? = null
+  var currentLocation: String? = null
 
   init {
     lightEditorManager.addListener(listener, this)
@@ -32,8 +33,17 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
     Disposer.register(lightEditorManager, this)
   }
 
-  private fun setCurrentBranch(gitLocalBranch: Optional<GitLocalBranch>) {
-    currentBranch = gitLocalBranch.orElse(null)?.name
+  @Throws(VcsException::class)
+  private fun getLocation(project: Project, directory: VirtualFile): String {
+    val localBranch = GitBranchUtil.getCurrentBranchFromGitOrThrow(project, directory)
+    if (localBranch != null) {
+      return localBranch.name
+    }
+    return GitBranchUtil.getCurrentRevisionFromGitOrThrow(project, directory).toShortString()
+  }
+
+  private fun updateCurrentLocation(location: Optional<String>) {
+    currentLocation = location.orElse(null)
     eventDispatcher.multicaster.update()
   }
 
@@ -45,7 +55,7 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
   }
 
   private fun clear() {
-    setCurrentBranch(Optional.ofNullable(null))
+    updateCurrentLocation(Optional.ofNullable(null))
   }
 
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
@@ -68,9 +78,14 @@ internal class LightGitTracker(private val lightEditService: LightEditService) :
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<VirtualFile, Optional<GitLocalBranch>>("Light Git Tracker", this::setCurrentBranch, this) {
-    override fun process(requests: List<VirtualFile>): Optional<GitLocalBranch> {
-      return Optional.ofNullable(GitBranchUtil.getCurrentBranchFromGit(LightEditUtil.getProject(), requests.last().parent))
+    BaseSingleTaskController<VirtualFile, Optional<String>>("Light Git Tracker", this::updateCurrentLocation, this) {
+    override fun process(requests: List<VirtualFile>): Optional<String> {
+      try {
+        return Optional.of(getLocation(LightEditUtil.getProject(), requests.last().parent))
+      }
+      catch (_: VcsException) {
+        return Optional.ofNullable(null)
+      }
     }
   }
 }
