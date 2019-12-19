@@ -219,6 +219,7 @@ internal class FilteringBranchesTree(project: Project,
 
   fun refreshTree() {
     expandedPaths.addAll(TreeUtil.collectExpandedPaths(tree))
+    refreshTreeNodesFromModel()
     searchModel.updateStructure()
     restorePreviouslyExpandedPaths()
   }
@@ -228,6 +229,14 @@ internal class FilteringBranchesTree(project: Project,
       val changed = checkForBranchesUpdate()
       if (!changed) return false
 
+      refreshTreeNodesFromModel()
+
+      return changed
+    }
+  }
+
+  private fun refreshTreeNodesFromModel() {
+    with(uiController) {
       nodeDescriptorsToNodes.clear()
       localBranchesDescriptors.clear()
       remoteBranchesDescriptors.clear()
@@ -237,8 +246,6 @@ internal class FilteringBranchesTree(project: Project,
       nodeDescriptorsToNodes += baseNodeDescriptorsToNodes
       nodeDescriptorsToNodes += localBranchesDescriptors.associateWith(::BranchTreeNode)
       nodeDescriptorsToNodes += remoteBranchesDescriptors.associateWith(::BranchTreeNode)
-
-      return changed
     }
   }
 
