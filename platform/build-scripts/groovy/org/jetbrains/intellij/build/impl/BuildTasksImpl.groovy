@@ -264,8 +264,9 @@ idea.fatal.error.notification=disabled
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
     def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
+    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
-                   productLayout.mainModules + buildContext.productProperties.mavenArtifacts.additionalModules,
+                   productLayout.mainModules + mavenArtifacts.additionalModules + mavenArtifacts.proprietaryModules,
                    buildContext.productProperties.modulesToCompileTests)
 
     def pluginsToPublish = new LinkedHashSet<>(
