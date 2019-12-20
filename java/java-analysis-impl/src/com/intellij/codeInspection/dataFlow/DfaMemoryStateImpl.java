@@ -361,7 +361,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
     return !isNull(dfaLeft) && !isNull(dfaRight) &&
-           DfaUtil.isComparedByEquals(getPsiType(dfaLeft)) && DfaUtil.isComparedByEquals(getPsiType(dfaRight));
+           TypeConstraint.fromDfType(getDfType(dfaLeft)).isComparedByEquals() &&
+           TypeConstraint.fromDfType(getDfType(dfaRight)).isComparedByEquals();
   }
 
   private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
