@@ -224,6 +224,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
           if (widget != null) {
             widget.getTerminalPanel().setCursorVisible(false);
           }
+          myAttachedToProcess.set(false);
         }, ModalityState.any());
       }
     });
