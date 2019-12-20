@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -77,11 +76,11 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   }
 
   private static void saveProjectAndNotify(@NotNull Project project) {
-    TransactionGuard.submitTransaction(project, () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       project.save();
       Notification notification = new CodeStyleMigrationNotification(project.getName());
       notification.notify(project);
-    });
+    }, project.getDisposed());
   }
 
   @Override
