@@ -179,7 +179,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         obj = ApplicationManager.getApplication().instantiateExtensionWithPicoContainerOnlyIfNeeded(stubClassName, pluginDescriptor);
       }
       else {
-        obj = ReflectionUtil.newInstance(Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader()));
+        obj = ReflectionUtil.newInstance(Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader()), false);
       }
     }
     catch (ProcessCanceledException e) {

@@ -172,7 +172,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val connection = ApplicationManager.getApplication().messageBus.connect()
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectClosed(project: Project) {
-          (getInstance(project) as ToolWindowManagerImpl).projectClosed()
+          (project.serviceIfCreated<ToolWindowManager>() as ToolWindowManagerImpl?)?.projectClosed()
         }
       })
 

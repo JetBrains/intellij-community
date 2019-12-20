@@ -451,7 +451,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     updateCurrentContext(focusOwner, new KeyboardShortcut(keyStroke, null));
-    if(myContext.getActions().isEmpty()) {
+    if (myContext.getActions().isEmpty()) {
       // there's nothing mapped for this stroke
       return false;
     }
@@ -470,7 +470,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
-    if(myContext.isHasSecondStroke()){
+    if (myContext.isHasSecondStroke()) {
       myFirstKeyStroke=keyStroke;
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
@@ -507,7 +507,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
       setState(KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE);
       return true;
-    }else{
+    }
+    else {
       return processAction(e, myActionProcessor);
     }
   }
@@ -783,27 +784,27 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
-  private void addActionsFromActiveKeymap(@NotNull Shortcut sc) {
+  private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       return;
     }
 
     KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
-    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(sc);
+    String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(shortcut);
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
       if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
-        addAction(action, sc);
+        addAction(action, shortcut);
       }
     }
 
-    if (keymap != null && actionIds.length > 0 && sc instanceof KeyboardShortcut) {
+    if (keymap != null && actionIds.length > 0 && shortcut instanceof KeyboardShortcut) {
       // user pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
       // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
       // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
-      SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)sc);
+      SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, (KeyboardShortcut)shortcut);
     }
   }
 
