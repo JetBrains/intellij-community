@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="intellij.ant" />
+    <orderEntry type="module" module-name="intellij.ant" scope="PROVIDED" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.langInjection" />
@@ -34,7 +34,7 @@
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
-    <orderEntry type="module" module-name="intellij.java.byteCodeViewer" />
+    <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module" module-name="intellij.groovy.psi" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />

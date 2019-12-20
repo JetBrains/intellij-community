@@ -108,6 +108,7 @@ abstract class BuildTasks {
       BuildUtils.addToClassPath("$projectHome/$it", binding.ant)
     }
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
+
     BuildContext context = BuildContext.createContext("$projectHome/$communityHomeRelativePath", projectHome,
                                                       productProperties, proprietaryBuildTools)
     return context
