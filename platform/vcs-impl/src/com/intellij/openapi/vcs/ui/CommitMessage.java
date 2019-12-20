@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -32,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
@@ -60,8 +62,17 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   private static final EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
     editor.setBackgroundColor(null); // to use background from set color scheme
-    editor.setColorsScheme(EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
+    editor.setColorsScheme(getCommitMessageColorScheme());
   };
+
+  @NotNull
+  private static EditorColorsScheme getCommitMessageColorScheme() {
+    boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
+    boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
+    return isLaFDark == isEditorDark
+           ? EditorColorsManager.getInstance().getGlobalScheme()
+           : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  }
 
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
