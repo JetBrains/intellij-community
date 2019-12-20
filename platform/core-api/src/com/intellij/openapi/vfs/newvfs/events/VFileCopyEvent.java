@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -49,6 +50,11 @@ public class VFileCopyEvent extends VFileEvent {
   @NotNull
   public String getNewChildName() {
     return myNewChildName;
+  }
+
+  @Nullable
+  public VirtualFile findCreatedFile() {
+    return myNewParent.isValid() ? myNewParent.findChild(myNewChildName) : null;
   }
 
   @Override
