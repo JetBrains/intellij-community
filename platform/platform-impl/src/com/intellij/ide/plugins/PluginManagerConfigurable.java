@@ -1453,7 +1453,7 @@ public class PluginManagerConfigurable
   private static class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
   }
 
-  private class ChangePluginStateAction extends AnAction {
+  private class ChangePluginStateAction extends DumbAwareAction {
     private final boolean myEnable;
 
     private ChangePluginStateAction(boolean enable) {
