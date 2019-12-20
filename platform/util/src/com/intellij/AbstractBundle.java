@@ -6,6 +6,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -42,6 +43,11 @@ public abstract class AbstractBundle {
   @NotNull
   public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
+  }
+  
+  @Nullable
+  public String messageOrNull(@NotNull String key, @NotNull Object... params) {
+    return CommonBundle.messageOfNull(getBundle(), key, params);
   }
 
   private ResourceBundle getBundle() {
