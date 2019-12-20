@@ -176,8 +176,11 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState(state);
     }
 
-    if (SystemInfo.isLinux && frame instanceof JFrame) {
-      LinuxIdeMenuBar.doBindAppMenuOfParent((JFrame)frame, WindowManager.getInstance().getIdeFrame(myProject));
+    if (SystemInfo.isLinux && frame instanceof JFrame && GlobalMenuLinux.isAvailable()) {
+      JFrame parentFrame = WindowManager.getInstance().getFrame(myProject);
+      if (parentFrame != null) {
+        LinuxIdeMenuBar.doBindAppMenuOfParent((JFrame)frame, parentFrame);
+      }
     }
 
     myFocusWatcher = new FocusWatcher();

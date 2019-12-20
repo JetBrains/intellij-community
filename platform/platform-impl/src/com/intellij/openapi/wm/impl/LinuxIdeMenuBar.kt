@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeFrame
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
@@ -11,17 +10,13 @@ import javax.swing.JFrame
 internal class LinuxIdeMenuBar : IdeMenuBar() {
   companion object {
     @JvmStatic
-    fun doBindAppMenuOfParent(frame: JFrame, parent: IdeFrame?) {
-      if (!GlobalMenuLinux.isAvailable()) {
-        return
-      }
-
+    fun doBindAppMenuOfParent(frame: JFrame, parentFrame: JFrame) {
       if (GlobalMenuLinux.isPresented()) {
         // all children of IdeFrame mustn't show swing-menubar
         frame.jMenuBar?.isVisible = false
       }
 
-      val globalMenu = ((parent as JFrame).jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
+      val globalMenu = (parentFrame.jMenuBar as? LinuxIdeMenuBar)?.globalMenu ?: return
       frame.addWindowListener(object : WindowAdapter() {
         override fun windowClosing(e: WindowEvent?) {
           globalMenu.unbindWindow(frame)
