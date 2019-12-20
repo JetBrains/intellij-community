@@ -175,6 +175,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
     myShortenCommandLineCombo.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
+    myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
     myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0);
   }
@@ -274,7 +275,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     listenerModel.setListenerList(data.TEST_LISTENERS);
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
-    myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(config.isUseModulePath());
   }
 
