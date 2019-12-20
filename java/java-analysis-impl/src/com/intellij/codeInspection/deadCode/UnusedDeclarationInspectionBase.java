@@ -579,7 +579,17 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             }
           }
           else {
-            addInstantiatedClass(method.getOwnerClass());
+            RefClass ownerClass = method.getOwnerClass();
+            if (ownerClass != null) {
+              addInstantiatedClass(ownerClass);
+            } else {
+              LOG.error("owner class is null for " + method.getPsiElement()
+                      + " is static ? " + method.isStatic()
+                      + "; is abstract ? " + method.isAbstract()
+                      + "; is main method ? " + method.isAppMain()
+                      + "; is constructor " + method.isConstructor()
+                      + "; containing file " + method.getPointer().getVirtualFile().getFileType());
+            }
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
@@ -621,7 +631,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void addInstantiatedClass(RefClass refClass) {
+    private void addInstantiatedClass(@NotNull RefClass refClass) {
       if (myInstantiatedClasses.add(refClass)) {
         ((RefClassImpl)refClass).setReachable(true);
         myInstantiatedClassesCount++;
