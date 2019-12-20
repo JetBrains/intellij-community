@@ -436,14 +436,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static void doLoadProject(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     Activity waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue");
     if (indicator != null) {
-      indicator.setText(ApplicationManager.getApplication().isInternal() ? "Waiting on Event Queue..." : "Preparing workspace...");
+      indicator.setText(ApplicationManager.getApplication().isInternal() ? "Waiting on event queue..." : "Preparing workspace...");
       indicator.setIndeterminate(true);
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       waitEdtActivity.end();
       if (indicator != null && ApplicationManager.getApplication().isInternal()) {
-        indicator.setText("Running Project Opened tasks...");
+        indicator.setText("Running project opened tasks...");
       }
       fireProjectOpened(project);
     });
