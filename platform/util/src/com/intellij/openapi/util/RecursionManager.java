@@ -378,7 +378,6 @@ public class RecursionManager {
 
     // IDEA-228815
     "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
-    "org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.InferredClosureParamsEnhancer.getClosureParameterType(",
 
     // IDEA-228814
     // resolve & inference
