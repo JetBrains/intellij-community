@@ -3846,6 +3846,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    private boolean inlayWithCustomContextMenuExists(@NotNull Point point) {
+      Inlay inlay = myInlayModel.getElementAt(point);
+      if (inlay == null) return false;
+      EditorCustomElementRenderer renderer = inlay.getRenderer();
+      return renderer.getContextMenuGroupId(inlay) != null || renderer.getContextMenuGroup(inlay) != null;
+    }
+
     private boolean processMousePressed(@NotNull final MouseEvent e) {
       myInitialMouseEvent = e;
 
@@ -3912,11 +3919,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
-      // at 'line markers' area).
-      boolean insideEditorRelatedAreas = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
-                  eventArea == EditorMouseEventArea.EDITING_AREA ||
-                  isInsideGutterWhitespaceArea(e);
-      if (insideEditorRelatedAreas) {
+      // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
+      boolean moveCaret = eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+                  isInsideGutterWhitespaceArea(e) ||
+                  eventArea == EditorMouseEventArea.EDITING_AREA &&
+                  !(e.getButton() == MouseEvent.BUTTON3 && inlayWithCustomContextMenuExists(e.getPoint()));
+      if (moveCaret) {
         VisualPosition visualPosition = getTargetPosition(x, y, true);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
         if (toggleCaret) {
@@ -3973,7 +3981,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return isNavigation;
       }
 
-      if (insideEditorRelatedAreas) {
+      if (moveCaret) {
         if (e.isShiftDown() && !e.isControlDown() && !e.isAltDown()) {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
             if (caretOffset < mySavedSelectionStart) {
