@@ -68,10 +68,13 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                    @NonNls @NotNull Object reason,
                                    @NotNull ModalityState modality) {
     assert !isDisposed : "already disposed";
-    TransactionGuard.getInstance().assertWriteSafeContext(modality);
-
     if (!project.isInitialized()) return;
+
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    if (documentManager.isEventSystemEnabled(document)) {
+      TransactionGuard.getInstance().assertWriteSafeContext(modality);
+    }
+
     PsiFile psiFile = documentManager.getCachedPsiFile(document);
     if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
 

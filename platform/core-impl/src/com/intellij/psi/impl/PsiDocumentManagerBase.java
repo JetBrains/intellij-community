@@ -328,7 +328,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private boolean isEventSystemEnabled(Document document) {
+  boolean isEventSystemEnabled(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
     return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
   }
