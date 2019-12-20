@@ -269,7 +269,7 @@ public interface TypeConstraint {
     @Nullable
     @Override
     public PsiType getPsiType(Project project) {
-      PsiType[] conjuncts = StreamEx.of(myInstanceOf).map(exact -> exact.getPsiType(project)).toArray(PsiType.EMPTY_ARRAY);
+      PsiType[] conjuncts = StreamEx.of(myInstanceOf).map(exact -> exact.getPsiType(project)).nonNull().toArray(PsiType.EMPTY_ARRAY);
       return conjuncts.length == 0 ? null : PsiIntersectionType.createIntersection(true, conjuncts);
     }
 
