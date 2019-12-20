@@ -20,6 +20,7 @@ import net.miginfocom.layout.LayoutUtil
 import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
+import kotlin.math.max
 import kotlin.reflect.KMutableProperty0
 
 private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
@@ -151,7 +152,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
+    get() = max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
@@ -180,10 +181,10 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     var insertIndex = subRows.size
     if (insertIndex > 0 && subRows[insertIndex-1].isTrailingSeparator) {
-      insertIndex--;
+      insertIndex--
     }
     if (insertIndex > 0 && subRows[insertIndex-1].isComment) {
-      insertIndex--;
+      insertIndex--
     }
     subRows.add(insertIndex, row)
 

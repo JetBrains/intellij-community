@@ -243,7 +243,21 @@ internal fun gapToBoundSize(value: Int, isHorizontal: Boolean): BoundSize {
 fun createLayoutConstraints(): LC {
   val lc = LC()
   lc.gridGapX = gapToBoundSize(0, true)
-  lc.insets("0px")
+  lc.setInsets(0)
+  return lc
+}
+
+fun LC.setInsets(value: Int) {
+  val h = createUnitValue(value, isHorizontal = true)
+  val v = createUnitValue(value, isHorizontal = false)
+  insets = arrayOf(v, h, v, h)
+}
+
+fun createLayoutConstraints(horizontalGap: Int, verticalGap: Int): LC {
+  val lc = LC()
+  lc.gridGapX = gapToBoundSize(horizontalGap, isHorizontal = true)
+  lc.gridGapY = gapToBoundSize(verticalGap, isHorizontal = false)
+  lc.setInsets(0)
   return lc
 }
 

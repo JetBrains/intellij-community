@@ -130,7 +130,7 @@ fun Panel(title: String? = null, hasSeparator: Boolean = true, layout: LayoutMan
 
 fun DialogPanel(title: String? = null, layout: LayoutManager2? = BorderLayout()): DialogPanel {
   val panel = DialogPanel(layout)
-  title?.let { setTitledBorder(it, panel, true) }
+  title?.let { setTitledBorder(it, panel, hasSeparator = true) }
   return panel
 }
 

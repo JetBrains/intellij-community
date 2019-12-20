@@ -62,7 +62,9 @@ fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val dialogLeftRight = JBUI.scale(12)
 
     override val commentVerticalTopGap = JBUI.scale(6)
-    override val indentLevel: Int get() = JBUI.scale(20)
+
+    override val indentLevel: Int
+      get() = JBUI.scale(20)
   }
 }
 

@@ -8,10 +8,14 @@ import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @PublishedApi
-@JvmOverloads
-internal fun createLayoutBuilder(isUseMagic: Boolean = true /* preserved for API compatibility */): LayoutBuilder {
+internal fun createLayoutBuilder(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@PublishedApi
+@Deprecated(message = "isUseMagic not used anymore")
+internal fun createLayoutBuilder(isUseMagic: Boolean) = createLayoutBuilder()
 
 interface LayoutBuilderImpl {
   val rootRow: Row
