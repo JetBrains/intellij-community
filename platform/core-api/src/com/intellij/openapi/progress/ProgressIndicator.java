@@ -88,8 +88,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText2(String)
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  void setText(String text);
+  void setText(@Nls(capitalization = Nls.Capitalization.Sentence) String text);
 
   /**
    * @return text above the progress bar, set by {@link #setText(String)}
@@ -101,8 +100,7 @@ public interface ProgressIndicator {
    * @param text Text to set
    * @see #setText(String)
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  void setText2(String text);
+  void setText2(@Nls(capitalization = Nls.Capitalization.Sentence) String text);
 
   /**
    * @return text under the progress bar, set by {@link #setText2(String)}
