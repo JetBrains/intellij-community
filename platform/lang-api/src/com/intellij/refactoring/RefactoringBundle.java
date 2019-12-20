@@ -16,29 +16,21 @@
 
 package com.intellij.refactoring;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
-
-/**
- * @author ven
- */
-public class RefactoringBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
+public class RefactoringBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.RefactoringBundle";
+  private static final RefactoringBundle INSTANCE = new RefactoringBundle();
 
-  private RefactoringBundle() {
+  private RefactoringBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
   public static String getSearchInCommentsAndStringsText() {
@@ -75,18 +67,5 @@ public class RefactoringBundle {
 
   public static String getCannotRefactorMessage(@Nullable final String message) {
     return message("cannot.perform.refactoring") + (message == null ? "" : "\n" + message);
-  }
-
-  public static String message(@PropertyKey(resourceBundle = BUNDLE) String key) {
-    return CommonBundle.message(getBundle(), key);
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }
