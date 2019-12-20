@@ -61,5 +61,6 @@ runIde {
 }
 
 publishPlugin {
+    channels project.hasProperty('pluginChannel') ? project.property('pluginChannel') : ''
     token System.getenv('IDEA_PLUGIN_DEPLOY_TOKEN')
 }
