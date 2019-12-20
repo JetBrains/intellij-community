@@ -50,36 +50,32 @@ private val webEditorOptionDescriptors = listOf(
 internal class WebSmartKeysConfigurable(val model: WebEditorOptions) : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
   override fun createPanel(): DialogPanel {
     return panel {
-      row {
-        titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
-          row {
-            checkBox(myAutomaticallyInsertClosingTagCheckBox)
-          }
-          row {
-            checkBox(myAutomaticallyInsertRequiredAttributesCheckBox)
-          }
-          row {
-            checkBox(myAutomaticallyInsertRequiredSubTagsCheckBox)
-          }
-          row {
-            checkBox(myAutomaticallyStartAttributeAfterCheckBox)
-          }
-          row {
-            checkBox(myAddQuotasForAttributeValue)
-          }
-          row {
-            checkBox(myAutoCloseTagCheckBox)
-          }
-          row {
-            checkBox(mySyncTagEditing)
-          }
+      titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
+        row {
+          checkBox(myAutomaticallyInsertClosingTagCheckBox)
+        }
+        row {
+          checkBox(myAutomaticallyInsertRequiredAttributesCheckBox)
+        }
+        row {
+          checkBox(myAutomaticallyInsertRequiredSubTagsCheckBox)
+        }
+        row {
+          checkBox(myAutomaticallyStartAttributeAfterCheckBox)
+        }
+        row {
+          checkBox(myAddQuotasForAttributeValue)
+        }
+        row {
+          checkBox(myAutoCloseTagCheckBox)
+        }
+        row {
+          checkBox(mySyncTagEditing)
         }
       }
-      row {
-        titledRow("CSS") {
-          row {
-            checkBox(mySelectWholeCssIdentifierOnDoubleClick)
-          }
+      titledRow("CSS") {
+        row {
+          checkBox(mySelectWholeCssIdentifierOnDoubleClick)
         }
       }
       for (configurable in configurables) {
