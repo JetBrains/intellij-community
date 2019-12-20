@@ -8,13 +8,14 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.lang.JavaVersion
 import java.io.File
 
 private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
   override fun getSdk(): Sdk? {
     val jreHome = File(System.getProperty("java.home"))
     val jdkHome = if (jreHome.name == "jre") jreHome.parentFile else jreHome
-    return (JavaSdk.getInstance() as JavaSdkImpl).createMockJdk("java version \"1.8.0\"", jdkHome.path, false)
+    return (JavaSdk.getInstance() as JavaSdkImpl).createMockJdk("java version \"{${JavaVersion.current()}}\"", jdkHome.path, false)
   }
 }
 
@@ -25,6 +26,7 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testEmptyComment() = doTest("/** */\nclass C { }")
 
+  @Suppress("GrazieInspection")
   fun testCommonErrors() = doTest("""
     package pkg;
     /**

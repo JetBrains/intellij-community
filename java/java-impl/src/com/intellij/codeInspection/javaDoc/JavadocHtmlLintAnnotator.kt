@@ -46,10 +46,8 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
 
   override fun doAnnotate(collectedInfo: Info): Result? {
-    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null }
-    if (text == null) return null
-
-    val file = collectedInfo.file.virtualFile!!
+    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null } ?: return null
+    val file = collectedInfo.file.virtualFile ?: return null
     val copy = createTempFile(text.toByteArray(file.charset))
 
     try {
@@ -157,7 +155,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
     while (i.hasNext()) {
       val line = i.next()
       val matcher = lintPattern.matcher(line)
-      if (matcher.matches() && i.hasNext() && !i.next().isEmpty() && i.hasNext()) {
+      if (matcher.matches() && i.hasNext() && i.next().isNotEmpty() && i.hasNext()) {
         val row = matcher.group(1).toInt() - 1
         val col = i.next().indexOf('^')
         val error = matcher.group(2) == "error"
