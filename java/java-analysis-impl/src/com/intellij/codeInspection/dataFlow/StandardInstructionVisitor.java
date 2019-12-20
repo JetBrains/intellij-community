@@ -123,7 +123,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Nullable
   private static PsiType getType(@Nullable PsiExpression expression, @Nullable DfaValue value, @NotNull DfaMemoryState memState) {
-    PsiType type = value == null ? null : DfaTypeValue.toPsiType(memState.getDfType(value));
+    PsiType type = value == null ? null : memState.getPsiType(value);
     if (type != null) return type;
     return expression == null ? null : expression.getType();
   }
@@ -276,13 +276,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaControlTransferValue transfer = instruction.getCastExceptionTransfer();
     final DfaValueFactory factory = runner.getFactory();
     PsiType fromType = instruction.getCasted().getType();
-    DfaPsiType dfaType = factory.createDfaType(type);
+    TypeConstraint constraint = TypeConstraints.instanceOf(type);
     boolean castPossible = true;
     List<DfaInstructionState> result = new ArrayList<>();
     if (transfer != null) {
       DfaMemoryState castFail = memState.createCopy();
       if (fromType != null && type.isConvertibleFrom(fromType)) {
-        if (!memState.castTopOfStack(dfaType)) {
+        if (!memState.castTopOfStack(constraint)) {
           castPossible = false;
         } else {
           result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
@@ -302,7 +302,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     } else {
       if (fromType != null && type.isConvertibleFrom(fromType)) {
-        if (!memState.castTopOfStack(dfaType)) {
+        if (!memState.castTopOfStack(constraint)) {
           castPossible = false;
         }
       }
@@ -537,7 +537,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       qualifierExpression = ((PsiMethodReferenceExpression)context).getQualifierExpression();
     }
     if (qualifierExpression instanceof PsiSuperExpression) return method; // non-virtual call
-    PsiType type = DfaTypeValue.toPsiType(state.getDfType(qualifier));
+    PsiType type = state.getPsiType(qualifier);
     return MethodUtils.findSpecificMethod(method, type);
   }
 
@@ -597,10 +597,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
         }
       }
-      DfaPsiType dfaType = factory.createDfaType(type);
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
-                      TypeConstraint.exact(dfaType).asDfType().meet(NOT_NULL_OBJECT) :
-                      DfTypes.typedObject(dfaType, nullability);
+                      TypeConstraints.exact(type).asDfType().meet(NOT_NULL_OBJECT) :
+                      TypeConstraints.instanceOf(type).asDfType().meet(DfaNullability.fromNullability(nullability).asDfType());
       if (!instruction.shouldFlushFields() && instruction.getContext() instanceof PsiNewExpression) {
         dfType = dfType.meet(DfTypes.LOCAL_OBJECT);
       }
@@ -625,10 +624,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       // Perform constant folding for getClass() call.
       if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
         TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifierValue));
-        if (fact.isExact()) {
+        if (fact instanceof TypeConstraint.Exact) {
           PsiType javaLangClass = precalculated.getType();
           if (javaLangClass != null) {
-            return factory.getConstant(fact.getPsiType(), javaLangClass);
+            return factory.getConstant(fact.getPsiType(factory.getProject()), javaLangClass);
           }
         }
       }
@@ -807,7 +806,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
     LongRangeSet leftRange = DfIntType.extractRange(memState.getDfType(leftLength));
     LongRangeSet rightRange = DfIntType.extractRange(memState.getDfType(rightLength));
-    DfReferenceType dfType = DfTypes.typedObject(factory.createDfaType(stringType), Nullability.NOT_NULL);
+    DfReferenceType dfType = DfTypes.typedObject(TypeConstraints.exact(stringType), Nullability.NOT_NULL);
     LongRangeSet resultRange = leftRange.plus(rightRange, false);
     return factory.fromDfType(dfType.meet(SpecialField.STRING_LENGTH.asDfType(DfTypes.intRange(resultRange))));
   }
@@ -905,7 +904,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
         TypeConstraint left = TypeConstraint.fromDfType(leftType);
         TypeConstraint right = TypeConstraint.fromDfType(dfaRight.getDfType());
-        useful = !right.isSuperStateOf(left);
+        useful = !right.isSuperConstraintOf(left);
       } else {
         useful = true;
       }

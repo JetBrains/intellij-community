@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +25,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
-    mySpecialField = SpecialField.fromQualifierType(type.getPsiType());
+    mySpecialField = SpecialField.fromQualifierType(psiType);
     mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
   }
 
@@ -39,10 +36,9 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     if (other instanceof DfGenericObjectType) {
       DfReferenceType type = ((DfReferenceType)other).dropMutability();
       if (type.isSuperType(this)) return this;
-      TypeConstraint constraint = type.getConstraint().intersect(myConstraint);
-      if (constraint != null) {
-        PsiType psiType = constraint.getPsiType();
-        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), psiType == null ? myPsiType : psiType, constraint);
+      TypeConstraint constraint = type.getConstraint().meet(myConstraint);
+      if (constraint != TypeConstraints.BOTTOM) {
+        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint);
         if (type.isSuperType(subConstant)) return subConstant;
       }
     }
@@ -52,7 +48,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @NotNull
   @Override
   public PsiType getPsiType() {
-    return Objects.requireNonNull(myConstraint.getPsiType());
+    return myPsiType;
   }
 
   @NotNull
@@ -87,7 +83,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Override
   public DfType tryNegate() {
-    return new DfGenericObjectType(Collections.singleton(getValue()), TypeConstraint.empty(), DfaNullability.UNKNOWN, Mutability.UNKNOWN,
+    return new DfGenericObjectType(Collections.singleton(getValue()), TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN,
                                    null, BOTTOM, false);
   }
 
@@ -107,7 +103,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType)) return TOP;
     DfReferenceType type = (DfReferenceType)other;
-    TypeConstraint constraint = getConstraint().unite(type.getConstraint());
+    TypeConstraint constraint = getConstraint().join(type.getConstraint());
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().unite(type.getMutability());
     boolean locality = isLocal() && type.isLocal();

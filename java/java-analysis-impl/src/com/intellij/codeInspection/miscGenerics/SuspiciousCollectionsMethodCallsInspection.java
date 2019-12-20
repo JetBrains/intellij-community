@@ -93,7 +93,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
       .getSuspiciousMethodCallMessage(methodCall, arg, argType, exactType || reportConvertibleMethodCalls, patternMethods, i);
     if (plainMessage != null && !exactType) {
       TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(arg));
-      PsiType type = constraint.getPsiType();
+      PsiType type = constraint.getPsiType(methodCall.getProject());
       if (type != null && SuspiciousMethodCallUtil.getSuspiciousMethodCallMessage(methodCall, arg, type, reportConvertibleMethodCalls, patternMethods, i) == null) {
         return null;
       }

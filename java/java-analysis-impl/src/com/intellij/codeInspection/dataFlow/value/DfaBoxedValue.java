@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntObjectHashMap;
@@ -75,7 +76,7 @@ public class DfaBoxedValue extends DfaValue {
         }
       }
       if (valueToWrap instanceof DfaTypeValue) {
-        TypeConstraint constraint = type == null ? TypeConstraint.empty() : TypeConstraint.exact(myFactory.createDfaType(type));
+        TypeConstraint constraint = type == null ? TypeConstraints.TOP : TypeConstraints.exact(type);
         DfType dfType = SpecialField.UNBOX.asDfType(valueToWrap.getDfType()).meet(constraint.asDfType());
         return myFactory.fromDfType(dfType);
       }

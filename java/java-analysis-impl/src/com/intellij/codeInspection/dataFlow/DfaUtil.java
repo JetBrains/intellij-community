@@ -18,7 +18,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public class DfaUtil {
   private static Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(@NotNull final PsiElement codeBlock) {
     return CachedValuesManager.getCachedValue(codeBlock, () -> {
       final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
-      RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+      RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock.getProject()).analyzeMethod(codeBlock, visitor);
       return CachedValueProvider.Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
     });
   }
@@ -124,11 +123,11 @@ public class DfaUtil {
   }
 
   @NotNull
-  private static Nullability inferBlockNullability(PsiParameterListOwner owner, boolean suppressNullable) {
+  private static Nullability inferBlockNullability(@NotNull PsiParameterListOwner owner, boolean suppressNullable) {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
-    final DataFlowRunner dfaRunner = new DataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
     class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
@@ -304,7 +303,7 @@ public class DfaUtil {
   }
 
   public static boolean isComparedByEquals(PsiType type) {
-    return type != null && (TypeUtils.isJavaLangString(type) || TypeConversionUtil.isPrimitiveWrapper(type));
+    return type != null && TypeConstraints.exact(type).isComparedByEquals();
   }
 
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {

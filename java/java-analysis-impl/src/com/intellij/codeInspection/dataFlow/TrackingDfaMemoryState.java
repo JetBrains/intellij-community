@@ -58,11 +58,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }
       if (state.myDfType instanceof DfAntiConstantType) {
         Set<?> notValues = ((DfAntiConstantType<?>)state.myDfType).getNotValues();
-        if (!notValues.isEmpty() && var.getType() != null) {
-          DfaPsiType dfaPsiType = getFactory().createDfaType(var.getType());
+        PsiType varType = var.getType();
+        if (!notValues.isEmpty() && varType != null) {
           for (Object notValue : notValues) {
             result.computeIfAbsent(var, k -> new HashSet<>()).add(
-              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, dfaPsiType))));
+              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, varType))));
           }
         }
       }

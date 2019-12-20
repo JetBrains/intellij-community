@@ -351,7 +351,7 @@ public enum SpecialField implements VariableDescriptor {
     DfType clamped = fieldValue.meet(defaultType);
     if (clamped.equals(defaultType)) return DfTypes.NOT_NULL_OBJECT;
     if (clamped.equals(DfTypes.BOTTOM)) return DfTypes.BOTTOM;
-    return DfTypes.customObject(TypeConstraint.empty(), DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
+    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
   }
 
   /**

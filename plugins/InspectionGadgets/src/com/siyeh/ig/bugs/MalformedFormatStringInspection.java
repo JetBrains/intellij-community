@@ -211,8 +211,7 @@ public class MalformedFormatStringInspection extends BaseInspection {
           continue;
         }
         if (validator != null && !validator.valid(argumentType)) {
-          TypeConstraint fact = TypeConstraint.fromDfType(CommonDataflow.getDfType(argument));
-          PsiType preciseType = fact.getPsiType();
+          PsiType preciseType = TypeConstraint.fromDfType(CommonDataflow.getDfType(argument)).getPsiType(expression.getProject());
           if (preciseType == null || !validator.valid(preciseType)) {
             registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
           }

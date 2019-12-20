@@ -317,7 +317,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final DataFlowRunner dfaRunner = new DataFlowRunner() {
+        final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {

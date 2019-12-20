@@ -67,7 +67,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCodeFragment = codeFragment;
     myProject = codeFragment.getProject();
     GlobalSearchScope scope = codeFragment.getResolveScope();
-    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(myFactory.createDfaType(createClassType(scope, fqn))));
+    myExceptionCache = FactoryMap.create(fqn -> new ExceptionTransfer(TypeConstraints.instanceOf(createClassType(scope, fqn))));
   }
 
   private void buildClassInitializerFlow(PsiClass psiClass, boolean isStatic) {
@@ -1264,7 +1264,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    TypeConstraint constraint = type == null ? TypeConstraint.empty() : TypeConstraint.exact(myFactory.createDfaType(type));
+    TypeConstraint constraint = type == null ? TypeConstraints.TOP : TypeConstraints.exact(type);
     DfType arrayType = constraint.asDfType()
       .meet(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(expression.getInitializers().length)))
       .meet(DfTypes.LOCAL_OBJECT);
@@ -1539,8 +1539,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void addThrows(@Nullable PsiElement explicitCall, Collection<? extends PsiType> exceptions) {
     List<PsiType> allExceptions = new ArrayList<>(exceptions);
-    allExceptions.add(myExceptionCache.get(JAVA_LANG_ERROR).getThrowable().getPsiType());
-    allExceptions.add(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION).getThrowable().getPsiType());
+    allExceptions.add(myExceptionCache.get(JAVA_LANG_ERROR).getThrowable().getPsiType(myProject));
+    allExceptions.add(myExceptionCache.get(JAVA_LANG_RUNTIME_EXCEPTION).getThrowable().getPsiType(myProject));
     List<PsiType> refs = PsiDisjunctionType.flattenAndRemoveDuplicates(allExceptions);
     for (PsiType ref : refs) {
       pushUnknown();
@@ -1553,7 +1553,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   void throwException(@Nullable PsiType ref, @Nullable PsiElement anchor) {
     if (ref != null) {
-      throwException(new ExceptionTransfer(myFactory.createDfaType(ref)), anchor);
+      throwException(new ExceptionTransfer(TypeConstraints.instanceOf(ref)), anchor);
     }
   }
 
@@ -1716,7 +1716,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       // stack: ... var.length actual_size
       addInstruction(new PushInstruction(var, null, true));
-      DfaValue arrayValue = myFactory.fromDfType(TypeConstraint.exact(myFactory.createDfaType(type)).asDfType().meet(DfTypes.LOCAL_OBJECT));
+      DfaValue arrayValue = myFactory.fromDfType(TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT));
       addInstruction(new PushInstruction(arrayValue, expression));
       addInstruction(new AssignInstruction(expression, var));
       // stack: ... var.length actual_size var
@@ -1764,7 +1764,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = TypeConstraint.exact(myFactory.createDfaType(type)).asDfType()
+      DfType dfType = TypeConstraints.exact(type).asDfType()
         .meet(SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0)))
         .meet(DfTypes.LOCAL_OBJECT);
       return myFactory.fromDfType(dfType);

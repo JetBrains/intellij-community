@@ -160,7 +160,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           final DfaVariableValue myStableExceptionVar;
 
           CatchDataFlowRunner() {
-            super(block);
+            super(holder.getProject(), block);
             DfaValueFactory factory = getFactory();
             myExceptionVar = factory.getVarFactory().createVariableValue(parameter);
             myStableExceptionVar = factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block));

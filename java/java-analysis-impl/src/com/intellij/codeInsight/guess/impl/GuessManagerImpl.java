@@ -152,7 +152,7 @@ public class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = new DataFlowRunner() {
+    DataFlowRunner runner = new DataFlowRunner(scope.getProject()) {
       @NotNull
       @Override
       protected DfaMemoryState createMemoryState() {
@@ -160,7 +160,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = type == null ? null : runner.getFactory().createDfaType(type).asConstraint();
+    TypeConstraint initial = type == null ? null : TypeConstraints.instanceOf(type);
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
@@ -494,7 +494,7 @@ public class GuessManagerImpl extends GuessManager {
 
     MultiMap<PsiExpression, PsiType> getResult() {
       if (myConstraint != null && myForPlace instanceof PsiExpression) {
-        PsiType type = myConstraint.getPsiType();
+        PsiType type = myConstraint.getPsiType(myForPlace.getProject());
         if (type instanceof PsiIntersectionType) {
           myResult.putValues((PsiExpression)myForPlace, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
         }
@@ -572,11 +572,11 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.empty()) return;
+        if (myConstraint == TypeConstraints.TOP) return;
         DfType type = memoryState.getDfType(memoryState.peek());
         TypeConstraint constraint = type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : myInitial;
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
+          myConstraint = myConstraint == null ? constraint : myConstraint.join(constraint);
         }
       }
     }

@@ -15,10 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
@@ -522,10 +520,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean castTopOfStack(@NotNull DfaPsiType type) {
+  public boolean castTopOfStack(@NotNull TypeConstraint type) {
     DfaValue value = peek();
     DfType dfType = getDfType(value);
-    DfType result = dfType.meet(type.asConstraint().asDfType());
+    DfType result = dfType.meet(type.asDfType());
     if (!result.equals(dfType)) {
       if (result == DfTypes.NULL || !meetDfType(value, result)) return false;
       if (!(value instanceof DfaVariableValue)) {
@@ -584,8 +582,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (result == DfTypes.BOTTOM) return false;
       DfaVariableState newState = state.createCopy(result);
       setVariableState(var, newState);
-      if (DfaUtil.isComparedByEquals(newState.getTypeConstraint().getPsiType()) &&
-          !newState.getTypeConstraint().equals(state.getTypeConstraint())) {
+      TypeConstraint newConstraint = newState.getTypeConstraint();
+      if (newConstraint.isComparedByEquals() && !newConstraint.equals(state.getTypeConstraint())) {
         // Type is narrowed to java.lang.String, java.lang.Integer, etc.: we consider String & boxed types
         // equivalence by content, but other object types by reference, so we need to remove distinct pairs, if any.
         convertReferenceEqualityToValueEquality(value);
@@ -597,7 +595,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (result instanceof DfAntiConstantType) {
         for (Object notValue : ((DfAntiConstantType<?>)result).getNotValues()) {
           if (notValue instanceof PsiType) {
-            if (processGetClass(var, (PsiType)notValue, true) == ThreeState.NO) return false;
+            if (!processGetClass(var, (PsiType)notValue, true)) return false;
           }
         }
       }
@@ -920,57 +918,41 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return meetDfType(leftQualifier, rightType.asDfType()) && meetDfType(rightQualifier, leftType.asDfType());
   }
 
-  @NotNull
-  private ThreeState processGetClass(DfaVariableValue variable, PsiType value, boolean negated) {
+  private boolean processGetClass(DfaVariableValue variable, PsiType value, boolean negated) {
     EqClass eqClass = getEqClass(variable);
     List<DfaVariableValue> variables = eqClass == null ? Collections.singletonList(variable) : eqClass.asList();
-    boolean hasUnprocessed = false;
     for (DfaVariableValue var : variables) {
       PsiModifierListOwner psi = var.getPsiVariable();
       DfaVariableValue qualifier = var.getQualifier();
       if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi) && qualifier != null) {
-        switch (applyGetClassRelation(qualifier, value, negated)) {
-          case NO:
-            return ThreeState.NO;
-          case YES:
-            continue;
-          case UNSURE:
-            break;
-        }
+        if(!applyGetClassRelation(qualifier, value, negated)) return false;
       }
-      hasUnprocessed = true;
     }
-    return hasUnprocessed ? ThreeState.UNSURE : ThreeState.YES;
+    return true;
   }
 
-  @NotNull
-  private ThreeState applyGetClassRelation(@NotNull DfaVariableValue qualifier, @NotNull PsiType value, boolean negated) {
-    DfaPsiType dfaType = myFactory.createDfaType(value);
-    TypeConstraint constraint = TypeConstraint.exact(dfaType);
-    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(value);
-    if (psiClass != null && (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
-      // getClass() result cannot be an interface or an abstract class
-      return ThreeState.fromBoolean(negated);
+  private boolean applyGetClassRelation(@NotNull DfaVariableValue qualifier, @NotNull PsiType value, boolean negated) {
+    TypeConstraint constraint = TypeConstraints.exact(value);
+    if (constraint == TypeConstraints.BOTTOM) {
+      // It's impossible to instantiate object of given type (e.g. primitive type, abstract class, interface type)
+      return negated;
     }
     if (!negated) {
-      return ThreeState.fromBoolean(meetDfType(qualifier, constraint.asDfType()));
+      return meetDfType(qualifier, constraint.asDfType());
     }
     TypeConstraint existingConstraint = TypeConstraint.fromDfType(getDfType(qualifier));
     if (existingConstraint.isExact()) {
-      return ThreeState.fromBoolean(!existingConstraint.equals(constraint));
+      return !existingConstraint.equals(constraint);
     }
-    if (dfaType.asConstraint().isExact()) { // final class
-      return ThreeState.fromBoolean(
-        meetDfType(qualifier, Objects.requireNonNull(TypeConstraint.empty().withNotInstanceofValue(dfaType)).asDfType()));
+    if (TypeConstraints.instanceOf(value).isExact()) { // final class
+      return meetDfType(qualifier, TypeConstraints.notInstanceOf(value).asDfType());
     }
-    return ThreeState.UNSURE;
+    return true;
   }
 
   private boolean propagateConstant(DfaVariableValue value, DfConstantType<?> constant) {
     if (constant.getValue() instanceof PsiType) {
-      if (processGetClass(value, (PsiType)constant.getValue(), false) == ThreeState.NO) {
-        return false;
-      }
+      if (!processGetClass(value, (PsiType)constant.getValue(), false)) return false;
     }
     DfType dfType = constant.tryNegate();
     if (dfType == null) return true;
@@ -1055,8 +1037,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Nullable
-  private PsiType getPsiType(@NotNull DfaValue value) {
-    PsiType type = DfaTypeValue.toPsiType(getDfType(value));
+  @Override
+  public PsiType getPsiType(@NotNull DfaValue value) {
+    PsiType type = DfaTypeValue.toPsiType(getFactory().getProject(), getDfType(value));
     return type == null ? value.getType() : type;
   }
 

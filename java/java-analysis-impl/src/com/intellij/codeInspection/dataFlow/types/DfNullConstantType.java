@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
   @NotNull
   @Override
   public TypeConstraint getConstraint() {
-    return TypeConstraint.empty();
+    return TypeConstraints.TOP;
   }
 
   @Override

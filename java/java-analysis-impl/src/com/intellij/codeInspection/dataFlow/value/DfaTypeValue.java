@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ public class DfaTypeValue extends DfaValue {
   @Nullable
   @Override
   public PsiType getType() {
-    return toPsiType(myType);
+    return toPsiType(myFactory.getProject(), myType);
   }
 
   public static boolean isUnknown(DfaValue value) {
@@ -67,12 +68,12 @@ public class DfaTypeValue extends DfaValue {
   }
 
   @Nullable
-  public static PsiType toPsiType(DfType dfType) {
+  public static PsiType toPsiType(Project project, DfType dfType) {
     if (dfType instanceof DfPrimitiveType) {
       return ((DfPrimitiveType)dfType).getPsiType();
     }
     if (dfType instanceof DfReferenceType) {
-      return ((DfReferenceType)dfType).getConstraint().getPsiType();
+      return ((DfReferenceType)dfType).getConstraint().getPsiType(project);
     }
     return null;
   }

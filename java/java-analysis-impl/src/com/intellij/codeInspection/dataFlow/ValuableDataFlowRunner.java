@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,10 @@ import java.util.Objects;
  * @author Gregory.Shrago
  */
 class ValuableDataFlowRunner extends DataFlowRunner {
+  ValuableDataFlowRunner(Project project) {
+    super(project);
+  }
+
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {

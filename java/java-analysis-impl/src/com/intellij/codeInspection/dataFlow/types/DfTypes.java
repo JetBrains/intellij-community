@@ -2,19 +2,14 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Objects;
 
 /**
  * Commonly used types and factory methods
@@ -378,19 +373,19 @@ public class DfTypes {
    * A reference type that contains any reference except null
    */
   public static final DfReferenceType NOT_NULL_OBJECT = 
-    customObject(TypeConstraint.empty(), DfaNullability.NOT_NULL, Mutability.UNKNOWN, null, BOTTOM);
+    customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, null, BOTTOM);
 
   /**
    * A reference type that contains any reference or null
    */
   public static final DfReferenceType OBJECT_OR_NULL = 
-    customObject(TypeConstraint.empty(), DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, BOTTOM);
+    customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, BOTTOM);
 
   /**
    * A reference type that contains any reference to a local object
    */
   public static final DfReferenceType LOCAL_OBJECT =
-    new DfGenericObjectType(Collections.emptySet(), TypeConstraint.empty(), DfaNullability.NOT_NULL, Mutability.UNKNOWN,
+    new DfGenericObjectType(Collections.emptySet(), TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN,
                             null, BOTTOM, true);
 
   /**
@@ -400,7 +395,7 @@ public class DfTypes {
    * @param type value type
    * @return a constant type that contains only given constant
    */
-  public static DfConstantType<?> constant(@Nullable Object constant, @NotNull DfaPsiType type) {
+  public static DfConstantType<?> constant(@Nullable Object constant, @NotNull PsiType type) {
     if (constant == null) {
       return NULL;
     }
@@ -422,7 +417,7 @@ public class DfTypes {
     if (constant instanceof Double) {
       return doubleValue((Double)constant);
     }
-    return new DfReferenceConstantType(constant, type.getPsiType(), type.asConstraint());
+    return new DfReferenceConstantType(constant, type, TypeConstraints.instanceOf(type));
   }
 
   /**
@@ -430,8 +425,8 @@ public class DfTypes {
    * @param nullability nullability
    * @return a reference type that references given objects of given type (or it subtypes) and has given nullability 
    */
-  public static DfReferenceType typedObject(@NotNull DfaPsiType type, @NotNull Nullability nullability) {
-    return new DfGenericObjectType(Collections.emptySet(), Objects.requireNonNull(TypeConstraint.empty().withInstanceofValue(type)),
+  public static DfReferenceType typedObject(@NotNull TypeConstraint type, @NotNull Nullability nullability) {
+    return new DfGenericObjectType(Collections.emptySet(), type,
                                    DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, BOTTOM, false);
   }
 

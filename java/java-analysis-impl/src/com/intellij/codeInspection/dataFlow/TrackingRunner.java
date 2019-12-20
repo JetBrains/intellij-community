@@ -51,11 +51,11 @@ public class TrackingRunner extends DataFlowRunner {
   private final List<DfaInstructionState> afterStates = new ArrayList<>();
   private final List<TrackingDfaMemoryState> killedStates = new ArrayList<>();
 
-  private TrackingRunner(@Nullable PsiElement context,
+  private TrackingRunner(@NotNull PsiElement context,
                          PsiExpression expression,
                          boolean unknownMembersAreNullable,
                          boolean ignoreAssertions) {
-    super(context, unknownMembersAreNullable, ignoreAssertions);
+    super(context.getProject(), context, unknownMembersAreNullable, ignoreAssertions);
     myExpression = expression;
   }
 
@@ -399,7 +399,7 @@ public class TrackingRunner extends DataFlowRunner {
         PsiType expressionType = expression.getType();
         MemoryStateChange operandPush = history.findExpressionPush(((PsiTypeCastExpression)expression).getOperand());
         if (operandPush != null) {
-          return new CauseItem[]{runner.findTypeCause(operandPush, expressionType, false)};
+          return new CauseItem[]{findTypeCause(operandPush, expressionType, false)};
         }
       }
       return new CauseItem[0];
@@ -705,13 +705,12 @@ public class TrackingRunner extends DataFlowRunner {
   }
 
   @Nullable
-  private CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
+  private static CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
     PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
-    DfaPsiType wanted = getFactory().createDfaType(type);
+    TypeConstraint wanted = TypeConstraints.instanceOf(type);
     PsiType operandType = operand.getType();
     if (operandType != null) {
-      DfaPsiType dfaType = getFactory().createDfaType(operandType);
-      TypeConstraint constraint = Objects.requireNonNull(TypeConstraint.empty().withInstanceofValue(dfaType));
+      TypeConstraint constraint = TypeConstraints.instanceOf(operandType);
       String explanation = constraint.getAssignabilityExplanation(wanted, isInstance);
       if (explanation != null) {
         String name = "an expression";
@@ -721,8 +720,8 @@ public class TrackingRunner extends DataFlowRunner {
         else if (operand instanceof PsiReferenceExpression) {
           name = getElementTitle(((PsiReferenceExpression)operand).resolve());
         }
-        if (dfaType == wanted) {
-          explanation = "type is " + dfaType;
+        if (constraint.equals(wanted)) {
+          explanation = "type is " + constraint.toShortString();
         }
         return new CauseItem(name + " " + explanation, operand);
       }

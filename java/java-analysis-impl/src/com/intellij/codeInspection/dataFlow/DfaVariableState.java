@@ -20,7 +20,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -45,9 +44,22 @@ class DfaVariableState {
   }
 
   @NotNull
-  DfaVariableState withoutType(@NotNull DfaPsiType type) {
+  DfaVariableState withoutType(@NotNull TypeConstraint type) {
     if (myDfType instanceof DfReferenceType) {
-      return createCopy(((DfReferenceType)myDfType).dropTypeConstraint().meet(getTypeConstraint().withoutType(type).asDfType()));
+      DfReferenceType dfType = (DfReferenceType)myDfType;
+      TypeConstraint constraint = dfType.getConstraint();
+      if (constraint.equals(type)) {
+        return createCopy(dfType.dropTypeConstraint());
+      }
+      if (type instanceof TypeConstraint.Exact) {
+        TypeConstraint.Exact exact = (TypeConstraint.Exact)type;
+        TypeConstraint result = TypeConstraints.TOP;
+        result = constraint.instanceOfTypes().without(exact).map(TypeConstraint.Exact::instanceOf)
+          .foldLeft(result, TypeConstraint::meet);
+        result = constraint.notInstanceOfTypes().without(exact).map(TypeConstraint.Exact::notInstanceOf)
+          .foldLeft(result, TypeConstraint::meet);
+        return createCopy(dfType.dropTypeConstraint().meet(result.asDfType()));
+      }
     }
     return this;
   }

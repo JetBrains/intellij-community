@@ -3,7 +3,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -241,24 +244,20 @@ class StateMerger {
       }
     }
 
+    DfaValueFactory factory = state.getFactory();
     state.forVariableStates((var, varState) -> {
       TypeConstraint typeConstraint = varState.getTypeConstraint();
-      for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
-        result.add(new InstanceofFact(var, true, type));
-      }
-      for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
-        result.add(new InstanceofFact(var, false, type));
-      }
-      DfType dfType = state.getDfType(var);
+      typeConstraint.instanceOfTypes().map(type -> new InstanceofFact(var, true, factory.fromDfType(type.asDfType()))).into(result);
+      typeConstraint.notInstanceOfTypes().map(type -> new InstanceofFact(var, false, factory.fromDfType(type.asDfType()))).into(result);
+      DfType dfType = varState.myDfType;
       if (dfType instanceof DfConstantType) {
         result.add(new EqualityFact(var, true, var.getFactory().fromDfType(dfType)));
       }
       if (dfType instanceof DfAntiConstantType) {
         Set<?> notValues = ((DfAntiConstantType<?>)dfType).getNotValues();
         if (!notValues.isEmpty() && var.getType() != null) {
-          DfaPsiType dfaPsiType = var.getFactory().createDfaType(var.getType());
           for (Object notValue : notValues) {
-            result.add(new EqualityFact(var, false, var.getFactory().fromDfType(DfTypes.constant(notValue, dfaPsiType))));
+            result.add(new EqualityFact(var, false, var.getFactory().fromDfType(DfTypes.constant(notValue, var.getType()))));
           }
         }
       }
@@ -356,7 +355,7 @@ class StateMerger {
       if (hi >= 0) {
         return new EqualityFact(var, positive, factory.getValue(hi));
       } else {
-        return new InstanceofFact(var, positive, factory.getType(-hi));
+        return new InstanceofFact(var, positive, (DfaTypeValue)factory.getValue(-hi));
       }
     }
   }
@@ -421,9 +420,9 @@ class StateMerger {
   }
 
   static final class InstanceofFact extends Fact {
-    @NotNull private final DfaPsiType myType;
+    @NotNull private final DfaTypeValue myType;
 
-    private InstanceofFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaPsiType type) {
+    private InstanceofFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaTypeValue type) {
       super(positive, var, (var.hashCode() * 31 + type.hashCode()) * 31 + (positive ? 1 : 0));
       myType = type;
     }
@@ -463,7 +462,7 @@ class StateMerger {
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
       DfaVariableState varState = state.getVariableState(myVar);
-      state.setVariableState(myVar, varState.withoutType(myType));
+      state.setVariableState(myVar, varState.withoutType(TypeConstraint.fromDfType(myType.getDfType())));
     }
   }
 

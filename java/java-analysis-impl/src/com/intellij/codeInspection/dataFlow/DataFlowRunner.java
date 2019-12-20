@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -56,22 +57,26 @@ public class DataFlowRunner {
   private boolean myWasForciblyMerged = false;
   private final TimeStats myStats = createStatistics();
 
-  public DataFlowRunner() {
-    this(null);
+  public DataFlowRunner(@NotNull Project project) {
+    this(project, null);
   }
 
-  public DataFlowRunner(@Nullable PsiElement context) {
-    this(context, false, false);
+  public DataFlowRunner(@NotNull Project project, @Nullable PsiElement context) {
+    this(project, context, false, false);
   }
 
   /**
+   * @param project current project
    * @param context analysis context element (code block, class, expression, etc.); used to determine whether we can trust 
-   *                field initializers (e.g. we usually cannot if context is a constructor) 
+ *                field initializers (e.g. we usually cannot if context is a constructor) 
    * @param unknownMembersAreNullable if true every parameter or method return value without nullity annotation is assumed to be nullable
    * @param ignoreAssertions if true, assertion statements will be ignored, as if JVM is started with -da.
    */
-  public DataFlowRunner(@Nullable PsiElement context, boolean unknownMembersAreNullable, boolean ignoreAssertions) {
-    myValueFactory = new DfaValueFactory(context, unknownMembersAreNullable);
+  public DataFlowRunner(@NotNull Project project, 
+                        @Nullable PsiElement context,
+                        boolean unknownMembersAreNullable,
+                        boolean ignoreAssertions) {
+    myValueFactory = new DfaValueFactory(project, context, unknownMembersAreNullable);
     myIgnoreAssertions = ignoreAssertions;
   }
 
@@ -472,7 +477,7 @@ public class DataFlowRunner {
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state
-        DfType dfType = DfTypes.typedObject(factory.createDfaType(var.getType()), Nullability.NOT_NULL)
+        DfType dfType = DfTypes.typedObject(TypeConstraints.instanceOf(var.getType()), Nullability.NOT_NULL)
           .meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
         return factory.fromDfType(dfType);
       }

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -18,7 +19,6 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,18 +31,18 @@ import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
 import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
-  private final List<DfaValue> myValues = new ArrayList<>();
-  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = new HashMap<>();
-  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = new HashMap<>();
-  private final Map<PsiType, DfaPsiType> myDfaTypes = new HashMap<>();
+  private final @NotNull List<DfaValue> myValues = new ArrayList<>();
   private final boolean myUnknownMembersAreNullable;
-  private final FieldChecker myFieldChecker;
+  private final @NotNull FieldChecker myFieldChecker;
+  private final @NotNull Project myProject;
 
   /**
-   * @param context                   an item to analyze (code-block, expression, class)
+   * @param project a project in which context the analysis is performed
+   * @param context an item to analyze (code-block, expression, class)
    * @param unknownMembersAreNullable
    */
-  public DfaValueFactory(@Nullable PsiElement context, boolean unknownMembersAreNullable) {
+  public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context, boolean unknownMembersAreNullable) {
+    myProject = project;
     myFieldChecker = new FieldChecker(context);
     myUnknownMembersAreNullable = unknownMembersAreNullable;
     myValues.add(null);
@@ -92,17 +92,7 @@ public class DfaValueFactory {
       if (type.equals(PsiType.FLOAT)) return DfTypes.FLOAT;
       if (type.equals(PsiType.NULL)) return DfTypes.NULL;
     }
-    return DfTypes.typedObject(createDfaType(type), nullability);
-  }
-
-  @NotNull
-  public DfaPsiType createDfaType(@NotNull PsiType psiType) {
-    psiType = DfaPsiType.normalizeType(psiType);
-    DfaPsiType dfaType = myDfaTypes.get(psiType);
-    if (dfaType == null) {
-      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, this));
-    }
-    return dfaType;
+    return DfTypes.typedObject(TypeConstraints.instanceOf(type), nullability);
   }
 
   int registerValue(DfaValue value) {
@@ -112,11 +102,6 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
-  }
-
-  @NotNull
-  public DfaPsiType getType(int id) {
-    return StreamEx.ofValues(myDfaTypes).findFirst(t -> t.getID() == id).orElseThrow(IllegalArgumentException::new);
   }
 
   @Nullable
@@ -185,7 +170,7 @@ public class DfaValueFactory {
    * @return a DfaTypeValue whose type is DfConstantType that corresponds to given constant.
    */
   public DfaTypeValue getConstant(Object value, @NotNull PsiType type) {
-    return fromDfType(DfTypes.constant(value, createDfaType(type)));
+    return fromDfType(DfTypes.constant(value, type));
   }
 
   /**
@@ -234,6 +219,11 @@ public class DfaValueFactory {
     return getConstant(value, type);
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   @Nullable
   private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
     if (!(variable instanceof PsiField)) return null;
@@ -250,7 +240,7 @@ public class DfaValueFactory {
    */
   @NotNull
   public DfaTypeValue getDefaultValue(@NotNull PsiType type) {
-    return fromDfType(DfTypes.constant(PsiTypesUtil.getDefaultValue(type), createDfaType(type)));
+    return fromDfType(DfTypes.constant(PsiTypesUtil.getDefaultValue(type), type));
   }
 
   @NotNull

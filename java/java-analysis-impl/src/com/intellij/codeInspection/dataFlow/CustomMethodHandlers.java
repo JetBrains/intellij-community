@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -106,9 +105,9 @@ class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_LONG, "toBinaryString").parameterCount(1),
               (args, memState, factory, method) -> numberAsString(args, memState, 1, Long.SIZE))
     .register(instanceCall(JAVA_LANG_ENUM, "name").parameterCount(0),
-              (args, memState, factory, method) -> enumName(args.myQualifier, memState, factory, method.getReturnType()))
+              (args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType()))
     .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
-              (args, memState, factory, method) -> getEmptyCollectionConstant(factory, method))
+              (args, memState, factory, method) -> getEmptyCollectionConstant(method))
     .register(anyOf(
       staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
       staticCall(JAVA_UTIL_LIST, "of"),
@@ -119,7 +118,7 @@ class CustomMethodHandlers {
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
-      handler = CustomMethodHandlers::handleConstantCall;
+      handler = (arguments, state, factory, m) -> handleConstantCall(arguments, state, m);
     }
     CustomMethodHandler handler2 = CUSTOM_METHOD_HANDLERS.mapFirst(method);
     return handler == null ? handler2 : handler.compose(handler2);
@@ -131,8 +130,7 @@ class CustomMethodHandlers {
   }
 
   @NotNull
-  private static DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state,
-                                           DfaValueFactory factory, PsiMethod method) {
+  private static DfType handleConstantCall(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
     PsiType returnType = method.getReturnType();
     if (returnType == null) return TOP;
     List<Object> args = new ArrayList<>();
@@ -161,7 +159,7 @@ class CustomMethodHandlers {
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       return TOP;
     }
-    return DfTypes.constant(result, factory.createDfaType(returnType));
+    return DfTypes.constant(result, returnType);
   }
 
   private static Method toJvmMethod(PsiMethod method) {
@@ -244,9 +242,9 @@ class CustomMethodHandlers {
                                           DfaMemoryState memState, DfaValueFactory factory,
                                           PsiMethod method) {
     PsiType type = method.getReturnType();
-    if (type == null) return TOP;
-    DfaPsiType dfaType = factory.createDfaType(type);
-    int factor = dfaType.getPsiType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
+    if (!(type instanceof PsiClassType)) return TOP;
+    TypeConstraint constraint = TypeConstraints.instanceOf(type);
+    int factor = ((PsiClassType)type).rawType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
     DfType size;
     if (method.isVarArgs()) {
       size = memState.getDfType(ARRAY_LENGTH.createValue(factory, args.myArguments[0]));
@@ -256,19 +254,19 @@ class CustomMethodHandlers {
     }
     boolean asList = method.getName().equals("asList");
     Mutability mutability = asList ? Mutability.MUTABLE : Mutability.UNMODIFIABLE;
-    DfType result = DfTypes.typedObject(dfaType, Nullability.NOT_NULL)
+    DfType result = DfTypes.typedObject(constraint, Nullability.NOT_NULL)
       .meet(COLLECTION_SIZE.asDfType(size))
       .meet(mutability.asDfType());
     return asList ? result.meet(LOCAL_OBJECT) : result;
   }
 
-  private static DfType getEmptyCollectionConstant(DfaValueFactory factory, PsiMethod method) {
+  private static DfType getEmptyCollectionConstant(PsiMethod method) {
     String fieldName = "EMPTY_" + method.getName().substring("empty".length()).toUpperCase(Locale.ROOT);
     PsiClass collectionsClass = method.getContainingClass();
     if (collectionsClass == null) return TOP;
     PsiField field = collectionsClass.findFieldByName(fieldName, false);
     if (field == null) return TOP;
-    return DfTypes.constant(field, factory.createDfaType(field.getType()));
+    return DfTypes.constant(field, field.getType());
   }
 
   @NotNull
@@ -285,16 +283,16 @@ class CustomMethodHandlers {
     resultLen = resultLen
       .intersect(LongRangeSet.point(0).fromRelation(RelationType.GE))
       .intersect(length.fromRelation(RelationType.LE));
-    return getStringValue(factory, stringType, resultLen);
+    return getStringValue(stringType, resultLen);
   }
 
   @NotNull
-  private static DfType getStringValue(@NotNull DfaValueFactory factory, @NotNull PsiType stringType, @NotNull LongRangeSet stringLength) {
-    DfaPsiType dfaType = factory.createDfaType(stringType);
+  private static DfType getStringValue(@NotNull PsiType stringType, @NotNull LongRangeSet stringLength) {
     if (Long.valueOf(0).equals(stringLength.getConstantValue())) {
-      return DfTypes.constant("", dfaType);
+      return DfTypes.constant("", stringType);
     }
-    return DfTypes.typedObject(dfaType, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(DfTypes.intRange(stringLength)));
+    TypeConstraint type = TypeConstraints.instanceOf(stringType);
+    return DfTypes.typedObject(type, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(DfTypes.intRange(stringLength)));
   }
 
   @NotNull
@@ -350,11 +348,11 @@ class CustomMethodHandlers {
   }
 
   @NotNull
-  private static DfType enumName(DfaValue qualifier, DfaMemoryState state, DfaValueFactory factory, PsiType type) {
+  private static DfType enumName(DfaValue qualifier, DfaMemoryState state, PsiType type) {
     DfType dfType = state.getDfType(qualifier);
     PsiEnumConstant value = DfConstantType.getConstantOfType(dfType, PsiEnumConstant.class);
     if (value != null) {
-      return DfTypes.constant(value.getName(), factory.createDfaType(type));
+      return DfTypes.constant(value.getName(), type);
     }
     return TOP;
   }

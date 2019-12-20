@@ -16,7 +16,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +70,7 @@ public interface DfaMemoryState {
    * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
    * @throws java.util.EmptyStackException if stack is empty
    */
-  boolean castTopOfStack(@NotNull DfaPsiType type);
+  boolean castTopOfStack(@NotNull TypeConstraint type);
 
   /**
    * Returns a relation between given values within this state, if known
@@ -123,6 +127,13 @@ public interface DfaMemoryState {
    */
   @NotNull
   DfType getUnboxedDfType(@NotNull DfaValue value);
+
+  /**
+   * @param value value to get the type of
+   * @return the PsiType of given value, could be more precise than the declared type. May return null if not known.
+   */
+  @Nullable
+  PsiType getPsiType(@NotNull DfaValue value);
 
   void flushFields();
 

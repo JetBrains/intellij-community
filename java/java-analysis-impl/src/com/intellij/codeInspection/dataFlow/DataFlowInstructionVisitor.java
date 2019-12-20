@@ -179,7 +179,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   EntryStream<PsiTypeCastExpression, Pair<Boolean, PsiType>> getFailingCastExpressions() {
     return EntryStream.of(myClassCastProblems).filterValues(StateInfo::shouldReport).mapToValue(
-      (cast, info) -> Pair.create(info.alwaysFails(), myRealOperandTypes.getOrDefault(cast, TypeConstraint.empty()).getPsiType()));
+      (cast, info) -> Pair.create(info.alwaysFails(), myRealOperandTypes.getOrDefault(cast, TypeConstraints.TOP).getPsiType(cast.getProject())));
   }
 
   Set<PsiElement> getMutabilityViolations(boolean receiver) {
@@ -226,7 +226,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
-      myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::unite);
+      myRealOperandTypes.merge((PsiTypeCastExpression)parent, fact, TypeConstraint::join);
     }
     reportConstantExpressionValue(value, memState, expression, range);
   }

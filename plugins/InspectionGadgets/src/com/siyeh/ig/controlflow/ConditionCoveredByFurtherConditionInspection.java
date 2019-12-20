@@ -132,7 +132,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze) {
+    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
       @NotNull
       @Override
       protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,

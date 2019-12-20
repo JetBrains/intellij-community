@@ -443,7 +443,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (returnedExpressions.isEmpty()) return true;
 
-    final DataFlowRunner dfaRunner = new DataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner(myProject);
     final StandardInstructionVisitor returnChecker = new StandardInstructionVisitor() {
       @Override
       protected void checkReturnValue(@NotNull DfaValue value,
@@ -478,7 +478,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
-    final DataFlowRunner dfaRunner = new DataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
     
     class Visitor extends StandardInstructionVisitor {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
