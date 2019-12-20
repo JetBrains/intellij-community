@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -86,7 +87,8 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     myVcs.endChangeSet(name);
   }
 
-  private void fileCreated(@NotNull VirtualFile file) {
+  private void fileCreated(@Nullable VirtualFile file) {
+    if (file == null) return;
     beginChangeSet();
     createRecursively(file);
     endChangeSet(null);
@@ -212,10 +214,10 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
 
   private void handleAfterEvent(VFileEvent event) {
     if (event instanceof VFileCreateEvent) {
-      VirtualFile file = event.getFile();
-      if (file != null) {
-        fileCreated(file);
-      }
+      fileCreated(event.getFile());
+    }
+    else if (event instanceof VFileCopyEvent) {
+      fileCreated(((VFileCopyEvent)event).findCreatedFile());
     }
     else if (event instanceof VFilePropertyChangeEvent) {
       propertyChanged((VFilePropertyChangeEvent)event);

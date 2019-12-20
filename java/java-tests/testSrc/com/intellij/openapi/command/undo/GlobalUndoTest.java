@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -123,6 +124,20 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     StoreUtil.saveDocumentsAndProjectsAndApp(false);
 
     checkAllFilesDeleted();
+  }
+
+  public void testUndoFileCopy() throws Exception {
+    VirtualFile file = createFile("a.txt", "").getVirtualFile();
+
+    VirtualFile dir = file.getParent();
+    VirtualFile copy = WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<VirtualFile, IOException>)() -> {
+      return file.copy(this, dir, "b.txt");
+    });
+
+    globalUndo();
+
+    assertTrue(file.isValid());
+    assertFalse(copy.isValid());
   }
 
   public void testUndoRenameClass() {
