@@ -237,7 +237,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
 
     if (result == null) {
-      result =  KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      result = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     }
 
     if (result == null) {
@@ -348,16 +348,14 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
     }
   }
 
-  private class AppListener implements ApplicationActivationListener {
-
+  private final class AppListener implements ApplicationActivationListener {
     @Override
     public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        Component parent = UIUtil.findUltimateParent(owner);
-
-        if (parent == ideFrame) {
-          myLastFocusedAtDeactivation.put(ideFrame, owner);
-        }
+      Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      Component parent = UIUtil.findUltimateParent(owner);
+      if (parent == ideFrame) {
+        myLastFocusedAtDeactivation.put(ideFrame, owner);
+      }
     }
   }
 

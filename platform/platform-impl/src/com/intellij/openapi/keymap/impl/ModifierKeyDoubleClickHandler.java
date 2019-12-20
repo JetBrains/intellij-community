@@ -252,7 +252,9 @@ public final class ModifierKeyDoubleClickHandler {
         if (!action.isEnabledInModalContext()) {
           // This check is copied IdeKeyEventDispatcher#dispatchKeyEvent method
           Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-          if (focusedWindow != null && IdeKeyEventDispatcher.isModalContext(focusedWindow)) return false;
+          if (focusedWindow != null && IdeKeyEventDispatcher.isModalContext(focusedWindow)) {
+            return false;
+          }
         }
 
         DataContext context = calculateContext();
