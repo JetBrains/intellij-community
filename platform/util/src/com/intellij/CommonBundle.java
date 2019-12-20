@@ -111,6 +111,11 @@ public final class CommonBundle extends BundleBase {
     return message("button.close");
   }
 
+  @Deprecated
+  public static String getNoForAllButtonText() {
+    return message("button.no.for.all");
+  }
+
   public static String getApplyButtonText() {
     return message("button.apply");
   }
