@@ -3,8 +3,6 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,15 +36,17 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 public class JarFileSystemTest extends BareTestFixtureTestCase {
-  private static final Logger LOG = Logger.getInstance(JarFileSystemTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
@@ -225,30 +225,36 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testInvalidJar() {
-    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/maven-toolchain-1.0.jar";
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
-    assertNotNull(vFile);
-    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
-    assertNotNull(manifest);
-    VirtualFile classFile = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + "org/apache/maven/toolchain/java/JavaToolChain.class");
-    assertNotNull(classFile);
+  public void testInvalidZip() throws IOException {
+    File testZip = tempDir.newFile("test.zip");
+    try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(testZip))) {
+      writeEntry(zip, "a");
+      writeEntry(zip, "a/b");
+      writeEntry(zip, "a/b/c.txt");
+      writeEntry(zip, "x\\y\\z.txt");
+    }
+
+    String rootPath = FileUtil.toSystemIndependentName(testZip.getPath()) + JarFileSystem.JAR_SEPARATOR;
+    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(rootPath);
+    assertNotNull(jarRoot);
+    List<String> entries = new ArrayList<>();
+    VfsUtilCore.visitChildrenRecursively(jarRoot, new VirtualFileVisitor<Object>() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!jarRoot.equals(file)) {
+          String path = file.getPath().substring(rootPath.length());
+          entries.add(file.isDirectory() ? path + '/' : path);
+        }
+        return true;
+      }
+    });
+    assertThat(entries).containsExactlyInAnyOrder("a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/y/z.txt");
   }
 
-  @Test
-  public void testCrazyBackSlashesInZipEntriesMustBeTreatedAsRegularDirectorySeparators() {
-    String jarPath = PathManagerEx.getTestDataPath() + "/vfs/log4sql.jar";
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(jarPath);
-    assertNotNull(vFile);
-    VirtualFile manifest = findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
-    assertNotNull(manifest);
-
-    VirtualFile jarRoot = JarFileSystem.getInstance().findFileByPath(jarPath + JarFileSystem.JAR_SEPARATOR);
-    assertNotNull(jarRoot);
-    String crazyDir = "src\\core\\log";
-    String crazyEntry = "/log4sql_conf.jsp";
-    assertNotNull(findByPath(jarPath + JarFileSystem.JAR_SEPARATOR + crazyDir.replace('\\', '/') + crazyEntry));
-    assertNull(jarRoot.findChild(crazyDir));
+  private static void writeEntry(ZipOutputStream zip, String name) throws IOException {
+    ZipEntry entry = new ZipEntry(name);
+    zip.putNextEntry(entry);
+    zip.closeEntry();
   }
 
   @Test
