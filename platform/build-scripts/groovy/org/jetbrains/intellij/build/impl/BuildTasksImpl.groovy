@@ -431,6 +431,10 @@ idea.fatal.error.notification=disabled
       'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
       "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
     ]
+    String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
+    if (prefix != null) {
+      args += "-Dintellij.build.bundled.jre.prefix=$prefix"
+    }
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
     }

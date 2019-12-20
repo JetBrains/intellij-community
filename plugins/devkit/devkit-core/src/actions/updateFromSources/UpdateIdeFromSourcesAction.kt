@@ -307,6 +307,7 @@ open class UpdateIdeFromSourcesAction
     params.programParametersList.add(scriptFile.absolutePath)
     params.programParametersList.add("update-from-sources")
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
+    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
     if (bundledPluginDirsToSkip.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
     }
