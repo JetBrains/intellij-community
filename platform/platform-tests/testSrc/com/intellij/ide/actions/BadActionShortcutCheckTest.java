@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.RunAll;
@@ -47,7 +44,7 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
       public void actionPerformed(@NotNull AnActionEvent e) {
       }
     };
-    AnAction action2 = ActionManager.getInstance().getAction("$Delete");
+    AnAction action2 = ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE);
     JPanel component = new JPanel();
 
     action1.registerCustomShortcutSet(action2.getShortcutSet(), component);
@@ -55,8 +52,8 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
   }
 
   public void testGlobalActionCantChangeShortcut1() {
-    AnAction action1 = ActionManager.getInstance().getAction("$Copy");
-    AnAction action2 = ActionManager.getInstance().getAction("$Delete");
+    AnAction action1 = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
+    AnAction action2 = ActionManager.getInstance().getAction(IdeActions.ACTION_DELETE);
     JPanel component = new JPanel();
 
     action1.registerCustomShortcutSet(action2.getShortcutSet(), component);
@@ -64,7 +61,7 @@ public class BadActionShortcutCheckTest extends LightPlatformTestCase {
   }
 
   public void testGlobalActionCantChangeShortcut2() {
-    AnAction action = ActionManager.getInstance().getAction("$Copy");
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
     JPanel component = new JPanel();
 
     action.registerCustomShortcutSet(CustomShortcutSet.EMPTY, component);
