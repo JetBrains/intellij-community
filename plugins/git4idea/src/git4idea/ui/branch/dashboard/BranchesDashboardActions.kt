@@ -249,7 +249,7 @@ internal object BranchesDashboardActions {
         text = "Fetch All Remotes"
         icon = AllIcons.Actions.Refresh
         description = ""
-        val project = e.project!!
+        val project = e.project ?: return@with
         if (GitFetchSupport.fetchSupport(project).isFetchRunning) {
           isEnabled = false
           description = "Fetch in progress..."
