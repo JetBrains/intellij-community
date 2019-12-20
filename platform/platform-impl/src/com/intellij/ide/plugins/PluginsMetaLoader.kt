@@ -169,7 +169,7 @@ object PluginsMetaLoader {
   private fun saveETagForFile(file: File, eTag: String) {
     val eTagFile = getETagFile(file)
     try {
-      FileUtil.writeToFile(eTagFile, eTag)
+      eTagFile.writeText(eTag)
     }
     catch (e: IOException) {
       LOG.warn("Can't save ETag to '" + eTagFile.absolutePath + "'", e)
