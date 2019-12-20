@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
@@ -159,7 +160,13 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   static {
     ourLib = _loadLibrary();
-    if (ourLib != null) {
+    if (ourLib == null) {
+      ourGLogger = null;
+      ourUpdateAllRoots = null;
+      ourOnAppmenuServiceAppeared = null;
+      ourOnAppmenuServiceVanished = null;
+    }
+    else {
       ourGLogger = (level, msg) -> {
         if (level == GlobalMenuLib.LOG_LEVEL_INFO) {
           if (TRACE_SYSOUT) {
@@ -221,27 +228,29 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           glibMain.start();
         }
       }
+    }
+  }
+
+  static final class MyActionTuner implements ActionConfigurationCustomizer {
+    @Override
+    public void customize(@NotNull ActionManager actionManager) {
+      if (!SystemInfo.isLinux || ApplicationManager.getApplication().isUnitTestMode() || !isPresented()) {
+        return;
+      }
 
       // register toggle-swing-menu action (to be able to enable swing menu when system applet is died)
-      ActionManager actionManager = ActionManager.getInstance();
-      AnAction toggleSwingMenu = new AnAction(TOGGLE_SWING_MENU_ACTION_NAME, TOGGLE_SWING_MENU_ACTION_DESC, null) {
-        boolean enabled = false;
+      actionManager
+        .registerAction(TOGGLE_SWING_MENU_ACTION_ID, new AnAction(TOGGLE_SWING_MENU_ACTION_NAME, TOGGLE_SWING_MENU_ACTION_DESC, null) {
+          boolean enabled = false;
 
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          for (GlobalMenuLinux gml : ourInstances.values()) {
-            gml.toggle(enabled);
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            for (GlobalMenuLinux gml : ourInstances.values()) {
+              gml.toggle(enabled);
+            }
+            enabled = !enabled;
           }
-          enabled = !enabled;
-        }
-      };
-      actionManager.registerAction(TOGGLE_SWING_MENU_ACTION_ID, toggleSwingMenu);
-    }
-    else {
-      ourGLogger = null;
-      ourUpdateAllRoots = null;
-      ourOnAppmenuServiceAppeared = null;
-      ourOnAppmenuServiceVanished = null;
+        });
     }
   }
 
@@ -779,7 +788,9 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   public static boolean isAvailable() { return ourLib != null; }
 
   // return true when corresponding dbus-service is alive
-  public static boolean isPresented() { return ourLib != null && ourIsServiceAvailable; }
+  public static boolean isPresented() {
+    return ourLib != null && ourIsServiceAvailable;
+  }
 
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux ||
@@ -1014,7 +1025,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     @Override
     public String toString() {
-      String res = String.format("'%s' (uid=%d, act=%s)", txt, uid, String.valueOf(action));
+      String res = String.format("'%s' (uid=%d, act=%s)", txt, uid, action);
       if (position == -1) {
         res += " [toDelele]";
       }
