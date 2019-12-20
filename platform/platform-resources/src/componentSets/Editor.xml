@@ -1,9 +1,6 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.ide.actionMacro.ActionMacroManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
     </component>
   </application-components>
@@ -11,5 +8,8 @@
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler" preload="await"/>
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
+
+    <applicationService serviceImplementation="com.intellij.ide.actionMacro.ActionMacroManager"/>
+    <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
   </extensions>
 </idea-plugin>

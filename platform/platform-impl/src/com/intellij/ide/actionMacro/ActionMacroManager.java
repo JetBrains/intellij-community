@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -29,6 +30,7 @@ import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.PositionTracker;
@@ -97,6 +99,14 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, null);
   }
 
+  static final class MyActionTuner implements ActionConfigurationCustomizer {
+    @Override
+    public void customize(@NotNull ActionManager actionManager) {
+      // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
+      NonUrgentExecutor.getInstance().execute(() -> getInstance());
+    }
+  }
+
   @Override
   public void loadState(@NotNull Element state) {
     myMacros = new ArrayList<>();
@@ -106,7 +116,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myMacros.add(macro);
     }
 
-    registerActions();
+    registerActions(ActionManager.getInstance());
   }
 
   @NotNull
@@ -122,7 +132,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
   }
 
   public static ActionMacroManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ActionMacroManager.class);
+    return ApplicationManager.getApplication().getService(ActionMacroManager.class);
   }
 
   public void startRecording(String macroName) {
@@ -304,7 +314,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
     myLastMacro = myRecordingMacro;
     addRecordedMacroWithName(macroName);
-    registerActions();
+    registerActions(ActionManager.getInstance());
   }
 
   private void addRecordedMacroWithName(@Nullable String macroName) {
@@ -409,27 +419,21 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     return myLastMacro != null;
   }
 
-  public void registerActions() {
-    unregisterActions();
-    HashSet<String> registeredIds = new HashSet<>(); // to prevent exception if 2 or more targets have the same name
+  public void registerActions(@NotNull ActionManager actionManager) {
+    // unregister Tool actions
+    for (String oldId : actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX)) {
+      actionManager.unregisterAction(oldId);
+    }
 
-    ActionMacro[] macros = getAllMacros();
-    for (final ActionMacro macro : macros) {
+    // to prevent exception if 2 or more targets have the same name
+    Set<String> registeredIds = new HashSet<>();
+
+    for (ActionMacro macro : getAllMacros()) {
       String actionId = macro.getActionId();
-
       if (!registeredIds.contains(actionId)) {
         registeredIds.add(actionId);
-        ActionManager.getInstance().registerAction(actionId, new InvokeMacroAction(macro));
+        actionManager.registerAction(actionId, new InvokeMacroAction(macro));
       }
-    }
-  }
-
-  public void unregisterActions() {
-
-    // unregister Tool actions
-    String[] oldIds = ActionManager.getInstance().getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
-    for (final String oldId : oldIds) {
-      ActionManager.getInstance().unregisterAction(oldId);
     }
   }
 
