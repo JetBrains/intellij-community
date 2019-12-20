@@ -34,6 +34,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -61,10 +62,9 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import static java.lang.System.out;
 
 /**
  * @author Alexander Lobas
@@ -677,7 +677,7 @@ public class PluginManagerConfigurable
                   String builtinUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
                   List<IdeaPluginDescriptor> builtinList = new ArrayList<>();
 
-                  for (Map.Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
+                  for (Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
                     List<IdeaPluginDescriptor> descriptors = entry.getKey().equals(builtinUrl) ? builtinList : result.descriptors;
                     for (IdeaPluginDescriptor descriptor : entry.getValue()) {
                       if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
@@ -786,6 +786,8 @@ public class PluginManagerConfigurable
         PluginsGroup downloaded = new PluginsGroup("Downloaded");
         downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
+        boolean groupBundled = Registry.is("plugins.group.bundled.category", false);
+        Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
         PluginsGroup bundled = new PluginsGroup("Bundled");
 
         ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
@@ -801,6 +803,14 @@ public class PluginManagerConfigurable
                 continue;
               }
               bundled.descriptors.add(descriptor);
+              if (groupBundled) {
+                String category = StringUtil.defaultIfEmpty(descriptor.getCategory(), "Other Bundled");
+                List<IdeaPluginDescriptor> groupDescriptors = bundledGroups.get(category);
+                if (groupDescriptors == null) {
+                  bundledGroups.put(category, groupDescriptors = new ArrayList<>());
+                }
+                groupDescriptors.add(descriptor);
+              }
               if (descriptor.isEnabled()) {
                 bundledEnabled++;
               }
@@ -820,11 +830,10 @@ public class PluginManagerConfigurable
             public void linkSelected(LinkLabel aSource, Object aLinkData) {
               myUpdateAll.setEnabled(false);
 
-              for (ListPluginComponent plugin : downloaded.ui.plugins) {
-                plugin.updatePlugin();
-              }
-              for (ListPluginComponent plugin : bundled.ui.plugins) {
-                plugin.updatePlugin();
+              for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+                for (ListPluginComponent plugin : group.plugins) {
+                  plugin.updatePlugin();
+                }
               }
             }
           }, null);
@@ -840,10 +849,43 @@ public class PluginManagerConfigurable
 
         myPluginModel.setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
-        bundled.sortByName();
-        bundled.titleWithCount(bundledEnabled);
-        myInstalledPanel.addGroup(bundled);
-        myPluginModel.addEnabledGroup(bundled);
+        if (groupBundled) {
+          List<PluginsGroup> groups = new ArrayList<>();
+
+          for (Entry<String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
+            PluginsGroup group = new PluginsGroup(entry.getKey()) {
+              @Override
+              public void titleWithCount(int enabled) {
+                rightAction.setText(enabled == 0 ? "Enable All" : "Disable All");
+              }
+            };
+            group.descriptors.addAll(entry.getValue());
+            group.sortByName();
+            group.rightAction = new LinkLabel<>("", null, (__, ___) -> myPluginModel
+              .changeEnableDisable(ContainerUtil.toArray(group.descriptors, IdeaPluginDescriptor[]::new),
+                                   group.rightAction.getText().startsWith("Enable")));
+            group.titleWithEnabled(myPluginModel);
+            groups.add(group);
+          }
+
+          ContainerUtil.sort(groups, (o1, o2) -> StringUtil.compare(o1.title, o2.title, true));
+          PluginsGroup otherGroup = ContainerUtil.find(groups, group -> group.title.equals("Other Bundled"));
+          if (otherGroup != null) {
+            groups.remove(otherGroup);
+            groups.add(otherGroup);
+          }
+
+          for (PluginsGroup group : groups) {
+            myInstalledPanel.addGroup(group);
+            myPluginModel.addEnabledGroup(group);
+          }
+        }
+        else {
+          bundled.sortByName();
+          bundled.titleWithCount(bundledEnabled);
+          myInstalledPanel.addGroup(bundled);
+          myPluginModel.addEnabledGroup(bundled);
+        }
 
         myPluginUpdatesService.connectInstalled(updates -> {
           if (ContainerUtil.isEmpty(updates)) {
