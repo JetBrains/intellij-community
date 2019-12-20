@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -41,7 +42,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
       Disposer.dispose(disposable);
     }
 
-    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, myProject);
+    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, ((ProjectEx)myProject).getEarlyDisposable());
     PlatformTestUtil.saveProject(recreated);
     assertThat(ModuleManager.getInstance(recreated).getModules()).isEmpty();
   }
@@ -58,7 +59,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
       Disposer.dispose(disposable);
     }
 
-    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, myProject);
+    Project recreated = ProjectManagerEx.getInstanceEx().newProjectForTest(myProjectDir, ((ProjectEx)myProject).getEarlyDisposable());
     createModule(recreated, "module", ModuleTypeId.WEB_MODULE);
     PlatformTestUtil.saveProject(recreated);
     Module module = assertOneElement(ModuleManager.getInstance(recreated).getModules());
