@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactDefinition;
+import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
@@ -412,7 +413,7 @@ public class TrackingRunner extends DataFlowRunner {
   public static class NullableDfaProblemType extends DfaProblemType {
     @Override
     public CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
-      FactDefinition<DfaNullability> nullability = history.findFact(history.myTopOfStack, DfaFactType.NULLABILITY);
+      FactDefinition<DfaNullability> nullability = history.findFact(history.myTopOfStack, FactExtractor.nullability());
       if (nullability.myFact == DfaNullability.NULLABLE || nullability.myFact == DfaNullability.NULL) {
         return new CauseItem[]{runner.findNullabilityCause(history, nullability.myFact)};
       }
@@ -667,7 +668,7 @@ public class TrackingRunner extends DataFlowRunner {
       if (operandHistory != null) {
         DfaValue operandValue = operandHistory.myTopOfStack;
         if (!value) {
-          FactDefinition<DfaNullability> nullability = operandHistory.findFact(operandValue, DfaFactType.NULLABILITY);
+          FactDefinition<DfaNullability> nullability = operandHistory.findFact(operandValue, FactExtractor.nullability());
           if (nullability.myFact == DfaNullability.NULL) {
             CauseItem causeItem = new CauseItem("value '" + operand.getText() + "' is always 'null'", operand);
             causeItem.addChildren(findConstantValueCause(operand, operandHistory, null));
@@ -728,15 +729,15 @@ public class TrackingRunner extends DataFlowRunner {
     }
     DfaValue operandValue = operandHistory.myTopOfStack;
 
-    FactDefinition<TypeConstraint> fact = operandHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
-    String explanation = fact.myFact == null ? null : fact.myFact.getAssignabilityExplanation(wanted, isInstance);
+    FactDefinition<TypeConstraint> fact = operandHistory.findFact(operandValue, FactExtractor.constraint());
+    String explanation = fact.myFact.getAssignabilityExplanation(wanted, isInstance);
     while (explanation != null) {
       MemoryStateChange causeLocation = fact.myChange;
       if (causeLocation == null) break;
       MemoryStateChange prevHistory = causeLocation.getPrevious();
       if (prevHistory == null) break;
-      fact = prevHistory.findFact(operandValue, DfaFactType.TYPE_CONSTRAINT);
-      TypeConstraint prevConstraint = fact.getFact(TypeConstraint.empty());
+      fact = prevHistory.findFact(operandValue, FactExtractor.constraint());
+      TypeConstraint prevConstraint = fact.myFact;
       String prevExplanation = prevConstraint.getAssignabilityExplanation(wanted, isInstance);
       if (prevExplanation == null) {
         if (causeLocation.myInstruction instanceof AssignInstruction && causeLocation.myTopOfStack == operandValue) {
@@ -782,8 +783,8 @@ public class TrackingRunner extends DataFlowRunner {
                                         MemoryStateChange leftChange, DfaValue leftValue, 
                                         MemoryStateChange rightChange, DfaValue rightValue) {
     ProgressManager.checkCanceled();
-    FactDefinition<DfaNullability> leftNullability = leftChange.findFact(leftValue, DfaFactType.NULLABILITY);
-    FactDefinition<DfaNullability> rightNullability = rightChange.findFact(rightValue, DfaFactType.NULLABILITY);
+    FactDefinition<DfaNullability> leftNullability = leftChange.findFact(leftValue, FactExtractor.nullability());
+    FactDefinition<DfaNullability> rightNullability = rightChange.findFact(rightValue, FactExtractor.nullability());
     if ((leftNullability.myFact == DfaNullability.NULL && rightNullability.myFact == DfaNullability.NOT_NULL) ||
         (rightNullability.myFact == DfaNullability.NULL && leftNullability.myFact == DfaNullability.NOT_NULL)) {
       return new CauseItem[]{
@@ -791,15 +792,13 @@ public class TrackingRunner extends DataFlowRunner {
         findNullabilityCause(rightChange, rightNullability.myFact)};
     }
 
-    FactDefinition<LongRangeSet> leftRange = leftChange.findFact(leftValue, DfaFactType.RANGE);
-    FactDefinition<LongRangeSet> rightRange = rightChange.findFact(rightValue, DfaFactType.RANGE);
-    if (leftRange.myFact != null && rightRange.myFact != null) {
-      LongRangeSet fromRelation = rightRange.myFact.fromRelation(relationType.getNegated());
-      if (fromRelation != null && !fromRelation.intersects(leftRange.myFact)) {
-        return new CauseItem[]{
-          findRangeCause(leftChange, leftValue, leftRange.myFact, "left operand is %s"),
-          findRangeCause(rightChange, rightValue, rightRange.myFact, "right operand is %s")};
-      }
+    FactDefinition<LongRangeSet> leftRange = leftChange.findFact(leftValue, FactExtractor.range());
+    FactDefinition<LongRangeSet> rightRange = rightChange.findFact(rightValue, FactExtractor.range());
+    LongRangeSet fromRelation = rightRange.myFact.fromRelation(relationType.getNegated());
+    if (fromRelation != null && !fromRelation.intersects(leftRange.myFact)) {
+      return new CauseItem[]{
+        findRangeCause(leftChange, leftValue, leftRange.myFact, "left operand is %s"),
+        findRangeCause(rightChange, rightValue, rightRange.myFact, "right operand is %s")};
     }
     if (leftValue instanceof DfaVariableValue) {
       Relation relation = new Relation(relationType, rightValue);
@@ -1042,7 +1041,7 @@ public class TrackingRunner extends DataFlowRunner {
         }
       }
     }
-    FactDefinition<DfaNullability> info = factUse.findFact(factUse.myTopOfStack, DfaFactType.NULLABILITY);
+    FactDefinition<DfaNullability> info = factUse.findFact(factUse.myTopOfStack, FactExtractor.nullability());
     MemoryStateChange factDef = info.myFact == nullability ? info.myChange : null;
     if (nullability == DfaNullability.NOT_NULL) {
       String explanation = getObviouslyNonNullExplanation(expression);
@@ -1308,18 +1307,16 @@ public class TrackingRunner extends DataFlowRunner {
         MemoryStateChange operandPush = factUse.findExpressionPush(operand);
         if (operandPush != null) {
           DfaValue castedValue = operandPush.myTopOfStack;
-          FactDefinition<LongRangeSet> operandInfo = operandPush.findFact(castedValue, DfaFactType.RANGE);
-          LongRangeSet operandRange = operandInfo.myFact == null ? LongRangeSet.fromType(type) : operandInfo.myFact;
-          if (operandRange != null) {
-            LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
-            if (range.equals(result)) {
-              CauseItem cause =
-                new CauseItem(new RangeDfaProblemType("result of '(" + type.getCanonicalText() + ")' cast is %s", range, null), expression);
-              if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
-                cause.addChildren(findRangeCause(operandPush, castedValue, operandRange, "cast operand is %s"));
-              }
-              return cause;
+          FactDefinition<LongRangeSet> operandInfo = operandPush.findFact(castedValue, FactExtractor.range());
+          LongRangeSet operandRange = operandInfo.myFact;
+          LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
+          if (range.equals(result)) {
+            CauseItem cause =
+              new CauseItem(new RangeDfaProblemType("result of '(" + type.getCanonicalText() + ")' cast is %s", range, null), expression);
+            if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
+              cause.addChildren(findRangeCause(operandPush, castedValue, operandRange, "cast operand is %s"));
             }
+            return cause;
           }
         }
       }
@@ -1336,12 +1333,12 @@ public class TrackingRunner extends DataFlowRunner {
           MemoryStateChange rightPush = factUse.findExpressionPush(right);
           if (leftPush != null && rightPush != null) {
             DfaValue leftVal = leftPush.myTopOfStack;
-            FactDefinition<LongRangeSet> leftSet = leftPush.findFact(leftVal, DfaFactType.RANGE);
+            FactDefinition<LongRangeSet> leftSet = leftPush.findFact(leftVal, FactExtractor.range());
             DfaValue rightVal = rightPush.myTopOfStack;
-            FactDefinition<LongRangeSet> rightSet = rightPush.findFact(rightVal, DfaFactType.RANGE);
+            FactDefinition<LongRangeSet> rightSet = rightPush.findFact(rightVal, FactExtractor.range());
             LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
-            LongRangeSet leftRange = leftSet.getFact(fromType);
-            LongRangeSet rightRange = rightSet.getFact(fromType);
+            LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
+            LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
             LongRangeSet result = leftRange.binOpFromToken(binOp.getOperationTokenType(), rightRange, isLong);
             if (range.equals(result)) {
               String sign = binOp.getOperationSign().getText();
@@ -1363,7 +1360,7 @@ public class TrackingRunner extends DataFlowRunner {
     }
     PsiPrimitiveType type = expression != null ? ObjectUtils.tryCast(expression.getType(), PsiPrimitiveType.class) : null;
     CauseItem item = new CauseItem(new RangeDfaProblemType(template, range, type), factUse);
-    FactDefinition<LongRangeSet> info = factUse.findFact(value, DfaFactType.RANGE);
+    FactDefinition<LongRangeSet> info = factUse.findFact(value, FactExtractor.range());
     MemoryStateChange factDef = range.equals(info.myFact) ? info.myChange : null;
     if (factDef != null) {
       if (factDef.myInstruction instanceof AssignInstruction && factDef.myTopOfStack == value) {
