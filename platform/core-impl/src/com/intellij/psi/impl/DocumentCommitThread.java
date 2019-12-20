@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -67,6 +68,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
                                    @NonNls @NotNull Object reason,
                                    @NotNull ModalityState modality) {
     assert !isDisposed : "already disposed";
+    TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     if (!project.isInitialized()) return;
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
