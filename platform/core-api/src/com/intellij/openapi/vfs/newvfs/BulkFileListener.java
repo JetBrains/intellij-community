@@ -19,7 +19,7 @@ import java.util.List;
  *<pre/>
  * 
  * Please note that the VFS events are project-agnostic so all listeners will be notified about events from all open projects. 
- * [disposable] is used only for removing the listeners
+ * For filtering the events use {@link com.intellij.openapi.roots.ProjectRootManager#getFileIndex} with {@link com.intellij.openapi.roots.FileIndex#isInContent}.
  * 
  * For a non-blocking alternative please see {@link com.intellij.openapi.vfs.AsyncFileListener}.
  */
