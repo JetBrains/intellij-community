@@ -18,7 +18,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.JBProtocolCommand;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -99,7 +102,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       @Override
       public void addNotify() {
         super.addNotify();
-        TransactionGuard.submitTransaction(FlatWelcomeFrame.this, () -> JBProtocolCommand.handleCurrentCommand());
+        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
       }
     };
 
@@ -253,7 +256,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
+  private final class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
@@ -375,6 +378,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
 
+    @NotNull
     private JComponent createBody() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(createLogo(), BorderLayout.NORTH);
@@ -505,9 +509,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       JPanel actions = new NonOpaquePanel();
       actions.setBorder(JBUI.Borders.emptyLeft(10));
       actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
-      ActionManager actionManager = ActionManager.getInstance();
-      ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       DefaultActionGroup group = new DefaultActionGroup();
+      ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
       myTouchbarActions.removeAll();
@@ -624,23 +627,25 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return action;
     }
 
-    protected void goBack() {
+    private void goBack() {
       mySlidingPanel.swipe("root", JBCardLayout.SwipeDirection.BACKWARD).doWhenDone(() -> {
         mySlidingPanel.getRootPane().setDefaultButton(null);
         setTitle(getWelcomeFrameTitle());
       });
     }
 
-    private void collectAllActions(DefaultActionGroup group, ActionGroup actionGroup) {
+    private void collectAllActions(@NotNull DefaultActionGroup group, @NotNull ActionGroup actionGroup) {
       for (AnAction action : actionGroup.getChildren(null)) {
         if (action instanceof ActionGroup && !((ActionGroup)action).isPopup()) {
           collectAllActions(group, (ActionGroup)action);
-        } else {
+        }
+        else {
           group.add(action);
         }
       }
     }
 
+    @NotNull
     private JComponent createLogo() {
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
@@ -677,7 +682,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @NotNull
     private Font getProductFont(int size) {
       try {
-        return loadFont("/fonts/Roboto-Light.ttf").deriveFont((float)JBUIScale.scale(size));
+        return loadFont().deriveFont((float)JBUIScale.scale(size));
       }
       catch (Throwable t) {
         Logger.getInstance(AppUIUtil.class).warn(t);
@@ -685,12 +690,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
     }
 
-    private Font loadFont(String path) {
-      URL url = AppUIUtil.class.getResource(path);
+    @NotNull
+    private Font loadFont() {
+      @SuppressWarnings("SpellCheckingInspection")
+      String fontPath = "/fonts/Roboto-Light.ttf";
+      URL url = AppUIUtil.class.getResource(fontPath);
       if (url == null) {
-        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + path);
-      } else {
-
+        Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + fontPath);
+      }
+      else {
         try (InputStream is = url.openStream()) {
           return Font.createFont(Font.TRUETYPE_FONT, is);
         }
@@ -715,7 +723,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       comp.addKeyListener(new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
-          final JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
+          JList list = UIUtil.findComponentOfType(FlatWelcomeFrame.this.getComponent(), JList.class);
           if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_SPACE) {
             InputEvent event = e;
             if (e.getComponent() instanceof JComponent) {
@@ -725,19 +733,24 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
               }
             }
             action.actionPerformed(AnActionEvent.createFromAnAction(action, event, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext()));
-          } else if (e.getKeyCode() == prevKeyCode) {
+          }
+          else if (e.getKeyCode() == prevKeyCode) {
             focusPrev(comp);
-          } else if (e.getKeyCode() == nextKeyCode) {
+          }
+          else if (e.getKeyCode() == nextKeyCode) {
             focusNext(comp);
-          } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+          }
+          else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             if (focusListOnLeft) {
               if (list != null) {
                 IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
               }
-            } else {
+            }
+            else {
               focusPrev(comp);
             }
-          } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+          }
+          else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             focusNext(comp);
           }
         }
@@ -758,7 +771,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     }
 
-    protected void focusPrev(JComponent comp) {
+    private void focusPrev(JComponent comp) {
       FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
       if (policy != null) {
         Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
@@ -768,7 +781,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
 
-    protected void focusNext(JComponent comp) {
+    private void focusNext(JComponent comp) {
       FocusTraversalPolicy policy = FlatWelcomeFrame.this.getFocusTraversalPolicy();
       if (policy != null) {
         Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
