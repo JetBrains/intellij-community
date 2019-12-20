@@ -41,8 +41,6 @@ import java.util.zip.ZipOutputStream;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
@@ -96,8 +94,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertNotNull(vFile);
 
     VirtualFile jarRoot = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    VirtualFile child = assertOneElement(jarRoot.getChildren());
-    assertEquals("META-INF", child.getName());
+    assertThat(ContainerUtil.map(jarRoot.getChildren(), VirtualFile::getName)).containsExactly("META-INF");
 
     VirtualFile entry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + JarFile.MANIFEST_NAME);
     assertEquals("", VfsUtilCore.loadText(entry));
@@ -124,9 +121,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(updated.get());
     assertTrue(entry.isValid());
     assertEquals("update", VfsUtilCore.loadText(entry));
-    List<String> children = ContainerUtil.map(jarRoot.getChildren(), f -> f.getName());
-    assertEquals(2, children.size());
-    assertSameElements(children, "META-INF", "some.txt");
+    assertThat(ContainerUtil.map(jarRoot.getChildren(), VirtualFile::getName)).containsExactlyInAnyOrder("META-INF", "some.txt");
 
     VirtualFile newEntry = findByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR + "some.txt");
     assertEquals("some text", VfsUtilCore.loadText(newEntry));
@@ -165,7 +160,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
       int N = Math.max(2, Runtime.getRuntime().availableProcessors());
       for (int iteration = 0; iteration < 200; ++iteration) {
-        List<Future> futuresToWait = new ArrayList<>();
+        List<Future<?>> futuresToWait = new ArrayList<>();
         CountDownLatch sameStartCondition = new CountDownLatch(N);
 
         for (int i = 0; i < N; ++i) {
@@ -190,7 +185,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
           }));
         }
 
-        for (Future future : futuresToWait) future.get(2, TimeUnit.SECONDS);
+        for (Future<?> future : futuresToWait) future.get(2, TimeUnit.SECONDS);
       }
     }
     catch (TimeoutException e) {
