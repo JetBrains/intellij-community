@@ -164,7 +164,7 @@ public final class DfaVariableValue extends DfaValue {
 
   private DfType calcInherentType() {
     PsiType type = getType();
-    DfType dfType = getFactory().createDfType(type, Nullability.UNKNOWN);
+    DfType dfType = DfTypes.typedObject(type, Nullability.UNKNOWN);
     if(myDescriptor instanceof SpecialField) {
       return dfType.meet(((SpecialField)myDescriptor).getDefaultValue(false));
     }

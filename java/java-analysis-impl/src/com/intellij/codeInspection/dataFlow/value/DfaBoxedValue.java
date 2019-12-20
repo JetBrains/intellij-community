@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiType;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +56,7 @@ public class DfaBoxedValue extends DfaValue {
   @NotNull
   @Override
   public DfType getDfType() {
-    return myFactory.createDfType(myType, Nullability.NOT_NULL);
+    return DfTypes.typedObject(myType, Nullability.NOT_NULL);
   }
 
   public static class Factory {

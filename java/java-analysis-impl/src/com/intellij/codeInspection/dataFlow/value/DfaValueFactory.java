@@ -5,7 +5,6 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.java.JavaLanguage;
@@ -74,25 +73,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaTypeValue getObjectType(@Nullable PsiType type, @NotNull Nullability nullability) {
-    return fromDfType(createDfType(type, nullability));
-  }
-
-  @NotNull
-  public DfType createDfType(@Nullable PsiType type, @NotNull Nullability nullability) {
-    if (type == null) return DfTypes.TOP;
-    if (type instanceof PsiPrimitiveType) {
-      if (type.equals(PsiType.VOID)) return DfTypes.TOP;
-      if (type.equals(PsiType.BOOLEAN)) return DfTypes.BOOLEAN;
-      if (type.equals(PsiType.INT)) return DfTypes.INT;
-      if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
-        return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(type)));
-      }
-      if (type.equals(PsiType.LONG)) return DfTypes.LONG;
-      if (type.equals(PsiType.DOUBLE)) return DfTypes.DOUBLE;
-      if (type.equals(PsiType.FLOAT)) return DfTypes.FLOAT;
-      if (type.equals(PsiType.NULL)) return DfTypes.NULL;
-    }
-    return DfTypes.typedObject(TypeConstraints.instanceOf(type), nullability);
+    return fromDfType(DfTypes.typedObject(type, nullability));
   }
 
   int registerValue(DfaValue value) {

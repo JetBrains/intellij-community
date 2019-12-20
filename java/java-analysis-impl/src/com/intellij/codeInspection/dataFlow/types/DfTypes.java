@@ -4,12 +4,14 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Commonly used types and factory methods
@@ -395,6 +397,7 @@ public class DfTypes {
    * @param type value type
    * @return a constant type that contains only given constant
    */
+  @NotNull
   public static DfConstantType<?> constant(@Nullable Object constant, @NotNull PsiType type) {
     if (constant == null) {
       return NULL;
@@ -423,10 +426,24 @@ public class DfTypes {
   /**
    * @param type type of the object
    * @param nullability nullability
-   * @return a reference type that references given objects of given type (or it subtypes) and has given nullability 
+   * @return a type that references given objects of given type (or it subtypes) and has given nullability 
    */
-  public static DfReferenceType typedObject(@NotNull TypeConstraint type, @NotNull Nullability nullability) {
-    return new DfGenericObjectType(Collections.emptySet(), type,
+  @NotNull
+  public static DfType typedObject(@Nullable PsiType type, @NotNull Nullability nullability) {
+    if (type == null) return TOP;
+    if (type instanceof PsiPrimitiveType) {
+      if (type.equals(PsiType.VOID)) return TOP;
+      if (type.equals(PsiType.BOOLEAN)) return BOOLEAN;
+      if (type.equals(PsiType.INT)) return INT;
+      if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
+        return intRange(Objects.requireNonNull(LongRangeSet.fromType(type)));
+      }
+      if (type.equals(PsiType.LONG)) return LONG;
+      if (type.equals(PsiType.DOUBLE)) return DOUBLE;
+      if (type.equals(PsiType.FLOAT)) return FLOAT;
+      if (type.equals(PsiType.NULL)) return NULL;
+    }
+    return new DfGenericObjectType(Collections.emptySet(), TypeConstraints.instanceOf(type),
                                    DfaNullability.fromNullability(nullability), Mutability.UNKNOWN, null, BOTTOM, false);
   }
 

@@ -243,7 +243,6 @@ class CustomMethodHandlers {
                                           PsiMethod method) {
     PsiType type = method.getReturnType();
     if (!(type instanceof PsiClassType)) return TOP;
-    TypeConstraint constraint = TypeConstraints.instanceOf(type);
     int factor = ((PsiClassType)type).rawType().equalsToText(JAVA_UTIL_MAP) ? 2 : 1;
     DfType size;
     if (method.isVarArgs()) {
@@ -254,7 +253,7 @@ class CustomMethodHandlers {
     }
     boolean asList = method.getName().equals("asList");
     Mutability mutability = asList ? Mutability.MUTABLE : Mutability.UNMODIFIABLE;
-    DfType result = DfTypes.typedObject(constraint, Nullability.NOT_NULL)
+    DfType result = DfTypes.typedObject(type, Nullability.NOT_NULL)
       .meet(COLLECTION_SIZE.asDfType(size))
       .meet(mutability.asDfType());
     return asList ? result.meet(LOCAL_OBJECT) : result;
@@ -291,8 +290,7 @@ class CustomMethodHandlers {
     if (Long.valueOf(0).equals(stringLength.getConstantValue())) {
       return DfTypes.constant("", stringType);
     }
-    TypeConstraint type = TypeConstraints.instanceOf(stringType);
-    return DfTypes.typedObject(type, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(DfTypes.intRange(stringLength)));
+    return DfTypes.typedObject(stringType, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(DfTypes.intRange(stringLength)));
   }
 
   @NotNull

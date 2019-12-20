@@ -223,7 +223,7 @@ public class DfaExpressionFactory {
         getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getElseExpression(), targetType));
     }
     PsiType type = expression.getType();
-    DfType dfType = myFactory.createDfType(type, NullabilityUtil.getExpressionNullability(expression));
+    DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
     if (expression instanceof PsiArrayInitializerExpression) {
       int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
       dfType = dfType.meet(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length)));

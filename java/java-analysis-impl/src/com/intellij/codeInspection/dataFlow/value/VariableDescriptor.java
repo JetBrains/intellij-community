@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public interface VariableDescriptor {
     }
     PsiType type = getType(null);
     LongRangeSet range = LongRangeSet.fromPsiElement(getPsiElement());
-    DfType dfType = factory.createDfType(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
+    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, getPsiElement()));
     if (dfType instanceof DfIntegralType) {
       dfType = ((DfIntegralType)dfType).meetRange(range);
     }

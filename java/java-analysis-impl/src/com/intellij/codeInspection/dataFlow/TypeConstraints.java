@@ -7,12 +7,16 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class TypeConstraints {
+  /**
+   * Top constraint (no restriction; any non-primitive value satisfies this)
+   */
   public static final TypeConstraint TOP = new TypeConstraint() {
     @NotNull
     @Override
@@ -42,6 +46,9 @@ public class TypeConstraints {
       return "";
     }
   };
+  /**
+   * Bottom constraint (no actual type satisfies this)
+   */
   public static final TypeConstraint BOTTOM = new TypeConstraint() {
     @NotNull
     @Override
@@ -77,7 +84,12 @@ public class TypeConstraints {
     if (type instanceof PsiArrayType) {
       PsiType componentType = ((PsiArrayType)type).getComponentType();
       if (componentType instanceof PsiPrimitiveType) {
-        return StreamEx.of(PrimitiveArray.values()).findFirst(p -> p.getType().equals(componentType)).orElse(null);
+        for (PrimitiveArray p : PrimitiveArray.values()) {
+          if (p.getType().equals(componentType)) {
+            return p;
+          }
+        }
+        return null;
       }
       TypeConstraint.Exact componentConstraint = createExact(componentType);
       return componentConstraint == null ? null : new ExactArray(componentConstraint);
@@ -97,9 +109,10 @@ public class TypeConstraints {
   /**
    * @param type PsiType
    * @return a constraint for the object that has exactly given PsiType; 
-   * {@link #BOTTOM} if the object of given type cannot be instantiated
+   * {@link #BOTTOM} if the object of given type cannot be instantiated.
    */
   @NotNull
+  @Contract(pure = true)
   public static TypeConstraint exact(@NotNull PsiType type) {
     type = normalizeType(type);
     TypeConstraint.Exact exact = createExact(type);
@@ -107,8 +120,28 @@ public class TypeConstraints {
     return BOTTOM;
   }
 
+  /**
+   * @param superClass a superclass
+   * @param tag a tag to distinguish subclasses; subclasses of the same class with the same tag are considered the same
+   * @return an unknown exact final direct subclass of given class or interface.
+   * Useful in rare cases when the corresponding subclass class object cannot be found. 
+   */
+  public static TypeConstraint exactSubClassOf(@NotNull PsiClass superClass, @NotNull Object tag) {
+    TypeConstraint.Exact exactSuperClass = exactClass(superClass);
+    if (exactSuperClass instanceof ExactClass) {
+      return new ExactSubClass((ExactClass)exactSuperClass, tag);
+    }
+    return exactSuperClass.instanceOf();
+  }
+
+  /**
+   * @param type PsiType
+   * @return a constraint for the object whose type is the supplied type or any subtype
+   */
   @NotNull
+  @Contract(pure = true)
   public static TypeConstraint instanceOf(@NotNull PsiType type) {
+    if (type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) return TOP;
     type = normalizeType(type);
     if (type instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
@@ -116,18 +149,25 @@ public class TypeConstraints {
       for (PsiType conjunct : conjuncts) {
         TypeConstraint.Exact exact = createExact(conjunct);
         if (exact == null) {
-          return new TypeConstraint.Constrained(Collections.singleton(new Unresolved(type.getCanonicalText())), Collections.emptySet());
+          return new Unresolved(type.getCanonicalText()).instanceOf();
         }
         result = result.meet(new TypeConstraint.Constrained(Collections.singleton(exact), Collections.emptySet()));
       }
       return result;
     }
     TypeConstraint.Exact exact = createExact(type);
-    if (exact == null) return new TypeConstraint.Constrained(Collections.singleton(new Unresolved(type.getCanonicalText())), Collections.emptySet());
+    if (exact == null) {
+      return new Unresolved(type.getCanonicalText()).instanceOf();
+    }
     return exact.instanceOf();
   }
 
+  /**
+   * @param type PsiType
+   * @return a constraint for the object whose type is not the supplied type or any of its subtypes
+   */
   @NotNull
+  @Contract(pure = true)
   public static TypeConstraint notInstanceOf(@NotNull PsiType type) {
     type = normalizeType(type);
     TypeConstraint.Exact exact = createExact(type);
@@ -183,7 +223,7 @@ public class TypeConstraints {
   }
 
   @NotNull
-  public static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
+  private static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) {
       if (CommonClassNames.JAVA_LANG_CLONEABLE.equals(psiClass.getQualifiedName())) {
         return ArraySuperInterface.CLONEABLE;
@@ -232,12 +272,12 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       return other.equals(this);
     }
 
     @Override
-    public boolean isConvertibleFrom(Exact other) {
+    public boolean isConvertibleFrom(@NotNull Exact other) {
       return other.equals(this) || other.isAssignableFrom(this);
     }
 
@@ -279,7 +319,7 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       if (equals(other)) return true;
       if (other instanceof PrimitiveArray || other instanceof ExactArray || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
@@ -292,13 +332,13 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isConvertibleFrom(Exact other) {
-      return false;
+    public boolean isConvertibleFrom(@NotNull Exact other) {
+      return !other.isFinal() || isAssignableFrom(other);
     }
 
     @Override
     public boolean canBeInstantiated() {
-      return true;
+      return false;
     }
   }
 
@@ -367,7 +407,7 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       if (equals(other) || isObject() || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
         String name = myClass.getQualifiedName();
@@ -381,7 +421,7 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isConvertibleFrom(Exact other) {
+    public boolean isConvertibleFrom(@NotNull Exact other) {
       if (equals(other) || isObject() || other instanceof Unresolved) return true;
       if (other instanceof ArraySuperInterface) {
         if (myClass.isInterface()) return true;
@@ -410,7 +450,7 @@ public class TypeConstraints {
     }
   }
 
-  public static final class ExactSubClass implements TypeConstraint.Exact {
+  private static final class ExactSubClass implements TypeConstraint.Exact {
     private final @NotNull ExactClass mySuper;
     private final @NotNull Object myTag;
 
@@ -449,12 +489,12 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       return equals(other);
     }
 
     @Override
-    public boolean isConvertibleFrom(Exact other) {
+    public boolean isConvertibleFrom(@NotNull Exact other) {
       return other.isAssignableFrom(this);
     }
 
@@ -501,13 +541,13 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       if (!(other instanceof ExactArray)) return false;
       return myComponent.isAssignableFrom(((ExactArray)other).myComponent);
     }
     
     @Override
-    public boolean isConvertibleFrom(Exact other) {
+    public boolean isConvertibleFrom(@NotNull Exact other) {
       if (other instanceof ExactArray) {
         return myComponent.isConvertibleFrom(((ExactArray)other).myComponent);
       }
@@ -553,12 +593,12 @@ public class TypeConstraints {
     }
 
     @Override
-    public boolean isAssignableFrom(Exact other) {
+    public boolean isAssignableFrom(@NotNull Exact other) {
       return other instanceof Unresolved || other instanceof ExactClass || other instanceof ExactSubClass;
     }
 
     @Override
-    public boolean isConvertibleFrom(Exact other) {
+    public boolean isConvertibleFrom(@NotNull Exact other) {
       return other instanceof Unresolved || other instanceof ExactClass || other instanceof ExactSubClass || 
              other instanceof ArraySuperInterface;
     }

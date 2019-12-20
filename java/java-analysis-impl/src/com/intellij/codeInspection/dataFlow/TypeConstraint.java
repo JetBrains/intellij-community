@@ -74,7 +74,7 @@ public interface TypeConstraint {
    */
   @NotNull
   default String getPresentationText(@Nullable PsiType type) {
-    return toString();
+    return toShortString();
   }
 
   /**
@@ -90,34 +90,62 @@ public interface TypeConstraint {
   default boolean isComparedByEquals() {
     return false;
   }
-  
+
+  /**
+   * @param otherType          other type
+   * @param expectedAssignable whether other type is expected to be assignable from this, or not
+   * @return textual explanation about why expected assignability cannot be satisfied; null if it can be satisfied, or
+   * explanation cannot be found.
+   */
   @Nullable
   default String getAssignabilityExplanation(@NotNull TypeConstraint otherType, boolean expectedAssignable) {
     return null;
   }
 
+  /**
+   * @return stream of "instanceof" constraints of this type
+   */
   default StreamEx<Exact> instanceOfTypes() {
     return StreamEx.empty();
   }
-  
+
+  /**
+   * @return stream of "not-instanceof" constraints of this type
+   */
   default StreamEx<Exact> notInstanceOfTypes() {
     return StreamEx.empty();
   }
 
+  /**
+   * @return a {@link DfType} that represents any object that satisfies this constraint, or null (nullability is unknown)
+   */
   default DfType asDfType() {
     return this == TypeConstraints.BOTTOM ? DfTypes.BOTTOM :
            DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
   }
 
+  /**
+   * @return a short string representation
+   */
   default String toShortString() {
     return toString();
   }
 
+  /**
+   * @param type {@link DfType} to extract {@link TypeConstraint} from
+   * @return an extracted type constraint
+   */
   @NotNull
   static TypeConstraint fromDfType(DfType type) {
-    return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : TypeConstraints.TOP;
+    return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() :
+           type == DfTypes.BOTTOM ? TypeConstraints.BOTTOM :
+           TypeConstraints.TOP;
   }
 
+  /**
+   * Represents an exact type. It may also represent types that cannot be instantiated (e.g. interface types), so no object
+   * could satisfy them, but they are still useful as building blocks for {@link Constrained}.
+   */
   interface Exact extends TypeConstraint {
     @NotNull
     @Override
@@ -133,7 +161,10 @@ public interface TypeConstraint {
       if (this.equals(other) || other.isSuperConstraintOf(this)) return this;
       return TypeConstraints.BOTTOM;
     }
-    
+
+    /**
+     * @return true if the type represented by this constraint cannot have subtypes
+     */
     boolean isFinal();
 
     @Override
@@ -141,11 +172,22 @@ public interface TypeConstraint {
       return true;
     }
 
+    /**
+     * @return stream of supertypes (except java.lang.Object)
+     */
     StreamEx<Exact> superTypes();
-    
-    boolean isAssignableFrom(Exact other);
-    
-    boolean isConvertibleFrom(Exact other);
+
+    /**
+     * @param other type to test assignability
+     * @return true if this type is assignable from the other type
+     */
+    boolean isAssignableFrom(@NotNull Exact other);
+
+    /**
+     * @param other type to test convertibility
+     * @return true if this type is convertible from the other type
+     */
+    boolean isConvertibleFrom(@NotNull Exact other);
 
     @Override
     default StreamEx<Exact> instanceOfTypes() {
@@ -179,15 +221,24 @@ public interface TypeConstraint {
       return isFinal() ? new Constrained(Collections.emptySet(), Collections.singleton(this)) : null;
     }
 
+    /**
+     * @return a constraint that represents objects not only of this type but also of any subtypes. May return self if the type is final.
+     */
     default TypeConstraint instanceOf() {
       if (isFinal()) return this;
       return new Constrained(Collections.singleton(this), Collections.emptySet());
     }
 
+    /**
+     * @return a constraint that represents objects that are not instanceof this type
+     */
     default TypeConstraint notInstanceOf() {
       return new Constrained(Collections.emptySet(), Collections.singleton(this));
     }
 
+    /**
+     * @return true if instances of this type can exist (i.e. the type is not abstract). 
+     */
     boolean canBeInstantiated();
     
     @Override
@@ -198,10 +249,13 @@ public interface TypeConstraint {
     @NotNull
     @Override
     default String getPresentationText(@Nullable PsiType type) {
-      return type != null && TypeConstraints.exact(type).equals(this) ? "" : "exactly " + this;
+      return type != null && TypeConstraints.exact(type).equals(this) ? "" : "exactly " + toShortString();
     }
   }
 
+  /**
+   * A non-exact, constrained type
+   */
   final class Constrained implements TypeConstraint {
     private final @NotNull Set<Exact> myInstanceOf;
     private final @NotNull Set<Exact> myNotInstanceOf;
@@ -444,7 +498,7 @@ public interface TypeConstraint {
       return EntryStream.of("instanceof ", instanceOfTypes,
                             "not instanceof ", myNotInstanceOf)
         .removeValues(Set::isEmpty)
-        .mapKeyValue((prefix, set) -> StreamEx.of(set).map(Exact::toString).sorted().joining(", ", prefix, ""))
+        .mapKeyValue((prefix, set) -> StreamEx.of(set).map(Exact::toShortString).sorted().joining(", ", prefix, ""))
         .joining("\n");
     }
   }

@@ -607,7 +607,7 @@ public class StreamChainInliner implements CallInliner {
       }
       else {
         DfaValueFactory factory = builder.getFactory();
-        DfType dfType = factory.createDfType(myCall.getType(), Nullability.NOT_NULL);
+        DfType dfType = DfTypes.typedObject(myCall.getType(), Nullability.NOT_NULL);
         if (myImmutable) {
           dfType = dfType.meet(Mutability.UNMODIFIABLE.asDfType());
         } else {
