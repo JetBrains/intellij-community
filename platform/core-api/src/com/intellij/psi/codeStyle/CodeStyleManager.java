@@ -83,7 +83,10 @@ public abstract class CodeStyleManager  {
    * @see #reformatText(PsiFile, int, int)
    */
   @Deprecated
-  @NotNull public abstract PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+  @NotNull
+  public PsiElement reformat(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
+    return reformat(element, canChangeWhiteSpacesOnly, false);
+  }
 
   /**
    * Reformats the contents of the specified PSI element, and optionally enforces braces
@@ -132,10 +135,12 @@ public abstract class CodeStyleManager  {
    * @see #reformatText(PsiFile, int, int)
    */
   @Deprecated
-  public abstract PsiElement reformatRange(@NotNull PsiElement element,
-                                           int startOffset,
-                                           int endOffset,
-                                           boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException;
+  public PsiElement reformatRange(@NotNull PsiElement element,
+                                  int startOffset,
+                                  int endOffset,
+                                  boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
+    return reformatRange(element, startOffset, endOffset, canChangeWhiteSpacesOnly, false);
+  }
 
   /**
    * Reformats part of the contents of the specified PSI element, and optionally enforces braces
