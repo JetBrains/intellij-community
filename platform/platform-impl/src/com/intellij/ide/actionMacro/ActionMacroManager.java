@@ -29,7 +29,6 @@ import com.intellij.ui.AnimatedIcon.Recording;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.PositionTracker;
@@ -70,13 +69,15 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
   private String myLastTyping = "";
 
-  public ActionMacroManager(@NotNull MessageBus messageBus) {
-    messageBus.connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+  ActionMacroManager() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull final AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         String id = ActionManager.getInstance().getId(action);
-        if (id == null) return;
-        //noinspection HardCodedStringLiteral
+        if (id == null) {
+          return;
+        }
+
         if ("StartStopMacroRecording".equals(id)) {
           myLastActionInputEvent.add(event.getInputEvent());
         }
@@ -129,14 +130,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     myIsRecording = true;
     myRecordingMacro = new ActionMacro(macroName);
 
-    final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(null).getStatusBar();
+    StatusBar statusBar = WindowManager.getInstance().getIdeFrame(null).getStatusBar();
     myWidget = new Widget(statusBar);
     statusBar.addWidget(myWidget);
   }
 
-
-  private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
-
+  private final class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
     private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
                                                          Recording.ICONS.toArray(new Icon[0]),
                                                          AllIcons.Ide.Macro.Recording_1,
@@ -489,8 +488,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     }
   }
 
-  private class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {
-
+  private final class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
       if (isRecording() && e instanceof KeyEvent) {
