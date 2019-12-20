@@ -47,6 +47,8 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
+import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
@@ -56,6 +58,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import net.miginfocom.layout.CC;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -505,13 +508,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
+    @NotNull
     private JComponent createActionPanel() {
-      JPanel actions = new NonOpaquePanel();
-      actions.setBorder(JBUI.Borders.emptyLeft(10));
-      actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
       DefaultActionGroup group = new DefaultActionGroup();
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
+
+      MigLayout layout = new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(UIUtil.DEFAULT_HGAP * 2, UIUtil.DEFAULT_VGAP * 4).flowY().fillX());
+      JPanel panel = new JPanel(layout);
+      panel.setOpaque(false);
+      panel.add(Box.createHorizontalGlue(), new CC().wrap().pushX());
 
       myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
@@ -535,20 +541,18 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           link.setPaintUnderline(false);
           link.setNormalColor(getLinkNormalColor());
           JActionLinkPanel button = new JActionLinkPanel(link);
-          button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
             TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
-          actions.add(button);
+          panel.add(button);
           myTouchbarActions.add(action);
         }
       }
 
-      WelcomeScreenActionsPanel panel = new WelcomeScreenActionsPanel();
-      panel.actions.add(actions);
-      return panel.root;
+      panel.add(Box.createHorizontalGlue(), new CC().newline().pushX());
+      return panel;
     }
 
     @Nullable
@@ -569,7 +573,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         super(new BorderLayout());
         myActionLink = actionLink;
         add(myActionLink);
-        NonOpaquePanel.setTransparent(this);
+        setOpaque(false);
       }
 
       @Override
@@ -580,8 +584,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         return accessibleContext;
       }
 
-      protected class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
-        public AccessibleJActionLinkPanel(AccessibleContext context) {
+      protected final class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
+        AccessibleJActionLinkPanel(AccessibleContext context) {
           super(context);
         }
 
@@ -850,11 +854,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Override
   public JComponent getComponent() {
     return getRootPane();
-  }
-
-  public static class WelcomeScreenActionsPanel {
-    private JPanel root;
-    private JPanel actions;
   }
 
   public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
