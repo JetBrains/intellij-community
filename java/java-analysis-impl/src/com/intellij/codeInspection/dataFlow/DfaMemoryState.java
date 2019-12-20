@@ -64,15 +64,6 @@ public interface DfaMemoryState {
   void setVarValue(DfaVariableValue var, DfaValue value);
 
   /**
-   * Ensures that top-of-stack value is either null or belongs to the supplied type
-   *
-   * @param type the type to cast to
-   * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
-   * @throws java.util.EmptyStackException if stack is empty
-   */
-  boolean castTopOfStack(@NotNull TypeConstraint type);
-
-  /**
    * Returns a relation between given values within this state, if known
    * @param left first value
    * @param right second value

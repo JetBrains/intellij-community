@@ -282,7 +282,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (transfer != null) {
       DfaMemoryState castFail = memState.createCopy();
       if (fromType != null && type.isConvertibleFrom(fromType)) {
-        if (!memState.castTopOfStack(constraint)) {
+        if (!castTopOfStack(factory, memState, constraint)) {
           castPossible = false;
         } else {
           result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
@@ -302,7 +302,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     } else {
       if (fromType != null && type.isConvertibleFrom(fromType)) {
-        if (!memState.castTopOfStack(constraint)) {
+        if (!castTopOfStack(factory, memState, constraint)) {
           castPossible = false;
         }
       }
@@ -313,6 +313,22 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     onTypeCast(instruction.getExpression(), memState, castPossible);
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  private static boolean castTopOfStack(@NotNull DfaValueFactory factory,
+                                        @NotNull DfaMemoryState state,
+                                        @NotNull TypeConstraint type) {
+    DfaValue value = state.peek();
+    DfType dfType = state.getDfType(value);
+    DfType result = dfType.meet(type.asDfType());
+    if (!result.equals(dfType)) {
+      if (result == DfTypes.NULL || !state.meetDfType(value, result)) return false;
+      if (!(value instanceof DfaVariableValue)) {
+        state.pop();
+        state.push(factory.fromDfType(result));
+      }
+    }
+    return true;
   }
 
   protected void onTypeCast(PsiTypeCastExpression castExpression, DfaMemoryState state, boolean castPossible) {}

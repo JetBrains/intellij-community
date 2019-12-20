@@ -519,21 +519,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myStack.isEmpty();
   }
 
-  @Override
-  public boolean castTopOfStack(@NotNull TypeConstraint type) {
-    DfaValue value = peek();
-    DfType dfType = getDfType(value);
-    DfType result = dfType.meet(type.asDfType());
-    if (!result.equals(dfType)) {
-      if (result == DfTypes.NULL || !meetDfType(value, result)) return false;
-      if (!(value instanceof DfaVariableValue)) {
-        pop();
-        push(myFactory.fromDfType(result));
-      }
-    }
-    return true;
-  }
-
   private void convertReferenceEqualityToValueEquality(DfaValue value) {
     int id = canonicalize(value).getID();
     Integer index = myIdToEqClassesIndices.get(id);
