@@ -133,12 +133,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     init {
       awtFocusListener = AWTEventListener { event ->
         event as FocusEvent
+
+        handlePinnedWindowFocusEvent(event) { toolWindowId ->
+          process { manager ->
+            val entry = manager.idToEntry.get(toolWindowId) ?: return@process
+            val info = manager.layout.getInfo(toolWindowId) ?: return@process
+            manager.doDeactivateToolWindow(info, entry)
+          }
+        }
+
         if (event.id != FocusEvent.FOCUS_GAINED) {
           return@AWTEventListener
         }
 
+        val component = event.component ?: return@AWTEventListener
         processOpenedProjects { project ->
-          val component = event.component ?: return@AWTEventListener
           for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.editorComposites) {
             if (composite.editors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
               (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
@@ -167,15 +176,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           (getInstance(project) as ToolWindowManagerImpl).projectClosed()
         }
       })
-
-      addFocusLostListener(pinnedWindowFocusLostHandler = { toolWindowId ->
-          process { manager ->
-            val entry = manager.idToEntry.get(toolWindowId) ?: return@process
-            val info = manager.layout.getInfo(toolWindowId) ?: return@process
-            manager.doDeactivateToolWindow(info, entry)
-          }
-        }
-      )
 
       connection.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
         override fun activeKeymapChanged(keymap: Keymap?) {
@@ -1907,28 +1907,25 @@ internal enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
 }
 
-private fun addFocusLostListener(pinnedWindowFocusLostHandler: (String) -> Unit) {
-  val listener = AWTEventListener { event ->
-    val eventId = event.id
-    if (event !is FocusEvent || !(eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_GAINED)) {
-      return@AWTEventListener
-    }
+private fun handlePinnedWindowFocusEvent(event: FocusEvent, pinnedWindowFocusLostHandler: (String) -> Unit) {
+  val eventId = event.id
+  if (!(eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_GAINED)) {
+    return
+  }
 
-    val id = ToolWindowManager.getActiveId() ?: return@AWTEventListener
+  val id = ToolWindowManager.getActiveId() ?: return
 
-    // let's check that it is a toolwindow who loses the focus
-    if (event.oppositeComponent != null && isInActiveToolWindow(event.source) && !isInActiveToolWindow(event.oppositeComponent)) {
-      // a toolwindow lost focus
-      val activeToolWindow = getActiveToolWindow()
-      val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
-      if (!event.isTemporary &&
-          !focusGoesToPopup && activeToolWindow != null &&
-          (activeToolWindow.isAutoHide || activeToolWindow.type == ToolWindowType.SLIDING)) {
-        pinnedWindowFocusLostHandler(id)
-      }
+  // let's check that it is a toolwindow who loses the focus
+  if (event.oppositeComponent != null && isInActiveToolWindow(event.source) && !isInActiveToolWindow(event.oppositeComponent)) {
+    // a toolwindow lost focus
+    val activeToolWindow = getActiveToolWindow()
+    val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
+    if (!event.isTemporary &&
+        !focusGoesToPopup && activeToolWindow != null &&
+        (activeToolWindow.isAutoHide || activeToolWindow.type == ToolWindowType.SLIDING)) {
+      pinnedWindowFocusLostHandler(id)
     }
   }
-  Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
 }
 
 private fun isInActiveToolWindow(component: Any?): Boolean {
