@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Pavel.Dolgov
  */
 public class SdkSetupNotificationTest extends JavaCodeInsightFixtureTestCase {
-
   public void testProjectSdk() {
     Sdk sdk = IdeaTestUtil.getMockJdk18();
     setProjectSdk(sdk);
