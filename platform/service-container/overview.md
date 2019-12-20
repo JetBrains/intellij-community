@@ -51,7 +51,7 @@ See [StartupActivity]. Do not forget to implement `DumbAware` to indicate that a
 There are two extension points:
 
 * `postStartupActivity`
-* `backgroundPostStartupActivity` (see `BACKGROUND_POST_STARTUP_ACTIVITY` docs).
+* `backgroundPostStartupActivity` Acts as `postStartupActivity` but executed not immediately after project opening, but with 5 seconds delay.
 
 To register:
 
