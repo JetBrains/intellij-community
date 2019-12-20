@@ -265,11 +265,14 @@ public class HardcodedContracts {
 
   private static List<MethodContract> equalsContracts(PsiMethodCallExpression call) {
     PsiExpression qualifier = call == null ? null : call.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && (knownAsEqualByReference(qualifier.getType()) || DfaUtil.isComparedByEquals(qualifier.getType()))) {
-      return Arrays.asList(
-        singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnTrue()),
-        trivialContract(returnFalse())
-      );
+    if (qualifier != null) {
+      PsiType type = qualifier.getType();
+      if (type != null && (knownAsEqualByReference(type) || TypeConstraints.exact(type).isComparedByEquals())) {
+        return Arrays.asList(
+          singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnTrue()),
+          trivialContract(returnFalse())
+        );
+      }
     }
     return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          singleConditionContract(ContractValue.qualifier(), RelationType.EQ,

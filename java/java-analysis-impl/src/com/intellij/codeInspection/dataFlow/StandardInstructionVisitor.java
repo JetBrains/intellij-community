@@ -454,15 +454,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       PsiMethodReferenceExpression context = (PsiMethodReferenceExpression)instruction.getContext();
       value = dereference(memState, value, NullabilityProblemKind.callMethodRefNPE.problem(context, null));
     }
-    if (sig.mutatesThis() && Mutability.fromDfType(memState.getDfType(value)).isUnmodifiable()) {
+    DfType dfType = memState.getDfType(value);
+    if (sig.mutatesThis() && Mutability.fromDfType(dfType).isUnmodifiable()) {
       reportMutabilityViolation(true, instruction.getContext());
-      DfType dfType = memState.getDfType(value);
       if (dfType instanceof DfReferenceType) {
         memState.setDfType(value, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
       }
     }
     if (!(value.getType() instanceof PsiArrayType) &&
-        (DfaUtil.isComparedByEquals(value.getType()) ||
+        (TypeConstraint.fromDfType(dfType).isComparedByEquals() ||
          instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType))) {
       // For now drop locality on every qualified call except primitive returning pure calls
       // as value might escape through the return value

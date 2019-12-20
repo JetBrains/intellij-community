@@ -302,10 +302,6 @@ public class DfaUtil {
     return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);
   }
 
-  public static boolean isComparedByEquals(PsiType type) {
-    return type != null && TypeConstraints.exact(type).isComparedByEquals();
-  }
-
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {

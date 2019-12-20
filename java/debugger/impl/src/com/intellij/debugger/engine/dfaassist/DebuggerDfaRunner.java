@@ -227,8 +227,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
 
     void finish() {
       if (myChanged) {
-        DfaVariableValue[] distinctValues =
-          StreamEx.ofValues(myCanonicalMap).filter(v -> v.getType() != null && !DfaUtil.isComparedByEquals(v.getType()))
+        DfaVariableValue[] distinctValues = StreamEx.ofValues(myCanonicalMap)
+            .filter(v -> v.getType() != null && !TypeConstraints.exact(v.getType()).isComparedByEquals())
             .toArray(new DfaVariableValue[0]);
         EntryStream.ofPairs(distinctValues)
           .filterKeyValue(
