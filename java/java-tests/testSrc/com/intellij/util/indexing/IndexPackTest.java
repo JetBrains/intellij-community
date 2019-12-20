@@ -193,7 +193,7 @@ public class IndexPackTest extends TestCase {
     }
 
     try (UncompressedZipFileSystem fs = new UncompressedZipFileSystem(pack.toPath(), new UncompressedZipFileSystemProvider())) {
-      PlatformTestUtil.startPerformanceTest("read", 4000, () -> {
+      PlatformTestUtil.startPerformanceTest("read", 6000, () -> {
 
         ReadOnlyIndexPack<String, String, String, ?> indexPack = new ReadOnlyIndexPack<>(generateIndexNames(packSize)
                                                                                            .map(name -> createStringLengthIndex(fs.getPath(name, "index"), true))
