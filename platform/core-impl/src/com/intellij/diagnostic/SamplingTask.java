@@ -29,7 +29,7 @@ public class SamplingTask {
   public SamplingTask(int intervalMs, int maxDurationMs) {
     myDumpInterval = intervalMs;
     myMaxDumps = maxDurationMs / intervalMs;
-    myCurrentTime = myStartTime = System.currentTimeMillis();
+    myCurrentTime = myStartTime = System.nanoTime();
     myGcCurrentTime = myGcStartTime = currentGcTime();
     myOsAverageLoad = OS_MX_BEAN.getSystemLoadAverage();
     ScheduledExecutorService executor = PerformanceWatcher.getInstance().getExecutor();
@@ -37,7 +37,7 @@ public class SamplingTask {
   }
 
   private void dumpThreads() {
-    myCurrentTime = System.currentTimeMillis();
+    myCurrentTime = System.nanoTime();
     myGcCurrentTime = currentGcTime();
     ThreadInfo[] infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false);
     if (!myFuture.isCancelled()) {
@@ -69,7 +69,7 @@ public class SamplingTask {
   }
 
   public long getTotalTime() {
-    return myCurrentTime - myStartTime;
+    return TimeUnit.NANOSECONDS.toMillis(myCurrentTime - myStartTime);
   }
 
   public long getGcTime() {
