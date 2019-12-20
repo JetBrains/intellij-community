@@ -293,7 +293,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, Language language) {
+  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, @NotNull Language language) {
     List<Language> dialects = language.getDialects();
     boolean applyToDialects = wrapper.applyToDialects();
     Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
@@ -304,7 +304,7 @@ public class InspectionEngine {
     return result;
   }
 
-  private static void addDialects(@NotNull Language language, @NotNull Set<String> result) {
+  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
     for (Language dialect : language.getDialects()) {
       result.add(dialect.getID());
       addDialects(dialect, result);
