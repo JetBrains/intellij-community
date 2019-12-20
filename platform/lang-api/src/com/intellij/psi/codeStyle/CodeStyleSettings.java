@@ -1413,4 +1413,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myModificationTracker;
   }
 
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+  }
 }

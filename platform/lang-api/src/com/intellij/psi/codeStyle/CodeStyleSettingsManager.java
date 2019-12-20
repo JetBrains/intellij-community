@@ -60,7 +60,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return ApplicationManager.getApplication().getService(AppCodeStyleSettingsManager.class);
   }
 
-  protected final void registerExtensionPointListeners(@NotNull Disposable disposable) {
+  protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
     FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<FileIndentOptionsProvider>() {
         @Override
@@ -89,6 +89,19 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
           unregisterFileTypeIndentOptions(enumSettings(), extension.getFileType());
         }
       }, disposable);
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          registerLanguageSettings(enumSettings(), extension);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterLanguageSettings(enumSettings(), extension);
+        }
+      }, disposable
+    );
   }
 
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
@@ -105,6 +118,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public final void unregisterFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
                                                     @NotNull FileType fileType) {
     allSettings.forEach(settings -> settings.unregisterAdditionalIndentOptions(fileType));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void registerLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                             @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.registerSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                               @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
