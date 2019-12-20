@@ -69,14 +69,6 @@ I i = {3}
     fileHighlightingTest GrUnresolvedAccessInspection
   }
 
-  void 'test reassigned var in lambda'() {
-    fileHighlightingTest GrUnresolvedAccessInspection
-  }
-
-  void 'test reassigned var in lambda 2'() {
-    fileHighlightingTest GrUnresolvedAccessInspection
-  }
-
   void 'test illegal single argument lambda'() {
     fileHighlightingTest ()
   }

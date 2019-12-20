@@ -1273,84 +1273,6 @@ class T {
 ''', JAVA_LANG_OBJECT
   }
 
-  void '_test closure local with instanceof constraint'() {
-    doTest '''
-def m() {
-        def aa = "1"
-        1.with {
-            aa
-            if (aa instanceof Object) {
-                a<caret>a
-            }
-        }
-    }
-''', JAVA_LANG_STRING
-  }
-
-  void 'test closure local with instanceof constraint CS'() {
-    doTest '''
-@groovy.transform.CompileStatic
-def m() {
-        def aa = "1"
-        1.with {
-            aa
-            if (aa instanceof Object) {
-                a<caret>a
-            }
-        }
-    }
-''', JAVA_LANG_STRING
-  }
-
-  void '_test nested closure local'() {
-    doTest '''
-def m() {
-        def aa = "1"
-        1.with {
-            aa = 2
-            2.with {
-                if (aa instanceof Object) {
-                    a<caret>a
-                }
-            }
-        }
-    }
-''', JAVA_LANG_INTEGER
-  }
-
-  void '_test nested closure local 2'() {
-    doTest '''
-def m() {
-        def aa = "1"
-        aa = 2
-        1.with {
-            2.with {
-                if (aa instanceof Object) {
-                    a<caret>a
-                }
-            }
-        }
-    }
-''', JAVA_LANG_INTEGER
-  }
-
-  void 'test nested closure local CS'() {
-    doTest '''
-@groovy.transform.CompileStatic
-def m() {
-        def aa = 1
-        1.with {
-            aa = ""
-            2.with {
-                if (aa instanceof Object) {
-                    a<caret>a
-                }
-            }
-        }
-    }
-''', "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]"
-  }
-
   void 'test spread call expression in chain call '() {
     doTest '''
 [""]*.trim().las<caret>t()
@@ -1365,5 +1287,4 @@ class C {
 [new C()]*.field.las<caret>t()
 ''', JAVA_LANG_INTEGER
   }
-
 }

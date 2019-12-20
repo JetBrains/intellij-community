@@ -294,24 +294,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     final PsiType nominal = refExpr.getNominalType(true);
-
-    Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);
-    if (reassigned != null && reassigned.booleanValue()) {
-      PsiType reassignedType = GrReassignedLocalVarsChecker.getReassignedVarType(refExpr, true);
-      if (reassignedType == null) {
-        return nominal;
-      }
-      else if (nominal == null) {
-        return reassignedType;
-      }
-      else if (TypeConversionUtil.isAssignable(TypeConversionUtil.erasure(nominal), reassignedType, false)) {
-        return reassignedType;
-      }
-      else {
-        return nominal;
-      }
-    }
-
     final PsiType inferred = getInferredTypes(refExpr, resolved);
     if (inferred == null) {
       return nominal == null ? getDefaultType(refExpr, result) : nominal;
