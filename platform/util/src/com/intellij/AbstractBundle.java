@@ -46,7 +46,7 @@ public abstract class AbstractBundle {
   }
   
   @Nullable
-  public String messageOrNull(@NotNull String key, @NotNull Object... params) {
+  public String messageOfNull(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.messageOfNull(getBundle(), key, params);
   }
 
