@@ -431,7 +431,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
       mySkipChangeRequests = true;
       try {
-        myEditor.getFoldingModel().runBatchFoldingOperation(runnable, false);
+        myEditor.getFoldingModel().runBatchFoldingOperation(runnable, false, false, true);
       }
       finally {
         mySkipChangeRequests = false;

@@ -52,7 +52,6 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   private boolean myDoNotCollapseCaret;
   private boolean myFoldRegionsProcessed;
 
-  private boolean myDisableScrollingPositionAdjustment;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
   private final AtomicLong myExpansionCounter = new AtomicLong();
@@ -172,24 +171,26 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void runBatchFoldingOperation(@NotNull Runnable operation) {
-    runBatchFoldingOperation(operation, false, true);
+  public void runBatchFoldingOperation(@NotNull Runnable operation, boolean allowMovingCaret, boolean keepRelativeCaretPosition) {
+    runBatchFoldingOperation(operation, !allowMovingCaret, true, keepRelativeCaretPosition);
   }
 
   @Override
   public void runBatchFoldingOperation(@NotNull Runnable operation, boolean moveCaret) {
-    runBatchFoldingOperation(operation, false, moveCaret);
+    runBatchFoldingOperation(operation, false, moveCaret, true);
   }
 
-  private void runBatchFoldingOperation(@NotNull Runnable operation, final boolean dontCollapseCaret, final boolean moveCaret) {
+  void runBatchFoldingOperation(@NotNull Runnable operation,
+                                boolean dontCollapseCaret,
+                                boolean moveCaret,
+                                boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
-    if (!oldBatchFlag) {
+    if (!oldBatchFlag && adjustScrollingPosition) {
       ((ScrollingModelImpl)myEditor.getScrollingModel()).finishAnimation();
       myScrollingPositionKeeper.savePosition();
-      myDisableScrollingPositionAdjustment = false;
     }
 
     myIsBatchFoldingProcessing = true;
@@ -200,25 +201,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       if (!oldBatchFlag) {
         myIsBatchFoldingProcessing = false;
         if (myFoldRegionsProcessed) {
-          notifyBatchFoldingProcessingDone(moveCaret);
+          notifyBatchFoldingProcessingDone(moveCaret, adjustScrollingPosition);
           myFoldRegionsProcessed = false;
         }
       }
       myDoNotCollapseCaret = oldDontCollapseCaret;
     }
-  }
-
-  @Override
-  public void runBatchFoldingOperationDoNotCollapseCaret(@NotNull final Runnable operation) {
-    runBatchFoldingOperation(operation, true, true);
-  }
-
-  /**
-   * Disables scrolling position adjustment after batch folding operation is finished.
-   * Should be called from inside batch operation runnable.
-   */
-  void disableScrollingPositionAdjustment() {
-    myDisableScrollingPositionAdjustment = true;
   }
 
   @Override
@@ -369,7 +357,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     if (notify) notifyListenersOnFoldRegionStateChange(region);
   }
 
-  private void notifyBatchFoldingProcessingDone(final boolean moveCaretFromCollapsedRegion) {
+  private void notifyBatchFoldingProcessingDone(boolean moveCaretFromCollapsedRegion, boolean adjustScrollingPosition) {
     clearCachedValues();
 
     for (FoldingListener listener : myListeners) {
@@ -425,7 +413,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
         }
       }
     });
-    if (!myDisableScrollingPositionAdjustment) myScrollingPositionKeeper.restorePosition(true);
+    if (adjustScrollingPosition) myScrollingPositionKeeper.restorePosition(true);
   }
 
   @Override
