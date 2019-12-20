@@ -54,7 +54,10 @@ import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.*
+import com.intellij.util.BitUtil
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SingleAlarm
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.PositionTracker
@@ -73,6 +76,8 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import kotlin.collections.component1
+import kotlin.collections.component2
 
 private val LOG = logger<ToolWindowManagerImpl>()
 
@@ -91,15 +96,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private var frame: ProjectFrameHelper? = null
   private var layoutToRestoreLater: DesktopLayout? = null
   private var currentState = KeyState.WAITING
-  private var waiterForSecondPress: Alarm? = null
+  private var waiterForSecondPress: SingleAlarm? = null
 
   private val pendingSetLayoutTask = AtomicReference<Runnable?>()
-
-  private val secondPressRunnable = Runnable {
-    if (currentState != KeyState.HOLD) {
-      resetHoldState()
-    }
-  }
 
   fun isToolWindowRegistered(id: String) = idToEntry.containsKey(id)
 
@@ -206,7 +205,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         if (event is WindowEvent && event.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
           process { manager ->
-            if (event.getSource() === manager.frame) {
+            val frame = event.getSource() as? JFrame
+            if (frame === manager.frame?.frame) {
               manager.resetHoldState()
             }
           }
@@ -236,7 +236,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     })
   }
 
-  fun dispatchKeyEvent(e: KeyEvent): Boolean {
+  private fun dispatchKeyEvent(e: KeyEvent): Boolean {
     if ((e.keyCode != KeyEvent.VK_CONTROL) && (
         e.keyCode != KeyEvent.VK_ALT) && (e.keyCode != KeyEvent.VK_SHIFT) && (e.keyCode != KeyEvent.VK_META)) {
       if (e.modifiers == 0) {
@@ -295,10 +295,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     else {
       if (currentState == KeyState.PRESSED) {
         currentState = KeyState.RELEASED
-        waiterForSecondPress?.let { waiterForSecondPress ->
-          waiterForSecondPress.cancelAllRequests()
-          waiterForSecondPress.addRequest(secondPressRunnable, SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650))
-        }
+        waiterForSecondPress?.cancelAndRequest()
       }
       else {
         resetHoldState()
@@ -318,7 +315,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     // manager is used in light tests (light project is never disposed), so, earlyDisposable must be used
     val disposable = (project as ProjectEx).earlyDisposable
-    waiterForSecondPress = Alarm(disposable)
+    waiterForSecondPress = SingleAlarm(task = Runnable {
+      if (currentState != KeyState.HOLD) {
+        resetHoldState()
+      }
+    }, delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 650), parentDisposable = disposable)
 
     val connection = project.messageBus.connect(disposable)
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
@@ -413,14 +414,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     toolWindowPane!!.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Iterable {
-      val result = ArrayList<JComponent>(idToEntry.size)
-      for (entry in idToEntry.values) {
-        val component = entry.toolWindow.decoratorComponent
-        if (component != null && component.parent == null) {
-          result.add(component)
-        }
-      }
-      result.iterator()
+      idToEntry.values.asSequence().mapNotNull {
+        val component = it.toolWindow.decoratorComponent
+        if (component != null && component.parent == null) component else null
+      }.iterator()
     })
 
     service<ToolWindowManagerAppLevelHelper>()
