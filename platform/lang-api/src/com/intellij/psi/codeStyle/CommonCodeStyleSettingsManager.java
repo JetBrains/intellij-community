@@ -249,10 +249,10 @@ class CommonCodeStyleSettingsManager {
   }
 
   void removeLanguageSettings(@NotNull Language language) {
-    myCommonSettingsMap.remove(language);
+    getCommonSettingsMap().remove(language);
   }
 
   void addLanguageSettings(@NotNull Language language, @NotNull CommonCodeStyleSettings settings) {
-    myCommonSettingsMap.put(language, settings);
+    getCommonSettingsMap().put(language, settings);
   }
 }
