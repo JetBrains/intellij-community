@@ -24,6 +24,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public class CompletionInitializationUtil {
       if (originalFile != injected &&
           injected instanceof PsiFileImpl &&
           InjectedLanguageManager.getInstance(originalFile.getProject()).isInjectedFragment(originalFile)) {
-        ((PsiFileImpl)injected).setOriginalFile(originalFile);
+        setOriginalFile((PsiFileImpl)injected, originalFile);
       }
       VirtualFile virtualFile = injected.getVirtualFile();
       DocumentWindow documentWindow = null;
@@ -155,6 +156,16 @@ public class CompletionInitializationUtil {
     }
 
     return hostCopyOffsets;
+  }
+
+  private static void setOriginalFile(PsiFileImpl copy, PsiFile origin) {
+    PsiFile currentOrigin = copy.getOriginalFile();
+    if (currentOrigin == copy) {
+      copy.setOriginalFile(origin);
+    } else {
+      PsiUtilCore.ensureValid(currentOrigin);
+      LOG.assertTrue(currentOrigin == origin);
+    }
   }
 
   @NotNull
