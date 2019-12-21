@@ -32,6 +32,11 @@ public class RefactoringBundle extends DynamicBundle {
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return INSTANCE.getMessage(key, params);
   }
+  
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+    return INSTANCE.getMessage(key);
+  }
 
   public static String getSearchInCommentsAndStringsText() {
     return message("search.in.comments.and.strings");
