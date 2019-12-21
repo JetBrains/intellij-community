@@ -901,7 +901,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val toolWindow = ToolWindowImpl(this, task.id, task.canCloseContent, task.canWorkInDumbMode, task.component, disposable,
       windowInfoSnapshot, contentFactory, isAvailable = task.shouldBeAvailable)
 
-    // contentFactory?.init(this) can set icon
+    contentFactory?.init(toolWindow)
+
+    // contentFactory.init can set icon
     if (toolWindow.icon == null) {
       var icon: Icon? = null
       if (bean?.icon != null) {
@@ -919,7 +921,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val button = StripeButton(toolWindowPane!!, toolWindow)
 
-    toolWindowPane.addStripeButton(button, info.anchor, layout.MyStripeButtonComparator(info.anchor, this))
+    val anchor = (contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor
+    toolWindowPane.addStripeButton(button, anchor, layout.MyStripeButtonComparator(anchor, this))
 
     val entry = ToolWindowEntry(button, toolWindow, disposable)
     idToEntry.put(task.id, entry)
@@ -1245,7 +1248,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val entry = idToEntry.get(id)!!
 
     val info = entry.readOnlyWindowInfo
-    if (anchor == info.anchor && order == info.order) {
+    if (anchor == info.anchor && (order == info.order || order == -1)) {
       return
     }
 

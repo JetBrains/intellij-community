@@ -123,8 +123,6 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       contentManager.addContent(content)
       contentManager.setSelectedContent(content, false)
     }
-
-    contentFactory?.init(this)
   }
 
   internal fun applyWindowInfo(info: WindowInfo) {
