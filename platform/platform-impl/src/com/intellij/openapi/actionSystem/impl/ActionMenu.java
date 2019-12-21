@@ -300,11 +300,12 @@ public final class ActionMenu extends JBMenu {
       context = myContext;
     }
     else {
-      @SuppressWarnings("deprecation") DataContext contextFromFocus = DataManager.getInstance().getDataContext();
+      DataManager dataManager = DataManager.getInstance();
+      @SuppressWarnings("deprecation") DataContext contextFromFocus = dataManager.getDataContext();
       context = contextFromFocus;
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
         IdeFrame frame = ComponentUtil.getParentOfType((Class<? extends IdeFrame>)IdeFrame.class, (Component)this);
-        context = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame));
+        context = dataManager.getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor((Window)frame));
       }
     }
 

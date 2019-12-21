@@ -95,7 +95,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return toolWindow.getId();
   }
 
-  public boolean isFocused(@NotNull IdeFrame ideFrame) {
+  public boolean isFocused(@NotNull JFrame frame) {
     IdeFocusManager focusManager = toolWindow.getToolWindowManager().getFocusManager();
     JComponent toolWindowComponent = toolWindow.getComponentIfInitialized();
     if (toolWindowComponent == null) {
@@ -107,7 +107,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       return true;
     }
 
-    Component owner = focusManager.getLastFocusedFor(ideFrame);
+    Component owner = focusManager.getLastFocusedFor(frame);
     return owner != null && SwingUtilities.isDescendingFrom(owner, toolWindowComponent);
   }
 

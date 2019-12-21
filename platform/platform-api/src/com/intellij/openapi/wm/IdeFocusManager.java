@@ -120,16 +120,20 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);
 
   /**
-   * Returns last focused component for the given {@code IdeFrame}.
+   * Returns last focused component for the given IDE {@code Window}.
+   * Only IDE window (that's implementing {@link IdeFrame}).
    */
   @Nullable
-  public abstract Component getLastFocusedFor(@Nullable IdeFrame frame);
+  public abstract Component getLastFocusedFor(@Nullable Window frame);
 
   /**
    * Returns last focused {@code IdeFrame}.
    */
   @Nullable
   public abstract IdeFrame getLastFocusedFrame();
+
+  @Nullable
+  public abstract Window getLastFocusedIdeWindow();
 
   /**
    * Put the container window to front. May not execute if the app is inactive or under some other conditions. This

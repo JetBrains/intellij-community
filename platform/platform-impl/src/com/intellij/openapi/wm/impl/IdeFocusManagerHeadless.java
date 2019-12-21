@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,12 +69,18 @@ public class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: rev
   }
 
   @Override
-  public Component getLastFocusedFor(IdeFrame frame) {
+  public Component getLastFocusedFor(@Nullable Window frame) {
     return null;
   }
 
   @Override
   public IdeFrame getLastFocusedFrame() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Window getLastFocusedIdeWindow() {
     return null;
   }
 

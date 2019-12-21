@@ -78,13 +78,19 @@ public final class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public Component getLastFocusedFor(IdeFrame frame) {
+  public Component getLastFocusedFor(@Nullable Window frame) {
     return getGlobalInstance().getLastFocusedFor(frame);
   }
 
   @Override
   public IdeFrame getLastFocusedFrame() {
     return getGlobalInstance().getLastFocusedFrame();
+  }
+
+  @Nullable
+  @Override
+  public Window getLastFocusedIdeWindow() {
+    return getGlobalInstance().getLastFocusedIdeWindow();
   }
 
   @Override

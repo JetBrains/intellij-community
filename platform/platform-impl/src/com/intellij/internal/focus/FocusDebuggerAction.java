@@ -103,7 +103,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
+    public void delayedApplicationDeactivated(@NotNull Window ideFrame) {
       myApplicationState = ApplicationState.DELAYED;
     }
 

@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
@@ -277,8 +276,8 @@ public final class ModifierKeyDoubleClickHandler {
     private DataContext calculateContext() {
       IdeFocusManager focusManager = IdeFocusManager.findInstance();
       Component focusedComponent = focusManager.getFocusOwner();
-      IdeFrame frame = focusManager.getLastFocusedFrame();
-      return frame == focusedComponent || focusedComponent == focusManager.getLastFocusedFor(frame)
+      Window ideWindow = focusManager.getLastFocusedIdeWindow();
+      return ideWindow == focusedComponent || focusedComponent == focusManager.getLastFocusedFor(ideWindow)
              ? DataManager.getInstance().getDataContext(focusedComponent)
              : DataManager.getInstance().getDataContext();
     }

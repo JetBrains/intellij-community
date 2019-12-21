@@ -919,7 +919,7 @@ public final class IdeEventQueue extends EventQueue {
       if (aFrame.equals(frame)) {
         IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
         if (focusManager instanceof FocusManagerImpl) {
-          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(frameHelper, focusOwnerInDeactivatedWindow);
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(aFrame, focusOwnerInDeactivatedWindow);
         }
       }
     }

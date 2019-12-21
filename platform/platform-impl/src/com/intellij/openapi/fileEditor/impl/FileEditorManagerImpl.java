@@ -293,7 +293,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     }
     if (focusOwner == null) {
-      focusOwner = fm.getLastFocusedFor(fm.getLastFocusedFrame());
+      focusOwner = fm.getLastFocusedFor(fm.getLastFocusedIdeWindow());
     }
 
     DockContainer container = myDockManager.getContainerFor(focusOwner);

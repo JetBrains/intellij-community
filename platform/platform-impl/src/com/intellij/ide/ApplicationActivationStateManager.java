@@ -78,8 +78,9 @@ public final class ApplicationActivationStateManager {
 
             if (!app.isDisposed()) {
               IdeFrame ideFrame = getIdeFrameFromWindow(windowEvent.getWindow());
+              // getIdeFrameFromWindow returns something from UI tree, so, if not null, it must be Window
               if (ideFrame != null) {
-                app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(ideFrame);
+                app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).delayedApplicationDeactivated(((Window)ideFrame));
               }
             }
           }
@@ -112,6 +113,7 @@ public final class ApplicationActivationStateManager {
     }
   }
 
+  @Nullable
   private static IdeFrame getIdeFrameFromWindow(@Nullable Window window) {
     Component frame = window == null ? null : ComponentUtil.findUltimateParent(window);
     return frame instanceof IdeFrame ? (IdeFrame)frame : null;

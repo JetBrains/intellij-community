@@ -179,7 +179,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       return false
     }
     else {
-      return windowInfo.isActive || (windowInfo.isVisible && (decorator?.isFocused(frameHelper) ?: false))
+      return windowInfo.isActive || (windowInfo.isVisible && (decorator?.isFocused(frameHelper.frame) ?: false))
     }
   }
 
@@ -268,7 +268,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   val isFocused: Boolean
     get() {
-      return decorator?.isFocused(toolWindowManager.getFrame() ?: return false) ?: false
+      return decorator?.isFocused(toolWindowManager.getFrame()?.frame ?: return false) ?: false
     }
 
   override fun setAdditionalGearActions(value: ActionGroup?) {

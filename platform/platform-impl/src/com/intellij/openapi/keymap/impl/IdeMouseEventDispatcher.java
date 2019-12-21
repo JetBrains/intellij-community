@@ -131,7 +131,8 @@ public final class IdeMouseEventDispatcher {
       if (focusManager instanceof FocusManagerImpl) {
         Component at = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
         if (at != null && at.isFocusable()) {
-          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((IdeFrame)c, at);
+          //noinspection CastConflictsWithInstanceof
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((Window)c, at);
         }
       }
     }
