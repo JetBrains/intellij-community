@@ -10,7 +10,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyPsiBundle;
@@ -166,10 +165,7 @@ public class ImportFromExistingAction implements QuestionAction {
     // did user choose 'import' or 'from import'?
     PsiElement parent = src.getParent();
     if (parent instanceof PyFromImportStatement) {
-      // add another import element right after the one we got
-      PsiElement newImportElement = gen.createImportElement(LanguageLevel.getDefault(), myName, null);
-      parent.add(newImportElement);
-      CodeStyleManager.getInstance(myTarget.getProject()).reformat(parent);
+      AddImportHelper.addNameToFromImportStatement((PyFromImportStatement)parent, myName, null);
     }
     else { // just 'import'
       // all we need is to qualify our target
