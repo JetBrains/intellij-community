@@ -66,7 +66,7 @@ class CurrentBranchComponent(
     isVisible = needShowBranch && branches.isNotEmpty()
   }
 
-  private fun setData(changes: Iterable<Change>, unversioned: Iterable<VirtualFile>) {
+  private fun setData(changes: Iterable<Change>, unversioned: Iterable<FilePath>) {
     val fromChanges = changes.mapNotNull { getCurrentBranch(project, it) }.toSet()
     val fromUnversioned = unversioned.mapNotNull { getCurrentBranch(project, it) }.toSet()
 
@@ -120,13 +120,12 @@ class CurrentBranchComponent(
       }
     }
 
-    fun getCurrentBranch(project: Project, change: Change) = getProviders(project).asSequence().mapNotNull {
-      it.getCurrentBranch(getFilePath(change))
-    }.firstOrNull()
+    fun getCurrentBranch(project: Project, change: Change) = getCurrentBranch(project, getFilePath(change))
 
-    fun getCurrentBranch(project: Project, file: VirtualFile) = getProviders(project).asSequence().mapNotNull {
-      it.getCurrentBranch(getFilePath(file))
-    }.firstOrNull()
+    fun getCurrentBranch(project: Project, file: VirtualFile) = getCurrentBranch(project, getFilePath(file))
+
+    fun getCurrentBranch(project: Project, path: FilePath) =
+      getProviders(project).asSequence().mapNotNull { it.getCurrentBranch(path) }.firstOrNull()
 
     fun getPresentableText(branch: BranchData) = if (branch is LinkedBranchData) branch.branchName ?: "!"
     else branch.branchName.orEmpty()

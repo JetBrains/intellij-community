@@ -23,12 +23,14 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.min
 
@@ -61,7 +63,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     }
   }
 
-  protected val label = object : JComponent() {
+  protected val label = object : JLabel() {
     override fun getMinimumSize(): Dimension {
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
@@ -69,7 +71,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     override fun getPreferredSize(): Dimension {
       val fm = getFontMetrics(font)
       val w = SwingUtilities2.stringWidth(this, fm, titleString) + JBUI.scale(5)
-      return Dimension(min(parent.width, w), fm.height)
+      return Dimension(min(parent.width, w), super.getPreferredSize().height)
     }
 
     override fun paintComponent(g: Graphics) {
@@ -98,6 +100,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
 
+    override fun setForeground(fg: Color?) {
+      super.setForeground(fg)
+      label.foreground = fg
+    }
   }.apply {
     isOpaque = false
     add(label)
@@ -339,6 +345,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       }
     }
 
+    label.text = titleString ?: ""
     label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
 
     label.revalidate()

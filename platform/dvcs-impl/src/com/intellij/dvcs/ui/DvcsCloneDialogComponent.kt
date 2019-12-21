@@ -3,6 +3,7 @@ package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsRememberedInputs
 import com.intellij.dvcs.repo.ClonePathProvider
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils.sanitizeCloneUrl
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
@@ -70,8 +71,10 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   abstract override fun doClone(project: Project, listener: CheckoutProvider.Listener)
 
-  fun getDirectory() = directoryField.text
-  fun getUrl() = urlEditor.text
+  fun getDirectory(): String = directoryField.text.trim()
+
+  fun getUrl(): String = sanitizeCloneUrl(urlEditor.text)
 
   override fun dispose() {}
+
 }

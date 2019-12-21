@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,6 +207,10 @@ public interface VcsLogProvider {
     return readMetadata(root, hashes);
   }
 
+  /**
+   * @deprecated was used only for indexing and replaced by the methods in {@link com.intellij.vcs.log.impl.VcsLogIndexer}.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<? super VcsFullCommitDetails> commitConsumer)
     throws VcsException {

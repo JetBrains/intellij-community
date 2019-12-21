@@ -919,7 +919,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean hasErrors(@NotNull IdeaPluginDescriptor plugin) {
-    return PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(plugin.getPluginId()) || !isLoaded(plugin.getPluginId());
+    PluginId pluginId = plugin.getPluginId();
+    if (PluginManagerCore.isIncompatible(plugin) || hasProblematicDependencies(pluginId)) {
+      return true;
+    }
+    if (!isLoaded(pluginId)) {
+      InstalledPluginsState state = InstalledPluginsState.getInstance();
+      return !state.wasInstalled(pluginId) && !state.wasInstalledWithoutRestart(pluginId);
+    }
+    return false;
   }
 
   @NotNull

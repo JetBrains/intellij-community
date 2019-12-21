@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTestBase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
 
 public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
@@ -113,4 +114,39 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                                                                                       "  yyy:\n" +
                                                                                       "  zzz: 0");
   }
+
+  public void testAddMissingPropertyAfterComment() {
+    doTest(SCHEMA_WITH_NESTING, "image: #aaa\n" +
+                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image: #aaa\n" +
+                                                                                                                                           "  tag: ");
+  }
+
+  public void testAddMissingPropertyAfterWhitespace() {
+    doTest(SCHEMA_WITH_NESTING, "image: \n" +
+                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image:\n" +
+                                                                                                                                           "  tag: ");
+  }
+
+  @Language("JSON") private static final String SCHEMA_WITH_NESTING = "{\n" +
+                                                               "  \"properties\": {\n" +
+                                                               "    \"image\": {\n" +
+                                                               "      \"description\": \"Container Image\",\n" +
+                                                               "      \"properties\": {\n" +
+                                                               "        \"repo\": {\n" +
+                                                               "          \"type\": \"string\"\n" +
+                                                               "        },\n" +
+                                                               "        \"tag\": {\n" +
+                                                               "          \"type\": \"string\"\n" +
+                                                               "        }\n" +
+                                                               "      },\n" +
+                                                               "      \"required\": [\n" +
+                                                               "        \"tag\"\n" +
+                                                               "      ],\n" +
+                                                               "      \"type\": \"object\"\n" +
+                                                               "    }\n" +
+                                                               "  },\n" +
+                                                               "  \"title\": \"Values\",\n" +
+                                                               "  \"type\": \"object\"\n" +
+                                                               "}\n";
+
 }

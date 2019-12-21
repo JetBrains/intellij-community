@@ -50,7 +50,7 @@ interface DynamicPluginListener {
 
 object DynamicPlugins {
   private val LOG = Logger.getInstance(DynamicPlugins::class.java)
-  private val GROUP = NotificationGroup("Profiling", NotificationDisplayType.BALLOON, false)
+  private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
 
   @JvmStatic
   fun allowLoadUnloadWithoutRestart(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {

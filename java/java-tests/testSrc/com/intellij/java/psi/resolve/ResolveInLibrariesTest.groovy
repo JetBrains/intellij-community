@@ -18,6 +18,7 @@ package com.intellij.java.psi.resolve
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -33,6 +34,7 @@ import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import groovy.transform.CompileStatic
 
 /**
  * @author peter
@@ -67,6 +69,29 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
       assert middles[i].isInheritor(interfaces[i], true)
       assert bottoms[i].isInheritor(interfaces[i], true)
       assert bottoms[i].isInheritor(middles[i], true)
+    }
+  }
+
+  @CompileStatic
+  void "test missed library dependency"() {
+    def projectRootManager = ProjectRootManager.getInstance(myFixture.project)
+    def oldSdk = projectRootManager.projectSdk
+    try {
+      WriteAction.run { projectRootManager.projectSdk = IdeaTestUtil.getMockJdk17() }
+      def groovy = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("Groovy")
+      PsiTestUtil.addProjectLibrary(module, 'groovy', [groovy], [])
+      def ant = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Ant")
+      PsiTestUtil.addProjectLibrary(module, 'ant', ant)
+
+      myFixture.configureByText("Foo.java", """
+  class Foo { 
+    {new org.codehaus.groovy.ant.Groovydoc().set<caret>Project(new org.apache.tools.ant.Project());}
+  }""")
+
+      assertNotNull(myFixture.getElementAtCaret())
+    }
+    finally {
+      WriteAction.run { projectRootManager.projectSdk = oldSdk }
     }
   }
 

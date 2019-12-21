@@ -66,10 +66,6 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   @Override
-  public void doCleanup(List<VirtualFile> files) {
-  }
-
-  @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder,
                          @NotNull ProgressIndicator progress, @NotNull ChangeListManagerGate addGate) {
     if (myProject.isDisposed()) return;
@@ -283,7 +279,7 @@ public class HgChangeProvider implements ChangeProvider {
       void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
         HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
         HgFile beforeFile, HgFile afterFile) {
-        builder.processUnversionedFile(VcsUtil.getVirtualFile(afterFile.getFile()));
+        builder.processUnversionedFile(afterFile.toFilePath());
       }
     };
 

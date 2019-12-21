@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.function.Function;
 
 final class IdeaFreezeReporter implements IdePerformanceListener {
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 15 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   public static final String MESSAGE_FILE_NAME = ".message";
@@ -40,7 +40,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!DEBUG && (!app.isEAP() || PluginManagerCore.isRunningFromSources())) {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 

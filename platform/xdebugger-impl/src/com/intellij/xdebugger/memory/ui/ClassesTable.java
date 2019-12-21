@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
@@ -548,7 +549,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
                                          boolean hasFocus, int row, int column) {
 
       if (hasFocus) {
-        setBorder(EMPTY_BORDER);
+        setBorder(new EmptyBorder(getBorder().getBorderInsets(this)));
       }
 
       if (value != null) {

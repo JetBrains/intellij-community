@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -306,7 +307,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     ChangesViewPreview diffPreview = myShelfToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).openEditorPreview();
+      ((EditorTabPreview)diffPreview).openEditorPreview(false);
     }
   }
 
@@ -710,6 +711,10 @@ public class ShelvedChangesViewManager implements Disposable {
           protected boolean skipPreviewUpdate() {
             if (super.skipPreviewUpdate())
               return true;
+
+            if (!IdeFocusManager.getInstance(myProject).getFocusOwner().equals(myTree)) {
+              return true;
+            }
 
             return !myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
           }

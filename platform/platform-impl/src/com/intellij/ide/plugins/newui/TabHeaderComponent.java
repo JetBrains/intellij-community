@@ -106,7 +106,7 @@ public class TabHeaderComponent extends JComponent {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(null, tooltip, AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(tooltip, tooltip, AllIcons.General.GearPlain) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().

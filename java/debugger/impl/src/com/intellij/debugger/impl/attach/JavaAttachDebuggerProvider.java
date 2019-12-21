@@ -304,14 +304,29 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
     @Override
     RemoteConnection createConnection() {
-      return myAutoAddress
-             ? new PidRemoteConnection(myPid)
-             : new PidRemoteConnection(myPid, myUseSocket, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, myAddress, false);
+      if (myAutoAddress) {
+        return new PidRemoteConnection(myPid);
+      }
+      else {
+        String host = DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK;
+        String port = myAddress;
+        int pos = port.indexOf(":");
+        if (pos != -1) {
+          host = port.substring(0, pos);
+          port = port.substring(pos + 1);
+        }
+        return new PidRemoteConnection(myPid, myUseSocket, host, port, false);
+      }
     }
 
     @Override
     String getSessionName() {
-      return myAutoAddress ? super.getSessionName() : "localhost:" + myAddress;
+      if (myAutoAddress) {
+        return super.getSessionName();
+      }
+      else {
+        return myAddress.contains(":") ? myAddress : "localhost:" + myAddress;
+      }
     }
 
     @Override

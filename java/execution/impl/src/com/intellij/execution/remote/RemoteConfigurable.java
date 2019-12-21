@@ -70,7 +70,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       String getLaunchCommandLine(RemoteConnection connection) {
         String commandLine = JDK5to8.getLaunchCommandLine(connection);
         if (connection.isUseSockets() && !connection.isServerMode()) {
-          commandLine = commandLine.replace(connection.getApplicationPort(), "*:" + connection.getApplicationPort());
+          commandLine = commandLine.replace(connection.getApplicationAddress(), "*:" + connection.getApplicationAddress());
         }
         return commandLine;
       }

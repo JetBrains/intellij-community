@@ -75,7 +75,6 @@ import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
-  public static final String FORCE_PLUGIN_UPDATES = "idea.force.plugin.updates";
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
 
   @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
@@ -200,7 +199,6 @@ public final class StartupUtil {
     fixProcessEnvironment();
 
     if (!configImportNeeded) {
-      installPluginUpdates();
       runPreAppClass(log);
     }
 
@@ -582,23 +580,6 @@ public final class StartupUtil {
     }
 
     log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
-  }
-
-  private static void installPluginUpdates() {
-    if (!Main.isCommandLine() || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      try {
-        StartupActionScriptManager.executeActionScript();
-      }
-      catch (IOException e) {
-        String message =
-          "The IDE failed to install some plugins.\n\n" +
-          "Most probably, this happened because of a change in a serialization format.\n" +
-          "Please try again, and if the problem persists, please report it\n" +
-          "to http://jb.gg/ide/critical-startup-errors" +
-          "\n\nThe cause: " + e.getMessage();
-        Main.showMessage("Plugin Installation Error", message, false);
-      }
-    }
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {

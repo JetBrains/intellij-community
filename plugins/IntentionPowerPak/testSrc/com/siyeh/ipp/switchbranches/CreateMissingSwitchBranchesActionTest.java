@@ -11,6 +11,10 @@ public class CreateMissingSwitchBranchesActionTest extends IPPTestCase {
   public void testDataflowInt() {
     doTest(CreateSwitchBranchesUtil.getActionName(Arrays.asList("1", "3", "5", "7", "9")));
   }
+  
+  public void testDataflowLong() {
+    assertIntentionNotAvailable(CreateSwitchBranchesUtil.getActionName(Arrays.asList("1", "2")));
+  }
 
   public void testDataflowIntMixedTypes() {
     doTest(CreateSwitchBranchesUtil.getActionName(Arrays.asList("0", "1", "3", "4", "6", "7", "9")));

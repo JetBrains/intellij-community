@@ -12,7 +12,7 @@ public class NullabilityAnnotationInfo {
   private final @NotNull Nullability myNullability;
   private final boolean myContainer;
 
-  NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation, @NotNull Nullability nullability, boolean container) {
+  public NullabilityAnnotationInfo(@NotNull PsiAnnotation annotation, @NotNull Nullability nullability, boolean container) {
     myAnnotation = annotation;
     myNullability = nullability;
     myContainer = container;

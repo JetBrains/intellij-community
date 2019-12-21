@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.build.*
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.replaceService
@@ -9,7 +10,7 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import org.assertj.core.api.Assertions
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import javax.swing.tree.DefaultMutableTreeNode
 
 abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
@@ -49,14 +50,22 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
     assertExecutionTreeNode(syncViewManager, nodeText, consoleText, true)
   }
 
+  protected fun assertSyncViewRerunActions() {
+    val buildView = syncViewManager.buildsMap[syncViewManager.getRecentBuild()]
+    val rerunActions = BuildView.RESTART_ACTIONS.getData(buildView!!)!!
+    assertSize(1, rerunActions)
+    val reimportActionText = ExternalSystemBundle.message("action.refresh.project.text", GradleConstants.SYSTEM_ID.readableName)
+    assertEquals(reimportActionText, rerunActions[0].templateText)
+  }
+
   protected fun assertBuildViewSelectedNode(nodeText: String, consoleText: String) {
     assertExecutionTreeNode(buildViewManager, nodeText, consoleText, true)
   }
 
   private fun assertExecutionTree(viewManager: TestViewManager, expected: String, ignoreTasksOrder: Boolean) {
-    Assertions.assertThat(viewManager.getBuildsMap()).hasSize(1)
-    val buildView = viewManager.getBuildsMap().values.first()
-    val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
+    val recentBuild = viewManager.getRecentBuild()
+    val buildView = viewManager.getBuildsMap()[recentBuild]
+    val eventView = buildView!!.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
     eventView!!.addFilter { true }
     viewManager.waitForPendingBuilds()
     val treeStringPresentation = runInEdtAndGet {
@@ -90,9 +99,9 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
   }
 
   private fun assertExecutionTreeNode(viewManager: TestViewManager, nodeText: String, consoleText: String, assertSelected: Boolean) {
-    Assertions.assertThat(viewManager.getBuildsMap()).hasSize(1)
-    val buildView = viewManager.getBuildsMap().values.first()
-    val eventView = buildView.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
+    val recentBuild = viewManager.getRecentBuild()
+    val buildView = viewManager.getBuildsMap()[recentBuild]
+    val eventView = buildView!!.getView(BuildTreeConsoleView::class.java.name, BuildTreeConsoleView::class.java)
     eventView!!.addFilter { true }
     viewManager.waitForPendingBuilds()
 
@@ -123,23 +132,24 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
   interface TestViewManager : ViewManager {
     fun getBuildsMap(): MutableMap<BuildDescriptor, BuildView>
     fun waitForPendingBuilds()
+    fun getRecentBuild(): BuildDescriptor
   }
 
   protected class TestSyncViewManager(project: Project) :
     SyncViewManager(project), TestViewManager {
     private val semaphore = Semaphore()
+    private lateinit var recentBuild: BuildDescriptor
     override fun waitForPendingBuilds() = TestCase.assertTrue(semaphore.waitFor(1000))
+    override fun getRecentBuild(): BuildDescriptor = recentBuild
+    override fun getBuildsMap(): MutableMap<BuildDescriptor, BuildView> = super.getBuildsMap()
 
-    override fun getBuildsMap(): MutableMap<BuildDescriptor, BuildView> {
-      return super.getBuildsMap()
-    }
-
-    override fun onBuildStart(buildDescriptor: BuildDescriptor?) {
+    override fun onBuildStart(buildDescriptor: BuildDescriptor) {
       super.onBuildStart(buildDescriptor)
+      recentBuild = buildDescriptor
       semaphore.down()
     }
 
-    override fun onBuildFinish(buildDescriptor: BuildDescriptor?) {
+    override fun onBuildFinish(buildDescriptor: BuildDescriptor) {
       super.onBuildFinish(buildDescriptor)
       semaphore.up()
     }
@@ -148,14 +158,13 @@ abstract class BuildViewMessagesImportingTestCase : GradleImportingTestCase() {
   protected class TestBuildViewManager(project: Project) :
     BuildViewManager(project), TestViewManager {
     private val semaphore = Semaphore()
+    private lateinit var recentBuild: BuildDescriptor
     override fun waitForPendingBuilds() = TestCase.assertTrue(semaphore.waitFor(1000))
-
-    override fun getBuildsMap(): MutableMap<BuildDescriptor, BuildView> {
-      return super.getBuildsMap()
-    }
-
-    override fun onBuildStart(buildDescriptor: BuildDescriptor?) {
+    override fun getRecentBuild(): BuildDescriptor = recentBuild
+    override fun getBuildsMap(): MutableMap<BuildDescriptor, BuildView> = super.getBuildsMap()
+    override fun onBuildStart(buildDescriptor: BuildDescriptor) {
       super.onBuildStart(buildDescriptor)
+      recentBuild = buildDescriptor
       semaphore.down()
     }
 

@@ -21,8 +21,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -66,6 +64,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import static com.intellij.openapi.fileEditor.impl.EditorsSplitters.findDefaultComponentInSplittersIfPresent;
 
 @State(name = "ToolWindowManager", defaultStateAsResource = true, storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
@@ -231,19 +231,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private static void focusDefaultElementInSelectedEditor() {
-    EditorsSplitters splittersToFocus = getSplittersToFocus();
-    if (splittersToFocus != null) {
-    final EditorWindow window = splittersToFocus.getCurrentWindow();
-      if (window != null) {
-        final EditorWithProviderComposite editor = window.getSelectedEditor();
-        if (editor != null) {
-          JComponent defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-          if (defaultFocusedComponentInEditor != null) {
-            defaultFocusedComponentInEditor.requestFocus();
-          }
-        }
-      }
-    }
+    findDefaultComponentInSplittersIfPresent(Component::requestFocus);
   }
 
   private void updateToolWindowHeaders() {
@@ -1265,13 +1253,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         setToolWindowTypeImpl(currentInfo.getId(), info.getType(), commandList);
       }
     }
-    // change other properties
+    // change auto-hide state
     for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(Objects.requireNonNull(currentInfo.getId()), false);
       if (info == null) {
         continue;
       }
-      copyWindowOptions(info, commandList);
+      if (currentInfo.isAutoHide() != info.isAutoHide()) {
+        setToolWindowAutoHideImpl(currentInfo.getId(), info.isAutoHide(), commandList);
+      }
     }
     // restore visibility
     for (final WindowInfoImpl currentInfo : currentInfos) {
@@ -1621,36 +1611,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
-  private void copyWindowOptions(@NotNull WindowInfoImpl origin, @NotNull List<? super FinalizableCommand> commandsList) {
-    String id = Objects.requireNonNull(origin.getId());
-    final WindowInfoImpl info = getRegisteredInfoOrLogError(id);
-
-    boolean changed = false;
-    if (info.isAutoHide() != origin.isAutoHide()) {
-      info.setAutoHide(origin.isAutoHide());
-      changed = true;
-    }
-    if (info.getWeight() != origin.getWeight()) {
-      info.setWeight(origin.getWeight());
-      changed = true;
-    }
-    if (info.getSideWeight() != origin.getSideWeight()) {
-      info.setSideWeight(origin.getSideWeight());
-      changed = true;
-    }
-    if (info.getContentUiType() != origin.getContentUiType()) {
-      info.setContentUiType(origin.getContentUiType());
-      changed = true;
-    }
-    if (changed) {
-      appendApplyWindowInfoCmd(info, commandsList);
-      if (info.isVisible()) {
-        deactivateWindows(id, commandsList);
-        showAndActivate(id, false, commandsList, true);
-      }
-    }
-  }
-
   void setToolWindowType(@NotNull String id, @NotNull ToolWindowType type) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FinalizableCommand> commandList = new ArrayList<>();
@@ -1740,39 +1700,6 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
   }
 
-  @Nullable
-  private static EditorsSplitters getSplittersToFocus() {
-    Window activeWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
-    if (activeWindow instanceof FloatingDecorator) {
-      IdeFocusManager ideFocusManager = IdeFocusManager.findInstanceByComponent(activeWindow);
-      IdeFrame lastFocusedFrame = ideFocusManager.getLastFocusedFrame();
-      JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
-      Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
-      activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(lastFocusedFrame.getProject()));
-      EditorsSplitters splitters = fem.getSplittersFor(activeWindow);
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    if (activeWindow instanceof IdeFrame.Child) {
-      Project project = ((IdeFrame.Child)activeWindow).getProject();
-      activeWindow = WindowManager.getInstance().getFrame(project);
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(project));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
-    if (frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
-      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(frame.getProject()));
-      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-      return splitters != null ? splitters : fem.getSplitters();
-    }
-
-    return null;
-  }
-
   @Override
   public void clearSideStack() {
     if (isStackEnabled()) {
@@ -1837,12 +1764,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   public void loadState(@NotNull Element state) {
     for (Element e : state.getChildren()) {
       if (DesktopLayout.TAG.equals(e.getName())) {
-        DesktopLayout layout = new DesktopLayout();
-        layout.readExternal(e);
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          myLayout.copyNotRegisteredFrom(layout);
-          setLayout(layout);
-        });
+        myLayout.readExternal(e);
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
         myLayoutToRestoreLater = new DesktopLayout();

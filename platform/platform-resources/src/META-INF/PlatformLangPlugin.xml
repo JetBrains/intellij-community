@@ -29,6 +29,8 @@
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
 
+    <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider"/>
+
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>

@@ -32,7 +32,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
-  public static final String PUNCTUATION_MARKS = "*_-\"'/.#$>: ,;?!@%^&";
+  public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private final boolean myMatchAllOccurrences;

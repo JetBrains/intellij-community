@@ -143,8 +143,10 @@ public class CucumberJvm3Adapter {
         else if (location.startsWith("file:")) {
           location = location.substring("file:".length());
         }
-        String[] fileAndLine = location.split(":");
-        String result = CucumberJvmSMFormatterUtil.getStepKeyword(fileAndLine[0], Integer.parseInt(fileAndLine[1]));
+        int lastColonIndex = location.lastIndexOf(':');
+        String filePath = location.substring(0, lastColonIndex);
+        String lineNumberString = location.substring(lastColonIndex + 1);
+        String result = CucumberJvmSMFormatterUtil.getStepKeyword(filePath, Integer.parseInt(lineNumberString));
         if (result != null) {
           return result;
         }

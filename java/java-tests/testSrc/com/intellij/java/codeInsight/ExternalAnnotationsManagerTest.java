@@ -53,7 +53,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
       if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
-        String home = jdk.getHomeDirectory().getParent().getPath();
+        String home = jdk.getHomeDirectory().getPath();
         VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
         String toolsPath = home + "/lib/tools.jar!/";
         VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);

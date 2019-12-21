@@ -86,14 +86,21 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     if (ConfigImportHelper.isFirstSession() && !ConfigImportHelper.isConfigImported()) {
       CtrlYActionChooser.askAboutShortcut()
     }
+
     fun removeKeymap(keymapName: String) {
       val isCurrent = schemeManager.activeScheme?.name.equals(keymapName)
-      schemeManager.removeScheme(keymapName)
+      val keymap = schemeManager.removeScheme(keymapName)
+      if (keymap != null) {
+        fireKeymapRemoved(keymap)
+      }
       DefaultKeymap.instance.removeKeymap(keymapName)
       if (isCurrent && !schemeManager.isEmpty) {
+        val newActiveKeymap = activeKeymap
         schemeManager.setCurrent(activeKeymap, true, true)
+        fireActiveKeymapChanged(newActiveKeymap)
       }
     }
+
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
       override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
         val keymapName = ep.keymapName
@@ -107,6 +114,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
             .getResourceAsStream(ep.effectiveFile).use { JDOMUtil.load(it) }
         }, pluginDescriptor.pluginId)
         schemeManager.addScheme(keymap)
+        fireKeymapAdded(keymap)
         // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
       }
 
@@ -121,6 +129,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
             override fun read() = ep.load(fileName) { JDOMUtil.load(it) }
           }, pluginDescriptor.pluginId)
           schemeManager.addScheme(keymap)
+          fireKeymapAdded(keymap)
           // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
         }
       }
@@ -131,6 +140,20 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         }
       }
     }, ApplicationManager.getApplication())
+  }
+
+  private fun fireKeymapAdded(keymap: Keymap) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).keymapAdded(keymap)
+    for (listener in listeners) {
+      listener.keymapAdded(keymap)
+    }
+  }
+
+  private fun fireKeymapRemoved(keymap: Keymap) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).keymapRemoved(keymap)
+    for (listener in listeners) {
+      listener.keymapRemoved(keymap)
+    }
   }
 
   private fun fireActiveKeymapChanged(newScheme: Keymap?) {

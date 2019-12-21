@@ -5,13 +5,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import com.intellij.xdebugger.attach.LocalAttachHost;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * this class allows to obtain os-specific data from {@link EnvironmentAwareHost}
@@ -19,9 +15,6 @@ import java.util.Map;
 public abstract class AttachOSHandler {
 
   private static final Logger LOGGER = Logger.getInstance(AttachOSHandler.class);
-  private static final GeneralCommandLine ENV_COMMAND_LINE = new GeneralCommandLine("env");
-
-  private Map<String, String> myEnvironment;
   @NotNull
   private final OSType myOSType;
 
@@ -38,19 +31,6 @@ public abstract class AttachOSHandler {
     return myOSType;
   }
 
-  @Nullable
-  protected String getenv(String name) throws Exception {
-    if(myHost instanceof LocalAttachHost) {
-      return EnvironmentUtil.getValue(name);
-    }
-
-    if(myEnvironment == null) {
-      myEnvironment = EnvironmentUtil.parseEnv(myHost.getProcessOutput(ENV_COMMAND_LINE).getStdout().split("\n"));
-    }
-
-    return myEnvironment.get(name);
-  }
-
   @NotNull
   public static AttachOSHandler getAttachOsHandler(@NotNull EnvironmentAwareHost host) {
 
@@ -64,12 +44,16 @@ public abstract class AttachOSHandler {
       if (osType == OSType.MACOSX) {
         return new MacAttachOSHandler(host);
       }
+
+      if (osType == OSType.WINDOWS) {
+        return new GenericAttachOSHandler(host, OSType.WINDOWS);
+      }
     }
     catch (ExecutionException e) {
       LOGGER.warn("Error while obtaining host operating system", e);
     }
 
-    return new GenericAttachOSHandler(host);
+    return new GenericAttachOSHandler(host, OSType.UNKNOWN);
   }
 
   @NotNull
@@ -91,7 +75,7 @@ public abstract class AttachOSHandler {
 
   @NotNull
   private static OSType computeOsType(@NotNull EnvironmentAwareHost host) throws ExecutionException {
-    if(host instanceof LocalAttachHost) {
+    if (host instanceof LocalAttachHost) {
       return localComputeOsType();
     }
 

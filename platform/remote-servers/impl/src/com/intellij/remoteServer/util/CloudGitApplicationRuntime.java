@@ -26,7 +26,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
     super(applicationName);
     myServerRuntime = serverRuntime;
     myLogManager = logManager;
-    myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl() : new CloudLoggingHandlerImpl(logManager);
+    myLoggingHandler = logManager == null ? new CloudSilentLoggingHandlerImpl(null) : new CloudLoggingHandlerImpl(logManager);
     myDeployment = serverRuntime.getAgent().createDeployment(applicationName, myLoggingHandler);
   }
 

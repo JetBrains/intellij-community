@@ -24,6 +24,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,6 +39,8 @@ public class ShowRecentFilesAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getProject() != null);
+    Project project = e.getProject();
+    boolean enabled = project != null && Switcher.SWITCHER_KEY.get(project) == null;
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

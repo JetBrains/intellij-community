@@ -1907,6 +1907,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testAnyAttributeDefaultNamespace() {
+    configureByFiles(null, BASE_PATH + "UnityEngine.xml", BASE_PATH + "UnityEngine.UIElements.xsd");
+    doDoTest(true, false);
+  }
+
   public void testSubstitution() throws Exception {
     doTest(new VirtualFile[]{
       getVirtualFile(BASE_PATH + "Substitute/test.xml"),

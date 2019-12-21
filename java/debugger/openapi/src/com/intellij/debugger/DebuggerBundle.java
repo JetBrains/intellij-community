@@ -39,8 +39,8 @@ public class DebuggerBundle {
   }
 
   public static String getAddressDisplayName(final RemoteConnection connection) {
-    return connection.isUseSockets() ? StringUtil.notNullize(connection.getDebuggerHostName()) + ":" + connection.getDebuggerPort()
-                                     : connection.getDebuggerPort();
+    return connection.isUseSockets() ? StringUtil.notNullize(connection.getDebuggerHostName()) + ":" + connection.getDebuggerAddress()
+                                     : connection.getDebuggerAddress();
   }
 
   public static String getTransportName(final RemoteConnection connection) {

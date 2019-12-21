@@ -52,10 +52,10 @@
 
     <!-- listen VFS_CHANGES - it is core service, so, don't want use lazy message bus listener without a reason -->
     <applicationService serviceInterface="com.intellij.openapi.command.undo.DocumentReferenceManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl" preload="await"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.DocumentReferenceManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.execution.wsl.WSLDistributionService"/>
-    <experimentalFeature id="wsl.close.process.input" percentOfUsers="100">
+    <experimentalFeature id="wsl.close.process.input" percentOfUsers="0">
       <description>Forces closing of WSL process input stream to prevent process zombification. See
         https://github.com/Microsoft/WSL/issues/2592
         Required for Windows 10 version prior 1803
@@ -64,6 +64,10 @@
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using P9 protocol (available since Windows update
         1903).
+      </description>
+    </experimentalFeature>
+    <experimentalFeature id="wsl.prefer.p9.support" percentOfUsers="0">
+      <description>Prefer P9 FS access protocol even if direct access to WSL FS is available.
       </description>
     </experimentalFeature>
     <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
@@ -544,6 +548,7 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector$RegistryUtilValidator" />
     <statistics.validation.customWhiteListRule implementation="com.intellij.internal.statistic.collectors.fus.PluginInfoWhiteListRule"/>
     <statistics.validation.customWhiteListRule implementation="com.intellij.openapi.updateSettings.impl.UpdateDialogURLWhiteListRule"/>
+    <statistics.validation.customWhiteListRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoWhiteListRule"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.ProjectStructureUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector"/>
@@ -562,7 +567,7 @@
     <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
     <statistics.counterUsagesCollector groupId="import.old.config" version="3"/>
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
-    <statistics.counterUsagesCollector groupId="ui.tips" version="2"/>
+    <statistics.counterUsagesCollector groupId="ui.tips" version="3"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
 
     <statistics.counterUsagesCollector groupId="new.project.wizard" version="1"/>
@@ -572,8 +577,10 @@
     <statistics.counterUsagesCollector groupId="vcs" version="2"/>
     <statistics.counterUsagesCollector groupId="build" version="2"/>
     <statistics.counterUsagesCollector groupId="project.import" version="2"/>
-    <statistics.counterUsagesCollector groupId="ui.event" version="2"/>
+    <statistics.counterUsagesCollector groupId="ui.event" version="3"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
+    <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
+    <statistics.counterUsagesCollector groupId="customize.wizard" version="1"/>
 
     <statistics.counterUsagesCollector groupId="ide.update.dialog" version="1"/>
 
@@ -581,6 +588,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
+    <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>

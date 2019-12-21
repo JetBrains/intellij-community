@@ -63,6 +63,7 @@ private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.p
 private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 private val parseClosureParameter: Key<Boolean> = Key.create("groovy.parse.closure.parameter")
+private val parseNlBeforeClosureArgument: Key<Boolean> = Key.create("groovy.parse.nl.before.closure.argument")
 
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
@@ -193,6 +194,21 @@ fun closureParameter(builder: PsiBuilder, level: Int, parameterParser: Parser): 
 }
 
 fun isClosureParameter(builder: PsiBuilder, level: Int): Boolean = builder[parseClosureParameter]
+
+fun enableNlBeforeClosure(builder: PsiBuilder, level: Int, parameterParser: Parser): Boolean {
+  return builder.withKey(parseNlBeforeClosureArgument, true) {
+    parameterParser.parse(builder, level)
+  }
+}
+
+fun disableNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
+  builder[parseNlBeforeClosureArgument] = false
+  return true
+}
+
+fun isParseNlBeforeClosure(builder: PsiBuilder, level: Int): Boolean {
+  return builder.latestDoneMarker?.tokenType == NEW_EXPRESSION || builder[parseNlBeforeClosureArgument]
+}
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {
   return builder.withKey(parseArguments, true) {

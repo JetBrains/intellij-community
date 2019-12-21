@@ -405,8 +405,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    myEditor.getFoldingModel().flushCaretPosition(this);
-
     VerticalInfo oldVerticalInfo = myVerticalInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
     VisualPosition oldVisualPosition = myVisibleCaret;
@@ -439,6 +437,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         mySkipChangeRequests = false;
       }
     }
+
+    myEditor.getFoldingModel().flushCaretPosition(this);
 
     myLogicalCaret = logicalPositionToUse;
     setLastColumnNumber(myLogicalCaret.column);

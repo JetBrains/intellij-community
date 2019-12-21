@@ -8,6 +8,12 @@ import org.jetbrains.annotations.Nullable;
 public interface KeymapManagerListener {
   Topic<KeymapManagerListener> TOPIC = new Topic<>("KeymapManagerListener", KeymapManagerListener.class);
 
+  default void keymapAdded(@NotNull Keymap keymap) {
+  }
+
+  default void keymapRemoved(@NotNull Keymap keymap) {
+  }
+
   default void activeKeymapChanged(@Nullable Keymap keymap) {
   }
 

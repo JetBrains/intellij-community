@@ -26,6 +26,7 @@ public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
 
   @Override
   protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
-    return !session.isPaused();
+    assert session instanceof XDebugSessionImpl;
+    return ((XDebugSessionImpl)session).isPauseActionSupported() && !session.isPaused();
   }
 }

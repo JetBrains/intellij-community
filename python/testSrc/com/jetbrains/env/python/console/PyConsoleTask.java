@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.console;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -427,11 +428,16 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommunication.interrupt();
   }
 
-
   public void addTextToEditor(final String text) {
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       getConsoleView().setInputText(text);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     });
+  }
+
+  @NotNull
+  @Override
+  public Set<String> getTags() {
+    return ImmutableSet.of("-iron"); // PY-36349
   }
 }

@@ -85,7 +85,8 @@ public class HtmlUtil {
     //"html",
     "head",
     //"body",
-    "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed"
+    "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed",
+    "caption"
   };
   private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<>();
 

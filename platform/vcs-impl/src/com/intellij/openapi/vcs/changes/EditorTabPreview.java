@@ -65,7 +65,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        openEditorPreview();
+        openEditorPreview(true);
       }
     }.registerCustomShortcutSet(contentPanel, null);
   }
@@ -102,7 +102,7 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
       FileEditorManager.getInstance(myProject).closeFile(myPreviewDiffVirtualFile);
     }
     else {
-      openEditorPreview();
+      openEditorPreview(false);
     }
   }
 
@@ -156,11 +156,11 @@ public abstract class EditorTabPreview implements ChangesViewPreview {
     FileEditorManager.getInstance(myProject).closeFile(getVcsContentFile());
   }
 
-  public void openEditorPreview() {
+  public void openEditorPreview(boolean focus) {
     if (hasContent()) {
       boolean wasOpen = FileEditorManager.getInstance(myProject).isFileOpen(myPreviewDiffVirtualFile);
 
-      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), true, true);
+      FileEditor[] fileEditors = FileEditorManager.getInstance(myProject).openFile(getVcsContentFile(), focus, true);
 
       if (!wasOpen) {
         DumbAwareAction action = new DumbAwareAction() {

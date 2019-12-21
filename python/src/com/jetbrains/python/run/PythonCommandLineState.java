@@ -295,7 +295,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   @NotNull
   public GeneralCommandLine generateCommandLine() {
-    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug(), myRunWithPty);
+    SdkAdditionalData data = null;
+    if (myConfig.getSdk() != null) {
+      data = myConfig.getSdk().getSdkAdditionalData();
+    }
+    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), data, myConfig, isDebug(), myRunWithPty);
 
     buildCommandLineParameters(commandLine);
 
@@ -305,14 +309,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug, boolean runWithPty) {
+  public static GeneralCommandLine createPythonCommandLine(Project project,
+                                                           @Nullable SdkAdditionalData data,
+                                                           PythonRunParams config,
+                                                           boolean isDebug,
+                                                           boolean runWithPty) {
     GeneralCommandLine commandLine = generalCommandLine(runWithPty);
 
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     createStandardGroups(commandLine);
 
-    initEnvironment(project, commandLine, config, isDebug);
+    initEnvironment(project, data, commandLine, config, isDebug);
 
     setRunnerPath(project, commandLine, config);
 
@@ -340,7 +348,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
-  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams runParams, boolean isDebug) {
+  protected static void initEnvironment(Project project,
+                                        SdkAdditionalData data,
+                                        GeneralCommandLine commandLine,
+                                        PythonRunParams runParams,
+                                        boolean isDebug) {
     Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
@@ -359,7 +371,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     buildPythonPath(project, commandLine, runParams, isDebug);
 
     for (PythonCommandLineEnvironmentProvider envProvider : PythonCommandLineEnvironmentProvider.EP_NAME.getExtensionList()) {
-      envProvider.extendEnvironment(project, commandLine, runParams);
+      envProvider.extendEnvironment(project, data, commandLine, runParams);
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class PythonCompletionTest extends PyTestCase {
@@ -1639,6 +1641,18 @@ public class PythonCompletionTest extends PyTestCase {
 
     assertNotNull(suggestedInAlternativeSyntax);
     assertContainsElements(suggestedInAlternativeSyntax, "True", "False");
+  }
+
+  // PY-38438
+  public void testPythonCompletionRankingForImportKeyword() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "im<caret>");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    int indImport = suggested.indexOf("import");
+    int ind__import__ = suggested.indexOf("__import__");
+    assertTrue(indImport != -1);
+    assertTrue(ind__import__ != -1);
+    assertTrue(indImport < ind__import__);
   }
 
   private void assertNoVariantsInExtendedCompletion() {

@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs
 
-import com.intellij.openapi.util.Pair
-import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
@@ -12,13 +10,16 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
+import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.io.IOException
 import java.util.*
 
-class PyTypedDictStubImpl private constructor(private val myCalleeName: QualifiedName?,
+class PyTypedDictStubImpl private constructor(private val myCalleeName: QualifiedName,
                                               override val name: String,
                                               override val fields: LinkedHashMap<String, Optional<String>>,
-                                              override val isTotal: Boolean = true) : PyTypedDictStub {
+                                              override val isRequired: Boolean = true) : PyTypedDictStub {
 
   override fun getTypeClass(): Class<out CustomTargetExpressionStubType<*>> {
     return PyTypedDictStubType::class.java
@@ -26,8 +27,9 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
   @Throws(IOException::class)
   override fun serialize(stream: StubOutputStream) {
-    stream.writeName(myCalleeName?.toString())
+    stream.writeName(myCalleeName.toString())
     stream.writeName(name)
+    stream.writeBoolean(isRequired)
     stream.writeVarInt(fields.size)
 
     for ((key, value) in fields) {
@@ -36,7 +38,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     }
   }
 
-  override fun getCalleeName(): QualifiedName? {
+  override fun getCalleeName(): QualifiedName {
     return myCalleeName
   }
 
@@ -54,12 +56,16 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
       val calleeName = getCalleeName(calleeReference)
 
       if (calleeName != null) {
-        val name = PyResolveUtil.resolveStrArgument(expression, 0, "name") ?: return null
+        val name = PyResolveUtil.resolveStrArgument(expression, 0, TYPED_DICT_NAME_PARAMETER) ?: return null
 
-        val fieldsAndTotality = resolveTypingTDFields(expression)
+        val fieldsArgument = expression.getArgument(1, TYPED_DICT_FIELDS_PARAMETER, PyDictLiteralExpression::class.java) ?: return null
 
-        if (fieldsAndTotality?.first != null && fieldsAndTotality.second != null) {
-          return PyTypedDictStubImpl(calleeName, name, fieldsAndTotality.first, fieldsAndTotality.second)
+        val fields = getTypingTDFieldsFromIterable(fieldsArgument)
+        if (fields != null) {
+          return PyTypedDictStubImpl(calleeName,
+                                     name,
+                                     fields,
+                                     PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
         }
       }
 
@@ -70,12 +76,13 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     fun deserialize(stream: StubInputStream): PyTypedDictStub? {
       val calleeName = stream.readNameString()
       val name = stream.readNameString()
+      val isRequired = stream.readBoolean()
       val fields = deserializeFields(stream, stream.readVarInt())
 
       return if (calleeName == null || name == null) {
         null
       }
-      else PyTypedDictStubImpl(QualifiedName.fromDottedString(calleeName), name, fields)
+      else PyTypedDictStubImpl(QualifiedName.fromDottedString(calleeName), name, fields, isRequired)
     }
 
     private fun getCalleeName(referenceExpression: PyReferenceExpression): QualifiedName? {
@@ -106,22 +113,6 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
       return fields
     }
 
-    private fun resolveTypingTDFields(callExpression: PyCallExpression): Pair<LinkedHashMap<String, Optional<String>>, Boolean>? {
-      // SUPPORTED CASES:
-
-      // fields = {"x": str, "y": int}
-      // Movie = TypedDict(..., fields)
-
-      // Movie = TypedDict(..., {'name': str, 'year': int}, total=False)
-
-      val secondArgument = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression::class.java))
-
-      val resolvedFields = if (secondArgument is PyReferenceExpression) PyResolveUtil.fullResolveLocally(secondArgument) else secondArgument
-      return if (resolvedFields !is PySequenceExpression) null
-      else Pair.create(getTypingTDFieldsFromIterable(resolvedFields),
-                       PyEvaluator.evaluateAsBoolean(callExpression.getKeywordArgument("total"), true))
-    }
-
     private fun getTypingTDFieldsFromIterable(fields: PySequenceExpression): LinkedHashMap<String, Optional<String>>? {
       val result = LinkedHashMap<String, Optional<String>>()
 
@@ -133,14 +124,10 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
         if (name !is PyStringLiteralExpression) return null
 
-        result[name.stringValue] = Optional.ofNullable(textIfPresent(type))
+        result[name.stringValue] = Optional.ofNullable(type?.text)
       }
 
       return result
-    }
-
-    private fun textIfPresent(element: PsiElement?): String? {
-      return element?.text
     }
   }
 }

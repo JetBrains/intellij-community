@@ -30,7 +30,13 @@ fun getPluginInfo(className: String): PluginInfo {
  */
 fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   if (pluginId == null) return unknownPlugin
-  return getPluginInfoByDescriptor(PluginManagerCore.getPlugin(pluginId))
+
+  val plugin = PluginManagerCore.getPlugin(pluginId)
+  if (plugin == null) {
+    // we can't load plugin descriptor for a not installed plugin but we can check if it's from JB repo
+    return if (isSafeToReport(pluginId.idString)) PluginInfo(PluginType.LISTED, pluginId.idString) else unknownPlugin
+  }
+  return getPluginInfoByDescriptor(plugin)
 }
 
 /**

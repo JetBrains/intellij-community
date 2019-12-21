@@ -15,8 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,18 +36,18 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class LightJavaModule extends LightElement implements PsiJavaModule {
   private final LightJavaModuleReferenceElement myRefElement;
-  private final VirtualFile myJarRoot;
+  private final VirtualFile myRoot;
   private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = AtomicNotNullLazyValue.createValue(() -> findExports());
 
-  private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
+  private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile root, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE);
-    myJarRoot = jarRoot;
-    myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot));
+    myRoot = root;
+    myRefElement = new LightJavaModuleReferenceElement(manager, name);
   }
 
   @NotNull
   public VirtualFile getRootVirtualFile() {
-    return myJarRoot;
+    return myRoot;
   }
 
   @Nullable
@@ -69,12 +71,12 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private List<PsiPackageAccessibilityStatement> findExports() {
     List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
 
-    VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor<Void>() {
+    VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>() {
       private final JavaDirectoryService service = JavaDirectoryService.getInstance();
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (file.isDirectory() && !myJarRoot.equals(file)) {
+        if (file.isDirectory() && !myRoot.equals(file)) {
           PsiDirectory directory = getManager().findDirectory(file);
           if (directory != null) {
             PsiPackage pkg = service.getPackage(directory);
@@ -146,12 +148,12 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
-    return notNull(myManager.findDirectory(myJarRoot), super.getNavigationElement());
+    return notNull(myManager.findDirectory(myRoot), super.getNavigationElement());
   }
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof LightJavaModule && myJarRoot.equals(((LightJavaModule)obj).myJarRoot) && getManager() == ((LightJavaModule)obj).getManager();
+    return obj instanceof LightJavaModule && myRoot.equals(((LightJavaModule)obj).myRoot) && getManager() == ((LightJavaModule)obj).getManager();
   }
 
   @Override
@@ -192,7 +194,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private static class LightPackageAccessibilityStatement extends LightElement implements PsiPackageAccessibilityStatement {
     private final String myPackageName;
 
-    private LightPackageAccessibilityStatement(@NotNull PsiManager manager, @NotNull String packageName) {
+    LightPackageAccessibilityStatement(@NotNull PsiManager manager, @NotNull String packageName) {
       super(manager, JavaLanguage.INSTANCE);
       myPackageName = packageName;
     }
@@ -233,30 +235,61 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     }
   }
 
-  @NotNull
-  public static LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
-    PsiDirectory directory = manager.findDirectory(jarRoot);
-    assert directory != null : jarRoot;
-    return CachedValuesManager.getCachedValue(directory, () -> {
-      LightJavaModule module = new LightJavaModule(manager, jarRoot);
-      return CachedValueProvider.Result.create(module, directory);
-    });
+  /** @deprecated method scope was extended, use {@link #findModule} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  public static @NotNull LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
+    LightJavaModule module = findModule(manager, root);
+    assert module != null : root;
+    return module;
+  }
+
+  /** The method is expected to be called on roots obtained from JavaAutoModuleNameIndex/JavaSourceModuleNameIndex */
+  public static @Nullable LightJavaModule findModule(@NotNull PsiManager manager, @NotNull VirtualFile root) {
+    PsiElement directory = manager.findDirectory(root);
+    if (directory == null) return null;
+    if (root.isInLocalFileSystem()) {
+      return CachedValuesManager.getCachedValue(directory, () -> {
+        VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+        if (manifest != null) {
+          PsiElement file = manager.findFile(manifest);
+          if (file != null) {
+            String name = claimedModuleName(manifest);
+            LightJavaModule module = name != null ? new LightJavaModule(manager, root, name) : null;
+            return CachedValueProvider.Result.create(module, file);
+          }
+        }
+        return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
+      });
+    }
+    else {
+      return CachedValuesManager.getCachedValue(directory, () -> {
+        LightJavaModule module = new LightJavaModule(manager, root, moduleName(root));
+        return CachedValueProvider.Result.create(module, directory);
+      });
+    }
   }
 
   @NotNull
   public static String moduleName(@NotNull VirtualFile jarRoot) {
     VirtualFile manifest = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
     if (manifest != null) {
-      try (InputStream stream = manifest.getInputStream()) {
-        String claimed = new Manifest(stream).getMainAttributes().getValue("Automatic-Module-Name");
-        if (claimed != null) return claimed;
-      }
-      catch (IOException e) {
-        Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
-      }
+      String claimed = claimedModuleName(manifest);
+      if (claimed != null) return claimed;
     }
 
     return moduleName(jarRoot.getNameWithoutExtension());
+  }
+
+  @Nullable
+  public static String claimedModuleName(@NotNull VirtualFile manifest) {
+    try (InputStream stream = manifest.getInputStream()) {
+      return new Manifest(stream).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
+    }
+    catch (IOException e) {
+      Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
+      return null;
+    }
   }
 
   /**

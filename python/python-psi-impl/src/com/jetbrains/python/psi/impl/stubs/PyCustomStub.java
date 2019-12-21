@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-interface PyCustomStub<CustomStubType extends PyCustomStubType> {
+public interface PyCustomStub<CustomStubType extends PyCustomStubType> {
 
   /**
    * @return type class to distinguish one custom stub from another.

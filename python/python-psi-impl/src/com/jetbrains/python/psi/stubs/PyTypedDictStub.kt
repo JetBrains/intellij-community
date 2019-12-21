@@ -17,5 +17,8 @@ interface PyTypedDictStub : CustomTargetExpressionStub {
    */
   val fields: Map<String, Optional<String>>
 
-  val isTotal: Boolean
+  /**
+   * @return value of 'total' keyword argument if exists, True otherwise
+   */
+  val isRequired: Boolean
 }

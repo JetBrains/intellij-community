@@ -202,7 +202,7 @@ public abstract class TreeTraversal {
 
     protected JBIterable<T> _transform(JBIterable<?> original) {
       JBIterable<?> result = original;
-      for (Function<Object, Object> f : getTransformations()) {
+      for (Function<Object, Object> f : _transformations()) {
         result = result.map(f);
       }
       //noinspection unchecked
@@ -211,11 +211,18 @@ public abstract class TreeTraversal {
 
     protected T _transform(Object original) {
       Object result = original;
-      for (Function<Object, ?> f : getTransformations()) {
+      for (Function<Object, ?> f : _transformations()) {
         result = f.fun(result);
       }
       //noinspection unchecked
       return (T)result;
+    }
+
+    private JBIterable<Function<Object, Object>> cachedTransform;
+
+    @NotNull
+    private JBIterable<Function<Object, Object>> _transformations() {
+      return cachedTransform == null ? cachedTransform = getTransformations() : cachedTransform;
     }
   }
 

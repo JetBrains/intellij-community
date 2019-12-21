@@ -5,8 +5,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -74,11 +74,13 @@ public class TextMateServiceImpl extends TextMateService {
 
   @Override
   public void reloadEnabledBundles() {
-    unregisterAllBundles();
     registerBundles(true);
   }
 
   private void registerBundles(boolean fireEvents) {
+    THashMap<String, CharSequence> oldExtensionsMapping = myExtensionsMapping.clone();
+    unregisterAllBundles();
+
     TextMateSettings settings = TextMateSettings.getInstance();
     if (settings == null) {
       return;
@@ -97,25 +99,33 @@ public class TextMateServiceImpl extends TextMateService {
         }
       }
     }
-    if (!myExtensionsMapping.equals(newExtensionsMapping)) {
-      myExtensionsMapping.clear();
-      myExtensionsMapping.putAll(newExtensionsMapping);
-      if (fireEvents && !newExtensionsMapping.isEmpty()) {
-        fireFileTypesChangedEvent();
+    if (!oldExtensionsMapping.equals(newExtensionsMapping)) {
+      Runnable update = () -> {
+        myExtensionsMapping.clear();
+        myExtensionsMapping.putAll(newExtensionsMapping);
+        myExtensionsMapping.trimToSize();
+      };
+
+      if (fireEvents) {
+        fireFileTypesChangedEvent(update);
+      }
+      else {
+        update.run();
       }
     }
     mySyntaxTable.compact();
-    myExtensionsMapping.trimToSize();
     myCustomHighlightingColors.trimToSize();
   }
 
-  private static void fireFileTypesChangedEvent() {
-    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () ->
+  private static void fireFileTypesChangedEvent(@NotNull Runnable update) {
+    ApplicationManager.getApplication().invokeLater(() -> {
       ApplicationManager.getApplication().runWriteAction(() -> {
         FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
         fileTypeManager.fireBeforeFileTypesChanged();
+        update.run();
         fileTypeManager.fireFileTypesChanged();
-      }));
+      });
+    }, ModalityState.NON_MODAL);
   }
 
   private static void loadBuiltinBundles(TextMateSettings settings) {

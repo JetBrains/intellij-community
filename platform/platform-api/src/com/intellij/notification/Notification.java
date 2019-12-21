@@ -227,7 +227,7 @@ public class Notification {
   }
 
   public static void fire(@NotNull final Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, dataId -> {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataId -> {
       if (KEY.is(dataId)) {
         return notification;
       }

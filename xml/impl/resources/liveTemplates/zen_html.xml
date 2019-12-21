@@ -148,7 +148,6 @@
   <template description="&lt;br&gt;" name="br" toReformat="true" toShortenFQNames="true" value="&lt;br&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
     </context>
   </template>
   <template description="&lt;frame&gt;" name="frame" toReformat="true" toShortenFQNames="true" value="&lt;frame&gt;">
@@ -160,7 +159,6 @@
   <template description="&lt;hr&gt;" name="hr" toReformat="true" toShortenFQNames="true" value="&lt;hr&gt;">
     <context>
       <option name="HTML_TEXT" value="true"/>
-      <option name="JSX_HTML" value="true"/>
     </context>
   </template>
   <template description="&lt;bdo dir=&quot;...&quot;&gt;...&lt;/bdo&gt;" name="bdo" toReformat="true" toShortenFQNames="true" value="&lt;bdo dir=&quot;$VAR0$&quot;&gt;$END$&lt;/bdo&gt;">
@@ -188,11 +186,11 @@
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>
-  <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;...&quot;&gt;" name="link" toReformat="true" toShortenFQNames="true" value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$END$&quot;&gt;">
-  <context>
+  <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;...&quot;&gt;" name="link" toReformat="true" toShortenFQNames="true"
+            value="&lt;link rel=&quot;stylesheet&quot; href=&quot;$END$&quot;&gt;">
+    <context>
       <option name="HTML_TEXT" value="true"/>
-    <option name="JSX_STATEMENT" value="true"/>
-    <option name="JSX_EXPRESSION" value="true"/>
+      <option name="JSX_HTML" value="true"/>
     </context>
   </template>
   <template description="&lt;link rel=&quot;stylesheet&quot; href=&quot;style.css&quot; &gt;" name="link:css"
@@ -336,10 +334,9 @@
     </context>
   </template>
   <template description="&lt;script src=&quot;...&quot;&gt;...&lt;/script&gt;" name="script:src" toReformat="true" toShortenFQNames="true" value="&lt;script src=&quot;$END$&quot;&gt;&lt;/script&gt;">
-  <context>
+    <context>
       <option name="HTML_TEXT" value="true"/>
-    <option name="JSX_STATEMENT" value="true"/>
-    <option name="JSX_EXPRESSION" value="true"/>
+      <option name="JSX_HTML" value="true"/>
     </context>
   </template>
   <template description="&lt;img src=&quot;...&quot; alt=&quot;...&quot;&gt;" name="img" toReformat="true" toShortenFQNames="true"
@@ -1715,6 +1712,102 @@
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR2"/>
     <context>
       <option name="HTML_TEXT" value="true"/>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  
+  <template description="&lt;div&gt;...&lt;/div&gt;" name="div" toReformat="false" toShortenFQNames="true" value="&lt;div&gt;$END$&lt;/div&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;span&gt;...&lt;/span&gt;" name="span" toReformat="false" toShortenFQNames="true" value="&lt;span&gt;$END$&lt;/span&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h1&gt;...&lt;/h1&gt;" name="h1" toReformat="false" toShortenFQNames="true" value="&lt;h1&gt;$END$&lt;/h1&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h2&gt;...&lt;/h2&gt;" name="h2" toReformat="false" toShortenFQNames="true" value="&lt;h2&gt;$END$&lt;/h2&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h3&gt;...&lt;/h3&gt;" name="h3" toReformat="false" toShortenFQNames="true" value="&lt;h3&gt;$END$&lt;/h3&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h4&gt;...&lt;/h4&gt;" name="h4" toReformat="false" toShortenFQNames="true" value="&lt;h4&gt;$END$&lt;/h4&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h5&gt;...&lt;/h5&gt;" name="h5" toReformat="false" toShortenFQNames="true" value="&lt;h5&gt;$END$&lt;/h5&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;h6&gt;...&lt;/h6&gt;" name="h6" toReformat="false" toShortenFQNames="true" value="&lt;h6&gt;$END$&lt;/h6&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;ol&gt;...&lt;/ol&gt;" name="ol" toReformat="false" toShortenFQNames="true" value="&lt;ol&gt;$END$&lt;/ol&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;ul&gt;...&lt;/ul&gt;" name="ul" toReformat="false" toShortenFQNames="true" value="&lt;ul&gt;$END$&lt;/ul&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;title&gt;...&lt;/title&gt;" name="title" toReformat="false" toShortenFQNames="true" value="&lt;title&gt;$END$&lt;/title&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;p&gt;...&lt;/p&gt;" name="p" toReformat="false" toShortenFQNames="true" value="&lt;p&gt;$END$&lt;/p&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;head&gt;...&lt;/head&gt;" name="head" toReformat="false" toShortenFQNames="true" value="&lt;head&gt;$END$&lt;/head&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;header&gt;...&lt;/header&gt;" name="header" toReformat="false" toShortenFQNames="true" value="&lt;header&gt;$END$&lt;/header&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;b&gt;...&lt;/b&gt;" name="b" toReformat="false" toShortenFQNames="true" value="&lt;b&gt;$END$&lt;/b&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;i&gt;...&lt;/i&gt;" name="i" toReformat="false" toShortenFQNames="true" value="&lt;i&gt;$END$&lt;/i&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;table&gt;...&lt;/table&gt;" name="table" toReformat="false" toShortenFQNames="true" value="&lt;table&gt;$END$&lt;/table&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;td&gt;...&lt;/td&gt;" name="td" toReformat="false" toShortenFQNames="true" value="&lt;td&gt;$END$&lt;/td&gt;">
+    <context>
+      <option name="JSX_HTML" value="true"/>
+    </context>
+  </template>
+  <template description="&lt;li&gt;...&lt;/li&gt;" name="li" toReformat="false" toShortenFQNames="true" value="&lt;li&gt;$END$&lt;/li&gt;">
+    <context>
       <option name="JSX_HTML" value="true"/>
     </context>
   </template>

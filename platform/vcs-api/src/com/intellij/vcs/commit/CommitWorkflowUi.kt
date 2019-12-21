@@ -3,11 +3,11 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.TextAccessor
 import java.util.*
 
@@ -26,8 +26,8 @@ interface CommitWorkflowUi : DataProvider, Disposable {
 
   fun getDisplayedChanges(): List<Change>
   fun getIncludedChanges(): List<Change>
-  fun getDisplayedUnversionedFiles(): List<VirtualFile>
-  fun getIncludedUnversionedFiles(): List<VirtualFile>
+  fun getDisplayedUnversionedFiles(): List<FilePath>
+  fun getIncludedUnversionedFiles(): List<FilePath>
 
   fun includeIntoCommit(items: Collection<*>)
 

@@ -11,6 +11,7 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 import java.util.Objects;
 
 class TextMateLexerState implements LexerState {
+  private final int hashcode;
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;
   @NotNull public final TextMateWeigh.Priority priorityMatch;
@@ -24,6 +25,7 @@ class TextMateLexerState implements LexerState {
     this.matchData = matchData;
     this.priorityMatch = priority;
     string = matchData.matched() ? line : null;
+    hashcode = Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
   }
 
   public static TextMateLexerState notMatched(@NotNull SyntaxNodeDescriptor syntaxRule) {
@@ -57,7 +59,7 @@ class TextMateLexerState implements LexerState {
 
   @Override
   public int hashCode() {
-    return Objects.hash(syntaxRule, matchData, priorityMatch, stringId());
+    return hashcode;
   }
 
   @Nullable

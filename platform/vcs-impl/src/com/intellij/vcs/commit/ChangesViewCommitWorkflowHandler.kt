@@ -221,7 +221,12 @@ class ChangesViewCommitWorkflowHandler(
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (isToggleCommitUi.asBoolean() && result == CheckinHandler.ReturnResult.COMMIT) deactivate(true)
+    if (result == CheckinHandler.ReturnResult.COMMIT) {
+      // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
+      workflow.commitState = workflow.commitState.copy(getCommitMessage())
+
+      if (isToggleCommitUi.asBoolean()) deactivate(true)
+    }
   }
 
   override fun updateWorkflow() {

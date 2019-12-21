@@ -75,17 +75,16 @@ def run_pip(args):
         error_no_pip()
 
 
-def do_pyvenv(path, system_site_packages):
+def do_pyvenv(args):
+    import runpy
+    # We cannot rely on automatic installation of setuptools and pip and
+    # have to bootstrap these packages ourselves, since some distributions
+    # of CPython on Ubuntu and MacOS don't include "ensurepip" module.
+    sys.argv[1:] = ['--without-pip'] + args
     try:
-        import venv
+        runpy.run_module('venv', run_name='__main__', alter_sys=True)
     except ImportError:
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
-    # In Python >= 3.4 venv.create() has a new parameter with_pip=False
-    # that allows to automatically install setuptools and pip with the module
-    # ensurepip. Unfortunately, we cannot use this parameter and have to
-    # bootstrap these packages ourselves, since some distributions of CPython
-    # on Ubuntu don't include ensurepip.
-    venv.create(path, system_site_packages=system_site_packages)
 
 
 def do_untar(name):
@@ -162,12 +161,7 @@ def main():
             opts, args = getopt.getopt(sys.argv[2:], '', ['system-site-packages'])
             if len(args) != 1:
                 usage()
-            path = args[0]
-            system_site_packages = False
-            for opt, arg in opts:
-                if opt == '--system-site-packages':
-                    system_site_packages = True
-            do_pyvenv(path, system_site_packages)
+            do_pyvenv(sys.argv[2:])
         else:
             usage()
     except Exception:

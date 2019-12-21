@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple, <warning descr="Unused import statement">Optional</warning>
+from typing import List, Set, Tuple, <warning descr="Unused import statement 'Optional'">Optional</warning>
 
 
 d = {'a': [1, 2, 3]}

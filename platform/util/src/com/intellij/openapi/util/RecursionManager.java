@@ -214,6 +214,11 @@ public class RecursionManager {
     public int hashCode() {
       return myHashCode;
     }
+
+    @Override
+    public String toString() {
+      return guardId + "->" + userObject;
+    }
   }
 
   private static class CalculationStack {
@@ -306,14 +311,16 @@ public class RecursionManager {
     private void prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
 
-      boolean inLoop = false;
-      for (Map.Entry<MyKey, Integer> entry: new ArrayList<>(progressMap.entrySet())) {
-        if (inLoop) {
-          entry.setValue(reentrancyCount);
+      List<Map.Entry<MyKey, Integer>> stack = new ArrayList<>(progressMap.entrySet());
+      int loopStart = ContainerUtil.indexOf(stack, entry -> entry.getKey().equals(realKey));
+      if (loopStart >= 0) {
+        preventions.add(stack.get(loopStart).getKey());
+        for (int i = loopStart + 1; i < stack.size(); i++) {
+          stack.get(i).setValue(reentrancyCount);
         }
-        else if (entry.getKey().equals(realKey)) {
-          preventions.add(entry.getKey());
-          inLoop = true;
+        if (LOG.isDebugEnabled() && loopStart < stack.size() - 1) {
+          LOG.debug("Recursion prevented for " + realKey +
+                    ", caching disabled for " + ContainerUtil.map(stack.subList(loopStart, stack.size()), Map.Entry::getKey));
         }
       }
     }

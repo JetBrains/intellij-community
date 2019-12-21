@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -48,7 +49,8 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
       TIntArrayList result = new TIntArrayList(offsets.length);
       Map<LighterASTNode, Boolean> stringConcatenations = new HashMap<>();
       LightTreeUtil.processLeavesAtOffsets(offsets, tree, (leaf, offset) -> {
-        LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
+        if (leaf == null || leaf.getTokenType() != JavaTokenType.PLUS) return;
+        LighterASTNode element = tree.getParent(leaf);
         if (element == null) return;
 
         if ((element.getTokenType() == JavaElementType.BINARY_EXPRESSION
@@ -95,7 +97,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @Override

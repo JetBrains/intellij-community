@@ -38,6 +38,9 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
@@ -1071,10 +1074,28 @@ public class MavenProject {
   }
 
   @Nullable
-  public String getResourceEncoding() {
+  public String getResourceEncoding(Project project) {
     Element pluginConfiguration = getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
     if (pluginConfiguration != null) {
-      return pluginConfiguration.getChildTextTrim("encoding");
+
+      String encoding = pluginConfiguration.getChildTextTrim("encoding");
+      if (encoding == null) {
+        return null;
+      }
+
+      if (encoding.startsWith("$")) {
+        MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(project, this.getFile());
+        if (domModel == null) {
+          MavenLog.LOG.warn("cannot get MavenDomProjectModel to find encoding");
+          return getSourceEncoding();
+        }
+        else {
+          MavenPropertyResolver.resolve(encoding, domModel);
+        }
+      }
+      else {
+        return encoding;
+      }
     }
     return getSourceEncoding();
   }

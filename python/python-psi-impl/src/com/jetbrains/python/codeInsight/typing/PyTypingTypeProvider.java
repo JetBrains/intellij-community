@@ -80,6 +80,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NEW_TYPE = "typing.NewType";
   public static final String CALLABLE = "typing.Callable";
   public static final String MAPPING = "typing.Mapping";
+  public static final String MAPPING_GET = "typing.Mapping.get";
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";

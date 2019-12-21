@@ -129,7 +129,7 @@ public class WSLUtil {
    * Must be invoked just before execution, see RUBY-20358
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @NotNull
   public static <T extends ProcessHandler> T addInputCloseListener(@NotNull T processHandler) {
     if (Experiments.getInstance().isFeatureEnabled("wsl.close.process.input")) {

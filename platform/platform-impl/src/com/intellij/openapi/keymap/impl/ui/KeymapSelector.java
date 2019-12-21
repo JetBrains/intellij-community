@@ -19,8 +19,11 @@ import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.SchemesModel;
 import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
@@ -43,9 +46,30 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
   private boolean messageShown;
   private boolean internal;
 
-  KeymapSelector(Consumer<? super Keymap> consumer) {
+  KeymapSelector(Consumer<? super Keymap> consumer, @Nullable Disposable parentDisposable) {
     super(0);
     this.consumer = consumer;
+
+    if (parentDisposable != null) {
+      ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+        @Override
+        public void keymapAdded(@NotNull Keymap keymap) {
+          manager.handleKeymapAdded(keymap);
+          resetSchemes(manager.getSchemes());
+        }
+
+        @Override
+        public void keymapRemoved(@NotNull Keymap keymap) {
+          manager.handleKeymapRemoved(keymap);
+          resetSchemes(manager.getSchemes());
+        }
+
+        @Override
+        public void activeKeymapChanged(@Nullable Keymap keymap) {
+          manager.handleActiveKeymapChanged(keymap);
+        }
+      });
+    }
   }
 
   @NotNull

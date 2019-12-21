@@ -749,9 +749,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (fileType == null) {
         return getOrDetectFromContent(file, content);
       }
-      if (mightBeReplacedByDetectedFileType(fileType)) {
+      if (mightBeReplacedByDetectedFileType(fileType) && isDetectable(file)) {
         FileType detectedFromContent = getOrDetectFromContent(file, content);
-        if (detectedFromContent != UnknownFileType.INSTANCE && detectedFromContent != PlainTextFileType.INSTANCE) {
+        // unknown file type means that it was detected as binary, it's better to keep it binary
+        if (detectedFromContent != PlainTextFileType.INSTANCE) {
           return detectedFromContent;
         }
       }

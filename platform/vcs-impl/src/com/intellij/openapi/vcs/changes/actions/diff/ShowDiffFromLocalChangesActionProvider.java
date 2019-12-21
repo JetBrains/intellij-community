@@ -14,14 +14,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
@@ -61,8 +59,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     List<Change> changes = view.getSelectedChanges().collect(toList());
-    List<VirtualFile> unversioned =
-      view.getSelectedUnversionedFiles().map(FilePath::getVirtualFile).filter(Objects::nonNull).collect(toList());
+    List<FilePath> unversioned = view.getSelectedUnversionedFiles().collect(toList());
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
 
@@ -114,7 +111,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   private static void showDiff(@NotNull Project project,
                                @NotNull List<? extends Change> changes,
-                               @NotNull List<? extends VirtualFile> unversioned,
+                               @NotNull List<? extends FilePath> unversioned,
                                @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
@@ -132,9 +129,8 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     }
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
-      VirtualFile selectedFile = unversioned.get(0);
-      List<VirtualFile> allUnversioned =
-        changesView.getUnversionedFiles().map(FilePath::getVirtualFile).filter(Objects::nonNull).collect(toList());
+      FilePath selectedFile = unversioned.get(0);
+      List<FilePath> allUnversioned = changesView.getUnversionedFiles().collect(toList());
       showUnversionedDiff(project, ListSelection.create(allUnversioned, selectedFile));
       return;
     }
@@ -152,20 +148,20 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   private static void showUnversionedDiff(@Nullable Project project,
-                                          @NotNull ListSelection<? extends VirtualFile> selection) {
+                                          @NotNull ListSelection<? extends FilePath> selection) {
     ListSelection<ChangeDiffRequestChain.Producer> producers =
-      selection.map(change -> UnversionedDiffRequestProducer.create(project, change));
+      selection.map(path -> UnversionedDiffRequestProducer.create(project, path));
 
     showDiff(project, producers.getList(), producers.getSelectedIndex());
   }
 
   private static void showSelectionDiff(@Nullable Project project,
                                         @NotNull List<? extends Change> changes,
-                                        @NotNull List<? extends VirtualFile> unversioned) {
+                                        @NotNull List<? extends FilePath> unversioned) {
     List<ChangeDiffRequestChain.Producer> changeRequests =
       ContainerUtil.mapNotNull(changes, change -> ChangeDiffRequestProducer.create(project, change));
     List<ChangeDiffRequestChain.Producer> unversionedRequests =
-      ContainerUtil.mapNotNull(unversioned, file -> UnversionedDiffRequestProducer.create(project, file));
+      ContainerUtil.mapNotNull(unversioned, path -> UnversionedDiffRequestProducer.create(project, path));
 
     showDiff(project, ContainerUtil.concat(changeRequests, unversionedRequests), 0);
   }

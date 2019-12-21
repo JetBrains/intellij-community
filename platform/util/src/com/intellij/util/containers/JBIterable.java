@@ -641,8 +641,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public final <T> JBIterable<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
-    JBIterable<T> map = map(function);
-    return map.filter(Conditions.notNull());
+    return intercept(iterator -> JBIterator.from(iterator).filterMap(Stateful.copy(function)));
   }
 
   /**

@@ -6,7 +6,7 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDropHandler;
@@ -122,7 +122,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
 
-    int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
+    int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
     getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
     setResizable(false);
 
@@ -264,8 +264,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super(new BorderLayout());
       mySlidingPanel.add("root", this);
       setBackground(getMainBackground());
-      if (RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseProjectGroups()).length > 0) {
-        final JComponent recentProjects = createRecentProjects();
+      if (RecentProjectListActionProvider.getInstance().getActions(false, isUseProjectGroups()).size() > 0) {
+        JComponent recentProjects = createRecentProjects();
         add(recentProjects, BorderLayout.WEST);
         JList<?> projectsList = UIUtil.findComponentOfType(recentProjects, JList.class);
         if (projectsList != null) {
@@ -280,7 +280,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             }
 
             private void removeIfNeeded() {
-              if (RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseProjectGroups()).length == 0) {
+              if (RecentProjectListActionProvider.getInstance().getActions(false, isUseProjectGroups()).size() == 0) {
                 FlatWelcomeScreen.this.remove(recentProjects);
                 FlatWelcomeScreen.this.revalidate();
                 FlatWelcomeScreen.this.repaint();

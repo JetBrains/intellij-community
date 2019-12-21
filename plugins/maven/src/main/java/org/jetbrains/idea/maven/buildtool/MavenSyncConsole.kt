@@ -53,7 +53,7 @@ class MavenSyncConsole(private val myProject: Project) {
     mySyncView = syncView
     val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, "Sync")
     runDescr.isActivateToolWindowWhenFailed = !fromAutoImport
-    runDescr.isActivateToolWindowWhenAdded = !fromAutoImport
+    runDescr.isActivateToolWindowWhenAdded = false
     mySyncView.onEvent(mySyncId,
                        StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
                          .withContentDescriptorSupplier {

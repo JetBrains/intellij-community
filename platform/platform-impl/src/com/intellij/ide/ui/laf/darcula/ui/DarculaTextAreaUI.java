@@ -38,7 +38,7 @@ public class DarculaTextAreaUI extends BasicTextAreaUI {
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new")
+    return Registry.is("ide.text.mouse.selection.new", true)
            ? new TextFieldWithPopupHandlerUI.MouseDragAwareCaret()
            : new TextFieldWithPopupHandlerUI.MarginAwareCaret();
   }

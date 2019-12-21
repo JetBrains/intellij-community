@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.log.LogListener;
 import com.intellij.remoteServer.agent.util.log.TerminalListener;
@@ -27,6 +28,12 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
     myMainLoggingHandler = logManager.getMainLoggingHandler();
     myPipeName2LogListener = new HashMap<>();
     myLogManager = logManager;
+  }
+
+  @Override
+  public String getProjectHash() {
+    Project project = myLogManager.getProject();
+    return "`" + project.getName() + "`:" + project.getLocationHash();
   }
 
   @Override

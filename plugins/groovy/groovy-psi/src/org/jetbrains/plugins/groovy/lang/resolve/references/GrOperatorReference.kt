@@ -32,7 +32,7 @@ class GrOperatorReference(
       return ExpressionArgument(operand)
     }
 
-  override val methodName: String = binaryOperatorMethodNames[element.operator] ?: error(element.text)
+  override val methodName: String get() = binaryOperatorMethodNames[element.operator] ?: error(element.text)
 
   override val arguments: Arguments?
     get() {

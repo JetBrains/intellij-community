@@ -1155,6 +1155,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintCaret() {
+      if (myEditor.isPurePaintingMode()) return;
       EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(true);
       if (locations == null) return;
 

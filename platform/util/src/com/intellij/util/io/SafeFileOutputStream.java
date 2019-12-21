@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.*;
+import java.nio.file.attribute.DosFileAttributeView;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -58,18 +60,18 @@ public class SafeFileOutputStream extends OutputStream {
       Path parent = myTarget.getParent();
       Path backup = parent != null ? parent.resolve(myBackupName) : Paths.get(myBackupName);
       Files.copy(myTarget, backup, BACKUP_COPY);
+      DosFileAttributeView dosView = SystemInfo.isWindows ? Files.getFileAttributeView(backup, DosFileAttributeView.class) : null;
+      if (dosView != null && dosView.readAttributes().isReadOnly()) {
+        dosView.setReadOnly(false);
+      }
       return backup;
     });
     myBuffer = new BufferExposingByteArrayOutputStream();
   }
 
-  @Override
-  public void write(int b) throws IOException {
-    myBuffer.write(b);
-  }
 
   @Override
-  public void write(byte[] b) throws IOException {
+  public void write(int b) throws IOException {
     myBuffer.write(b);
   }
 

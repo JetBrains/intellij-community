@@ -335,6 +335,8 @@
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
 
+    <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
+
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>

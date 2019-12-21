@@ -33,7 +33,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
   public SAJDWPRemoteConnection(String pid, List<String> commands) {
     super(pid);
     setServerMode(true);
-    setDebuggerPort("0");
+    setDebuggerAddress("0");
     myCommands = commands;
   }
 

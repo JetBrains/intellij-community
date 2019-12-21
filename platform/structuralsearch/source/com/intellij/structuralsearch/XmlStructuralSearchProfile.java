@@ -248,7 +248,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( \"<ul> or <ol>\" )]<li />", HTML_XML, StdFileTypes.HTML)
+        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( <ul> or <ol> )]<li />", HTML_XML, StdFileTypes.HTML)
       };
     }
   }

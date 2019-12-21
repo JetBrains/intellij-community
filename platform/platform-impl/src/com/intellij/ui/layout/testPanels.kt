@@ -308,3 +308,25 @@ fun separatorAndComment() : JPanel {
     }
   }
 }
+
+fun rowWithIndent(): JPanel {
+  return panel {
+    row("Zero") {
+      subRowIndent = 0
+      row("Bar 0") {
+      }
+    }
+    row("One") {
+      subRowIndent = 1
+
+      row("Bar 1") {
+      }
+    }
+    row("Two") {
+      subRowIndent = 2
+
+      row("Bar 2") {
+      }
+    }
+  }
+}

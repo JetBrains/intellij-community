@@ -239,6 +239,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return flags;
   }
 
+  /**
+   * @deprecated use {@link IconManager#registerIconLayer(int, Icon)}
+   */
   @Deprecated
   public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
     IconManager.getInstance().registerIconLayer(flagMask, icon);

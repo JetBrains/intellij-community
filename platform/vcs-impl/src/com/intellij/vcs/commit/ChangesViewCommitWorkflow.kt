@@ -10,7 +10,10 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
-internal class CommitState(val changes: List<Change>, val commitMessage: String)
+internal class CommitState(val changes: List<Change>, val commitMessage: String) {
+  fun copy(commitMessage: String): CommitState =
+    if (this.commitMessage == commitMessage) this else CommitState(changes, commitMessage)
+}
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)

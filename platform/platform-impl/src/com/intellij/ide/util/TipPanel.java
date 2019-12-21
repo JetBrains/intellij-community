@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TipsOfTheDayUsagesCollector;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption;
 import com.intellij.ui.JBColor;
@@ -84,6 +85,7 @@ public class TipPanel extends JPanel implements DoNotAskOption {
     TipUIUtil.openTipInBrowser(tip, browser);
     myPoweredByLabel.setText(TipUIUtil.getPoweredByText(tip));
     myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
+    TipsOfTheDayUsagesCollector.triggerTipShown(tip);
     settings.setLastTip(lastTip);
   }
 

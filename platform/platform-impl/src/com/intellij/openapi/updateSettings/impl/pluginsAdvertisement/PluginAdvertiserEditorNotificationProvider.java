@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -18,6 +19,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -61,6 +63,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
       return createPanel(fileName, knownExtensions, project);
     }
+    LOG.debug("No known extensions loaded");
     return null;
   }
 
@@ -74,6 +77,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     if (plugins != null && !plugins.isEmpty()) {
       return createPanel(extension, plugins, project);
     }
+    LOG.debug("No plugins for extension " + extension);
     return null;
   }
 
@@ -87,7 +91,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {
         myEnabledExtensions.add(extension);
         EditorNotifications.getInstance(project).updateAllNotifications();
-        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins.editor");
+        FeatureUsageData data = new FeatureUsageData()
+          .addData("source", "editor")
+          .addData("plugins", Collections.singletonList(disabledPlugin.getPluginId().getIdString()));
+        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
         PluginsAdvertiser.enablePlugins(project, Collections.singletonList(disabledPlugin));
       });
     } else if (hasNonBundledPlugin(plugins)) {
@@ -96,6 +103,10 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
         for (PluginsAdvertiser.Plugin plugin : plugins) {
           pluginIds.add(plugin.myPluginId);
         }
+        FeatureUsageData data = new FeatureUsageData()
+          .addData("source", "editor")
+          .addData("plugins", new ArrayList<>(pluginIds));
+        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "install.plugins", data);
         PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> {
           myEnabledExtensions.add(extension);
           EditorNotifications.getInstance(project).updateAllNotifications();
@@ -109,11 +120,14 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
       panel.createActionLabel(PluginsAdvertiser.CHECK_ULTIMATE_EDITION_TITLE, () -> {
         myEnabledExtensions.add(extension);
-        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page.editor");
+        FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "open.download.page", data);
         PluginsAdvertiser.openDownloadPage();
       });
 
       panel.createActionLabel(PluginsAdvertiser.ULTIMATE_EDITION_SUGGESTION, () -> {
+        FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+        FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.ultimate", data);
         PropertiesComponent.getInstance().setValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION, "true");
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
@@ -121,6 +135,8 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       return null;
     }
     panel.createActionLabel("Ignore extension", () -> {
+      FeatureUsageData data = new FeatureUsageData().addData("source", "editor");
+      FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "ignore.extensions", data);
       UnknownFeaturesCollector.getInstance(project).ignoreFeature(createExtensionFeature(extension));
       EditorNotifications.getInstance(project).updateAllNotifications();
     });

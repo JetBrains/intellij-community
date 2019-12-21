@@ -15,10 +15,9 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.util.CollectConsumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -28,10 +27,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility class, that contains various methods for testing
@@ -302,5 +298,19 @@ public abstract class TestUtils {
 
   public static void disableAstLoading(@NotNull Project project, @NotNull Disposable parent) {
     PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, parent);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static <T> RunAll runAll(@NotNull Collection<? extends T> input,
+                                  @NotNull ThrowableConsumer<? super T, Throwable> action) {
+    List<ThrowableRunnable<Throwable>> runnables = ContainerUtil.map(input, it -> () -> action.consume(it));
+    return new RunAll(runnables.toArray(new ThrowableRunnable[0]));
+  }
+
+  @NotNull
+  public static <K, V> RunAll runAll(@NotNull Map<? extends K, ? extends V> input,
+                                     @NotNull ThrowablePairConsumer<? super K, ? super V, Throwable> action) {
+    return runAll(input.entrySet(), e -> action.consume(e.getKey(), e.getValue()));
   }
 }

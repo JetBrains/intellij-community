@@ -76,12 +76,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
-    if (!visible) {
-      refresher.setValid(false, true);
-    }
-    else {
-      refresher.onRefresh();
-    }
+    refresher.setValid(visible, true);
   }
 
   @Override

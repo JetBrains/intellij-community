@@ -25,6 +25,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
     platformPrefix = "PyCharmCore"
+    customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
     brandingResourcePaths = ["$communityHome/python/resources"]
     scrambleMainJar = false

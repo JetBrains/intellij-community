@@ -4,5 +4,5 @@ def f(c, x):
     elif c > 1:
         from lib2 import f #pass
     else:
-        <warning descr="Unused import statement">from lib2 import g #fail</warning>
+        <warning descr="Unused import statement 'from lib2 import g #fail'">from lib2 import g #fail</warning>
     return f(x)

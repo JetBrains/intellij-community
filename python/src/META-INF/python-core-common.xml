@@ -99,8 +99,6 @@
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassCompletionContributor"/>
-    <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.completion.PyTypedDictCompletionContributor"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
@@ -698,6 +696,7 @@
     <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
                     interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"/>
     <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"/>
+    <extensionPoint qualifiedName="Pythonid.thirdPartySdkDetector" interface="com.jetbrains.python.psi.resolve.PyThirdPartySdkDetector"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

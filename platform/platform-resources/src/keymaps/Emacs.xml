@@ -318,6 +318,7 @@
   <action id="IntroduceField"/>
   <action id="RecentFiles"/>
   <action id="SwitcherRecentEditedChangedToggleCheckBox"/>
+  <action id="SwitcherIterateItems"/>
   <action id="EditorTab"/>
   <action id="EditorDeleteLine"/>
   <action id="PreviousProjectWindow"/>

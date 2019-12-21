@@ -79,6 +79,13 @@ abstract class WindowsDistributionCustomizer {
   String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "" }
 
   /**
+   * Name of the root product windows installation directory and Desktop ShortCut
+   */
+  String getNameForInstallDirAndDesktopShortcut(ApplicationInfoProperties applicationInfo, String buildNumber) {
+    "${getFullNameIncludingEdition(applicationInfo)} ${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
+  }
+
+  /**
    * Override this method to copy additional files to Windows distribution of the product.
    * @param targetDirectory contents of this directory will be packed into zip archive and exe installer, so when the product is installed
    * it'll be placed under its root directory.
@@ -89,7 +96,6 @@ abstract class WindowsDistributionCustomizer {
    * The returned name will be shown in Windows Installer and used in Registry keys
    */
   String getFullNameIncludingEdition(ApplicationInfoProperties applicationInfo) { applicationInfo.productName }
-
   /**
    * The returned name will be used to create links on Desktop
    */
