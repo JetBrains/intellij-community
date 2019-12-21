@@ -118,6 +118,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   companion object {
     @JvmStatic
+    @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
       val toolWindow = decorator.toolWindow
       return toolWindow.toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindow.id)
@@ -128,32 +129,59 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   @Service
   private class ToolWindowManagerAppLevelHelper {
-    private var awtFocusListener: AWTEventListener? = null
-
-    init {
-      awtFocusListener = AWTEventListener { event ->
-        event as FocusEvent
-
-        handlePinnedWindowFocusEvent(event) { toolWindowId ->
-          process { manager ->
-            val entry = manager.idToEntry.get(toolWindowId) ?: return@process
-            val info = manager.layout.getInfo(toolWindowId) ?: return@process
-            manager.doDeactivateToolWindow(info, entry)
+    companion object {
+      private fun handleFocusEvent(event: FocusEvent) {
+        if (event.id == FocusEvent.FOCUS_LOST) {
+          if (event.oppositeComponent == null || event.isTemporary) {
+            return
           }
-        }
 
-        if (event.id != FocusEvent.FOCUS_GAINED) {
-          return@AWTEventListener
-        }
+          val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return
+          if (project.isDisposed || project.isDefault) {
+            return
+          }
 
-        val component = event.component ?: return@AWTEventListener
-        processOpenedProjects { project ->
-          for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.editorComposites) {
-            if (composite.editors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
-              (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
+          val toolWindowManager = getInstance(project) as ToolWindowManagerImpl
+          val toolWindowId = toolWindowManager.activeToolWindowId ?: return
+
+          val activeToolWindow = toolWindowManager.idToEntry.get(toolWindowId) ?: return
+          val windowInfo = activeToolWindow.readOnlyWindowInfo
+          if (!(windowInfo.isAutoHide || windowInfo.type == ToolWindowType.SLIDING)) {
+            return
+          }
+
+          // let's check that it is a toolwindow who loses the focus
+          if (isInActiveToolWindow(event.source, activeToolWindow.toolWindow) && !isInActiveToolWindow(event.oppositeComponent, activeToolWindow.toolWindow)) {
+            // a toolwindow lost focus
+            val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
+            if (!focusGoesToPopup) {
+              val info = toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindowId)
+              toolWindowManager.doDeactivateToolWindow(info, activeToolWindow)
             }
           }
         }
+        else if (event.id == FocusEvent.FOCUS_GAINED) {
+          val component = event.component ?: return
+          processOpenedProjects { project ->
+            for (composite in FileEditorManagerEx.getInstanceEx(project).splitters.editorComposites) {
+              if (composite.editors.any { SwingUtilities.isDescendingFrom(component, it.component) }) {
+                (getInstance(project) as ToolWindowManagerImpl).activeStack.clear()
+              }
+            }
+          }
+        }
+      }
+
+      private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) {
+        processOpenedProjects { project ->
+          processor(getInstance(project) as ToolWindowManagerImpl)
+        }
+      }
+    }
+
+    init {
+      val awtFocusListener = AWTEventListener { event ->
+        handleFocusEvent(event as FocusEvent)
       }
 
       Toolkit.getDefaultToolkit().addAWTEventListener(awtFocusListener, AWTEvent.FOCUS_EVENT_MASK)
@@ -215,12 +243,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
         false
       }, ApplicationManager.getApplication())
-    }
-
-    private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) {
-      processOpenedProjects { project ->
-        processor(getInstance(project) as ToolWindowManagerImpl)
-      }
     }
   }
 
@@ -1930,29 +1952,7 @@ internal enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
 }
 
-private fun handlePinnedWindowFocusEvent(event: FocusEvent, pinnedWindowFocusLostHandler: (String) -> Unit) {
-  val eventId = event.id
-  if (!(eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_LOST || eventId == FocusEvent.FOCUS_GAINED)) {
-    return
-  }
-
-  val id = ToolWindowManager.getActiveId() ?: return
-
-  // let's check that it is a toolwindow who loses the focus
-  if (event.oppositeComponent != null && isInActiveToolWindow(event.source) && !isInActiveToolWindow(event.oppositeComponent)) {
-    // a toolwindow lost focus
-    val activeToolWindow = getActiveToolWindow()
-    val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
-    if (!event.isTemporary &&
-        !focusGoesToPopup && activeToolWindow != null &&
-        (activeToolWindow.isAutoHide || activeToolWindow.type == ToolWindowType.SLIDING)) {
-      pinnedWindowFocusLostHandler(id)
-    }
-  }
-}
-
-private fun isInActiveToolWindow(component: Any?): Boolean {
-  val activeToolWindow = getActiveToolWindow() ?: return false
+private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowImpl): Boolean {
   var source = if (component is JComponent) component else null
   val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
   if (activeToolWindowComponent != null) {
@@ -1961,16 +1961,4 @@ private fun isInActiveToolWindow(component: Any?): Boolean {
     }
   }
   return source != null
-}
-
-private fun getActiveToolWindow(): ToolWindowImpl? {
-  val frame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
-  val project = frame?.project
-  if (project == null || project.isDisposed || project.isDefault) {
-    return null
-  }
-
-  val toolWindowManager = ToolWindowManager.getInstance(project)
-  val activeId = toolWindowManager.activeToolWindowId
-  return activeId?.let { toolWindowManager.getToolWindow(it) as ToolWindowImpl }
 }

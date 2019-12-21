@@ -17,12 +17,6 @@ abstract class ToolWindowManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ToolWindowManager = project.getService(ToolWindowManager::class.java)
-
-    @JvmStatic
-    fun getActiveId(): String? {
-      val project = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null
-      return if (project.isDisposed || project.isDefault) null else getInstance(project).activeToolWindowId
-    }
   }
 
   abstract val focusManager: IdeFocusManager
