@@ -92,17 +92,15 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
       }
     }))
 
-    if (decorator == null) {
-      decorator = InternalDecorator(this)
-      decorator!!.applyWindowInfo(windowInfo)
-      decorator!!.addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(e: ComponentEvent) {
-          toolWindowManager.resized(e.component as InternalDecorator)
-        }
-      })
-    }
-
-    decorator!!.addContentComponent(canWorkInDumbMode, contentManager)
+    val decorator = InternalDecorator(this)
+    this.decorator = decorator
+    decorator.applyWindowInfo(windowInfo)
+    decorator.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent) {
+        toolWindowManager.resized(e.component as InternalDecorator)
+      }
+    })
+    decorator.addContentComponent(canWorkInDumbMode, contentManager)
 
     toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentManager.component)
 
