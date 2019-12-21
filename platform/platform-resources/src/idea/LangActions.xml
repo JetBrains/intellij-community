@@ -191,8 +191,6 @@
       <add-to-group group-id="EditorToggleActions"/>
     </action>
 
-    <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
-
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
       <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
@@ -1375,5 +1373,7 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
+
+    <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
   </actions>
 </idea-plugin>
