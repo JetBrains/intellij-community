@@ -50,12 +50,12 @@ public final class PythonImportUtils {
     return PyImportCollectorFactory.getInstance().create(node, reference, refText, asName).addCandidates();
   }
 
-  public static boolean isImportable(PsiElement ref_element) {
-    PyStatement parentStatement = PsiTreeUtil.getParentOfType(ref_element, PyStatement.class);
+  public static boolean isImportable(PsiElement refElement) {
+    PyStatement parentStatement = PsiTreeUtil.getParentOfType(refElement, PyStatement.class);
     if (parentStatement instanceof PyGlobalStatement || parentStatement instanceof PyNonlocalStatement ||
-      parentStatement instanceof PyImportStatementBase) {
+        parentStatement instanceof PyImportStatementBase) {
       return false;
     }
-    return PsiTreeUtil.getParentOfType(ref_element, PyStringLiteralExpression.class, false, PyStatement.class) == null;
+    return PsiTreeUtil.getParentOfType(refElement, PyPlainStringElement.class, false, PyStatement.class) == null;
   }
 }

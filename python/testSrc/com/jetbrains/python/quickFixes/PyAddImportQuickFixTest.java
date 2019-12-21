@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,6 +214,13 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
           (___) -> doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path")
         )
     );
+  }
+
+  // PY-34818
+  public void testReferenceInsideFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doMultiFileAutoImportTest("Import");
+    });
   }
 
   private void doTestProposedImportsOrdering(@NotNull String text, String @NotNull ... expected) {
