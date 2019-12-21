@@ -50,6 +50,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCommand
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GuiUtils
@@ -591,9 +592,31 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   override val activeToolWindowId: String?
     get() {
       ApplicationManager.getApplication().assertIsDispatchThread()
-      return idToEntry.values.firstOrNull {
-        it.readOnlyWindowInfo.isActive
-      }?.toolWindow?.id
+      val frame = frame?.frame ?: return null
+      if (frame.isActive) {
+        val focusOwner = focusManager.getLastFocusedFor(frame) ?: return null
+
+        var parent: Component? = focusOwner
+        while (parent != null) {
+          if (parent is InternalDecorator) {
+            return parent.toolWindow.id
+          }
+          else if (parent is ToolWindowContentUi) {
+            return parent.toolWindowId
+          }
+
+          parent = parent.parent
+        }
+      }
+      else {
+        // let's check floating and windowed
+        for (entry in idToEntry.values) {
+          if (entry.floatingDecorator?.isActive == true || entry.windowedDecorator?.isActive == true) {
+            return entry.id
+          }
+        }
+      }
+      return null
     }
 
   override fun getLastActiveToolWindowId(): String? {

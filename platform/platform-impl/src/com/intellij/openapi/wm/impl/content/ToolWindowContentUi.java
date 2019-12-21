@@ -101,6 +101,11 @@ public final class ToolWindowContentUi extends JPanel implements ContentUI, Data
     });
   }
 
+  @NotNull
+  public String getToolWindowId() {
+    return myWindow.getId();
+  }
+
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     revalidate();

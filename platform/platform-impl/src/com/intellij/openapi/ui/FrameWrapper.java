@@ -274,6 +274,10 @@ public class FrameWrapper implements Disposable, DataProvider {
     return myFrame;
   }
 
+  public boolean isActive() {
+    return myFrame != null && myFrame.isActive();
+  }
+
   @NotNull
   protected JFrame createJFrame(@NotNull IdeFrame parent) {
     return new MyJFrame(this, parent);
