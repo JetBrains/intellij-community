@@ -272,22 +272,24 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
       final MatchPredicate predicate = new ExprTypePredicate(
-        constraint.getNameOfExprType(),
+        constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes(),
         name,
         constraint.isExprTypeWithinHierarchy(),
         options.isCaseSensitiveMatch(),
-        constraint.isPartOfSearchResults()
+        constraint.isPartOfSearchResults(),
+        constraint.isRegexExprType()
       );
       result.add(constraint.isInvertExprType() ? new NotPredicate(predicate) : predicate);
     }
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfFormalArgType())) {
       final MatchPredicate predicate = new FormalArgTypePredicate(
-        constraint.getNameOfFormalArgType(),
+        constraint.isRegexFormalType() ? constraint.getNameOfFormalArgType() : constraint.getExpectedTypes(),
         name,
         constraint.isFormalArgTypeWithinHierarchy(),
         options.isCaseSensitiveMatch(),
-        constraint.isPartOfSearchResults()
+        constraint.isPartOfSearchResults(),
+        constraint.isRegexFormalType()
       );
       result.add(constraint.isInvertFormalType() ? new NotPredicate(predicate) : predicate);
     }
@@ -1009,6 +1011,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           else if (grandParent instanceof PsiStatement) return false;
         }
       case UIUtil.TYPE:
+      case UIUtil.TYPE_REGEX:
         if (variableNode instanceof PsiExpressionStatement) {
           final PsiElement child = variableNode.getLastChild();
           if (child instanceof PsiErrorElement) {

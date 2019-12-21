@@ -183,15 +183,14 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (!constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
-                                      constraint.getNameOfExprType(),
+                                      constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes(),
                                       constraint.isExprTypeWithinHierarchy() ? 1 : 0));
       }
 
-      constraint.getNameOfFormalArgType();
       if (!constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
-                                      constraint.getNameOfFormalArgType(),
+                                      constraint.isRegexFormalType() ? constraint.getNameOfFormalArgType() : constraint.getExpectedTypes(),
                                       constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0));
       }
 

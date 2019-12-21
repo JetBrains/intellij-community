@@ -66,6 +66,7 @@ public class UIUtil {
   @NonNls public static final String TEXT_HIERARCHY = "TEXT HIERARCHY";
   @NonNls public static final String REFERENCE = "REFERENCE";
   @NonNls public static final String TYPE = "TYPE";
+  @NonNls public static final String TYPE_REGEX = "TYPE REGEX";
   @NonNls public static final String EXPECTED_TYPE = "EXPECTED TYPE";
   @NonNls public static final String MINIMUM_ZERO = "MINIMUM ZERO";
   @NonNls public static final String MAXIMUM_UNLIMITED = "MAXIMUM UNLIMITED";

@@ -308,7 +308,7 @@ public class StringToConstraintsTransformerTest {
   public void testBrackets() {
     test("'_x:[exprtype( java\\.lang\\.String\\[\\]\\[\\] )]");
     final MatchVariableConstraint constraint = myOptions.getVariableConstraint("x");
-    assertEquals("java.lang.String[][]", constraint.getNameOfExprType());
+    assertEquals("java\\.lang\\.String\\[\\]\\[\\]", constraint.getNameOfExprType());
   }
 
   private void expectException(@NotNull String criteria, @NotNull String exceptionMessage) {
