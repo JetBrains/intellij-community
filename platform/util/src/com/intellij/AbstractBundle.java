@@ -44,10 +44,16 @@ public abstract class AbstractBundle {
   public String getMessage(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.message(getBundle(), key, params);
   }
-  
+
   @Nullable
   public String messageOfNull(@NotNull String key, @NotNull Object... params) {
     return CommonBundle.messageOfNull(getBundle(), key, params);
+  }
+
+  public String messageOrDefault(@NotNull String key,
+                                 @Nullable String defaultValue,
+                                 @NotNull Object... params) {
+    return CommonBundle.messageOrDefault(getBundle(), key, defaultValue, params);
   }
 
   private ResourceBundle getBundle() {
