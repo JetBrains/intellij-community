@@ -2,10 +2,7 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -37,6 +34,7 @@ public final class CommonBundle extends BundleBase {
     return bundle;
   }
 
+  @Contract("null, _, _, _ -> param3")
   public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
     if (bundle == null) {
       return defaultValue;
@@ -44,9 +42,7 @@ public final class CommonBundle extends BundleBase {
     else if (!bundle.containsKey(key)) {
       return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
     }
-    else {
-      return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
-    }
+    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
   }
 
   @Nls
