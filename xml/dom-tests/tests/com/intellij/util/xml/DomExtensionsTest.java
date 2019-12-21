@@ -145,6 +145,11 @@ public class DomExtensionsTest extends DomTestCase {
     assertNotNull(assertInstanceOf(myElement.getSomeConcreteChild(), MyConcreteElement.class).getXmlTag());
   }
 
+  public void testTolerateMalformedTags() {
+    MyCustomChildrenElement myElement = createElement("<a><xx/><concrete-child/><prefix:/></a>", MyCustomChildrenElement.class);
+    assertEquals("xx", assertOneElement(myElement.getCustomChidren()).getXmlTag().getName());
+  }
+
   public void testFirstChildRedefinitionOnExtending() {
     registerDomExtender(MyCustomChildrenElement.class, ModestDomExtender.class);
 
