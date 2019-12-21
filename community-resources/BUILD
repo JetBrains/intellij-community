@@ -35,6 +35,7 @@ iml_module(
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
         "//tools/idea/platform/platform-resources:intellij.platform.resources",
         "//tools/idea/platform/usageView:intellij.platform.usageView",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
