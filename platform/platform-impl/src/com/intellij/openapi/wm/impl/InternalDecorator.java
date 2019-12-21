@@ -17,9 +17,8 @@ import com.intellij.openapi.wm.*;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.impl.ContentManagerImpl;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
@@ -55,7 +54,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
 
   private final ToolWindowHeader header;
-  private final JPanel contentPane;
 
   InternalDecorator(@NotNull ToolWindowImpl toolWindow) {
     super(new BorderLayout());
@@ -80,11 +78,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
-    contentPane = new JPanel(new BorderLayout());
-    installFocusTraversalPolicy(contentPane, new LayoutFocusTraversalPolicy());
-    contentPane.add(header, BorderLayout.NORTH);
-
-    add(contentPane, BorderLayout.CENTER);
+    installFocusTraversalPolicy(this, new LayoutFocusTraversalPolicy());
+    add(header, BorderLayout.NORTH);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
@@ -159,15 +154,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return null;
   }
 
-  void addContentComponent(boolean dumbAware, @NotNull ContentManagerImpl contentManager) {
-    JPanel innerPanel = new JPanel(new BorderLayout());
+  void addContentComponent(boolean dumbAware, @NotNull ContentManager contentManager) {
     JComponent toolWindowComponent = contentManager.getComponent();
     if (!dumbAware) {
       toolWindowComponent = DumbService.getInstance(toolWindow.getToolWindowManager().getProject()).wrapGently(toolWindowComponent, toolWindow.getDisposable());
     }
-    innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
-
-    contentPane.add(new NonOpaquePanel(innerPanel), BorderLayout.CENTER);
+    add(toolWindowComponent, BorderLayout.CENTER);
   }
 
   @Override
