@@ -57,24 +57,20 @@ class GHPRChangesLoadingModel(private val changesModel: GHPRChangesModel,
       loading = true
       error = null
 
-      val newUpdateFuture =
-        if (zipChanges) {
-          dataProvider.changesProviderRequest.successOnEdt {
-            changesModel.changes = it.changes
-            diffHelper.setUp(dataProvider, it)
-          }
-        }
-        else {
-          diffHelper.reset()
-          dataProvider.logCommitsRequest.successOnEdt { changesModel.commits = it }
-        }
+      updateFuture = dataProvider.changesProviderRequest.successOnEdt {
 
-      newUpdateFuture.handleOnEdt { _, error: Throwable? ->
-        if (error != null) this.error = error.cause
+        if (zipChanges) changesModel.changes = it.changes
+        else changesModel.commits = it.changesByCommits
+
+        diffHelper.setUp(dataProvider, it)
+
+      }.handleOnEdt { _, error: Throwable? ->
+
+        if (error != null) this.error = error
         loading = false
         eventDispatcher.multicaster.onLoadingCompleted()
+
       }
-      updateFuture = newUpdateFuture
       eventDispatcher.multicaster.onLoadingStarted()
     }
   }

@@ -3,14 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.ui.changes
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
-import git4idea.GitCommit
+import org.jetbrains.plugins.github.api.data.GHCommit
 import javax.swing.tree.DefaultTreeModel
 
 /**
  * Either commits or changes should be not-null, but not both
  */
 interface GHPRChangesModel {
-  var commits: List<GitCommit>?
+  var commits: Map<GHCommit, List<Change>>?
   var changes: List<Change>?
 
   fun buildChangesTree(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.GithubCommit
+import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import java.util.*
@@ -15,7 +15,7 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder {
 
   val detailsRequest: CompletableFuture<GHPullRequest>
   val headBranchFetchRequest: CompletableFuture<Unit>
-  val apiCommitsRequest: CompletableFuture<List<GithubCommit>>
+  val apiCommitsRequest: CompletableFuture<List<GHCommit>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>

@@ -3,9 +3,11 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.diff.util.Range
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.plugins.github.api.data.GHCommit
 
 interface GHPRChangesProvider {
   val changes: List<Change>
+  val changesByCommits: Map<GHCommit, List<Change>>
 
   fun findChangeDiffData(change: Change): DiffData?
 

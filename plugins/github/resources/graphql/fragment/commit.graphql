@@ -10,6 +10,7 @@ fragment commit on Commit {
             url
         }
     }
+    message
     messageHeadlineHTML
     messageBodyHTML
 }

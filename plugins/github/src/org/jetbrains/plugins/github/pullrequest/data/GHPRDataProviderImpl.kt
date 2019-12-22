@@ -12,14 +12,15 @@ import com.intellij.util.EventDispatcher
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
+import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
@@ -75,10 +76,10 @@ internal class GHPRDataProviderImpl(private val project: Project,
       error("Base revision \"${details.baseRefOid}\" was not fetched from \"${gitRemote.remote.name} ${details.baseRefName}\"")
   }
 
-  private val apiCommitsRequestValue = backingValue {
-    GithubApiPagesLoader.loadAll(requestExecutor, it,
-                                 GithubApiRequests.Repos.PullRequests.Commits.pages(repository, number))
-
+  private val apiCommitsRequestValue = backingValue { indicator ->
+    SimpleGHGQLPagesLoader(requestExecutor, { p ->
+      GHGQLRequests.PullRequest.commits(repository, number, p)
+    }).loadAll(indicator).map { it.commit }
   }
   override val apiCommitsRequest by backgroundProcessValue(apiCommitsRequestValue)
 
@@ -100,20 +101,35 @@ internal class GHPRDataProviderImpl(private val project: Project,
   }
   override val logCommitsRequest by backgroundProcessValue(logCommitsRequestValue)
 
-  private val diffFileRequestValue = backingValue {
-    requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.getDiff(repository, number))
-  }
   private val changesProviderValue = backingValue {
+    val baseFetch = baseBranchFetchRequestValue.value
+    val headFetch = headBranchFetchRequestValue.value
+
     val detailsRequest = detailsRequestValue.value
-    val commitsRequest = logCommitsRequestValue.value
-    val diffFileRequest = diffFileRequestValue.value
+    val commitsRequest = apiCommitsRequestValue.value
 
     val details = detailsRequest.joinCancellable()
-    val commits = commitsRequest.joinCancellable()
-    val diffFile = diffFileRequest.joinCancellable()
-    GHPRChangesProviderImpl(gitRemote.repository,
-                            details.baseRefOid, details.headRefOid,
-                            commits, diffFile)
+    val commits: List<GHCommit> = commitsRequest.joinCancellable()
+
+    val commitsWithDiffs = commits.map { commit ->
+      val commitDiff = requestExecutor.execute(it,
+                                               GithubApiRequests.Repos.Commits.getDiff(repository, commit.oid))
+
+      commit to commitDiff
+    }
+    val cumulativeDiff = requestExecutor.execute(it,
+                                                 GithubApiRequests.Repos.Commits.getDiff(repository,
+                                                                                         details.baseRefOid, details.headRefOid))
+
+    //TODO: ??? move to diff and load merge base via API
+    baseFetch.joinCancellable()
+    headFetch.joinCancellable()
+
+    val mergeBaseRev =
+      GitHistoryUtils.getMergeBase(project, gitRemote.repository.root, details.baseRefOid, details.headRefOid)?.rev
+      ?: error("Could not calculate merge base for PR branch")
+
+    GHPRChangesProviderImpl(gitRemote.repository, mergeBaseRev, commitsWithDiffs, cumulativeDiff)
   }
   override val changesProviderRequest: CompletableFuture<out GHPRChangesProvider> by backgroundProcessValue(changesProviderValue)
 

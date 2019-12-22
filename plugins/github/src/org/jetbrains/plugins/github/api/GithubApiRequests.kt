@@ -143,6 +143,30 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
     }
 
+    object Commits : Entity("/commits") {
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
+        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff for ref")
+
+      @JvmStatic
+      fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
+        object : Get<String>(getUrl(repository, "/compare/$refA...$refB"),
+                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
+          override fun extractResult(response: GithubApiResponse): String {
+            return response.handleBody(ThrowableConvertor {
+              StreamUtil.readText(it, Charsets.UTF_8)
+            })
+          }
+        }.withOperationName("get diff between refs")
+    }
+
     object Forks : Entity("/forks") {
 
       @JvmStatic

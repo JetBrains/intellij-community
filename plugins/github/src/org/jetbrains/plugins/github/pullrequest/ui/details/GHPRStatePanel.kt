@@ -249,7 +249,7 @@ object GHPRStatePanel {
 
 
           dataProvider.apiCommitsRequest.successOnEdt { commits ->
-            val body = "* " + StringUtil.join(commits, { it.commit.message }, "\n\n* ")
+            val body = "* " + StringUtil.join(commits, { it.message }, "\n\n* ")
             val dialog = GithubMergeCommitMessageDialog(project,
                                                         "Merge Pull Request",
                                                         "Merge pull request #${it.number}",

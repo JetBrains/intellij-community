@@ -8,10 +8,7 @@ import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
+import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
 object GHGQLRequests {
@@ -81,6 +78,21 @@ object GHGQLRequests {
 
     private class ThreadsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestReviewThread>)
       : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
+
+    fun commits(repository: GHRepositoryCoordinates, number: Long,
+                pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestCommitShort>> {
+      return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestCommits,
+                                      mapOf("repoOwner" to repository.repositoryPath.owner,
+                                            "repoName" to repository.repositoryPath.repository,
+                                            "number" to number,
+                                            "pageSize" to pagination?.pageSize,
+                                            "cursor" to pagination?.afterCursor),
+                                      CommitsConnection::class.java,
+                                      "repository", "pullRequest", "commits")
+    }
+
+    private class CommitsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestCommitShort>)
+      : GHConnection<GHPullRequestCommitShort>(pageInfo, nodes)
 
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,
