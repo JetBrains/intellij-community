@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -104,7 +105,7 @@ class GitExecutableInlineComponent(private val container: BorderLayoutPanel, pri
     container.removeAll()
 
     val label = multilineLabel(errorText).apply {
-      foreground = JBColor.RED
+      foreground = DialogWrapper.ERROR_FOREGROUND_COLOR
     }
 
     container.addToCenter(label)
