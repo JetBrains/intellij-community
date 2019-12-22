@@ -705,6 +705,11 @@ static String test(String a, String b) {
 """)
     assert c == ['_, null -> null', 'null, !null -> null']
   }
+  
+  void "test primitive cast ignored"() {
+    def c = inferContracts("""static int test(long x) {return (int)x;}""")
+    assert c == []
+  }
 
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))

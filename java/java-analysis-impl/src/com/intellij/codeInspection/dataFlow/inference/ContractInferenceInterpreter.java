@@ -209,7 +209,7 @@ class ContractInferenceInterpreter {
     if (type == PARENTH_EXPRESSION) {
       return visitExpression(states, findExpressionChild(myTree, expr));
     }
-    if (type == TYPE_CAST_EXPRESSION) {
+    if (type == TYPE_CAST_EXPRESSION && !isPrimitiveCast(myTree, expr)) {
       return visitExpression(states, findExpressionChild(myTree, expr));
     }
 

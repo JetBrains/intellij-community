@@ -352,12 +352,13 @@ public class TypeConstraints {
 
     @Override
     public boolean equals(Object obj) {
-      return obj == this || obj instanceof ExactClass && myClass.equals(((ExactClass)obj).myClass);
+      return obj == this || obj instanceof ExactClass &&
+                            myClass.getManager().areElementsEquivalent(myClass, ((ExactClass)obj).myClass);
     }
 
     @Override
     public int hashCode() {
-      return myClass.hashCode();
+      return Objects.hashCode(myClass.getQualifiedName());
     }
 
     @Override
