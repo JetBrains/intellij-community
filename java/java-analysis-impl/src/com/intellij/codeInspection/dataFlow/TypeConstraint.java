@@ -173,7 +173,14 @@ public interface TypeConstraint {
     }
 
     /**
-     * @return stream of supertypes (except java.lang.Object)
+     * @return true if instances of this type can exist (i.e. the type is not abstract). 
+     */
+    default boolean canBeInstantiated() {
+      return true;
+    }
+
+    /**
+     * @return stream of supertypes
      */
     StreamEx<Exact> superTypes();
 
@@ -218,12 +225,13 @@ public interface TypeConstraint {
 
     @Override
     default TypeConstraint tryNegate() {
-      return isFinal() ? new Constrained(Collections.emptySet(), Collections.singleton(this)) : null;
+      return isFinal() ? notInstanceOf() : null;
     }
 
     /**
      * @return a constraint that represents objects not only of this type but also of any subtypes. May return self if the type is final.
      */
+    @NotNull
     default TypeConstraint instanceOf() {
       if (isFinal()) return this;
       return new Constrained(Collections.singleton(this), Collections.emptySet());
@@ -232,14 +240,10 @@ public interface TypeConstraint {
     /**
      * @return a constraint that represents objects that are not instanceof this type
      */
+    @NotNull
     default TypeConstraint notInstanceOf() {
       return new Constrained(Collections.emptySet(), Collections.singleton(this));
     }
-
-    /**
-     * @return true if instances of this type can exist (i.e. the type is not abstract). 
-     */
-    boolean canBeInstantiated();
     
     @Override
     default String toShortString() {
@@ -277,10 +281,10 @@ public interface TypeConstraint {
     @Override
     public TypeConstraint tryNegate() {
       if (myInstanceOf.size() == 1 && myNotInstanceOf.isEmpty()) {
-        return new Constrained(Collections.emptySet(), Collections.singleton(myInstanceOf.iterator().next()));
+        return myInstanceOf.iterator().next().notInstanceOf();
       }
       if (myNotInstanceOf.size() == 1 && myInstanceOf.isEmpty()) {
-        return new Constrained(Collections.singleton(myNotInstanceOf.iterator().next()), Collections.emptySet());
+        return myNotInstanceOf.iterator().next().instanceOf();
       }
       return null;
     }
@@ -314,10 +318,10 @@ public interface TypeConstraint {
       }
       TypeConstraint constraint = TypeConstraints.TOP;
       for (Exact type: instanceOfTypes) {
-        constraint = constraint.meet(new Constrained(Collections.singleton(type), Collections.emptySet()));
+        constraint = constraint.meet(type.instanceOf());
       }
       for (Exact type: notTypes) {
-        constraint = constraint.meet(new Constrained(Collections.emptySet(), Collections.singleton(type)));
+        constraint = constraint.meet(type.notInstanceOf());
       }
       return constraint;
     }

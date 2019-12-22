@@ -18,64 +18,38 @@ public class TypeConstraints {
    * Top constraint (no restriction; any non-primitive value satisfies this)
    */
   public static final TypeConstraint TOP = new TypeConstraint() {
-    @NotNull
-    @Override
-    public TypeConstraint join(@NotNull TypeConstraint other) {
-      return this;
-    }
-
-    @NotNull
-    @Override
-    public TypeConstraint meet(@NotNull TypeConstraint other) {
-      return other;
-    }
-
-    @Override
-    public boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
-      return true;
-    }
-
-    @Override
-    public TypeConstraint tryNegate() {
-      return BOTTOM;
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return "";
-    }
+    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
+    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
+    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
+    @Override public TypeConstraint tryNegate() { return BOTTOM; }
+    @Override public String toString() { return ""; }
   };
   /**
    * Bottom constraint (no actual type satisfies this)
    */
   public static final TypeConstraint BOTTOM = new TypeConstraint() {
-    @NotNull
-    @Override
-    public TypeConstraint join(@NotNull TypeConstraint other) {
-      return other;
-    }
+    @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
+    @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
+    @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
+    @Override public TypeConstraint tryNegate() { return TOP; }
+    @Override public String toString() { return "<impossible type>"; }
+  };
 
-    @NotNull
-    @Override
-    public TypeConstraint meet(@NotNull TypeConstraint other) {
-      return this;
-    }
+  /**
+   * Exactly java.lang.Object class
+   */
+  public static final TypeConstraint.Exact EXACTLY_OBJECT = new TypeConstraint.Exact() {
+    @Override public StreamEx<Exact> superTypes() { return StreamEx.empty();}
+    @Override public boolean isFinal() { return false;}
+    @Override public boolean isAssignableFrom(@NotNull Exact other) { return true;}
+    @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
+    @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
+    @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
+    @Override public String toString() { return CommonClassNames.JAVA_LANG_OBJECT;}
 
     @Override
-    public TypeConstraint tryNegate() {
-      return TOP;
-    }
-
-    @Override
-    public boolean isSuperConstraintOf(@NotNull TypeConstraint other) {
-      return other == this;
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return "<impossible type>";
+    public PsiType getPsiType(Project project) {
+      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
     }
   };
 
@@ -121,20 +95,6 @@ public class TypeConstraints {
   }
 
   /**
-   * @param superClass a superclass
-   * @param tag a tag to distinguish subclasses; subclasses of the same class with the same tag are considered the same
-   * @return an unknown exact final direct subclass of given class or interface.
-   * Useful in rare cases when the corresponding subclass class object cannot be found. 
-   */
-  public static TypeConstraint exactSubClassOf(@NotNull PsiClass superClass, @NotNull Object tag) {
-    TypeConstraint.Exact exactSuperClass = exactClass(superClass);
-    if (exactSuperClass instanceof ExactClass) {
-      return new ExactSubClass((ExactClass)exactSuperClass, tag);
-    }
-    return exactSuperClass.instanceOf();
-  }
-
-  /**
    * @param type PsiType
    * @return a constraint for the object whose type is the supplied type or any subtype
    */
@@ -151,7 +111,7 @@ public class TypeConstraints {
         if (exact == null) {
           return new Unresolved(type.getCanonicalText()).instanceOf();
         }
-        result = result.meet(new TypeConstraint.Constrained(Collections.singleton(exact), Collections.emptySet()));
+        result = result.meet(exact.instanceOf());
       }
       return result;
     }
@@ -160,21 +120,6 @@ public class TypeConstraints {
       return new Unresolved(type.getCanonicalText()).instanceOf();
     }
     return exact.instanceOf();
-  }
-
-  /**
-   * @param type PsiType
-   * @return a constraint for the object whose type is not the supplied type or any of its subtypes
-   */
-  @NotNull
-  @Contract(pure = true)
-  public static TypeConstraint notInstanceOf(@NotNull PsiType type) {
-    type = normalizeType(type);
-    TypeConstraint.Exact exact = createExact(type);
-    if (exact != null) {
-      return new TypeConstraint.Constrained(Collections.emptySet(), Collections.singleton(exact));
-    }
-    return TOP;
   }
 
   @NotNull
@@ -224,12 +169,15 @@ public class TypeConstraints {
 
   @NotNull
   private static TypeConstraint.Exact exactClass(@NotNull PsiClass psiClass) {
-    if (psiClass.isInterface()) {
-      if (CommonClassNames.JAVA_LANG_CLONEABLE.equals(psiClass.getQualifiedName())) {
-        return ArraySuperInterface.CLONEABLE;
-      }
-      if (CommonClassNames.JAVA_IO_SERIALIZABLE.equals(psiClass.getQualifiedName())) {
-        return ArraySuperInterface.SERIALIZABLE;
+    String name = psiClass.getQualifiedName();
+    if (name != null) {
+      switch (name) {
+        case CommonClassNames.JAVA_LANG_OBJECT:
+          return EXACTLY_OBJECT;
+        case CommonClassNames.JAVA_LANG_CLONEABLE:
+          return ArraySuperInterface.CLONEABLE;
+        case CommonClassNames.JAVA_IO_SERIALIZABLE:
+          return ArraySuperInterface.SERIALIZABLE;
       }
     }
     return new ExactClass(psiClass);
@@ -268,7 +216,7 @@ public class TypeConstraints {
 
     @Override
     public StreamEx<Exact> superTypes() {
-      return StreamEx.of(ArraySuperInterface.values());
+      return StreamEx.<Exact>of(ArraySuperInterface.values()).append(EXACTLY_OBJECT);
     }
 
     @Override
@@ -279,11 +227,6 @@ public class TypeConstraints {
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
       return other.equals(this) || other.isAssignableFrom(this);
-    }
-
-    @Override
-    public boolean canBeInstantiated() {
-      return true;
     }
   }
 
@@ -315,7 +258,7 @@ public class TypeConstraints {
 
     @Override
     public StreamEx<Exact> superTypes() {
-      return StreamEx.empty();
+      return StreamEx.of(EXACTLY_OBJECT);
     }
 
     @Override
@@ -324,9 +267,6 @@ public class TypeConstraints {
       if (other instanceof PrimitiveArray || other instanceof ExactArray || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
         return InheritanceUtil.isInheritor(((ExactClass)other).myClass, myReference);
-      }
-      if (other instanceof ExactSubClass) {
-        return isAssignableFrom(((ExactSubClass)other).mySuper);
       }
       return false;
     }
@@ -358,12 +298,7 @@ public class TypeConstraints {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(myClass.getQualifiedName());
-    }
-
-    @Override
-    public TypeConstraint instanceOf() {
-      return isObject() ? TOP : Exact.super.instanceOf();
+      return Objects.hashCode(myClass.getName());
     }
 
     @Override
@@ -398,39 +333,30 @@ public class TypeConstraints {
     @Override
     public StreamEx<Exact> superTypes() {
       List<Exact> superTypes = new ArrayList<>();
-      InheritanceUtil.processSupers(myClass, false, t -> {
-        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(t.getQualifiedName())) {
-          superTypes.add(exactClass(t));
-        }
-        return true;
-      });
+      InheritanceUtil.processSupers(myClass, false, t -> superTypes.add(exactClass(t)));
       return StreamEx.of(superTypes);
     }
 
     @Override
     public boolean isAssignableFrom(@NotNull Exact other) {
-      if (equals(other) || isObject() || other instanceof Unresolved) return true;
+      if (equals(other) || other instanceof Unresolved) return true;
       if (other instanceof ExactClass) {
         String name = myClass.getQualifiedName();
         if (name == null) return false;
         return InheritanceUtil.isInheritor(((ExactClass)other).myClass, name);
-      }
-      if (other instanceof ExactSubClass) {
-        return isAssignableFrom(((ExactSubClass)other).mySuper);
       }
       return false;
     }
 
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
-      if (equals(other) || isObject() || other instanceof Unresolved) return true;
+      if (equals(other) || other instanceof Unresolved || other == EXACTLY_OBJECT) return true;
       if (other instanceof ArraySuperInterface) {
         if (myClass.isInterface()) return true;
         if (!myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         return InheritanceUtil.isInheritor(myClass, ((ArraySuperInterface)other).myReference);
       }
       if (other instanceof ExactClass) {
-        if (((ExactClass)other).isObject()) return true;
         PsiClass otherClass = ((ExactClass)other).myClass;
         if (myClass.isInterface() && otherClass.isInterface()) return true;
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
@@ -440,68 +366,7 @@ public class TypeConstraints {
         return otherName != null && InheritanceUtil.isInheritor(myClass, otherName) ||
                myName != null && InheritanceUtil.isInheritor(otherClass, myName);
       }
-      if (other instanceof ExactSubClass) {
-        return isAssignableFrom(((ExactSubClass)other).mySuper);
-      }
       return false;
-    }
-
-    boolean isObject() {
-      return CommonClassNames.JAVA_LANG_OBJECT.equals(myClass.getQualifiedName());
-    }
-  }
-
-  private static final class ExactSubClass implements TypeConstraint.Exact {
-    private final @NotNull ExactClass mySuper;
-    private final @NotNull Object myTag;
-
-    ExactSubClass(@NotNull ExactClass aSuper, @NotNull Object tag) {
-      mySuper = aSuper;
-      myTag = tag;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj == this ||
-             obj instanceof ExactSubClass &&
-             mySuper.equals(((ExactSubClass)obj).mySuper) &&
-             myTag.equals(((ExactSubClass)obj).myTag);
-    }
-
-    @Override
-    public int hashCode() {
-      return mySuper.hashCode() * 31 + myTag.hashCode();
-    }
-
-    @NotNull
-    @Override
-    public String toString() {
-      return "unknown subclass of " + mySuper;
-    }
-
-    @Override
-    public boolean isFinal() {
-      return true;
-    }
-
-    @Override
-    public StreamEx<Exact> superTypes() {
-      return mySuper.superTypes().prepend(mySuper);
-    }
-
-    @Override
-    public boolean isAssignableFrom(@NotNull Exact other) {
-      return equals(other);
-    }
-
-    @Override
-    public boolean isConvertibleFrom(@NotNull Exact other) {
-      return other.isAssignableFrom(this);
-    }
-
-    @Override
-    public boolean canBeInstantiated() {
-      return true;
     }
   }
 
@@ -537,8 +402,7 @@ public class TypeConstraints {
 
     @Override
     public StreamEx<Exact> superTypes() {
-      return myComponent instanceof ExactArray || myComponent instanceof PrimitiveArray ? myComponent.superTypes()
-             : myComponent.superTypes().<Exact>map(ExactArray::new).append(ArraySuperInterface.values());
+      return myComponent.superTypes().<Exact>map(ExactArray::new).append(ArraySuperInterface.values()).append(EXACTLY_OBJECT);
     }
 
     @Override
@@ -557,11 +421,6 @@ public class TypeConstraints {
         return CommonClassNames.JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
       }
       return false;
-    }
-
-    @Override
-    public boolean canBeInstantiated() {
-      return true;
     }
   }
 
@@ -590,23 +449,17 @@ public class TypeConstraints {
 
     @Override
     public StreamEx<Exact> superTypes() {
-      return StreamEx.empty();
+      return StreamEx.of(EXACTLY_OBJECT);
     }
 
     @Override
     public boolean isAssignableFrom(@NotNull Exact other) {
-      return other instanceof Unresolved || other instanceof ExactClass || other instanceof ExactSubClass;
+      return other instanceof Unresolved || other instanceof ExactClass;
     }
 
     @Override
     public boolean isConvertibleFrom(@NotNull Exact other) {
-      return other instanceof Unresolved || other instanceof ExactClass || other instanceof ExactSubClass || 
-             other instanceof ArraySuperInterface;
-    }
-
-    @Override
-    public boolean canBeInstantiated() {
-      return true;
+      return other instanceof Unresolved || other instanceof ExactClass || other instanceof ArraySuperInterface;
     }
   }
 }
