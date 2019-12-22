@@ -42,21 +42,25 @@ public abstract class AbstractBundle {
 
   @NotNull
   public String getMessage(@NotNull String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return CommonBundle.message(getResourceBundle(), key, params);
   }
 
   @Nullable
   public String messageOfNull(@NotNull String key, @NotNull Object... params) {
-    return CommonBundle.messageOfNull(getBundle(), key, params);
+    return CommonBundle.messageOfNull(getResourceBundle(), key, params);
   }
 
   public String messageOrDefault(@NotNull String key,
                                  @Nullable String defaultValue,
                                  @NotNull Object... params) {
-    return CommonBundle.messageOrDefault(getBundle(), key, defaultValue, params);
+    return CommonBundle.messageOrDefault(getResourceBundle(), key, defaultValue, params);
+  }
+  
+  public boolean containsKey(@NotNull String key) {
+    return getResourceBundle().containsKey(key);
   }
 
-  private ResourceBundle getBundle() {
+  public ResourceBundle getResourceBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
