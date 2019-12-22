@@ -115,11 +115,10 @@ internal class GHPRDataProviderImpl(private val project: Project,
       val commitDiff = requestExecutor.execute(it,
                                                GithubApiRequests.Repos.Commits.getDiff(repository, commit.oid))
 
-      commit to commitDiff
+      val cumulativeDiff = requestExecutor.execute(it,
+                                                   GithubApiRequests.Repos.Commits.getDiff(repository, details.baseRefOid, commit.oid))
+      Triple(commit, commitDiff, cumulativeDiff)
     }
-    val cumulativeDiff = requestExecutor.execute(it,
-                                                 GithubApiRequests.Repos.Commits.getDiff(repository,
-                                                                                         details.baseRefOid, details.headRefOid))
 
     //TODO: ??? move to diff and load merge base via API
     baseFetch.joinCancellable()
@@ -129,7 +128,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
       GitHistoryUtils.getMergeBase(project, gitRemote.repository.root, details.baseRefOid, details.headRefOid)?.rev
       ?: error("Could not calculate merge base for PR branch")
 
-    GHPRChangesProviderImpl(gitRemote.repository, mergeBaseRev, commitsWithDiffs, cumulativeDiff)
+    GHPRChangesProviderImpl(gitRemote.repository, mergeBaseRev, commitsWithDiffs)
   }
   override val changesProviderRequest: CompletableFuture<out GHPRChangesProvider> by backgroundProcessValue(changesProviderValue)
 

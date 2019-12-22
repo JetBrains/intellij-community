@@ -6,6 +6,7 @@ import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -14,10 +15,12 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
+import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
 class GHPRChangesDiffHelperImpl(private val project: Project,
                                 private val reviewService: GHPRReviewService,
@@ -51,9 +54,21 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
     }
   }
 
-  private fun mapThread(diffData: GHPRChangesProvider.DiffData, thread: GHPullRequestReviewThread): GHPRDiffReviewThreadMapping? {
-    if (thread.originalCommit?.oid?.let { diffData.contains(it, thread.path) } == false) return null
-    val (side, line) = thread.position?.let { diffData.linesMapper.findFileLocation(it) } ?: return null
+  private fun mapThread(diffData: GHPRChangeDiffData, thread: GHPullRequestReviewThread): GHPRDiffReviewThreadMapping? {
+    val originalCommitSha = thread.originalCommit?.oid ?: return null
+    if (!diffData.contains(originalCommitSha, thread.path)) return null
+
+    val (side, line) = when (diffData) {
+      is GHPRChangeDiffData.Cumulative -> thread.position?.let { diffData.linesMapper.findFileLocation(it) } ?: return null
+      is GHPRChangeDiffData.Commit -> {
+        if (originalCommitSha != diffData.commitSha) return null
+        val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(thread.path, thread.diffHunk))
+        patchReader.readTextPatches()
+        val patchHunk = patchReader.textPatches[0].hunks.lastOrNull() ?: return null
+        val position = GHPatchHunkUtil.getHunkLinesCount(patchHunk) - 1
+        GHPatchHunkUtil.findSideFileLineFromHunkLineIndex(patchHunk, position) ?: return null
+      }
+    }
 
     return GHPRDiffReviewThreadMapping(side, line, thread)
   }
