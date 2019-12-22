@@ -727,6 +727,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return meetDfType(dfaLeft, sanitizeNullability(rightType));
       }
       else if (relationType == RelationType.IS_NOT || (relationType == RelationType.NE && rightType instanceof DfConstantType)) {
+        if (rightType.isSuperType(leftType)) return false;
         DfType antiType = rightType.tryNegate();
         if (antiType != null && !meetDfType(dfaLeft, antiType)) {
           return leftType.meet(rightType) == DfTypes.BOTTOM;
@@ -910,28 +911,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : variables) {
       PsiModifierListOwner psi = var.getPsiVariable();
       DfaVariableValue qualifier = var.getQualifier();
-      if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi) && qualifier != null) {
-        if(!applyGetClassRelation(qualifier, value, negated)) return false;
+      if (qualifier != null && psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
+        DfaTypeValue typeValue = getFactory().fromDfType(TypeConstraints.exact(value).asDfType());
+        if (!applyCondition(qualifier.cond(negated ? RelationType.IS_NOT : RelationType.IS, typeValue))) {
+          return false;
+        }
       }
-    }
-    return true;
-  }
-
-  private boolean applyGetClassRelation(@NotNull DfaVariableValue qualifier, @NotNull PsiType value, boolean negated) {
-    TypeConstraint constraint = TypeConstraints.exact(value);
-    if (constraint == TypeConstraints.BOTTOM) {
-      // It's impossible to instantiate object of given type (e.g. primitive type, abstract class, interface type)
-      return negated;
-    }
-    if (!negated) {
-      return meetDfType(qualifier, constraint.asDfType());
-    }
-    TypeConstraint existingConstraint = TypeConstraint.fromDfType(getDfType(qualifier));
-    if (existingConstraint.isExact()) {
-      return !existingConstraint.equals(constraint);
-    }
-    if (TypeConstraints.instanceOf(value).isExact()) { // final class
-      return meetDfType(qualifier, TypeConstraints.notInstanceOf(value).asDfType());
     }
     return true;
   }
