@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
@@ -35,6 +36,7 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
+import git4idea.update.getUpdateMethods
 import java.awt.Color
 import javax.swing.JLabel
 
@@ -213,7 +215,7 @@ internal class GitVcsPanel(private val project: Project,
       cell {
         label("Update method:")
         comboBox(
-          EnumComboBoxModel(UpdateMethod::class.java),
+          CollectionComboBoxModel(getUpdateMethods()),
           { projectSettings.updateMethod },
           { projectSettings.updateMethod = it!! },
           renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)

@@ -48,6 +48,7 @@ internal class GitUpdateOptionsPanel(private val settings: GitVcsSettings) {
 
   fun updateFrom() = panel.reset()
 
-  private fun getUpdateMethods(): List<UpdateMethod> =
-    UpdateMethod.values().filter { it != BRANCH_DEFAULT || Registry.`is`("git.update.project.dialog.branch.default") }
 }
+
+internal fun getUpdateMethods(): List<UpdateMethod> =
+  UpdateMethod.values().filter { it != BRANCH_DEFAULT || Registry.`is`("git.update.project.dialog.branch.default") }
