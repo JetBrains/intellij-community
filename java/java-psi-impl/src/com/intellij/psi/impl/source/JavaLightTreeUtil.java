@@ -76,9 +76,7 @@ public class JavaLightTreeUtil {
     LighterASTNode typeElement = LightTreeUtil.firstChildOfType(tree, node, TYPE);
     if (typeElement != null) {
       LighterASTNode item = ContainerUtil.getOnlyItem(tree.getChildren(typeElement));
-      if (item.getTokenType() instanceof IKeywordElementType) {
-        return true;
-      }
+      return item != null && item.getTokenType() instanceof IKeywordElementType;
     }
     return false;
   }
