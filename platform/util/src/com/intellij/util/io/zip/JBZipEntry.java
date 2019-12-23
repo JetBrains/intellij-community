@@ -114,7 +114,7 @@ public class JBZipEntry implements Cloneable {
    * @param mode an {@code int} value
    */
   public void setUnixMode(int mode) {
-    setExternalAttributes((mode << 16)
+    setExternalAttributes(((long)(mode & SHORT_MASK) << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
