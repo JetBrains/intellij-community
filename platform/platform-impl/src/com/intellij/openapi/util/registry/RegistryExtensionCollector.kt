@@ -26,9 +26,9 @@ class RegistryKeyBean : PluginAware {
     @JvmStatic
     fun addKeysFromPlugins() {
       Registry.addKeys(EP_NAME.iterable.map { extension ->
-        val contributedByThirdParty = extension.descriptor?.let { !getPluginInfoById(it.pluginId).isSafeToReport() } ?: false
+        val pluginId = extension.descriptor?.pluginId?.idString
         RegistryKeyDescriptor(extension.key, extension.description.unescapeString(), extension.defaultValue, extension.restartRequired,
-                              contributedByThirdParty)
+                              pluginId)
       })
     }
   }

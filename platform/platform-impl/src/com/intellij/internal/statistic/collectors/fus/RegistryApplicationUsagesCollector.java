@@ -7,9 +7,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.*;
 
 public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollector {
 
@@ -53,6 +54,11 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
     return "platform.registry.application";
   }
 
+  @Override
+  public int getVersion() {
+    return 2;
+  }
+
   public static class RegistryUtilValidator extends CustomWhiteListRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -64,16 +70,22 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       final ExperimentalFeature feature = findFeatureById(data);
       if (feature != null) {
-        final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(feature.getClass());
+        final PluginInfo info = getPluginInfo(feature.getClass());
         if (StringUtil.equals(data, context.eventId)) {
           context.setPluginInfo(info);
         }
         return info.isDevelopedByJetBrains() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
       }
 
+      PluginInfo info = getPluginInfoByRegistry(Registry.get(data));
+      context.setPluginInfo(info);
+      return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+    }
 
-      final RegistryValue value = Registry.get(data);
-      return !value.isContributedByThirdPartyPlugin() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
+    @NotNull
+    private static PluginInfo getPluginInfoByRegistry(@NotNull RegistryValue value) {
+      String pluginId = value.getPluginId();
+      return pluginId != null ? getPluginInfoById(PluginId.getId(pluginId)) : getPlatformPlugin();
     }
 
     @Nullable
