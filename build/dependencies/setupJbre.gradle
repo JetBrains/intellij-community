@@ -41,9 +41,10 @@ static def splitJreBuild(String jreBuild, String version) {
 
 def createJbreTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
   def isModular = version >= 9
+  def is32bitSupported = version <= 11
   if (prefix == null) prefix = isModular ? 'jbr-' : 'jbrx-'
   jrePlatformsToDownload(targetOs).each { platform ->
-    archToDownload(platform, !isModular).each { arch ->
+    archToDownload(platform, is32bitSupported).each { arch ->
       def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
       def (update, buildNumber) = splitJreBuild(jreBuild.toString(), version.toString())
       def jbrxArtifactName = "$prefix$update-$platform-$arch-$buildNumber".toString()
@@ -179,5 +180,5 @@ static def jrePlatformsToDownload(targetOs) {
 }
 
 static def archToDownload(platform, is32BitArchSupported) {
-  is32BitArchSupported && platform == 'windows' ? ['i586', 'x64'] : ['x64']
+  is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
 }

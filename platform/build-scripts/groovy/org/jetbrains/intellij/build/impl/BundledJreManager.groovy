@@ -56,13 +56,13 @@ class BundledJreManager {
     return extractJre(OsFamily.ALL.find { it.jbrArchiveSuffix == osName })
   }
 
-  String extractJre(OsFamily os) {
-    String targetDir = "$baseDirectoryForJre/secondJre.${os.jbrArchiveSuffix}_${JvmArchitecture.x64}"
+  String extractJre(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
+    String targetDir = "$baseDirectoryForJre/secondJre.${os.jbrArchiveSuffix}_$arch"
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
-    File archive = findArchive(os, getJreBuild(os), getJreVersion(), jrePrefix(), JvmArchitecture.x64)
+    File archive = findArchive(os, getJreBuild(os), getJreVersion(), jrePrefix(), arch)
     if (archive == null) {
       return null
     }
@@ -71,6 +71,20 @@ class BundledJreManager {
       def destinationDir = new File(destination)
       if (destinationDir.exists()) destinationDir.deleteDir()
       untar(archive, destination, isBundledJreModular())
+    }
+
+    if (arch == JvmArchitecture.x32) {
+      File archiveX32 = findArchive(os, getJreBuild(os), getJreVersion(), jrePrefix(), JvmArchitecture.x32)
+      if (archiveX32.exists()) {
+        buildContext.messages.block("Extract $archiveX32.name jre32") {
+          String destination = "$targetDir/jbr"
+          if (os == OsFamily.WINDOWS) {
+            destination = "$targetDir/jre32"
+          }
+          buildContext.messages.progress("Extracting JRE from '$archiveX32.name' archive to $destination")
+          untar(archiveX32, destination, false)
+        }
+      }
     }
     return targetDir
   }
@@ -199,7 +213,7 @@ class BundledJreManager {
       // [11, b96]
       (update, build) = [version.toString(), jreBuild]
     }
-    "${update}-${os.jbrArchiveSuffix}-${arch == JvmArchitecture.x32 ? 'i586' : 'x64'}-${build}.tar.gz"
+    "${update}-${os.jbrArchiveSuffix}-${arch == JvmArchitecture.x32 ? 'x86' : 'x64'}-${build}.tar.gz"
   }
 
   private File findSecondBundledJreArchive(OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
@@ -270,6 +284,10 @@ class BundledJreManager {
    */
   boolean isBundledJreModular() {
     return buildContext.options.bundledJreVersion >= 9
+  }
+
+  boolean is32JreSupported() {
+    return buildContext.options.bundledJreVersion <= 11
   }
 
   /**
