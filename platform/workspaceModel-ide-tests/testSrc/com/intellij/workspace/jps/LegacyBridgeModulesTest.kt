@@ -366,10 +366,9 @@ class LegacyBridgeModulesTest {
       ModuleRootManager.getInstance(module).getModuleExtension(TestModuleExtension::class.java).languageLevel
     )
 
-    assertEquals(
-      LanguageLevel.JDK_1_5,
-      ModuleRootManager.getInstance(module).modifiableModel.getModuleExtension(TestModuleExtension::class.java).languageLevel
-    )
+    val modifiableRootModel = ModuleRootManager.getInstance(module).modifiableModel
+    assertEquals(LanguageLevel.JDK_1_5, modifiableRootModel.getModuleExtension(TestModuleExtension::class.java).languageLevel)
+    modifiableRootModel.dispose()
 
     assertEquals(1, TestModuleExtension.commitCalled.get())
   }
