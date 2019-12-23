@@ -103,10 +103,31 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
 
   private fun createContentManager(): ContentManagerImpl {
     val contentUi = ToolWindowContentUi(this, windowInfo.contentUiType)
-    this.contentUi = contentUi
     val contentManager = ContentManagerImpl(contentUi, canCloseContent, toolWindowManager.project, parentDisposable)
 
-    addContentNotInHierarchyComponents(contentUi)
+    UIUtil.putClientProperty(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
+      override fun iterator(): Iterator<JComponent> {
+        if (contentManager.contentCount == 0) {
+          return Collections.emptyIterator()
+        }
+
+        return contentManager.contents
+          .asSequence()
+          .mapNotNull { content: Content ->
+            var last: JComponent? = null
+            var parent: Component? = content.component
+            while (parent != null) {
+              if (parent === contentUi.component || parent !is JComponent) {
+                return@mapNotNull null
+              }
+              last = parent
+              parent = parent.getParent()
+            }
+            last
+          }
+          .iterator()
+      }
+    })
 
     val contentComponent = contentManager.component
     InternalDecorator.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
@@ -132,6 +153,10 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     })
 
     toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, contentComponent)
+
+    if (windowInfo.isVisible) {
+      createContentIfNeeded()
+    }
 
     // after init, as it was before contentManager creation was changed to be lazy
     pendingContentManagerListeners?.let { list ->
@@ -435,6 +460,7 @@ class ToolWindowImpl internal constructor(val toolWindowManager: ToolWindowManag
     contentManager.value
   }
 
+  // if content manager due to some incorrect call was already initialized, content will be not created
   internal fun scheduleContentInitializationIfNeeded() {
     if (contentFactory != null) {
       // todo use lazy loading (e.g. JBLoadingPanel)
@@ -629,31 +655,4 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
   if (children.isNotEmpty() && !separatorText.isNullOrEmpty()) {
     main.addAction(Separator(separatorText), Constraints.FIRST)
   }
-}
-
-private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
-  UIUtil.putClientProperty(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
-    override fun iterator(): Iterator<JComponent> {
-      val contentManager = contentUi.contentManager ?: return Collections.emptyIterator()
-      if (contentManager.contentCount == 0) {
-        return Collections.emptyIterator()
-      }
-
-      return contentManager.contents
-        .asSequence()
-        .mapNotNull { content: Content ->
-          var last: JComponent? = null
-          var parent: Component? = content.component
-          while (parent != null) {
-            if (parent === contentUi.component || parent !is JComponent) {
-              return@mapNotNull null
-            }
-            last = parent
-            parent = parent.getParent()
-          }
-          last
-        }
-        .iterator()
-    }
-  })
 }
