@@ -302,6 +302,7 @@
                         predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
 
     <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
+    <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
   </extensions>
 
   <extensionPoints>
