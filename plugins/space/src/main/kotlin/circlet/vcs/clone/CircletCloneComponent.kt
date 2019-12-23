@@ -1,8 +1,5 @@
-package circlet.ui.clone
+package circlet.vcs.clone
 
-import circlet.actions.AccountMenuItem
-import circlet.actions.AccountMenuPopupStep
-import circlet.actions.AccountsMenuListPopup
 import circlet.client.*
 import circlet.client.api.*
 import circlet.components.*
@@ -10,11 +7,12 @@ import circlet.platform.api.oauth.*
 import circlet.platform.client.*
 import circlet.settings.*
 import circlet.ui.*
+import circlet.ui.AccountMenuItem
+import circlet.ui.AccountMenuPopupStep
+import circlet.ui.AccountsMenuListPopup
 import com.intellij.dvcs.*
 import com.intellij.dvcs.repo.*
 import com.intellij.dvcs.ui.*
-import com.intellij.icons.*
-import com.intellij.ide.*
 import com.intellij.openapi.*
 import com.intellij.openapi.fileChooser.*
 import com.intellij.openapi.project.*
@@ -44,8 +42,7 @@ import java.util.concurrent.*
 import javax.swing.*
 import javax.swing.event.*
 
-internal class CircletCloneComponent(val project: Project,
-                                     private val git: Git) : VcsCloneDialogExtensionComponent() {
+internal class CircletCloneComponent(val project: Project) : VcsCloneDialogExtensionComponent() {
     // state
     private val uiLifetime = LifetimeSource()
 
@@ -64,8 +61,8 @@ internal class CircletCloneComponent(val project: Project,
 
         circletWorkspace.workspace.forEach(uiLifetime) { workspace ->
             if (workspace == null) {
-                val settings = CircletServerSettingsComponent.getInstance().settings
-                loginState.value = CircletLoginState.Disconnected(settings.value.server)
+                val settings = CircletSettings.getInstance()
+                loginState.value = CircletLoginState.Disconnected(settings.serverSettings.server)
             }
             else {
                 loginState.value = CircletLoginState.Connected(workspace.client.server, workspace)
@@ -128,29 +125,12 @@ internal class CircletCloneComponent(val project: Project,
     }
 
     override fun doClone(checkoutListener: CheckoutProvider.Listener) {
-        val url = cloneView.getUrl()
-        url ?: return
-        val directory = cloneView.getDirectory()
-        val parent = Paths.get(directory).toAbsolutePath().parent
-        val lfs = LocalFileSystem.getInstance()
-        var destinationParent = lfs.findFileByIoFile(parent.toFile())
-        if (destinationParent == null) {
-            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
-        }
-        destinationParent ?: return
-        val directoryName = Paths.get(directory).fileName.toString()
-        val parentDirectory = parent.toAbsolutePath().toString()
-        GitCheckoutProvider.clone(project,
-                                  git,
-                                  checkoutListener,
-                                  destinationParent,
-                                  url,
-                                  directoryName,
-                                  parentDirectory)
+        cloneView.doClone(checkoutListener)
     }
 
     override fun onComponentSelected() {
         val isConnected = loginState.value is CircletLoginState.Connected
+        dialogStateListener.onOkActionNameChanged("Clone")
         dialogStateListener.onOkActionEnabled(isConnected && cloneView.getUrl() != null)
     }
 
@@ -167,6 +147,7 @@ private class CloneView(
     private val dialogStateListener: VcsCloneDialogComponentStateListener,
     private val st: CircletLoginState.Connected
 ) {
+    val settings = CircletSettings.getInstance()
 
     val selectedUrl = mutableProperty<String?>(null)
 
@@ -215,7 +196,7 @@ private class CloneView(
             if (it.valueIsAdjusting)
                 return@addListSelectionListener
             // selection change is triggered when repo details update, so we can use value here.
-            selectedUrl.value = selectedValue?.repoDetails?.value?.urls?.sshUrl
+            updateSelectedUrl()
         }
     }
 
@@ -228,6 +209,8 @@ private class CloneView(
         client.repoService,
         client.star
     )
+
+    var createDirectoryError: ValidationInfo? = null
 
     init {
 
@@ -245,7 +228,7 @@ private class CloneView(
 
         cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
             launch(lifetime, Ui) {
-                val allRepos =  allProjectsWithReposAndDetails.filterNotNull()
+                val allRepos = allProjectsWithReposAndDetails.filterNotNull()
                 val toAdd = allRepos.drop(listModel.items.count())
                 val selection = circletProjectListWithSearch.list.selectedIndex
                 listModel.addAll(listModel.items.count(), toAdd)
@@ -265,19 +248,22 @@ private class CloneView(
             }
 
             private fun showPopupMenu() {
+                val host = st.server
                 val serverUrl = cleanupUrl(st.server)
                 val menuItems: MutableList<AccountMenuItem> = mutableListOf()
                 menuItems += AccountMenuItem.Account(st.workspace.me.value.englishFullName(),
                                                      serverUrl,
-                                                     resizeIcon(accountLabel.icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
-                                                     listOf(AccountMenuItem.Action("Open $serverUrl",
-                                                                                   { BrowserUtil.browse(st.server) },
-                                                                                   AllIcons.Ide.External_link_arrow)))
-                menuItems += AccountMenuItem.Action("Projects",
-                                                    { BrowserUtil.browse("${st.server.removeSuffix("/")}/p") },
-                                                    AllIcons.Ide.External_link_arrow,
+                                                     resizeIcon(CircletUserAvatarProvider.getInstance().avatars.value.circle,
+                                                                VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
+                                                     listOf(browseAction("Open $serverUrl", host)))
+                menuItems += browseAction("Projects", Navigator.p.absoluteHref(host), true)
+                menuItems += AccountMenuItem.Action("Settings...",
+                                                    {
+                                                        CircletSettingsPanel.openSettings(project)
+                                                        updateSelectedUrl()
+                                                    },
                                                     showSeparatorAbove = true)
-                menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() }, showSeparatorAbove = true)
+                menuItems += AccountMenuItem.Action("Log Out...", { circletWorkspace.signOut() })
 
                 AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
                     .showUnderneathOf(accountLabel)
@@ -358,6 +344,14 @@ private class CloneView(
         }
     }
 
+    fun updateSelectedUrl() {
+        val repositoryUrls = list.selectedValue?.repoDetails?.value?.urls
+        selectedUrl.value = when (settings.cloneType) {
+            CloneType.SSH -> repositoryUrls?.sshUrl
+            CloneType.HTTP -> repositoryUrls?.httpUrl
+        }
+    }
+
     fun getUrl(): String? = selectedUrl.value
 
     fun getDirectory(): String = directoryField.text
@@ -365,7 +359,34 @@ private class CloneView(
     fun doValidteAll(): List<ValidationInfo> {
         val list = ArrayList<ValidationInfo>()
         ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
-        ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.createDestination(directoryField.text))
         return list
+    }
+
+    fun doClone(checkoutListener: CheckoutProvider.Listener) {
+        val url = getUrl()
+        url ?: return
+        val directory = getDirectory()
+
+        createDirectoryError = CloneDvcsValidationUtils.createDestination(directory)
+        if (createDirectoryError != null) {
+            return
+        }
+
+        val parent = Paths.get(directory).toAbsolutePath().parent
+        val lfs = LocalFileSystem.getInstance()
+        var destinationParent = lfs.findFileByIoFile(parent.toFile())
+        if (destinationParent == null) {
+            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
+        }
+        destinationParent ?: return
+        val directoryName = Paths.get(directory).fileName.toString()
+        val parentDirectory = parent.toAbsolutePath().toString()
+        GitCheckoutProvider.clone(project,
+                                  Git.getInstance(),
+                                  checkoutListener,
+                                  destinationParent,
+                                  url,
+                                  directoryName,
+                                  parentDirectory)
     }
 }

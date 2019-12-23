@@ -1,4 +1,4 @@
-package circlet.ui.clone
+package circlet.vcs.clone
 
 import circlet.actions.*
 import com.intellij.openapi.actionSystem.*

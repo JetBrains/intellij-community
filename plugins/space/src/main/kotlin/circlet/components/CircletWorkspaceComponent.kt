@@ -9,7 +9,6 @@ import circlet.platform.workspaces.*
 import circlet.settings.*
 import circlet.utils.*
 import circlet.workspaces.*
-import com.intellij.openapi.options.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
@@ -35,8 +34,10 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedComponent by 
         (it?.workspace ?: mutableProperty<Workspace?>(null))
     }
 
+    private val settings = CircletSettings.getInstance()
+
     override fun initComponent() {
-        val settingsOnStartup = CircletServerSettingsComponent.getInstance().settings.value
+        val settingsOnStartup = settings.serverSettings
         val wsLifetime = workspacesLifetimes.next()
 
         // sign in automatically on application startup.
@@ -68,7 +69,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedComponent by 
         if (response is OAuthTokenResponse.Success) {
             log.info { "response = ${response.accessToken} ${response.expiresIn} ${response.refreshToken} ${response.scope}" }
             wss.signInWithToken(response.toTokenInfo())
-            CircletServerSettingsComponent.getInstance().applySettings(CircletServerSettings(true, server))
+            settings.serverSettings = CircletServerSettings(true, server)
             manager.value = wss
         }
         return response
@@ -79,7 +80,7 @@ class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedComponent by 
         oldManager?.signOut(true)
         workspacesLifetimes.clear()
         manager.value = null
-        CircletServerSettingsComponent.getInstance().applySettings(CircletServerSettingsComponent.getInstance().state.copy(enabled = false))
+        settings.serverSettings = settings.serverSettings.copy(enabled = false)
     }
 
     private suspend fun autoSignIn(settingsOnStartup: CircletServerSettings, wsLifetime: Lifetime): Boolean {
@@ -114,7 +115,7 @@ private fun authCheckFailedNotification(lifetime: Lifetime) {
 }
 
 private fun configure() {
-    ShowSettingsUtil.getInstance().showSettingsDialog(null, CircletConfigurable::class.java)
+    CircletSettingsPanel.openSettings(null)
 }
 
 fun ideaConfig(server: String): WorkspaceConfiguration {
