@@ -16,7 +16,11 @@ plugins {
 applyKotlinJVM()
 
 if (hasProperty("teamcity")) {
-    version = "2019.${teamcity["build.number"]}"
+    if (project.hasProperty('pluginChannel')) {
+        version = "2019.internal.${teamcity["build.number"]}"
+    } else {
+        version = "2019.${teamcity["build.number"]}"
+    }
 }
 
 dependencies {
