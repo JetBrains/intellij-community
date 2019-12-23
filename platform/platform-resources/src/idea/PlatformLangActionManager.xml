@@ -25,7 +25,6 @@
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/idea/StatisticsEventLog.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/VcsActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/LangActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/StatisticsEventLog.xml" xpointer="xpointer(/idea-plugin/*)"/>
