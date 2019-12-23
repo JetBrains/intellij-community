@@ -134,15 +134,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);
-    for (FrameworkSupportNodeBase node : myRoots) {
-      if (preselected.contains(node.getId())) {
-        node.setChecked(true);
-      }
-    }
     setAssociatedFrameworks();
 
     myFrameworksTree.setRoots(myRoots);
     myFrameworksTree.setSelectionRow(0);
+
+    for (FrameworkSupportNodeBase<?> node : myRoots) {
+      if (preselected.contains(node.getId())) {
+        // we need to trigger `FrameworksTree::onNodeStateChanged`
+        // in order to preconfigure `FrameworkSupportNode`s
+        myFrameworksTree.setNodeState(node, true);
+      }
+    }
   }
 
   public void setAssociatedFrameworks() {
