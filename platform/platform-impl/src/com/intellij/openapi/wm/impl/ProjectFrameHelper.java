@@ -420,6 +420,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetProvider widgetProvider, @NotNull PluginDescriptor pluginDescriptor) {
+        if (!widgetProvider.isCompatibleWith(ProjectFrameHelper.this)) {
+          return;
+        }
+
         StatusBarWidget widget = widgetProvider.getWidget(project);
         if (widget == null) {
           return;
@@ -441,6 +445,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
       @Override
       public void extensionRemoved(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
+        if (!provider.isCompatibleWith(ProjectFrameHelper.this)) {
+          return;
+        }
+
         assert providerToWidgetDisposable.containsKey(provider);
         Disposer.dispose(providerToWidgetDisposable.get(provider));
         statusBar.repaint();
