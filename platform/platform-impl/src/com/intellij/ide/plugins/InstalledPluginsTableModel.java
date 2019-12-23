@@ -238,17 +238,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       return true;
     }
 
-    final String listOfSelectedPlugins = StringUtil.join(descriptorsWithChangedEnabledState, pluginDescriptor -> pluginDescriptor.getName(), ", ");
-    final String listOfDependencies = StringUtil.join(deps, pluginId -> {
-      final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
-      assert pluginDescriptor != null;
-      return pluginDescriptor.getName();
+    String listOfDependencies = StringUtil.join(deps, pluginId -> {
+      IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
+      return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + (pluginDescriptor == null ? pluginId.getIdString() : pluginDescriptor.getName());
     }, "<br>");
-    final String message = !newEnabledState ? "<html>The following plugins <br>" + listOfDependencies + "<br>are enabled and depend" +(deps.size() == 1 ? "s" : "") + " on selected plugins. " +
-                                     "<br>Would you like to disable them too?</html>"
-                                   : "<html>The following plugins on which " + listOfSelectedPlugins + " depend" + (descriptorsWithChangedEnabledState.length == 1 ? "s" : "") +
-                                     " are disabled:<br>" + listOfDependencies + "<br>Would you like to enable them?</html>";
-    if (Messages.showOkCancelDialog(message, newEnabledState ? "Enable Dependant Plugins" : "Disable Plugins with Dependency on this", Messages.getQuestionIcon()) == Messages.OK) {
+    String inputS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
+    String outS = deps.size() == 1 ? "" : "s";
+    String message = newEnabledState ?
+                      "<html>The enabled plugin" + inputS + " depends on the following plugin" + outS + ":<br>" + listOfDependencies + "</html>"
+                      : "<html>The following plugin" + inputS + " depend on the disabled plugin" + outS + ":<br>" + listOfDependencies + "</html>";
+    if (Messages.showOkCancelDialog(message, newEnabledState ? "Enable required plugins" : "Disable dependent plugins",
+                                    newEnabledState ? "Enable" :  "Disable" , Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) == Messages.OK) {
       for (PluginId pluginId : deps) {
         myEnabled.put(pluginId, newEnabledState);
       }
