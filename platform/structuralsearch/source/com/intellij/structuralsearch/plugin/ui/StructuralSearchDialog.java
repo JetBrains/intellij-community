@@ -128,16 +128,19 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   PatternContext myPatternContext = null;
   final List<RangeHighlighter> myRangeHighlighters = new SmartList<>();
   private final DocumentListener myRestartHighlightingListener = new DocumentListener() {
+    final Runnable runnable = () -> ReadAction.nonBlocking(() -> {
+      addMatchHighlights();
+    })
+      .withDocumentsCommitted(getProject())
+      .expireWith(getDisposable())
+      .coalesceBy(this)
+      .submit(AppExecutorUtil.getAppExecutorService());
+
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      ReadAction.nonBlocking(() -> {
-        removeMatchHighlights();
-        addMatchHighlights();
-      })
-        .withDocumentsCommitted(getProject())
-        .expireWith(getDisposable())
-        .coalesceBy(this, event.getDocument())
-        .submit(AppExecutorUtil.getAppExecutorService());
+      if (myAlarm.isDisposed()) return;
+      myAlarm.cancelRequest(runnable);
+      myAlarm.addRequest(runnable, 100);
     }
   };
 
@@ -183,17 +186,26 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myEditor = searchContext.getEditor();
     addRestartHighlightingListenerToCurrentEditor();
     final FileEditorManagerListener listener = new FileEditorManagerListener() {
-
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        removeRestartHighlightingListenerToCurrentEditor();
+      FileEditor myNewEditor;
+      final Runnable runnable = () -> {
+        removeRestartHighlightingListenerFromCurrentEditor();
         removeMatchHighlights();
-        final FileEditor editor = event.getNewEditor();
-        if (editor instanceof TextEditor) {
-          myEditor = ((TextEditor)editor).getEditor();
+        if (myNewEditor instanceof TextEditor) {
+          myEditor = ((TextEditor)myNewEditor).getEditor();
           addMatchHighlights();
           addRestartHighlightingListenerToCurrentEditor();
         }
+        else {
+          myEditor = null;
+        }
+      };
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        if (myAlarm.isDisposed()) return;
+        myAlarm.cancelRequest(runnable);
+        myNewEditor = event.getNewEditor();
+        myAlarm.addRequest(runnable, 100);
       }
     };
     getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
@@ -211,7 +223,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     }
   }
 
-  private void removeRestartHighlightingListenerToCurrentEditor() {
+  private void removeRestartHighlightingListenerFromCurrentEditor() {
     if (myEditor != null) {
       myEditor.getDocument().removeDocumentListener(myRestartHighlightingListener);
     }
@@ -855,12 +867,16 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     if (myEditConfigOnly) {
       return;
     }
+    // retrieval of editor needs to be outside of invokeLater(), otherwise the editor might have already changed.
     final Editor editor = myEditor;
     if (editor == null) {
       return;
     }
-    final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(() -> {
+      final Project project = getProject();
+      if (project.isDisposed()) {
+        return;
+      }
       final HighlightManager highlightManager = HighlightManager.getInstance(project);
       for (RangeHighlighter highlighter : myRangeHighlighters) {
         highlightManager.removeSegmentHighlighter(editor, highlighter);
@@ -1192,7 +1208,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
     myReplaceCriteriaEdit.removeNotify();
-    removeRestartHighlightingListenerToCurrentEditor();
+    removeRestartHighlightingListenerFromCurrentEditor();
     super.dispose();
   }
 
