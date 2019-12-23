@@ -97,7 +97,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
 
     @SuppressWarnings({ "unchecked" })
     private void createGutterAnnotation(CommonElement t, GutterIconRenderer renderer) {
-      final Annotation a = myHolder.createAnnotation((T)t, HighlightSeverity.INFORMATION, null);
+      final Annotation a = myHolder.createAnnotation(HighlightSeverity.INFORMATION, (T)t, null);
       a.setGutterIconRenderer(renderer);
     }
 
@@ -117,7 +117,7 @@ public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
         final Set<Define> set = map.get(define.getName());
         if (set == null || set.size() == 0) {
           //noinspection unchecked
-          myHolder.createAnnotation((T)define, HighlightSeverity.ERROR, "Definition doesn't override anything from " + file.getName());
+          myHolder.createAnnotation(HighlightSeverity.ERROR, (T)define, "Definition doesn't override anything from " + file.getName());
           continue;
         }
 

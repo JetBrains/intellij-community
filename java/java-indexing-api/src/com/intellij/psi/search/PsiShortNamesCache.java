@@ -75,11 +75,11 @@ public abstract class PsiShortNamesCache {
   @NotNull
   public abstract String[] getAllClassNames();
 
-  public boolean processAllClassNames(@NotNull Processor<String> processor) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor) {
     return ContainerUtil.process(getAllClassNames(), processor);
   }
 
-  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllClassNames(), processor);
   }
 
@@ -92,7 +92,7 @@ public abstract class PsiShortNamesCache {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public void getAllClassNames(@NotNull HashSet<String> dest) {
+  public void getAllClassNames(@NotNull HashSet<? super String> dest) {
     processAllClassNames(new CommonProcessors.CollectProcessor<>(dest));
   }
 
@@ -123,11 +123,11 @@ public abstract class PsiShortNamesCache {
     return processMethodsWithName(name, scope, method -> processor.process(method));
   }
 
-  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processAllMethodNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllMethodNames(), processor);
   }
 
-  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public boolean processAllFieldNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllFieldNames(), processor);
   }
 
