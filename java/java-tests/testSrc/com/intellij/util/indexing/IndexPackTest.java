@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -195,9 +196,12 @@ public class IndexPackTest extends TestCase {
     try (UncompressedZipFileSystem fs = new UncompressedZipFileSystem(pack.toPath(), new UncompressedZipFileSystemProvider())) {
       PlatformTestUtil.startPerformanceTest("read", 6000, () -> {
 
-        ReadOnlyIndexPack<String, String, String, ?> indexPack = new ReadOnlyIndexPack<>(generateIndexNames(packSize)
-                                                                                           .map(name -> createStringLengthIndex(fs.getPath(name, "index"), true))
-                                                                                           .collect(Collectors.toList()));
+        ReadOnlyIndexPack<String, String, String, InvertedIndex<String, String, String>> indexPack
+                = new ReadOnlyIndexPack<>(path -> createStringLengthIndex(path, false));
+
+        generateIndexNames(packSize).map(name -> fs.getPath(name, "index")).forEach(path -> {
+          indexPack.attach(path, DummyProject.getInstance());
+        });
 
         LongAdder recordCount = new LongAdder();
         for (int key : keys.toArray()) {
