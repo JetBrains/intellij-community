@@ -12,5 +12,5 @@ public interface PsiRecordComponentStub extends PsiMemberStub<PsiRecordComponent
 
   TypeInfo getType(boolean doResolve);
 
-  boolean hasDeprecatedAnnotation();
+  boolean isVararg();
 }

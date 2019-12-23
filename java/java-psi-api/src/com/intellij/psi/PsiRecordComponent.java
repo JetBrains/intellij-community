@@ -9,7 +9,5 @@ public interface PsiRecordComponent extends PsiMember, PsiVariable {
    *
    * @return true if the record component is a vararg, false otherwise
    */
-  default boolean isVarArgs() {
-    return getType() instanceof PsiEllipsisType;
-  }
+  boolean isVarArgs();
 }

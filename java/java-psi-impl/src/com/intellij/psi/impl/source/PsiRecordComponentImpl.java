@@ -147,6 +147,15 @@ public class PsiRecordComponentImpl extends JavaStubPsiElement<PsiRecordComponen
   }
 
   @Override
+  public boolean isVarArgs() {
+    PsiRecordComponentStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.isVararg();
+    }
+    return getType() instanceof PsiEllipsisType;
+  }
+
+  @Override
   public String toString() {
     return "PsiRecordComponent:" + getName();
   }

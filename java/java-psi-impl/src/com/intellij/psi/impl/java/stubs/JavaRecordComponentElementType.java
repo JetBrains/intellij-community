@@ -36,7 +36,7 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
   public void serialize(@NotNull PsiRecordComponentStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
-    dataStream.writeBoolean(stub.hasDeprecatedAnnotation());
+    dataStream.writeByte(((PsiRecordComponentStubImpl)stub).getFlags());
   }
 
   @NotNull
@@ -44,8 +44,8 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
   public PsiRecordComponentStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     TypeInfo type = TypeInfo.readTYPE(dataStream);
-    boolean hasDeprecatedAnnotation = dataStream.readBoolean();
-    return new PsiRecordComponentStubImpl(parentStub, name, type, hasDeprecatedAnnotation);
+    byte flags = dataStream.readByte();
+    return new PsiRecordComponentStubImpl(parentStub, name, type, flags);
   }
 
   @Override
@@ -73,6 +73,6 @@ public class JavaRecordComponentElementType extends JavaStubElementType<PsiRecor
 
     LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.MODIFIER_LIST);
     boolean hasDeprecatedAnnotation = modifierList != null && RecordUtil.isDeprecatedByAnnotation(tree, modifierList);
-    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, hasDeprecatedAnnotation);
+    return new PsiRecordComponentStubImpl(parentStub, name, typeInfo, typeInfo.isEllipsis, hasDeprecatedAnnotation);
   }
 }
