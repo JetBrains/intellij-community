@@ -71,4 +71,18 @@ public class IntegerMultiplicationImplicitCastToLong {
     long longCastAfterOverflow(int a, int b, int c) {
         return (long) (<warning descr="a * b * c: integer multiplication implicitly cast to long">a * b * c</warning>);
     }
+
+    // IDEA-229673
+    public void foo(boolean[] rgsToRead, int elements)
+    {
+        for (int i = 0, valOffset = 0; i < elements; ++i, valOffset += 64) {
+            long val = 0;
+            for (int j = 0; j < 64; ++j) {
+                int ix = valOffset + j;
+                if (rgsToRead.length == ix) break;
+                if (!rgsToRead[ix]) continue;
+                val = val | (<warning descr="1 << j: integer shift implicitly cast to long">1 << j</warning>);
+            }
+        }
+    }
 }

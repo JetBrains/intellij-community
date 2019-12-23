@@ -251,22 +251,24 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
         long min = 1, max = 1;
         for (PsiExpression operand : operands) {
           LongRangeSet set = DfLongType.extractRange(dfr.getDfType(PsiUtil.skipParenthesizedExprDown(operand)));
-          long nextMin = set.min();
-          long nextMax = set.max();
           if (operand == operands[0]) {
-            min = nextMin;
-            max = nextMax;
+            min = set.min();
+            max = set.max();
             continue;
           }
           long r1, r2, r3, r4;
           if (shift) {
-            nextMin &= 0x1F;
-            nextMax &= 0x1F;
+            set = set.bitwiseAnd(LongRangeSet.point(0x3F));
+            long nextMin = set.min();
+            long nextMax = set.max();
+            if (nextMax >= 0x20) return false;
             r1 = min << nextMin;
             r2 = max << nextMin;
             r3 = min << nextMax;
             r4 = max << nextMax;
           } else {
+            long nextMin = set.min();
+            long nextMax = set.max();
             if (intOverflow(nextMin) || intOverflow(nextMax)) return false;
             r1 = min * nextMin;
             r2 = max * nextMin;
