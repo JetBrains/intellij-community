@@ -15,6 +15,8 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
@@ -39,10 +41,7 @@ import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.CommitsTableModel.Companion.SUBJECT_COLUMN
 import org.jetbrains.annotations.CalledInBackground
-import java.awt.BasicStroke
-import java.awt.Component
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -73,20 +72,24 @@ internal class GitInteractiveRebaseDialog(
       GitRebaseEntryWithDetails(GitRebaseEntry(it.action, it.commit, it.subject), it.commitDetails)
     )
   })
-  private val resetEntriesAction = object : AbstractAction("Reset Entries"), Action {
-    override fun actionPerformed(e: ActionEvent?) {
-      commitsTableModel.resetEntries()
-    }
+  private val resetEntriesLabel = LinkLabel<Any?>("Reset", null).apply {
+    isVisible = false
+    setListener(
+      LinkListener { _, _ ->
+        commitsTable.removeEditor()
+        commitsTableModel.resetEntries()
+        isVisible = false
+      },
+      null
+    )
   }
   private val commitsTable = object : CommitsTable(project, commitsTableModel) {
     override fun onEditorCreate() {
       isOKActionEnabled = false
-      resetEntriesAction.isEnabled = false
     }
 
     override fun onEditorRemove() {
       isOKActionEnabled = true
-      resetEntriesAction.isEnabled = true
     }
   }
   private val modalityState = ModalityState.stateForComponent(window)
@@ -115,6 +118,7 @@ internal class GitInteractiveRebaseDialog(
         fullCommitDetailsListPanel.commitsSelected(commitsTable.selectedRows.map { commitsTableModel.getEntry(it).entry.commitDetails })
       }
     }
+    commitsTableModel.addTableModelListener { resetEntriesLabel.isVisible = true }
     PopupHandler.installRowSelectionTablePopup(
       commitsTable,
       DefaultActionGroup(actions),
@@ -141,8 +145,13 @@ internal class GitInteractiveRebaseDialog(
 
     decorator.addExtraAction(AnActionButton.fromAction(ShowGitRebaseEditorLikeEntriesAction(project, commitsTable)))
 
-    val tablePanel = decorator.createPanel().apply {
-      border = JBUI.Borders.emptyTop(4)
+    val tablePanel = decorator.createPanel()
+    val resetEntriesLabelPanel = BorderLayoutPanel().addToCenter(resetEntriesLabel).apply {
+      border = JBUI.Borders.emptyRight(10)
+    }
+    decorator.actionsPanel.apply {
+      border = JBUI.Borders.empty(2, 0)
+      add(BorderLayout.EAST, resetEntriesLabelPanel)
     }
 
     val detailsSplitter = OnePixelSplitter(DETAILS_PROPORTION, 0.5f).apply {
@@ -158,8 +167,6 @@ internal class GitInteractiveRebaseDialog(
   fun getEntries(): List<GitRebaseEntryWithEditedMessage> = commitsTableModel.entries
 
   override fun getPreferredFocusedComponent(): JComponent = commitsTable
-
-  override fun createActions(): Array<Action> = arrayOf<Action>(resetEntriesAction) + super.createActions()
 }
 
 private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMessage>) : AbstractTableModel(), EditableModel {
