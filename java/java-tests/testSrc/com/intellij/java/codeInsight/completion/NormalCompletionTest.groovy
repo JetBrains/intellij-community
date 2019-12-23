@@ -1944,4 +1944,10 @@ class Abc {
   }
 
   void testNoCallsAfterAnnotationInCodeBlock() { doTest() }
+  
+  void testExtendsAfterEnum() {
+    myFixture.configureByText("a.java", "enum X ex<caret>") // should not complete
+    myFixture.completeBasic()
+    myFixture.checkResult("enum X ex")
+  }
 }

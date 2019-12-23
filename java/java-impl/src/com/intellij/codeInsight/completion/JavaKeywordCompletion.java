@@ -86,7 +86,8 @@ public class JavaKeywordCompletion {
         return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevVisibleLeaf(element), PsiDocComment.class) != null;
       }
 
-      return !(parent instanceof PsiExpressionList || parent instanceof PsiTypeCastExpression);
+      return !(parent instanceof PsiExpressionList || parent instanceof PsiTypeCastExpression
+               || parent instanceof PsiRecordHeader);
     }
 
     return false;
@@ -579,24 +580,31 @@ public class JavaKeywordCompletion {
   }
 
   private void addExtendsImplements() {
-    if (myPrevLeaf == null || !(myPrevLeaf instanceof PsiIdentifier || myPrevLeaf.textMatches(">"))) return;
+    if (myPrevLeaf == null ||
+        !(myPrevLeaf instanceof PsiIdentifier || myPrevLeaf.textMatches(">") || myPrevLeaf.textMatches(")"))) {
+      return;
+    }
 
     PsiClass psiClass = null;
     PsiElement prevParent = myPrevLeaf.getParent();
     if (myPrevLeaf instanceof PsiIdentifier && prevParent instanceof PsiClass) {
       psiClass = (PsiClass)prevParent;
-    } else {
+    }
+    else {
       PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiReferenceList.class);
       if (referenceList != null && referenceList.getParent() instanceof PsiClass) {
         psiClass = (PsiClass)referenceList.getParent();
       }
-      else if (prevParent instanceof PsiTypeParameterList && prevParent.getParent() instanceof PsiClass) {
+      else if ((prevParent instanceof PsiTypeParameterList || prevParent instanceof PsiRecordHeader)
+               && prevParent.getParent() instanceof PsiClass) {
         psiClass = (PsiClass)prevParent.getParent();
       }
     }
 
     if (psiClass != null) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      if (!psiClass.isEnum() && !psiClass.isRecord()) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.EXTENDS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
       if (!psiClass.isInterface()) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPLEMENTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
