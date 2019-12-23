@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -36,7 +37,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.Set;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
@@ -632,5 +632,5 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   // Contains actions IDs which descriptions are permitted for displaying in the ActionButton tooltip
-  private static final Set<String> WHITE_LIST = Collections.emptySet();
+  private static final Set<String> WHITE_LIST = ContainerUtil.immutableSet("ProjectRefreshAction");
 }
