@@ -48,10 +48,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
 
+    SearchScope scope = parameters.getScope();
+
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
       SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
-      return AllClassesSearch.search(useScope, project).allowParallelProcessing().forEach(psiClass -> {
+      SearchScope actualScope = useScope.intersectWith(scope);
+      return AllClassesSearch.search(actualScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (shortCircuitCandidate(psiClass)) return true;
         return consumer.process(psiClass);
@@ -64,7 +67,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return true;
     }
 
-    SearchScope scope = parameters.getScope();
     VirtualFile baseClassJarFile = null;
     // iterate by same-FQN groups. For each group process only same-jar subclasses, or all of them if they are all outside the jarFile.
     int groupStart = 0;
