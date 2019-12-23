@@ -8,9 +8,7 @@ import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.platform.ProjectFrameAllocatorKt;
@@ -22,7 +20,7 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable {
+class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable, LightEditFrame {
 
   private final BooleanSupplier myCloseHandler;
 
@@ -53,6 +51,14 @@ class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable {
               StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(this, statusBar, new LightEditAutosaveWidget(editorManager),
               StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    for (StatusBarWidgetProvider provider : StatusBarWidgetProvider.EP_NAME.getExtensionList()) {
+      if (provider.isCompatibleWith(this)) {
+        final StatusBarWidget widget = provider.getWidget(LightEditUtil.getProject());
+        if (widget != null) {
+          addWidget(this, statusBar, widget, provider.getAnchor());
+        }
+      }
+    }
     statusBar.updateWidgets();
   }
 
