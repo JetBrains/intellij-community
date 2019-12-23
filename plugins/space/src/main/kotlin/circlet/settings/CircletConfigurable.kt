@@ -36,7 +36,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
     private val panel = JPanel(BorderLayout())
 
     private fun initialState(): CircletLoginState {
-        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("", null)
+        val workspace = circletWorkspace.workspace.value ?: return CircletLoginState.Disconnected("")
         return CircletLoginState.Connected(workspace.client.server, workspace)
     }
 
@@ -44,7 +44,7 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
         val settings = CircletServerSettingsComponent.getInstance().settings
         circletWorkspace.workspace.forEach(uiLifetime) { ws ->
             if (ws == null) {
-                state.value = CircletLoginState.Disconnected(settings.value.server, "")
+                state.value = CircletLoginState.Disconnected(settings.value.server)
             }
             else {
                 state.value = CircletLoginState.Connected(ws.client.server, ws)
@@ -67,17 +67,17 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
 
             is CircletLoginState.Connecting -> return buildConnectingPanel(st) {
                 st.lt.terminate()
-                state.value = CircletLoginState.Disconnected(st.server, null)
+                state.value = CircletLoginState.Disconnected(st.server)
             }
 
             is CircletLoginState.Connected -> {
-                val serverComponent = JLabel(st.server.removePrefix("https://").removePrefix("http://")).apply {
+                val serverComponent = JLabel(cleanupUrl(st.server)).apply {
                     foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
                 }
                 val logoutButton = JButton("Log Out").apply {
                     addActionListener {
                         circletWorkspace.signOut()
-                        state.value = CircletLoginState.Disconnected(st.server, null)
+                        state.value = CircletLoginState.Disconnected(st.server)
                     }
                 }
 
@@ -87,11 +87,10 @@ class CircletSettingUi : ConfigurableUi<CircletServerSettings>, Disposable {
                 }
 
                 val avatarLabel = JLabel()
-                CircletUserAvatarProvider.getInstance().avatar.forEach(uiLifetime) { icon ->
-                    avatarLabel.icon = resizeIcon(icon, 50)
+                CircletUserAvatarProvider.getInstance().avatars.forEach(uiLifetime) { avatars ->
+                    avatarLabel.icon = resizeIcon(avatars.circle, 50)
                 }
                 return JPanel(GridBagLayout()).apply {
-                    // TODO: load real user icon
                     var gbc = GridBag().nextLine().next().anchor(GridBag.LINE_START).insetRight(UIUtil.DEFAULT_HGAP)
                     add(avatarLabel, gbc)
                     gbc = gbc.next().weightx(1.0).anchor(GridBag.WEST)

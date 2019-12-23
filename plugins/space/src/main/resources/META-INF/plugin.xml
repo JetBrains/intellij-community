@@ -1,17 +1,21 @@
 <idea-plugin version="2">
     <id>com.jetbrains.space</id>
-    <name>Space Integration</name>
+    <name>Space</name>
     <version>0.1.dev</version>
     <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[Space Integration plugin]]></description>
+    <description>
+        <![CDATA[
+            Lets you connect your IDE to your organization in <a href="https://jetbrains.com/space/">JetBrains Space</a> so you can view and clone project repositories.
+        ]]>
+    </description>
 
     <change-notes><![CDATA[]]>
 
     </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="193.5233.12"/>
+    <idea-version since-build="193.5233.12" until-build="201.*"/>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -21,6 +25,7 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <registryKey key="space.automation.enabled" defaultValue="false" restartRequired="true" description="Enable Space Automation"/>
         <applicationService serviceImplementation="circlet.settings.CircletServerSettingsComponent"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
@@ -40,6 +45,7 @@
         <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.SyncDslViewManager"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
+        <projectService serviceImplementation="circlet.vcs.CircletProjectContext"/>
         <runLineMarkerContributor
             language="kotlin"
             id="circletScriptRunLineMarkerProvider"
@@ -47,8 +53,9 @@
 
         <configurationType implementation="circlet.plugins.pipelines.services.run.CircletRunConfigurationType"/>
 
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension
-            implementation="circlet.ui.clone.CircletCloneExtension"/>
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="circlet.ui.clone.CircletCloneExtension"/>
+
+        <postStartupActivity implementation="circlet.vcs.PostStartupActivity"/>
     </extensions>
 
     <application-components>
@@ -62,13 +69,55 @@
     </application-components>
 
     <actions>
-        <action class="circlet.actions.TestCircletAction" text="Test Space..." id="Circlet.TestCircletAction"/>
-
-        <group text="Space" id="CircletGroup" popup="true">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
+        <group id="circlet.actions.MainToolbarActionGroup">
+            <separator/>
+            <action id="circlet.actions.CircletMainToolBarAction"
+                    class="circlet.actions.CircletMainToolBarAction"
+                    icon="CircletIcons.mainIcon"
+                    text="Space Toolbar Menu">
+            </action>
+            <add-to-group group-id="NavBarToolBar" anchor="last"/>
         </group>
 
+
+        <action id="circlet.ui.clone.CircletCloneAction"
+                class="circlet.ui.clone.CircletCloneAction"
+                text="Clone Repository..."/>
+
+        <action id="circlet.actions.CircletLoginAction"
+                class="circlet.actions.CircletLoginAction"
+                text="Log In to Space..."/>
+        <action id="circlet.actions.CircletLogoutAction"
+                class="circlet.actions.CircletLogoutAction"
+                text="Log Out..."/>
+
+        <group id="circlet.vcs.OpenReviews" class="circlet.vcs.OpenReviews" text="Open Code Reviews..."/>
+        <group id="circlet.vcs.OpenChecklists" class="circlet.vcs.OpenChecklists" text="Open Checklists..."/>
+        <group id="circlet.vcs.OpenIssues" class="circlet.vcs.OpenIssues" text="Open Issues..."/>
+<!--        <group id="circlet.vcs.OpenProjects" class="circlet.vcs.OpenProjects" text="Open Projects..."/>-->
+
+        <group text="Space" id="CircletGroup" popup="true" icon="CircletIcons.mainIcon">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <reference id="circlet.ui.clone.CircletCloneAction"/>
+            <separator/>
+            <reference id="circlet.vcs.OpenReviews"/>
+            <reference id="circlet.vcs.OpenChecklists"/>
+            <reference id="circlet.vcs.OpenIssues"/>
+            <separator/>
+            <reference id="circlet.actions.CircletLoginAction"/>
+            <reference id="circlet.actions.CircletLogoutAction"/>
+        </group>
+
+        <group id="circlet.vcs.CircletVcsOpenInBrowserActionGroup"
+               class="circlet.vcs.CircletVcsOpenInBrowserActionGroup"
+               text="Open On Space">
+            <add-to-group group-id="EditorPopupMenu"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
+            <add-to-group group-id="EditorTabPopupMenu"/>
+            <add-to-group group-id="Vcs.Log.ContextMenu" anchor="last"/>
+            <add-to-group group-id="VcsHistoryActionsGroup" anchor="last"/>
+            <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
+        </group>
     </actions>
 
 </idea-plugin>
