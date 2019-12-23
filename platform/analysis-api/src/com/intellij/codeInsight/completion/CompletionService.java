@@ -53,8 +53,15 @@ public abstract class CompletionService {
   }
 
   protected void getVariantsFromContributors(CompletionParameters parameters,
-                                           @Nullable CompletionContributor from,
-                                           PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
+                                             @Nullable CompletionContributor from,
+                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer) {
+    getVariantsFromContributors(parameters, from, matcher, consumer, null);
+  }
+
+  protected void getVariantsFromContributors(CompletionParameters parameters,
+                                             @Nullable CompletionContributor from,
+                                             PrefixMatcher matcher, Consumer<? super CompletionResult> consumer,
+                                             CompletionSorter customSorter) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
@@ -62,6 +69,9 @@ public abstract class CompletionService {
       CompletionContributor contributor = contributors.get(i);
 
       CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
+      if (customSorter != null) {
+        result = result.withRelevanceSorter(customSorter);
+      }
       contributor.fillCompletionVariants(parameters, result);
       if (result.isStopped()) {
         return;
