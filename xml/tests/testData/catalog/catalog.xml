@@ -8,4 +8,5 @@
             uri="xhtml1-strict.dtd"/>
   <system systemId="urn:oasis:names:tc:xacml:1.0:policy"
             uri="catalog/cs-xacml-schema-policy-01.xsd"/>
+  <uriSuffix uriSuffix="test-node.xsl" uri="file:///C:/temp/catalog-test/library/test-node.xsl"/>
 </catalog>

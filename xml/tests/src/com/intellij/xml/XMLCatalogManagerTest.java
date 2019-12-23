@@ -55,6 +55,12 @@ public class XMLCatalogManagerTest extends BasePlatformTestCase {
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
   }
 
+  public void testResolveUri() {
+    String resolve = getManager().resolve("test-node.xsl");
+    assertNotNull(resolve);
+    assertEquals("file:/C:/temp/catalog-test/library/test-node.xsl", resolve);
+  }
+
   public void testHighlighting() {
     myFixture.configureByFile("policy.xml");
     List<HighlightInfo> infos = myFixture.doHighlighting();
