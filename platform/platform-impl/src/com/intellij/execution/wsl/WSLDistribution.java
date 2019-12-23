@@ -341,7 +341,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    return WSLUtil.getWindowsPath(wslPath, myDescriptor.getMntRoot());
+    return WSLUtil.getWindowsPath(wslPath, getMntRoot());
   }
 
   /**
@@ -350,9 +350,17 @@ public class WSLDistribution {
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return myDescriptor.getMntRoot() + convertWindowsPath(windowsPath);
+      return getMntRoot() + convertWindowsPath(windowsPath);
     }
     return null;
+  }
+
+  /**
+   * @see WslDistributionDescriptor#getMntRoot()
+   */
+  @NotNull
+  public final String getMntRoot(){
+    return myDescriptor.getMntRoot();
   }
 
   /**
