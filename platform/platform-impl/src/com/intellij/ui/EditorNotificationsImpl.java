@@ -105,10 +105,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
           //noinspection unchecked
           Key<? extends JComponent> key = extension.getKey();
           for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
-            List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
-              return !(editor instanceof TextEditor) ||
-                     AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
-            });
+            List<FileEditor> editors = getEditors(file);
 
             for (FileEditor editor : editors) {
               updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(extension.getClass()));
@@ -125,10 +122,7 @@ public class EditorNotificationsImpl extends EditorNotifications {
         return;
       }
 
-      List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
-        return !(editor instanceof TextEditor) ||
-               AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
-      });
+      List<FileEditor> editors = getEditors(file);
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         Iterator<FileEditor> it = editors.iterator();
@@ -141,6 +135,14 @@ public class EditorNotificationsImpl extends EditorNotifications {
         }
       }
       if (!editors.isEmpty()) updateEditors(file, editors);
+    });
+  }
+
+  @NotNull
+  private List<FileEditor> getEditors(@NotNull VirtualFile file) {
+    return ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
+      return !(editor instanceof TextEditor) ||
+             AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
     });
   }
 
