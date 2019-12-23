@@ -11,6 +11,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
@@ -1085,6 +1086,17 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         myPlugin2Id.putValue(pluginId, actionId);
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
+      notifyCustomActionsSchema(actionId);
+    }
+  }
+
+  private void notifyCustomActionsSchema(@NotNull String registeredID) {
+    CustomActionsSchema schema = CustomActionsSchema.getInstance();
+    for (ActionUrl url : schema.getActions()) {
+      if (registeredID.equals(url.getComponent())) {
+        schema.incrementModificationStamp();
+        break;
+      }
     }
   }
 
