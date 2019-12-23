@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.extensions.ExtensionPointAdapter;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
@@ -89,14 +91,31 @@ public class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
+    
+    //noinspection rawtypes
     EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointAdapter<Provider>() {
+      new ExtensionPointListener<Provider>() {
         @Override
-        public void extensionListChanged() {
+        public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
           updateAllNotifications();
         }
-      }
-    , false, project);
+
+        @Override
+        public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          //noinspection unchecked
+          Key<? extends JComponent> key = extension.getKey();
+          for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+            List<FileEditor> editors = ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
+              return !(editor instanceof TextEditor) ||
+                     AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
+            });
+
+            for (FileEditor editor : editors) {
+              updateNotification(editor, key, null, PluginInfoDetectorKt.getPluginInfo(extension.getClass()));
+            }
+          }
+        }
+      }, false, project);
   }
 
   @Override
