@@ -12,11 +12,10 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
-import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
 class WorkspaceModuleImporter(private val project: Project,
                               private val mavenProject: MavenProject,
@@ -109,12 +108,18 @@ class WorkspaceModuleImporter(private val project: Project,
   }
 
   private fun importFolders() {
-    MavenFoldersImporter.getSourceFolders(mavenProject).forEach {
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, VirtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(it.key)),
-                                                      it.value.isForTests,
-                                                      getTypeId(it.value),
+    MavenFoldersImporter.getSourceFolders(mavenProject).forEach { entry ->
+
+      val serializer = (JpsModelSerializerExtension.getExtensions()
+        .flatMap { it.moduleSourceRootPropertiesSerializers }
+        .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
+                       ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
+
+      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, VirtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
+                                                      entry.value.isForTests,
+                                                      serializer.typeId,
                                                       MavenExternalSource.INSTANCE)
-      when (it.value) {
+      when (entry.value) {
         is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
         is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
         else -> TODO()
@@ -126,11 +131,6 @@ class WorkspaceModuleImporter(private val project: Project,
     if (MavenConstants.SCOPE_RUNTIME == mavenScope) return ModuleDependencyItem.DependencyScope.RUNTIME
     if (MavenConstants.SCOPE_TEST == mavenScope) return ModuleDependencyItem.DependencyScope.TEST
     return if (MavenConstants.SCOPE_PROVIDED == mavenScope) ModuleDependencyItem.DependencyScope.PROVIDED else ModuleDependencyItem.DependencyScope.COMPILE
-  }
-
-
-  private fun <P : JpsElement?> getTypeId(rootType: JpsModuleSourceRootType<P>): String {
-    return if (rootType.isForTests) return JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID else JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
   }
 
 }
