@@ -340,7 +340,7 @@ class LegacyBridgeModifiableRootModel(
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
     // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
-    dispose()
+    disposeSkippingLibraries()
 
     val moduleDiff = module.diff
 
@@ -359,6 +359,15 @@ class LegacyBridgeModifiableRootModel(
 
       moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
       moduleLibraryTable.librariesToRemove.clear()
+    }
+
+    // No assertions here since it is ok to call dispose twice or more
+    modelIsCommittedOrDisposed = true
+  }
+
+  private fun disposeSkippingLibraries() {
+    if (!modelIsCommittedOrDisposed) {
+      Disposer.dispose(extensionsDisposable)
     }
 
     // No assertions here since it is ok to call dispose twice or more
