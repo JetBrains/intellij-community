@@ -486,7 +486,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     myReformat = new JCheckBox(SSRBundle.message("reformat.checkbox"));
     myUseStaticImport = new JCheckBox(SSRBundle.message("use.static.import.checkbox"));
 
-    OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
+    final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     myReplaceCriteriaEdit = createEditor(true);
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
@@ -568,7 +568,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
 
     myRecursive = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     myRecursive.setVisible(!myReplace);
+    myRecursive.addActionListener(e -> initiateValidation());
     myMatchCase = new JCheckBox(FindBundle.message("find.popup.case.sensitive"), true);
+    myMatchCase.addActionListener(e -> initiateValidation());
     myFileType = UIUtil.detectFileType(mySearchContext);
     myDialect = myFileType.getLanguage();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
