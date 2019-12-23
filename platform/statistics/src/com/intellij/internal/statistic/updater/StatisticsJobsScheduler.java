@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 final class StatisticsJobsScheduler implements ApplicationInitializedListener {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 5 * 60 * 1000;
-  private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 20;
+  private static final int CHECK_STATISTICS_PROVIDERS_DELAY_IN_MIN = 1;
 
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 15;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;

@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance(EventLogStatisticsService.class);
 
-  private static final int MAX_FILES_TO_SEND = 20;
+  private static final int MAX_FILES_TO_SEND = 5;
 
   private final String myRecorder;
   private final EventLogSettingsService mySettingsService;
