@@ -1,6 +1,5 @@
 class A {
   void test() {
-    record.
-    foo();
+    record A(String s) { }
   }
 }

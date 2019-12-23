@@ -1,4 +1,4 @@
-PsiJavaFile:RecordInCodeBlock.java
+PsiJavaFile:LocalRecord.java
   PsiImportList
     <empty list>
   PsiClass:A
@@ -34,24 +34,36 @@ PsiJavaFile:RecordInCodeBlock.java
       PsiCodeBlock
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace('\n    ')
-        PsiExpressionStatement
-          PsiMethodCallExpression:record.
-    foo()
-            PsiReferenceExpression:record.
-    foo
-              PsiReferenceExpression:record
-                PsiReferenceParameterList
-                  <empty list>
-                PsiIdentifier:record('record')
-              PsiJavaToken:DOT('.')
-              PsiReferenceParameterList
-                <empty list>
-              PsiWhiteSpace('\n    ')
-              PsiIdentifier:foo('foo')
-            PsiExpressionList
+        PsiDeclarationStatement
+          PsiClass:A
+            PsiModifierList:
+              <empty list>
+            PsiKeyword:record('record')
+            PsiWhiteSpace(' ')
+            PsiIdentifier:A('A')
+            PsiTypeParameterList
+              <empty list>
+            PsiRecordHeader
               PsiJavaToken:LPARENTH('(')
+              PsiRecordComponent:s
+                PsiModifierList:
+                  <empty list>
+                PsiTypeElement:String
+                  PsiJavaCodeReferenceElement:String
+                    PsiIdentifier:String('String')
+                    PsiReferenceParameterList
+                      <empty list>
+                PsiWhiteSpace(' ')
+                PsiIdentifier:s('s')
               PsiJavaToken:RPARENTH(')')
-          PsiJavaToken:SEMICOLON(';')
+            PsiReferenceList
+              <empty list>
+            PsiReferenceList
+              <empty list>
+            PsiWhiteSpace(' ')
+            PsiJavaToken:LBRACE('{')
+            PsiWhiteSpace(' ')
+            PsiJavaToken:RBRACE('}')
         PsiWhiteSpace('\n  ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n')

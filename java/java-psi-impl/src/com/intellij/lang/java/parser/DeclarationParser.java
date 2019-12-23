@@ -63,7 +63,16 @@ public class DeclarationParser {
 
   @Nullable
   private PsiBuilder.Marker parseClassFromKeyword(PsiBuilder builder, PsiBuilder.Marker declaration, boolean isAnnotation, Context context) {
-    final IElementType keywordTokenType = builder.getTokenType();
+    IElementType keywordTokenType = builder.getTokenType();
+    if (isRecordToken(builder, keywordTokenType)) {
+      if (builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
+        builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
+        keywordTokenType = JavaTokenType.RECORD_KEYWORD;
+      } else {
+        declaration.drop();
+        return null;
+      }
+    }
     assert ElementType.CLASS_KEYWORD_BIT_SET.contains(keywordTokenType) : keywordTokenType;
     builder.advanceLexer();
     final boolean isEnum = (keywordTokenType == JavaTokenType.ENUM_KEYWORD);
@@ -234,21 +243,20 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null;
     }
-    else if (isRecordToken(builder, tokenType)) {
-      if (context == Context.CODE_BLOCK) return null;
-    }
-    else if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
-      if (context == Context.FILE) return null;
-    }
-    else if (tokenType instanceof ILazyParseableElementType) {
-      builder.advanceLexer();
-      return null;
-    }
-    else if (!ElementType.MODIFIER_BIT_SET.contains(tokenType) &&
-             !ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
-             tokenType != JavaTokenType.AT &&
-             (context == Context.CODE_BLOCK || tokenType != JavaTokenType.LT)) {
-      return null;
+    else if (!isRecordToken(builder, tokenType)) {
+      if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
+        if (context == Context.FILE) return null;
+      }
+      else if (tokenType instanceof ILazyParseableElementType) {
+        builder.advanceLexer();
+        return null;
+      }
+      else if (!ElementType.MODIFIER_BIT_SET.contains(tokenType) &&
+               !ElementType.CLASS_KEYWORD_BIT_SET.contains(tokenType) &&
+               tokenType != JavaTokenType.AT &&
+               (context == Context.CODE_BLOCK || tokenType != JavaTokenType.LT)) {
+        return null;
+      }
     }
 
     final PsiBuilder.Marker declaration = builder.mark();
@@ -267,12 +275,7 @@ public class DeclarationParser {
         return null;
       }
     }
-    boolean isRecord = false;
-    if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType()) ||
-        (isRecord = isRecordToken(builder, builder.getTokenType()))) {
-      if (isRecord) {
-        builder.remapCurrentToken(JavaTokenType.RECORD_KEYWORD);
-      }
+    if (ElementType.CLASS_KEYWORD_BIT_SET.contains(builder.getTokenType()) || isRecordToken(builder, builder.getTokenType())) {
       final PsiBuilder.Marker result = parseClassFromKeyword(builder, declaration, false, context);
       return result != null ? result : modList;
     }
@@ -395,7 +398,7 @@ public class DeclarationParser {
   }
 
   private static boolean isRecordToken(PsiBuilder builder, IElementType tokenType) {
-    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText());
+    return tokenType == JavaTokenType.IDENTIFIER && PsiKeyword.RECORD.equals(builder.getTokenText()) && builder.lookAhead(1) == JavaTokenType.IDENTIFIER;
   }
 
   @NotNull
