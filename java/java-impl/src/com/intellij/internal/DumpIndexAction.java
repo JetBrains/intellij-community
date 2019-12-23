@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.persistent.ContentHashesUtil;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.JavaSimplePropertyIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -34,6 +33,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -213,7 +213,7 @@ public class DumpIndexAction extends AnAction {
                                @NotNull Collection<HashBasedIndexGenerator<?, ?>> generators,
                                @NotNull Path chunkOut) {
     try {
-      ContentHashesUtil.HashEnumerator hashEnumerator = new ContentHashesUtil.HashEnumerator(chunkOut.resolve("hashes"));
+      ContentHashEnumerator hashEnumerator = new ContentHashEnumerator(chunkOut.resolve("hashes"));
       try {
         for (HashBasedIndexGenerator<?, ?> generator : generators) {
           generator.openIndex();

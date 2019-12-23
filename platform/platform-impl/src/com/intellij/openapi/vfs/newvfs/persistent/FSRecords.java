@@ -21,6 +21,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
@@ -158,7 +159,7 @@ public class FSRecords {
     private static Storage myAttributes;
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
-    private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
+    private static ContentHashEnumerator myContentHashesEnumerator;
     private static File myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
@@ -276,7 +277,7 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath()) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
@@ -557,7 +558,7 @@ public class FSRecords {
     return records;
   }
 
-  private static PersistentBTreeEnumerator<byte[]> getContentHashesEnumerator() {
+  private static ContentHashEnumerator getContentHashesEnumerator() {
     return DbConnection.myContentHashesEnumerator;
   }
 
@@ -1603,11 +1604,13 @@ public class FSRecords {
   private static int contents;
   private static int reuses;
 
+  private static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
+
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    byte[] digest = ContentHashesUtil.calculateContentHash(bytes, offset, length);
+    byte[] contentHash = DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
@@ -1617,9 +1620,10 @@ public class FSRecords {
     if (DUMP_STATISTICS && (contents & 0x3FFF) == 0) {
       LOG.info("Contents:" + contents + " of " + totalContents + ", reuses:" + reuses + " of " + totalReuses + " for " + time / 1000000);
     }
-    PersistentBTreeEnumerator<byte[]> hashesEnumerator = getContentHashesEnumerator();
+
+    ContentHashEnumerator hashesEnumerator = getContentHashesEnumerator();
     final int largestId = hashesEnumerator.getLargestId();
-    int page = hashesEnumerator.enumerate(digest);
+    int page = hashesEnumerator.enumerate(contentHash);
 
     if (page <= largestId) {
       ++reuses;
