@@ -15,10 +15,8 @@
  */
 package com.intellij.terminal;
 
-import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.DisposableWrapper;
@@ -26,7 +24,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -36,11 +33,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
@@ -66,7 +61,6 @@ import java.awt.*;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.Collections;
 import java.util.List;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, DataProvider {
@@ -75,7 +69,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
-  private final CompositeFilter myCompositeFilter;
+  private final CompositeFilterWrapper myCompositeFilterWrapper;
   private JBTerminalWidgetListener myListener;
 
   private JBTerminalWidgetDisposableWrapper myDisposableWrapper;
@@ -95,31 +89,17 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
                           @NotNull Disposable parent) {
     super(columns, lines, settingsProvider);
     mySettingsProvider = settingsProvider;
-    myCompositeFilter = new CompositeFilter(project);
-    myCompositeFilter.setForceUseAllFilters(true);
+    myCompositeFilterWrapper = new CompositeFilterWrapper(project, console);
     addHyperlinkFilter(line -> runFilters(project, line));
     setName("terminal");
     myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(this, parent);
-
-    ReadAction
-      .nonBlocking(() -> calcCompositeFilter(project, console))
-      .expireWith(myDisposableWrapper)
-      .finishOnUiThread(ModalityState.any(), filters -> { filters.forEach(filter -> myCompositeFilter.addFilter(filter)); })
-      .submit(NonUrgentExecutor.getInstance());
-  }
-
-  @NotNull
-  private static List<Filter> calcCompositeFilter(@NotNull Project project, @Nullable TerminalExecutionConsole console) {
-    return project.isDefault()
-           ? Collections.emptyList()
-           : ConsoleViewUtil.computeConsoleFilters(project, console, GlobalSearchScope.allScope(project));
   }
 
   @Nullable
   private LinkResult runFilters(@NotNull Project project, @NotNull String line) {
     Filter.Result r = ReadAction.compute(() -> {
       try {
-        return myCompositeFilter.applyFilter(line, line.length());
+        return myCompositeFilterWrapper.getCompositeFilter().applyFilter(line, line.length());
       }
       catch (ProcessCanceledException e) {
         if (LOG.isDebugEnabled()) {
@@ -296,7 +276,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
   }
 
   public void addMessageFilter(@NotNull Filter filter) {
-    myCompositeFilter.addFilter(filter);
+    myCompositeFilterWrapper.addFilter(filter);
   }
 
   public void start(TtyConnector connector) {
