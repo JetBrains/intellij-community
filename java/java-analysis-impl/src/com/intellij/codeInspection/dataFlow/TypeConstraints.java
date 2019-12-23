@@ -436,6 +436,11 @@ public class TypeConstraints {
       return obj == this || obj instanceof Unresolved && myReference.equals(((Unresolved)obj).myReference);
     }
 
+    @Override
+    public int hashCode() {
+      return myReference.hashCode();
+    }
+
     @NotNull
     @Override
     public String toString() {
