@@ -120,7 +120,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     });
     Disposer.register(disposable, this::release);
     LanguageLineWrapPositionStrategy.EP_NAME.addExtensionPointListener(
-      (a,b) -> release(), disposable);
+      this::release, disposable);
   }
 
   public void registerSoftWrapIfNecessary() {

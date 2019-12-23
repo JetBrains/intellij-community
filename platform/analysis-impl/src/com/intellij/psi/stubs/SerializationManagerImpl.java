@@ -64,7 +64,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
 
-    StubElementTypeHolderEP.EP_NAME.addExtensionPointListener((e, pd) -> dropSerializerData(), this);
+    StubElementTypeHolderEP.EP_NAME.addExtensionPointListener(this::dropSerializerData, this);
   }
 
   @Override

@@ -8,8 +8,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,10 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.KeyedLazyInstance;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
-import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,7 +35,8 @@ public class FileTypeUtil {
         types = null;
       }
     });
-    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint()).addExtensionPointListener((e, pd) -> types = null, false, application);
+    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint()).addExtensionPointListener(
+      () -> types = null, false, application);
   }
 
   public static String buildComment(FileType type, String template, LanguageOptions options) {

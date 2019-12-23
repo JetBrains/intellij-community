@@ -10,7 +10,10 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -109,7 +112,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private static final String DEFAULT_VERSION = "";
 
   public ExternalResourceManagerExImpl() {
-    StandardResourceProvider.EP_NAME.addExtensionPointListener((e, pd) -> dropCache(), null);
+    StandardResourceProvider.EP_NAME.addExtensionPointListener(this::dropCache, null);
   }
 
   private void dropCache() {

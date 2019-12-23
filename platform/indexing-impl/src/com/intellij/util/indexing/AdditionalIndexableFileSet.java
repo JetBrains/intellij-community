@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -39,7 +38,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   public AdditionalIndexableFileSet(@Nullable Project project) {
     myProject = project;
     myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
-    IndexableSetContributor.EP_NAME.addExtensionPointListener((e, pd) -> {
+    IndexableSetContributor.EP_NAME.addExtensionPointListener(() -> {
       cachedDirectories = null;
       cachedFiles = null;
     }, project != null ? project : ApplicationManager.getApplication());
