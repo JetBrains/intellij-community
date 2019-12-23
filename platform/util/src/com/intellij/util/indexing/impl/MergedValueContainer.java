@@ -12,13 +12,6 @@ public class MergedValueContainer<Value> extends ValueContainer<Value> {
   private final List<ValueContainer<Value>> myContainers;
   private int mySize;
 
-  @NotNull
-  public static <Value> ValueContainer<Value> merge(@NotNull ValueContainer<Value> container1, @NotNull ValueContainer<Value> container2) {
-    if (container1.size() == 0) return container2;
-    if (container2.size() == 0) return container1;
-    return new MergedValueContainer<>(Arrays.asList(container1, container2));
-  }
-
   public MergedValueContainer(@NotNull List<ValueContainer<Value>> containers) {
     if (containers.isEmpty()) {
       throw new IllegalArgumentException();
