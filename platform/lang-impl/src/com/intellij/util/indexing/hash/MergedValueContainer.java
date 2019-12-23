@@ -1,37 +1,32 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.indexing.impl;
+package com.intellij.util.indexing.hash;
 
 import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class MergedValueContainer<Value> extends ValueContainer<Value> {
-  private final List<ValueContainer<Value>> myContainers;
-  private int mySize;
+  private final ValueContainer<Value> myContainer1;
+  private final ValueContainer<Value> myContainer2;
 
   @NotNull
   public static <Value> ValueContainer<Value> merge(@NotNull ValueContainer<Value> container1, @NotNull ValueContainer<Value> container2) {
     if (container1.size() == 0) return container2;
     if (container2.size() == 0) return container1;
-    return new MergedValueContainer<>(Arrays.asList(container1, container2));
+    return new MergedValueContainer<>(container1, container2);
   }
 
-  public MergedValueContainer(@NotNull List<ValueContainer<Value>> containers) {
-    if (containers.isEmpty()) {
-      throw new IllegalArgumentException();
-    }
-    myContainers = containers;
+  private MergedValueContainer(@NotNull ValueContainer<Value> container1, @NotNull ValueContainer<Value> container2) {
+    myContainer1 = container1;
+    myContainer2 = container2;
   }
 
   @NotNull
   @Override
-  public InvertedIndexValueIterator<Value> getValueIterator() {
-    return new InvertedIndexValueIterator<Value>() {
-      int myNextId = 1;
-      ValueIterator<Value> myCurrent = myContainers.get(0).getValueIterator();
+  public ValueIterator<Value> getValueIterator() {
+    return new ValueIterator<Value>() {
+      boolean mySecondIsUsed;
+      ValueIterator<Value> myCurrent = myContainer1.getValueIterator();
 
       @NotNull
       @Override
@@ -46,20 +41,14 @@ public class MergedValueContainer<Value> extends ValueContainer<Value> {
       }
 
       @Override
-      public Object getFileSetObject() {
-        return null;
-      }
-
-      @Override
       public boolean hasNext() {
-        while (true) {
-          if (myCurrent.hasNext()) return true;
-          if (myNextId < myContainers.size()) {
-            myCurrent = myContainers.get(myNextId++).getValueIterator();
-          } else {
-            return false;
-          }
+        if (myCurrent.hasNext()) return true;
+        if (!mySecondIsUsed) {
+          myCurrent = myContainer2.getValueIterator();
+          mySecondIsUsed = true;
+          return hasNext();
         }
+        return false;
       }
 
       @Override
@@ -71,9 +60,6 @@ public class MergedValueContainer<Value> extends ValueContainer<Value> {
 
   @Override
   public int size() {
-    if (mySize == 0) {
-      mySize = myContainers.stream().mapToInt(c -> c.size()).sum();
-    }
-    return mySize;
+    return myContainer1.size() + myContainer2.size();
   }
 }
