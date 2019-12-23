@@ -4,12 +4,15 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl> extends RangeMarkerWithGetterImpl implements Inlay<R> {
   static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
@@ -28,7 +31,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPrecedingText;
     myRenderer = renderer;
-    doUpdateSize();
+    doUpdate();
     //noinspection unchecked
     getTree().addInterval((T)this, offset, offset, false, false, relatesToPrecedingText, 0);
   }
@@ -42,12 +45,17 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   }
 
   @Override
-  public void updateSize() {
+  public void update() {
     int oldWidth = getWidthInPixels();
     int oldHeight = getHeightInPixels();
-    doUpdateSize();
-    if (oldWidth != getWidthInPixels() || oldHeight != getHeightInPixels()) {
-      myEditor.getInlayModel().notifyChanged(this);
+    GutterIconRenderer oldIconProvider = getGutterIconProvider();
+    doUpdate();
+    int changeFlags = 0;
+    if (oldWidth != getWidthInPixels()) changeFlags |= InlayModel.ChangeFlags.WIDTH_CHANGED;
+    if (oldHeight != getHeightInPixels()) changeFlags |= InlayModel.ChangeFlags.HEIGHT_CHANGED;
+    if (!Objects.equals(oldIconProvider, getGutterIconProvider())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
+    if (changeFlags != 0) {
+      myEditor.getInlayModel().notifyChanged(this, changeFlags);
     }
     else {
       repaint();
@@ -70,7 +78,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     }
   }
 
-  abstract void doUpdateSize();
+  abstract void doUpdate();
 
   @Override
   public void dispose() {
@@ -113,5 +121,11 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Override
   public int getWidthInPixels() {
     return myWidthInPixels;
+  }
+
+  @Nullable
+  @Override
+  public GutterIconRenderer getGutterIconProvider() {
+    return null;
   }
 }

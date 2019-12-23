@@ -647,8 +647,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInBulkUpdate()) return;
+  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+    if (myEditor.getDocument().isInBulkUpdate() ||
+        (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {
+      return;
+    }
     if (inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END || hasCaretInVirtualSpace()) {
       updateVisualPosition();
     }

@@ -4,7 +4,9 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -14,6 +16,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
+  private GutterIconRenderer myGutterIconProvider;
 
   BlockInlayImpl(@NotNull EditorImpl editor,
                  int offset,
@@ -32,7 +35,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   }
 
   @Override
-  void doUpdateSize() {
+  void doUpdate() {
     myWidthInPixels = myRenderer.calcWidthInPixels(this);
     if (myWidthInPixels < 0) {
       throw new IllegalArgumentException("Non-negative width should be defined for a block element");
@@ -43,7 +46,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
     if (myHeightInPixels < 0) {
       throw new IllegalArgumentException("Non-negative height should be defined for a block element");
     }
-
+    myGutterIconProvider = myRenderer.calcGutterIconProvider(this);
   }
 
   @Override
@@ -83,6 +86,12 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   @Override
   public VisualPosition getVisualPosition() {
     return myEditor.offsetToVisualPosition(getOffset());
+  }
+
+  @Nullable
+  @Override
+  public GutterIconRenderer getGutterIconProvider() {
+    return myGutterIconProvider;
   }
 
   @Override

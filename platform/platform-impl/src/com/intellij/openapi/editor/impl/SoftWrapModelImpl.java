@@ -476,9 +476,12 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay) {
+  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
     if (myEditor.getDocument().isInBulkUpdate() ||
-        inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END) return;
+        inlay.getPlacement() != Inlay.Placement.INLINE && inlay.getPlacement() != Inlay.Placement.AFTER_LINE_END ||
+        (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) {
+      return;
+    }
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;

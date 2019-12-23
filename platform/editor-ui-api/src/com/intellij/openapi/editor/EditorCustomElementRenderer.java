@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -112,6 +113,18 @@ public interface EditorCustomElementRenderer {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated
   default String getContextMenuGroupId() {
+    return null;
+  }
+
+  /**
+   * Allows to show an icon in gutter and process corresponding mouse events for block custom elements (other types of custom elements are
+   * not supported at the moment). Icon will only be rendered if its height is not larger than the element's height.<p>
+   * Returned provider should have a meaningful implementation of {@code equals} method - {@link Inlay#update()} will update the inlay's
+   * provider (only) if newly returned instance is not equal to the previously defined one.
+   */
+  @ApiStatus.Experimental
+  @Nullable
+  default GutterIconRenderer calcGutterIconProvider(@NotNull Inlay inlay) {
     return null;
   }
 }

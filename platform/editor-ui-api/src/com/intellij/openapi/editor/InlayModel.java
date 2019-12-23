@@ -205,11 +205,18 @@ public interface InlayModel {
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
   interface Listener extends EventListener {
-    void onAdded(@NotNull Inlay inlay);
+    default void onAdded(@NotNull Inlay inlay) {}
 
-    void onUpdated(@NotNull Inlay inlay);
+    default void onUpdated(@NotNull Inlay inlay) {}
 
-    void onRemoved(@NotNull Inlay inlay);
+    /**
+     * @param changeFlags see {@link ChangeFlags}
+     */
+    default void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+      onUpdated(inlay);
+    }
+
+    default void onRemoved(@NotNull Inlay inlay) {}
   }
 
   /**
@@ -218,15 +225,25 @@ public interface InlayModel {
   abstract class SimpleAdapter implements Listener {
     @Override
     public void onAdded(@NotNull Inlay inlay) {
-      onUpdated(inlay);
+      onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
+                       ChangeFlags.HEIGHT_CHANGED |
+                       (inlay.getGutterIconProvider() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
-
-    @Override
-    public void onUpdated(@NotNull Inlay inlay) {}
 
     @Override
     public void onRemoved(@NotNull Inlay inlay) {
-      onUpdated(inlay);
+      onUpdated(inlay, ChangeFlags.WIDTH_CHANGED |
+                       ChangeFlags.HEIGHT_CHANGED |
+                       (inlay.getGutterIconProvider() == null ? 0 : ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED));
     }
+  }
+
+  /**
+   * Flags provided by {@link Listener#onUpdated(Inlay, int)}.
+   */
+  interface ChangeFlags {
+    int WIDTH_CHANGED = 0x1;
+    int HEIGHT_CHANGED = 0x2;
+    int GUTTER_ICON_PROVIDER_CHANGED = 0x4;
   }
 }

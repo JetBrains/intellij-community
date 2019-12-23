@@ -200,7 +200,7 @@ public class EditorEmbeddedComponentManager {
       renderer.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
-          inlay.updateSize();
+          inlay.update();
           updateAllInlaysBelow(component.getBounds());
         }
       });
@@ -208,14 +208,14 @@ public class EditorEmbeddedComponentManager {
         @Override
         public void componentResized(ComponentEvent e) {
           updateSize(inlay);
-          inlay.updateSize();
+          inlay.update();
           updateAllInlaysBelow(component.getBounds());
         }
       });
       renderer.addMouseWheelListener(myEditor.getContentComponent()::dispatchEvent);
 
       update(inlay);
-      inlay.updateSize();
+      inlay.update();
 
       myEditor.getContentComponent().add(renderer);
       myInlays.add(inlay);

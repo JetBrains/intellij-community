@@ -34,8 +34,8 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR =
     Comparator.comparingInt((AfterLineEndInlayImpl i) -> i.getOffset()).thenComparingInt(i -> i.myOrder);
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator.comparingInt(i -> i.myOrder);
-  private static final Processor<InlayImpl> UPDATE_SIZE_PROCESSOR = inlay -> {
-    inlay.updateSize();
+  private static final Processor<InlayImpl> UPDATE_PROCESSOR = inlay -> {
+    inlay.update();
     return true;
   };
 
@@ -105,9 +105,9 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
   }
 
   void reinitSettings() {
-    myInlineElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
-    myBlockElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
-    myAfterLineEndElementsTree.processAll(UPDATE_SIZE_PROCESSOR);
+    myInlineElementsTree.processAll(UPDATE_PROCESSOR);
+    myBlockElementsTree.processAll(UPDATE_PROCESSOR);
+    myAfterLineEndElementsTree.processAll(UPDATE_PROCESSOR);
   }
 
   @Override
@@ -436,8 +436,8 @@ public class InlayModelImpl implements InlayModel, Disposable, Dumpable {
     myDispatcher.getMulticaster().onAdded(inlay);
   }
 
-  void notifyChanged(InlayImpl inlay) {
-    myDispatcher.getMulticaster().onUpdated(inlay);
+  void notifyChanged(InlayImpl inlay, int changeFlags) {
+    myDispatcher.getMulticaster().onUpdated(inlay, changeFlags);
   }
 
   void notifyRemoved(InlayImpl inlay) {

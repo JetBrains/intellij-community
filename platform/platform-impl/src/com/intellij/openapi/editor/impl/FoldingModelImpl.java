@@ -535,9 +535,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay) {
-    Inlay.Placement placement = inlay.getPlacement();
-    if (placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) myFoldTree.clearCachedInlayValues();
+  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+    if ((inlay.getPlacement() == Inlay.Placement.ABOVE_LINE || inlay.getPlacement() == Inlay.Placement.BELOW_LINE) &&
+        (changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0) {
+      myFoldTree.clearCachedInlayValues();
+    }
   }
 
   @Nullable

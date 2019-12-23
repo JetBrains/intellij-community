@@ -495,8 +495,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
-      public void onUpdated(@NotNull Inlay inlay) {
-        onInlayUpdated(inlay);
+      public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+        onInlayUpdated(inlay, changeFlags);
       }
     }, myCaretModel);
 
@@ -631,8 +631,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     updateCaretCursor();
   }
 
-  private void onInlayUpdated(@NotNull Inlay inlay) {
-    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+  private void onInlayUpdated(@NotNull Inlay inlay, int changeFlags) {
+    if (myDocument.isInBulkUpdate()) return;
+    if ((changeFlags & InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED) != 0) updateGutterSize();
+    if (myDocument.isInEventsHandling() ||
+        (changeFlags & (InlayModel.ChangeFlags.WIDTH_CHANGED | InlayModel.ChangeFlags.HEIGHT_CHANGED)) == 0) {
+      return;
+    }
     validateSize();
     int offset = inlay.getOffset();
     Inlay.Placement placement = inlay.getPlacement();

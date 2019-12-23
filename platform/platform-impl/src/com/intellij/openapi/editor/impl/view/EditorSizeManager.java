@@ -172,8 +172,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   @Override
-  public void onUpdated(@NotNull Inlay inlay) {
-    if (myDocument.isInBulkUpdate()) return;
+  public void onUpdated(@NotNull Inlay inlay, int changeFlags) {
+    if (myDocument.isInBulkUpdate() || (changeFlags & InlayModel.ChangeFlags.WIDTH_CHANGED) == 0) return;
 
     if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
       onLineInlayUpdate(inlay);
