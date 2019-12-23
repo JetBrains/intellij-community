@@ -66,7 +66,7 @@ interface ReferableTypedEntity : TypedEntity {
 /**
  * Returns all entities of type [R] which [property] refers to this entity.
  */
-inline fun <E : ReferableTypedEntity, reified R : TypedEntity> E.referrers(property: KProperty1<R, E>): Sequence<R> {
+inline fun <E : ReferableTypedEntity, reified R : TypedEntity> E.referrers(property: KProperty1<R, E?>): Sequence<R> {
   return referrers(R::class.java, property.name)
 }
 

@@ -21,6 +21,10 @@ internal interface ParentEntity : ReferableTypedEntity {
   @JvmDefault
   val children
     get() = referrers(ChildEntity::parent)
+
+  @JvmDefault
+  val optionalChildren
+    get() = referrers(ChildWithOptionalParentEntity::optionalParent)
 }
 
 internal interface ChildWithOptionalParentEntity : TypedEntity {
@@ -226,16 +230,19 @@ class ReferencesInProxyBasedStorageTest {
     val child = builder.addChildWithOptionalEntity(null)
     assertNull(child.optionalParent)
     val newParent = builder.addParentEntity()
+    assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
     val newChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, child) {
       optionalParent = newParent
     }
     builder.checkConsistency()
     assertEquals(newParent, newChild.optionalParent)
+    assertEquals(newChild, newParent.optionalChildren.single())
 
     val veryNewChild = builder.modifyEntity(ModifiableChildWithOptionalParentEntity::class.java, newChild) {
       optionalParent = null
     }
     assertNull(veryNewChild.optionalParent)
+    assertEquals(emptyList<ChildWithOptionalParentEntity>(), newParent.optionalChildren.toList())
   }
 
   @Test
