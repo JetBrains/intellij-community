@@ -15,17 +15,12 @@ public class LightEditPanel extends JPanel implements Disposable {
   private final LightEditorManager myEditorManager;
   private final LightEditTabs      myTabs;
 
-  public LightEditPanel(LightEditorManager editorManager) {
-    myEditorManager = editorManager;
+  public LightEditPanel() {
+    myEditorManager = LightEditService.getInstance().getEditorManager();
     setLayout(new BorderLayout());
     myTabs = new LightEditTabs(this, myEditorManager);
     add(myTabs, BorderLayout.CENTER);
     Disposer.register(this, myTabs);
-  }
-
-  @NotNull
-  LightEditorManager getEditorManager() {
-    return myEditorManager;
   }
 
   public LightEditTabs getTabs() {

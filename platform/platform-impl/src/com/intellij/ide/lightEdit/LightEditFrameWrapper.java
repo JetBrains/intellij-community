@@ -22,71 +22,56 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-class LightEditFrameWrapper implements Disposable {
+class LightEditFrameWrapper extends ProjectFrameHelper implements Disposable {
 
-  private final LightEditPanel myLightEditPanel;
-  private final ProjectFrameHelper myProjectFrameHelper;
-  private BooleanSupplier myCloseHandler;
+  private final BooleanSupplier myCloseHandler;
 
-  LightEditFrameWrapper(@NotNull LightEditPanel lightEditPanel) {
-    myLightEditPanel = lightEditPanel;
-    myProjectFrameHelper = allocateFrame();
-    Disposer.register(this, myProjectFrameHelper);
-    myProjectFrameHelper.getFrame().setJMenuBar(new LightEditMenuBar());
+  private LightEditPanel myEditPanel;
+
+  LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
+    super(frame, null);
+    getFrame().setJMenuBar(new LightEditMenuBar());
+    myCloseHandler = closeHandler;
   }
 
   @NotNull
   LightEditPanel getLightEditPanel() {
-    return myLightEditPanel;
+    return myEditPanel;
   }
 
   @NotNull
-  private ProjectFrameHelper allocateFrame() {
-    return ((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(LightEditUtil.getProject(), () -> {
-      return new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null) {
-        @NotNull
-        @Override
-        protected IdeRootPane createIdeRootPane() {
-          return new LightEditRootPane(getFrame(), this, this);
-        }
-
-        @Override
-        protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-          IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-          addWidget(project, statusBar, new LightEditPositionWidget(myLightEditPanel.getEditorManager()),
-                    StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-          addWidget(project, statusBar, new LightEditAutosaveWidget(myLightEditPanel.getEditorManager()),
-                    StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
-          statusBar.updateWidgets();
-        }
-
-        @NotNull
-        @Override
-        protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
-          return new CloseProjectWindowHelper() {
-            @Override
-            public void windowClosing(@Nullable Project project) {
-              if (myCloseHandler.getAsBoolean()) {
-                super.windowClosing(project);
-              }
-            }
-          };
-        }
-      };
-    });
+  @Override
+  protected IdeRootPane createIdeRootPane() {
+    return new LightEditRootPane(getFrame(), this, this);
   }
 
-  public void setTitle(@NotNull String title) {
-    IdeFrameImpl frame = myProjectFrameHelper.getFrame();
-    frame.setTitle(title);
+  @Override
+  protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
+    LightEditorManager editorManager = LightEditService.getInstance().getEditorManager();
+    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
+    addWidget(this, statusBar, new LightEditPositionWidget(editorManager),
+              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(this, statusBar, new LightEditAutosaveWidget(editorManager),
+              StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    statusBar.updateWidgets();
   }
 
-  public void setOnCloseHandler(@NotNull BooleanSupplier closeHandler) {
-    myCloseHandler = closeHandler;
+  @NotNull
+  @Override
+  protected CloseProjectWindowHelper createCloseProjectWindowHelper() {
+    return new CloseProjectWindowHelper() {
+      @Override
+      public void windowClosing(@Nullable Project project) {
+        if (myCloseHandler.getAsBoolean()) {
+          super.windowClosing(project);
+        }
+      }
+    };
   }
 
   @Override
   public void dispose() {
+    Disposer.dispose(myEditPanel);
   }
 
   private class LightEditRootPane extends IdeRootPane {
@@ -97,7 +82,8 @@ class LightEditFrameWrapper implements Disposable {
     @NotNull
     @Override
     protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-      return myLightEditPanel;
+      myEditPanel = new LightEditPanel();
+      return myEditPanel;
     }
 
     @NotNull
@@ -123,5 +109,11 @@ class LightEditFrameWrapper implements Disposable {
     @Override
     protected void deinstallNorthComponents() {
     }
+  }
+
+  static LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
+    return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
+      LightEditUtil.getProject(),
+      () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(), closeHandler));
   }
 }

@@ -29,7 +29,6 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   private static final Logger LOG = Logger.getInstance(LightEditService.class);
 
   private LightEditFrameWrapper myFrameWrapper;
-  private boolean myWrapperIsStale;
   private final LightEditorManager myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
 
@@ -55,19 +54,20 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   private void init() {
-    if (myFrameWrapper == null || myWrapperIsStale) {
-      final LightEditPanel editorPanel = new LightEditPanel(myEditorManager);
-      myFrameWrapper = new LightEditFrameWrapper(editorPanel);
-      myFrameWrapper.setOnCloseHandler(()-> closeEditorWindow());
-      myWrapperIsStale = false;
+    if (myFrameWrapper == null) {
+      myFrameWrapper = LightEditFrameWrapper.allocate(()->closeEditorWindow());
       LOG.info("Frame created");
+    }
+    else {
+      myFrameWrapper.getFrame().setVisible(true);
+      LOG.info("Window opened");
     }
   }
 
   public void showEditorWindow() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       init();
-      myFrameWrapper.setTitle(getAppName());
+      myFrameWrapper.getFrame().setTitle(getAppName());
     }
   }
 
@@ -127,11 +127,10 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
 
   public boolean closeEditorWindow() {
     if (canClose()) {
-      disposeEditorPanel();
-      myWrapperIsStale = true;
-      Disposer.dispose(myEditorManager);
+      myFrameWrapper.getFrame().setVisible(false);
       LOG.info("Window closed");
       if (ProjectManager.getInstance().getOpenProjects().length == 0 && WelcomeFrame.getInstance() == null) {
+        disposeFrameWrapper();
         LOG.info("No open projects or welcome frame, exiting");
         try {
           ApplicationManager.getApplication().exit();
@@ -167,27 +166,27 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   public LightEditPanel getEditPanel() {
+    assert !Disposer.isDisposed(myFrameWrapper.getLightEditPanel());
     return myFrameWrapper.getLightEditPanel();
-  }
-
-  private void disposeEditorPanel() {
-    LightEditPanel editorPanel = getEditPanel();
-    Disposer.dispose(editorPanel);
   }
 
   @Override
   public void dispose() {
     if (myFrameWrapper != null) {
-      disposeEditorPanel();
-      Disposer.dispose(myFrameWrapper);
-      LOG.info("Frame disposed");
+      disposeFrameWrapper();
     }
+  }
+
+  private void disposeFrameWrapper() {
+    Disposer.dispose(myFrameWrapper);
+    myFrameWrapper = null;
+    LOG.info("Frame disposed");
   }
 
   @Override
   public void afterSelect(@Nullable LightEditorInfo editorInfo) {
-    if (myFrameWrapper != null && !myWrapperIsStale) {
-      myFrameWrapper.setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
+    if (myFrameWrapper != null) {
+      myFrameWrapper.getFrame().setTitle(getAppName() + (editorInfo != null ? ": " + editorInfo.getFile().getPresentableUrl() : ""));
     }
   }
 
