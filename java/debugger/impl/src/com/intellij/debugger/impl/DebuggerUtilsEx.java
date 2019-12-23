@@ -48,6 +48,7 @@ import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -399,6 +400,28 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
     CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
+  }
+
+  /**
+   * @param location location to get the assertion status for
+   * @return the effective assertion status at given code location:
+   * {@link ThreeState#YES} means assertions are enabled
+   * {@link ThreeState#NO} means assertions are disabled
+   * {@link ThreeState#UNSURE} means there are no assertions in the current class, so the status was not requested by the runtime
+   */
+  @NotNull
+  public static ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
+    ReferenceType type = location.declaringType();
+    if (type instanceof ClassType) {
+      Field field = type.fieldByName("$assertionsDisabled");
+      if (field != null && field.isStatic() && field.isSynthetic()) {
+        Value value = type.getValue(field);
+        if (value instanceof BooleanValue) {
+          return ThreeState.fromBoolean(!((BooleanValue)value).value());
+        }
+      }
+    }
+    return ThreeState.UNSURE;
   }
 
   private static class SigReader {

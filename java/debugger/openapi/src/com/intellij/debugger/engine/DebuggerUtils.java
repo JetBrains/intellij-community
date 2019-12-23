@@ -31,7 +31,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -586,27 +585,5 @@ public abstract class DebuggerUtils {
 
   public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
     return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
-  }
-
-  /**
-   * @param location location to get the assertion status for
-   * @return the effective assertion status at given code location:
-   * {@link ThreeState#YES} means assertions are enabled
-   * {@link ThreeState#NO} means assertions are disabled
-   * {@link ThreeState#UNSURE} means there are no assertions in the current class, so the status was not requested by the runtime
-   */
-  @NotNull
-  public static ThreeState getEffectiveAssertionStatus(@NotNull Location location) {
-    ReferenceType type = location.declaringType();
-    if (type instanceof ClassType) {
-      Field field = type.fieldByName("$assertionsDisabled");
-      if (field != null && field.isStatic() && field.isSynthetic()) {
-        Value value = type.getValue(field);
-        if (value instanceof BooleanValue) {
-          return ThreeState.fromBoolean(!((BooleanValue)value).value());
-        }
-      }
-    }
-    return ThreeState.UNSURE;
   }
 }

@@ -5,9 +5,9 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -130,7 +130,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       return null;
     }
     if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
-      ThreeState status = DebuggerUtils.getEffectiveAssertionStatus(frame.location());
+      ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(frame.location());
       // Assume that assertions are enabled if we cannot fetch the status
       return frame.virtualMachine().mirrorOf(status == ThreeState.NO);
     }

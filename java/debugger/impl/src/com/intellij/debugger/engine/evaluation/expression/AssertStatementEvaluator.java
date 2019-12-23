@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.util.ThreeState;
 import com.sun.jdi.BooleanValue;
@@ -32,7 +33,7 @@ public class AssertStatementEvaluator implements Evaluator {
     if (frameProxy == null) {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
     }
-    ThreeState status = DebuggerUtils.getEffectiveAssertionStatus(frameProxy.location());
+    ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(frameProxy.location());
     if (status == ThreeState.UNSURE) {
       // No assertions compiled in current class, so assertions flag is not initialized.
       // Request the status from the Class#desiredAssertionStatus.
