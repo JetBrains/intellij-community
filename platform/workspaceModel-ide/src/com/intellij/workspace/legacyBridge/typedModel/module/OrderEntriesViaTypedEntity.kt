@@ -14,8 +14,14 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.ArrayUtil
+import com.intellij.workspace.api.LibraryId
 import com.intellij.workspace.api.LibraryTableId
 import com.intellij.workspace.api.ModuleDependencyItem
+import com.intellij.workspace.api.ModuleId
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
+import com.intellij.workspace.legacyBridge.intellij.toLibraryTableId
+import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryViaTypedEntity(
@@ -27,8 +33,6 @@ internal abstract class OrderEntryViaTypedEntity(
 
   protected val updater: ((ModuleDependencyItem) -> ModuleDependencyItem) -> Unit
     get() = itemUpdater ?: error("This mode is read-only. Call from a modifiable model")
-
-  protected val isModifiable = itemUpdater != null
 
   override fun getOwnerModule() = model.module
   override fun compareTo(other: OrderEntry?) = index.compareTo((other as OrderEntryViaTypedEntity).index)
@@ -112,7 +116,10 @@ internal class ModuleOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = ModuleOrderEntryViaTypedEntity(model, index, moduleDependencyItem.copy(), if (isModifiable) updater else null)
+  ): OrderEntry = ModuleOrderEntryViaTypedEntity(
+    (rootModel as LegacyBridgeModifiableRootModel).currentModel,
+    index, moduleDependencyItem.copy(), null
+  )
 }
 
 fun ModuleDependencyItem.DependencyScope.toDependencyScope() = when (this) {
@@ -236,7 +243,24 @@ internal class LibraryOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = LibraryOrderEntryViaTypedEntity(model, index, libraryDependencyItem.copy(), library, if (isModifiable) updater else null)
+  ): OrderEntry {
+    val currentModel = (rootModel as LegacyBridgeModifiableRootModel).currentModel
+
+    val libraryTableId = if (libraryLevel == JpsLibraryTableSerializer.MODULE_LEVEL) {
+      LibraryTableId.ModuleLibraryTableId(ModuleId(rootModel.module.name))
+    }
+    else toLibraryTableId(libraryLevel)
+
+    val libraryId = LibraryId(libraryDependencyItem.library.name, libraryTableId)
+    val libraryDependencyItemCopy = libraryDependencyItem.copy(library = libraryId)
+
+    val moduleLibraryCopy = moduleLibrary?.let {
+      val libraryTable = rootModel.moduleLibraryTable
+      val disposable = LegacyBridgeModuleRootComponent.getInstance(rootModel.module)
+      LegacyBridgeLibraryImpl(libraryTable, rootModel.project, libraryId, rootModel.module.entityStore, disposable)
+    }
+    return LibraryOrderEntryViaTypedEntity(currentModel, index, libraryDependencyItemCopy, moduleLibraryCopy, null)
+  }
 
   override fun isSynthetic(): Boolean = isModuleLevel
 }
@@ -244,7 +268,7 @@ internal class LibraryOrderEntryViaTypedEntity(
 internal class SdkOrderEntryViaTypedEntity(
   model: RootModelViaTypedEntityImpl,
   index: Int,
-  private val sdkDependencyItem: ModuleDependencyItem.SdkDependency
+  internal val sdkDependencyItem: ModuleDependencyItem.SdkDependency
 ) : SdkOrderEntryBaseViaTypedEntity(model, index, sdkDependencyItem, null), ModuleJdkOrderEntry, ClonableOrderEntry {
 
   override val rootProvider: RootProvider?
@@ -269,7 +293,7 @@ internal class SdkOrderEntryViaTypedEntity(
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = SdkOrderEntryViaTypedEntity(model, index, sdkDependencyItem.copy())
+  ): OrderEntry = SdkOrderEntryViaTypedEntity((rootModel as LegacyBridgeModifiableRootModel).currentModel, index, sdkDependencyItem.copy())
 
   override fun isSynthetic(): Boolean = true
 }
@@ -290,7 +314,9 @@ internal class InheritedSdkOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = InheritedSdkOrderEntryViaTypedEntity(model, index, ModuleDependencyItem.InheritedSdkDependency)
+  ): OrderEntry = InheritedSdkOrderEntryViaTypedEntity(
+    (rootModel as LegacyBridgeModifiableRootModel).currentModel, index, ModuleDependencyItem.InheritedSdkDependency
+  )
 }
 
 internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEntityImpl, index: Int, item: ModuleDependencyItem.ModuleSourceDependency)
@@ -309,7 +335,9 @@ internal class ModuleSourceOrderEntryViaTypedEntity(model: RootModelViaTypedEnti
   override fun cloneEntry(rootModel: ModifiableRootModel,
                           projectRootManager: ProjectRootManagerImpl,
                           filePointerManager: VirtualFilePointerManager
-  ): OrderEntry = ModuleSourceOrderEntryViaTypedEntity(model, index, ModuleDependencyItem.ModuleSourceDependency)
+  ): OrderEntry = ModuleSourceOrderEntryViaTypedEntity(
+    (rootModel as LegacyBridgeModifiableRootModel).currentModel, index, ModuleDependencyItem.ModuleSourceDependency
+  )
 
   override fun isSynthetic(): Boolean = true
 }

@@ -28,6 +28,7 @@ import com.intellij.workspace.legacyBridge.roots.LegacyBridgeModifiableContentEn
 import com.intellij.workspace.legacyBridge.typedModel.module.LibraryOrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.OrderEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.RootModelViaTypedEntityImpl
+import com.intellij.workspace.legacyBridge.typedModel.module.SdkOrderEntryViaTypedEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
@@ -119,20 +120,44 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override fun addOrderEntry(orderEntry: OrderEntry): Unit = when (orderEntry) {
-    is LibraryOrderEntryViaTypedEntity -> {
-      updateDependencies { it + orderEntry.libraryDependencyItem }
+  override fun addOrderEntry(orderEntry: OrderEntry) {
+    assertModelIsLive()
+    when (orderEntry) {
+      is LibraryOrderEntryViaTypedEntity -> {
+
+        val tableId = if (orderEntry.isModuleLevel) {
+          LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId())
+        }
+        else toLibraryTableId(orderEntry.libraryLevel)
+
+        val libraryEntityName = LegacyBridgeLibraryImpl.generateLibraryEntityName(orderEntry.libraryName) { existsName ->
+          diff.resolve(LibraryId(existsName, tableId)) != null
+        }
+
+        if (orderEntry.isModuleLevel) {
+          this.diff.addLibraryEntity(
+            roots = emptyList(),
+            tableId = tableId,
+            name = libraryEntityName,
+            excludedRoots = emptyList(),
+            source = moduleEntity.entitySource
+          )
+        }
+
+        updateDependencies { it + orderEntry.libraryDependencyItem }
+        val orderEntryLibrary = orderEntry.library
+        if (orderEntryLibrary is LegacyBridgeLibraryImpl) moduleLibraryTable.librariesToAdd += orderEntryLibrary
+        Unit
+      }
+
+      is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it); return } ?: error("Module is empty: $orderEntry")
+      is ModuleSourceOrderEntry -> updateDependencies { it + ModuleDependencyItem.ModuleSourceDependency }
+
+      is InheritedJdkOrderEntry -> updateDependencies { it + ModuleDependencyItem.InheritedSdkDependency }
+      is ModuleJdkOrderEntry -> updateDependencies { it + (orderEntry as SdkOrderEntryViaTypedEntity).sdkDependencyItem }
+
+      else -> error("OrderEntry should not be extended by external systems")
     }
-
-    is ModuleOrderEntry -> orderEntry.module?.let { addModuleOrderEntry(it); return } ?: error("Module is empty: $orderEntry")
-    is ModuleSourceOrderEntry -> updateDependencies { it + ModuleDependencyItem.ModuleSourceDependency }
-
-    is InheritedJdkOrderEntry -> updateDependencies { it + ModuleDependencyItem.InheritedSdkDependency }
-    is ModuleJdkOrderEntry -> updateDependencies {
-      it + ModuleDependencyItem.SdkDependency(orderEntry.jdkName, orderEntry.jdk.sdkType.name)
-    }
-
-    else -> error("OrderEntry should not be extended by external systems")
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
