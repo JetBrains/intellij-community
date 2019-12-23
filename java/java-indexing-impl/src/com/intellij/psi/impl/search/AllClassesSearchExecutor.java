@@ -30,6 +30,10 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
+    if (scope == GlobalSearchScope.EMPTY_SCOPE) {
+      return true;
+    }
+
     if (scope instanceof GlobalSearchScope) {
       PsiManager manager = PsiManager.getInstance(queryParameters.getProject());
       manager.startBatchFilesProcessingMode();
