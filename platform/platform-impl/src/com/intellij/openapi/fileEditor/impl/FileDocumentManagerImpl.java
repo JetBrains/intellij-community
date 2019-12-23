@@ -701,6 +701,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
     final VirtualFile file = getFile(document);
     assert file != null;
+    if (!file.isValid()) return;
 
     if (!fireBeforeFileContentReload(file, document)) {
       return;
