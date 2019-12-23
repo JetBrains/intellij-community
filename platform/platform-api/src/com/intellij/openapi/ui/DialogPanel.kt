@@ -3,6 +3,7 @@ package com.intellij.openapi.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.ui.components.JBPanel
+import com.intellij.util.containers.MultiMap
 import java.awt.LayoutManager
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -15,6 +16,7 @@ class DialogPanel : JBPanel<DialogPanel> {
   var preferredFocusedComponent: JComponent? = null
   var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?> = emptyMap()
+  var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap.empty()
   var applyCallbacks: List<() -> Unit> = emptyList()
   var resetCallbacks: List<() -> Unit> = emptyList()
   var isModifiedCallbacks: List<() -> Boolean> = emptyList()
@@ -42,6 +44,7 @@ class DialogPanel : JBPanel<DialogPanel> {
       if (component is JTextComponent) {
         validator.andRegisterOnDocumentListener(component)
       }
+      registerCustomValidationRequestors(component, validator)
       validator.installOn(component)
     }
   }
@@ -60,5 +63,11 @@ class DialogPanel : JBPanel<DialogPanel> {
 
   fun isModified(): Boolean {
     return isModifiedCallbacks.any { it() }
+  }
+
+  private fun registerCustomValidationRequestors(component: JComponent, validator: ComponentValidator) {
+    for (onCustomValidationRequest in customValidationRequestors[component]) {
+      onCustomValidationRequest { validator.revalidate() }
+    }
   }
 }

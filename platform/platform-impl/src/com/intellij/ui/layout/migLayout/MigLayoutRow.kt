@@ -3,7 +3,9 @@ package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.VisualPaddingsProvider
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.HideableTitledSeparator
@@ -423,8 +425,9 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
   override val component: T
-) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
+) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder, CellBuilderPropertyEx<T> {
   private var applyIfEnabled = false
+  lateinit var property: GraphProperty<*>
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
     row.addCommentRow(component, text, maxLineLength)
@@ -437,12 +440,19 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component), component) }
+    builder.validateCallbacks.add { callback(ValidationInfoBuilder(component.origin), component) }
     return this
   }
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
-    builder.componentValidateCallbacks[component] = { callback(ValidationInfoBuilder(component), component) }
+    builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
+    return this
+  }
+
+  override fun withValidationOnProperty(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
+    withValidationOnApply(callback)
+    withValidationOnInput(callback)
+    builder.customValidationRequestors.putValue(component.origin, property::afterPropagation)
     return this
   }
 
@@ -519,3 +529,11 @@ private fun getCommentLeftInset(component: JComponent): Int {
   val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
   return insets.left - componentBorderVisualLeftPadding
 }
+
+private val JComponent.origin: JComponent
+  get() {
+    return when (this) {
+      is TextFieldWithBrowseButton -> textField
+      else -> this
+    }
+  }

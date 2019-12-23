@@ -7,6 +7,7 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
@@ -55,6 +56,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var preferredFocusedComponent: JComponent? = null
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
+  override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
   override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
   override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()

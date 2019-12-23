@@ -3,6 +3,7 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.migLayout.*
+import com.intellij.util.containers.MultiMap
 import java.awt.Container
 import javax.swing.ButtonGroup
 import javax.swing.JComponent
@@ -30,6 +31,9 @@ interface LayoutBuilderImpl {
 
   // Validators applied immediately on input
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
+
+  // Validation applicants for custom validation events
+  val customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit>
 
   val applyCallbacks: List<() -> Unit>
   val resetCallbacks: List<() -> Unit>
