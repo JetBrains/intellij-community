@@ -24,4 +24,8 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic()
     myFixture.checkResult("record X() cla")
   }
+  
+  void testRecordAccessorDeclaration() {
+    doTest()
+  }
 }

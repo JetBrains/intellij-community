@@ -24,86 +24,98 @@ import com.intellij.openapi.util.text.StringUtil;
  */
 public class FieldElement extends AbstractElement implements Element {
 
-    private boolean isConstant;
-    private boolean isEnum;
+  private boolean isConstant;
+  private boolean isEnum;
+  private boolean isRecordComponent;
 
-    private boolean isModifierTransient;
-    private boolean isModifierVolatile;
-    private String accessor;
+  private boolean isModifierTransient;
+  private boolean isModifierVolatile;
+  private String accessor;
 
   @Override
   public String getAccessor() {
-        return accessor;
+    return accessor;
+  }
+
+  /**
+   * Is the field a constant type?
+   */
+  public boolean isConstant() {
+    return isConstant;
+  }
+
+  /**
+   * Does the field have a transient modifier?
+   */
+  public boolean isModifierTransient() {
+    return isModifierTransient;
+  }
+
+  /**
+   * Does the field have a volatile modifier?
+   */
+  public boolean isModifierVolatile() {
+    return isModifierVolatile;
+  }
+
+  /**
+   * Is the field an enum type (JDK1.5)?
+   */
+  public boolean isEnum() {
+    return isEnum;
+  }
+
+  /**
+   * Is the field a record component (JDK14)?
+   */
+  public boolean isRecordComponent() {
+    return isRecordComponent;
+  }
+
+  public void setRecordComponent(boolean recordComponent) {
+    isRecordComponent = recordComponent;
+  }
+
+  void setConstant(boolean constant) {
+    isConstant = constant;
+  }
+
+  void setModifierTransient(boolean modifierTransient) {
+    isModifierTransient = modifierTransient;
+  }
+
+  void setModifierVolatile(boolean modifierVolatile) {
+    this.isModifierVolatile = modifierVolatile;
+  }
+
+  public void setEnum(boolean anEnum) {
+    isEnum = anEnum;
+  }
+
+  /**
+   * Performs a regular expression matching the fieldname.
+   *
+   * @param regexp regular expression.
+   * @return true if the fieldname matches the regular expression.
+   * @throws IllegalArgumentException is throw if the given input is invalid (an empty String) or a pattern matching error.
+   */
+  public boolean matchName(String regexp) throws IllegalArgumentException {
+    if (StringUtil.isEmpty(regexp)) {
+      throw new IllegalArgumentException(
+        "Can't perform regular expression since the given input is empty. Check the Method body velocity code: regexp='" + regexp + "'");
     }
 
-    /**
-     * Is the field a constant type?
-     */
-    public boolean isConstant() {
-        return isConstant;
-    }
+    return name.matches(regexp);
+  }
 
-    /**
-     * Does the field have a transient modifier?
-     */
-    public boolean isModifierTransient() {
-        return isModifierTransient;
-    }
-
-    /**
-     * Does the field have a volatile modifier?
-     */
-    public boolean isModifierVolatile() {
-        return isModifierVolatile;
-    }
-
-    /**
-     * Is the field an enum type (JDK1.5)?
-     * @since 3.17
-     */
-    public boolean isEnum() {
-        return isEnum;
-    }
-
-    void setConstant(boolean constant) {
-        isConstant = constant;
-    }
-
-    void setModifierTransient(boolean modifierTransient) {
-        isModifierTransient = modifierTransient;
-    }
-
-    void setModifierVolatile(boolean modifierVolatile) {
-         this.isModifierVolatile = modifierVolatile;
-    }
-
-    public void setEnum(boolean anEnum) {
-        isEnum = anEnum;
-    }
-
-    /**
-     * Performs a regular expression matching the fieldname.
-     *
-     * @param regexp regular expression.
-     * @return true if the fieldname matches the regular expression.
-     * @throws IllegalArgumentException is throw if the given input is invalid (an empty String) or a pattern matching error.
-     */
-    public boolean matchName(String regexp) throws IllegalArgumentException {
-        if (StringUtil.isEmpty(regexp)) {
-            throw new IllegalArgumentException("Can't perform regular expression since the given input is empty. Check the Method body velocity code: regexp='" + regexp + "'");
-        }
-
-        return name.matches(regexp);
-    }
-
-    public String toString() {
-        return super.toString() + " ::: FieldElement{" +
-                "isConstant=" + isConstant +
-                ", isEnum=" + isEnum +
-                ", isModifierTransient=" + isModifierTransient +
-                ", isModifierVolatile=" + isModifierVolatile +
-                "}";
-    }
+  public String toString() {
+    return super.toString() + " ::: FieldElement{" +
+           "isConstant=" + isConstant +
+           ", isEnum=" + isEnum +
+           ", isModifierTransient=" + isModifierTransient +
+           ", isModifierVolatile=" + isModifierVolatile +
+           "}";
+  }
 
   public void setAccessor(String accessor) {
     this.accessor = accessor;
