@@ -95,7 +95,7 @@ public class DfaAssist implements DebuggerContextListener {
           return ReadAction.nonBlocking(() -> createDfaRunner(frame, pointer.getElement()))
               .withDocumentsCommitted(myProject).executeSynchronously();
         }
-        catch (VMDisconnectedException | VMOutOfMemoryException ignore) {
+        catch (VMDisconnectedException | VMOutOfMemoryException | InternalException ignore) {
         }
         return null;
       }
