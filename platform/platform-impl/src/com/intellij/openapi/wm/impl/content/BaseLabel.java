@@ -12,6 +12,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
@@ -27,7 +28,7 @@ public class BaseLabel extends JLabel {
   private Color myPassiveFg;
   private boolean myBold;
 
-  public BaseLabel(ToolWindowContentUi ui, boolean bold) {
+  public BaseLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
     myUi = ui;
     setOpaque(false);
     myBold = bold;

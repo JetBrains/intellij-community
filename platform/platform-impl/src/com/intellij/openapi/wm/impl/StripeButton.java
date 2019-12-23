@@ -313,7 +313,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
   }
 
   void apply(@NotNull WindowInfo info) {
-    setSelected(info.isVisible() || info.isActive());
+    setSelected(info.isVisible());
     updateState(toolWindow);
   }
 

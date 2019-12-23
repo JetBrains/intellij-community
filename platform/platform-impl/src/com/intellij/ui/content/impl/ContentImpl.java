@@ -153,8 +153,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public String getToolwindowTitle() {
-    if (myToolwindowTitle != null) return myToolwindowTitle;
-    return myDisplayName;
+    return myToolwindowTitle == null ? myDisplayName : myToolwindowTitle;
   }
 
   @Override
@@ -170,11 +169,6 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   @Override
   public void setShouldDisposeContent(boolean value) {
     myShouldDisposeContent = value;
-  }
-
-  @Override
-  public boolean shouldDisposeContent() {
-    return myShouldDisposeContent;
   }
 
   @Override

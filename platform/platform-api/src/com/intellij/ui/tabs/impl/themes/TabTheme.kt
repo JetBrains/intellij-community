@@ -78,7 +78,7 @@ class EditorTabTheme : TabTheme {
     get() = JBUI.CurrentTheme.EditorTabs.inactiveColoredFileBackground()
 }
 
-class ToolWindowTabTheme : DefaultTabTheme() {
+internal class ToolWindowTabTheme : DefaultTabTheme() {
   override val background: Color?
     get() = null
   override val borderColor: Color
@@ -104,7 +104,7 @@ class ToolWindowTabTheme : DefaultTabTheme() {
     get() = JBUI.CurrentTheme.ToolWindow.underlinedTabInactiveForeground()
 }
 
-class DebuggerTabTheme : DefaultTabTheme() {
+internal class DebuggerTabTheme : DefaultTabTheme() {
   override val underlineHeight: Int
     get() = JBUI.CurrentTheme.DebuggerTabs.underlineHeight()
   override val underlinedTabBackground: Color?

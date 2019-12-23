@@ -50,7 +50,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.commands.RequestFocusInToolWindowCommand
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.GuiUtils
@@ -623,9 +622,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           if (parent is InternalDecorator) {
             return parent.toolWindow.id
           }
-          else if (parent is ToolWindowContentUi) {
-            return parent.toolWindowId
-          }
 
           parent = parent.parent
         }
@@ -776,7 +772,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, dirtyMode: Boolean, hideSide: Boolean = false, moveFocus: Boolean = true): Boolean {
     // info.isActive is not reliable (not set to false on focus lost)
-    val wasActive = entry.toolWindow.isFocused
+    val wasActive = entry.toolWindow.isActive
 
     if (!wasActive && !info.isVisible) {
       return false
@@ -857,8 +853,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun doShowWindow(entry: ToolWindowEntry, info: WindowInfo, dirtyMode: Boolean) {
-    entry.toolWindow.ensureContentInitialized()
-
     if (entry.readOnlyWindowInfo.type == ToolWindowType.FLOATING) {
       addFloatingDecorator(entry, info)
     }
@@ -901,12 +895,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         }
       }
 
-      toolWindowPane!!.addDecorator(entry.toolWindow.decoratorComponent!!, info, dirtyMode, this)
+      toolWindowPane!!.addDecorator(entry.toolWindow.getOrCreateDecoratorComponent(), info, dirtyMode, this)
       // remove tool window from the SideStack
       if (isStackEnabled) {
         sideStack.remove(entry.id)
       }
     }
+
+    entry.toolWindow.scheduleContentInitializationIfNeeded()
   }
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindowImpl {
@@ -1383,7 +1379,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun hideIfNeededAndShowAfterTask(entry: ToolWindowEntry, info: WindowInfoImpl, task: () -> Unit) {
     val wasVisible = entry.readOnlyWindowInfo.isVisible
-    val wasFocused = entry.toolWindow.isFocused
+    val wasFocused = entry.toolWindow.isActive
     if (wasVisible) {
       doHide(entry, info, dirtyMode = true, moveFocus = false)
     }

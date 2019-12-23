@@ -168,7 +168,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public boolean removeContent(@NotNull Content content, boolean dispose) {
-    boolean wasFocused = content.getComponent() != null && UIUtil.isFocusAncestor(content.getComponent());
+    boolean wasFocused = UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
 
