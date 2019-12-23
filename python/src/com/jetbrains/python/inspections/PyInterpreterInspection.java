@@ -5,17 +5,14 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.SwingHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -27,7 +24,6 @@ import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -147,22 +143,7 @@ public class PyInterpreterInspection extends PyInspection {
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module == null) return;
 
-      DataManager.getInstance()
-        .getDataContextFromFocusAsync()
-        .onSuccess(
-          context -> {
-            final ListPopup popup = new PySdkPopupFactory(project, module).createPopup(context);
-            if (popup != null) {
-              final Component component = SwingHelper.getComponentFromRecentMouseEvent();
-              if (component != null) {
-                popup.showUnderneathOf(component);
-              }
-              else {
-                popup.showInBestPositionFor(context);
-              }
-            }
-          }
-        );
+      PySdkPopupFactory.Companion.createAndShow(project, module);
     }
   }
 }

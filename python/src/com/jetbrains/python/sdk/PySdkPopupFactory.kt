@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -12,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.util.text.trimMiddle
+import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.psi.LanguageLevel
@@ -27,6 +29,22 @@ class PySdkPopupFactory(val project: Project, val module: Module) {
     }
 
     fun descriptionInPopup(sdk: Sdk) = "${nameInPopup(sdk)} [${path(sdk)}]".trimMiddle(150)
+
+    fun createAndShow(project: Project, module: Module) {
+      DataManager.getInstance()
+        .dataContextFromFocusAsync
+        .onSuccess {
+          val popup = PySdkPopupFactory(project, module).createPopup(it) ?: return@onSuccess
+
+          val component = SwingHelper.getComponentFromRecentMouseEvent()
+          if (component != null) {
+            popup.showUnderneathOf(component)
+          }
+          else {
+            popup.showInBestPositionFor(it)
+          }
+        }
+    }
   }
 
   fun createPopup(context: DataContext): ListPopup? {

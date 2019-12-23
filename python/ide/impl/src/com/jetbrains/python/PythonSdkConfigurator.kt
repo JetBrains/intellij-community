@@ -2,6 +2,11 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -26,6 +31,8 @@ import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
  */
 class PythonSdkConfigurator {
   companion object {
+    private val BALLOON_NOTIFICATIONS = NotificationGroup("Python interpreter configuring", NotificationDisplayType.BALLOON, true)
+
     private fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
       return existingSdks
         .asSequence()
@@ -55,6 +62,23 @@ class PythonSdkConfigurator {
     }
 
     private fun onEdt(project: Project, runnable: () -> Unit) = AppUIUtil.invokeOnEdt(Runnable { runnable() }, project.disposed)
+
+    private fun notifyAboutConfiguredSdk(project: Project, module: Module, sdk: Sdk) {
+      BALLOON_NOTIFICATIONS.createNotification(
+        "${sdk.name} has been configured as the project interpreter",
+        NotificationType.INFORMATION
+      ).apply {
+        addAction(
+          object : AnAction("Configure a Python Interpreter") {
+            override fun actionPerformed(e: AnActionEvent) {
+              PySdkPopupFactory.createAndShow(project, module)
+            }
+          }
+        )
+
+        notify(project)
+      }
+    }
   }
 
   init {
@@ -84,6 +108,7 @@ class PythonSdkConfigurator {
       onEdt(project) {
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
         module.excludeInnerVirtualEnv(it)
+        notifyAboutConfiguredSdk(project, module, it)
       }
       return
     }
@@ -97,7 +122,8 @@ class PythonSdkConfigurator {
         SdkConfigurationUtil.addSdk(newSdk)
         newSdk.associateWithModule(module, null)
         SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
-        module.excludeInnerVirtualEnv(it)
+        module.excludeInnerVirtualEnv(newSdk)
+        notifyAboutConfiguredSdk(project, module, newSdk)
       }
 
       return
@@ -110,6 +136,7 @@ class PythonSdkConfigurator {
       onEdt(project) {
         SdkConfigurationUtil.addSdk(it)
         SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+        notifyAboutConfiguredSdk(project, module, it)
       }
       return
     }
@@ -117,14 +144,20 @@ class PythonSdkConfigurator {
     if (indicator.isCanceled) return
     indicator.text = "Looking for the default interpreter setting for a new project"
     guardIndicator(indicator) { getDefaultProjectSdk() }?.let {
-      onEdt(project) { SdkConfigurationUtil.setDirectoryProjectSdk(project, it) }
+      onEdt(project) {
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+        notifyAboutConfiguredSdk(project, module, it)
+      }
       return
     }
 
     if (indicator.isCanceled) return
     indicator.text = "Looking for the previously used system-wide interpreter"
     guardIndicator(indicator) { findExistingSystemWideSdk(existingSdks) }?.let {
-      onEdt(project) { SdkConfigurationUtil.setDirectoryProjectSdk(project, it) }
+      onEdt(project) {
+        SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+        notifyAboutConfiguredSdk(project, module, it)
+      }
       return
     }
 
@@ -134,6 +167,7 @@ class PythonSdkConfigurator {
       onEdt(project) {
         SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {
           SdkConfigurationUtil.setDirectoryProjectSdk(project, this)
+          notifyAboutConfiguredSdk(project, module, this)
         }
       }
     }
