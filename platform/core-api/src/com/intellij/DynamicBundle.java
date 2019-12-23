@@ -22,6 +22,7 @@ public abstract class DynamicBundle extends AbstractBundle {
     super(pathToBundle);
   }
 
+  // see BundleUtil
   @Override
   protected ResourceBundle findBundle(@NotNull String pathToBundle,
                                       @NotNull ClassLoader baseLoader,

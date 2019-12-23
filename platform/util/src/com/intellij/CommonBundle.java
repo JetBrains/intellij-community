@@ -4,9 +4,9 @@ package com.intellij;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.*;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
+
+import static com.intellij.BundleUtil.loadLanguageBundle;
 
 /**
  * @author yole
@@ -14,7 +14,7 @@ import java.util.ResourceBundle;
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class CommonBundle extends BundleBase {
   private static final String BUNDLE = "messages.CommonBundle";
-  private static Reference<ResourceBundle> ourBundle;
+  private static ResourceBundle ourBundle;
 
   private CommonBundle() { }
 
@@ -26,16 +26,15 @@ public final class CommonBundle extends BundleBase {
 
   @NotNull
   private static ResourceBundle getCommonBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+    if (ourBundle != null) return ourBundle;
+    return ourBundle = ResourceBundle.getBundle(BUNDLE);
   }
 
   @Contract("null, _, _, _ -> param3")
-  public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
+  public static String messageOrDefault(@Nullable ResourceBundle bundle,
+                                        @NotNull String key,
+                                        @Nullable String defaultValue,
+                                        @NotNull Object... params) {
     if (bundle == null) {
       return defaultValue;
     }
@@ -134,5 +133,10 @@ public final class CommonBundle extends BundleBase {
 
   public static String settingsActionPath() {
     return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
+  }
+
+  public static void setBundle(@Nullable ClassLoader pluginClassLoader) {
+    ResourceBundle bundle = loadLanguageBundle(pluginClassLoader, BUNDLE);
+    if (bundle != null) ourBundle = bundle;
   }
 }
