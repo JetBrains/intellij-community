@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -45,7 +44,7 @@ final class ContentComboLabel extends BaseLabel {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
+            ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
           }
           super.keyPressed(e);
         }
@@ -58,7 +57,7 @@ final class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
+      ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
     }
   }
 
@@ -110,8 +109,7 @@ final class ContentComboLabel extends BaseLabel {
   @Nullable
   @Override
   public Content getContent() {
-    ContentManager contentManager = myUi.getContentManager();
-    return contentManager == null ? null : contentManager.getSelectedContent();
+    return myUi.contentManager == null ? null : myUi.contentManager.getSelectedContent();
   }
 
   @Override
@@ -147,7 +145,7 @@ final class ContentComboLabel extends BaseLabel {
     @Override
     public boolean doAccessibleAction(int index) {
       if (index == 0) {
-        ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
+        ToolWindowContentUi.toggleContentPopup(myUi, myUi.contentManager);
         return true;
       }
       else {

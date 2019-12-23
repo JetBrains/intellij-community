@@ -7,7 +7,7 @@ import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
 
-internal class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
+class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  {
   override fun paintTab(position: JBTabsPosition,
                         g: Graphics2D,
                         rect: Rectangle,
@@ -18,8 +18,8 @@ internal class ToolWindowTabPainter: JBDefaultTabPainter(ToolWindowTabTheme())  
     rect.y += borderThickness
     rect.height -= borderThickness
 
-    if (position == JBTabsPosition.top) {
-      rect.height -= borderThickness
+    when (position) {
+      JBTabsPosition.top -> rect.height -= borderThickness
     }
 
     super.paintTab(position, g, rect, borderThickness, tabColor, active, hovered)

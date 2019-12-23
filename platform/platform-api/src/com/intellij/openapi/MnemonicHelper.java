@@ -35,7 +35,7 @@ import java.util.function.IntPredicate;
  *
  * @author lesya
  */
-public final class MnemonicHelper extends ComponentTreeWatcher {
+public class MnemonicHelper extends ComponentTreeWatcher {
   private static final Logger LOG = Logger.getInstance(MnemonicHelper.class);
 
   public static final Key<IntPredicate> MNEMONIC_CHECKER = Key.create("MNEMONIC_CHECKER");
@@ -190,16 +190,11 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
 
   private static final MnemonicFixer ourMnemonicFixer = new MnemonicFixer();
 
-  private static final class MnemonicFixer implements ContainerListener {
+  private static class MnemonicFixer implements ContainerListener {
     void addTo(Component component) {
       for (Component c : UIUtil.uiTraverser(component)) {
-        if (c instanceof Container) {
-          ((Container)c).addContainerListener(this);
-        }
-        if (c instanceof ActionButtonComponent) {
-          assert c instanceof JComponent;
-          fixMacMnemonicKeyStroke((JComponent)c, null);
-        }
+        if (c instanceof Container) ((Container)c).addContainerListener(this);
+        if (c instanceof ActionButtonComponent) fixMacMnemonicKeyStroke((JComponent)c, null);
         MnemonicWrapper.getWrapper(c);
       }
     }

@@ -13,6 +13,8 @@ import javax.swing.*;
 import java.awt.*;
 
 abstract class ContentLayout {
+  static final int TAB_ARC = 2;
+
   ToolWindowContentUi myUi;
   BaseLabel myIdLabel;
 
@@ -27,6 +29,8 @@ abstract class ContentLayout {
   public abstract void layout();
 
   public abstract void paintComponent(Graphics g);
+
+  public abstract void paintChildren(Graphics g);
 
   public abstract void update();
 
@@ -50,7 +54,7 @@ abstract class ContentLayout {
   }
 
   private String getTitleSuffix() {
-    ContentManager manager = myUi.getContentManager();
+    ContentManager manager = myUi.contentManager;
     switch (manager == null ? 0 : manager.getContentCount()) {
       case 0:
         return null;

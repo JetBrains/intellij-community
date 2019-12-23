@@ -13,14 +13,12 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.layout.migLayout.MigLayoutBuilderKt;
-import com.intellij.ui.layout.migLayout.patched.MigLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import net.miginfocom.layout.CC;
-import net.miginfocom.layout.ConstraintParser;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +35,6 @@ import java.util.function.Supplier;
  * @author pegov
  */
 public abstract class ToolWindowHeader extends JPanel implements UISettingsListener, DataProvider {
-  @NotNull private final ToolWindowContentUi contentUi;
   @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
   @NotNull
@@ -53,19 +50,20 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
   private ActionToolbar myToolbarWest;
   private final JPanel myWestPanel;
 
-  ToolWindowHeader(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull Supplier<? extends ActionGroup> gearProducer) {
-    super(new MigLayout(MigLayoutBuilderKt.createLayoutConstraints(0, 0).noVisualPadding().fill(), ConstraintParser.parseColumnConstraints("[grow][pref!]")));
-
-    this.contentUi = contentUi;
+  ToolWindowHeader(@NotNull ToolWindowImpl toolWindow, @NotNull Supplier<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
 
     AccessibleContextUtil.setName(this, "Tool Window Header");
 
     myToolWindow = toolWindow;
 
-    myWestPanel = contentUi.getTabComponent();
-    add(myWestPanel, new CC().grow());
-    ToolWindowContentUi.initMouseListeners(myWestPanel, contentUi, true);
+    setLayout(new MigLayout("novisualpadding, ins 0, gap 0, fill", "[grow][pref!]"));
+    myWestPanel = new NonOpaquePanel(new MigLayout("filly, novisualpadding, ins 0, gap 0"));
+
+    add(myWestPanel, "grow");
+    myWestPanel.add(toolWindow.getContentUI().getTabComponent(), "growy");
+
+    ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
     ActionManager actionManager = ActionManager.getInstance();
     AnAction tabListAction = actionManager.getAction("TabList");
@@ -85,7 +83,8 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
     myWestPanel.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
-        contentUi.showContextMenu(comp, x, y, toolWindow.getPopupGroup(), contentUi.getContentManager().getSelectedContent());
+        toolWindow.getContentUI()
+          .showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
     myWestPanel.addMouseListener(new MouseAdapter() {
@@ -140,7 +139,7 @@ public abstract class ToolWindowHeader extends JPanel implements UISettingsListe
   @Override
   public Object getData(@NotNull String dataId) {
     if (MorePopupAware.KEY.is(dataId) && myToolWindow instanceof ToolWindowImpl) {
-      return contentUi.getData(dataId);
+      return ((ToolWindowImpl)myToolWindow).getContentUI().getData(dataId);
     }
     return null;
   }

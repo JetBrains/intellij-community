@@ -8,6 +8,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.Reference;
@@ -17,7 +18,8 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public final class TabbedContentTabLabel extends ContentTabLabel {
+public class TabbedContentTabLabel extends ContentTabLabel {
+
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
@@ -78,7 +80,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
         return hasMultipleTabs();
       }
 
-      @NotNull
+      @Nullable
       @Override
       public Runnable getAction() {
         return () -> selectContent();
@@ -97,7 +99,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
   public TabbedContent getContent() {
     return myContent;

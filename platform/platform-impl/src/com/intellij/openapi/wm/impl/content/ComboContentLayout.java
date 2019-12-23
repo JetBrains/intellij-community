@@ -34,7 +34,7 @@ final class ComboContentLayout extends ContentLayout {
 
   @Override
   public void layout() {
-    Rectangle bounds = myUi.getTabComponent().getBounds();
+    Rectangle bounds = myUi.getBounds();
     Dimension idSize = isIdVisible() ? myIdLabel.getPreferredSize() : JBUI.emptySize();
 
     int eachX = 0;
@@ -71,6 +71,9 @@ final class ComboContentLayout extends ContentLayout {
   }
 
   @Override
+  public void paintChildren(Graphics g) { }
+
+  @Override
   public void update() {
     updateIdLabel(myIdLabel);
     myComboLabel.update();
@@ -78,17 +81,17 @@ final class ComboContentLayout extends ContentLayout {
 
   @Override
   public void rebuild() {
-    myUi.getTabComponent().removeAll();
+    myUi.removeAll();
 
-    myUi.getTabComponent().add(myIdLabel);
+    myUi.add(myIdLabel);
     ToolWindowContentUi.initMouseListeners(myIdLabel, myUi, true);
 
-    myUi.getTabComponent().add(myComboLabel);
+    myUi.add(myComboLabel);
     ToolWindowContentUi.initMouseListeners(myComboLabel, myUi, false);
   }
 
   boolean isToDrawCombo() {
-    ContentManager manager = myUi.getContentManager();
+    ContentManager manager = myUi.contentManager;
     return manager != null && manager.getContentCount() > 1;
   }
 

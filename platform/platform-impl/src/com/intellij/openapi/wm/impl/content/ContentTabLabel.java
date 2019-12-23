@@ -23,6 +23,7 @@ import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -104,6 +105,7 @@ class ContentTabLabel extends BaseLabel {
       }
 
       String toolText = icon.getTooltip();
+
       if (toolText != null && !toolText.isEmpty()) {
         IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
         currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
@@ -116,6 +118,7 @@ class ContentTabLabel extends BaseLabel {
       IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(myText));
       currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), null);
     }
+
   }
 
   private void hideCurrentTooltip() {
@@ -127,12 +130,15 @@ class ContentTabLabel extends BaseLabel {
 
   private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     @Override
-    protected void execute(@NotNull MouseEvent e) {
-      for (AdditionalIcon icon : myAdditionalIcons) {
-        if (mouseOverIcon(icon)) {
-          icon.getAction().run();
-          return;
-        }
+    protected void execute(final MouseEvent e) {
+
+      Optional<Runnable> first = myAdditionalIcons.stream()
+                                                  .filter(icon -> mouseOverIcon(icon))
+                                                  .map(icon -> icon.getAction()).findFirst();
+
+      if (first.isPresent()) {
+        first.get().run();
+        return;
       }
 
       selectContent();
@@ -352,10 +358,10 @@ class ContentTabLabel extends BaseLabel {
 
   @NotNull
   private ContentManager getContentManager() {
-    return myUi.getContentManager();
+    return myUi.myWindow.getContentManager();
   }
 
-  @NotNull
+  @Nullable
   @Override
   public Content getContent() {
     return myContent;

@@ -187,6 +187,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   /**
+   * Creates command which shows tool window with specified set of parameters.
+   * Command uses cloned copy of passed {@code info} object.
+   *
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
@@ -288,7 +291,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
+  private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, final float weight) {
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
       verticalSplitter.setFirstSize((int)(layeredPane.getHeight() * weight));
