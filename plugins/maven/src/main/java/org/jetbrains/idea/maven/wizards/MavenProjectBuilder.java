@@ -21,7 +21,6 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectOpenProcessor;
-import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +197,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> impl
     }
 
     boolean isFromUI = model != null;
-    if (isFromUI && LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+    if (isFromUI && MavenUtil.newModelEnabled(project)) {
       throw new UnsupportedOperationException();
       //return manager.importProjects(new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel));
     }

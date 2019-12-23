@@ -46,6 +46,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -731,7 +732,7 @@ public class MavenUtil {
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        resolveGlobalSettingsFile(overriddenMavenHome));
+                                                resolveGlobalSettingsFile(overriddenMavenHome));
     }
     try {
       return result.getCanonicalFile();
@@ -882,6 +883,10 @@ public class MavenUtil {
     for (MavenId id : unresolvedIds) {
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).showError(id.getKey());
     }
+  }
+
+  public static boolean newModelEnabled(Project project) {
+    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project);
   }
 
   public interface MavenTaskHandler {
@@ -1152,5 +1157,15 @@ public class MavenUtil {
       return baseDir.findFileByRelativePath(fileRelativePath);
     }
     return null;
+  }
+
+  public static Path toPath(@Nullable MavenProject mavenProject, String path) {
+    if (!FileUtil.isAbsolute(path)) {
+      if(mavenProject == null) {
+        throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
+      }
+      path = new File(mavenProject.getDirectory(), path).getPath();
+    }
+    return new Path(path);
   }
 }

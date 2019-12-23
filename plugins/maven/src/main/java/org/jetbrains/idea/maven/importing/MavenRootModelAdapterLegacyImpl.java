@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -22,6 +21,7 @@ import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 import org.jetbrains.jps.model.JpsElement;
@@ -266,10 +266,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   @Override
   public Path toPath(String path) {
-    if (!FileUtil.isAbsolute(path)) {
-      path = new File(myMavenProject.getDirectory(), path).getPath();
-    }
-    return new Path(path);
+    return MavenUtil.toPath(myMavenProject, path);
   }
 
   @Override
@@ -336,8 +333,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
-    if (library == null) {
-      library = provider.createLibrary(libraryName, getMavenExternalSource());
+    if (library == null) {     library = provider.createLibrary(libraryName, getMavenExternalSource());
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 

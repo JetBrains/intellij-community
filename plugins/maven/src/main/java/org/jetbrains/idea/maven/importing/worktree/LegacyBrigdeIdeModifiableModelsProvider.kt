@@ -26,12 +26,13 @@ import org.jetbrains.idea.maven.utils.MavenLog
 
 class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
                                               builder: TypedEntityStorageBuilder) : IdeModifiableModelsProvider {
-  val diff = builder
   private val legacyBridgeModuleManagerComponent = LegacyBridgeModuleManagerComponent.getInstance(project)
   private val myProductionModulesForTestModules = HashMap<Module, String>()
   private val myUserData = UserDataHolderBase()
 
-  private val moduleModel = lazy {
+  var diff = builder
+
+  private val modifiableModuleModel = lazy {
     legacyBridgeModuleManagerComponent.getModifiableModel(diff)
   }
 
@@ -69,14 +70,14 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
     if (moduleTypeId == null) {
       throw IllegalArgumentException("moduleTypeId")
     }
+    val modifiableModel = modifiableModuleModel.value
     legacyBridgeModuleManagerComponent.incModificationCount()
-    val modifiableModel = legacyBridgeModuleManagerComponent.getModifiableModel(diff)
     val module = modifiableModel.newModule(filePath, moduleTypeId)
     return module
   }
 
   override fun newModule(moduleData: ModuleData): Module {
-    val modifiableModel = moduleModel.value
+    val modifiableModel = modifiableModuleModel.value
     legacyBridgeModuleManagerComponent.incModificationCount()
     val newModule = modifiableModel.newModule(moduleData.moduleFileDirectoryPath, moduleData.moduleTypeId)
     return newModule
@@ -96,12 +97,12 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun getModifiableModuleModel(): ModifiableModuleModel {
-    return legacyBridgeModuleManagerComponent.getModifiableModel(diff)
+    return modifiableModuleModel.value
   }
 
   override fun commit() {
-    if(moduleModel.isInitialized()) {
-      moduleModel.value.commit()
+    if(modifiableModuleModel.isInitialized()) {
+      modifiableModuleModel.value.commit()
     }
   }
 

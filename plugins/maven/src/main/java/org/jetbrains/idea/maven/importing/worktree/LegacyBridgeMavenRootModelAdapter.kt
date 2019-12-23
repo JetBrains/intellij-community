@@ -4,21 +4,21 @@ package org.jetbrains.idea.maven.importing.worktree
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.SourceFolder
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.workspace.api.*
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterInterface
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.Path
 import org.jetbrains.idea.maven.utils.Url
@@ -29,13 +29,17 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
 
+@Retention(AnnotationRetention.SOURCE)
+private annotation class NotRequiredToImplement;
+
 class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject,
-                                        private val module: Module,
+                                        private val module: LegacyBridgeModule,
                                         private val project: Project,
-                                        private val moduleEntity: ModuleEntity,
+                                        initialModuleEntity: ModuleEntity,
                                         private val legacyBridgeModifiableModelsProvider: LegacyBrigdeIdeModifiableModelsProvider,
                                         private val builder: TypedEntityStorageBuilder) : MavenRootModelAdapterInterface {
 
+  private var moduleEntity: ModuleEntity = initialModuleEntity
   private val legacyBridge = LegacyBridgeModuleRootComponent.getInstance(module)
   private val modifiableModel = legacyBridge.getModifiableModel(builder, RootConfigurationAccessor())
   private val entitySource = MavenExternalSource.INSTANCE
@@ -53,8 +57,9 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
     return module
   }
 
+  @NotRequiredToImplement
   override fun clearSourceFolders() {
-    TODO("Not Implemented")
+
   }
 
   override fun <P : JpsElement?> addSourceFolder(path: String,
@@ -135,22 +140,29 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
     return moduleEntity.contentRoots.firstOrNull { VfsUtilCore.isEqualOrAncestor(it.url.url, url.url) }
   }
 
+  @NotRequiredToImplement
   override fun unregisterAll(path: String, under: Boolean, unregisterSources: Boolean) {
-//    MavenLog.LOG.error("unregisterAll is not implemented")
   }
 
+  @NotRequiredToImplement
   override fun hasCollision(sourceRootPath: String): Boolean {
     return false
   }
 
-  override fun useModuleOutput(production: String, test: String) {}
+  override fun useModuleOutput(production: String, test: String) {
+    LegacyBridgeCompilerModuleExtension(module, module.entityStore, builder).apply {
+      inheritCompilerOutputPath(false);
+      setCompilerOutputPath(toUrl(production).getUrl());
+      setCompilerOutputPathForTests(toUrl(test).getUrl());
+    }
+  }
 
   override fun addModuleDependency(moduleName: String,
                                    scope: DependencyScope,
                                    testJar: Boolean) {
 
     val dependency = ModuleDependencyItem.Exportable.ModuleDependency(ModuleId(moduleName), false, toEntityScope(scope), testJar)
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    moduleEntity = builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
       this.dependencies = this.dependencies + dependency
     }
   }
@@ -168,9 +180,24 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
     return LegacyBridgeModuleManagerComponent(project).modules.firstOrNull { it.name == moduleName }
   }
 
+  private fun MavenArtifact.ideaLibraryName(): String = "${this.libraryName}";
+
   override fun addSystemDependency(artifact: MavenArtifact,
                                    scope: DependencyScope) {
-    TODO()
+    assert(MavenConstants.SCOPE_SYSTEM == artifact.scope) { "Artifact scope should be \"system\"" }
+    val roots = ArrayList<LibraryRoot>()
+    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+                          LibraryRootTypeId("CLASSES"),
+                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+
+    val libraryTableId = LibraryTableId.ModuleLibraryTableId(ModuleId(moduleEntity.name))
+
+    val libraryEntity = builder.addLibraryEntity(artifact.ideaLibraryName(), libraryTableId,
+                                                 roots,
+                                                 emptyList(), entitySource)
+
+    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
+                                       MavenExternalSource.INSTANCE)
   }
 
   override fun addLibraryDependency(artifact: MavenArtifact,
@@ -191,30 +218,38 @@ class LegacyBridgeMavenRootModelAdapter(private val myMavenProject: MavenProject
                   LibraryRootTypeId("SOURCES"),
                   LibraryRoot.InclusionOptions.ROOT_ITSELF))
 
-    val libraryTableId = LibraryTableId.ModuleLibraryTableId(ModuleId(moduleEntity.name))
+    val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
 
-    val libraryEntity = builder.addLibraryEntity(artifact.libraryName, libraryTableId,
+    val libraryEntity = builder.addLibraryEntity(artifact.ideaLibraryName(), libraryTableId,
                                                  roots,
                                                  emptyList(), entitySource)
     builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
                                        MavenExternalSource.INSTANCE)
 
-    val libDependency = ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(libraryEntity.name, libraryTableId), false, toEntityScope(scope))
+    val libDependency = ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(libraryEntity.name, libraryTableId), false,
+                                                                          toEntityScope(scope))
 
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity, {
+    moduleEntity = builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity, {
       this.dependencies += this.dependencies + libDependency
     })
     val last = legacyBridge.orderEntries.last()
-    assert(last is LibraryOrderEntry && last.libraryName == artifact.libraryName)
+    assert(last is LibraryOrderEntry && last.libraryName == artifact.ideaLibraryName())
     return last as LibraryOrderEntry
-
   }
 
 
   override fun findLibrary(artifact: MavenArtifact): Library? {
-    return legacyBridge.legacyBridgeModuleLibraryTable().libraries.firstOrNull { it.name == artifact.libraryName }
+    return legacyBridge.legacyBridgeModuleLibraryTable().libraries.firstOrNull { it.name == artifact.ideaLibraryName() }
   }
 
-  override fun setLanguageLevel(level: LanguageLevel) {}
+  override fun setLanguageLevel(level: LanguageLevel) {
+    try {
+      modifiableModel.getModuleExtension(LanguageLevelModuleExtension::class.java)?.apply {
+        languageLevel = level
+      }
+    }
+    catch (e: IllegalArgumentException) { //bad value was stored
+    }
+  }
 
 }
