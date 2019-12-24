@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -127,16 +126,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     return true;
   }
 
-  private boolean checkCannotInferArgumentTypes(@NotNull CallInfo info) {
-    if (info.getArgumentTypes() != null) {
-      return true;
-    }
-    else {
-      highlightUnknownArgs(info);
-      return false;
-    }
-  }
-
   private boolean checkForImplicitEnumAssigning(@Nullable PsiType expectedType,
                                                 @NotNull GrExpression expression,
                                                 @NotNull GroovyPsiElement elementToHighlight) {
@@ -186,17 +175,16 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     Applicability applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
 
-    switch (applicable) {
-      case inapplicable:
-        highlightInapplicableMethodUsage(methodResolveResult, info, method);
-        return false;
-      case canBeApplicable:
-        if (checkUnknownArgs) {
-          highlightUnknownArgs(info);
-        }
-        return !checkUnknownArgs;
-      default:
-        return true;
+    if (applicable == Applicability.inapplicable) {
+      highlightInapplicableMethodUsage(methodResolveResult, info, method);
+      return false;
+    }
+    else if (applicable == Applicability.canBeApplicable && checkUnknownArgs) {
+      highlightUnknownArgs(info);
+      return false;
+    }
+    else {
+      return true;
     }
   }
 
@@ -224,17 +212,17 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrMethodCallInfo info = new GrMethodCallInfo(call);
     if (hasErrorElements(info.getArgumentList())) return;
 
-    if (info.getInvokedExpression() instanceof GrReferenceExpression) {
-      final GrReferenceExpression referenceExpression = (GrReferenceExpression)info.getInvokedExpression();
-      GroovyResolveResult resolveResult = info.advancedResolve();
-      GroovyResolveResult[] results = info.multiResolve();
-
-      PsiElement resolved = resolveResult.getElement();
-
-      if (!checkCannotInferArgumentTypes(info)) return;
-
-      if (resolved != null) {
-        if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
+    final GrExpression invokedExpression = info.getInvokedExpression();
+    if (invokedExpression instanceof GrReferenceExpression) {
+      final PsiType[] argumentTypes = info.getArgumentTypes();
+      if (argumentTypes == null) {
+        highlightUnknownArgs(info);
+        return;
+      }
+      final GroovyResolveResult[] results = info.multiResolve();
+      if (results.length == 1) {
+        GroovyResolveResult resolveResult = results[0];
+        if (resolveResult.getElement() instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
           GroovyMethodCallReference reference = call.getImplicitCallReference();
           if (reference != null) {
             Argument receiver = reference.getReceiverArgument();
@@ -246,27 +234,26 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           }
         }
         else {
-          checkCallApplicability(referenceExpression.getType(), true, info);
+          checkCallApplicability(invokedExpression.getType(), true, info);
         }
       }
-      else if (results.length > 0) {
-        PsiType[] argumentTypes = info.getArgumentTypes();
-        boolean checkUnknownArgs = argumentTypes == null || ContainerUtil.or(argumentTypes, Objects::isNull);
+      else if (results.length > 1) {
+        boolean checkUnknownArgs = ContainerUtil.or(argumentTypes, Objects::isNull);
         for (GroovyResolveResult result : results) {
           PsiElement current = result.getElement();
           if (current instanceof PsiMethod && !result.isInvokedOnProperty()) {
             if (!checkMethodApplicability(result, checkUnknownArgs, info)) return;
           }
           else {
-            if (!checkCallApplicability(referenceExpression.getType(), checkUnknownArgs, info)) return;
+            if (!checkCallApplicability(invokedExpression.getType(), checkUnknownArgs, info)) return;
           }
         }
 
         registerError(info.getElementToHighlight(), ProblemHighlightType.GENERIC_ERROR, GroovyBundle.message("method.call.is.ambiguous"));
       }
     }
-    else if (info.getInvokedExpression() != null) { //it checks in visitRefExpr(...)
-      final PsiType type = info.getInvokedExpression().getType();
+    else if (invokedExpression != null) { //it checks in visitRefExpr(...)
+      final PsiType type = invokedExpression.getType();
       checkCallApplicability(type, true, info);
     }
 
