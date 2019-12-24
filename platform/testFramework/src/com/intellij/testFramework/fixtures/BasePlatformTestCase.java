@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/testing_plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
  *
  * @author peter
+ * @see CodeInsightFixtureTestCase for "heavy" tests that require access to the real FS or changes project roots.
  */
 public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
