@@ -588,24 +588,20 @@ public class AddImportHelper {
     final PythonCodeStyleService pyCodeStyle = PythonCodeStyleService.getInstance();
     final boolean shouldSort = pyCodeStyle.isOptimizeImportsSortImports(file) && pyCodeStyle.isOptimizeImportsSortNamesInFromImports(file);
 
-    PyImportElement precedingNameElement = null;
+    PyImportElement followingNameElement = null;
     for (PyImportElement existingNameElement : fromImport.getImportElements()) {
       final String existingName = Objects.toString(existingNameElement.getImportedQName(), "");
       if (name.equals(existingName) && Comparing.equal(asName, existingNameElement.getAsName())) {
         return false;
       }
-      if (shouldSort && nameComparator.compare(existingName, name) < 0) {
-        precedingNameElement = existingNameElement;
+      if (shouldSort && followingNameElement == null && nameComparator.compare(existingName, name) > 0) {
+        followingNameElement = existingNameElement;
       }
     }
     final PyElementGenerator generator = PyElementGenerator.getInstance(fromImport.getProject());
     final PyImportElement newNameElement = generator.createImportElement(LanguageLevel.forElement(fromImport), name, asName);
-    if (shouldSort) {
-      fromImport.addAfter(newNameElement, precedingNameElement);
-    }
-    else {
-      fromImport.add(newNameElement);
-    }
+    // addBefore(newNameElement, null) is the same as inserting at the end
+    fromImport.addBefore(newNameElement, followingNameElement);
     // May need to add parentheses, trailing comma, etc.
     CodeStyleManager.getInstance(fromImport.getProject()).reformat(fromImport);
     return true;
