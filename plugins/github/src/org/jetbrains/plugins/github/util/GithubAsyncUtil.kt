@@ -117,10 +117,13 @@ fun <T, R> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> R): Com
     handler(result, error?.let { extractError(it) })
   }, EDT_EXECUTOR)
 
-fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
+fun <T, R> CompletableFuture<T>.successAsync(executor: Executor, handler: (T) -> R): CompletableFuture<R> =
   handleAsync(BiFunction<T?, Throwable?, R> { result: T?, error: Throwable? ->
     result?.let { handler(it) } ?: throw error?.let { extractError(it) } ?: IllegalStateException()
-  }, EDT_EXECUTOR)
+  }, executor)
+
+fun <T, R> CompletableFuture<T>.successOnEdt(handler: (T) -> R): CompletableFuture<R> =
+  successAsync(EDT_EXECUTOR, handler)
 
 fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> T): CompletableFuture<T> =
   handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->

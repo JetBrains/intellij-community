@@ -6,6 +6,7 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.Range
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAd
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.successAsync
 import kotlin.properties.Delegates
 
 class GHPRDiffReviewSupportImpl(private val project: Project,
@@ -72,16 +74,20 @@ class GHPRDiffReviewSupportImpl(private val project: Project,
 
   private fun doLoadReviewThreads(threadsModel: SingleValueModel<List<GHPRDiffReviewThreadMapping>?>, disposable: Disposable) {
     isLoadingReviewThreads = true
-    reviewService.loadReviewThreads().handleOnEdt(disposable) { result, error ->
-      if (result != null) {
-        if (showReviewThreads)
-          threadsModel.value = result.mapNotNull(reviewThreadMapper)
+    reviewService.loadReviewThreads()
+      .successAsync(ProcessIOExecutorService.INSTANCE) {
+        it.mapNotNull(reviewThreadMapper)
       }
-      if (error != null) {
-        LOG.info("Failed to load review threads", error)
+      .handleOnEdt(disposable) { result, error ->
+        if (result != null) {
+          if (showReviewThreads)
+            threadsModel.value = result
+        }
+        if (error != null) {
+          LOG.info("Failed to load review threads", error)
+        }
+        isLoadingReviewThreads = false
       }
-      isLoadingReviewThreads = false
-    }
   }
 
   companion object {
