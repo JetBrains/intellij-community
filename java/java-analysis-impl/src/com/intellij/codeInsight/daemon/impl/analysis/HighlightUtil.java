@@ -904,9 +904,11 @@ public class HighlightUtil extends HighlightUtilBase {
         else {
           //noinspection DuplicateExpressions
           if (PsiModifier.STATIC.equals(modifier) || privateOrProtected || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-            isAllowed = modifierOwnerParent instanceof PsiClass &&
+            isAllowed = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).getQualifiedName() != null ||
+                        modifierOwnerParent instanceof PsiDeclarationStatement && aClass.isRecord() ||            
+                        FileTypeUtils.isInServerPageFile(modifierOwnerParent) || 
                         // non-physical dummy holder might not have FQN
-                        ((PsiClass)modifierOwnerParent).getQualifiedName() != null || FileTypeUtils.isInServerPageFile(modifierOwnerParent) || !modifierOwnerParent.isPhysical();
+                        !modifierOwnerParent.isPhysical();
           }
           if (privateOrProtected && !isAllowed) {
             fix = QUICK_FIX_FACTORY.createChangeModifierFix();

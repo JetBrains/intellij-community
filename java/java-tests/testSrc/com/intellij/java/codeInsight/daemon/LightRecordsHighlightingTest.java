@@ -30,6 +30,9 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRecordCompactConstructors() {
     doTest();
   }
+  public void testLocalRecords() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.addClass("package java.lang; public abstract class Record {" +
