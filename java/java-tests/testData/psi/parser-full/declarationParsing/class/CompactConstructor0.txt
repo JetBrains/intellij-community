@@ -31,11 +31,9 @@ PsiJavaFile:CompactConstructor0.java
         <empty list>
       PsiWhiteSpace(' ')
       PsiIdentifier:ClassName('ClassName')
-      PsiWhiteSpace(' ')
-      PsiParameterList:
-        <empty list>
       PsiReferenceList
         <empty list>
+      PsiWhiteSpace(' ')
       PsiCodeBlock
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace('\n\n  ')
