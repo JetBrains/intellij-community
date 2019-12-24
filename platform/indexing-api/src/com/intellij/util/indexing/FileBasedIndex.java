@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -144,6 +145,15 @@ public abstract class FileBasedIndex {
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull Runnable command,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
+    ignoreDumbMode(dumbModeAccessType, () -> {
+      command.run();
+      return null;
+    });
+  }
+
+  @ApiStatus.Experimental
+  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
+                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
     throw new UnsupportedOperationException();
   }
 

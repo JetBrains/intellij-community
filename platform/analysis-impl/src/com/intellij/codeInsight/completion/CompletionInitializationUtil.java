@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -29,6 +29,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -81,14 +83,16 @@ public class CompletionInitializationUtil {
         }
       };
     Project project = psiFile.getProject();
-    for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
-      current.set(contributor);
-      contributor.beforeCompletion(context);
-      CompletionAssertions.checkEditorValid(editor);
-      assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
-                                                                                           contributor +
-                                                                                           " left the document uncommitted";
-    }
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      for (final CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(context.getPositionLanguage(), project)) {
+        current.set(contributor);
+        contributor.beforeCompletion(context);
+        CompletionAssertions.checkEditorValid(editor);
+        assert !PsiDocumentManager.getInstance(project).isUncommited(editor.getDocument()) : "Contributor " +
+                                                                                             contributor +
+                                                                                             " left the document uncommitted";
+      }
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
     return context;
   }
 
