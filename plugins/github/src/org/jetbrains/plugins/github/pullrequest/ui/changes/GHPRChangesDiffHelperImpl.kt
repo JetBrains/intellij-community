@@ -61,12 +61,12 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
     val (side, line) = when (diffData) {
       is GHPRChangeDiffData.Cumulative -> thread.position?.let { diffData.linesMapper.findFileLocation(it) } ?: return null
       is GHPRChangeDiffData.Commit -> {
-        if (originalCommitSha != diffData.commitSha) return null
         val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(thread.path, thread.diffHunk))
         patchReader.readTextPatches()
         val patchHunk = patchReader.textPatches[0].hunks.lastOrNull() ?: return null
         val position = GHPatchHunkUtil.getHunkLinesCount(patchHunk) - 1
-        GHPatchHunkUtil.findSideFileLineFromHunkLineIndex(patchHunk, position) ?: return null
+        val (unmappedSide, unmappedLine) = GHPatchHunkUtil.findSideFileLineFromHunkLineIndex(patchHunk, position) ?: return null
+        diffData.mapPosition(originalCommitSha, unmappedSide, unmappedLine) ?: return null
       }
     }
 
