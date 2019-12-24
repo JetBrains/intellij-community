@@ -8,7 +8,6 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
-import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -110,13 +109,21 @@ class EpBasedConfigurableGroup
           WithEpDependencies cast = ConfigurableWrapper.cast(WithEpDependencies.class, wrapper);
           if (cast != null) {
             Collection<BaseExtensionPointName<?>> dependencies = cast.getDependencies();
-            dependencies.forEach(el -> area.getExtensionPoint(el.getName()).addExtensionPointListener(epListener, false, this));
+            dependencies.forEach(
+              el ->findExtensionPoint(area, el.getName()).addExtensionPointListener(epListener, false, this));
           }
         }
       }
     }
 
     myListeners.add(listener);
+  }
+
+  @NotNull
+  private static ExtensionPoint<?> findExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name) {
+    return area.hasExtensionPoint(name)
+           ? area.getExtensionPoint(name)
+           : ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
   }
 
   @Override
