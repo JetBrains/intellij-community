@@ -483,4 +483,7 @@ public abstract class QuickFixFactory {
   
   @NotNull
   public abstract IntentionAction createAddParameterListFix(PsiMethod method);
+
+  @NotNull
+  public abstract IntentionAction createAddEmptyRecordHeaderFix(PsiClass record);
 }

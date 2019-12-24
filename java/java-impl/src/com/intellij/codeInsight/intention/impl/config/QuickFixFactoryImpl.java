@@ -913,4 +913,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createAddParameterListFix(PsiMethod method) {
     return new AddParameterListFix(method);
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddEmptyRecordHeaderFix(PsiClass psiClass) {
+    return new AddEmptyRecordHeaderFix(psiClass);
+  }
 }

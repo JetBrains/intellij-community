@@ -890,8 +890,10 @@ public class HighlightClassUtil {
     PsiIdentifier identifier = psiClass.getNameIdentifier();
     if (identifier == null) return null;
     if (header == null) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier)
         .descriptionAndTooltip(JavaErrorMessages.message("record.no.header")).create();
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddEmptyRecordHeaderFix(psiClass));
+      return info;
     }
     return null;
   }
