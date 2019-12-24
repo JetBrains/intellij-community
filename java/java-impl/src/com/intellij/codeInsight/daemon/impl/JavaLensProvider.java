@@ -13,10 +13,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -166,7 +163,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings>, E
           InlayPresentation[] withSettings = ArrayUtil.mergeArrays(trimmedSpace, spaceAndSettings);
           return factory.seq(withSettings);
         }, e -> true);
-        sink.addBlockElement(lineStart, true, true, 0, withAppearingSettings);
+        sink.addBlockElement(lineStart, true, true, BlockInlayPriority.LENS, withAppearingSettings);
       }
       return true;
     };

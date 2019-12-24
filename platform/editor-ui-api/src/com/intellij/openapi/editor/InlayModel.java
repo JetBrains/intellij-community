@@ -48,6 +48,8 @@ public interface InlayModel {
    *                 positioning of such elements (larger priority value means the element will be rendered closer to the text)
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
+   *
+   * @see BlockInlayPriority
    */
   @Nullable
   <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
