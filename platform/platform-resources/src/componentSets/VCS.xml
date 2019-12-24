@@ -53,10 +53,6 @@
       <headless-implementation-class/>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker</implementation-class>
     </component>
   </project-components>

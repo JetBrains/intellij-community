@@ -8,15 +8,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.wm.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,22 +27,79 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Ide.IncomingChangesOn;
+import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ObjectUtils.notNull;
 
-/**
- * @author yole
- */
-public class IncomingChangesIndicator {
+public class IncomingChangesIndicator implements StatusBarWidget, StatusBarWidget.IconPresentation {
   private static final Logger LOG = Logger.getInstance(IncomingChangesIndicator.class);
 
-  private final Project myProject;
-  private final CommittedChangesCache myCache;
-  private IndicatorComponent myIndicatorComponent;
+  private static final Icon INCOMING_ICON = IncomingChangesOn;
+  private static final Icon DISABLED_INCOMING_ICON = notNull(IconLoader.getDisabledIcon(IncomingChangesOn), IncomingChangesOn);
 
-  public IncomingChangesIndicator(Project project, CommittedChangesCache cache, MessageBus bus) {
+  @NotNull private final Project myProject;
+  private StatusBar myStatusBar;
+  private int myIncomingChangesCount;
+  private boolean myIsIncomingChangesAvailable;
+
+  public IncomingChangesIndicator(@NotNull Project project) {
     myProject = project;
-    myCache = cache;
-    final MessageBusConnection connection = bus.connect();
+  }
+
+  private void setIncomingChangesCount(int incomingChangesCount) {
+    LOG.debug("Refreshing indicator: " + incomingChangesCount + " changes");
+
+    myIncomingChangesCount = incomingChangesCount;
+    if (myStatusBar != null) myStatusBar.updateWidget(ID());
+  }
+
+  @Override
+  @NotNull
+  public String ID() {
+    return "IncomingChanges";
+  }
+
+  @Override
+  public WidgetPresentation getPresentation() {
+    return this;
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    if (!myIsIncomingChangesAvailable) return null; // hide widget
+
+    return myIncomingChangesCount > 0 ? INCOMING_ICON : DISABLED_INCOMING_ICON;
+  }
+
+  @Nullable
+  @Override
+  public String getTooltipText() {
+    if (!myIsIncomingChangesAvailable) return null;
+
+    return myIncomingChangesCount > 0
+           ? message("incoming.changes.indicator.tooltip", myIncomingChangesCount)
+           : "No incoming changelists available";
+  }
+
+  @Override
+  public Consumer<MouseEvent> getClickConsumer() {
+    return mouseEvent -> {
+      if (myStatusBar != null) {
+        DataContext dataContext = DataManager.getInstance().getDataContext((Component)myStatusBar);
+        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        if (project != null) {
+          ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+          changesView.show(() -> ChangesViewContentManager.getInstance(project).selectContent("Incoming"));
+        }
+      }
+    };
+  }
+
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    myStatusBar = statusBar;
+
+    final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
       @Override
       public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
@@ -59,20 +117,21 @@ public class IncomingChangesIndicator {
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, listener);
   }
 
+  @Override
+  public void dispose() {
+    myStatusBar = null;
+  }
+
   private void updateIndicatorVisibility() {
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+    if (myStatusBar == null) return;
+
     if (needIndicator()) {
-      if (myIndicatorComponent == null) {
-        myIndicatorComponent = new IndicatorComponent();
-        statusBar.addWidget(myIndicatorComponent, myProject);
-        refreshIndicator();
-      }
+      myIsIncomingChangesAvailable = true;
+      refreshIndicator();
     }
     else {
-      if (myIndicatorComponent != null) {
-        statusBar.removeWidget(myIndicatorComponent.ID());
-        myIndicatorComponent = null;
-      }
+      myIsIncomingChangesAvailable = false;
+      setIncomingChangesCount(0);
     }
   }
 
@@ -88,95 +147,17 @@ public class IncomingChangesIndicator {
   }
 
   private void refreshIndicator() {
-    if (myIndicatorComponent == null) {
-      return;
-    }
-    final List<CommittedChangeList> list = myCache.getCachedIncomingChanges();
-    if (list == null || list.isEmpty()) {
-      debug("Refreshing indicator: no changes");
-      myIndicatorComponent.clear();
-    }
-    else {
-      debug("Refreshing indicator: " + list.size() + " changes");
-      myIndicatorComponent.setChangesAvailable(VcsBundle.message("incoming.changes.indicator.tooltip", list.size()));
-    }
+    if (myStatusBar == null) return;
+
+    final List<CommittedChangeList> list = CommittedChangesCache.getInstance(myProject).getCachedIncomingChanges();
+    setIncomingChangesCount(list == null || list.isEmpty() ? 0 : list.size());
   }
 
-  private static void debug(@NonNls final String message) {
-    LOG.debug(message);
-  }
-
-  private static class IndicatorComponent implements StatusBarWidget, StatusBarWidget.IconPresentation {
-
-    private static final Icon INCOMING_ICON = IncomingChangesOn;
-    private static final Icon DISABLED_INCOMING_ICON = notNull(IconLoader.getDisabledIcon(IncomingChangesOn), IncomingChangesOn);
-
-    private StatusBar myStatusBar;
-
-    private Icon myCurrentIcon = DISABLED_INCOMING_ICON;
-    private String myToolTipText;
-
-    private IndicatorComponent() {
-    }
-
-    void clear() {
-      update(DISABLED_INCOMING_ICON, "No incoming changelists available");
-    }
-
-    void setChangesAvailable(@NotNull final String toolTipText) {
-      update(INCOMING_ICON, toolTipText);
-    }
-
-    private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {
-      myCurrentIcon = icon;
-      myToolTipText = toolTipText;
-      if (myStatusBar != null) myStatusBar.updateWidget(ID());
-    }
-
-    @Override
+  public static class Provider implements StatusBarWidgetProvider {
     @NotNull
-    public Icon getIcon() {
-      return myCurrentIcon;
-    }
-
     @Override
-    public String getTooltipText() {
-      return myToolTipText;
-    }
-
-    @Override
-    public Consumer<MouseEvent> getClickConsumer() {
-      return mouseEvent -> {
-        if (myStatusBar != null) {
-        DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
-        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        if (project != null) {
-          ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-          changesView.show(() -> ChangesViewContentManager.getInstance(project).selectContent("Incoming"));
-        }
-        }
-      };
-    }
-
-    @Override
-    @NotNull
-    public String ID() {
-      return "IncomingChanges";
-    }
-
-    @Override
-    public WidgetPresentation getPresentation() {
-      return this;
-    }
-
-    @Override
-    public void install(@NotNull StatusBar statusBar) {
-      myStatusBar = statusBar;
-    }
-
-    @Override
-    public void dispose() {
-      myStatusBar = null;
+    public StatusBarWidget getWidget(@NotNull Project project) {
+      return new IncomingChangesIndicator(project);
     }
   }
 }
