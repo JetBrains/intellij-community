@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,16 +85,15 @@ public final class Annotation implements Segment {
 
   /**
    * Creates an instance of the annotation.
-   *
+   * Do not create Annotation manually, please use {@link AnnotationHolder#newAnnotation(HighlightSeverity, String)} builder methods instead.
    * @param startOffset the start offset of the text range covered by the annotation.
    * @param endOffset   the end offset of the text range covered by the annotation.
    * @param severity    the severity of the problem indicated by the annotation (highlight, warning or error).
    * @param message     the description of the annotation (shown in the status bar or by "View | Error Description" action)
    * @param tooltip     the tooltip for the annotation (shown when hovering the mouse in the gutter bar)
-   * @see AnnotationHolder#createErrorAnnotation
-   * @see AnnotationHolder#createWarningAnnotation
-   * @see AnnotationHolder#createInfoAnnotation
+   * @see AnnotationHolder#newAnnotation
    */
+  @ApiStatus.Internal
   public Annotation(final int startOffset, final int endOffset, @NotNull HighlightSeverity severity, final String message, String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
     assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
