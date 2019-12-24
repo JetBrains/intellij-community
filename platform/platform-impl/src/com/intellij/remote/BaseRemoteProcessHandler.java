@@ -40,6 +40,15 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
     super(process, commandLine, charset);
   }
 
+  /**
+   * Override this method to fine-tune {@link BaseOutputReader} behavior.
+   */
+  @NotNull
+  protected BaseOutputReader.Options readerOptions() {
+    return new BaseOutputReader.Options();
+  }
+
+
   @Override
   protected void destroyProcessImpl() {
     if (!myProcess.killProcessTree()) {
@@ -55,7 +64,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
       @Override
       public void startNotified(@NotNull final ProcessEvent event) {
         try {
-          final RemoteOutputReader stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, myCommandLine) {
+          final RemoteOutputReader stdoutReader = new RemoteOutputReader(myProcess.getInputStream(), getCharset(), myProcess, myCommandLine, readerOptions()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
@@ -68,7 +77,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
             }
           };
 
-          final RemoteOutputReader stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess, myCommandLine) {
+          final RemoteOutputReader stderrReader = new RemoteOutputReader(myProcess.getErrorStream(), getCharset(), myProcess, myCommandLine, readerOptions()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDERR);
@@ -113,8 +122,12 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
     @NotNull private final RemoteProcess myRemoteProcess;
     private boolean myClosed;
 
-    RemoteOutputReader(@NotNull InputStream inputStream, Charset charset, @NotNull RemoteProcess remoteProcess, @NotNull String commandLine) {
-      super(inputStream, charset);
+    RemoteOutputReader(@NotNull InputStream inputStream,
+                       Charset charset,
+                       @NotNull RemoteProcess remoteProcess,
+                       @NotNull String commandLine,
+                       @NotNull Options options) {
+      super(inputStream, charset, options);
 
       myRemoteProcess = remoteProcess;
 
