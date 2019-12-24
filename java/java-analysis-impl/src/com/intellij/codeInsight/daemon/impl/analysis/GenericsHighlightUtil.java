@@ -899,7 +899,7 @@ public class GenericsHighlightUtil {
         for (PsiJavaCodeReferenceElement referenceElement : typeParameter1.getExtendsList().getReferenceElements()) {
           final PsiElement resolve = referenceElement.resolve();
           if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(parameters, resolve) > i) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceElement.getTextRange()).descriptionAndTooltip("Illegal forward reference").create();
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceElement).descriptionAndTooltip("Illegal forward reference").create();
           }
         }
       }
@@ -1488,7 +1488,7 @@ public class GenericsHighlightUtil {
     if (message != null) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(message)
-        .range(ref.getTextRange())
+        .range(ref)
         .create();
     }
 

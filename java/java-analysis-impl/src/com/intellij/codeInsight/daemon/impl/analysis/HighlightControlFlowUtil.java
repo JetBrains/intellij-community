@@ -629,7 +629,7 @@ public class HighlightControlFlowUtil {
     final String name = variable.getName();
     String description = JavaErrorMessages.message("assignment.to.final.variable", name);
     final HighlightInfo highlightInfo =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference).descriptionAndTooltip(description).create();
     final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
     if (innerClass == null || variable instanceof PsiField) {
       HighlightFixUtil.registerMakeNotFinalAction(variable, highlightInfo);
