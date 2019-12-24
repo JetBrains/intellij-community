@@ -84,7 +84,7 @@
     <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
     <externalProjectWatcherContributor implementation="org.jetbrains.idea.maven.project.MavenProjectsManager$ExternalWatcherContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
-    <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher"/>

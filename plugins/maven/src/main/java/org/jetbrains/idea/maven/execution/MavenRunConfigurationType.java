@@ -36,7 +36,7 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
 /**
  * @author Vladislav.Kaznacheev
  */
-public final class MavenRunConfigurationType extends AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
+public final class MavenRunConfigurationType implements ConfigurationType {
   private static final Key<Boolean> IS_DELEGATE_BUILD = new Key<>("IS_DELEGATE_BUILD");
   private final ConfigurationFactory myFactory;
   private static final int MAX_NAME_LENGTH = 40;
@@ -49,7 +49,6 @@ public final class MavenRunConfigurationType extends AbstractExternalSystemTaskC
    * reflection
    */
   MavenRunConfigurationType() {
-    super(MavenUtil.SYSTEM_ID);
     myFactory = new MavenRunConfigurationFactory(this);
   }
 

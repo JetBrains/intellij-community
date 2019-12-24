@@ -13,70 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.idea.maven.execution
 
-package org.jetbrains.idea.maven.execution;
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.actions.LazyRunConfigurationProducer
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 
-import com.intellij.execution.Location;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.junit.RuntimeConfigurationProducer;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfiguration>() {
 
-import java.util.List;
-
-public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
-  public MavenConfigurationProducer() {
-    super(MavenRunConfigurationType.getInstance());
+  override fun getConfigurationFactory(): ConfigurationFactory {
+    return MavenRunConfigurationType.getInstance().configurationFactories[0];
   }
 
-  @Override
-  public PsiElement getSourceElement() {
-    return restoreSourceElement();
+  override fun setupConfigurationFromContext(configuration: MavenRunConfiguration,
+                                             context: ConfigurationContext,
+                                             sourceElement: Ref<PsiElement>): Boolean {
+    val location = context.location ?: return false
+    val file = location.virtualFile ?: return false
+    if (!MavenUtil.isPomFile(location.project, file)) return false
+    if (location !is MavenGoalLocation) return false
+    if (context.module == null) return false
+    val goals = location.goals
+    val profiles = MavenProjectsManager.getInstance(location.getProject()).explicitProfiles
+    configuration.runnerParameters = MavenRunnerParameters(true, file.parent.path, file.name, goals, profiles.enabledProfiles,
+                                                           profiles.disabledProfiles)
+    return true
   }
 
-  @Override
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
-    storeSourceElement(location.getPsiElement());
-    final MavenRunnerParameters params = createBuildParameters(location);
-    if (params == null) return null;
+  override fun isConfigurationFromContext(configuration: MavenRunConfiguration,
+                                          context: ConfigurationContext): Boolean {
+    val location = context.location ?: return false
+    val file = location.virtualFile ?: return false
+    if (!MavenUtil.isPomFile(location.project, file)) return false
+    if (location !is MavenGoalLocation) return false
+    if (context.module == null) return false
 
-    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, location.getProject());
-  }
-
-  @Override
-  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
-                                                                 @NotNull List<? extends RunnerAndConfigurationSettings> existingConfigurations,
-                                                                 ConfigurationContext context) {
-
-    final MavenRunnerParameters runnerParameters = createBuildParameters(location);
-    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
-      final RunConfiguration configuration = existingConfiguration.getConfiguration();
-      if (configuration instanceof MavenRunConfiguration &&
-          ((MavenRunConfiguration)configuration).getRunnerParameters().equals(runnerParameters)) {
-        return existingConfiguration;
-      }
+    val tasks: List<String> = location.goals
+    val taskNames: List<String> = configuration.runnerParameters.goals
+    if (tasks.isEmpty() && taskNames.isEmpty()) {
+      return true
     }
-    return null;
-  }
 
-  private static MavenRunnerParameters createBuildParameters(Location l) {
-    if (!(l instanceof MavenGoalLocation)) return null;
-
-    VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
-    List<String> goals = ((MavenGoalLocation)l).getGoals();
-    MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
-
-    return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
-  }
-
-  @Override
-  public int compareTo(Object o) {
-    return PREFERED;
+    return tasks.containsAll(taskNames) && !taskNames.isEmpty()
   }
 }
