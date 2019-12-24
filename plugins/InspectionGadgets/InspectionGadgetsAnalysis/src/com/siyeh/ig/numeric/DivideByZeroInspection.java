@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
@@ -129,7 +130,7 @@ public class DivideByZeroInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'NaN'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "NaN");
     }
   }
 }

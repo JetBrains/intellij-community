@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -58,7 +55,7 @@ public class OctalEscapeInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '" + myHex + '\'';
+      return CommonQuickFixBundle.message("fix.replace.with.x", myHex);
     }
 
     @Nls

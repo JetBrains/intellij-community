@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -99,7 +100,7 @@ public class DfaOptionalSupport {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '." + myTargetMethodName + "()'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "." + myTargetMethodName + "()");
     }
 
     @Override

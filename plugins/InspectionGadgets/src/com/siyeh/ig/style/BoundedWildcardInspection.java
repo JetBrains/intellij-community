@@ -109,7 +109,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with '? " + (isExtends ? "extends" : "super") + "'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "? " + (isExtends ? PsiKeyword.EXTENDS : PsiKeyword.SUPER));
     }
 
     @Override

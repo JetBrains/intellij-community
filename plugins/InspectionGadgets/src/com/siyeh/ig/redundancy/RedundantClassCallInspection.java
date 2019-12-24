@@ -91,7 +91,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'instanceof'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.INSTANCEOF);
     }
 
     @NotNull

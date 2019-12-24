@@ -62,7 +62,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getName() {
-      return "Replace with " + (reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
+      return CommonQuickFixBundle.message("fix.replace.with.x", reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
     }
 
     @Nls

@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -100,7 +97,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with ' {" + myCount + "}'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", " {" + myCount + "}");
     }
 
     @Nls
