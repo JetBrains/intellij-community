@@ -230,10 +230,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       GroovyResolveResult[] results = info.multiResolve();
 
       PsiElement resolved = resolveResult.getElement();
-      if (resolved == null) {
-        GrExpression qualifier = referenceExpression.getQualifierExpression();
-        if (qualifier == null && GrHighlightUtil.isDeclarationAssignment(referenceExpression)) return;
-      }
 
       if (!checkCannotInferArgumentTypes(info)) return;
 
