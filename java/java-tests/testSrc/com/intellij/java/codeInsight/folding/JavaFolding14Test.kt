@@ -3,12 +3,10 @@ package com.intellij.java.codeInsight.folding
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.junit.Ignore
 
 class JavaFolding14Test : JavaFoldingTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_14
 
-  @Ignore
   fun testRecord() {
     val text = """
         class B {}
@@ -28,9 +26,7 @@ class JavaFolding14Test : JavaFoldingTestCase() {
     assertEquals("""
         FoldRegion -(20:44), placeholder='(...)'
         FoldRegion -(45:81), placeholder='{...}'
-        FoldRegion +(51:57), placeholder=' { '
         FoldRegion -(51:65), placeholder='{...}'
-        FoldRegion +(61:65), placeholder=' }'
     """.trimIndent(), regions.joinToString("\n"))
   }
 }

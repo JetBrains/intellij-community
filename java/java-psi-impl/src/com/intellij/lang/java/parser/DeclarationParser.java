@@ -342,7 +342,6 @@ public class DeclarationParser {
           return parseMethodFromLeftParenth(builder, declaration, false, true);
         }
         else if (builder.getTokenType() == JavaTokenType.LBRACE) { // compact constructor
-          emptyElement(builder, JavaElementType.PARAMETER_LIST);
           emptyElement(builder, JavaElementType.THROWS_LIST);
           return parseMethodBody(builder, declaration, false);
         }

@@ -36,16 +36,15 @@ record NotInitialized(int x,
   }
 }
 record TwoCompacts(int x, int y) {
-  <error descr="'TwoCompacts()' is already defined in 'TwoCompacts'">public TwoCompacts </error>{}
-  <error descr="'TwoCompacts()' is already defined in 'TwoCompacts'">public TwoCompacts </error>{}
+  <error descr="'TwoCompacts(int, int)' is already defined in 'TwoCompacts'">public TwoCompacts</error> {}
+  <error descr="'TwoCompacts(int, int)' is already defined in 'TwoCompacts'">public TwoCompacts</error> {}
 }
 record CompactAndCanonical(int x, int y) {
-  // TODO
-  public CompactAndCanonical(int x, int y) {
+  <error descr="'CompactAndCanonical(int, int)' is already defined in 'CompactAndCanonical'">public CompactAndCanonical(int x, int y)</error> {
     this.x = x;
     this.y = y;
   }
-  public CompactAndCanonical {
+  <error descr="'CompactAndCanonical(int, int)' is already defined in 'CompactAndCanonical'">public CompactAndCanonical</error> {
     
   }
 }

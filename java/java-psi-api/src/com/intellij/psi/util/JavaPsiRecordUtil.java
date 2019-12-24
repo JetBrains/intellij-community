@@ -51,7 +51,7 @@ public class JavaPsiRecordUtil {
    * regardless whether it's declared in the record or not
    */
   public static boolean isCompactConstructor(@NotNull PsiMethod method) {
-    return method.isConstructor() && method.getParameterList().textMatches("");
+    return method.isConstructor() && method.getParameterList().getText() == null;
   }
 
   /**

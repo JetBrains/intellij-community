@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.resolve;
 
+import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -46,11 +47,32 @@ public class ResolveRecordMethodsTest extends LightResolveTestCase {
     PsiJavaFile file = (PsiJavaFile)getFile();
 
     PsiClass record = file.getClasses()[0];
+    assertNavigatesToFirstRecordComponent(record, target);
+    assertTrue(targetField.hasAnnotation("F"));
+    assertFalse(targetField.hasAnnotation("M"));
+  }
+
+  public void testCompactConstructor() {
+    PsiElement target = resolve();
+    assertTrue(target instanceof PsiParameter);
+    PsiParameter parameter = (PsiParameter)target;
+    assertEquals(PsiType.INT, parameter.getType());
+
+    PsiJavaFile file = (PsiJavaFile)getFile();
+
+    PsiClass record = file.getClasses()[0];
+    assertNavigatesToFirstRecordComponent(record, target);
+    PsiMethod[] constructors = record.getConstructors();
+    assertEquals(1, constructors.length);
+    JvmParameter[] parameters = constructors[0].getParameters();
+    assertEquals(1, parameters.length);
+    assertEquals(parameters[0], parameter);
+  }
+
+  private static void assertNavigatesToFirstRecordComponent(PsiClass record, PsiElement target) {
     PsiRecordComponent[] components = record.getRecordComponents();
     assertSize(1, components);
     assertEquals(target.getTextOffset(), components[0].getTextOffset());
-    assertTrue(targetField.hasAnnotation("F"));
-    assertFalse(targetField.hasAnnotation("M"));
   }
 
   public void testExistingMethod() {
