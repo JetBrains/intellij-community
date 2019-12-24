@@ -18,6 +18,7 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -102,6 +103,11 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
+        return;
+      }
+      if (containingClass.isRecord() &&
+          (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method))) {
+        // compact and canonical constructors in record must be public, according to spec
         return;
       }
       if (containingClass.hasModifierProperty(PsiModifier.PUBLIC) ||
