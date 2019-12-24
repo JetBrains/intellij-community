@@ -2,11 +2,10 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -68,14 +67,11 @@ class PythonSdkConfigurator {
         "${sdk.name} has been configured as the project interpreter",
         NotificationType.INFORMATION
       ).apply {
-        addAction(
-          object : AnAction("Configure a Python Interpreter") {
-            override fun actionPerformed(e: AnActionEvent) {
-              PySdkPopupFactory.createAndShow(project, module)
-            }
-          }
-        )
+        val configureSdkAction = NotificationAction.createSimpleExpiring("Configure a Python Interpreter...") {
+          PySdkPopupFactory.createAndShow(project, module)
+        }
 
+        addAction(configureSdkAction)
         notify(project)
       }
     }
