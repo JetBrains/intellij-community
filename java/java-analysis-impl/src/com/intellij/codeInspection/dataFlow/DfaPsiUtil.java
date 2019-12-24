@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
@@ -563,5 +565,19 @@ public class DfaPsiUtil {
     PsiType expressionType = expression.getType();
     if (!(expressionType instanceof PsiClassType)) return classType;
     return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+  }
+
+  /**
+   * @param expr literal to create a constant type from
+   * @return a DfType that describes given literal
+   */
+  @NotNull
+  public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
+    PsiType type = expr.getType();
+    if (type == null) return DfTypes.TOP;
+    if (PsiType.NULL.equals(type)) return DfTypes.NULL;
+    Object value = expr.getValue();
+    if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
+    return DfTypes.constant(value, type);
   }
 }

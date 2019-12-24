@@ -125,15 +125,6 @@ public class DfaValueFactory {
   }
 
   /**
-   * @return a special value that indicates a failing contract.
-   * @see DfTypes#FAIL
-   */
-  @NotNull
-  public DfaTypeValue getContractFail() {
-    return fromDfType(DfTypes.FAIL);
-  }
-
-  /**
    * Creates a constant of given type and given value. Constants are always unique 
    * (two different constants are not equal to each other).
    * 
@@ -152,20 +143,6 @@ public class DfaValueFactory {
    */
   public DfaTypeValue getConstant(Object value, @NotNull PsiType type) {
     return fromDfType(DfTypes.constant(value, type));
-  }
-
-  /**
-   * @param expr literal to create a constant type value from
-   * @return a DfaTypeValue; null if the literal is malformed
-   */
-  @Nullable
-  public DfaTypeValue getConstantFromLiteral(PsiLiteralExpression expr) {
-    PsiType type = expr.getType();
-    if (type == null) return null;
-    if (PsiType.NULL.equals(type)) return getNull();
-    Object value = expr.getValue();
-    if (value == null) return null;
-    return getConstant(value, type);
   }
 
   /**
@@ -212,16 +189,6 @@ public class DfaValueFactory {
     if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
     @NonNls String name = variable.getName();
     return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
-  }
-  /**
-   * Creates a constant that corresponds to the default value of given type
-   *
-   * @param type type to get the default value for
-   * @return a constant (e.g. 0 from int, false for boolean, null for reference type).
-   */
-  @NotNull
-  public DfaTypeValue getDefaultValue(@NotNull PsiType type) {
-    return fromDfType(DfTypes.constant(PsiTypesUtil.getDefaultValue(type), type));
   }
 
   @NotNull

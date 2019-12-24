@@ -353,7 +353,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.getContractFail();
+      return factory.fromDfType(DfTypes.FAIL);
     }
 
     @Override

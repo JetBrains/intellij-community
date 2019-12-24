@@ -74,7 +74,7 @@ public class DfaExpressionFactory {
     }
 
     if (expression instanceof PsiLiteralExpression) {
-      return myFactory.getConstantFromLiteral((PsiLiteralExpression)expression);
+      return myFactory.fromDfType(DfaPsiUtil.fromLiteral((PsiLiteralExpression)expression));
     }
 
     if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {

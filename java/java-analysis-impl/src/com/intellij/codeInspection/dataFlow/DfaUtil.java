@@ -4,8 +4,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -359,7 +359,10 @@ public class DfaUtil {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                           DataFlowRunner runner,
+                                           DfaMemoryState memState,
+                                           DfaValue val) {
       PsiExpression place = instruction.getExpression();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
@@ -374,7 +377,7 @@ public class DfaUtil {
           }
         });
       }
-      return super.visitPush(instruction, runner, memState);
+      return super.visitPush(instruction, runner, memState, val);
     }
 
     @Override

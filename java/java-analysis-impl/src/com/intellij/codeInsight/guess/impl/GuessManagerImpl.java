@@ -558,11 +558,14 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                           DataFlowRunner runner,
+                                           DfaMemoryState memState,
+                                           DfaValue value) {
       if (myForPlace == instruction.getExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
+      DfaInstructionState[] states = super.visitPush(instruction, runner, memState, value);
       if (myForPlace == instruction.getExpression()) {
         addConstraints(states);
       }

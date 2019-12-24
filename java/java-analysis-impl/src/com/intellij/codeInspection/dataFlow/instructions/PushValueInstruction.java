@@ -20,39 +20,28 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PushInstruction extends ExpressionPushingInstruction<PsiExpression> {
-  private final @NotNull DfaValue myValue;
-  private final boolean myReferenceWrite;
+public class PushValueInstruction extends ExpressionPushingInstruction<PsiExpression> {
+  private final @NotNull DfType myValue;
 
-  public PushInstruction(@NotNull DfaValue value, PsiExpression place) {
-    this(value, place, false);
-  }
-
-  public PushInstruction(@NotNull DfaValue value, PsiExpression place, final boolean isReferenceWrite) {
+  public PushValueInstruction(@NotNull DfType value, PsiExpression place) {
     super(place);
     myValue = value;
-    myReferenceWrite = isReferenceWrite;
   }
 
-  public boolean isReferenceWrite() {
-    return myReferenceWrite;
-  }
-
-  @NotNull
-  public DfaValue getValue() {
-    return myValue;
+  public PushValueInstruction(@NotNull DfType value) {
+    this(value, null);
   }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitPush(this, runner, stateBefore, myValue);
+    return visitor.visitPush(this, runner, stateBefore, runner.getFactory().fromDfType(myValue));
   }
 
   public String toString() {
-    return "PUSH " + myValue;
+    return "PUSH_VAL " + myValue;
   }
 }

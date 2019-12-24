@@ -424,6 +424,31 @@ public class DfTypes {
   }
 
   /**
+   * @param type PsiType to get default value of
+   * @return a constant that represents a JVM default value of given type (0 for int, false for boolean, etc)
+   */
+  public static DfConstantType<?> defaultValue(@NotNull PsiType type) {
+    if (type instanceof PsiPrimitiveType) {
+      switch (type.getCanonicalText()) {
+        case "boolean":
+          return FALSE;
+        case "byte":
+        case "char":
+        case "short":
+        case "int":
+          return intValue(0);
+        case "long":
+          return longValue(0L);
+        case "float":
+          return floatValue(0F);
+        case "double":
+          return doubleValue(0D);
+      }
+    }
+    return NULL;
+  }
+
+  /**
    * @param type type of the object
    * @param nullability nullability
    * @return a type that references given objects of given type (or it subtypes) and has given nullability 

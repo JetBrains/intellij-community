@@ -309,8 +309,9 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    pushExpressionResult(instruction.getValue(), instruction, memState);
+  public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction, DataFlowRunner runner, 
+                                         DfaMemoryState memState, DfaValue value) {
+    pushExpressionResult(value, instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
