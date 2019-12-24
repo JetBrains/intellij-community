@@ -15,14 +15,16 @@ import java.io.IOException;
 public class SerializedStubTreeDataExternalizer implements DataExternalizer<SerializedStubTree> {
   private final boolean myIncludeInputs;
   private final SerializationManagerEx mySerializationManager;
+  private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
   public SerializedStubTreeDataExternalizer() {
-    this(true, null);
+    this(true, null, SerializedStubTree.IDE_USED_EXTERNALIZER);
   }
 
-  public SerializedStubTreeDataExternalizer(boolean inputs, SerializationManagerEx manager) {
+  public SerializedStubTreeDataExternalizer(boolean inputs, SerializationManagerEx manager, StubForwardIndexExternalizer<?> externalizer) {
     myIncludeInputs = inputs;
     mySerializationManager = manager;
+    myStubIndexesExternalizer = externalizer;
   }
 
   @Override
@@ -44,6 +46,7 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
   @NotNull
   @Override
   public final SerializedStubTree read(@NotNull final DataInput in) throws IOException {
+    SerializedStubTree tree;
     if (PersistentHashMapValueStorage.COMPRESSION_ENABLED) {
       int serializedStubsLength = DataInputOutputUtil.readINT(in);
       byte[] bytes = new byte[serializedStubsLength];
@@ -58,14 +61,15 @@ public class SerializedStubTreeDataExternalizer implements DataExternalizer<Seri
         indexedStubByteLength = 0;
         indexedStubBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
       }
-      SerializedStubTree tree = new SerializedStubTree(bytes, bytes.length, null, indexedStubBytes, indexedStubByteLength, null);
-      if (mySerializationManager != null) tree.setSerializationManager(mySerializationManager);
-      return tree;
+      tree = new SerializedStubTree(bytes, bytes.length, null, indexedStubBytes, indexedStubByteLength, null);
     }
     else {
       byte[] treeBytes = CompressionUtil.readCompressed(in);
       byte[] indexedStubBytes = myIncludeInputs ? CompressionUtil.readCompressed(in) : ArrayUtil.EMPTY_BYTE_ARRAY;
-      return new SerializedStubTree(treeBytes, treeBytes.length, null, indexedStubBytes, indexedStubBytes.length, null);
+      tree = new SerializedStubTree(treeBytes, treeBytes.length, null, indexedStubBytes, indexedStubBytes.length, null);
     }
+    if (mySerializationManager != null) tree.setSerializationManager(mySerializationManager);
+    tree.setStubIndexesExternalizer(myStubIndexesExternalizer);
+    return tree;
   }
 }
