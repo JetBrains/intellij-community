@@ -144,6 +144,15 @@ public abstract class PackageManagementService {
 
   public abstract void fetchPackageDetails(String packageName, CatchingConsumer<String, Exception> consumer);
 
+  /**
+   * @return identifier of this service for reported usage data (sent for JetBrains implementations only).
+   *         Return null to avoid reporting any usage data.
+   */
+  @Nullable
+  public String getID() {
+    return null;
+  }
+
   public interface Listener {
     /**
      * Fired when the installation of the specified package is started.

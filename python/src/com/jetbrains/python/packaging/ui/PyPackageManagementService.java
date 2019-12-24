@@ -399,4 +399,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public int compareVersions(@NotNull String version1, @NotNull String version2) {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }
+
+  @Nullable
+  @Override
+  public String getID() {
+    return "Python";
+  }
 }
