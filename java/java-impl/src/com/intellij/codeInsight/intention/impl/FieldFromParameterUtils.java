@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,6 +125,14 @@ public final class FieldFromParameterUtils {
       }
       else {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        if (parent instanceof PsiExpressionList) {
+          // skip validating calls like Objects.requireNonNull
+          PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
+          PsiExpression returnedValue = PsiUtil.skipParenthesizedExprDown(JavaMethodContractUtil.findReturnedValue(call));
+          if (returnedValue == expression) {
+            parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+          }
+        }
         assignmentExpression = parent instanceof PsiAssignmentExpression ? (PsiAssignmentExpression)parent : null;
       }
       if (assignmentExpression == null) continue;
