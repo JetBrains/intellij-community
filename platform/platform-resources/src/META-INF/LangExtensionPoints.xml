@@ -377,11 +377,11 @@
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider" dynamic="true"/>
     <extensionPoint name="virtualFileQualifiedNameProvider" interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
-    <extensionPoint name="usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
-    <extensionPoint name="importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule"/>
+    <extensionPoint name="usageFilteringRuleProvider" interface="com.intellij.usages.rules.UsageFilteringRuleProvider" dynamic="true"/>
+    <extensionPoint name="importFilteringRule" interface="com.intellij.usages.rules.ImportFilteringRule" dynamic="true"/>
     <extensionPoint name="usageGroupingRuleProvider" interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
     <extensionPoint name="usageTypeProvider" interface="com.intellij.usages.impl.rules.UsageTypeProvider" dynamic="true"/>
-    <extensionPoint name="fileStructureGroupRuleProvider" interface="com.intellij.usages.impl.FileStructureGroupRuleProvider"/>
+    <extensionPoint name="fileStructureGroupRuleProvider" interface="com.intellij.usages.impl.FileStructureGroupRuleProvider" dynamic="true"/>
     <extensionPoint name="usageContextPanelProvider" interface="com.intellij.usages.UsageContextPanel$Provider" area="IDEA_PROJECT"/>
     <extensionPoint name="usageViewFactory" interface="com.intellij.usages.impl.UsageViewFactory" dynamic="true"/>
     <extensionPoint name="usageViewElementsListener" interface="com.intellij.usages.impl.UsageViewElementsListener" dynamic="true"/>
