@@ -15,6 +15,17 @@ record TypeMismatch<T>(T t) {
     this.t = null;
   }
 }
+// Current spec draft allows this
+record VarArgMismatch(int... x) {
+  public VarArgMismatch(int[] x) {
+    this.x = x;
+  }
+}
+record VarArgMismatch2(int[] x) {
+  public VarArgMismatch2(int... x) {
+    this.x = x;
+  }
+}
 record Delegate(int x) {
   public Delegate(int x) {
     <error descr="Canonical constructor cannot delegate to another constructor">this()</error>;

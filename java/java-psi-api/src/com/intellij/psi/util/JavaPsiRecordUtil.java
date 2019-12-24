@@ -71,6 +71,12 @@ public class JavaPsiRecordUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiType componentType = components[i].getType();
       PsiType parameterType = parameters[i].getType();
+      if (componentType instanceof PsiEllipsisType) {
+        componentType = ((PsiEllipsisType)componentType).toArrayType();
+      }
+      if (parameterType instanceof PsiEllipsisType) {
+        parameterType = ((PsiEllipsisType)parameterType).toArrayType();
+      }
       if (!TypeConversionUtil.erasure(componentType).equals(TypeConversionUtil.erasure(parameterType))) return false;
     }
     return true;
