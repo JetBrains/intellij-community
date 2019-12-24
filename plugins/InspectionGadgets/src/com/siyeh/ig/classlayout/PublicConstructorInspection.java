@@ -105,7 +105,7 @@ public class PublicConstructorInspection extends BaseInspection {
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      if (aClass.isInterface() || aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
         return;
       }
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC) || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
