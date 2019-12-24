@@ -242,11 +242,12 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
       return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + (pluginDescriptor == null ? pluginId.getIdString() : pluginDescriptor.getName());
     }, "<br>");
-    String inputS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
-    String outS = deps.size() == 1 ? "" : "s";
+    String beginS = descriptorsWithChangedEnabledState.length == 1 ? "" : "s";
+    String middleS = descriptorsWithChangedEnabledState.length == 1 ? "s" : "";
+    String endS = deps.size() == 1 ? "" : "s";
     String message = newEnabledState ?
-                      "<html>The enabled plugin" + inputS + " depends on the following plugin" + outS + ":<br>" + listOfDependencies + "</html>"
-                      : "<html>The following plugin" + inputS + " depend on the disabled plugin" + outS + ":<br>" + listOfDependencies + "</html>";
+                      "<html>The enabled plugin" + beginS + " depend" + middleS + " on the following plugin" + endS + ":<br>" + listOfDependencies + "</html>"
+                      : "<html>The following plugin" + beginS + " depend" + middleS + " on the disabled plugin" + endS + ":<br>" + listOfDependencies + "</html>";
     if (Messages.showOkCancelDialog(message, newEnabledState ? "Enable required plugins" : "Disable dependent plugins",
                                     newEnabledState ? "Enable" :  "Disable" , Messages.CANCEL_BUTTON, Messages.getQuestionIcon()) == Messages.OK) {
       for (PluginId pluginId : deps) {
