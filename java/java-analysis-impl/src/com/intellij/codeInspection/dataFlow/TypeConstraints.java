@@ -389,6 +389,11 @@ public class TypeConstraints {
       return obj == this || obj instanceof ExactArray && myComponent.equals(((ExactArray)obj).myComponent);
     }
 
+    @Override
+    public int hashCode() {
+      return myComponent.hashCode() * 31 + 1;
+    }
+
     @NotNull
     @Override
     public String toString() {
