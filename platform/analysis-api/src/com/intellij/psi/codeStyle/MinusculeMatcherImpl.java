@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.CharBuffer;
+import java.util.Arrays;
+
 /**
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
  * Used in navigation, code completion, speed search etc.
@@ -235,20 +238,31 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   @Nullable
   private FList<TextRange> matchBySubstring(@NotNull String name) {
     boolean infix = isPatternChar(0, '*');
-    if (name.length() < myPattern.length - (infix ? 1 : 0)) {
+    char[] patternWithoutWildChar = filterChar(myPattern, '*');
+    if (name.length() < patternWithoutWildChar.length) {
       return null;
     }
     if (infix) {
-      int index = StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(myPattern, 1, myPattern.length), 0);
+      int index = StringUtil.indexOfIgnoreCase(name, new CharArrayCharSequence(patternWithoutWildChar, 0, patternWithoutWildChar.length), 0);
       if (index >= 0) {
-        return FList.<TextRange>emptyList().prepend(TextRange.from(index, myPattern.length - 1));
+        return FList.<TextRange>emptyList().prepend(TextRange.from(index, patternWithoutWildChar.length - 1));
       }
       return null;
     }
-    if (CharArrayUtil.regionMatches(myPattern, 0, myPattern.length, name)) {
-      return FList.<TextRange>emptyList().prepend(new TextRange(0, myPattern.length));
+    if (CharArrayUtil.regionMatches(patternWithoutWildChar, 0, patternWithoutWildChar.length, name)) {
+      return FList.<TextRange>emptyList().prepend(new TextRange(0, patternWithoutWildChar.length));
     }
     return null;
+  }
+
+  private static char[] filterChar(char[] source, char filteredChar) {
+    char[] buffer = new char[source.length];
+    int i = 0;
+    for (char c : source) {
+      if (c != filteredChar) buffer[i++] = c;
+    }
+
+    return Arrays.copyOf(buffer, i);
   }
 
   /**
