@@ -20,7 +20,8 @@ public abstract class SingleEntryCompositeIndexer<V, SubIndexerType, SubIndexerV
   @Nullable
   @Override
   protected V computeValue(@NotNull FileContent inputData) {
-    return computeValue(inputData, calculateSubIndexer(inputData));
+    SubIndexerType subIndexerType = calculateSubIndexer(inputData);
+    return subIndexerType != null ? computeValue(inputData, subIndexerType) : null;
   }
 
   @Nullable
