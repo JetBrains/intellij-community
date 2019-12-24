@@ -133,7 +133,7 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun toStorage(): TypedEntityStorage
 
   companion object {
-    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
       return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
     }

@@ -35,6 +35,7 @@ internal open class ProxyBasedEntityStorage(internal open val entitiesByType: Ma
                                             internal open val entitiesByPersistentIdHash: Map<Int, Set<EntityData>>,
                                             internal open val entityById: Map<Long, EntityData>,
                                             internal open val referrers: Map<Long, List<Long>>,
+                                            internal open val persistentIdReferrers: Map<Long, List<Long>>,
                                             internal val metaDataRegistry: EntityMetaDataRegistry) : TypedEntityStorage {
   companion object {
     private val proxyClassConstructors = ConcurrentFactoryMap.createMap<Class<out TypedEntity>, Constructor<out ProxyBasedEntity>> {
@@ -145,8 +146,10 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                              override val entitiesByPersistentIdHash: MutableMap<Int, MutableSet<EntityData>>,
                                              override val entityById: MutableMap<Long, EntityData>,
                                              override val referrers: MutableMap<Long, MutableList<Long>>,
+                                             override val persistentIdReferrers: MutableMap<Long, MutableList<Long>>,
                                              metaDataRegistry: EntityMetaDataRegistry)
-  : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, metaDataRegistry), TypedEntityStorageBuilder, TypedEntityStorageDiffBuilder {
+  : ProxyBasedEntityStorage(entitiesByType, entitiesBySource, entitiesByPersistentIdHash, entityById, referrers, persistentIdReferrers, metaDataRegistry),
+    TypedEntityStorageBuilder, TypedEntityStorageDiffBuilder {
 
   constructor(storage: ProxyBasedEntityStorage)
     : this(storage.entitiesByType.mapValuesTo(HashMap()) { it.value.toMutableSet() },
@@ -154,6 +157,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
            storage.entitiesByPersistentIdHash.mapValuesTo(HashMap()) { it.value.toMutableSet() },
            storage.entityById.toMutableMap(),
            storage.referrers.mapValuesTo(HashMap()) { it.value.toMutableList() },
+           storage.persistentIdReferrers.mapValuesTo(HashMap()) { it.value.toMutableList() },
            storage.metaDataRegistry)
 
   private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
@@ -209,6 +213,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (handleReferrers) {
       addReferences(entityData)
     }
+    addPersistentIdReferrers(entityData)
   }
 
   override fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
@@ -263,6 +268,9 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       removeReferences(oldData)
       addReferences(newData)
     }
+
+    addPersistentIdReferrers(newData)
+    updatePersistentIdReferrers(oldData, newData)
   }
 
   private fun removeReferences(data: EntityData) {
@@ -273,6 +281,48 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       }
 
       if (refs.isEmpty()) referrers.remove(referencesId)
+    }
+  }
+
+  private fun addPersistentIdReferrers(data: EntityData) {
+    data.collectPersistentIdReferences { persistentIdReference ->
+      val entityDataToTypedEntity = entitiesByPersistentIdHash[persistentIdReference.hashCode()]?.asSequence()
+                                      ?.associateWith { createEntityInstance(it) }
+                                    ?: emptyMap()
+      entityDataToTypedEntity.forEach { entity ->
+        val typedEntity = entity.value
+        val entityData = entity.key
+        if (typedEntity is TypedEntityWithPersistentId && typedEntity.persistentId() == persistentIdReference) {
+          val refs = persistentIdReferrers.getOrPut(entityData.id) { mutableListOf() }
+          // TODO Slow check
+          if (refs.contains(data.id)) {
+            // TODO Add edit without reference handling
+            return@forEach
+            //error("Id ${data.id} was already in references with target id ${entityData.id}")
+          }
+          refs.add(data.id)
+        }
+      }
+    }
+  }
+
+  private fun updatePersistentIdReferrers(oldData: EntityData, newData: EntityData) {
+    if (oldData.persistentId() == newData.persistentId()) return
+    persistentIdReferrers[newData.id]?.forEach { id ->
+      val refOldData = entityById[id]
+      if (refOldData == null) return
+
+      val oldIdHash = (createEntityInstance(refOldData) as? TypedEntityWithPersistentId)?.persistentId()?.hashCode()
+      val refNewData = refOldData.createModifiableCopy()
+      val newImpl = EntityImpl(refNewData, this)
+      val newInstance = createProxy(refNewData.unmodifiableEntityType, newImpl)
+      newImpl.allowModifications {
+        newImpl.data.replaceAllPersistentIdReferences(oldData.persistentId(), newData.persistentId())
+      }
+      // Referrers are updated in proxy method invocation
+      replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false)
+      updateChangeLog { it.add(ChangeEntry.ReplaceEntity(refOldData.id, refNewData)) }
+
     }
   }
 
@@ -584,7 +634,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
-          is EntityPropertyKind.DataClass -> {
+          is EntityPropertyKind.Class -> {
             assertDataClassIsWithoutReferences(itemKind)
             value.hashCode()
           }
@@ -593,7 +643,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         }
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value.hashCode()
-        is EntityPropertyKind.DataClass -> {
+        is EntityPropertyKind.Class -> {
           assertDataClassIsWithoutReferences(kind)
           value.hashCode()
         }
@@ -626,7 +676,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> (v1 as List<Any?>) == (v2 as List<Any?>)
-          is EntityPropertyKind.DataClass -> {
+          is EntityPropertyKind.Class -> {
             assertDataClassIsWithoutReferences(itemKind)
             (v1 as List<Any?>) == (v2 as List<Any?>)
           }
@@ -641,7 +691,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
 
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> v1 == v2
-        is EntityPropertyKind.DataClass -> {
+        is EntityPropertyKind.Class -> {
           assertDataClassIsWithoutReferences(kind)
           v1 == v2
         }
@@ -655,9 +705,9 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     return true
   }
 
-  private fun assertDataClassIsWithoutReferences(dataClassKind: EntityPropertyKind.DataClass) {
-    if (dataClassKind.hasReferences) {
-      TODO("DataClasses with references are not supported here yet: ${dataClassKind.dataClass}")
+  private fun assertDataClassIsWithoutReferences(classKind: EntityPropertyKind.Class) {
+    if (classKind.hasReferences) {
+      TODO("DataClasses with references are not supported here yet: ${classKind.aClass}")
     }
   }
 
@@ -686,7 +736,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
           is EntityPropertyKind.List -> error("List of lists are not supported")
           // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
           is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value
-          is EntityPropertyKind.DataClass -> {
+          is EntityPropertyKind.Class -> {
             assertDataClassIsWithoutReferences(itemKind)
             value
           }
@@ -695,7 +745,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
         }
         // TODO EntityReferences/EntityValues are not supported in sealed hierarchies
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> value
-        is EntityPropertyKind.DataClass -> {
+        is EntityPropertyKind.Class -> {
           assertDataClassIsWithoutReferences(kind)
           value
         }
@@ -767,6 +817,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
                                                                          entitiesByPersistentIdHash.mapValues { it.value.toSet() },
                                                                          entityById.toMap(),
                                                                          referrers.mapValues { it.value.toList() },
+                                                                         persistentIdReferrers.mapValues { it.value.toList() },
                                                                          metaDataRegistry)
 
   sealed class ChangeEntry {
@@ -818,6 +869,9 @@ internal class EntityData(val entitySource: EntitySource, val id: Long, val meta
   }
 
   fun collectReferences(collector: (Long) -> Unit) = metaData.collectReferences(properties, collector)
+  fun collectPersistentIdReferences(collector: (PersistentEntityId<*>) -> Unit) = metaData.collectPersistentIdReferences(properties, collector)
+  fun replaceAllPersistentIdReferences(oldEntity: PersistentEntityId<*>, newEntity: PersistentEntityId<*>) =
+    metaData.replaceAllPersistentIdReferences(properties, oldEntity, newEntity)
 
   override fun toString() = "${unmodifiableEntityType.simpleName}@$id"
 }
@@ -927,19 +981,19 @@ internal class EntityImpl(override val data: EntityData,
 
             Unit
           }
-          is EntityPropertyKind.DataClass -> {
+          is EntityPropertyKind.Class -> {
             val oldValues = data.properties[propertyName]
             data.properties[propertyName] = newValue
 
             if (oldValues != null) {
               for (oldValue in oldValues as List<*>) {
-                itemKind.collectReferences(oldValue) { referrers.listRemoveValue(it, id) }
+                itemKind.collectReferences<Long>(oldValue) { referrers.listRemoveValue(it, id) }
               }
             }
 
             if (newValue != null) {
               for (value in newValue as List<*>) {
-                itemKind.collectReferences(newValue) { referrers.listPutValue(it, id) }
+                itemKind.collectReferences<Long>(newValue) { referrers.listPutValue(it, id) }
               }
             }
 
@@ -951,12 +1005,12 @@ internal class EntityImpl(override val data: EntityData,
           is EntityPropertyKind.SealedKotlinDataClassHierarchy, is EntityPropertyKind.Primitive,
           is EntityPropertyKind.PersistentId, EntityPropertyKind.FileUrl -> data.properties[propertyName] = newValue
         }.let {  } // exhaustive when
-        is EntityPropertyKind.DataClass -> {
+        is EntityPropertyKind.Class -> {
           val oldValue = data.properties[propertyName]
           data.properties[propertyName] = newValue
 
-          propertyKind.collectReferences(oldValue) { referrers.listRemoveValue(it, id) }
-          propertyKind.collectReferences(newValue) { referrers.listPutValue(it, id) }
+          propertyKind.collectReferences<Long>(oldValue) { referrers.listRemoveValue(it, id) }
+          propertyKind.collectReferences<Long>(newValue) { referrers.listPutValue(it, id) }
         }
         else -> data.properties[propertyName] = newValue
       }

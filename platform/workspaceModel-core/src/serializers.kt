@@ -127,9 +127,9 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
         Unit
       }
 
-      is EntityPropertyKind.DataClass -> {
-        if (classResolver.getRegistration(kind.dataClass) == null) {
-          recursiveDataClass(kind.dataClass, metaDataRegistry)
+      is EntityPropertyKind.Class -> {
+        if (classResolver.getRegistration(kind.aClass) == null) {
+          recursiveDataClass(kind.aClass, metaDataRegistry)
         }
         Unit
       }
@@ -137,7 +137,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       // It's Long
       is EntityPropertyKind.EntityValue -> Unit
       is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-        kind.subclasses.forEach { subclass ->
+        kind.subclassesProperties.forEach { subclassProperty ->
+          val subclass = subclassProperty.key
           when {
             subclass.isData -> recursiveDataClass(subclass.java, metaDataRegistry)
             subclass.objectInstance != null -> {
@@ -148,7 +149,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
                 })
               }
             }
-            else -> error("Unsupported subclass: $subclass")
+            else -> error("Unsupported subclass: ${subclassProperty.key}")
           }
 
         }
@@ -165,7 +166,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
     }
     else {
       register(clazz)
-      val metadata = metaDataRegistry.getDataClassMetaData(clazz)
+      val metadata = metaDataRegistry.getClassMetaData(clazz)
       metadata.properties.values.forEach { recursiveRegister(it, metaDataRegistry) }
     }
   }
@@ -201,7 +202,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
 
       output.writeVarInt(allEntitySourceClasses.size, true)
       for (sourceClass in allEntitySourceClasses) {
-        val hash = storage.metaDataRegistry.getDataClassMetaData(sourceClass).hash(storage.metaDataRegistry)
+        val hash = storage.metaDataRegistry.getClassMetaData(sourceClass).hash(storage.metaDataRegistry)
         kryo.writeObject(output, TypeInfo(sourceClass.name, typeResolver.getPluginId(sourceClass), hash))
       }
 
@@ -273,7 +274,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
         }
 
         val expectedHash = typeInfo.hash
-        val actualHash = metaDataRegistry.getDataClassMetaData(clazz).hash(metaDataRegistry)
+        val actualHash = metaDataRegistry.getClassMetaData(clazz).hash(metaDataRegistry)
         if (!expectedHash.contentEquals(actualHash)) {
           error("Serialized entity source type and current runtime type are different: $clazz")
         }
