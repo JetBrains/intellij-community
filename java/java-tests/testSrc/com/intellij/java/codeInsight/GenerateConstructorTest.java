@@ -19,17 +19,20 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.java.codeInspection.DataFlowInspectionTest;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -104,9 +107,26 @@ public class GenerateConstructorTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testNullableField() { doTest(); }
+  
+  public void testRecordCompactConstructor() { doTestRecordConstructor(true); }
+  
+  public void testRecordCanonicalConstructor() { doTestRecordConstructor(false); }
 
   private void doTest() {
     doTest(false);
+  }
+  
+  private void doTestRecordConstructor(boolean compact) {
+    String name = getTestName(false);
+    myFixture.configureByFile("before" + name + ".java");
+    new GenerateConstructorHandler() {
+      @Nullable
+      @Override
+      protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
+        return new ClassMember[]{new RecordConstructorMember(aClass, compact)};
+      }
+    }.invoke(getProject(), getEditor(), getFile());
+    myFixture.checkResultByFile("after" + name + ".java");
   }
 
   private void doTest(boolean preSelect) {
