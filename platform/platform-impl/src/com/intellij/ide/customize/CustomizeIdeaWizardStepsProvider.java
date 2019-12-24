@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,9 +23,6 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
       @Override
       protected void initFeaturedPlugins(@NotNull Map<String, String> featuredPlugins) {
         featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
-        if (PlatformUtils.isIdeaUltimate()) {
-          featuredPlugins.put("Node JS", "Web Development:Support for Node.js projects:NodeJS");
-        }
         featuredPlugins.put("Grazie", "Spellcheck:Intelligent spelling and grammar checks:tanvd.grazi");
         addAwsPlugin(featuredPlugins);
         featuredPlugins.put("IntelliJ Light Theme", "Themes:IntelliJ Light is a new light theme for IntelliJ-based IDEs:com.jetbrains.lightThemePreview");
