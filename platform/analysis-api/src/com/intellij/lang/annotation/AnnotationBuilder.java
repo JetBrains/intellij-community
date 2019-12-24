@@ -7,6 +7,7 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -24,11 +25,32 @@ interface AnnotationBuilder {
   /**
    * Specify annotation range. When not called, the current element range is used,
    * i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
+   * The passed {@code range} must be inside the range of the current element being annotated.
    * This is an intermediate method in the creating new annotation pipeline.
    */
   @Contract(pure=true)
   @NotNull
   AnnotationBuilder range(@NotNull TextRange range);
+
+  /**
+   * Specify annotation range is equal to the {@code element.getTextRange()}.
+   * When not called, the current element range is used, i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
+   * The range of the {@code element} must be inside the range of the current element being annotated.
+   * This is an intermediate method in the creating new annotation pipeline.
+   */
+  @Contract(pure=true)
+  @NotNull
+  AnnotationBuilder range(@NotNull ASTNode element);
+
+  /**
+   * Specify annotation range is equal to the {@code element.getTextRange()}.
+   * When not called, the current element range is used, i.e. of the element your {@link Annotator#annotate(PsiElement, AnnotationHolder)} method is called with.
+   * The range of the {@code element} must be inside the range of the current element being annotated.
+   * This is an intermediate method in the creating new annotation pipeline.
+   */
+  @Contract(pure=true)
+  @NotNull
+  AnnotationBuilder range(@NotNull PsiElement element);
   /**
    * Specify annotation should be shown after the end of line. Useful for creating warnings of the type "unterminated string literal".
    * This is an intermediate method in the creating new annotation pipeline.
@@ -97,6 +119,14 @@ interface AnnotationBuilder {
   AnnotationBuilder needsUpdateOnTyping();
 
   /**
+   * Optimization method which explicitly specifies whether the annotation should be re-calculated when the user types in it.
+   * This is an intermediate method in the creating new annotation pipeline.
+   */
+  @Contract(pure=true)
+  @NotNull
+  AnnotationBuilder needsUpdateOnTyping(boolean value);
+
+  /**
    * Registers quick fix for this annotation.
    * If you want to tweak the fix, e.g. modify its range, please use {@link #newFix(IntentionAction)} instead.
    * This is an intermediate method in the creating new annotation pipeline.
@@ -126,7 +156,7 @@ interface AnnotationBuilder {
   interface FixBuilder {
     /**
      * Specify the range for this quick fix. If not specified, the annotation range is used.
-     * This is an intermediate method in the creating new annotation pipeline.
+     * This is an intermediate method in the registering new quick fix pipeline.
      */
     @Contract(pure=true)
     @NotNull
@@ -137,19 +167,27 @@ interface AnnotationBuilder {
 
     /**
      * Specify that the quickfix will be available during batch mode only.
-     * This is an intermediate method in the creating new annotation pipeline.
+     * This is an intermediate method in the registering new quick fix pipeline.
      */
     @Contract(pure=true)
     @NotNull
     FixBuilder batch();
 
     /**
+     * Specify that the quickfix will be available both during batch mode and on-the-fly.
+     * This is an intermediate method in the registering new quick fix pipeline.
+     */
+    @Contract(pure=true)
+    @NotNull
+    FixBuilder universal();
+
+    /**
      * Finish registration of the new quickfix associated with the annotation.
      * After calling this method you can continue constructing the annotation - e.g. register new fixes.
      * For example:
      * <pre>{@code holder.newAnnotation(range, WARNING, "Illegal element")
-     *   .newFix(myRenameFix).registerFix()
-     *   .newFix(myDeleteFix).registerFix()
+     *   .newFix(myRenameFix).key(DISPLAY_KEY).registerFix()
+     *   .newFix(myDeleteFix).range(deleteRange).registerFix()
      *   .create();
      * }</pre>
      */

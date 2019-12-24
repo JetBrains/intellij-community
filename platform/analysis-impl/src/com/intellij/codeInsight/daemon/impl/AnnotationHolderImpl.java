@@ -182,6 +182,11 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
     return new B(this, severity, message, myCurrentElement);
   }
+  @NotNull
+  @Override
+  public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+    return new B(this, severity, null, myCurrentElement);
+  }
 
   PsiElement myCurrentElement;
   @ApiStatus.Internal

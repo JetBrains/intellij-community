@@ -164,12 +164,22 @@ public interface AnnotationHolder {
 
   /**
    * Begin creating a new annotation for this range with severity and message.
-   * For example: <p>{@code holder.newAnnotation(elementRange, HighlightSeverity.WARNING, "My warning message").create();}</p>
+   * For example: <p>{@code holder.newAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
    */
   @Contract(pure=true)
   @ApiStatus.Experimental
   @NotNull
   default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
+    throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
+  }
+  /**
+   * Begin creating a new annotation for this range with severity but with no any message.
+   * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
+   */
+  @Contract(pure=true)
+  @ApiStatus.Experimental
+  @NotNull
+  default AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
   }
 }

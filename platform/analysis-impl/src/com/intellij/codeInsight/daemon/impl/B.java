@@ -7,10 +7,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -22,11 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 class B implements AnnotationBuilder {
+  private static final Logger LOG = Logger.getInstance(B.class);
   @NotNull
   private final AnnotationHolderImpl myHolder;
   private final String message;
   @NotNull
   private final PsiElement myCurrentElement;
+  @NotNull
   private final HighlightSeverity severity;
   private TextRange range;
   private Boolean afterEndOfLine;
@@ -39,8 +43,9 @@ class B implements AnnotationBuilder {
   private Boolean needsUpdateOnTyping;
   private String tooltip;
   private List<FixB> fixes;
+  private boolean created;
 
-  B(@NotNull AnnotationHolderImpl holder, HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
+  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
@@ -59,6 +64,7 @@ class B implements AnnotationBuilder {
     TextRange range;
     HighlightDisplayKey key;
     Boolean batch;
+    Boolean universal;
 
     FixB(@NotNull IntentionAction fix) {
       this.fix = fix;
@@ -83,8 +89,26 @@ class B implements AnnotationBuilder {
     @NotNull
     @Override
     public FixBuilder batch() {
+      assertNotSet(this.universal, "universal");
       assertNotSet(this.batch, "batch");
+      assertLQF();
       this.batch = true;
+      return this;
+    }
+
+    private void assertLQF() {
+      if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter)) {
+        throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix to be registered as batch");
+      }
+    }
+
+    @NotNull
+    @Override
+    public FixBuilder universal() {
+      assertNotSet(this.universal, "universal");
+      assertNotSet(this.batch, "batch");
+      assertLQF();
+      this.universal = true;
       return this;
     }
 
@@ -123,11 +147,24 @@ class B implements AnnotationBuilder {
     assertNotSet(this.range, "range");
     TextRange currentElementRange = myCurrentElement.getTextRange();
     if (!currentElementRange.contains(range)) {
+      //LOG.warn("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range, new IllegalArgumentException());
       throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
     }
 
     this.range = range;
     return this;
+  }
+
+  @NotNull
+  @Override
+  public AnnotationBuilder range(@NotNull ASTNode element) {
+    return range(element.getTextRange());
+  }
+
+  @NotNull
+  @Override
+  public AnnotationBuilder range(@NotNull PsiElement element) {
+    return range(element.getTextRange());
   }
 
   @NotNull
@@ -189,8 +226,14 @@ class B implements AnnotationBuilder {
   @NotNull
   @Override
   public AnnotationBuilder needsUpdateOnTyping() {
+    return needsUpdateOnTyping(true);
+  }
+
+  @NotNull
+  @Override
+  public AnnotationBuilder needsUpdateOnTyping(boolean value) {
     assertNotSet(this.needsUpdateOnTyping, "needsUpdateOnTyping");
-    this.needsUpdateOnTyping = true;
+    this.needsUpdateOnTyping = value;
     return this;
   }
 
@@ -204,6 +247,10 @@ class B implements AnnotationBuilder {
 
   @Override
   public void create() {
+    if (created) {
+      throw new IllegalStateException("Must not call .create() twice");
+    }
+    created = true;
     if (range == null) {
       range = myCurrentElement.getTextRange();
     }
@@ -238,6 +285,10 @@ class B implements AnnotationBuilder {
         TextRange finalRange = fb.range == null ? this.range : fb.range;
         if (fb.batch != null && fb.batch) {
           registerBatchFix(annotation, fix, finalRange, fb.key);
+        }
+        else if (fb.universal != null && fb.universal) {
+          registerBatchFix(annotation, fix, finalRange, fb.key);
+          annotation.registerFix(fix, finalRange, fb.key);
         }
         else {
           annotation.registerFix(fix, finalRange, fb.key);
