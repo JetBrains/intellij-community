@@ -307,9 +307,7 @@ public class ActionsTreeUtil {
       else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
-          if (!id.startsWith(TOOL_ACTION_PREFIX)) {
-            group.addActionId(id);
-          }
+          group.addActionId(id);
         }
       }
     }
