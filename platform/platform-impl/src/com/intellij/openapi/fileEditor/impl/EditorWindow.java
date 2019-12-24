@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -65,7 +66,7 @@ public class EditorWindow {
   private final Stack<Pair<String, FileEditorOpenOptions>> myRemovedTabs = new Stack<Pair<String, FileEditorOpenOptions>>() {
     @Override
     public void push(Pair<String, FileEditorOpenOptions> pair) {
-      if (size() >= UISettings.getInstance().getEditorTabLimit()) {
+      if (size() >= getTabLimit()) {
         remove(0);
       }
       super.push(pair);
@@ -538,7 +539,7 @@ public class EditorWindow {
         final Icon template = AllIcons.FileTypes.Text;
         EmptyIcon emptyIcon = EmptyIcon.create(template.getIconWidth(), template.getIconHeight());
         myTabbedPane.insertTab(file, emptyIcon, new TComp(this, editor), null, indexToInsert, editor);
-        trimToSize(UISettings.getInstance().getEditorTabLimit(), file, false);
+        trimToSize(file, false);
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
@@ -902,15 +903,16 @@ public class EditorWindow {
     }
   }
 
-  void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
+  void trimToSize(@Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
     getManager().getReady(this).doWhenDone(() -> {
       if (!isDisposed()) {
-        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
+        doTrimSize(fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
       }
     });
   }
 
-  private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
+  private void doTrimSize(@Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
+    int limit = getTabLimit();
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
     if (shouldCloseSelected(fileToIgnore)) {
@@ -926,6 +928,15 @@ public class EditorWindow {
         defaultCloseFile(file, transferFocus);
       }
     }
+  }
+
+  public static int getTabLimit() {
+    int limit = UISettings.getInstance().getEditorTabLimit();
+    if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
+        && UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
+      limit = 1;
+    }
+    return limit;
   }
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {

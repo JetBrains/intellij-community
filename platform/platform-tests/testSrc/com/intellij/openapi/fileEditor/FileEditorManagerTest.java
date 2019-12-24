@@ -104,9 +104,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   private void callTrimToSize() {
-    UISettingsState uiSettings = UISettings.getInstance().getState();
     for (EditorsSplitters each : myManager.getAllSplitters()) {
-      each.trimToSize(uiSettings.getEditorTabLimit());
+      each.trimToSize();
     }
   }
 

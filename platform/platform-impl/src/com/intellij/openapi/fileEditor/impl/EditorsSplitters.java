@@ -377,9 +377,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  public void trimToSize(final int editor_tab_limit) {
+  public void trimToSize() {
     for (final EditorWindow window : myWindows) {
-      window.trimToSize(editor_tab_limit, window.getSelectedFile(), true);
+      window.trimToSize(window.getSelectedFile(), true);
     }
   }
 
@@ -818,7 +818,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       else {
         children = new ArrayList<>(fileElements.size());
         // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-        int toRemove = fileElements.size() - UISettings.getInstance().getEditorTabLimit();
+        int toRemove = fileElements.size() - EditorWindow.getTabLimit();
         for (Element fileElement : fileElements) {
           if (toRemove <= 0 || Boolean.parseBoolean(fileElement.getAttributeValue(PINNED))) {
             children.add(fileElement);
