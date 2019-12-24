@@ -24,8 +24,10 @@ public class AddParameterListFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement endElement) {
     if (!(startElement instanceof PsiMethod)) return;
     PsiMethod method = (PsiMethod)startElement;
-    method.getParameterList()
-      .replace(JavaPsiFacade.getElementFactory(project).createParameterList(ArrayUtil.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY));
+    PsiIdentifier identifier = method.getNameIdentifier();
+    if (identifier == null) return;
+    method.addAfter(JavaPsiFacade.getElementFactory(project).createParameterList(ArrayUtil.EMPTY_STRING_ARRAY, PsiType.EMPTY_ARRAY),
+                identifier);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
