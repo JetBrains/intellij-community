@@ -187,32 +187,41 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    boolean addingNewName = first == last &&
+                            first.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
+                            (anchor == null || anchor.getElementType() == PyElementTypes.IMPORT_ELEMENT);
+    if (!addingNewName) {
+      return super.addInternal(first, last, anchor, before);
+    }
+
     if (anchor == null) {
-      // adding last element; the import may be "from ... import (...)", must get before the last ")"
-      PsiElement lastChild = getLastChild();
-      if (lastChild != null) {
-        while (lastChild instanceof PsiComment) {
-          lastChild = lastChild.getPrevSibling();
-          anchor = lastChild.getNode();
+      final PyImportElement[] elements = getImportElements();
+      if (elements.length != 0) {
+        if (before) {
+          anchor = elements[elements.length - 1].getNode();
+          before = false;
         }
-        ASTNode rpar_node = lastChild.getNode();
-        if (rpar_node != null && rpar_node.getElementType() == PyTokenTypes.RPAR) anchor = rpar_node;
+        else {
+          anchor = elements[0].getNode();
+          before = true;
+        }
       }
     }
-    final ASTNode result = super.addInternal(first, last, anchor, before);
-    ASTNode prevNode = result;
-    do {
-      prevNode = prevNode.getTreePrev();
-    }
-    while (prevNode != null && prevNode.getElementType() == TokenType.WHITE_SPACE);
 
-    if (prevNode != null && prevNode.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
-        result.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
-      ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
-      super.addInternal(comma, comma, prevNode, false);
+    // In an incomplete from import statement there is a special sentinel empty PyImportElement at the end
+    if (anchor != null && anchor.getTextLength() == 0) {
+      getNode().replaceChild(anchor, first);
+      return first;
     }
-
-    return result;
+    else {
+      final ASTNode result = super.addInternal(first, last, anchor, before);
+      if (anchor != null && anchor.getElementType() == PyElementTypes.IMPORT_ELEMENT &&
+          result.getElementType() == PyElementTypes.IMPORT_ELEMENT) {
+        ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
+        super.addInternal(comma, comma, before ? result : anchor, false);
+      }
+      return result;
+    }
   }
 
   @Override

@@ -224,7 +224,21 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   }
 
   // PY-23968
-  public void testOrderingOfNamesInFromImport() {
+  public void testOrderingOfNamesInFromImportBeginning() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportInTheMiddle() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doMultiFileAutoImportTest("Import");
+  }
+
+  // PY-23968
+  public void testOrderingOfNamesInFromImportEnd() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
     doMultiFileAutoImportTest("Import");
