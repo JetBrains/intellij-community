@@ -275,22 +275,19 @@ class CustomMethodHandlers {
     DfaValue[] arguments = args.myArguments;
     if (arguments.length < 1 || arguments.length > 2 || arguments[0] == null) return TOP;
     DfaValue from = arguments[0];
-    DfaValue to = arguments.length == 1 ? STRING_LENGTH.createValue(factory, qualifier) : arguments[1];
-    DfaValue lengthVal = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
-    LongRangeSet resultLen = DfIntType.extractRange(state.getDfType(lengthVal));
-    LongRangeSet length = DfIntType.extractRange(state.getDfType(STRING_LENGTH.createValue(factory, qualifier)));
-    resultLen = resultLen
-      .intersect(LongRangeSet.point(0).fromRelation(RelationType.GE))
-      .intersect(length.fromRelation(RelationType.LE));
-    return getStringValue(stringType, resultLen);
-  }
-
-  @NotNull
-  private static DfType getStringValue(@NotNull PsiType stringType, @NotNull LongRangeSet stringLength) {
-    if (Long.valueOf(0).equals(stringLength.getConstantValue())) {
+    DfaValue lenVal = STRING_LENGTH.createValue(factory, qualifier);
+    DfaValue to = arguments.length == 1 ? lenVal : arguments[1];
+    DfaValue resultLenVal = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    DfType resultLen = state.getDfType(resultLenVal);
+    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
+    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.GE, DfTypes.intValue(0));
+    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
+    resultLen = ((DfIntType)resultLen).meetRelation(RelationType.LE, state.getDfType(lenVal));
+    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
+    if (DfConstantType.isConst(resultLen, 0)) {
       return DfTypes.constant("", stringType);
     }
-    return DfTypes.typedObject(stringType, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(DfTypes.intRange(stringLength)));
+    return DfTypes.typedObject(stringType, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(resultLen));
   }
 
   @NotNull
