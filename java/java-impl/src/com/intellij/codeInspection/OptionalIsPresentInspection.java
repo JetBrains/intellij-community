@@ -287,7 +287,6 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       else {
         return;
       }
-      if (myScenario.getProblemType(optionalRef, thenElement, elseElement) == ProblemType.NONE) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
       String replacementText = myScenario.generateReplacement(factory, ct, optionalRef, thenElement, elseElement);
