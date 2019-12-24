@@ -2,6 +2,7 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
 import com.intellij.icons.AllIcons
@@ -281,6 +282,13 @@ internal object BranchesDashboardActions {
           gitBranchManager.setFavorite(type, repository, branch.branchName, !branch.isFavorite)
         }
       }
+    }
+  }
+
+  class GroupByDirectoryAction(private val tree: FilteringBranchesTree) : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY,
+                                                                                               AllIcons.Actions.GroupByPackage) {
+    override fun setSelected(key: GroupingKey, state: Boolean) {
+      tree.toggleDirectoryGrouping(state)
     }
   }
 

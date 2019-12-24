@@ -41,6 +41,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.CheckoutLocalBranchOnDoubleClickHandler
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.FetchAction
+import git4idea.ui.branch.dashboard.BranchesDashboardActions.GroupByDirectoryAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.NewBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
@@ -126,6 +127,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
     createFocusFilterFieldAction(branchesSearchField)
 
+    val groupByDirectoryAction = GroupByDirectoryAction(tree)
     val toggleFavoriteAction = ToggleFavoriteAction()
     val fetchAction = FetchAction(this)
     val showMyBranchesAction = ShowMyBranchesAction(uiController)
@@ -145,6 +147,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     group.add(fetchAction)
     group.add(toggleFavoriteAction)
     group.add(Separator())
+    group.add(groupByDirectoryAction)
     group.add(expandAllAction)
     group.add(collapseAllAction)
 

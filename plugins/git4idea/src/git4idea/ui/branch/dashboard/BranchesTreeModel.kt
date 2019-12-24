@@ -18,15 +18,18 @@ internal data class BranchInfo(val branchName: String,
   override fun toString() = branchName
 }
 
-internal data class BranchNodeDescriptor(val type: NodeType, val branchInfo: BranchInfo? = null) {
+internal data class BranchNodeDescriptor(val type: NodeType,
+                                         val branchInfo: BranchInfo? = null,
+                                         val displayName: String? = branchInfo?.branchName,
+                                         val parent: BranchNodeDescriptor? = null) {
   override fun toString(): String {
-    val suffix = branchInfo?.branchName
+    val suffix = branchInfo?.branchName ?: displayName
     return if (suffix != null) "$type:$suffix" else "$type"
   }
 }
 
 internal enum class NodeType {
-  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH
+  ROOT, LOCAL_ROOT, REMOTE_ROOT, BRANCH, GROUP_NODE
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {
@@ -37,7 +40,7 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
       NodeType.ROOT -> "root"
       NodeType.LOCAL_ROOT -> "Local"
       NodeType.REMOTE_ROOT -> "Remote"
-      else -> nodeDescriptor.branchInfo?.branchName ?: super.toString()
+      else -> nodeDescriptor.displayName ?: nodeDescriptor.branchInfo?.branchName ?: super.toString()
     }
   }
 
@@ -54,17 +57,43 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
   override fun hashCode() = Objects.hash(userObject)
 }
 
-internal fun Set<BranchInfo>.toNodeDescriptors() =
+internal fun BranchInfo.toNodeDescriptors(useGrouping: Boolean): List<BranchNodeDescriptor> {
+  if (!useGrouping) {
+    return listOf(BranchNodeDescriptor(NodeType.BRANCH, this))
+  }
+
+  val result = arrayListOf<BranchNodeDescriptor>()
+  var curParent: BranchNodeDescriptor? = null
+  val iter = branchName.split("/").iterator()
+
+  while (iter.hasNext()) {
+    val branchNamePart = iter.next()
+    val groupNode = iter.hasNext()
+    val nodeType = if (groupNode) NodeType.GROUP_NODE else NodeType.BRANCH
+    val branchInfo = if (nodeType == NodeType.BRANCH) this else null
+
+    curParent = BranchNodeDescriptor(nodeType, branchInfo, displayName = branchNamePart, parent = curParent)
+    result.add(curParent)
+  }
+  return result
+}
+
+internal fun Set<BranchInfo>.toNodeDescriptors(useGrouping: Boolean) =
   asSequence()
-    .map { BranchNodeDescriptor(NodeType.BRANCH, it) }
+    .flatMap { it.toNodeDescriptors(useGrouping).asSequence() }
+    .distinct()
     .sortedWith(BRANCH_TREE_NODE_COMPARATOR)
-    .toList()
+    .partition { it.type == NodeType.GROUP_NODE }
 
 internal val BRANCH_TREE_NODE_COMPARATOR = Comparator<BranchNodeDescriptor> { d1, d2 ->
   val b1 = d1.branchInfo
   val b2 = d2.branchInfo
+  val displayName1 = d1.displayName
+  val displayName2 = d2.displayName
+  val isGroupNodes = d1.type == NodeType.GROUP_NODE && d2.type == NodeType.GROUP_NODE
   when {
-    b1 == null || b2 == null -> d1.type.compareTo(d2.type)
+    b1 == null || b2 == null ->
+      if (isGroupNodes && displayName1 != null && displayName2 != null) displayName1.compareTo(displayName2) else d1.type.compareTo(d2.type)
     b1.isCurrent && !b2.isCurrent -> -1
     !b1.isCurrent && b2.isCurrent -> 1
     b1.isFavorite && !b2.isFavorite -> -1

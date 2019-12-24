@@ -2,6 +2,8 @@
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.dvcs.branch.isGroupingEnabled
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
@@ -12,11 +14,13 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.speedSearch.SpeedSearch
+import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
@@ -59,19 +63,28 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       val descriptor = value.getNodeDescriptor()
 
       val branchInfo = descriptor.branchInfo
-      if (branchInfo != null && descriptor.type == NodeType.BRANCH) {
-        when {
-          branchInfo.isCurrent -> {
-            icon = if (branchInfo.isFavorite) DvcsImplIcons.CurrentBranchFavoriteLabel else DvcsImplIcons.CurrentBranchLabel
-          }
-          branchInfo.isFavorite -> {
-            icon = AllIcons.Nodes.Favorite
-          }
-          else -> {
-            icon = EmptyIcon.ICON_16
-          }
+      val isBranchNode = descriptor.type == NodeType.BRANCH
+      val isGroupNode = descriptor.type == NodeType.GROUP_NODE
+
+      icon = when {
+        isBranchNode && branchInfo != null && branchInfo.isCurrent && branchInfo.isFavorite -> {
+          DvcsImplIcons.CurrentBranchFavoriteLabel
         }
+        isBranchNode && branchInfo != null && branchInfo.isCurrent -> {
+          DvcsImplIcons.CurrentBranchLabel
+        }
+        isBranchNode && branchInfo != null && branchInfo.isFavorite -> {
+          AllIcons.Nodes.Favorite
+        }
+        isBranchNode -> {
+          EmptyIcon.ICON_16
+        }
+        isGroupNode -> {
+          PlatformIcons.FOLDER_ICON
+        }
+        else -> null
       }
+
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
       if (branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
@@ -127,6 +140,8 @@ internal class FilteringBranchesTree(project: Project,
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
 
+  private val localGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
+  private val remoteGroupBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
   private val localBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
   private val remoteBranchesDescriptors = mutableListOf<BranchNodeDescriptor>()
   private val nodeDescriptorsToNodes = hashMapOf<BranchNodeDescriptor, BranchTreeNode>()
@@ -137,6 +152,13 @@ internal class FilteringBranchesTree(project: Project,
       localBranchesNode.getNodeDescriptor() to localBranchesNode,
       remoteBranchesNode.getNodeDescriptor() to remoteBranchesNode
     )
+
+  private var useDirectoryGrouping = GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY) //TODO make configurable
+
+  fun toggleDirectoryGrouping(state: Boolean) {
+    useDirectoryGrouping = state
+    refreshTree()
+  }
 
   init {
     runInEdt {
@@ -199,12 +221,34 @@ internal class FilteringBranchesTree(project: Project,
   override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
     when (nodeDescriptor.type) {
       NodeType.ROOT -> getRootNodeDescriptors(localBranchesDescriptors.isNotEmpty(), remoteBranchesDescriptors.isNotEmpty())
-      NodeType.LOCAL_ROOT -> localBranchesDescriptors.filterByMyBranches()
-      NodeType.REMOTE_ROOT -> remoteBranchesDescriptors.filterByMyBranches()
-      else -> mutableListOf() //leaf branch node
+      NodeType.LOCAL_ROOT -> (getLocalGroupNodes() + getLocalRootNodes().filterByMyBranches()).toList()
+      NodeType.REMOTE_ROOT -> (getRemoteGroupNodes() + getRemoteRootNodes().filterByMyBranches()).toList()
+      NodeType.GROUP_NODE -> (getAllGroupNodes(nodeDescriptor) + getAllBranchNodes(nodeDescriptor).filterByMyBranches()).toList()
+      else -> emptyList() //leaf branch node
     }
 
-  private fun Iterable<BranchNodeDescriptor>.filterByMyBranches() =
+  private fun getLocalRootNodes() =
+    if (useDirectoryGrouping) localBranchesDescriptors.asSequence().filter(forParent()) else localBranchesDescriptors.asSequence()
+
+  private fun getRemoteRootNodes() =
+    if (useDirectoryGrouping) remoteBranchesDescriptors.asSequence().filter(forParent()) else remoteBranchesDescriptors.asSequence()
+
+  private fun getLocalGroupNodes(parent: BranchNodeDescriptor? = null) =
+    if (useDirectoryGrouping) localGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
+
+  private fun getRemoteGroupNodes(parent: BranchNodeDescriptor? = null) =
+    if (useDirectoryGrouping) remoteGroupBranchesDescriptors.asSequence().filter(forParent(parent)) else emptySequence()
+
+  private fun getAllGroupNodes(parent: BranchNodeDescriptor) =
+    if (useDirectoryGrouping) (getLocalGroupNodes(parent) + getRemoteGroupNodes(parent)) else emptySequence()
+
+  private fun getAllBranchNodes(parent: BranchNodeDescriptor) =
+    if (useDirectoryGrouping) (localBranchesDescriptors.asSequence() + remoteBranchesDescriptors.asSequence()).filter(forParent(parent))
+    else emptySequence()
+
+  private fun forParent(parent: BranchNodeDescriptor? = null): (BranchNodeDescriptor) -> Boolean = { it.parent == parent }
+
+  private fun Sequence<BranchNodeDescriptor>.filterByMyBranches() =
     filter { !uiController.showOnlyMy || it.branchInfo?.isMy == ThreeState.YES }
 
   override fun rebuildTree(initial: Boolean): Boolean {
@@ -248,12 +292,20 @@ internal class FilteringBranchesTree(project: Project,
       nodeDescriptorsToNodes.clear()
       localBranchesDescriptors.clear()
       remoteBranchesDescriptors.clear()
+      localGroupBranchesDescriptors.clear()
+      remoteGroupBranchesDescriptors.clear()
 
-      localBranchesDescriptors += localBranches.toNodeDescriptors()
-      remoteBranchesDescriptors += remoteBranches.toNodeDescriptors()
+      val (localGroupNodes, localBranches) = localBranches.toNodeDescriptors(useDirectoryGrouping)
+      val (remoteGroupNodes, remoteBranches) = remoteBranches.toNodeDescriptors(useDirectoryGrouping)
+      localGroupBranchesDescriptors += localGroupNodes
+      remoteGroupBranchesDescriptors += remoteGroupNodes
+      localBranchesDescriptors += localBranches
+      remoteBranchesDescriptors += remoteBranches
       nodeDescriptorsToNodes += baseNodeDescriptorsToNodes
       nodeDescriptorsToNodes += localBranchesDescriptors.associateWith(::BranchTreeNode)
       nodeDescriptorsToNodes += remoteBranchesDescriptors.associateWith(::BranchTreeNode)
+      nodeDescriptorsToNodes += localGroupBranchesDescriptors.associateWith(::BranchTreeNode)
+      nodeDescriptorsToNodes += remoteGroupBranchesDescriptors.associateWith(::BranchTreeNode)
     }
   }
 
