@@ -9,12 +9,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -49,10 +50,7 @@ public final class EventsWatcher implements Disposable {
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
   );
-  @NotNull
-  private static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
 
-  private static final long ourStartTimestamp = System.currentTimeMillis();
   @NotNull
   private static final NotNullLazyValue<Boolean> ourIsEnabled =
     NotNullLazyValue.createValue(() -> Registry.is("ide.event.queue.dispatch.log.enabled", false));
@@ -89,11 +87,6 @@ public final class EventsWatcher implements Disposable {
     new ConcurrentHashMap<>();
 
   @NotNull
-  private final File myLogPath = new File(
-    new File(PathManager.getLogPath(), "edt-log"),
-    String.format("%tY%<tm%<td-%<tH%<tM%<tS", ourStartTimestamp)
-  );
-  @NotNull
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
     "EDT Events Logger",
     1
@@ -107,9 +100,9 @@ public final class EventsWatcher implements Disposable {
   );
 
   @NotNull
-  private final MessageBus myMessageBus;
+  private final LogFileWriter myWriter = new LogFileWriter();
   @NotNull
-  private final MessageBusConnection myConnection;
+  private final MessageBus myMessageBus;
 
   @Nullable
   private Object myCurrentInstance = null;
@@ -118,25 +111,8 @@ public final class EventsWatcher implements Disposable {
 
   public EventsWatcher(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
-    myConnection = myMessageBus.connect();
-
-    myConnection.subscribe(
-      RunnablesListener.TOPIC,
-      new RunnablesListener() {
-        @Override
-        public void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
-                                    @NotNull Collection<InvocationDescription> descriptions) {
-          appendToLogFile(eventClass.getSimpleName(), descriptions.stream());
-        }
-
-        @Override
-        public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
-                                       @NotNull Collection<InvocationsInfo> infos,
-                                       @NotNull Collection<WrapperDescription> wrappers) {
-          appendToLogFile("Runnables", invocations.stream());
-        }
-      }
-    );
+    myMessageBus.connect(this)
+      .subscribe(RunnablesListener.TOPIC, myWriter);
   }
 
   public void logTimeMillis(@NotNull String processId, long startedAt) {
@@ -214,13 +190,10 @@ public final class EventsWatcher implements Disposable {
 
   @Override
   public void dispose() {
-    appendToLogFile("Wrappers", myWrappers);
-    appendToLogFile("Timings", myDurationsByFqn);
+    Disposer.dispose(myWriter);
 
     myThread.cancel(true);
     myExecutor.shutdownNow();
-
-    myConnection.disconnect();
   }
 
   @Nullable
@@ -241,26 +214,6 @@ public final class EventsWatcher implements Disposable {
       myDurationsByFqn.values(),
       myWrappers.values()
     );
-  }
-
-  private <K, V> void appendToLogFile(@NotNull String kind,
-                                      @NotNull Map<K, V> entities) {
-    appendToLogFile(kind, entities.values().stream().sorted());
-  }
-
-  private <T> void appendToLogFile(@NotNull String kind,
-                                   @NotNull Stream<T> lines) {
-    if (!(myLogPath.isDirectory() || myLogPath.mkdirs())) return;
-
-    try {
-      FileUtil.writeToFile(
-        new File(myLogPath, kind + ".log"),
-        lines.map(Objects::toString).collect(JOINING_COLLECTOR),
-        true
-      );
-    }
-    catch (IOException ignored) {
-    }
   }
 
   @Nullable
@@ -357,6 +310,74 @@ public final class EventsWatcher implements Disposable {
         "invokeLater",
         TimeUnit.MILLISECONDS.toNanos(duration)
       );
+    }
+  }
+
+  private static final class LogFileWriter implements RunnablesListener, Disposable {
+
+    @NotNull
+    public static final Collector<CharSequence, ?, String> JOINING_COLLECTOR = Collectors.joining("\n");
+
+    @NotNull
+    private final File myLogPath = new File(
+      new File(PathManager.getLogPath(), "edt-log"),
+      String.format("%tY%<tm%<td-%<tH%<tM%<tS", System.currentTimeMillis())
+    );
+
+    @NotNull
+    private final Map<String, InvocationsInfo> myInfos = new HashMap<>();
+    @NotNull
+    private final Map<String, WrapperDescription> myWrappers = new HashMap<>();
+
+    @Override
+    public void eventsProcessed(@NotNull Class<? extends AWTEvent> eventClass,
+                                @NotNull Collection<InvocationDescription> descriptions) {
+      appendToFile(eventClass.getSimpleName(), descriptions.stream());
+    }
+
+    @Override
+    public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
+                                   @NotNull Collection<InvocationsInfo> infos,
+                                   @NotNull Collection<WrapperDescription> wrappers) {
+      appendToFile("Runnables", invocations.stream());
+
+      putAllTo(infos, InvocationsInfo::getFQN, myInfos);
+      putAllTo(wrappers, WrapperDescription::getFQN, myWrappers);
+    }
+
+    @Override
+    public void dispose() {
+      writeToFile("Timings", myInfos);
+      writeToFile("Wrappers", myWrappers);
+    }
+
+    private <T> void appendToFile(@NotNull String kind,
+                                  @NotNull Stream<T> lines) {
+      if (!(myLogPath.isDirectory() || myLogPath.mkdirs())) return;
+
+      try {
+        FileUtil.writeToFile(
+          new File(myLogPath, kind + ".log"),
+          lines.map(Objects::toString).collect(JOINING_COLLECTOR),
+          true
+        );
+      }
+      catch (IOException ignored) {
+      }
+    }
+
+    private <K, V> void writeToFile(@NotNull String kind,
+                                    @NotNull Map<K, V> entities) {
+      appendToFile(kind, entities.values().stream().sorted());
+    }
+
+    private static <E> void putAllTo(@NotNull Collection<E> entities,
+                                     @NotNull Function<? super E, String> mapper,
+                                     @NotNull Map<String, E> map) {
+      Map<String, E> entitiesMap = entities
+        .stream()
+        .collect(Collectors.toMap(mapper, Function.identity()));
+      map.putAll(entitiesMap);
     }
   }
 }
