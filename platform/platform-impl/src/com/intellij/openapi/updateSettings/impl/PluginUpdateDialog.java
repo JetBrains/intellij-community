@@ -255,6 +255,10 @@ public class PluginUpdateDialog extends DialogWrapper {
     assert descriptor != null;
     ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, emptyListener(), false) {
       @Override
+      public void updateErrors() {
+      }
+
+      @Override
       public void showProgress() {
         super.showProgress();
         updateButtons();
