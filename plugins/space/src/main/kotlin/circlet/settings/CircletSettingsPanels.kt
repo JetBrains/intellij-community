@@ -18,7 +18,9 @@ internal fun buildLoginPanel(st: CircletLoginState.Disconnected,
         val loginButton = JButton("Log In").apply {
             addActionListener {
                 isEnabled = false
-                loginAction(serverField.text)
+                var url = serverField.text
+                url = if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
+                loginAction(url.removeSuffix("/"))
             }
         }
 
