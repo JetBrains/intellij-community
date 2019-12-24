@@ -303,15 +303,15 @@ public class ContentImpl extends UserDataHolderBase implements Content {
       Disposer.dispose((Disposable)myComponent);
     }
 
-    myComponent = null;
-    myFocusRequest = null;
-    myManager = null;
-
-    clearUserData();
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
       myDisposer = null;
     }
+
+    myComponent = null;
+    myFocusRequest = null;
+    myManager = null;
+    clearUserData();
   }
 
   @Override
