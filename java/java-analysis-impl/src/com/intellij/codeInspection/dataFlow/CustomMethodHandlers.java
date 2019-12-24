@@ -86,7 +86,7 @@ class CustomMethodHandlers {
     .register(exactInstanceCall(JAVA_LANG_STRING, "substring"),
               (args, memState, factory, method) -> substring(args, memState, factory, method.getReturnType()))
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
-              (args, memState, factory, method) -> ofNullable(args.myArguments[0], memState))
+              (args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]), method.getReturnType()))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
               (args, memState, factory, method) -> calendarGet(args.myArguments, memState))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
@@ -283,16 +283,7 @@ class CustomMethodHandlers {
     resultLen = ((DfIntType)resultLen).meetRelation(RelationType.GE, DfTypes.intValue(0));
     if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
     resultLen = ((DfIntType)resultLen).meetRelation(RelationType.LE, state.getDfType(lenVal));
-    if (!(resultLen instanceof DfIntType)) return DfTypes.FAIL;
-    if (DfConstantType.isConst(resultLen, 0)) {
-      return DfTypes.constant("", stringType);
-    }
-    return DfTypes.typedObject(stringType, Nullability.NOT_NULL).meet(STRING_LENGTH.asDfType(resultLen));
-  }
-
-  @NotNull
-  private static DfType ofNullable(DfaValue argument, DfaMemoryState state) {
-    return OPTIONAL_VALUE.asDfType(state.getDfType(argument));
+    return STRING_LENGTH.asDfType(resultLen, stringType);
   }
 
   @NotNull

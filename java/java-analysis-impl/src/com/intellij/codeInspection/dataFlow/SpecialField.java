@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -352,6 +353,23 @@ public enum SpecialField implements VariableDescriptor {
     if (clamped.equals(defaultType)) return DfTypes.NOT_NULL_OBJECT;
     if (clamped.equals(DfTypes.BOTTOM)) return DfTypes.BOTTOM;
     return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
+  }
+
+  /**
+   * @param fieldValue dfType of the special field value
+   * @param exactResultType exact PSI type of the result
+   * @return a dfType that represents a value having this special field restricted to the supplied dfType
+   */
+  @NotNull
+  public DfType asDfType(@NotNull DfType fieldValue, @Nullable PsiType exactResultType) {
+    DfType dfType = asDfType(fieldValue);
+    if (exactResultType == null) {
+      return dfType;
+    }
+    if (this == STRING_LENGTH && DfConstantType.isConst(fieldValue, 0)) {
+      return DfTypes.constant("", exactResultType);
+    }
+    return dfType.meet(TypeConstraints.exact(exactResultType).asDfType());
   }
 
   /**

@@ -406,9 +406,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          DfType dfType =
-            DfTypes.typedObject(Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType(), Nullability.NOT_NULL)
-              .meet(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(argCount - paramCount + 1)));
+          PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
+          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(argCount - paramCount + 1), arrayType);
           argValues[paramCount - 1] = factory.fromDfType(dfType);
         }
       }
@@ -822,9 +821,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
     LongRangeSet leftRange = DfIntType.extractRange(memState.getDfType(leftLength));
     LongRangeSet rightRange = DfIntType.extractRange(memState.getDfType(rightLength));
-    DfType dfType = DfTypes.typedObject(stringType, Nullability.NOT_NULL);
     LongRangeSet resultRange = leftRange.plus(rightRange, false);
-    return factory.fromDfType(dfType.meet(SpecialField.STRING_LENGTH.asDfType(DfTypes.intRange(resultRange))));
+    return factory.fromDfType(SpecialField.STRING_LENGTH.asDfType(DfTypes.intRange(resultRange), stringType));
   }
 
   @NotNull
