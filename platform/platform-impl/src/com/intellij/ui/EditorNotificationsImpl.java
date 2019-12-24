@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -140,10 +139,9 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
   @NotNull
   private List<FileEditor> getEditors(@NotNull VirtualFile file) {
-    return ContainerUtil.filter(FileEditorManager.getInstance(myProject).getAllEditors(file), editor -> {
-      return !(editor instanceof TextEditor) ||
-             AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor());
-    });
+    return ContainerUtil.filter(
+      FileEditorManager.getInstance(myProject).getAllEditors(file),
+      editor -> !(editor instanceof TextEditor) || AsyncEditorLoader.isEditorLoaded(((TextEditor)editor).getEditor()));
   }
 
   private void updateEditors(@NotNull VirtualFile file, List<FileEditor> editors) {
