@@ -137,16 +137,18 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   public void tearDown() throws Exception {
-    if (myTempDir == null || !deleteOnTearDown()) {
+    if (myTempDir == null) {
       return;
     }
 
     try {
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
-      if (virtualFile != null) {
-        WriteAction.runAndWait(() -> {
-          virtualFile.delete(this);
-        });
+      if (deleteOnTearDown()) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(myTempDir.toString()));
+        if (virtualFile != null) {
+          WriteAction.runAndWait(() -> {
+            virtualFile.delete(this);
+          });
+        }
       }
     }
     catch (Throwable e) {
