@@ -24,6 +24,9 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class NodeDescriptor<E> {
+  public static final NodeDescriptor[] EMPTY_ARRAY = new NodeDescriptor[0];
+  public static final int DEFAULT_WEIGHT = 30;
+
   protected final Project myProject;
   private final NodeDescriptor myParentDescriptor;
 
@@ -118,7 +121,7 @@ public abstract class NodeDescriptor<E> {
     if (element instanceof WeighedItem) {
       return ((WeighedItem) element).getWeight();
     }
-    return 30;
+    return DEFAULT_WEIGHT;
   }
 
 

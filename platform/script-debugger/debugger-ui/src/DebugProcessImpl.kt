@@ -133,6 +133,7 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
 
   final override fun startForceStepInto(context: XSuspendContext?) {
     isForceStep = true
+    enableBlackboxing(false, context.vm)
     startStepInto(context)
   }
 
@@ -177,12 +178,16 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
       lastStep = null
       lastCallFrame = null
       urlToFileCache.clear()
-      disableDoNotStepIntoLibraries = false
+      enableBlackboxing(true, vm)
     }
     else {
       lastStep = stepAction
     }
     return suspendContextManager.continueVm(stepAction)
+  }
+
+  protected open fun enableBlackboxing(state: Boolean, vm: Vm) {
+    disableDoNotStepIntoLibraries = !state
   }
 
   protected fun setOverlay(context: SuspendContext<*>) {

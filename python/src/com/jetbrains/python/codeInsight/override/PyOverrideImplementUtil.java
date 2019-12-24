@@ -422,7 +422,7 @@ public class PyOverrideImplementUtil {
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
       super.visitPyReferenceExpression(referenceExpression);
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext();
       if (referenceExpression.getReference(resolveContext).multiResolve(false).length == 0) {
         myUnresolved.add(referenceExpression);
       }

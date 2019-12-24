@@ -70,7 +70,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil
  * @author Maxim.Medvedev
  */
 public class ExpressionGenerator extends Generator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ExpressionGenerator");
+  private static final Logger LOG = Logger.getInstance(ExpressionGenerator.class);
 
   private final StringBuilder builder;
   private final GroovyPsiElementFactory factory;

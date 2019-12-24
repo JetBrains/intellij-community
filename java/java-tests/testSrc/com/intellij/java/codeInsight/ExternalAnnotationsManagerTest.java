@@ -5,7 +5,6 @@ import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -26,6 +25,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
@@ -53,7 +53,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
       if (jdk.getVersionString().matches("java version \"1\\.8\\..+\"")) {
-        String home = jdk.getHomeDirectory().getParent().getPath();
+        String home = jdk.getHomeDirectory().getPath();
         VfsRootAccess.allowRootAccess(getTestRootDisposable(), home);
         String toolsPath = home + "/lib/tools.jar!/";
         VirtualFile toolsJar = JarFileSystem.getInstance().findFileByPath(toolsPath);

@@ -30,13 +30,6 @@ public class CyclomaticComplexityInspection extends MethodMetricInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "cyclomatic.complexity.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return 10;
   }

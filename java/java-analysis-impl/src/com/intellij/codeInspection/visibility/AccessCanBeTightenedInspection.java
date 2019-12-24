@@ -53,12 +53,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Member access can be tightened";
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return VisibilityInspection.SHORT_NAME;
   }

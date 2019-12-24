@@ -43,7 +43,7 @@ import java.util.List;
  * @author egor
  */
 public class SourceCodeChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.SourceCodeChecker");
+  private static final Logger LOG = Logger.getInstance(SourceCodeChecker.class);
 
   private SourceCodeChecker() {
   }

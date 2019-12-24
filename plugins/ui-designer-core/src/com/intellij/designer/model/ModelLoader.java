@@ -27,7 +27,7 @@ import java.io.InputStream;
  * @author Alexander Lobas
  */
 public abstract class ModelLoader {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.designer.model.ModelLoader");
+  protected static final Logger LOG = Logger.getInstance(ModelLoader.class);
 
   protected final Project myProject;
 

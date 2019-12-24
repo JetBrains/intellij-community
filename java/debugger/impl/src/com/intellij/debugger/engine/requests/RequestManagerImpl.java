@@ -30,7 +30,7 @@ import java.util.*;
  * @author lex
  */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.RequestManagerImpl");
+  private static final Logger LOG = Logger.getInstance(RequestManagerImpl.class);
 
   private static final Key CLASS_NAME = Key.create("ClassName");
   private static final Key<Requestor> REQUESTOR = Key.create("Requestor");

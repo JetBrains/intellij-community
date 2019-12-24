@@ -29,7 +29,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder");
+  private static final Logger LOG = Logger.getInstance(NotNullInstrumentingBuilder.class);
 
   public NotNullInstrumentingBuilder() {
   }

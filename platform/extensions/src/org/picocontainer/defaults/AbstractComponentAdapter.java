@@ -25,60 +25,62 @@ import org.picocontainer.ComponentAdapter;
  * @since 1.0
  */
 public abstract class AbstractComponentAdapter implements ComponentAdapter {
-    private final Object componentKey;
-    private final Class<?> componentImplementation;
+  private final Object componentKey;
+  private final Class<?> componentImplementation;
 
-    /**
-     * Constructs a new ComponentAdapter for the given key and implementation.
-     * @param componentKey the search key for this implementation
-     * @param componentImplementation the concrete implementation
-     * @throws AssignabilityRegistrationException if the key is a type and the implementation cannot be assigned to.
-     */
-    protected AbstractComponentAdapter(Object componentKey, Class componentImplementation) throws AssignabilityRegistrationException {
-        if (componentImplementation == null) {
-            throw new NullPointerException("componentImplementation");
-        }
-        this.componentKey = componentKey;
-        this.componentImplementation = componentImplementation;
-        checkTypeCompatibility();
+  /**
+   * Constructs a new ComponentAdapter for the given key and implementation.
+   *
+   * @param componentKey            the search key for this implementation
+   * @param componentImplementation the concrete implementation
+   * @throws AssignabilityRegistrationException if the key is a type and the implementation cannot be assigned to.
+   */
+  protected AbstractComponentAdapter(Object componentKey, Class componentImplementation) throws AssignabilityRegistrationException {
+    if (componentImplementation == null) {
+      throw new NullPointerException("componentImplementation");
     }
+    this.componentKey = componentKey;
+    this.componentImplementation = componentImplementation;
+    checkTypeCompatibility();
+  }
 
-    /**
-     * {@inheritDoc}
-     * @see ComponentAdapter#getComponentKey()
-     */
-    @Override
-    public Object getComponentKey() {
-        if (componentKey == null) {
-            throw new NullPointerException("componentKey");
-        }
-        return componentKey;
+  /**
+   * {@inheritDoc}
+   *
+   * @see ComponentAdapter#getComponentKey()
+   */
+  @Override
+  public Object getComponentKey() {
+    if (componentKey == null) {
+      throw new NullPointerException("componentKey");
     }
+    return componentKey;
+  }
 
-    /**
-     * {@inheritDoc}
-     * @see ComponentAdapter#getComponentImplementation()
-     */
-    @Override
-    public Class<?> getComponentImplementation() {
-        return componentImplementation;
+  /**
+   * {@inheritDoc}
+   *
+   * @see ComponentAdapter#getComponentImplementation()
+   */
+  @Override
+  public Class<?> getComponentImplementation() {
+    return componentImplementation;
+  }
+
+  protected void checkTypeCompatibility() throws AssignabilityRegistrationException {
+    if (componentKey instanceof Class) {
+      Class<?> componentType = (Class)componentKey;
+      if (!componentType.isAssignableFrom(componentImplementation)) {
+        throw new AssignabilityRegistrationException(componentType, componentImplementation);
+      }
     }
+  }
 
-    protected void checkTypeCompatibility() throws AssignabilityRegistrationException {
-        if (componentKey instanceof Class) {
-            Class componentType = (Class) componentKey;
-            if (!componentType.isAssignableFrom(componentImplementation)) {
-                throw new AssignabilityRegistrationException(componentType, componentImplementation);
-            }
-        }
-    }
-
-    /**
-     * @return Returns the ComponentAdapter's class name and the component's key.
-     * @see Object#toString()
-     */
-    public String toString() {
-        return getClass().getName() + "[" + getComponentKey() + "]";
-    }
-
+  /**
+   * @return Returns the ComponentAdapter's class name and the component's key.
+   * @see Object#toString()
+   */
+  public String toString() {
+    return getClass().getName() + "[" + getComponentKey() + "]";
+  }
 }

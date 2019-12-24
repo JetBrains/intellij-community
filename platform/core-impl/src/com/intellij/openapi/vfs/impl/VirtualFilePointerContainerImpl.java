@@ -33,7 +33,7 @@ import java.util.function.Predicate;
  * @author dsl
  */
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
+  private static final Logger LOG = Logger.getInstance(VirtualFilePointerContainer.class);
   private static final int UNINITIALIZED = -1;
   @NotNull private final ConcurrentList<VirtualFilePointer> myList = ContainerUtil.createConcurrentList();
   @NotNull private final ConcurrentList<VirtualFilePointer> myJarDirectories = ContainerUtil.createConcurrentList();
@@ -257,7 +257,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
           // getFiles() must return files under jar directories but must not return jarDirectories themselves
           cachedDirectories.remove(jarDirectory);
 
-          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor() {
+          VfsUtilCore.visitChildrenRecursively(jarDirectory, new VirtualFileVisitor<Void>() {
             @Override
             public boolean visitFile(@NotNull VirtualFile file) {
               if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {

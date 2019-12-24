@@ -31,7 +31,7 @@ import java.util.Set;
  * @author peter
  */
 public class NoAccessDuringPsiEvents {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.NoAccessDuringPsiEvents");
+  private static final Logger LOG = Logger.getInstance(NoAccessDuringPsiEvents.class);
   private static final Set<String> ourReportedTraces = new HashSet<>();
 
   public static void checkCallContext() {

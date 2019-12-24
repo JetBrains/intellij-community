@@ -14,9 +14,10 @@ import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.api.*
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.authentication.util.GHAccessTokenCreator
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubParseException
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
@@ -128,7 +129,7 @@ sealed class GithubCredentialsUI {
                                       indicator: ProgressIndicator): Pair<String, String> {
       val login = loginTextField.text.trim()
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
-      val token = GithubTokenCreator(server, executor, indicator).createMaster(clientName).token
+      val token = GHAccessTokenCreator(server, executor, indicator).createMaster(clientName).token
       return login to token
     }
 
@@ -154,8 +155,6 @@ sealed class GithubCredentialsUI {
                          private val serverTextField: ExtendableTextField,
                          switchUi: () -> Unit,
                          private val dialogMode: Boolean) : GithubCredentialsUI() {
-    private val GIST_SCOPE_PATTERN = Regex("(?:^|, )repo(?:,|$)")
-    private val REPO_SCOPE_PATTERN = Regex("(?:^|, )gist(?:,|$)")
 
     private val tokenTextField = JBTextField()
     private val switchUiLink = LinkLabel.create("Use Credentials", switchUi)
@@ -168,7 +167,11 @@ sealed class GithubCredentialsUI {
     override fun getPanel() = panel {
       buildTitleAndLinkRow(this, dialogMode, switchUiLink)
       row("Server:") { serverTextField(pushX, growX) }
-      row("Token:") { tokenTextField(pushX, growX) }
+      row("Token:") {
+        tokenTextField(
+          comment = "The following scopes must be granted to the access token: " + GHSecurityUtil.MASTER_SCOPES,
+          constraints = *arrayOf(pushX, growX))
+      }
       row("") {
         cell {
           loginButton()
@@ -190,23 +193,11 @@ sealed class GithubCredentialsUI {
     override fun acquireLoginAndToken(server: GithubServerPath,
                                       executor: GithubApiRequestExecutor,
                                       indicator: ProgressIndicator): Pair<String, String> {
-      var scopes: String? = null
-      val login = executor.execute(indicator,
-                                   object : GithubApiRequest.Get.Json<GithubAuthenticatedUser>(
-                                     GithubApiRequests.getUrl(server,
-                                                              GithubApiRequests.CurrentUser.urlSuffix),
-                                     GithubAuthenticatedUser::class.java) {
-                                     override fun extractResult(response: GithubApiResponse): GithubAuthenticatedUser {
-                                       scopes = response.findHeader("X-OAuth-Scopes")
-                                       return super.extractResult(response)
-                                     }
-                                   }.withOperationName("get profile information")).login
-      if (scopes.isNullOrEmpty()
-          || !GIST_SCOPE_PATTERN.containsMatchIn(scopes!!)
-          || !REPO_SCOPE_PATTERN.containsMatchIn(scopes!!)) {
-        throw GithubAuthenticationException("Access token should have `repo` and `gist` scopes.")
-      }
+      val (details, scopes) = GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, server)
+      if (scopes == null || !GHSecurityUtil.isEnoughScopes(scopes))
+        throw GithubAuthenticationException("Insufficient scopes granted to token.")
 
+      val login = details.login
       fixedLogin?.let {
         if (it != login) throw GithubAuthenticationException("Token should match username \"$it\"")
       }

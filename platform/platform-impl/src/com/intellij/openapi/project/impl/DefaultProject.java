@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -28,14 +30,14 @@ import java.util.List;
 /**
  * @author peter
  */
-final class DefaultProject extends UserDataHolderBase implements ProjectEx, ProjectStoreOwner {
+final class DefaultProject extends UserDataHolderBase implements Project, ProjectStoreOwner {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
   private final DefaultProjectTimed myDelegate = new DefaultProjectTimed(this) {
     @NotNull
     @Override
     ProjectEx compute() {
-      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application is being disposed!");
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       return new ProjectImpl() {
         @Override
         public boolean isDefault() {
@@ -67,8 +69,10 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
           // do not leak internal delegate, use DefaultProject everywhere instead
           picoContainer.registerComponentInstance(Project.class, DefaultProject.this);
 
-          registerComponents(PluginManagerCore.getLoadedPlugins());
+          //noinspection unchecked
+          registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
           createComponents(null);
+          Disposer.register(DefaultProject.this, this);
         }
 
         @Override
@@ -86,6 +90,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
         @Override
         public int hashCode() {
           return DEFAULT_HASH_CODE;
+        }
+
+        @NotNull
+        @Override
+        protected synchronized MessageBusImpl getOrCreateMessageBusUnderLock() {
+          MessageBusImpl messageBus = super.getOrCreateMessageBusUnderLock();
+          messageBus.setIgnoreParentLazyListeners(true);
+          return messageBus;
         }
       };
     }
@@ -124,11 +136,6 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
 
   public boolean isCached() {
     return myDelegate.isCached();
-  }
-
-  @Override
-  public void setProjectName(@NotNull String name) {
-    throw new IllegalStateException();
   }
 
   // delegates
@@ -211,8 +218,14 @@ final class DefaultProject extends UserDataHolderBase implements ProjectEx, Proj
   }
 
   @Override
-  public <T> T getService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
-    return getDelegate().getService(serviceClass, createIfNeeded);
+  public <T> T getService(@NotNull Class<T> serviceClass) {
+    return getDelegate().getService(serviceClass);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+    return getDelegate().getServiceIfCreated(serviceClass);
   }
 
   @Override

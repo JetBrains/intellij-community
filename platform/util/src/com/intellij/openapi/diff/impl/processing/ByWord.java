@@ -22,7 +22,7 @@ import java.util.ArrayList;
  */
 @Deprecated
 public class ByWord implements DiffPolicy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.ByWord");
+  private static final Logger LOG = Logger.getInstance(ByWord.class);
   private final ComparisonPolicy myComparisonPolicy;
 
   public ByWord(ComparisonPolicy comparisonPolicy) {

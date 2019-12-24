@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunctionalExpression, SearchParameters> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.JavaFunctionalExpressionSearcher");
+  private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionSearcher.class);
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
@@ -74,7 +74,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       processOffsets(descriptors, project, (file, occurrences) -> {
         fileCount.incrementAndGet();
         exprCount.addAndGet(occurrences.size());
-        return processFile(consumer, descriptors, file, occurrences);
+        return processFile(descriptors, file, occurrences, consumer);
       });
     }
     finally {
@@ -189,10 +189,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       () -> new HashSet<>(ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile))));
   }
 
-  private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
-                                     @NotNull List<? extends SamDescriptor> descriptors,
+  private static boolean processFile(@NotNull List<? extends SamDescriptor> descriptors,
                                      @NotNull VirtualFile vFile,
-                                     @NotNull Set<? extends FunExprOccurrence> occurrences) {
+                                     @NotNull Set<? extends FunExprOccurrence> occurrences,
+                                     @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     return descriptors.get(0).dumbService.runReadActionInSmartMode(() -> {
       PsiFile file = descriptors.get(0).samClass.getManager().findFile(vFile);
       if (!(file instanceof PsiJavaFile)) {

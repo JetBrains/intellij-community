@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Sets;
@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -93,7 +92,7 @@ public class TerminalView {
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TerminalView.class);
+    return project.getService(TerminalView.class);
   }
 
   void initToolWindow(@NotNull ToolWindow toolWindow) {
@@ -114,7 +113,7 @@ public class TerminalView {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
         if (toolWindow.isVisible() && myToolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null);
@@ -299,7 +298,7 @@ public class TerminalView {
     panel.setContent(terminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 
-    panel.uiSettingsChanged(null);
+    panel.updateDFState();
 
     content.setPreferredFocusableComponent(terminalWidget.getPreferredFocusableComponent());
 
@@ -512,11 +511,11 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateDFState();
   }
 
-  private void updateDFState() {
+  void updateDFState() {
     if (isDfmSupportEnabled()) {
       setDistractionFree(shouldMakeDistractionFree());
     }

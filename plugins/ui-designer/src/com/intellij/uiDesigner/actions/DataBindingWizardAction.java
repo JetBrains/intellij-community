@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class DataBindingWizardAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.actions.DataBindingWizardAction");
+  private static final Logger LOG = Logger.getInstance(DataBindingWizardAction.class);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

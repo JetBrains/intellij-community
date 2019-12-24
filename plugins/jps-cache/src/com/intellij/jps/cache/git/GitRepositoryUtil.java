@@ -3,39 +3,31 @@ package com.intellij.jps.cache.git;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIterator;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.git.GitRepositoryUtil");
 
   private GitRepositoryUtil() {}
 
-  public static Iterator<String> getCommitsIterator(@NotNull Project project) {
+  public static List<Iterator<String>> getCommitsIterator(@NotNull Project project) {
     if (GitUtil.hasGitRepositories(project)) {
-      VirtualFile virtualFile = project.getProjectFile();
-      if (virtualFile == null) return EmptyIterator.getInstance();
-
-      GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(virtualFile);
-      if (repository == null) return EmptyIterator.getInstance();
-      return new GitCommitsIterator(project, repository);
+      Collection<GitRepository> projectRepositories = GitUtil.getRepositories(project);
+      return ContainerUtil.map(projectRepositories, repo -> new GitCommitsIterator(project, repo));
     }
-    LOG.debug("Project doesn't contain Git repository");
-    return EmptyIterator.getInstance();
+    LOG.info("Project doesn't contain Git repository");
+    return Collections.emptyList();
   }
 
   private static class GitCommitsIterator implements Iterator<String> {
-    private static final int MAX_FETCH_SIZE = 5000;
+    private static final int MAX_FETCH_SIZE = 1000;
     private static final int FETCH_SIZE = 100;
     private final GitRepository myRepository;
     private final Project myProject;
@@ -55,7 +47,7 @@ public class GitRepositoryUtil {
       if (commits.size() > 0) {
         if (currentPosition < commits.size()) return true;
         if (fetchedCount >= MAX_FETCH_SIZE) {
-          LOG.warn("Exceeded fetch limit for git commits");
+          LOG.info("Exceeded fetch limit for git commits");
           return false;
         }
         fetchOldCommits(commits.get(currentPosition - 1));
@@ -90,7 +82,7 @@ public class GitRepositoryUtil {
       catch (VcsException e) {
         LOG.warn("Can't get Git hashes for commits", e);
       }
-      commits = ContainerUtil.newSmartList();
+      commits = new SmartList<>();
     }
   }
 }

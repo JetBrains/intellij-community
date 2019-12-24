@@ -20,6 +20,8 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   override val implementationClassName: String
     get() = descriptor.implementation!!
 
+  override fun isImplementationEqualsToInterface() = descriptor.serviceInterface == null || descriptor.serviceInterface == descriptor.implementation
+
   override fun getComponentKey(): String = descriptor.getInterface()
 
   override fun getActivityCategory(componentManager: PlatformComponentManagerImpl) = getServiceActivityCategory(componentManager)
@@ -51,7 +53,7 @@ internal class ServiceComponentAdapter(val descriptor: ServiceDescriptor,
   private fun <T : Any> createAndInitialize(componentManager: PlatformComponentManagerImpl, implementationClass: Class<T>): T {
     val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
     if (instance is Disposable) {
-      Disposer.register(componentManager, instance)
+      Disposer.register(componentManager.serviceParentDisposable, instance)
     }
     componentManager.initializeComponent(instance, descriptor)
     return instance

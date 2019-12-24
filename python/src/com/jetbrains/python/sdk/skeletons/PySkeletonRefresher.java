@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.sdk.skeletons;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,37 +25,32 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
-import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionString;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -69,24 +62,14 @@ import static com.jetbrains.python.sdk.skeleton.PySkeletonHeader.fromVersionStri
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
-
-  @Nullable private final Project myProject;
-  private @Nullable final ProgressIndicator myIndicator;
-  @NotNull private final Sdk mySdk;
-  private String mySkeletonsPath;
-
-  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  private final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
-  // we use the equals sign after filename so that we can freely include space in the filename
-
   private static int ourGeneratingCount = 0;
 
-  private String myExtraSyspath;
-  private PyPregeneratedSkeletons myPregeneratedSkeletons;
-  private int myGeneratorVersion;
-  private Map<String, Pair<Integer, Long>> myBlacklist;
-  private SkeletonVersionChecker myVersionChecker;
-
+  @Nullable private final Project myProject;
+  @Nullable private final ProgressIndicator myIndicator;
+  @NotNull private final Sdk mySdk;
+  private String mySkeletonsPath;
+  private List<String> myExtraSyspath;
+  private int myGeneratorVersion = -1;
   private final PySkeletonGenerator mySkeletonsGenerator;
 
   public static synchronized boolean isGeneratingSkeletons() {
@@ -102,8 +85,6 @@ public class PySkeletonRefresher {
                                            @Nullable String skeletonsPath,
                                            @NotNull Sdk sdk)
     throws InvalidSdkException {
-    final Map<String, List<String>> errors = new TreeMap<>();
-    final List<String> failedSdks = new SmartList<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
@@ -111,57 +92,23 @@ public class PySkeletonRefresher {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
       final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
-        List<String> sdkErrors = refresher.regenerateSkeletons(checker);
-        if (sdkErrors.size() > 0) {
-          String sdkName = sdk.getName();
-          List<String> knownErrors = errors.get(sdkName);
-          if (knownErrors == null) {
-            errors.put(sdkName, sdkErrors);
-          }
-          else {
-            knownErrors.addAll(sdkErrors);
+        final List<String> errors = refresher.regenerateSkeletons();
+        if (!errors.isEmpty()) {
+          LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
+          for (String moduleName : errors) {
+            LOG.warn(moduleName);
           }
         }
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
       }
       finally {
         changeGeneratingSkeletons(-1);
-      }
-    }
-    if (failedSdks.size() > 0 || errors.size() > 0) {
-      int module_errors = 0;
-      for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
-      String message;
-      if (failedSdks.size() > 0) {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failedSdks.size());
-      }
-      else {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
-      }
-      logErrors(errors, failedSdks, message);
-    }
-  }
-
-  private static void logErrors(@NotNull final Map<String, List<String>> errors, @NotNull final List<String> failedSdks,
-                                @NotNull final String message) {
-    LOG.warn(PyBundle.message("sdk.some.skeletons.failed"));
-    LOG.warn(message);
-
-    if (failedSdks.size() > 0) {
-      LOG.warn(PyBundle.message("sdk.error.dialog.failed.sdks"));
-      LOG.warn(StringUtil.join(failedSdks, ", "));
-    }
-
-    if (errors.size() > 0) {
-      LOG.warn(PyBundle.message("sdk.error.dialog.failed.modules"));
-      for (String sdkName : errors.keySet()) {
-        for (String moduleName : errors.get(sdkName)) {
-          LOG.warn(moduleName);
-        }
       }
     }
   }
@@ -197,6 +144,65 @@ public class PySkeletonRefresher {
     }
   }
 
+  @NotNull
+  public List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {
+    final String skeletonsPath = getSkeletonsPath();
+    final File skeletonsDir = new File(skeletonsPath);
+    //noinspection ResultOfMethodCallIgnored
+    skeletonsDir.mkdirs();
+
+    mySkeletonsGenerator.prepare();
+
+    myGeneratorVersion = readGeneratorVersion();
+
+    final PyPregeneratedSkeletons preGeneratedSkeletons =
+      PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
+
+    final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
+    final File builtinsFile = new File(skeletonsPath, builtinsFileName);
+
+    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
+    final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
+
+    if (preGeneratedSkeletons != null && oldOrNonExisting) {
+      indicate(PyBundle.message("sdk.gen.unpacking.prebuilt"));
+      preGeneratedSkeletons.unpackPreGeneratedSkeletons(getSkeletonsPath());
+    }
+
+    indicate(PyBundle.message("sdk.gen.launching.generator"));
+    final List<PySkeletonGenerator.GenerationResult> results = updateOrCreateSkeletons();
+    final List<String> failedModules = ContainerUtil.mapNotNull(results, result -> {
+      if (result.getGenerationStatus() == PySkeletonGenerator.GenerationStatus.FAILED) {
+        return result.getModuleName();
+      }
+      return null;
+    });
+    final boolean builtinsUpdated = ContainerUtil.exists(results,
+                                                         result -> result.getModuleOrigin().equals(PySkeletonHeader.BUILTIN_NAME));
+
+    indicate(PyBundle.message("sdk.gen.reloading"));
+    mySkeletonsGenerator.refreshGeneratedSkeletons();
+
+    indicate(PyBundle.message("sdk.gen.cleaning.up"));
+    cleanUpSkeletons(skeletonsDir);
+
+    if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
+      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+    }
+
+    return failedModules;
+  }
+
+  private static int readGeneratorVersion() {
+    final File versionFile = PythonHelpersLocator.getHelperFile("generator3/version.txt");
+    try (final FileInputStream inputStream = new FileInputStream(versionFile)) {
+      return PySkeletonHeader.fromVersionString(StreamUtil.readText(inputStream, StandardCharsets.UTF_8).trim());
+    }
+    catch (IOException e) {
+      throw new AssertionError("Failed to read generator version from " + versionFile);
+    }
+  }
+
   private void indicate(String msg) {
     LOG.debug("Progress message: " + msg);
     if (myIndicator != null) {
@@ -213,13 +219,7 @@ public class PySkeletonRefresher {
     }
   }
 
-  private void checkCanceled() {
-    if (myIndicator != null) {
-      myIndicator.checkCanceled();
-    }
-  }
-
-  private static String calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
+  private static List<String> calculateExtraSysPath(@NotNull final Sdk sdk, @Nullable final String skeletonsPath) {
     final File skeletons = skeletonsPath != null ? new File(skeletonsPath) : null;
 
     final VirtualFile userSkeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
@@ -233,7 +233,7 @@ public class PySkeletonRefresher {
     paths.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
     paths.addAll(BuildoutFacet.getExtraPathForAllOpenModules());
 
-    return Joiner.on(File.pathSeparator).join(ContainerUtil.mapNotNull(paths, (Function<VirtualFile, Object>)file -> {
+    return ContainerUtil.mapNotNull(paths, file -> {
       if (file.isInLocalFileSystem()) {
         // We compare canonical files, not strings because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
         final File canonicalFile = new File(file.getPath());
@@ -245,7 +245,7 @@ public class PySkeletonRefresher {
         }
       }
       return null;
-    }));
+    });
   }
 
   /**
@@ -265,226 +265,16 @@ public class PySkeletonRefresher {
     return mySkeletonsPath;
   }
 
-  public List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker checker) throws InvalidSdkException {
-    final List<String> errorList = new SmartList<>();
-    final String homePath = mySdk.getHomePath();
-    final String skeletonsPath = getSkeletonsPath();
-    final File skeletonsDir = new File(skeletonsPath);
-    if (!skeletonsDir.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      skeletonsDir.mkdirs();
-    }
-    final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
-
-    if (checker != null && checker.isPregenerated()) {
-      mySkeletonsGenerator.setPrebuilt(true);
-    }
-
-    mySkeletonsGenerator.prepare();
-    myBlacklist = loadBlacklist();
-
-    indicate(PyBundle.message("sdk.gen.querying.$0", readablePath));
-    // get generator version and binary libs list in one go
-
-    final String extraSysPath = calculateExtraSysPath(mySdk, getSkeletonsPath());
-
-    //Split into batches of 50 to avoid command line too long error
-    final String[] split = extraSysPath.split(";");
-    PySkeletonGenerator.ListBinariesResult binaries = null;
-    for (List<String> batch : Lists.partition(Arrays.asList(split), 50)) {
-      if (binaries == null) {
-        binaries = mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch));
-      }
-      else {
-        binaries.modules.putAll(mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch)).modules);
-      }
-    }
-    myGeneratorVersion = binaries != null ? binaries.generatorVersion : 0;
-    myPregeneratedSkeletons = PyPregeneratedSkeletonsProvider.findPregeneratedSkeletonsForSdk(mySdk, myGeneratorVersion);
-
-    indicate(PyBundle.message("sdk.gen.reading.versions.file"));
-
-    if (checker != null) {
-      myVersionChecker = checker.withDefaultVersionIfUnknown(myGeneratorVersion);
-    }
-    else {
-      myVersionChecker = new SkeletonVersionChecker(myGeneratorVersion);
-    }
-
-    // check builtins
-    final String builtinsFileName = PythonSdkType.getBuiltinsFileName(mySdk);
-    final File builtinsFile = new File(skeletonsPath, builtinsFileName);
-
-    final PySkeletonHeader oldHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
-    final boolean oldOrNonExisting = oldHeader == null || oldHeader.getVersion() == 0;
-
-    if (myPregeneratedSkeletons != null && oldOrNonExisting) {
-      myPregeneratedSkeletons.unpackPreGeneratedSkeletons(getSkeletonsPath());
-    }
-
-    if (oldOrNonExisting) {
-      copyBaseSdkSkeletonsToVirtualEnv(skeletonsPath, binaries);
-    }
-
-    final boolean builtinsUpdated = updateSkeletonsForBuiltins(readablePath, builtinsFile);
-
-    if (binaries != null && !binaries.modules.isEmpty()) {
-      indicate(PyBundle.message("sdk.gen.updating.$0", readablePath));
-      final List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
-      if (updateErrors.size() > 0) {
-        indicateMinor(BLACKLIST_FILE_NAME);
-        for (UpdateResult error : updateErrors) {
-          if (error.isFresh()) errorList.add(error.getName());
-          myBlacklist.put(error.getPath(), new Pair<>(myGeneratorVersion, error.getTimestamp()));
-        }
-        storeBlacklist(skeletonsDir, myBlacklist);
-      }
-      else {
-        removeBlacklist(skeletonsDir);
-      }
-    }
-
-    indicate(PyBundle.message("sdk.gen.reloading"));
-    mySkeletonsGenerator.refreshGeneratedSkeletons();
-
-    if (!oldOrNonExisting) {
-      indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));
-      cleanUpSkeletons(skeletonsDir);
-    }
-
-    if ((builtinsUpdated || PythonSdkUtil.isRemote(mySdk)) && myProject != null) {
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
-    }
-
-    return errorList;
-  }
-
-  private boolean updateSkeletonsForBuiltins(String readablePath, File builtinsFile) throws InvalidSdkException {
-    final PySkeletonHeader newHeader = PySkeletonHeader.readSkeletonHeader(builtinsFile);
-    final boolean mustUpdateBuiltins = myPregeneratedSkeletons == null &&
-                                       (newHeader == null || newHeader.getVersion() < myVersionChecker.getBuiltinVersion());
-    if (mustUpdateBuiltins) {
-      indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readablePath));
-      mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
-      if (myProject != null) {
-        PythonSdkPathCache.getInstance(myProject, mySdk).clearBuiltins();
-      }
-    }
-    return mustUpdateBuiltins;
-  }
-
-  private void copyBaseSdkSkeletonsToVirtualEnv(String skeletonsPath, PySkeletonGenerator.ListBinariesResult binaries)
-    throws InvalidSdkException {
-    final Sdk base = PythonSdkType.getInstance().getVirtualEnvBaseSdk(mySdk);
-    if (base != null) {
-      indicate("Copying base SDK skeletons for virtualenv...");
-      final String baseSkeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), base.getHomePath());
-      final PySkeletonGenerator.ListBinariesResult baseBinaries =
-        mySkeletonsGenerator.listBinaries(base, calculateExtraSysPath(base, baseSkeletonsPath));
-      for (Map.Entry<String, PyBinaryItem> entry : binaries.modules.entrySet()) {
-        final String module = entry.getKey();
-        final PyBinaryItem binary = entry.getValue();
-        final PyBinaryItem baseBinary = baseBinaries.modules.get(module);
-        final File fromFile = getSkeleton(module, baseSkeletonsPath);
-        if (baseBinaries.modules.containsKey(module) &&
-            fromFile.exists() &&
-            binary.length() == baseBinary.length()) { // Weak binary modules equality check
-          final File toFile = fromFile.isDirectory() ?
-                              getPackageSkeleton(module, skeletonsPath) :
-                              getModuleSkeleton(module, skeletonsPath);
-          try {
-            FileUtil.copy(fromFile, toFile);
-          }
-          catch (IOException e) {
-            LOG.info("Error copying base virtualenv SDK skeleton for " + module, e);
-          }
-        }
-      }
-    }
-  }
-
-
-  private Map<String, Pair<Integer, Long>> loadBlacklist() {
-    Map<String, Pair<Integer, Long>> ret = new HashMap<>();
-    File blacklistFile = new File(mySkeletonsPath, BLACKLIST_FILE_NAME);
-    if (blacklistFile.exists() && blacklistFile.canRead()) {
-      Reader input;
-      try {
-        input = new FileReader(blacklistFile);
-        LineNumberReader lines = new LineNumberReader(input);
-        try {
-          String line;
-          do {
-            line = lines.readLine();
-            if (line != null && line.length() > 0 && line.charAt(0) != '#') { // '#' begins a comment
-              Matcher matcher = BLACKLIST_LINE.matcher(line);
-              boolean notParsed = true;
-              if (matcher.matches()) {
-                final int version = fromVersionString(matcher.group(2));
-                if (version > 0) {
-                  try {
-                    final long timestamp = Long.parseLong(matcher.group(3));
-                    final String filename = matcher.group(1);
-                    ret.put(filename, new Pair<>(version, timestamp));
-                    notParsed = false;
-                  }
-                  catch (NumberFormatException ignore) {
-                  }
-                }
-              }
-              if (notParsed) LOG.warn("In blacklist at " + mySkeletonsPath + " strange line '" + line + "'");
-            }
-          }
-          while (line != null);
-        }
-        catch (IOException ex) {
-          LOG.warn("Failed to read blacklist in " + mySkeletonsPath, ex);
-        }
-        finally {
-          lines.close();
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-    return ret;
-  }
-
-  private static void storeBlacklist(File skeletonDir, Map<String, Pair<Integer, Long>> blacklist) {
-    File blacklistFile = new File(skeletonDir, BLACKLIST_FILE_NAME);
-    PrintWriter output;
-    try {
-      output = new PrintWriter(blacklistFile);
-      try {
-        output.println("# PyCharm failed to generate skeletons for these modules.");
-        output.println("# These skeletons will be re-generated automatically");
-        output.println("# when a newer module version or an updated generator becomes available.");
-        // each line:   filename = version.string timestamp
-        for (String fname : blacklist.keySet()) {
-          Pair<Integer, Long> data = blacklist.get(fname);
-          output.print(fname);
-          output.print(" = ");
-          output.print(SkeletonVersionChecker.toVersionString(data.getFirst()));
-          output.print(" ");
-          output.print(data.getSecond());
-          output.println();
-        }
-      }
-      finally {
-        output.close();
-      }
-    }
-    catch (IOException ex) {
-      LOG.warn("Failed to store blacklist in " + skeletonDir.getPath(), ex);
-    }
-  }
-
-  private static void removeBlacklist(File skeletonDir) {
-    File blacklistFile = new File(skeletonDir, BLACKLIST_FILE_NAME);
-    if (blacklistFile.exists()) {
-      boolean okay = blacklistFile.delete();
-      if (!okay) LOG.warn("Could not delete blacklist file in " + skeletonDir.getPath());
-    }
+  @NotNull
+  private List<PySkeletonGenerator.GenerationResult> updateOrCreateSkeletons() throws InvalidSdkException, ExecutionException {
+    final long startTime = System.currentTimeMillis();
+    final List<PySkeletonGenerator.GenerationResult> result = mySkeletonsGenerator
+      .commandBuilder()
+      .extraSysPath(getExtraSyspath())
+      .runGeneration(myIndicator);
+    finishSkeletonsGeneration();
+    LOG.info("Rebuilding skeletons for binaries took " + (System.currentTimeMillis() - startTime) + " ms");
+    return result;
   }
 
   /**
@@ -518,7 +308,8 @@ public class PySkeletonRefresher {
         // clean up an individual file
         final String itemName = item.getName();
         if (PyNames.INIT_DOT_PY.equals(itemName) && item.length() == 0) continue; // these are versionless
-        if (BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
+        if (PySkeletonGenerator.BLACKLIST_FILE_NAME.equals(itemName)) continue; // don't touch the blacklist
+        if (PySkeletonGenerator.STATE_MARKER_FILE.equals(itemName)) continue;
         if (PythonSdkType.getBuiltinsFileName(mySdk).equals(itemName)) {
           continue;
         }
@@ -539,181 +330,12 @@ public class PySkeletonRefresher {
     }
   }
 
-  private static class UpdateResult {
-    private final String myPath;
-    private final String myName;
-    private final long myTimestamp;
-
-    public boolean isFresh() {
-      return myIsFresh;
-    }
-
-    private final boolean myIsFresh;
-
-    private UpdateResult(String name, String path, long timestamp, boolean fresh) {
-      myName = name;
-      myPath = path;
-      myTimestamp = timestamp;
-      myIsFresh = fresh;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public Long getTimestamp() {
-      return myTimestamp;
-    }
-  }
-
-  /**
-   * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
-   * Does one module at a time: slower, but avoids certain conflicts.
-   *
-   * @param modules output of generator3 -L
-   * @return blacklist data; whatever was not generated successfully is put here.
-   */
-  private List<UpdateResult> updateOrCreateSkeletons(Map<String, PyBinaryItem> modules) throws InvalidSdkException {
-    long startTime = System.currentTimeMillis();
-
-    final List<String> names = Lists.newArrayList(modules.keySet());
-    Collections.sort(names);
-    final List<UpdateResult> results = new ArrayList<>();
-    final int count = names.size();
-    if (myIndicator != null) {
-      myIndicator.setIndeterminate(false);
-    }
-    for (int i = 0; i < count; i++) {
-      checkCanceled();
-      if (myIndicator != null) {
-        myIndicator.setFraction((double)i / count);
-      }
-      final String name = names.get(i);
-      final PyBinaryItem module = modules.get(name);
-      if (module != null) {
-        updateOrCreateSkeleton(module, results);
-      }
-    }
-    finishSkeletonsGeneration();
-
-
-    long doneInMs = System.currentTimeMillis() - startTime;
-
-    LOG.info("Rebuilding skeletons for binaries took " + doneInMs + " ms");
-
-    return results;
-  }
-
   private void finishSkeletonsGeneration() {
     mySkeletonsGenerator.finishSkeletonsGeneration();
   }
 
-  private static File getSkeleton(String moduleName, String skeletonsPath) {
-    final File module = getModuleSkeleton(moduleName, skeletonsPath);
-    return module.exists() ? module : getPackageSkeleton(moduleName, skeletonsPath);
-  }
 
-  private static File getModuleSkeleton(String module, String skeletonsPath) {
-    final String modulePath = module.replace('.', '/');
-    return new File(skeletonsPath, modulePath + ".py");
-  }
-
-  private static File getPackageSkeleton(String pkg, String skeletonsPath) {
-    final String packagePath = pkg.replace('.', '/');
-    return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
-  }
-
-  private void updateOrCreateSkeleton(final PyBinaryItem binaryItem,
-                                      final List<UpdateResult> errorList) throws InvalidSdkException {
-    final String moduleName = binaryItem.getModule();
-
-    final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
-    final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(skeleton);
-    boolean mustRebuild = true; // guilty unless proven fresh enough
-    if (header != null) {
-      int requiredVersion = myVersionChecker.getRequiredVersion(moduleName);
-      mustRebuild = header.getVersion() < requiredVersion;
-    }
-    if (!mustRebuild) { // ...but what if the lib was updated?
-      mustRebuild = (skeleton.exists() && binaryItem.lastModified() > skeleton.lastModified());
-      // really we can omit both exists() calls but I keep these to make the logic clear
-    }
-    if (myBlacklist != null) {
-      Pair<Integer, Long> versionInfo = myBlacklist.get(binaryItem.getPath());
-      if (versionInfo != null) {
-        int failedGeneratorVersion = versionInfo.getFirst();
-        long failedTimestamp = versionInfo.getSecond();
-        mustRebuild &= failedGeneratorVersion < myGeneratorVersion || failedTimestamp < binaryItem.lastModified();
-        if (!mustRebuild) { // we're still failing to rebuild, it, keep it in blacklist
-          errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), false));
-        }
-      }
-    }
-    if (mustRebuild) {
-      indicateMinor(moduleName);
-      if (myPregeneratedSkeletons != null && myPregeneratedSkeletons.copyPregeneratedSkeleton(moduleName, getSkeletonsPath())) {
-        return;
-      }
-      LOG.info("Skeleton for " + moduleName);
-
-      generateSkeleton(moduleName, binaryItem.getPath(), null, generated -> {
-        if (!generated) {
-          errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
-        }
-      });
-    }
-  }
-
-  public static class PyBinaryItem {
-    private final String myPath;
-    private final String myModule;
-    private final long myLength;
-    private final long myLastModified;
-
-    PyBinaryItem(String module, String path, long length, long lastModified) {
-      myPath = path;
-      myModule = module;
-      myLength = length;
-      myLastModified = lastModified * 1000;
-    }
-
-    public String getPath() {
-      return myPath;
-    }
-
-    public String getModule() {
-      return myModule;
-    }
-
-    public long length() {
-      return myLength;
-    }
-
-    public long lastModified() {
-      return myLastModified;
-    }
-  }
-
-
-  /**
-   * Generates a skeleton for a particular binary module.
-   *
-   * @param modname        name of the binary module as known to Python (e.g. 'foo.bar')
-   * @param modfilename    name of file which defines the module, null for built-in modules
-   * @param assemblyRefs   refs that generator wants to know in .net environment, if applicable
-   * @param resultConsumer accepts true if generation completed successfully
-   */
-  public void generateSkeleton(@NotNull String modname, @Nullable String modfilename,
-                               @Nullable List<String> assemblyRefs, Consumer<Boolean> resultConsumer) throws InvalidSdkException {
-    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk, resultConsumer);
-  }
-
-
-  private String getExtraSyspath() {
+  private List<String> getExtraSyspath() {
     if (myExtraSyspath == null) {
       myExtraSyspath = calculateExtraSysPath(mySdk, mySkeletonsPath);
     }
@@ -721,6 +343,9 @@ public class PySkeletonRefresher {
   }
 
   public int getGeneratorVersion() {
+    if (myGeneratorVersion == -1) {
+      myGeneratorVersion = readGeneratorVersion();
+    }
     return myGeneratorVersion;
   }
 
@@ -732,5 +357,10 @@ public class PySkeletonRefresher {
     PyRemoteSdkAdditionalDataBase sdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
     return PyRemoteSkeletonGeneratorFactory.getInstance(sdkAdditionalData)
       .createRemoteSkeletonGenerator(project, ownerComponent, sdk, skeletonsPath);
+  }
+
+  @NotNull
+  public PySkeletonGenerator getGenerator() {
+    return mySkeletonsGenerator;
   }
 }

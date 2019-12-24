@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.openapi.impl.JavaRefactoringFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(JavaRefactoringFactoryImpl.class);
   private final Project myProject;
 
   public JavaRefactoringFactoryImpl(Project project) {

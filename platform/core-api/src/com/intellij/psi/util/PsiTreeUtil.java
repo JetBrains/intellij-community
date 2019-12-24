@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class PsiTreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
+  private static final Logger LOG = Logger.getInstance(PsiTreeUtil.class);
 
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
   @SuppressWarnings("unchecked")
@@ -422,7 +422,7 @@ public class PsiTreeUtil {
     List<T> result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(child, classes)) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         @SuppressWarnings("unchecked") T t = (T)child;
         result.add(t);
       }
@@ -882,7 +882,7 @@ public class PsiTreeUtil {
     final boolean[] result = {true};
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         //noinspection unchecked
         if (processor.execute(element)) {
           super.visitElement(element);

@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomizationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizationUtil");
+  private static final Logger LOG = Logger.getInstance(CustomizationUtil.class);
 
   private CustomizationUtil() {
   }

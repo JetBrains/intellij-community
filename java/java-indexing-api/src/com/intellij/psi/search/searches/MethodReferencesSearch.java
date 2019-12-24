@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
-  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.methodReferencesSearch");
+  public static final ExtensionPointName<QueryExecutor<PsiReference, MethodReferencesSearch.SearchParameters>> EP_NAME = ExtensionPointName.create("com.intellij.methodReferencesSearch");
   public static final MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters implements DumbAwareSearchParameters {
@@ -96,7 +96,9 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     }
   }
 
-  private MethodReferencesSearch() {}
+  private MethodReferencesSearch() {
+    super(EP_NAME);
+  }
 
   public static Query<PsiReference> search(@NotNull PsiMethod method, SearchScope scope, final boolean strictSignatureSearch) {
     return search(new SearchParameters(method, scope, strictSignatureSearch));

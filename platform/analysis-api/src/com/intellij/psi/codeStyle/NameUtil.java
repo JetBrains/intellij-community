@@ -282,11 +282,13 @@ public final class NameUtil {
     return buildMatcher(pattern, options);
   }
 
+  /**
+   * @deprecated Parameter {@code lowerCaseWords} is ignored, same as {@link #buildMatcher(String, int, boolean, boolean)}
+   */
   @Deprecated
   @NotNull
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, @SuppressWarnings("unused") boolean lowerCaseWords) {
+    return buildMatcher(pattern, exactPrefixLen, allowToUpper, allowToLower);
   }
 
   public static class MatcherBuilder {
@@ -294,6 +296,7 @@ public final class NameUtil {
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
     private boolean typoTolerant = Registry.is("ide.completion.typo.tolerance");
+    private boolean preferStartMatches = false;
 
     public MatcherBuilder(String pattern) {
       this.pattern = pattern;
@@ -314,9 +317,15 @@ public final class NameUtil {
       return this;
     }
 
+    public MatcherBuilder preferringStartMatches() {
+      preferStartMatches = true;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      return typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
-                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
+                                              : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return preferStartMatches ? new PreferStartMatchMatcherWrapper(matcher) : matcher;
     }
   }
 

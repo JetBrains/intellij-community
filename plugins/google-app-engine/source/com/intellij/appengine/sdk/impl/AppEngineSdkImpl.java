@@ -29,7 +29,7 @@ import java.util.jar.Attributes;
  * @author nik
  */
 public class AppEngineSdkImpl implements AppEngineSdk {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.sdk.impl.AppEngineSdkImpl");
+  private static final Logger LOG = Logger.getInstance(AppEngineSdkImpl.class);
   private Map<String, Set<String>> myClassesWhiteList;
   private Map<String, Set<String>> myMethodsBlackList;
   private final String myHomePath;

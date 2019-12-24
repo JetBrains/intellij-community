@@ -39,13 +39,6 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
     return GroupNames.NUMERIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Numeric overflow";
-  }
-
   @NotNull
   @Override
   public String getShortName() {

@@ -43,7 +43,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexe
  & @author ven
  */
 public class UnusedDefInspection extends GroovyLocalInspectionBase {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection");
+  private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 
   @NotNull
   @Override

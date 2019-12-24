@@ -42,14 +42,14 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapReduceIndex");
+  private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
   @NotNull protected final IndexId<Key, Value> myIndexId;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
 
   protected final DataExternalizer<Value> myValueExternalizer;
   protected final IndexExtension<Key, Value, Input> myExtension;
   protected final AtomicLong myModificationStamp = new AtomicLong();
-  private final DataIndexer<Key, Value, Input> myIndexer;
+  protected final DataIndexer<Key, Value, Input> myIndexer;
 
   private final ForwardIndex myForwardIndex;
   private final ForwardIndexAccessor<Key, Value> myForwardIndexAccessor;

@@ -42,7 +42,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   public static final PrevNextActionsDescriptor DEFAULT_PREV_NEXT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB,
                                                                                                             IdeActions.ACTION_PREVIOUS_TAB);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneImpl");
+  private static final Logger LOG = Logger.getInstance(TabbedPaneImpl.class);
 
   private ScrollableTabSupport myScrollableTabSupport;
   private AnAction myNextTabAction;

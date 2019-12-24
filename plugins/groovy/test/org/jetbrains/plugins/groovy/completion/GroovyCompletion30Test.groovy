@@ -71,4 +71,20 @@ def foo(a) {
 foo 1
 ''')
   }
+
+  void testCompletionAfterComplexStatement() {
+    doBasicTest '''
+def x(List<Integer> l){}
+
+void m(l) {
+    x([l])
+    l.by<caret>
+}''', '''
+def x(List<Integer> l){}
+
+void m(l) {
+    x([l])
+    l.byteValue()<caret>
+}'''
+  }
 }

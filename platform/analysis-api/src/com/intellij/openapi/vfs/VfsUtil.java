@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+  private static final Logger LOG = Logger.getInstance(VfsUtil.class);
 
   /**
    * Specifies an average delay between a file system event and a moment the IDE gets pinged about it by fsnotifier.
@@ -379,7 +379,7 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull VirtualFile root) {
     List<VirtualFile> result = new ArrayList<>();
-    visitChildrenRecursively(root, new VirtualFileVisitor<Object>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+    visitChildrenRecursively(root, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         result.add(file);
@@ -430,7 +430,7 @@ public class VfsUtil extends VfsUtilCore {
     List<VirtualFile> result = null;
     for (VirtualFile child : dir.getChildren()) {
       if (filter.accept(child)) {
-        if (result == null) result = ContainerUtil.newSmartList();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }
@@ -498,6 +498,15 @@ public class VfsUtil extends VfsUtilCore {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;
     LocalFileSystem.getInstance().refreshFiles(list, async, recursive, null);
+  }
+
+  /**
+   * @see #markDirtyAndRefresh(boolean, boolean, boolean, VirtualFile...)
+   */
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull File... files) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile[] virtualFiles = ContainerUtil.map(files, fileSystem::refreshAndFindFileByIoFile, new VirtualFile[files.length]);
+    markDirtyAndRefresh(async, recursive, reloadChildren, virtualFiles);
   }
 
   @NotNull

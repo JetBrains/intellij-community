@@ -19,6 +19,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
+import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -39,7 +40,7 @@ import static java.util.Objects.requireNonNull;
  * @author dmitry lomov
  */
 public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
+  private static final Logger LOG = Logger.getInstance(JavaFileManagerImpl.class);
 
   private final PsiManagerEx myManager;
   private volatile Set<String> myNontrivialPackagePrefixes;
@@ -178,9 +179,12 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), excludingScope));
 
-    Collection<VirtualFile> jars = JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope);
-    if (!jars.isEmpty()) {
-      jars.stream().map(f -> LightJavaModule.getModule(myManager, f)).forEach(results::add);
+    for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
+      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, manifest.getParent().getParent()));
+    }
+
+    for (VirtualFile root : JavaAutoModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {
+      ContainerUtil.addIfNotNull(results, LightJavaModule.findModule(myManager, root));
     }
 
     return upgradeModules(sortModules(results, scope), moduleName, scope);
@@ -189,7 +193,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static class LibSrcExcludingScope extends DelegatingGlobalSearchScope {
     private final ProjectFileIndex myIndex;
 
-    private LibSrcExcludingScope(@NotNull GlobalSearchScope baseScope) {
+    LibSrcExcludingScope(@NotNull GlobalSearchScope baseScope) {
       super(baseScope);
       myIndex = ProjectFileIndex.getInstance(requireNonNull(baseScope.getProject()));
     }

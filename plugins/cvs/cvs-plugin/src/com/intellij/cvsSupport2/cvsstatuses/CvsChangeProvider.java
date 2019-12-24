@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
@@ -34,7 +20,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -56,7 +45,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
  * @author max
  */
 public class CvsChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsstatuses.CvsChangeProvider");
+  private static final Logger LOG = Logger.getInstance(CvsChangeProvider.class);
 
   private final CvsVcs2 myVcs;
   private final CvsEntriesManager myEntriesManager;
@@ -112,9 +101,6 @@ public class CvsChangeProvider implements ChangeProvider {
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
-
-  @Override
-  public void doCleanup(final List<VirtualFile> files) {}
 
   private void processEntriesIn(@NotNull VirtualFile dir, VcsDirtyScope scope, ChangelistBuilder builder, boolean recursively,
                                 Collection<VirtualFile> cvsRoots, final ProgressIndicator progress) throws VcsException {

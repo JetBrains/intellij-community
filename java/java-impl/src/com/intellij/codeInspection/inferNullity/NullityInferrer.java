@@ -356,7 +356,7 @@ public class NullityInferrer {
     private boolean sometimesNull;
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (sometimesNull) return;
       super.visitElement(element);
     }
@@ -513,7 +513,7 @@ public class NullityInferrer {
           public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (sometimesReturnsNull[0]) return;
             super.visitElement(element);
           }

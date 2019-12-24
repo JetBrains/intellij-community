@@ -16,14 +16,16 @@
 
 package com.intellij.facet;
 
-import com.intellij.openapi.roots.ProjectModelExternalSource;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
+@ApiStatus.NonExtendable
 public interface ModifiableFacetModel extends FacetModel {
 
   void addFacet(Facet facet);

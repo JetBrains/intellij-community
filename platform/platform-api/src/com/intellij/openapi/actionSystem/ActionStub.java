@@ -1,25 +1,17 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartFMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
 /**
@@ -29,31 +21,40 @@ import java.util.function.Supplier;
  * @author Vladimir Kondratyev
  */
 @SuppressWarnings("ComponentNotRegistered")
-public class ActionStub extends AnAction implements ActionStubBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ActionStub");
+public final class ActionStub extends AnAction implements ActionStubBase {
+  private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
   private final String myClassName;
   private final String myProjectType;
   private final Supplier<Presentation> myTemplatePresentation;
   private final String myId;
-  private final ClassLoader myLoader;
-  private final PluginId myPluginId;
+  private final IdeaPluginDescriptor myPlugin;
   private final String myIconPath;
+  private SmartFMap<String, String> myActionTextOverrides = SmartFMap.emptyMap();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
-                    ClassLoader loader,
-                    PluginId pluginId,
-                    String iconPath, String projectType,
+                    @NotNull IdeaPluginDescriptor plugin,
+                    String iconPath,
+                    String projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
-    myLoader = loader;
+    myPlugin = plugin;
     myClassName = actionClass;
     myProjectType = projectType;
     myTemplatePresentation = templatePresentation;
     LOG.assertTrue(!id.isEmpty());
     myId = id;
-    myPluginId = pluginId;
     myIconPath = iconPath;
+  }
+
+  public void addActionTextOverride(@NotNull String place, @NotNull String text) {
+    myActionTextOverrides = myActionTextOverrides.plus(place, text);
+  }
+
+  @NotNull
+  @Override
+  public IdeaPluginDescriptor getPlugin() {
+    return myPlugin;
   }
 
   @NotNull
@@ -74,12 +75,12 @@ public class ActionStub extends AnAction implements ActionStubBase {
   }
 
   public ClassLoader getLoader() {
-    return myLoader;
+    return myPlugin.getPluginClassLoader();
   }
 
   @Override
   public PluginId getPluginId() {
-    return myPluginId;
+    return myPlugin.getPluginId();
   }
 
   @Override
@@ -95,9 +96,19 @@ public class ActionStub extends AnAction implements ActionStubBase {
   /**
    * Copies template presentation and shortcuts set to {@code targetAction}.
    */
-  public final void initAction(@NotNull AnAction targetAction) {
+  @ApiStatus.Internal
+  public final void initAction(@NotNull AnAction targetAction, @Nullable ResourceBundle resourceBundle) {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
+    for (Map.Entry<String, String> override : myActionTextOverrides.entrySet()) {
+      String place = override.getKey();
+      String overrideText = override.getValue();
+      if (overrideText.isEmpty()) {
+        if (resourceBundle == null) return;
+        overrideText = resourceBundle.getString("action." + getId() + "." + place + ".text");
+      }
+      targetAction.addTextOverride(place, overrideText);
+    }
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {

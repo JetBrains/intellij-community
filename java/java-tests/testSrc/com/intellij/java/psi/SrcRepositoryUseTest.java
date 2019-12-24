@@ -36,7 +36,7 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("ConstantConditions")
 @HeavyPlatformTestCase.WrapInCommand
 public class SrcRepositoryUseTest extends JavaPsiTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SrcRepositoryUseTest");
+  private static final Logger LOG = Logger.getInstance(SrcRepositoryUseTest.class);
   private static final Key<String> TEST_KEY = Key.create("TEST");
 
   @Override

@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +20,7 @@ import java.util.List;
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public static ChangeListManager getInstance(@NotNull Project project) {
-    return project.getComponent(ChangeListManager.class);
+    return project.getService(ChangeListManager.class);
   }
 
   public abstract void scheduleUpdate();
@@ -135,8 +134,14 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable);
 
+  /**
+   * Prefer using {@link ChangeListListener#TOPIC}
+   */
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);

@@ -41,13 +41,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class ManualArrayToCollectionCopyInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "manual.array.to.collection.copy.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

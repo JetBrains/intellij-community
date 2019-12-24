@@ -40,6 +40,11 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     return false;
   }
 
+  @Override
+  public boolean isReadActionNeeded() {
+    return false;
+  }
+
   @Nullable
   @Override
   public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity,
@@ -80,12 +85,6 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.MODULARIZATION_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Inconsistent language level settings";
   }
 
   @Override

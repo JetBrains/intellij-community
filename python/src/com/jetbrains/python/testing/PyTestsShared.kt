@@ -1,6 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
 package com.jetbrains.python.testing
 
 import com.intellij.execution.ExecutionException
@@ -26,7 +24,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -37,10 +34,10 @@ import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.*
-import com.jetbrains.extenstions.ModuleBasedContextAnchor
-import com.jetbrains.extenstions.QNameResolveContext
-import com.jetbrains.extenstions.getElementAndResolvableName
-import com.jetbrains.extenstions.resolveToElement
+import com.jetbrains.extensions.ModuleBasedContextAnchor
+import com.jetbrains.extensions.QNameResolveContext
+import com.jetbrains.extensions.getElementAndResolvableName
+import com.jetbrains.extensions.resolveToElement
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
@@ -62,18 +59,17 @@ import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import java.util.regex.Matcher
 
-
 /**
  * New configuration factories
  */
-internal val pythonFactories: Array<PythonConfigurationFactoryBase> = arrayOf(
-  PyUnitTestFactory,
-  PyTestFactory,
-  PyNoseTestFactory,
-  PyTrialTestFactory)
+internal val pythonFactories get() = arrayOf<PythonConfigurationFactoryBase>(
+  PyUnitTestFactory(),
+  PyTestFactory(),
+  PyNoseTestFactory(),
+  PyTrialTestFactory())
 
 /**
- * Accepts text that may be wrapped in TC message. Unwarps it and removes TC escape code.
+ * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
  * Regular text is unchanged
  */
 fun processTCMessage(text: String): String {
@@ -85,7 +81,7 @@ fun processTCMessage(text: String): String {
   }
 }
 
-internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
+internal fun getAdditionalArgumentsPropertyName() = PyAbstractTestConfiguration::additionalArguments.name
 
 /**
  * If runner name is here that means test runner only can run inheritors for TestCase
@@ -99,7 +95,7 @@ val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfi
  */
 fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
   is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
-  is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
+  is PsiDirectory -> element.name.contains("test", true) || element.children.any {
     it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
   }
   is PyFunction -> PythonUnitTestUtil.isTestFunction(element,
@@ -145,20 +141,6 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 
 // folder provided by python side. Resolve test names versus it
 private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
-
-
-/**
- * Resolves url into element
- */
-fun getElementByUrl(url: String,
-                    module: Module,
-                    evalContext: TypeEvalContext): Location<out PsiElement>? {
-  val protocol = VirtualFileManager.extractProtocol(url) ?: return null
-  return getElementByUrl(protocol,
-                         VirtualFileManager.extractPath(url),
-                         module,
-                         evalContext)
-}
 
 private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.let { data ->
   PathMappingProvider.getSuitableMappingProviders(data).flatMap { it.getPathMappingSettings(project, data).pathMappings }
@@ -502,7 +484,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
   override fun getTestSpec(location: Location<*>,
-                           failedTest: com.intellij.execution.testframework.AbstractTestProxy): String? {
+                           failedTest: AbstractTestProxy): String? {
     val list = getPythonTestSpecByLocation(location)
     if (list.isEmpty()) {
       return null
@@ -512,7 +494,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     }
   }
 
-  override fun getTestSpecsForRerun(scope: com.intellij.psi.search.GlobalSearchScope,
+  override fun getTestSpecsForRerun(scope: GlobalSearchScope,
                                     locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> {
     val result = java.util.ArrayList<String>()
     // Set used to remove duplicate targets
@@ -684,14 +666,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
             }
             is PsiFileSystemItem -> {
               val virtualFile = element.virtualFile
-              val path = virtualFile
-
               val workingDirectory = when (element) {
                                        is PyFile -> getDirectoryForFileToBeImportedFrom(element)
                                        is PsiDirectory -> element
                                        else -> return null
                                      }?.virtualFile?.path ?: return null
-              return Pair(ConfigurationTarget(path.path, PyRunTargetVariant.PATH), workingDirectory)
+              return Pair(ConfigurationTarget(virtualFile.path, PyRunTargetVariant.PATH), workingDirectory)
             }
           }
         }
@@ -775,8 +755,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       location.metainfo?.let { configuration.setMetaInfo(it) }
     }
     else {
-      val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                            element) ?: return false
+      val targetForConfig = getTargetForConfig(configuration, element) ?: return false
       targetForConfig.first.copyTo(configuration.target)
       // Directory may be set in Default configuration. In that case no need to rewrite it.
       if (configuration.workingDirectory.isNullOrEmpty()) {
@@ -799,7 +778,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     }
 
     val psiElement = context.psiLocation ?: return false
-    val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration, psiElement) ?: return false
+    val targetForConfig = getTargetForConfig(configuration, psiElement) ?: return false
     if (configuration.target != targetForConfig.first) {
       return false
     }

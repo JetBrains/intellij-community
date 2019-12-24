@@ -10,7 +10,7 @@ import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
 
 public abstract class AbstractExtensionPointBean implements PluginAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.extensions.AbstractExtensionPointBean");
+  private static final Logger LOG = Logger.getInstance(AbstractExtensionPointBean.class);
 
   protected PluginDescriptor myPluginDescriptor;
 

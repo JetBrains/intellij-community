@@ -5,6 +5,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -15,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
@@ -31,6 +33,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
@@ -54,10 +57,22 @@ import static com.intellij.vcs.commit.message.CommitMessageInspectionProfile.get
 import static java.util.Collections.singletonList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 
-public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, EditorColorsListener {
+public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
 
-  private static final EditorCustomization BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION = editor -> editor.setBackgroundColor(null);
+  private static final EditorCustomization COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION = editor -> {
+    editor.setBackgroundColor(null); // to use background from set color scheme
+    editor.setColorsScheme(getCommitMessageColorScheme());
+  };
+
+  @NotNull
+  private static EditorColorsScheme getCommitMessageColorScheme() {
+    boolean isLaFDark = ColorUtil.isDark(UIUtil.getPanelBackground());
+    boolean isEditorDark = EditorColorsManager.getInstance().isDarkEditor();
+    return isLaFDark == isEditorDark
+           ? EditorColorsManager.getInstance().getGlobalScheme()
+           : EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  }
 
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
@@ -95,6 +110,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     setBorder(createEmptyBorder());
 
     updateOnInspectionProfileChanged(project);
+    project.getMessageBus().connect(this).subscribe(LafManagerListener.TOPIC, this);
   }
 
   private void updateOnInspectionProfileChanged(@NotNull Project project) {
@@ -105,9 +121,9 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @Override
-  public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
+  public void lookAndFeelChanged(@NotNull LafManager source) {
     Editor editor = myEditorField.getEditor();
-    if (editor instanceof EditorEx) BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION.customize((EditorEx)editor);
+    if (editor instanceof EditorEx) COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION.customize((EditorEx)editor);
   }
 
   @NotNull
@@ -159,7 +175,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     features.add(new RightMarginCustomization(project));
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    features.add(BACKGROUND_FROM_COLOR_SCHEME_CUSTOMIZATION);
+    features.add(COLOR_SCHEME_FOR_CURRENT_UI_THEME_CUSTOMIZATION);
     if (runInspections) {
       features.add(ErrorStripeEditorCustomization.ENABLED);
       features.add(new InspectionCustomization(project));

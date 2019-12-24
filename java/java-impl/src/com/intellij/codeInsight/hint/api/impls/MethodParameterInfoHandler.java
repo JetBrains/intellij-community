@@ -46,8 +46,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 /**
@@ -167,35 +165,53 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
           }
           if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
-
-            int currentNumberOfParameters = expressionList.getExpressionCount();
-            PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
-            Document document = psiDocumentManager.getCachedDocument(context.getFile());
-            if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
-              PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
-              if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
-                  document != null && psiDocumentManager.isCommitted(document) &&
-                  isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
-                JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
-                ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
-                highlightHints(context.getEditor(), null, -1, context.getCustomContext());
-              }
-              else {
-                int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
-                                                                        context.getOffset(), JavaTokenType.COMMA);
-                TextRange textRange = expressionList.getTextRange();
-                if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
-                highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1, context.getCustomContext());
-              }
-            }
-
             return expressionList;
           }
         }
       }
     }
-    highlightHints(context.getEditor(), null, -1, context.getCustomContext());
     return null;
+  }
+
+  @Override
+  public void processFoundElementForUpdatingParameterInfo(@Nullable PsiExpressionList expressionList, @NotNull UpdateParameterInfoContext context) {
+    if (expressionList != null) {
+      Object[] candidates = context.getObjectsToView();
+      if (candidates != null && candidates.length != 0) {
+        Object currentMethodInfo = context.getHighlightedParameter();
+        if (currentMethodInfo == null) currentMethodInfo = candidates[0];
+        PsiElement element = currentMethodInfo instanceof CandidateInfo ? ((CandidateInfo)currentMethodInfo).getElement() :
+                             currentMethodInfo instanceof PsiElement ? (PsiElement)currentMethodInfo :
+                             null;
+        if ((element instanceof PsiMethod)) {
+          PsiElement parent = expressionList.getParent();
+
+          int currentNumberOfParameters = expressionList.getExpressionCount();
+          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
+          Document document = psiDocumentManager.getCachedDocument(context.getFile());
+          if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
+            PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
+            if ((context.getHighlightedParameter() != null || candidates.length == 1) && chosenMethod != null &&
+                document != null && psiDocumentManager.isCommitted(document) &&
+                isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
+              JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
+              ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
+              highlightHints(context.getEditor(), null, -1, context.getCustomContext());
+            }
+            else {
+              int index = ParameterInfoUtils.getCurrentParameterIndex(expressionList.getNode(),
+                                                                      context.getOffset(), JavaTokenType.COMMA);
+              TextRange textRange = expressionList.getTextRange();
+              if (context.getOffset() <= textRange.getStartOffset() || context.getOffset() >= textRange.getEndOffset()) index = -1;
+              highlightHints(context.getEditor(), expressionList, context.isInnermostContext() ? index : -1, context.getCustomContext());
+            }
+          }
+        }
+      }
+    }
+    else {
+      highlightHints(context.getEditor(), null, -1, context.getCustomContext());
+    }
   }
 
   private static boolean isOutsideOfCompletedInvocation(UpdateParameterInfoContext context) {
@@ -239,12 +255,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     TextRange range = owner.getTextRange();
     if (range == null) return null;
     Document document = editor.getDocument();
-    if (Registry.is("editor.keep.completion.hints.even.longer")) {
-      int startY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset())).y;
-      int endY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getEndOffset())).y;
-      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      return startY > visibleArea.getMaxY() || endY < visibleArea.getMinY() ? null : new TextRange(0, document.getTextLength());
-    }
     if (!Registry.is("editor.keep.completion.hints.longer")) return range;
     return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document),
                          DocumentUtil.getLineEndOffset(range.getEndOffset(), document));
@@ -275,12 +285,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void updateParameterInfo(@NotNull final PsiExpressionList o, @NotNull final UpdateParameterInfoContext context) {
-    PsiElement parameterOwner = context.getParameterOwner();
-    if (parameterOwner != o) {
-      context.removeHint();
-      return;
-    }
-
     int offset = context.getOffset();
     TextRange elRange = o.getTextRange();
     int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()
@@ -815,6 +819,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     Project project = context.getProject();
     Editor editor = context.getEditor();
+    if (editor instanceof EditorWindow) return;
     int inlaysBeforeCaretWithComma = getInlaysBeforeCaretWithComma(editor);
     if (inlaysBeforeCaretWithComma == 0) return;
 

@@ -13,7 +13,7 @@ import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -44,15 +44,15 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   public IntentionManagerImpl() {
     List<IntentionAction> actions = new ArrayList<>();
     actions.add(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
-    IntentionManager.EP_INTENTION_ACTIONS.forEachExtensionSafe(extension -> {
-      actions.add(new IntentionActionWrapper(extension, extension.getCategories()));
-    });
+    IntentionManager.EP_INTENTION_ACTIONS.forEachExtensionSafe(extension ->
+      actions.add(new IntentionActionWrapper(extension))
+    );
     myActions = ContainerUtil.createLockFreeCopyOnWriteList(actions);
 
     IntentionManager.EP_INTENTION_ACTIONS.addExtensionPointListener(new ExtensionPointListener<IntentionActionBean>() {
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        myActions.add(new IntentionActionWrapper(extension, extension.getCategories()));
+        myActions.add(new IntentionActionWrapper(extension));
       }
 
       @Override
@@ -124,7 +124,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
   public void dispose() {
   }
 
-  private static IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper toolWrapper,
+  private static IntentionAction createFixAllIntentionInternal(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
                                                                @NotNull IntentionAction action) {
     PsiFile file = null;
     FileModifier fix = action;
@@ -217,12 +217,12 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     }
     checkedForDuplicates = true;
     List<String> duplicates = myActions.stream()
-       .collect(Collectors.groupingBy(action -> IntentionActionDelegate.unwrap(action).getClass()))
+       .collect(Collectors.groupingBy(action -> action instanceof IntentionActionDelegate ? ((IntentionActionDelegate)action).getImplementationClassName() : action.getClass().getName()))
        .values().stream()
        .filter(list -> list.size() > 1)
        .map(dupList -> dupList.size() + " intention duplicates found for " + IntentionActionDelegate.unwrap(dupList.get(0))
                        + " (" + dupList.get(0).getClass()
-                       + "; plugin " + PluginManagerCore.getPluginOrPlatformByClassName(dupList.get(0).getClass().getName()) + ")")
+                       + "; plugin " + PluginManager.getPluginOrPlatformByClassName(dupList.get(0).getClass().getName()) + ")")
        .collect(Collectors.toList());
 
     if (!duplicates.isEmpty()) {

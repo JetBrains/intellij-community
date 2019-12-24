@@ -41,12 +41,6 @@ public class SystemExitInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("system.exit.call.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final String className = (String)infos[0];
     return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", className);

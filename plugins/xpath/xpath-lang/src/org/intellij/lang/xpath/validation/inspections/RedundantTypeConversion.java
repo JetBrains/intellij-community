@@ -36,13 +36,7 @@ public class RedundantTypeConversion extends XPathInspection {
 
     public boolean CHECK_ANY = false;
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Redundant Type Conversion";
-    }
-
-    @Override
+  @Override
     @NotNull
     @NonNls
     public String getShortName() {

@@ -4,6 +4,8 @@ package com.jetbrains.python;
 import com.intellij.ide.customize.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.python.conda.PyCharmCustomizeCondaSetupStep;
+import com.jetbrains.python.conda.PythonMinicondaLocator;
 
 import javax.swing.*;
 import java.util.List;
@@ -16,7 +18,8 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
       @Override
       protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
         addVimPlugin(featuredPlugins);
-        addMarkdownPlugin(featuredPlugins);
+        addRPlugin(featuredPlugins);
+        addAwsPlugin(featuredPlugins);
       }
     };
 
@@ -31,5 +34,9 @@ public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizar
     }
 
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
+
+    if (PythonMinicondaLocator.isInstallerExists()) {
+      steps.add(new PyCharmCustomizeCondaSetupStep());
+    }
   }
 }

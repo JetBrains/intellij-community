@@ -2,9 +2,19 @@ package org.intellij.plugins.markdown.ui.preview.javafx;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor;
 import org.jetbrains.annotations.NotNull;
 
 class ImageRefreshFix {
+  static {
+    MarkdownAccessor.setImageRefreshFixAccessor(new MarkdownAccessor.ImageRefreshFixAccessor() {
+      @Override
+      public String setStamps(@NotNull String html) {
+        return ImageRefreshFix.setStamps(html);
+      }
+    });
+  }
+
   private ImageRefreshFix() {
   }
 

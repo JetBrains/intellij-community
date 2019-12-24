@@ -38,12 +38,15 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
     return new LocalInspectionTool[]{inspection};
   }
 
-  private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false)+".java", true, false);
+  private void doTest(String extension) throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + extension, true, false);
     UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testSimple() throws Exception {
-    doTest();
+    doTest(".java");
+  }
+  public void testGroovy() throws Exception {
+    doTest(".groovy");
   }
 }

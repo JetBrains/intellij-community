@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
 
 class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEvent.Simple>(), GHPRTimelineEvent.Simple {
@@ -18,10 +18,10 @@ class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEven
   private val _unassignedPeople = mutableSetOf<GHUser>()
   val unassignedPeople: Set<GHUser> get() = _unassignedPeople
 
-  private val _addedReviewers = mutableSetOf<GHPullRequestReviewer>()
-  val addedReviewers: Set<GHPullRequestReviewer> get() = _addedReviewers
-  private val _removedReviewers = mutableSetOf<GHPullRequestReviewer>()
-  val removedReviewers: Set<GHPullRequestReviewer> get() = _removedReviewers
+  private val _addedReviewers = mutableSetOf<GHPullRequestRequestedReviewer>()
+  val addedReviewers: Set<GHPullRequestRequestedReviewer> get() = _addedReviewers
+  private val _removedReviewers = mutableSetOf<GHPullRequestRequestedReviewer>()
+  val removedReviewers: Set<GHPullRequestRequestedReviewer> get() = _removedReviewers
 
   private var _rename: Pair<String, String>? = null
   val rename: Pair<String, String>? get() = _rename?.let { if (it.first != it.second) it else null }
@@ -34,8 +34,10 @@ class GHPRTimelineMergedSimpleEvents : GHPRTimelineMergedEvents<GHPRTimelineEven
       is GHPRAssignedEvent -> if (!_unassignedPeople.remove(event.user)) _assignedPeople.add(event.user)
       is GHPRUnassignedEvent -> if (!_assignedPeople.remove(event.user)) _unassignedPeople.add(event.user)
 
-      is GHPRReviewRequestedEvent -> if (!_removedReviewers.remove(event.requestedReviewer)) _addedReviewers.add(event.requestedReviewer)
-      is GHPRReviewUnrequestedEvent -> if (!_addedReviewers.remove(event.requestedReviewer)) _removedReviewers.add(event.requestedReviewer)
+      is GHPRReviewRequestedEvent -> if (!_removedReviewers.remove(event.requestedReviewer)) _addedReviewers.add(
+        event.requestedReviewer)
+      is GHPRReviewUnrequestedEvent -> if (!_addedReviewers.remove(event.requestedReviewer)) _removedReviewers.add(
+        event.requestedReviewer)
 
       is GHPRRenamedTitleEvent -> _rename = (_rename?.first ?: event.previousTitle) to event.currentTitle
     }

@@ -40,12 +40,6 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.parameter.can.be.local.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }

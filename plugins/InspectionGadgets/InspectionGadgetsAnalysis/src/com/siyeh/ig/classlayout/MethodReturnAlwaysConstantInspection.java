@@ -30,12 +30,6 @@ import java.util.Set;
 
 public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.return.always.constant.display.name");
-  }
-
   @Override
   public CommonProblemDescriptor[] checkElement(
     @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,

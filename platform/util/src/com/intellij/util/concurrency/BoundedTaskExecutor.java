@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,7 +32,8 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
 
   private volatile boolean myShutdown;
-  private final @NotNull String myName;
+  @NotNull
+  private final String myName;
   private final Executor myBackendExecutor;
   private final int myMaxThreads;
   // low  32 bits: number of tasks running (or trying to run)
@@ -267,6 +269,11 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     for (Future<?> future : futures) {
       future.get(timeout, unit);
     }
+  }
+
+  @TestOnly
+  public boolean isEmpty() {
+    return (int)myStatus.get() == 0;
   }
 
   @NotNull

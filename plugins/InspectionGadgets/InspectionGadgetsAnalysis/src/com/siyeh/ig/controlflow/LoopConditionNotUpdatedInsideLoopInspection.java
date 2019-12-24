@@ -41,13 +41,6 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "loop.condition.not.updated.inside.loop.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final boolean entireCondition = ((Boolean)infos[0]).booleanValue();
     if (entireCondition) {
@@ -83,25 +76,23 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
       super.visitWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      check(condition, statement);
+      check(statement);
     }
 
     @Override
     public void visitDoWhileStatement(PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      check(condition, statement);
+      check(statement);
     }
 
     @Override
     public void visitForStatement(PsiForStatement statement) {
       super.visitForStatement(statement);
-      final PsiExpression condition = statement.getCondition();
-      check(condition, statement);
+      check(statement);
     }
 
-    private void check(@Nullable PsiExpression condition, @NotNull PsiLoopStatement statement) {
+    private void check(@NotNull PsiConditionalLoopStatement statement) {
+      final PsiExpression condition = statement.getCondition();
       final List<PsiExpression> notUpdated = new SmartList<>();
       PsiStatement body = statement.getBody();
       if (body == null || condition == null || SideEffectChecker.mayHaveSideEffects(condition)) return;

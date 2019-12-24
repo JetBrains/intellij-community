@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.fragmented;
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
@@ -17,6 +18,8 @@ import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
+import com.intellij.diff.tools.util.side.OnesideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
@@ -38,24 +41,27 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xml.breadcrumbs.NavigatableCrumb;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
@@ -109,9 +115,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
+    myEditor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
 
-    JComponent titlesPanel = createTitles();
-    UnifiedContentPanel contentPanel = new UnifiedContentPanel(titlesPanel, myEditor);
+    OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
+    contentPanel.setTitle(createTitles());
+    if (getProject() != null) {
+      contentPanel.setBreadcrumbs(new UnifiedBreadcrumbsPanel(), getTextSettings());
+    }
 
     myPanel = new UnifiedDiffPanel(myProject, contentPanel, this, myContext);
 
@@ -341,25 +351,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myModel.updateGutterActions();
   }
 
-  @Nullable
-  private static EditorHighlighter buildHighlighter(@Nullable Project project,
-                                                    @NotNull Document document,
-                                                    @NotNull DocumentContent content1,
-                                                    @NotNull DocumentContent content2,
-                                                    @NotNull CharSequence text1,
-                                                    @NotNull CharSequence text2,
-                                                    @NotNull List<HighlightRange> ranges,
-                                                    int textLength) {
-    EditorHighlighter highlighter1 = DiffUtil.initEditorHighlighter(project, content1, text1);
-    EditorHighlighter highlighter2 = DiffUtil.initEditorHighlighter(project, content2, text2);
-
-    if (highlighter1 == null && highlighter2 == null) return null;
-    if (highlighter1 == null) highlighter1 = DiffUtil.initEmptyEditorHighlighter(text1);
-    if (highlighter2 == null) highlighter2 = DiffUtil.initEmptyEditorHighlighter(text2);
-
-    return new UnifiedEditorHighlighter(document, highlighter1, highlighter2, ranges, textLength);
-  }
-
   @NotNull
   protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
                            @NotNull CharSequence[] texts,
@@ -367,17 +358,11 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
 
-    EditorHighlighter highlighter = ReadAction.compute(() -> {
-      indicator.checkCanceled();
-      return buildHighlighter(myProject, myDocument, content1, content2,
-                              texts[0], texts[1], builder.getRanges(),
-                              builder.getText().length());
-    });
-
-    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.compute(() -> {
-      indicator.checkCanceled();
-      return new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(), content2.getDocument(), builder.getRanges());
-    });
+    UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
+      return new UnifiedEditorRangeHighlighter(myProject, content1, content2, builder.getRanges());
+    })
+      .cancelWith(indicator)
+      .executeSynchronously();
 
     LineNumberConvertor convertor1 = builder.getConvertor1();
     LineNumberConvertor convertor2 = builder.getConvertor2();
@@ -408,9 +393,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
       TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
       TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
-      myEditor.getGutterComponentEx().setLineNumberConvertor(
-        mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor),
-        mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor));
+      TIntFunction merged1 = mergeLineConverters(contentConvertor1, convertor1.createConvertor(), foldingLineConvertor);
+      TIntFunction merged2 = mergeLineConverters(contentConvertor2, convertor2.createConvertor(), foldingLineConvertor);
+      myEditor.getGutter().setLineNumberConverter(merged1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged1),
+                                                  merged2 == null ? null : new LineNumberConverterAdapter(merged2));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -422,7 +408,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      if (highlighter != null) myEditor.setHighlighter(highlighter);
       DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
 
       if (rangeHighlighter != null) rangeHighlighter.apply(myProject, myDocument);
@@ -1325,13 +1310,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
           ReadAction
             .nonBlocking(() -> updateHighlighters(blockData))
-            .finishOnUiThread(ModalityState.stateForComponent(myPanel), result -> {
+            .finishOnUiThread(ModalityState.stateForComponent(myPanel), rangeHighlighter -> {
               if (myStateIsOutOfDate || blockData != myModel.getData()) return;
-
-              EditorHighlighter highlighter = result.first;
-              UnifiedEditorRangeHighlighter rangeHighlighter = result.second;
-
-              if (highlighter != null) myEditor.setHighlighter(highlighter);
 
               UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
               rangeHighlighter.apply(myProject, myDocument);
@@ -1344,20 +1324,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    private Pair<EditorHighlighter, UnifiedEditorRangeHighlighter> updateHighlighters(@NotNull ChangedBlockData blockData) {
+    private UnifiedEditorRangeHighlighter updateHighlighters(@NotNull ChangedBlockData blockData) {
       List<HighlightRange> ranges = blockData.getRanges();
-      Document document1 = getContent1().getDocument();
-      Document document2 = getContent2().getDocument();
-
-      ProgressManager.checkCanceled();
-      EditorHighlighter highlighter = buildHighlighter(myProject, myDocument, getContent1(), getContent2(),
-                                                       document1.getCharsSequence(), document2.getCharsSequence(), ranges,
-                                                       myDocument.getTextLength());
-
-      ProgressManager.checkCanceled();
-      UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2, ranges);
-
-      return Pair.create(highlighter, rangeHighlighter);
+      return new UnifiedEditorRangeHighlighter(myProject, getContent1(), getContent2(), ranges);
     }
 
     private class MyMarkupModelListener implements MarkupModelListener {
@@ -1374,6 +1343,142 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
         scheduleUpdate();
+      }
+    }
+  }
+
+  private class UnifiedBreadcrumbsPanel extends DiffBreadcrumbsPanel {
+    private final VirtualFile myFile1;
+    private final VirtualFile myFile2;
+
+    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector1;
+    private volatile FileBreadcrumbsCollector myBreadcrumbsCollector2;
+
+    private UnifiedBreadcrumbsPanel() {
+      super(getEditor(), UnifiedDiffViewer.this);
+
+      myFile1 = FileDocumentManager.getInstance().getFile(getDocument(Side.LEFT));
+      myFile2 = FileDocumentManager.getInstance().getFile(getDocument(Side.RIGHT));
+    }
+
+    @Override
+    protected boolean updateCollectors(boolean enabled) {
+      myBreadcrumbsCollector1 = enabled ? findCollector(myFile1) : null;
+      myBreadcrumbsCollector2 = enabled ? findCollector(myFile2) : null;
+      return myBreadcrumbsCollector1 != null || myBreadcrumbsCollector2 != null;
+    }
+
+    @Nullable
+    @Override
+    protected Iterable<? extends Crumb> computeCrumbs(int offset) {
+      Pair<Integer, Side> pair = transferOffsetToTwoside(offset);
+      if (pair == null) return null;
+
+      Side side = pair.second;
+      int twosideOffset = pair.first;
+
+      VirtualFile file = side.select(myFile1, myFile2);
+      FileBreadcrumbsCollector collector = side.select(myBreadcrumbsCollector1, myBreadcrumbsCollector2);
+      if (file == null || collector == null) return null;
+
+      Iterable<? extends Crumb> crumbs = collector.computeCrumbs(file, getDocument(side), twosideOffset, null);
+      return ContainerUtil.map(crumbs, it -> it instanceof NavigatableCrumb ? new UnifiedNavigatableCrumb((NavigatableCrumb)it, side) : it);
+    }
+
+    @Override
+    protected void navigateToCrumb(Crumb crumb, boolean withSelection) {
+      if (crumb instanceof UnifiedNavigatableCrumb) {
+        super.navigateToCrumb(crumb, withSelection);
+      }
+    }
+
+    @Nullable
+    private Pair<Integer, Side> transferOffsetToTwoside(int offset) {
+      LineCol onesidePosition = LineCol.fromOffset(myDocument, offset);
+
+      Pair<int[], Side> pair = transferLineFromOneside(onesidePosition.line);
+      Side side = pair.second;
+      int twosideLine = side.select(pair.first);
+      if (twosideLine == -1) return null;
+
+      Document twosideDocument = getDocument(side);
+      LineCol twosidePosition = new LineCol(twosideLine, onesidePosition.column);
+      return Pair.create(twosidePosition.toOffset(twosideDocument), side);
+    }
+
+    private int transferOffsetFromTwoside(@NotNull Side side, int offset) {
+      LineCol twosidePosition = LineCol.fromOffset(getDocument(side), offset);
+
+      int onesideLine = transferLineToOneside(side, twosidePosition.line);
+      if (onesideLine == -1) return -1;
+
+      LineCol onesidePosition = new LineCol(onesideLine, twosidePosition.column);
+      return onesidePosition.toOffset(myDocument);
+    }
+
+
+    private class UnifiedNavigatableCrumb implements NavigatableCrumb {
+      @NotNull private final NavigatableCrumb myDelegate;
+      @NotNull private final Side mySide;
+
+      private UnifiedNavigatableCrumb(@NotNull NavigatableCrumb delegate, @NotNull Side side) {
+        myDelegate = delegate;
+        mySide = side;
+      }
+
+      @Override
+      public int getAnchorOffset() {
+        int offset = myDelegate.getAnchorOffset();
+        return offset != -1 ? transferOffsetFromTwoside(mySide, offset) : -1;
+      }
+
+      @Override
+      @Nullable
+      public TextRange getHighlightRange() {
+        TextRange range = myDelegate.getHighlightRange();
+        if (range == null) return null;
+        int start = transferOffsetFromTwoside(mySide, range.getStartOffset());
+        int end = transferOffsetFromTwoside(mySide, range.getEndOffset());
+        if (start == -1 || end == -1) return null;
+        return new TextRange(start, end);
+      }
+
+      @Override
+      public void navigate(@NotNull Editor editor, boolean withSelection) {
+        int offset = getAnchorOffset();
+        if (offset != -1) {
+          editor.getCaretModel().moveToOffset(offset);
+          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        }
+
+        if (withSelection) {
+          final TextRange range = getHighlightRange();
+          if (range != null) {
+            editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+          }
+        }
+      }
+
+      @Override
+      public Icon getIcon() {
+        return myDelegate.getIcon();
+      }
+
+      @Override
+      public String getText() {
+        return myDelegate.getText();
+      }
+
+      @Override
+      @Nullable
+      public String getTooltip() {
+        return myDelegate.getTooltip();
+      }
+
+      @Override
+      @NotNull
+      public List<? extends Action> getContextActions() {
+        return myDelegate.getContextActions();
       }
     }
   }

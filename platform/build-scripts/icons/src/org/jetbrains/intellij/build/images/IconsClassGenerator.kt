@@ -37,15 +37,15 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
     val packageName: String
     val className: String
     val outFile: Path
-    when {
-      "intellij.platform.icons" == module.name -> {
+    when (module.name) {
+      "intellij.platform.icons" -> {
         packageName = "com.intellij.icons"
         className = "AllIcons"
 
         val dir = util.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
         outFile = Paths.get(dir, "AllIcons.java")
       }
-      "intellij.android.artwork" == module.name -> {
+      "intellij.android.artwork" -> {
         // backward compatibility - AndroidIcons class should be not modified
         packageName = "icons"
         className = "AndroidArtworkIcons"
@@ -91,7 +91,9 @@ class IconsClassGenerator(private val projectHome: File, val modules: List<JpsMo
           }
         }
 
-        className = oldClassName ?: directoryName(module) + "Icons"
+        className = oldClassName ?: directoryName(module).let {
+          if (it.endsWith("Icons")) it else "${it}Icons"
+        }
         outFile = targetRoot.resolve("$className.java")
       }
     }

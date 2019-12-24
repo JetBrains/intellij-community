@@ -170,8 +170,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       for (PsiElement e = this; e != null; e = e.getNextSibling()) {
         if (e instanceof PsiExpression) {
-          if (!(e instanceof PsiArrayInitializerExpression) &&
-              !isSelfReferenced((PsiExpression)e, parent)) {
+          if (!(e instanceof PsiArrayInitializerExpression)) {
             PsiExpression expression = (PsiExpression)e;
             PsiType type = RecursionManager.doPreventingRecursion(expression, true, () -> expression.getType());
             return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
@@ -181,33 +180,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
     return null;
-  }
-
-  private static boolean isSelfReferenced(@NotNull PsiExpression initializer, PsiElement parent) {
-    class SelfReferenceVisitor extends JavaRecursiveElementVisitor {
-      private boolean referenced;
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (referenced) return;
-        super.visitElement(element);
-      }
-
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (expression.getParent() instanceof PsiMethodCallExpression) {
-          return;
-        }
-        if (expression.resolve() == parent) {
-          referenced = true;
-        }
-      }
-    }
-
-    SelfReferenceVisitor visitor = new SelfReferenceVisitor();
-    initializer.accept(visitor);
-    return visitor.referenced;
   }
 
   @Override

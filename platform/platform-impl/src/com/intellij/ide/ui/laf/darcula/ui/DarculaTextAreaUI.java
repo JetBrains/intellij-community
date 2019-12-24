@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -38,8 +37,6 @@ public class DarculaTextAreaUI extends BasicTextAreaUI {
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new")
-           ? new TextFieldWithPopupHandlerUI.MouseDragAwareCaret()
-           : new TextFieldWithPopupHandlerUI.MarginAwareCaret();
+    return new TextFieldWithPopupHandlerUI.MouseDragAwareCaret();
   }
 }

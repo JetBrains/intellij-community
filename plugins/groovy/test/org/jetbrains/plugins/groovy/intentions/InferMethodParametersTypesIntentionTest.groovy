@@ -540,4 +540,8 @@ class AA { static void fo<caret>o(Integer a) {} }
   void testOffsetSensitiveMethodCreating() {
     doTest(true)
   }
+
+  void testAvoidInfiniteLoopForPlusAssignment() {
+    doTest(true)
+  }
 }

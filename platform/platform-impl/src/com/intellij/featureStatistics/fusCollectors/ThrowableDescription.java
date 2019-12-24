@@ -9,8 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ThrowableDescription {
-
+public final class ThrowableDescription {
   private static final String UNKNOWN = "unknown";
   private static final String THIRD_PARTY = "third.party";
 
@@ -52,11 +51,9 @@ public class ThrowableDescription {
     Map<String, PluginInfo> pluginInfoCache = new HashMap<>();
 
     for (int i = 0; i < size; i++) {
-
       StackTraceElement element = myStacktrace[i];
 
       PluginInfo pluginInfo = pluginInfoCache.get(element.getClassName());
-
       if (pluginInfo == null) {
         pluginInfo = PluginInfoDetectorKt.getPluginInfo(element.getClassName());
         pluginInfoCache.put(element.getClassName(), pluginInfo);

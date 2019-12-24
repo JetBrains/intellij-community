@@ -238,7 +238,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
 
     if (rootTag != null &&
         "schema".equals(rootTag.getLocalName()) &&
-        XmlUtil.ourSchemaUrisList.indexOf(rootTag.getNamespace()) != -1 ) {
+        XmlUtil.ourSchemaUrisList.contains(rootTag.getNamespace())) {
       final String targetNS = rootTag.getAttributeValue(TARGET_NAMESPACE);
 
       if (targetNS != null) {

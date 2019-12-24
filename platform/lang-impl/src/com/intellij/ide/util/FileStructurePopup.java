@@ -92,7 +92,7 @@ import java.util.function.BiPredicate;
  * @author Konstantin Bulenkov
  */
 public class FileStructurePopup implements Disposable, TreeActionsOwner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
+  private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
   private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
   private final Project myProject;
@@ -809,7 +809,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   @NotNull
   private Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
     AsyncPromise<TreePath> result = new AsyncPromise<>();
-    myStructureTreeModel.getInvoker().runOrInvokeLater(() -> {
+    myStructureTreeModel.getInvoker().invoke(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidate().onSuccess(

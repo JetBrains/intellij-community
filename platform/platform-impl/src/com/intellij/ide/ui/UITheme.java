@@ -354,7 +354,7 @@ public class UITheme {
     }
   }
 
-  public static Object parseValue(String key, @NotNull String value) {
+  public static Object parseValue(String key, @NotNull String value, @NotNull ClassLoader cl) {
     if ("null".equals(value)) return null;
     if ("true".equals(value)) return Boolean.TRUE;
     if ("false".equals(value)) return Boolean.FALSE;
@@ -380,7 +380,7 @@ public class UITheme {
           return asUIResource(customLine(color, 1));
         }
         else {
-          return Class.forName(value).newInstance();
+          return Class.forName(value, true, cl).newInstance();
         }
       }
       catch (Exception e) {
@@ -397,8 +397,7 @@ public class UITheme {
       return parseGrayFilter(value);
     }
     else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
-      if (icon != null) {
+      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;      if (icon != null) {
         return new IconUIResource(icon);
       }
       Color color = parseColor(value);
@@ -412,6 +411,11 @@ public class UITheme {
     }
 
     return value;
+  }
+
+  public static Object parseValue(String key, @NotNull String value) {
+    ClassLoader cl = UIManager.getLookAndFeel().getClass().getClassLoader();
+    return parseValue(key, value, cl);
   }
 
   private static Insets parseInsets(String value) {

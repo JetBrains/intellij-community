@@ -37,7 +37,7 @@ import java.util.HashSet;
  */
 public class CvsConfigurationPanel {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel");
+  private static final Logger LOG = Logger.getInstance(CvsConfigurationPanel.class);
 
   private JPanel myPanel;
 

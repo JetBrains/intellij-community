@@ -40,7 +40,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public final class PsiUtil extends PsiUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
+  private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
@@ -1322,14 +1322,8 @@ public final class PsiUtil extends PsiUtilCore {
     if (parent instanceof PsiIfStatement) {
       return checkSameExpression(expr, ((PsiIfStatement)parent).getCondition());
     }
-    if (parent instanceof PsiWhileStatement) {
-      return checkSameExpression(expr, ((PsiWhileStatement)parent).getCondition());
-    }
-    if (parent instanceof PsiForStatement) {
-      return checkSameExpression(expr, ((PsiForStatement)parent).getCondition());
-    }
-    if (parent instanceof PsiDoWhileStatement) {
-      return checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition());
+    if (parent instanceof PsiConditionalLoopStatement) {
+      return checkSameExpression(expr, ((PsiConditionalLoopStatement)parent).getCondition());
     }
     if (parent instanceof PsiConditionalExpression) {
       return checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition());

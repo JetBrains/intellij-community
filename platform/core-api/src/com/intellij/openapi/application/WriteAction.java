@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @see ReadAction
  */
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
+  private static final Logger LOG = Logger.getInstance(WriteAction.class);
 
   /**
    * @deprecated use {@link #run(ThrowableRunnable)}
@@ -47,7 +47,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -150,7 +150,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
 
     AtomicReference<T> result = new AtomicReference<>();
     AtomicReference<Throwable> exception = new AtomicReference<>();
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         result.set(compute(action));
       }

@@ -37,7 +37,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.impl.DebugUtil.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -175,7 +173,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   }
 
   public void testAnnotateLibrary() {
-
     addDefaultLibrary();
     myFixture.configureByFiles("lib/p/TestPrimitive.java", "content/anno/p/annotations.xml");
     myFixture.configureByFiles("lib/p/Test.java");
@@ -230,7 +227,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotAvailable("NotNull");
     assertNotAvailable("Nullable");
   }
-  
+
   public void testAvailableFixesOnReference() {
     myFixture.configureByText("Foo.java", "public class Foo {" +
                                           " {\"\".sub<caret>string(1);} " +
@@ -395,8 +392,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
 
     startListeningForExternalChanges();
     myFixture.testAction(new CommentByLineCommentAction()); // comment out a line in annotations file
-    sleep(150);
-    UIUtil.dispatchAllInvocationEvents();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     annotation = AnnotationUtil.findAnnotation(fooJava, "java.lang.Deprecated");
     assertNull(annotation);
   }

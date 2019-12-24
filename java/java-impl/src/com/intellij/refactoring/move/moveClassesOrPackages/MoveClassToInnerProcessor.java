@@ -49,7 +49,7 @@ import java.util.*;
  * @author yole
  */
 public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveClassToInnerProcessor.class);
   public static final Key<List<NonCodeUsageInfo>> ourNonCodeUsageKey = Key.create("MoveClassToInner.NonCodeUsage");
 
   private PsiClass[] myClassesToMove;

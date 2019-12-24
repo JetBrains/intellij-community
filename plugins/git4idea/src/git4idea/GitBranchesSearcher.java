@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class GitBranchesSearcher {
-  private final static Logger LOG = Logger.getInstance("#git4idea.GitBranchesSearcher");
+  private final static Logger LOG = Logger.getInstance(GitBranchesSearcher.class);
   private final GitBranch myLocal;
   private GitBranch myRemote;
 

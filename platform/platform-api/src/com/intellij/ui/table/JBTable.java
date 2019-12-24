@@ -593,7 +593,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (e != e2 && e2.isConsumed()) e.consume();
   }
 
-  private final class MyCellEditorRemover extends Activatable.Adapter implements PropertyChangeListener {
+  private final class MyCellEditorRemover implements PropertyChangeListener, Activatable {
     private boolean myIsActive = false;
 
     MyCellEditorRemover() {

@@ -12,8 +12,10 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EdtTestUtil;
@@ -23,6 +25,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -303,7 +306,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     String mirror = System.getProperty("idea.maven.test.mirror",
                                        // use JB maven proxy server for internal use by default, see details at
                                        // https://confluence.jetbrains.com/display/JBINT/Maven+proxy+server
-                                       "http://maven.labs.intellij.net/repo1");
+                                       "https://repo.labs.intellij.net/repo1");
     return "<settings>" +
            content +
            "<mirrors>" +
@@ -567,6 +570,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
     toPrint += ": " + getClass().getSimpleName() + "." + getName();
     System.out.println(toPrint);
+  }
+
+  protected <R, E extends Throwable> R runWriteAction(@NotNull ThrowableComputable<R, E> computable) throws E {
+    return WriteCommandAction.writeCommandAction(myProject).compute(computable);
+  }
+
+  protected <E extends Throwable> void runWriteAction(@NotNull ThrowableRunnable<E> runnable) throws E {
+    WriteCommandAction.writeCommandAction(myProject).run(runnable);
   }
 
   private static String getTestMavenHome() {

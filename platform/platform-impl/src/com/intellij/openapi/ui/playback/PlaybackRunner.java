@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
@@ -25,8 +25,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class PlaybackRunner implements Disposable {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackRunner");
+  private static final Logger LOG = Logger.getInstance(PlaybackRunner.class);
 
   private Robot myRobot;
 
@@ -82,7 +81,7 @@ public class PlaybackRunner implements Disposable {
     myPassedStages.clear();
     myContextTimestamp++;
 
-    ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(ApplicationActivationListener.TOPIC, myAppListener);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, myAppListener);
 
     try {
       myActionCallback = new ActionCallback();
@@ -133,9 +132,9 @@ public class PlaybackRunner implements Disposable {
         myActionCallback.setRejected();
         return;
       }
-      final PlaybackContext context =
-        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
-
+      PlaybackContext context =
+        new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir,
+                            (Set<Class>)myFacadeClasses.clone()) {
           private final long myTimeStamp = myContextTimestamp;
 
           @Override

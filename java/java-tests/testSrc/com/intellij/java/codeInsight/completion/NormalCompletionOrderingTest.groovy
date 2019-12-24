@@ -402,6 +402,10 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }
 
+  void testDispreferReturnAsLoopBody() {
+    checkPreferredItems 0, 'returnMethod', 'return'
+  }
+
   void testDispreferReturnInVoidLambda() {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }

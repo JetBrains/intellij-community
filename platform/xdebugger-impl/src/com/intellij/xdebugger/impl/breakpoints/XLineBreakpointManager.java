@@ -6,6 +6,7 @@ import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Document;
@@ -18,7 +19,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -111,9 +111,12 @@ public final class XLineBreakpointManager {
       return;
     }
 
-    //noinspection CodeBlock2Expr
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
-      myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
+      for (XLineBreakpointImpl<?> breakpoint : myBreakpoints.keySet()) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          breakpoint.updateUI();
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }
     });
   }
 

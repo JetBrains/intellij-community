@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SerializableScheme
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.*
@@ -10,12 +11,14 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.ExternalizableSchemeAdapter
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.SystemInfo
@@ -473,7 +476,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       if (parentScheme == null) {
         LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
         unknownParentName = parentSchemeName
-        notifyAboutMissingParentKeymap(name, parentSchemeName)
+        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$parentSchemeName\" for \"$name\"")
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -719,32 +722,43 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
   return true
 }
 
-private fun notifyAboutMissingParentKeymap(childName: String, parentName: String) {
+internal fun notifyAboutMissingKeymap(keymapName: String, message: String) {
   ApplicationManager.getApplication().invokeLater({
+    // TODO remove when PluginAdvertiser implements that
     @Suppress("SpellCheckingInspection")
-    val nameToPluginId = mapOf(
-      "Eclipse" to "com.intellij.plugins.eclipsekeymap",
-      "NetBeans 6.5" to "com.intellij.plugins.netbeanskeymap",
-      "ReSharper" to "com.intellij.keymaps.ReSharperKeymap",
-      "Sublime Text" to "com.intellij.plugins.sublimetextkeymap",
-      "Visual Studio OSX" to "com.intellij.plugins.visualstudiokeymap",
-      "Visual Studio" to "com.intellij.plugins.visualstudiokeymap",
-      "VSCode" to "com.intellij.plugins.vscodekeymap"
-    )
-    val action: AnAction? = when (val pluginId = nameToPluginId.get(parentName)) {
-      null -> {
-        null
+    val pluginId = when (keymapName) {
+      "Mac OS X",
+      "Mac OS X 10.5+" -> "com.intellij.plugins.macoskeymap"
+      "Default for GNOME" -> "com.intellij.plugins.gnomekeymap"
+      "Default for KDE" -> "com.intellij.plugins.kdekeymap"
+      "Default for XWin" -> "com.intellij.plugins.xwinkeymap"
+      "Eclipse",
+      "Eclipse (Mac OS X)" -> "com.intellij.plugins.eclipsekeymap"
+      "Emacs" -> "com.intellij.plugins.emacskeymap"
+      "NetBeans 6.5" -> "com.intellij.plugins.netbeanskeymap"
+      "ReSharper",
+      "ReSharper OSX" -> "com.intellij.plugins.resharperkeymap"
+      "Sublime Text",
+      "Sublime Text (Mac OS X)" -> "com.intellij.plugins.sublimetextkeymap"
+      "Visual Studio" -> "com.intellij.plugins.visualstudiokeymap"
+      "Xcode" -> "com.intellij.plugins.xcodekeymap"
+      else -> null
+    }
+    val action: AnAction? = when (pluginId) {
+      null -> object : NotificationAction("Search for $keymapName Keymap plugin") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          //TODO enableSearch("$keymapName /tag:Keymap")?.run()
+          ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PluginManagerConfigurable::class.java)
+        }
       }
-      else -> {
-        object : NotificationAction("Install $parentName Keymap") {
-          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-            PluginsAdvertiser.installAndEnablePlugins(setOf(pluginId)) {
-              notification.expire()
-            }
+      else -> object : NotificationAction("Install $keymapName Keymap") {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          PluginsAdvertiser.installAndEnable(setOf(PluginId.getId(pluginId))) {
+            notification.expire()
           }
         }
       }
     }
-    NOTIFICATION_MANAGER.notify("Missing Keymap", "Cannot find parent keymap \"$parentName\" for \"$childName\"", action = action)
+    NOTIFICATION_MANAGER.notify("Missing Keymap", message, action = action)
   }, ModalityState.NON_MODAL)
 }

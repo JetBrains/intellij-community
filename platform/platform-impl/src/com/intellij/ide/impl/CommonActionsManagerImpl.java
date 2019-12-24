@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
@@ -41,7 +41,6 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   public AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createExpandAllAction(expander, component);
     action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
     return action;
   }
 
@@ -66,7 +65,6 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   public AnAction createCollapseAllHeaderAction(TreeExpander expander, JComponent component) {
     AnAction action = createCollapseAllAction(expander, component);
     action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     return action;
   }
 

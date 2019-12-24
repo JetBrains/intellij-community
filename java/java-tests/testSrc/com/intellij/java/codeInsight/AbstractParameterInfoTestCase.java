@@ -92,14 +92,19 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     }
   }
 
-  private void waitForAutoPopup() throws TimeoutException {
-    AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
+  protected void waitForAutoPopup() {
+    try {
+      AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
+    }
+    catch (TimeoutException e) {
+      fail("Timed out waiting for auto-popup");
+    }
   }
 
   protected void waitForAllAsyncStuff() {
     try { waitForParameterInfoUpdate(); } catch (TimeoutException e) { fail("Timed out waiting for parameter info update"); }
     myFixture.doHighlighting();
     waitTillAnimationCompletes(getEditor());
-    try { waitForAutoPopup(); } catch (TimeoutException e) { fail("Timed out waiting for auto-popup"); }
+    waitForAutoPopup();
   }
 }

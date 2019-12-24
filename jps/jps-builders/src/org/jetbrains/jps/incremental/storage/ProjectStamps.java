@@ -29,7 +29,7 @@ import java.io.IOException;
 public class ProjectStamps {
   public static final boolean PORTABLE_CACHES = Boolean.getBoolean("org.jetbrains.jps.portable.caches");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.ProjectStamps");
+  private static final Logger LOG = Logger.getInstance(ProjectStamps.class);
 
   private final TimestampStorage<? extends StampsStorage.Stamp> myStampsStorage;
 

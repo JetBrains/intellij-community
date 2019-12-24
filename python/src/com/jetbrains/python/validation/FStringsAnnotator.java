@@ -104,7 +104,7 @@ public class FStringsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     final boolean insideFragment = PsiTreeUtil.getParentOfType(comment, PyFStringFragment.class) != null;
     if (insideFragment) {
       report(comment, "Expression fragments inside f-strings cannot include line comments");

@@ -33,13 +33,6 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.qualifier.for.this.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(infos[0] instanceof PsiThisExpression
                                            ? "unnecessary.qualifier.for.this.problem.descriptor"

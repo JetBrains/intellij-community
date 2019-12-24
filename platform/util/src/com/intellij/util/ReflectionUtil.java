@@ -4,9 +4,9 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +15,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
-public class ReflectionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
+public final class ReflectionUtil {
+  private static final Logger LOG = Logger.getInstance(ReflectionUtil.class);
 
   private ReflectionUtil() { }
 
@@ -123,7 +123,7 @@ public class ReflectionUtil {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
-    for (Class<?> c : classTraverser(clazz)) {
+    for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
       ContainerUtil.addAll(result, c.getDeclaredFields());
     }
     return result;
@@ -140,16 +140,45 @@ public class ReflectionUtil {
   @NotNull
   public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType())));
-    if (result != null) return result;
+    if (result != null) {
+      return result;
+    }
     throw new NoSuchFieldException("Class: " + clazz + " fieldName: " + fieldName + " fieldType: " + fieldType);
   }
 
   @Nullable
-  private static Field findFieldInHierarchy(@NotNull Class<?> clazz, @NotNull Condition<? super Field> checker) {
-    for (Class<?> c : classTraverser(clazz)) {
-      Field field = ContainerUtil.find(c.getDeclaredFields(), checker);
+  private static Field findFieldInHierarchy(@NotNull Class<?> rootClass, @NotNull java.util.function.Predicate<? super Field> checker) {
+    for (Class<?> aClass = rootClass; aClass != null; aClass = aClass.getSuperclass()) {
+      for (Field field : aClass.getDeclaredFields()) {
+        if (checker.test(field)) {
+          field.setAccessible(true);
+          return field;
+        }
+      }
+    }
+
+    // ok, let's check interfaces
+    return processInterfaces(rootClass.getInterfaces(), new HashSet<>(), checker);
+  }
+
+  @Nullable
+  private static Field processInterfaces(@NotNull Class<?>[] interfaces,
+                                         @NotNull Set<Class<?>> visited,
+                                         @NotNull java.util.function.Predicate<? super Field> checker) {
+    for (Class<?> anInterface : interfaces) {
+      if (!visited.add(anInterface)) {
+        continue;
+      }
+
+      for (Field field : anInterface.getDeclaredFields()) {
+        if (checker.test(field)) {
+          field.setAccessible(true);
+          return field;
+        }
+      }
+
+      Field field = processInterfaces(anInterface.getInterfaces(), visited, checker);
       if (field != null) {
-        field.setAccessible(true);
         return field;
       }
     }
@@ -297,7 +326,7 @@ public class ReflectionUtil {
 
   public static <T> T getField(@NotNull Class<?> objectClass, @Nullable Object object, @Nullable("null means any type") Class<T> fieldType, @NotNull @NonNls String fieldName) {
     try {
-      final Field field = findAssignableField(objectClass, fieldType, fieldName);
+      Field field = findAssignableField(objectClass, fieldType, fieldName);
       //noinspection unchecked
       return (T)field.get(object);
     }
@@ -617,7 +646,7 @@ public class ReflectionUtil {
   }
 
 
-  private static class MySecurityManager extends SecurityManager {
+  private static final class MySecurityManager extends SecurityManager {
     private static final MySecurityManager INSTANCE = new MySecurityManager();
     Class<?>[] getStack() {
       return getClassContext();
@@ -648,12 +677,4 @@ public class ReflectionUtil {
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {
     return ancestor == descendant || ancestor.isAssignableFrom(descendant);
   }
-
-  @NotNull
-  public static JBTreeTraverser<Class<?>> classTraverser(@Nullable Class<?> root) {
-    return CLASS_TRAVERSER.unique().withRoot(root);
-  }
-
-  private static final JBTreeTraverser<Class<?>> CLASS_TRAVERSER = JBTreeTraverser.from(
-    (Function<? super Class<?>, ? extends Iterable<? extends Class<?>>>)aClass -> JBIterable.<Class<?>>of(aClass.getSuperclass()).append(aClass.getInterfaces()));
 }

@@ -131,7 +131,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof GrArgumentLabel) {
           final String name = ((GrArgumentLabel)element).getName();
           if (GroovyNamesUtil.isIdentifier(name)) {

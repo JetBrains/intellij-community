@@ -33,7 +33,7 @@ public class ImportedTestRunnableState implements RunProfileState, HistoryTestRu
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) {
     final MyEmptyProcessHandler handler = new MyEmptyProcessHandler();
     final SMTRunnerConsoleProperties properties = myRunProfile.getProperties();
     RunProfile configuration;

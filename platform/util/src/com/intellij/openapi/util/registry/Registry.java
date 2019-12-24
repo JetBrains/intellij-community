@@ -196,7 +196,7 @@ public final class Registry  {
     return myUserProperties.isEmpty();
   }
 
-  boolean isRestartNeeded() {
+  public boolean isRestartNeeded() {
     return isRestartNeeded(myUserProperties);
   }
 
@@ -214,7 +214,7 @@ public final class Registry  {
    */
   @Deprecated
   public static synchronized void addKey(@NotNull String key, @NotNull String description, @NotNull String defaultValue, boolean restartRequired) {
-    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, false));
+    getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, defaultValue, restartRequired, null));
   }
 
   public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {

@@ -11,7 +11,7 @@ import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +50,11 @@ public class ClassInnerStuffCache {
   @NotNull
   public PsiClass[] getInnerClasses() {
     return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcInnerClasses())));
+  }
+
+  @NotNull
+  public PsiRecordComponent[] getRecordComponents() {
+    return copy(CachedValuesManager.getCachedValue(myClass, () -> makeResult(calcRecordComponents())));
   }
 
   @Nullable
@@ -122,6 +127,12 @@ public class ClassInnerStuffCache {
   }
 
   @NotNull
+  private PsiRecordComponent[] calcRecordComponents() {
+    PsiRecordHeader header = myClass.getRecordHeader();
+    return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
+  }
+
+  @NotNull
   private Map<String, PsiField> getFieldsMap() {
     PsiField[] fields = getFields();
     if (fields.length == 0) return Collections.emptyMap();
@@ -145,7 +156,7 @@ public class ClassInnerStuffCache {
     for (PsiMethod method : methods) {
       List<PsiMethod> list = collectedMethods.get(method.getName());
       if (list == null) {
-        collectedMethods.put(method.getName(), list = ContainerUtil.newSmartList());
+        collectedMethods.put(method.getName(), list = new SmartList<>());
       }
       list.add(method);
     }

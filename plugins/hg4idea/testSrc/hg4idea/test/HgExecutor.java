@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.vcs.ExecutableHelper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.util.HgErrorUtil;
@@ -65,7 +66,7 @@ public class HgExecutor {
       do {
         result = new ShellCommand(split, pwd(), null).execute(false, false);
       }
-      while (HgErrorUtil.isWLockError(result) && attempt++ < 2);
+      while ((HgErrorUtil.isWLockError(result) || isUsedByAnotherProcess(result)) && attempt++ < 2);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -91,5 +92,11 @@ public class HgExecutor {
   @NotNull
   public static String getHgExecutable() {
     return HG_EXECUTABLE;
+  }
+
+  private static boolean isUsedByAnotherProcess(@Nullable HgCommandResult result) {
+    //abort: process cannot access the file because it is being used by another process
+    if (result == null) return false;
+    return HgErrorUtil.isAbort(result) && result.getRawError().contains("used by another process");
   }
 }

@@ -14,6 +14,16 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="/META-INF/Core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/CoreImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Analysis.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/AnalysisImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/ProjectModel.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/ProjectModelImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Indexing.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/EditorEx.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <extensionPoints>
     <xi:include href="/META-INF/PlatformExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
     <xi:include href="/META-INF/VcsExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
@@ -25,27 +35,42 @@
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
     <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    <xi:include href="/META-INF/WorkspaceModelExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
 
+    <applicationService serviceImplementation="com.intellij.ide.RecentProjectListActionProvider"/>
+
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTracker"
+                    serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTrackerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector"/>
+    <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ProjectSdkUsages"/>
+    <sdkUsagesContributor implementation="com.intellij.openapi.projectRoots.impl.SdkUsagesCollector$ModuleSdkUsages"/>
+
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <registryKey key="sdk.auto" defaultValue="true" description="Check unknown SDKs on project open, attempts to fix automatically and suggest fix actions"/>
+    <registryKey key="sdk.auto.use.editor.notification" defaultValue="true" description="Show editor notifications to resolve problems"/>
+    <registryKey key="sdk.auto.use.editor.notification.for.unset" defaultValue="false" description="Show editor notifications for unset SDKs"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification"/>
+    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification"/>
+    <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.UnknownSdkTracker"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
-    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
-                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"/>
@@ -63,6 +88,7 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
+    <applicationInitializedListener implementation="com.intellij.ide.LanguageBundleListener"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>

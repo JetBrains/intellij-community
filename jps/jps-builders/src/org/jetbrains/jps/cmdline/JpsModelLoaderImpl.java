@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author nik
  */
 public class JpsModelLoaderImpl implements JpsModelLoader {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.JpsModelLoaderImpl");
+  private static final Logger LOG = Logger.getInstance(JpsModelLoaderImpl.class);
   private final String myProjectPath;
   private final String myGlobalOptionsPath;
   private final boolean myLoadUnloadedModules;

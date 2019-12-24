@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -29,14 +29,14 @@ import org.jetbrains.settingsRepository.LOG
 import java.io.InputStream
 import java.nio.file.Path
 
-fun wrapIfNeedAndReThrow(e: TransportException) {
+internal fun wrapIfNeedAndReThrow(e: TransportException) {
   if (e is org.eclipse.jgit.errors.NoRemoteRepositoryException || e.status == TransportException.Status.CANNOT_RESOLVE_REPO) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
-  val message = e.message!!
+  val message = e.message
   if (e.status == TransportException.Status.NOT_AUTHORIZED || e.status == TransportException.Status.NOT_PERMITTED ||
-      message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
+      message != null && isAuthFailedMessage(message)) {
     throw AuthenticationException(e)
   }
   else if (e.status == TransportException.Status.CANCELLED || message == "Download cancelled") {
@@ -45,6 +45,11 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
   else {
     throw e
   }
+}
+
+private fun isAuthFailedMessage(message: String): Boolean {
+  return message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") ||
+         message.contains(": reject HostKey:") /* JSch */
 }
 
 fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: CredentialsProvider? = null, progressMonitor: ProgressMonitor? = null): FetchResult? {
@@ -56,9 +61,8 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     }
   }
   catch (e: TransportException) {
-    val message = e.message!!
-    if (message.startsWith("Remote does not have ")) {
-      LOG.warn(message)
+    if (e.message?.startsWith("Remote does not have ") == true) {
+      LOG.warn(e.message)
       // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
       return null
     }

@@ -59,7 +59,8 @@ public class ClassUtil {
     for (HierarchicalMethodSignature signatureHierarchical : aClass.getVisibleSignatures()) {
       PsiMethod method = signatureHierarchical.getMethod();
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
+      // TODO: remove record check when we provide synthetic equals/hashCode/toString for Record classes
+      if (containingClass == null || CommonClassNames.JAVA_LANG_RECORD.equals(containingClass.getQualifiedName())) {
         continue;
       }
       if (!aClass.equals(containingClass)

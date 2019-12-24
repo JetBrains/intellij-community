@@ -63,7 +63,9 @@ public class UsageViewTest extends BasePlatformTestCase {
           return false;
         }
         Project project = ((PsiFile)file).getProject();
-        System.err.println(project + " already leaking; its creation trace: " + HeavyPlatformTestCase.getCreationPlace(project));
+        if (alreadyLeaking.add(project)) {
+          System.err.println(project + " already leaking; its creation trace: " + HeavyPlatformTestCase.getCreationPlace(project));
+        }
       }
       alreadyLeaking.add(file);
       return false;

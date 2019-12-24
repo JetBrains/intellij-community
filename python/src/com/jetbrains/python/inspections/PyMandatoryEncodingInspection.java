@@ -39,12 +39,6 @@ import java.awt.event.ActionListener;
  * User : catherine
  */
 public class PyMandatoryEncodingInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.mandatory.encoding");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

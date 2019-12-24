@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
@@ -42,6 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarFile;
+
+import static org.junit.Assert.assertArrayEquals;
 
 public class PersistentFsTest extends HeavyPlatformTestCase {
   private PersistentFS myFs;
@@ -74,6 +77,41 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     delete(vFile);
     assertNull(myFs.findFileById(id));
+  }
+
+  public void testFileContentHash() throws Exception {
+    File dir = createTempDirectory();
+    File file = new File(dir, "test.txt");
+    assertTrue(file.createNewFile());
+    FileUtil.writeToFile(file, "one");
+
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    // content is not yet loaded
+    byte[] hash = fs.getContentHashIfStored(vFile);
+    assertNull(hash);
+
+    vFile.contentsToByteArray();
+    hash = fs.getContentHashIfStored(vFile);
+    assertNotNull(hash);
+
+    // different contents should have different hashes
+    setFileText(vFile, "two");
+    byte[] newHash = fs.getContentHashIfStored(vFile);
+    assertNotNull(newHash);
+    assertFalse(Arrays.equals(hash, newHash));
+
+    // equal contents should have the equal hashes
+    setFileText(vFile, "one");
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
+
+    // deleted files preserve content, and thus hash
+    delete(vFile);
+    assertNotNull(fs.contentsToByteArray(vFile));
+    assertArrayEquals(hash, fs.getContentHashIfStored(vFile));
   }
 
   public void testFindRootShouldNotBeFooledByRelativePath() throws Exception {
@@ -655,5 +693,40 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
     VirtualFile[] newChildren = vtemp.getChildren();
     assertOneElement(newChildren);
+  }
+
+  public void testPersistentFsCacheDoesntContainInvalidFiles() throws IOException {
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+
+    File dir = createTempDirectory();
+    File subDir1 = new File(dir, "subDir1");
+    File subDir2 = new File(subDir1, "subDir2");
+    File subDir3 = new File(subDir2, "subDir3");
+    File file = new File(subDir3, "file.txt");
+
+    assertTrue(subDir3.mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFileSystemEntry vFile = ((VirtualFileSystemEntry)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    VirtualFileSystemEntry vSubDir3 = vFile.getParent();
+    VirtualFileSystemEntry vSubDir2 = vSubDir3.getParent();
+    VirtualFileSystemEntry vSubDir1 = vSubDir2.getParent();
+
+    VirtualFileSystemEntry[] hardReferenceHolder = new VirtualFileSystemEntry[]{vFile, vSubDir3, vSubDir2, vSubDir1};
+
+    // delete directory with deep nested children
+    delete(vSubDir1);
+
+    for (VirtualFileSystemEntry f : hardReferenceHolder) {
+      assertFalse("file is valid but deleted " + f.getName(), f.isValid());
+    }
+
+    for (VirtualFileSystemEntry f : hardReferenceHolder) {
+      assertNull(fs.getCachedDir(f.getId()));
+      assertNull(fs.findFileById(f.getId()));
+    }
+
+    for (VirtualFileSystemEntry f : fs.getIdToDirCache().values()) {
+      assertTrue(f.isValid());
+    }
   }
 }

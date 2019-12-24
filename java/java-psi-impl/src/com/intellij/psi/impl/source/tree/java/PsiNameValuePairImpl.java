@@ -202,6 +202,6 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
     return "PsiNameValuePair";
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
+  private static final Logger LOG = Logger.getInstance(PsiNameValuePairImpl.class);
 
 }

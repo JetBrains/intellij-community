@@ -6,10 +6,7 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.RunFirst;
-import com.intellij.testFramework.TeamCityLogger;
-import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestSorter;
+import com.intellij.testFramework.*;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,12 +152,28 @@ public class TestCaseLoader {
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      int index = MathUtil.nonNegativeAbs(testCaseClass.getName().hashCode());
-
-      if (index % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX) {
+      if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
         myClassList.add(testCaseClass);
       }
     }
+  }
+
+  /**
+   * @return true iff this {@code testIdentifier} matches current testing settings: number of buckets and bucket index. {@code testIdentifier} may
+   * be something identifying a test: test class or feature file name
+   * @apiNote logic for bucketing tests into different bucket configurations.
+   * @see TestCaseLoader#TEST_RUNNERS_COUNT
+   * @see TestCaseLoader#TEST_RUNNER_INDEX
+   */
+  public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
+    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
+  }
+
+  /**
+   * @return true iff tests supposed to be separated into buckets using {@link #matchesCurrentBucket(String)} method
+   */
+  public static boolean shouldBucketTests() {
+    return TEST_RUNNERS_COUNT > 1;
   }
 
   void addFirstTest(Class<?> aClass) {
@@ -351,7 +364,13 @@ public class TestCaseLoader {
 
     String message = "Number of test classes found: " + getClassesCount() + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
-    TeamCityLogger.info(message);
+
+    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0) {
+      TeamCityLogger.error(message);
+    }
+    else {
+      TeamCityLogger.info(message);
+    }
   }
 
   @Nullable

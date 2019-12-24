@@ -20,46 +20,47 @@ package org.picocontainer.defaults;
  * @author J&ouml;rg Schaible
  * @since 1.1
  */
-public abstract class ThreadLocalCyclicDependencyGuard extends ThreadLocal implements CyclicDependencyGuard {
+public abstract class ThreadLocalCyclicDependencyGuard extends ThreadLocal<Boolean> implements CyclicDependencyGuard {
+  @Override
+  protected Boolean initialValue() {
+    return Boolean.FALSE;
+  }
 
-    @Override
-    protected Object initialValue() {
-        return Boolean.FALSE;
+  /**
+   * Derive from this class and implement this function with the functionality
+   * to observe for a dependency cycle.
+   *
+   * @return a value, if the functionality result in an expression,
+   * otherwise just return <code>null</code>
+   */
+  @Override
+  public abstract Object run();
+
+  /**
+   * Call the observing function. The provided guard will hold the {@link Boolean} value.
+   * If the guard is already <code>Boolean.TRUE</code> a {@link CyclicDependencyException}
+   * will be  thrown.
+   *
+   * @param stackFrame the current stack frame
+   * @return the result of the <code>run</code> method
+   */
+  @Override
+  public final Object observe(Class stackFrame) {
+    if (Boolean.TRUE.equals(get())) {
+      throw new CyclicDependencyException(stackFrame);
     }
-
-    /**
-     * Derive from this class and implement this function with the functionality
-     * to observe for a dependency cycle.
-     *
-     * @return a value, if the functionality result in an expression,
-     *      otherwise just return <code>null</code>
-     */
-    @Override
-    public abstract Object run();
-
-    /**
-     * Call the observing function. The provided guard will hold the {@link Boolean} value.
-     * If the guard is already <code>Boolean.TRUE</code> a {@link CyclicDependencyException}
-     * will be  thrown.
-     *
-     * @param stackFrame the current stack frame
-     * @return the result of the <code>run</code> method
-     */
-    @Override
-    public final Object observe(Class stackFrame) {
-        if (Boolean.TRUE.equals(get())) {
-            throw new CyclicDependencyException(stackFrame);
-        }
-        Object result = null;
-        try {
-            set(Boolean.TRUE);
-            result = run();
-        } catch (final CyclicDependencyException e) {
-            e.push(stackFrame);
-            throw e;
-        } finally {
-            set(Boolean.FALSE);
-        }
-        return result;
+    Object result;
+    try {
+      set(Boolean.TRUE);
+      result = run();
     }
+    catch (final CyclicDependencyException e) {
+      e.push(stackFrame);
+      throw e;
+    }
+    finally {
+      set(Boolean.FALSE);
+    }
+    return result;
+  }
 }

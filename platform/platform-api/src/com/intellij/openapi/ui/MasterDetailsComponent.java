@@ -42,7 +42,7 @@ import java.util.*;
  * @author anna
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
+  protected static final Logger LOG = Logger.getInstance(MasterDetailsComponent.class);
 
   protected static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
 

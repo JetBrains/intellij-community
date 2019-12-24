@@ -53,12 +53,6 @@ import static com.jetbrains.python.psi.impl.PyTypeDeclarationStatementNavigator.
  * @author vlan
  */
 public class PyRedeclarationInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.redeclaration");
-  }
 
   @NotNull
   @Override

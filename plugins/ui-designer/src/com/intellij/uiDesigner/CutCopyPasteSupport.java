@@ -34,7 +34,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.CutCopyPasteSupport");
+  private static final Logger LOG = Logger.getInstance(CutCopyPasteSupport.class);
   private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private final GuiEditor myEditor;

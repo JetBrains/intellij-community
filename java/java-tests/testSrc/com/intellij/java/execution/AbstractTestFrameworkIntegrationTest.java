@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +32,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import javax.swing.*;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -60,7 +62,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     if (searchForTestsTask != null) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
                                                                           searchForTestsTask.run(new EmptyProgressIndicator());
-                                                                          searchForTestsTask.onSuccess();
+                                                                          ApplicationManager.getApplication().invokeLater(() -> searchForTestsTask.onSuccess());
                                                                         },
                                                                         "", false, project, null);
     }
@@ -135,7 +137,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
     final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
     return new ArtifactRepositoryManager(
       localRepo,
-      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "http://maven.labs.intellij.net/repo1")),
+      Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "https://repo.labs.intellij.net/repo1")),
       new ProgressConsumer() {
         @Override
         public void consume(String message) {

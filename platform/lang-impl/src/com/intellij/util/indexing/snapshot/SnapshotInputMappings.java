@@ -2,13 +2,8 @@
 package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -24,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -33,7 +27,6 @@ import java.util.stream.Stream;
 public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
 
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
   private static final boolean USE_MANUAL_COMPRESSION = SystemProperties.getBooleanProperty("snapshots.use.manual.compression", false);
 
   private final ID<Key, Value> myIndexId;
@@ -164,7 +157,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   }
 
   private int getHashId(@Nullable Input content) throws IOException {
-    return content == null ? 0 : getHashOfContent((FileContent) content);
+    return content == null ? 0 : getHashOfContent((FileContentImpl)content);
   }
 
   @Override
@@ -177,7 +170,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   public void clear() throws IOException {
     try {
       if (myIndexingTrace != null) {
-        File baseFile = myIndexingTrace.getBaseFile();
+        File baseFile = myIndexingTrace.getBaseFile().toFile();
         try {
           myIndexingTrace.close();
         }
@@ -215,7 +208,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     if (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS) return null;
     final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
     try {
-      return new PersistentMapBasedForwardIndex(saved);
+      return new PersistentMapBasedForwardIndex(saved.toPath(), false);
     }
     catch (IOException ex) {
       IOUtil.deleteAllFilesStartingWith(saved);
@@ -226,7 +219,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   private PersistentHashMap<Integer, String> createIndexingTrace() throws IOException {
     final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
     try {
-      return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE,
+      return new PersistentHashMap<>(mapFile.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
                                      new DataExternalizer<String>() {
                                        @Override
                                        public void save(@NotNull DataOutput out, String value) throws IOException {
@@ -272,50 +265,30 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     return myContents.get(hashId);
   }
 
-  private Integer getHashOfContent(FileContent content) throws IOException {
-    FileType fileType = content.getFileType();
-    if (myIsPsiBackedIndex && content instanceof FileContentImpl) {
+  private Integer getHashOfContent(FileContentImpl content) throws IOException {
+    if (myIsPsiBackedIndex) {
       // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
-      Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
-
-      if (previouslyCalculatedUncommittedHashId == null) {
-        Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
-
-        if (document != null) {  // if document is not committed
-          PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
-
-          if (psiDocumentManager.isUncommited(document)) {
-            PsiFile file = psiDocumentManager.getCachedPsiFile(document);
-            Charset charset = ((FileContentImpl)content).getCharset();
-
-            if (file != null) {
-              previouslyCalculatedUncommittedHashId = ContentHashesSupport
-                .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
-                                               fileType);
-              content.putUserData(ourSavedUncommittedHashIdKey, previouslyCalculatedUncommittedHashId);
-            }
-          }
-        }
-      }
-      if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
+      return doGetContentHash(content, true);
     }
+    return doGetContentHash(content, false);
+  }
 
-    Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
+  @NotNull
+  private static Integer doGetContentHash(FileContentImpl content, boolean fromDocument) throws IOException {
+    com.intellij.openapi.util.Key<Integer> key = fromDocument ? ourSavedUncommittedHashIdKey : ourSavedContentHashIdKey;
+
+    Integer previouslyCalculatedContentHashId = content.getUserData(key);
     if (previouslyCalculatedContentHashId == null) {
-      byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
+      byte[] hash = content.getHash(fromDocument);
       if (hash == null) {
-        if (fileType.isBinary()) {
-          previouslyCalculatedContentHashId = ContentHashesSupport.calcContentHashId(content.getContent(), fileType);
-        } else {
-          Charset charset = content instanceof FileContentImpl ? ((FileContentImpl)content).getCharset() : null;
-          previouslyCalculatedContentHashId = ContentHashesSupport
-            .calcContentHashIdWithFileType(content.getContent(), charset, fileType);
-        }
-      } else {
-        previouslyCalculatedContentHashId =  ContentHashesSupport.enumerateHash(hash);
+        IndexedHashesSupport.initIndexedHash(content);
+        hash = content.getHash(fromDocument);
+        LOG.assertTrue(hash != null);
       }
-      content.putUserData(ourSavedContentHashIdKey, previouslyCalculatedContentHashId);
+
+      previouslyCalculatedContentHashId = IndexedHashesSupport.enumerateHash(hash);
+      content.putUserData(key, previouslyCalculatedContentHashId);
     }
     return previouslyCalculatedContentHashId;
   }

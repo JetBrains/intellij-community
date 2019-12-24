@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl");
+  private static final Logger LOG = Logger.getInstance(ReadonlyStatusHandlerImpl.class);
   private final Project myProject;
   protected boolean myClearReadOnlyInTests;
 

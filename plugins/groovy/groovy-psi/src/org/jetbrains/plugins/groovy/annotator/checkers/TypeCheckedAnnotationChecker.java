@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,11 @@ public class TypeCheckedAnnotationChecker extends CustomAnnotationChecker {
           "2.1.0".equals(sdkVersion))) return false;
 
     GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    checkAnnotationArguments(holder, (PsiClass)resolved, classReference, attributes, false);
+    Pair.NonNull<PsiElement, String> r = checkAnnotationArguments((PsiClass)resolved, classReference, attributes, false);
+    if (r != null && r.getFirst() != null) {
+      holder.createErrorAnnotation(r.getFirst(), r.getSecond());
+    }
+
     return true;
   }
 }

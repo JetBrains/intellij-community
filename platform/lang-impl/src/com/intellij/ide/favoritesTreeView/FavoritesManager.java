@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
@@ -38,7 +37,7 @@ import java.util.function.Function;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
-public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
+public final class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   // fav list name -> list of (root: root url, root class)
   private final Map<String, List<TreeItem<Pair<AbstractUrl, String>>>> myName2FavoritesRoots =
     new TreeMap<>();
@@ -51,7 +50,10 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   @NotNull
   private Map<String, FavoritesListProvider> getProviders() {
-    if (myProviders != null) return myProviders;
+    if (myProviders != null) {
+      return myProviders;
+    }
+
     myProviders = new HashMap<>();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final FavoritesListProvider[] providers = EP_NAME.getExtensions(myProject);
@@ -165,12 +167,11 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return myViewSettings;
   }
 
-  public synchronized boolean removeFavoritesList(@NotNull String name) {
-    boolean result = myName2FavoritesRoots.remove(name) != null;
+  public synchronized void removeFavoritesList(@NotNull String name) {
+    myName2FavoritesRoots.remove(name);
     myFavoritesRootsOrder.remove(name);
     myDescriptions.remove(name);
     listRemoved(name);
-    return result;
   }
 
   @NotNull
@@ -468,7 +469,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final Set<Boolean> find = new HashSet<>();
     final ContentIterator contentIterator = fileOrDir -> {
-      if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
+      if (fileOrDir.getPath().equals(vFile.getPath())) {
         find.add(Boolean.TRUE);
       }
       return true;

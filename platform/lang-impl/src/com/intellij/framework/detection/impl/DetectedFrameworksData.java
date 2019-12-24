@@ -34,6 +34,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,21 +44,21 @@ import java.util.Set;
  * @author nik
  */
 public class DetectedFrameworksData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.detection.impl.DetectedFrameworksData");
+  private static final Logger LOG = Logger.getInstance(DetectedFrameworksData.class);
   private PersistentHashMap<Integer,TIntHashSet> myExistentFrameworkFiles;
   private final TIntObjectHashMap<TIntHashSet> myNewFiles;
   private final MultiMap<Integer, DetectedFrameworkDescription> myDetectedFrameworks;
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<>();
-    File file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true).resolve("files").toFile();
+    Path file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true).resolve("files");
     myNewFiles = new TIntObjectHashMap<>();
     try {
       myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
     }
     catch (IOException e) {
       LOG.info(e);
-      PersistentHashMap.deleteFilesStartingWith(file);
+      PersistentHashMap.deleteFilesStartingWith(file.toFile());
       try {
         myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());
       }

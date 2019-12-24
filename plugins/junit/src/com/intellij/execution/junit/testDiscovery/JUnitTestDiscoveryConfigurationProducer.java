@@ -70,6 +70,7 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
         super.fillForkModule(perModule, toRoot.get(module), name);
       }
 
+      @NotNull
       @Override
       protected String getRunner() {
         return JUnitStarter.JUNIT4_PARAMETER;

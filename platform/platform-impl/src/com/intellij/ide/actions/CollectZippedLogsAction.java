@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.settingsSummary.ProblemType;
 import com.intellij.troubleshooting.TroubleInfoCollector;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Compressor;
@@ -31,8 +30,10 @@ import java.util.Date;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
+  private static class Holder {
+    private static final NotificationGroup NOTIFICATION_GROUP =
+      new NotificationGroup("Collect Zipped Logs", NotificationDisplayType.BALLOON, true);
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -60,7 +61,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           RevealFileAction.openFile(zippedLogsFile);
         }
         else {
-          final Notification logNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+          final Notification logNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 "Log file is created: " + zippedLogsFile.getAbsolutePath(),
                                                                 NotificationType.INFORMATION);
@@ -68,7 +69,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         }
       }
       catch (final IOException exception) {
-        final Notification errorNotification = new Notification(NOTIFICATION_GROUP.getDisplayId(),
+        final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 "Can't create zip file with logs: " + exception.getLocalizedMessage(),
                                                                 NotificationType.ERROR);
@@ -101,7 +102,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     return zippedLogsFile;
   }
 
-  @SuppressWarnings("deprecation")
   @Nullable
   private static StringBuilder collectInfoFromExtensions(@Nullable Project project) {
     StringBuilder settings = null;
@@ -110,9 +110,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
       settings.append(new CompositeGeneralTroubleInfoCollector().collectInfo(project));
       for (TroubleInfoCollector troubleInfoCollector : TroubleInfoCollector.EP_SETTINGS.getExtensions()) {
         settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
-      }
-      for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
-        settings.append(problemType.collectInfo(project)).append('\n');
       }
     }
     return settings;

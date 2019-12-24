@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor");
+  private static final Logger LOG = Logger.getInstance(ShelveChangesCommitExecutor.class);
 
   private final Project myProject;
 

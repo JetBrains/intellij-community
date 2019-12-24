@@ -65,15 +65,13 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
           else -> false
         }) {
-          runBlocking {
-            autoSync()
-          }
+          autoSync()
         }
       }
     })
   }
 
-  suspend fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
+  fun autoSync(onAppExit: Boolean = false, force: Boolean = false) {
     if (!enabled || !icsManager.isActive || (!force && !icsManager.settings.autoSync)) {
       return
     }
@@ -87,10 +85,12 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     val app = ApplicationManager.getApplication()
 
     if (onAppExit) {
-      sync(app, onAppExit)
+      runBlocking {
+        sync(app, onAppExit)
+      }
       return
     }
-    else if (app.isDisposeInProgress) {
+    else if (app.isDisposed) {
       // will be handled by applicationExiting listener
       return
     }
@@ -148,7 +148,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
         catchAndLog {
           val updateResult = updater.merge()
           if (!onAppExit &&
-              !app.isDisposeInProgress &&
+              !app.isDisposed &&
               updateResult != null &&
               updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult,
                                                app.messageBus)) {

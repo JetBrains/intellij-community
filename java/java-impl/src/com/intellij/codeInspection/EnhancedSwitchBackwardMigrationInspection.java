@@ -37,9 +37,7 @@ public class EnhancedSwitchBackwardMigrationInspection extends AbstractBaseJavaL
         if (!isNonemptyRuleFormatSwitch(expression)) return;
         if (findReplacer(expression) == null) return;
         String message = InspectionsBundle.message("inspection.switch.expression.backward.expression.migration.inspection.name");
-        PsiElement problemElement =
-          (InspectionProjectProfileManager.isInformationLevel(getShortName(), expression)) ? expression : expression.getFirstChild();
-        holder.registerProblem(problemElement, message, new ReplaceWithOldStyleSwitchFix());
+        holder.registerProblem(expression.getFirstChild(), message, new ReplaceWithOldStyleSwitchFix());
       }
 
       @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.build.BuildContentManager;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -38,7 +39,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -73,7 +73,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
 
   private static final NotificationGroup ORPHAN_MODULE_NOTIFICATION_GROUP =
-    NotificationGroup.toolWindowGroup("Build sync orphan modules", ToolWindowId.BUILD);
+    NotificationGroup.toolWindowGroup("Build sync orphan modules", BuildContentManager.TOOL_WINDOW_ID);
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
@@ -451,30 +451,38 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       11, (o1, o2) -> {
       int order1 = o1.second.getOrder();
       int order2 = o2.second.getOrder();
-      return order1 != order2 ? order1 < order2 ? -1 : 1 : 0;
+      if (order1 != order2) {
+        return order1 < order2 ? -1 : 1;
+      }
+      return o1.second.toString().compareTo(o2.second.toString());
     });
-
-    int shift = 0;
+    final List<OrderEntry> noOrderAwareItems = new ArrayList<>();
     for (int i = 0; i < length; i++) {
       OrderEntry orderEntry = orderEntries[i];
       final OrderAware orderAware = orderEntryDataMap.get(orderEntry);
       if (orderAware == null) {
-        newOrder[i] = orderEntry;
-        shift++;
+        noOrderAwareItems.add(orderEntry);
       }
       else {
         priorityQueue.add(Pair.create(orderEntry, orderAware));
       }
     }
 
+    Collections.sort(noOrderAwareItems, new Comparator<OrderEntry>() {
+      @Override
+      public int compare(OrderEntry o1, OrderEntry o2) {
+        return o1.toString().compareTo(o2.toString());
+      }
+    });
+
+    for (int i = 0; i < noOrderAwareItems.size(); i++) {
+      newOrder[i] = noOrderAwareItems.get(i);
+    }
+    int index = noOrderAwareItems.size();
     Pair<OrderEntry, OrderAware> pair;
     while ((pair = priorityQueue.poll()) != null) {
-      final OrderEntry orderEntry = pair.first;
-      final OrderAware orderAware = pair.second;
-      final int order = orderAware.getOrder() != -1 ? orderAware.getOrder() : length - 1;
-      final int newPlace = findNewPlace(newOrder, order - shift);
-      assert newPlace != -1;
-      newOrder[newPlace] = orderEntry;
+      newOrder[index] = pair.first;
+      index++;
     }
 
     if (LOG.isDebugEnabled()) {

@@ -25,6 +25,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -285,7 +286,7 @@ public class MemoryAgentUtil {
           if (outputLines.length >= 1 && outputLines[0].contains("memory_agent") && !mentions.isEmpty()) {
             Project project = env.getProject();
             String name = env.getRunProfile().getName();
-            String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(env);
+            String windowId = RunContentManager.getInstance(project).getToolWindowIdByEnvironment(env);
 
             Attachment[] mentionsInOutput = StreamEx.of(mentions).map(x -> new Attachment("agent_mention.txt", x))
               .toArray(Attachment.EMPTY_ARRAY);

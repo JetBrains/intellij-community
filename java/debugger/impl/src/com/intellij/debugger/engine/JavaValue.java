@@ -38,6 +38,8 @@ import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue;
+import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -53,11 +55,15 @@ import java.util.Set;
 /**
 * @author egor
 */
-public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider, XValueWithInlinePresentation {
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider, XValueWithInlinePresentation,
+                                                      PinToTopParentValue, PinToTopMemberValue {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
+  private final boolean myCanBePinned;
   private final JavaValue myParent;
+  @NotNull
   private final ValueDescriptorImpl myValueDescriptor;
+  @NotNull
   private final EvaluationContextImpl myEvaluationContext;
   private final NodeManagerImpl myNodeManager;
   private final boolean myContextSet;
@@ -82,6 +88,24 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myEvaluationContext = evaluationContext;
     myNodeManager = nodeManager;
     myContextSet = contextSet;
+    myCanBePinned = doComputeCanBePinned();
+  }
+
+  @Nullable
+  @Override
+  public String getTypeName() {
+    return myValueDescriptor.getDeclaredType();
+  }
+
+  @Override
+  public boolean canBePinned() {
+    return myCanBePinned;
+  }
+  private boolean doComputeCanBePinned() {
+    if(myValueDescriptor instanceof ArrayElementDescriptor) {
+      return false;
+    }
+    return myParent != null;
   }
 
   public static JavaValue create(JavaValue parent,

@@ -1,5 +1,5 @@
 
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -52,8 +52,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
   public static void updateToolWindowActionPresentation(@NotNull ToolWindowImpl toolWindow) {
     ActionManager actionManager = ActionManager.getInstance();
-    String actionId = getActionIdForToolWindow(toolWindow.getId());
-    AnAction action = actionManager.getAction(actionId);
+    AnAction action = actionManager.getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {
       ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
@@ -925,9 +926,21 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         if (!(callable instanceof StubBasedPsiElement) && !context.maySwitchToAST(callable)) {
           return null;
         }
-        return callable.getCallType(receiver, Collections.emptyMap(), context);
+        return callable.getCallType(receiver, buildArgumentsToParametersMap(receiver, callable, context), context);
       }
       return null;
+    }
+
+    @NotNull
+    private static Map<PyExpression, PyCallableParameter> buildArgumentsToParametersMap(@Nullable PyExpression receiver,
+                                                                                        @NotNull PyCallable callable,
+                                                                                        @NotNull TypeEvalContext context) {
+      if (receiver == null) return Collections.emptyMap();
+
+      final PyCallableParameter firstParameter = ContainerUtil.getFirstItem(callable.getParameters(context));
+      if (firstParameter == null || !firstParameter.isSelf()) return Collections.emptyMap();
+
+      return ImmutableMap.of(receiver, firstParameter);
     }
 
     @NotNull
@@ -1350,7 +1363,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyReferenceExpression referenceExpr = as(expression, PyReferenceExpression.class);
         final PsiElement resolved;
         if (referenceExpr != null) {
-          resolved = referenceExpr.followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(context)).getElement();
+          resolved = referenceExpr.followAssignmentsChain(PyResolveContext.defaultContext().withTypeEvalContext(context)).getElement();
         }
         else {
           final PsiReference ref = expression.getReference();

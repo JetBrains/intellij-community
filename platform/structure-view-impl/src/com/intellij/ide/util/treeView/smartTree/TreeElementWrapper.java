@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.TreeElementWrapper");
+  private static final Logger LOG = Logger.getInstance(TreeElementWrapper.class);
   public TreeElementWrapper(Project project, @NotNull TreeElement value, @NotNull TreeModel treeModel) {
     super(project, value, treeModel);
   }

@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
+  private static final Logger LOG = Logger.getInstance(SimplifyBooleanExpressionFix.class);
   public static final String FAMILY_NAME = QuickFixBundle.message("simplify.boolean.expression.family");
 
   private final boolean mySubExpressionValue;
@@ -352,7 +352,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     final IncorrectOperationException[] exception = {null};
     result[0].accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         // read in all children in advance since due to element replacement involving its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
@@ -399,7 +399,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     final Ref<Boolean> canBeSimplified = new Ref<>(Boolean.FALSE);
     expression.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!canBeSimplified.get().booleanValue()) {
           super.visitElement(element);
         }

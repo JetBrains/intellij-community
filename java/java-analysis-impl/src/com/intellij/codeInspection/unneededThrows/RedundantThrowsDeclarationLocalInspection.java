@@ -35,12 +35,6 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return myGlobalTool.getDisplayName();
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return myGlobalTool.getShortName();
   }

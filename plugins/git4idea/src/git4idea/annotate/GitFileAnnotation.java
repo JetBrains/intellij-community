@@ -195,8 +195,8 @@ public class GitFileAnnotation extends FileAnnotation {
     atb.appendLine("Author: " + lineInfo.getAuthor());
     atb.appendLine("Date: " + DateFormatUtil.formatDateTime(getDate(lineInfo)));
 
-    if (!myFilePath.equals(lineInfo.myFilePath)) {
-      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+    if (!myFilePath.equals(lineInfo.getFilePath())) {
+      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.getFilePath().getPresentableUrl());
       atb.appendLine("Path: " + path);
     }
 
@@ -270,7 +270,7 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
-  static class LineInfo {
+  static class CommitInfo {
     @NotNull private final Project myProject;
     @NotNull private final GitRevisionNumber myRevision;
     @NotNull private final FilePath myFilePath;
@@ -281,15 +281,15 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
-    LineInfo(@NotNull Project project,
-                    @NotNull GitRevisionNumber revision,
-                    @NotNull FilePath path,
-                    @NotNull Date committerDate,
-                    @NotNull Date authorDate,
-                    @NotNull VcsUser author,
-                    @NotNull String subject,
-                    @Nullable GitRevisionNumber previousRevision,
-                    @Nullable FilePath previousPath) {
+    CommitInfo(@NotNull Project project,
+             @NotNull GitRevisionNumber revision,
+             @NotNull FilePath path,
+             @NotNull Date committerDate,
+             @NotNull Date authorDate,
+             @NotNull VcsUser author,
+             @NotNull String subject,
+             @Nullable GitRevisionNumber previousRevision,
+             @Nullable FilePath previousPath) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -340,6 +340,66 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull
     public String getSubject() {
       return mySubject;
+    }
+  }
+
+  public static class LineInfo {
+    @NotNull private final CommitInfo myCommitInfo;
+    private final int myLineNumber;
+    private final int myOriginalLineNumber;
+
+    LineInfo(@NotNull CommitInfo commitInfo, int lineNumber, int originalLineNumber) {
+      this.myCommitInfo = commitInfo;
+      this.myLineNumber = lineNumber;
+      this.myOriginalLineNumber = originalLineNumber;
+    }
+
+    public int getLineNumber() {
+      return myLineNumber;
+    }
+
+    public int getOriginalLineNumber() {
+      return myOriginalLineNumber;
+    }
+
+    @NotNull
+    public GitRevisionNumber getRevisionNumber() {
+      return myCommitInfo.getRevisionNumber();
+    }
+
+    @NotNull
+    public FilePath getFilePath() {
+      return myCommitInfo.getFilePath();
+    }
+
+    @NotNull
+    public VcsFileRevision getFileRevision() {
+      return myCommitInfo.getFileRevision();
+    }
+
+    @Nullable
+    public VcsFileRevision getPreviousFileRevision() {
+      return myCommitInfo.getPreviousFileRevision();
+    }
+
+    @NotNull
+    public Date getCommitterDate() {
+      return myCommitInfo.getCommitterDate();
+    }
+
+    @NotNull
+    public Date getAuthorDate() {
+      return myCommitInfo.getAuthorDate();
+    }
+
+    @NotNull
+    public String getAuthor() {
+      return myCommitInfo.getAuthor();
+    }
+
+    @NotNull
+    public String getSubject() {
+      return myCommitInfo.getSubject();
     }
   }
 

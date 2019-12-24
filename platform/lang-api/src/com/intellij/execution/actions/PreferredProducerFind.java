@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 
 class PreferredProducerFind {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.PreferredProducerFind");
+  private static final Logger LOG = Logger.getInstance(PreferredProducerFind.class);
 
   private PreferredProducerFind() {}
 

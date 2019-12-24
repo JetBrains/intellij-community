@@ -52,7 +52,7 @@ public class Messages {
 
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
   private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
+  private static final Logger LOG = Logger.getInstance(Messages.class);
 
   @TestOnly
   public static TestDialog setTestDialog(TestDialog newValue) {

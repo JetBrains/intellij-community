@@ -70,7 +70,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
         final XmlElementVisitor visitor = (XmlElementVisitor)myInspection.buildVisitor(holder, false);
         new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (element instanceof XmlAttribute) {
               visitor.visitXmlAttribute((XmlAttribute)element);
             }

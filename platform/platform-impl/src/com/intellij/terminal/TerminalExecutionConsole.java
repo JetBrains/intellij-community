@@ -11,7 +11,10 @@ import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +24,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.HyperlinkStyle;
@@ -57,7 +59,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private volatile boolean myLastCR = false;
   private final PendingTasksRunner myOnResizedRunner;
   private final TerminalConsoleContentHelper myContentHelper = new TerminalConsoleContentHelper(this);
-  private boolean myEnableConsoleActions = true;
 
   private boolean myEnterKeyDefaultCodeEnabled = true;
 
@@ -119,7 +120,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   /**
    * @deprecated use {{@link #addMessageFilter(Filter)}} instead
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
   public void addMessageFilter(Project project, Filter filter) {
     myTerminalWidget.addMessageFilter(filter);
@@ -223,6 +224,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
           if (widget != null) {
             widget.getTerminalPanel().setCursorVisible(false);
           }
+          myAttachedToProcess.set(false);
         }, ModalityState.any());
       }
     });
@@ -271,29 +273,27 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return false;
   }
 
+  /**
+   * @deprecated already handled by {@link com.intellij.execution.runners.RunContentBuilder#createDescriptor()}
+   */
+  @Deprecated
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
-    AnAction[] actions = createConsoleActions();
-    myEnableConsoleActions = false;
-    if (prependSeparatorIfNonEmpty && actions.length > 0) {
-      actions = ArrayUtil.mergeArrays(new AnAction[] {Separator.create()}, actions);
-    }
-    return actions;
+    return AnAction.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
   public AnAction[] createConsoleActions() {
-    if (myEnableConsoleActions) {
-      return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
-    }
-    return AnAction.EMPTY_ARRAY;
+    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
   }
 
   @Override
   public void allowHeavyFilters() {
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myTerminalWidget.getComponent();

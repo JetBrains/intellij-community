@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
-public class DependencySearchService {
+public final class DependencySearchService {
   private final Project myProject;
 
   private final PackageSearchService myPackageSearchService = new PackageSearchService();
@@ -44,11 +44,9 @@ public class DependencySearchService {
     return myOfflineSearchService;
   }
 
-
   public final void reload() {
     List<DependencyCompletionProvider> providers = new ArrayList<>();
-    List<DependencyCompletionProviderFactory> factoryList = DependencyCompletionProviderFactory.EP_NAME.getExtensionList();
-    for (DependencyCompletionProviderFactory factory : factoryList) {
+    for (DependencyCompletionProviderFactory factory : DependencyCompletionProviderFactory.EP_NAME.getExtensionList()) {
       if (factory.isApplicable(myProject)) {
         providers.addAll(factory.getProviders(myProject));
       }
@@ -60,7 +58,6 @@ public class DependencySearchService {
   public Promise<Void> fulltextSearch(@NotNull String template,
                                       @NotNull SearchParameters parameters,
                                       @NotNull Consumer<MavenRepositoryArtifactInfo> consumer) {
-
     if (skipRequest(parameters)) {
       return Promises.resolvedPromise(null);
     }

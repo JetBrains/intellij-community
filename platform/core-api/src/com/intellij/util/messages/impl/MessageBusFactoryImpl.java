@@ -3,18 +3,19 @@ package com.intellij.util.messages.impl;
 
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
+import com.intellij.util.messages.MessageBusOwner;
 import org.jetbrains.annotations.NotNull;
 
 public final class MessageBusFactoryImpl extends MessageBusFactory {
   @NotNull
   @Override
-  public MessageBus createMessageBus(@NotNull Object owner) {
+  public MessageBus createMessageBus(@NotNull MessageBusOwner owner) {
     return new MessageBusImpl.RootBus(owner);
   }
 
   @NotNull
   @Override
-  public MessageBus createMessageBus(@NotNull Object owner, @NotNull MessageBus parentBus) {
+  public MessageBus createMessageBus(@NotNull MessageBusOwner owner, @NotNull MessageBus parentBus) {
     return new MessageBusImpl(owner, (MessageBusImpl)parentBus);
   }
 }

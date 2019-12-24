@@ -36,11 +36,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
-    QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(containingFile, ref));
     registrar.register(new QualifyStaticConstantFix(containingFile, ref));
-    registrar.register(quickFixFactory.createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
 
@@ -50,7 +48,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
-      registrar.register(new RenameWrongRefFix(refExpr));
+      registrar.register(fixRange, new RenameWrongRefFix(refExpr), null);
       PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
       if (qualifier == null) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);

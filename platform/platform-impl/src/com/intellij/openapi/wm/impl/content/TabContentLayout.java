@@ -4,12 +4,12 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -17,7 +17,7 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabPainter;
 import com.intellij.ui.tabs.JBTabsPosition;
-import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
+import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
@@ -29,8 +29,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-class TabContentLayout extends ContentLayout {
-
+final class TabContentLayout extends ContentLayout implements MorePopupAware {
   static final int MORE_ICON_BORDER = 6;
   public static final int TAB_LAYOUT_START = 4;
   LayoutData myLastLayout;
@@ -38,13 +37,6 @@ class TabContentLayout extends ContentLayout {
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
-  private final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
-    @Override
-    @Nullable
-    protected Rectangle getIconRec() {
-      return myLastLayout.moreRect;
-    }
-  };
   List<AnAction> myDoubleClickActions = new ArrayList<>();
 
   TabContentLayout(ToolWindowContentUi ui) {
@@ -54,12 +46,9 @@ class TabContentLayout extends ContentLayout {
       @Override
       protected void execute(final MouseEvent e) {
         if (!myUi.isCurrent(TabContentLayout.this)) return;
-
-        if (myLastLayout != null) {
-          final Rectangle moreRect = myLastLayout.moreRect;
-          if (moreRect != null && moreRect.contains(e.getPoint())) {
-            showPopup(e, ContainerUtil.filter(myTabs, myLastLayout.toDrop::contains));
-          }
+        Rectangle moreRect = getMoreRect();
+        if (moreRect != null) {
+          showMorePopup();
         }
       }
     };
@@ -75,8 +64,10 @@ class TabContentLayout extends ContentLayout {
         return myUi.myWindow.isActive();
       }
     };
-    for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
-      contentAdded(new ContentManagerEvent(this, myUi.myManager.getContent(i), i));
+
+    ContentManager contentManager = myUi.contentManager;
+    for (int i = 0; i < contentManager.getContentCount(); i++) {
+      contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
   }
 
@@ -91,16 +82,31 @@ class TabContentLayout extends ContentLayout {
     myDoubleClickActions = ContainerUtil.newArrayList(actions);
   }
 
-  private static void showPopup(MouseEvent e, List<? extends ContentTabLabel> tabs) {
+  private Rectangle getMoreRect() {
+    if (myLastLayout == null) return null;
+    return myLastLayout.moreRect;
+  }
+
+  @Override
+  public boolean canShowMorePopup() {
+    return getMoreRect() != null;
+  }
+
+  @Override
+  public void showMorePopup() {
+    Rectangle rect = getMoreRect();
+    if (rect == null) return;
+    List<? extends ContentTabLabel> tabs = ContainerUtil.filter(myTabs, myLastLayout.toDrop::contains);
     final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
     final SelectContentStep step = new SelectContentStep(contentsToShow);
-    JBPopupFactory.getInstance().createListPopup(step).show(new RelativePoint(e));
+    RelativePoint point = new RelativePoint(myUi, new Point(rect.x, rect.y + rect.height));
+    JBPopupFactory.getInstance().createListPopup(step).show(point);
   }
 
   @Override
   public void layout() {
     Rectangle bounds = myUi.getBounds();
-    ContentManager manager = myUi.myManager;
+    ContentManager manager = myUi.contentManager;
     LayoutData data = new LayoutData(myUi);
 
     data.eachX = TAB_LAYOUT_START;
@@ -140,7 +146,6 @@ class TabContentLayout extends ContentLayout {
       }
 
 
-      data.moreRectWidth = calcMoreIconWidth();
       data.toFitWidth = bounds.getSize().width - data.eachX;
 
       final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
@@ -170,7 +175,7 @@ class TabContentLayout extends ContentLayout {
         }
         else {
           if (!reachedBounds) {
-            final int width = bounds.width - data.eachX - data.moreRectWidth;
+            final int width = bounds.width - data.eachX;
             each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
             data.eachX += width;
           }
@@ -185,23 +190,23 @@ class TabContentLayout extends ContentLayout {
         each.setBounds(0, 0, 0, 0);
       }
     }
-
+    boolean toolbarUpdateNeeded;
     if (data.toDrop.size() > 0) {
-      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, myMoreIcon.getIconWidth(), bounds.height);
-      myMoreIcon.updateCounter(data.toDrop.size());
+      toolbarUpdateNeeded = myLastLayout != null && myLastLayout.moreRect == null;
+      data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, /*getMoreToolbarWidth()*/16, bounds.height);
     }
     else {
+      toolbarUpdateNeeded = myLastLayout != null && myLastLayout.moreRect != null;
       data.moreRect = null;
     }
 
-    final Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, myMoreIcon.getIconWidth()+MORE_ICON_BORDER, bounds.height);
+    final Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, /*getMoreToolbarWidth()*/16+MORE_ICON_BORDER, bounds.height);
 
     myUi.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     myLastLayout = data;
-  }
-
-  private int calcMoreIconWidth() {
-    return myMoreIcon.getIconWidth() + MORE_ICON_BORDER * TAB_ARC;
+    if (toolbarUpdateNeeded) {
+      ActionToolbarImpl.updateAllToolbarsImmediately();
+    }
   }
 
   @Override
@@ -215,12 +220,13 @@ class TabContentLayout extends ContentLayout {
       }
     }
 
-    Content selected = myUi.myManager.getSelectedContent();
-    if (selected == null && myUi.myManager.getContents().length>0) {
-      selected = myUi.myManager.getContents()[0];
+    ContentManager contentManager = myUi.contentManager;
+    Content selected = contentManager.getSelectedContent();
+    if (selected == null && contentManager.getContents().length > 0) {
+      selected = contentManager.getContents()[0];
     }
 
-    result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width + (myTabs.size() > 1 ? calcMoreIconWidth() : 0) : 0;
+    result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width : 0;
 
     return result;
   }
@@ -228,9 +234,6 @@ class TabContentLayout extends ContentLayout {
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);
-    if (data.toDrop.size() == 1) {
-      data.toFitWidth -= data.moreRectWidth;
-    }
   }
 
   boolean isToDrawTabs() {
@@ -250,8 +253,6 @@ class TabContentLayout extends ContentLayout {
     Dimension layoutSize;
     boolean fullLayout = true;
 
-    int moreRectWidth;
-
     ArrayList<ContentTabLabel> toLayout = new ArrayList<>();
     Collection<ContentTabLabel> toDrop = new HashSet<>();
 
@@ -263,7 +264,7 @@ class TabContentLayout extends ContentLayout {
 
     LayoutData(ToolWindowContentUi ui) {
       layoutSize = ui.getSize();
-      contentCount = ui.myManager.getContentCount();
+      contentCount = ui.contentManager.getContentCount();
     }
   }
 
@@ -294,10 +295,6 @@ class TabContentLayout extends ContentLayout {
   @Override
   public void paintChildren(Graphics g) {
     if (!isToDrawTabs()) return;
-
-    if (myLastLayout != null && myLastLayout.moreRect != null) {
-      myMoreIcon.paintIcon(myUi, g);
-    }
   }
 
   @Override
@@ -362,24 +359,13 @@ class TabContentLayout extends ContentLayout {
 
   @Override
   public void showContentPopup(ListPopup listPopup) {
-    Content selected = myUi.myManager.getSelectedContent();
+    Content selected = myUi.contentManager.getSelectedContent();
     if (selected != null) {
       ContentTabLabel tab = myContent2Tabs.get(selected);
       listPopup.showUnderneathOf(tab);
     } else {
       listPopup.showUnderneathOf(myIdLabel);
     }
-  }
-
-  @Override
-  public RelativeRectangle getRectangleFor(Content content) {
-    ContentTabLabel label = myContent2Tabs.get(content);
-    return new RelativeRectangle(label.getParent(), label.getBounds());
-  }
-
-  @Override
-  public Component getComponentFor(Content content) {
-    return myContent2Tabs.get(content);
   }
 
   @Override

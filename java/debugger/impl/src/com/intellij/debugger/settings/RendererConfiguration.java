@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RendererConfiguration implements Cloneable, JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.NodeRendererSettings");
+  private static final Logger LOG = Logger.getInstance(NodeRendererSettings.class);
 
   private static final int VERSION = 8;
 

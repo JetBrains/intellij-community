@@ -20,6 +20,7 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiImpl
@@ -52,17 +53,17 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
   }
 
   private fun createLogUiAndTab(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, currentRef: String) {
-    val logUi = logManager.createLogUi(logUiFactory, true)
+    val logUi = logManager.createLogUi(logUiFactory, VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val panel = VcsLogPanel(logManager, logUi)
     val contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).contentManager!!
     ContentUtilEx.addTabbedContent(contentManager, panel, "Compare", "$branchName and $currentRef", true, panel.getUi())
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null)
+    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.activate(null)
   }
 
   private class MyLogUiFactory(val logManager: VcsLogManager,
                                val rangeFilter: VcsLogRangeFilter,
-                               val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
-    override fun createLogUi(project: Project, logData: VcsLogData): VcsLogUiImpl {
+                               val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+    override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = "git-compare-branches-" + UUID.randomUUID()
       val properties = MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesLogProperties>())
 

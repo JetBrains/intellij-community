@@ -22,12 +22,6 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class UtilityClassCanBeEnumInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("utility.class.can.be.enum.display.name");
-  }
 
   @NotNull
   @Override

@@ -40,6 +40,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 @State(
   name = "WindowManager",
@@ -59,12 +60,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  private final CommandProcessor myCommandProcessor = new CommandProcessor();
   private final WindowWatcher myWindowWatcher = new WindowWatcher();
+
   /**
    * That is the default layout.
    */
-  private final DesktopLayout myLayout = new DesktopLayout();
+  private DesktopLayout myLayout = new DesktopLayout();
 
   // null keys must be supported
   // null key - root frame
@@ -103,6 +104,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
           || UIUtil.isClientPropertyTrue(frame.getRootPane(), IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS)) {
         return;
       }
+
       int extendedState = frame.getExtendedState();
       Rectangle bounds = frame.getBounds();
       JRootPane rootPane = frame.getRootPane();
@@ -111,7 +113,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       }
 
       ProjectFrameHelper frameHelper = ProjectFrameHelper.getFrameHelper(frame);
-      Project project = frameHelper == null ? null : frameHelper.getProject();
+      if (frameHelper == null) {
+        return;
+      }
+
+      Project project = frameHelper.getProject();
       if (project == null) {
         // Component moved during project loading - update myDefaultFrameInfo directly.
         // Cannot mark as dirty and compute later, because to convert user space info to device space,
@@ -119,7 +125,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
         // but later, when getStateModificationCount or getState is called, may be no frame at all.
         defaultFrameInfoHelper.updateFrameInfo(frameHelper);
       }
-      else {
+      else if (!project.isDisposed()) {
         ProjectFrameBounds projectFrameBounds = ProjectFrameBounds.getInstance(project);
         projectFrameBounds.markDirty(FrameInfoHelper.isMaximized(extendedState) ? null : bounds);
       }
@@ -336,12 +342,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @Override
   public void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize) {
-    if (c == null) return;
+    if (c == null) {
+      return;
+    }
 
-    Window wnd = SwingUtilities.getWindowAncestor(c);
-
-    if (wnd instanceof JWindow) {
-      JBPopup popup = (JBPopup)((JWindow)wnd).getRootPane().getClientProperty(JBPopup.KEY);
+    Window window = SwingUtilities.getWindowAncestor(c);
+    if (window instanceof JWindow) {
+      JBPopup popup = (JBPopup)((JWindow)window).getRootPane().getClientProperty(JBPopup.KEY);
       if (popup != null) {
         if (oldSize.height < newSize.height) {
           Dimension size = popup.getSize();
@@ -507,19 +514,26 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return myProjectToFrame.remove(null);
   }
 
-  public void assignFrame(@NotNull ProjectFrameHelper frame, @NotNull Project project) {
+  public void assignFrame(@NotNull ProjectFrameHelper frameHelper, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
-    frame.setProject(project);
-    myProjectToFrame.put(project, frame);
+    frameHelper.setProject(project);
+    myProjectToFrame.put(project, frameHelper);
 
-    frame.getFrame().addWindowListener(myActivationListener);
-    frame.getFrame().addComponentListener(myFrameStateListener);
+    IdeFrameImpl frame = frameHelper.getFrame();
+    frame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(project));
+    frame.addWindowListener(myActivationListener);
+    frame.addComponentListener(myFrameStateListener);
   }
 
-  @Override
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
+    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null));
+  }
+
+  @NotNull
+  public final ProjectFrameHelper allocateFrame(@NotNull Project project,
+                                                @NotNull Supplier<? extends ProjectFrameHelper> projectFrameHelperSupplier) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -530,7 +544,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null);
+      frame = projectFrameHelperSupplier.get();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();
@@ -604,7 +618,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     Project project = frameHelper.getProject();
     LOG.assertTrue(project != null);
 
-    frameHelper.getFrame().removeWindowListener(myActivationListener);
+    frame.removeWindowListener(myActivationListener);
     proceedDialogDisposalQueue(project);
 
     frameHelper.setProject(null);
@@ -620,16 +634,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       if (statusBar != null) {
         Disposer.dispose(statusBar);
       }
-      frame.dispose();
+      Disposer.dispose(frameHelper);
     }
   }
 
   public final void disposeRootFrame() {
     if (myProjectToFrame.size() == 1) {
-      final ProjectFrameHelper rootFrame = removeAndGetRootFrame();
+      ProjectFrameHelper rootFrame = removeAndGetRootFrame();
       if (rootFrame != null) {
-        // disposing last frame if quitting
-        rootFrame.getFrame().dispose();
+        Disposer.dispose(rootFrame);
       }
     }
   }
@@ -650,18 +663,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     return myWindowWatcher.getFocusedComponent(project);
   }
 
-  /**
-   * Private part
-   */
-  @Override
-  @NotNull
-  public final CommandProcessor getCommandProcessor() {
-    return myCommandProcessor;
-  }
-
   @Override
   public void loadState(@NotNull Element state) {
-    final Element frameElement = state.getChild(FRAME_ELEMENT);
+    Element frameElement = state.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
       FrameInfo info = new FrameInfo();
       XmlSerializer.deserializeInto(frameElement, info);
@@ -680,7 +684,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       defaultFrameInfoHelper.copyFrom(info);
     }
 
-    final Element desktopElement = state.getChild(DesktopLayout.TAG);
+    Element desktopElement = state.getChild(DesktopLayout.TAG);
     if (desktopElement != null) {
       myLayout.readExternal(desktopElement);
     }
@@ -720,8 +724,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final void setLayout(final DesktopLayout layout) {
-    myLayout.copyFrom(layout);
+  public final void setLayout(@NotNull DesktopLayout layout) {
+    myLayout = layout.copy();
   }
 
   public WindowWatcher getWindowWatcher() {

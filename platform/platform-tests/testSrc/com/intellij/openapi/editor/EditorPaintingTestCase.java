@@ -21,9 +21,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -37,23 +39,23 @@ import java.io.IOException;
 public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
 
+  private float oldUserScaleFactor = 1.0f;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    oldUserScaleFactor = JBUIScale.scale(1.0f);
+    JBUIScale.setUserScaleFactorForTest(1.0f);
     FontLayoutService.setInstance(new MockFontLayoutService(BitmapFont.CHAR_WIDTH, BitmapFont.CHAR_HEIGHT, BitmapFont.CHAR_DESCENT));
   }
 
   @Override
   protected void tearDown() throws Exception {
-    try {
-      FontLayoutService.setInstance(null);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    new RunAll()
+      .append(() -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor))
+      .append(() -> FontLayoutService.setInstance(null))
+      .append(() -> super.tearDown())
+      .run();
   }
 
   protected void checkResult() throws IOException {

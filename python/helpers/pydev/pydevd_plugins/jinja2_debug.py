@@ -16,7 +16,10 @@ class Jinja2LineBreakpoint(LineBreakpoint):
         return self.file == template_frame_file and self.line == template_frame_line
 
     def __str__(self):
-        return "Jinja2LineBreakpoint: %s-%d" %(self.file, self.line)
+        return "Jinja2LineBreakpoint: %s-%d" % (self.file, self.line)
+
+    def __repr__(self):
+        return '<Jinja2LineBreakpoint(%s, %s, %s, %s, %s)>' % (self.file, self.line, self.condition, self.func_name, self.expression)
 
 
 def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name, hit_condition=None, is_logpoint=False):

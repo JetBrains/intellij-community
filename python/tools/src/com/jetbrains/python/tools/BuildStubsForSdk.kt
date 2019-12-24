@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -22,16 +22,11 @@ import org.jetbrains.index.stubs.ProjectSdkStubsGenerator
 import org.jetbrains.index.stubs.mergeStubs
 import org.junit.Assert
 import java.io.File
+import kotlin.system.exitProcess
 
-/**
- * @author traff
- */
-
-const val stubsFileName: String = SDK_STUBS_STORAGE_NAME
-
-const val MERGE_STUBS_FROM_PATHS: String = "MERGE_STUBS_FROM_PATHS"
-
-const val PACK_STDLIB_FROM_PATH: String = "PACK_STDLIB_FROM_PATH"
+const val stubsFileName = SDK_STUBS_STORAGE_NAME
+const val MERGE_STUBS_FROM_PATHS = "MERGE_STUBS_FROM_PATHS"
+const val PACK_STDLIB_FROM_PATH = "PACK_STDLIB_FROM_PATH"
 
 fun getBaseDirValue(): String? {
   val path: String? = System.getProperty(PREBUILT_INDICES_PATH_PROPERTY)
@@ -51,25 +46,25 @@ fun getBaseDirValue(): String? {
 
 val stubsVersion: String = PyFileElementType.INSTANCE.stubVersion.toString()
 
-fun main(args: Array<String>) {
+fun main() {
   val baseDir = getBaseDirValue()!!
-
-  if (System.getenv().containsKey(MERGE_STUBS_FROM_PATHS)) {
-
-    mergeStubs(System.getenv(MERGE_STUBS_FROM_PATHS).split(File.pathSeparatorChar), baseDir, stubsFileName,
-               "${PathManager.getHomePath()}/python/testData/empty", stubsVersion)
-  }
-  else if (System.getenv().containsKey(PACK_STDLIB_FROM_PATH)) {
-    packStdlibFromPath(baseDir, System.getenv(PACK_STDLIB_FROM_PATH))
-  }
-  else {
-    PyProjectSdkStubsGenerator().buildStubs(baseDir)
+  when {
+    System.getenv().containsKey(MERGE_STUBS_FROM_PATHS) -> {
+      mergeStubs(System.getenv(MERGE_STUBS_FROM_PATHS).split(File.pathSeparatorChar), baseDir, stubsFileName,
+                 "${PathManager.getHomePath()}/python/testData/empty", stubsVersion)
+    }
+    System.getenv().containsKey(PACK_STDLIB_FROM_PATH) -> {
+      packStdlibFromPath(baseDir, System.getenv(PACK_STDLIB_FROM_PATH))
+    }
+    else -> {
+      PyProjectSdkStubsGenerator().buildStubs(baseDir)
+    }
   }
 }
 
-fun packStdlibFromPath(baseDir: String, root: String) {
+private fun packStdlibFromPath(baseDir: String, root: String) {
   try {
-    for (python in File(root).listFiles()) {
+    for (python in File(root).listFiles()!!) {
       if (python.name.startsWith(".")) {
         continue
       }
@@ -84,11 +79,11 @@ fun packStdlibFromPath(baseDir: String, root: String) {
     }
   }
   finally {
-    System.exit(0)
+    exitProcess(0)
   }
 }
 
-class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
+private class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
   override val moduleTypeId: String
     get() = PyNames.PYTHON_MODULE_ID
 
@@ -100,7 +95,7 @@ class PyProjectSdkStubsGenerator : ProjectSdkStubsGenerator() {
     get() = System.getenv(PYCHARM_PYTHONS)
 }
 
-class PyStubsGenerator(stubsStorageFilePath: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString(), stubsStorageFilePath) {
+internal class PyStubsGenerator(stubsStorageFilePath: String) : LanguageLevelAwareStubsGenerator<LanguageLevel>(PyFileElementType.INSTANCE.stubVersion.toString(), stubsStorageFilePath) {
   override fun defaultLanguageLevel(): LanguageLevel = LanguageLevel.getDefault()
 
   override fun languageLevelIterator(): MutableIterator<LanguageLevel> = LanguageLevel.SUPPORTED_LEVELS.iterator()

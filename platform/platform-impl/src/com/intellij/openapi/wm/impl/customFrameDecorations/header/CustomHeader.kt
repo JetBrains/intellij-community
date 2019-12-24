@@ -16,7 +16,6 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.JBFont
@@ -34,12 +33,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     companion object {
         private val LOGGER = logger<CustomHeader>()
 
-        val H_GAP
-            get() = JBUIScale.scale(7)
-        val MIN_HEIGHT
-            get() = JBUIScale.scale(24)
-        val GAP_AFTER_MENU
-            get() = JBUIScale.scale(18)
+        val H
+            get() = 7
+        val V
+            get() = 5
+
+
+        val LABEL_BORDER get() = JBUI.Borders.empty(V, 0)
 
         val WINDOWS_VERSION = getWindowsReleaseId()
 
@@ -230,37 +230,27 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     }
 
     private fun createProductIcon(): JComponent {
-        val myMenuBar = object : JMenuBar() {
-            override fun getPreferredSize(): Dimension {
-                return minimumSize
-            }
+        val menu = JPopupMenu()
 
-            override fun getMinimumSize(): Dimension {
-                return Dimension(iconSize, iconSize)
-            }
-
-            override fun paint(g: Graphics?) {
-                icon.paintIcon(this, g, 0, 0)
+        val ic = object :  JLabel(){
+            override fun getIcon(): Icon {
+                return this@CustomHeader.icon
             }
         }
-
-        val menu = object : JMenu() {
-            override fun getPreferredSize(): Dimension {
-                return myMenuBar.preferredSize
+        ic.addMouseListener(object : MouseAdapter(){
+            override fun mousePressed(e: MouseEvent?) {
+                menu.show(ic, 0, ic.height)
             }
-        }
-        myMenuBar.add(menu)
+        })
 
-        myMenuBar.isOpaque = false
         menu.isFocusable = false
         menu.isBorderPainted = true
 
         addMenuItems(menu)
-
-        return myMenuBar
+        return ic
     }
 
-    open fun addMenuItems(menu: JMenu) {
+    open fun addMenuItems(menu: JPopupMenu) {
         val closeMenuItem = menu.add(myCloseAction)
         closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
     }

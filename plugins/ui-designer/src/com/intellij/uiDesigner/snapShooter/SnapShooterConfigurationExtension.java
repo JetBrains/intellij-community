@@ -60,7 +60,11 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       params.getProgramParametersList().prepend(appConfiguration.getMainClassName());
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
       Set<String> paths = new TreeSet<>();
+      String designerBundle = PathManager.getResourceRoot(getClass(), "/messages/UIDesignerBundle.properties");
       paths.add(PathUtil.getJarPathForClass(SnapShooter.class));               // intellij.java.guiForms.designer
+      if (designerBundle != null) {
+        paths.add(designerBundle);                                            // UIDesignerBundle
+      }
       paths.add(PathUtil.getJarPathForClass(BaseComponent.class));             // intellij.platform.core
       paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));          // intellij.java
       paths.add(PathUtil.getJarPathForClass(DesignerEditorPanelFacade.class)); // intellij.platform.ide.impl

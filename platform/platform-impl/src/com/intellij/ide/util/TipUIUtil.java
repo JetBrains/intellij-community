@@ -2,9 +2,9 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -79,14 +79,22 @@ public class TipUIUtil {
   @NotNull
   public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor instanceof IdeaPluginDescriptor &&
-           !PluginManagerCore.CORE_PLUGIN_ID.equals(descriptor.getPluginId().getIdString()) ?
-           ((IdeaPluginDescriptor)descriptor).getName() : "";
+    return descriptor != null &&
+           PluginManagerCore.CORE_ID != descriptor.getPluginId() ?
+           descriptor.getName() : "";
   }
 
   @Nullable
-  public static TipAndTrickBean getTip(String tipFileName) {
-    TipAndTrickBean tip = TipAndTrickBean.findByFileName(tipFileName);
+  public static TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
+    if (feature == null) {
+      return null;
+    }
+
+    String tipFileName = feature.getTipFileName();
+    TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
+    if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
+      tip = TipAndTrickBean.findByFileName(tipFileName);
+    }
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = new TipAndTrickBean();
       tip.fileName = tipFileName;

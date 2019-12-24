@@ -4,14 +4,15 @@ package com.intellij.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Bitness;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
 import com.intellij.util.lang.JavaVersion;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class JdkBundleList {
   private static final Logger LOG = Logger.getInstance(JdkBundleList.class);
@@ -56,31 +57,4 @@ public class JdkBundleList {
   public JdkBundle getBundle(@NotNull String path) {
     return myBundles.get(path);
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #addBundle(JdkBundle)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void addBundle(@NotNull JdkBundle bundle, @SuppressWarnings("unused") boolean forceOldVersion) {
-    addBundle(bundle);
-  }
-
-  /** @deprecated use {@link #getBundles()} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public ArrayList<JdkBundle> toArrayList() {
-    return new ArrayList<>(myBundles.values());
-  }
-
-  /** @deprecated use {@link #addBundlesFromLocation(String, JavaVersion, JavaVersion)} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  public void addBundlesFromLocation(@NotNull String location, @Nullable Version minVer, @Nullable Version maxVer) {
-    addBundlesFromLocation(location, toJavaVersion(minVer), toJavaVersion(maxVer));
-  }
-
-  private static JavaVersion toJavaVersion(Version v) {
-    return v == null ? null : v.major == 1 ? JavaVersion.compose(v.minor) : JavaVersion.compose(v.major, v.minor, v.bugfix, 0, false);
-  }
-  //</editor-fold>
 }

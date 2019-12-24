@@ -4,10 +4,8 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.TextAnnotationGutterProvider;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
@@ -57,9 +55,24 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract Point getCenterPoint(GutterIconRenderer renderer);
 
-  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor);
+  /**
+   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter)} instead.
+   * @see LineNumberConverterAdapter
+   */
+  @Deprecated
+  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
+    setLineNumberConvertor(lineNumberConvertor, null);
+  }
 
-  public abstract void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2);
+  /**
+   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter, LineNumberConverter)} instead.
+   * @see LineNumberConverterAdapter
+   */
+  @Deprecated
+  public void setLineNumberConvertor(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+    setLineNumberConverter(convertor1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(convertor1),
+                           convertor2 == null ? null : new LineNumberConverterAdapter(convertor2));
+  }
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 

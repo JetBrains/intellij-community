@@ -4,13 +4,13 @@
   <vendor>JetBrains</vendor>
   <description>
     <![CDATA[
-      Allows working with <a href="http://github.com/">GitHub</a>.
-      The following features are available:
+      Provides integration with <a href="http://github.com/">GitHub</a>.
         <ul>
-        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
-        <li>Ability to browse, check out sources from and import into the available Git repositories, when GitHub is not enabled.</li>
-        <li>When GitHub is enabled, the GitHub node appears on the VCS menu, and on the context menu of the editor.
+        <li>Specify your GitHub account to access all of your repositories from the IDE.</li>
+        <li>Clone repositories, create and review pull requests, create gists, and much more.</li>
         </ul>
+        <p>To configure, open <b>Settings / Preferences</b> and go to Version Control | GitHub.</p>
+        <p>Requires the Git plugin.</p>
       ]]>
   </description>
 
@@ -110,15 +110,19 @@
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
-      <action id="Github.PullRequest.List.Refresh"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
+      <action id="Github.PullRequest.List.Reload"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadListAction" use-shortcut-of="Refresh"/>
     </group>
-    <action id="Github.PullRequest.Preview.Refresh"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
-            internal="true"/>
-    <action id="Github.PullRequest.Preview.Refresh.Comments"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshCommentsAction"
-            internal="true"/>
+    <group id="Github.PullRequest.Details.Popup">
+      <action id="Github.PullRequest.Details.Reload"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
+    </group>
+    <action id="Github.PullRequest.Comments.Reload"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+    <group id="Github.PullRequest.Timeline.Popup">
+      <action id="Github.PullRequest.Timeline.Update"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
+    </group>
     <group>
       <action id="Github.PullRequest.Zip.Commits.Toggle"
               class="org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesBrowser$ToggleZipCommitsAction"/>

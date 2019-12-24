@@ -21,12 +21,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiCacheKey;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -73,8 +75,21 @@ public final class NameResolverTools {
   }
 
   /**
+   * Same as {@link #isName(PyElement, FQNamesProvider...)} for named elements, but only checks name.
+   * Aliases not supported, but much lighter that way
+   */
+  public static boolean isNameShortCut(@NotNull PyElement element, @NotNull FQNamesProvider... namesProviders) {
+    String name = element.getName();
+    if (name == null) {
+      return false;
+    }
+    return Arrays.stream(namesProviders).anyMatch(o -> getLastComponents(o).contains(name));
+  }
+
+  /**
    * Checks if FQ element name is one of provided names. May be <strong>heavy</strong>.
    * It is always better to use less accurate but lighter {@link #isCalleeShortCut(PyCallExpression, FQNamesProvider)}
+   * and {@link #isNameShortCut(PyElement, FQNamesProvider...)}
    *
    * @param element        element to check
    * @param namesProviders some enum that has one or more names
@@ -83,7 +98,8 @@ public final class NameResolverTools {
   public static boolean isName(@NotNull final PyElement element, @NotNull final FQNamesProvider... namesProviders) {
     assert element.isValid();
     final Pair<String, String> qualifiedAndClassName = RecursionManager.doPreventingRecursion(element, false,
-                                                                                        () -> QUALIFIED_AND_CLASS_NAME.getValue(element));
+                                                                                              () -> QUALIFIED_AND_CLASS_NAME
+                                                                                                .getValue(element));
     LOG.assertTrue(qualifiedAndClassName != null);
     //noinspection ConstantConditions
     if (qualifiedAndClassName == null) return false;
@@ -119,7 +135,7 @@ public final class NameResolverTools {
   }
 
   /**
-   * Same as {@link #isName(PyElement, FQNamesProvider...)} for call expr, but first checks name.
+   * Same as {@link #isName(PyElement, FQNamesProvider...)} for call expr, but only checks name.
    * Aliases not supported, but much lighter that way
    *
    * @param call     expr
@@ -127,7 +143,7 @@ public final class NameResolverTools {
    * @return true if callee is correct
    */
   public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
-                                         @NotNull final FQNamesProvider function) {
+                                         @NotNull final FQNamesProvider... function) {
     final PyExpression callee = call.getCallee();
     if (callee == null) {
       return false;
@@ -135,8 +151,7 @@ public final class NameResolverTools {
 
     final String callableName = callee.getName();
 
-    final Collection<String> possibleNames = getLastComponents(function);
-    return possibleNames.contains(callableName) && call.isCallee(function);
+    return Arrays.stream(function).anyMatch(o -> getLastComponents(o).contains(callableName));
   }
 
   @NotNull
@@ -178,6 +193,7 @@ public final class NameResolverTools {
 
   /**
    * Check if class has parent with some name
+   *
    * @param child class to check
    */
   public static boolean isSubclass(@NotNull final PyClass child,
@@ -205,7 +221,8 @@ public final class NameResolverTools {
     @Override
     public boolean value(final PsiElement element) {
       if (element instanceof PyCallExpression) {
-        return ((PyCallExpression)element).isCallee(myNameToSearch);
+        PyCallExpression callExpression = (PyCallExpression)element;
+        return isCalleeShortCut(callExpression, myNameToSearch);
       }
       return false;
     }
@@ -223,7 +240,7 @@ public final class NameResolverTools {
       // Trying to use no implicit context if possible...
       final PsiReference reference;
       if (param instanceof PyReferenceOwner) {
-        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.noImplicits());
+        reference = ((PyReferenceOwner)param).getReference(PyResolveContext.defaultContext());
       }
       else {
         reference = param.getReference();

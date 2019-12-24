@@ -272,7 +272,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     AtomicBoolean result = new AtomicBoolean();
-    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
+    GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     GitPreservingProcess preservingProcess =
       new GitPreservingProcess(myProject, myGit, getRootsFromRepositories(repositories), "checkout", reference, saveMethod, indicator,
                                () -> result.set(checkoutOrNotify(repositories, reference, newBranch, false)));

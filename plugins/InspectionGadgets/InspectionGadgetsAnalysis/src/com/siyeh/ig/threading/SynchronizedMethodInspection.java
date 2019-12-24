@@ -41,13 +41,6 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "synchronized.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return InspectionGadgetsBundle.message(

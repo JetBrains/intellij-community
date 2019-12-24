@@ -10,6 +10,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
@@ -179,30 +181,36 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullability getTypeNullability(@Nullable PsiType type) {
-    if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
+    NullabilityAnnotationInfo info = getTypeNullabilityInfo(type);
+    return info == null ? Nullability.UNKNOWN : info.getNullability();
+  }
 
-    Ref<Nullability> result = Ref.create(Nullability.UNKNOWN);
+  @Nullable
+  public static NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
+    if (type == null || type instanceof PsiPrimitiveType) return null;
+
+    Ref<NullabilityAnnotationInfo> result = Ref.create(null);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
       result.set(getTypeOwnNullability(eachType));
-      return result.get() == Nullability.UNKNOWN &&
+      return result.get() == null &&
              (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }
 
-  @NotNull
-  private static Nullability getTypeOwnNullability(PsiType eachType) {
+  @Nullable
+  private static NullabilityAnnotationInfo getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
       if (nnn.getNullables().contains(qualifiedName)) {
-        return Nullability.NULLABLE;
+        return new NullabilityAnnotationInfo(annotation, Nullability.NULLABLE, false);
       }
       if (nnn.getNotNulls().contains(qualifiedName)) {
-        return Nullability.NOT_NULL;
+        return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
       }
     }
-    return Nullability.UNKNOWN;
+    return null;
   }
 
   /**
@@ -311,7 +319,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = new HashMap<>();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
+        final DataFlowRunner dfaRunner = new DataFlowRunner(constructor.getProject()) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {
@@ -557,5 +565,19 @@ public class DfaPsiUtil {
     PsiType expressionType = expression.getType();
     if (!(expressionType instanceof PsiClassType)) return classType;
     return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+  }
+
+  /**
+   * @param expr literal to create a constant type from
+   * @return a DfType that describes given literal
+   */
+  @NotNull
+  public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
+    PsiType type = expr.getType();
+    if (type == null) return DfTypes.TOP;
+    if (PsiType.NULL.equals(type)) return DfTypes.NULL;
+    Object value = expr.getValue();
+    if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
+    return DfTypes.constant(value, type);
   }
 }

@@ -397,11 +397,17 @@ public abstract class UsefulTestCase extends TestCase {
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
       }
       catch (Throwable tearingDown) {
-        if (exception == null) exception = tearingDown;
-        else exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        if (exception == null) {
+          exception = tearingDown;
+        }
+        else {
+          exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
+        }
       }
     }
-    if (exception != null) throw exception;
+    if (exception != null) {
+      throw exception;
+    }
   }
 
   /**
@@ -986,12 +992,12 @@ public abstract class UsefulTestCase extends TestCase {
    * If expected error message is null it will not be checked.
    *
    * @param exceptionClass   Expected exception type
-   * @param expectedErrorMsg expected error message, of any
+   * @param expectedErrorMsgPart expected error message, of any
    * @param runnable         Block annotated with some exception type
    */
   @SuppressWarnings({"unchecked", "SameParameterValue"})
   public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                        @Nullable String expectedErrorMsg,
+                                                        @Nullable String expectedErrorMsgPart,
                                                         @NotNull ThrowableRunnable<T> runnable) {
     assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
@@ -1003,7 +1009,7 @@ public abstract class UsefulTestCase extends TestCase {
       public void tryClosure() throws Throwable {
         runnable.run();
       }
-    }, expectedErrorMsg);
+    }, expectedErrorMsgPart);
   }
 
   /**
@@ -1028,7 +1034,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   private static <T extends Throwable> void assertExceptionOccurred(boolean shouldOccur,
                                                                     @NotNull AbstractExceptionCase<T> exceptionCase,
-                                                                    String expectedErrorMsg) throws T {
+                                                                    String expectedErrorMsgPart) throws T {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();
@@ -1043,8 +1049,8 @@ public abstract class UsefulTestCase extends TestCase {
         wasThrown = true;
         final String errorMessage = exceptionCase.getAssertionErrorMessage();
         assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
-        if (expectedErrorMsg != null) {
-          assertEquals("Compare error messages", expectedErrorMsg, cause.getMessage());
+        if (expectedErrorMsgPart != null) {
+          assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
       }
       else if (exceptionCase.getExpectedExceptionClass().equals(cause.getClass())) {

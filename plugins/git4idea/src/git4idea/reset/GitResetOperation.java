@@ -91,7 +91,7 @@ public class GitResetOperation {
                                                                                  "reset", "&Hard Reset");
     if (choice == GitSmartOperationDialog.Choice.SMART) {
       final Ref<GitCommandResult> result = Ref.create();
-      GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
+      GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
       new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
                                saveMethod, myIndicator,
                                () -> result.set(myGit.reset(repository, myMode, target))).execute();

@@ -2,6 +2,7 @@
 package com.intellij.ide.cds
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.util.ExecUtil
@@ -9,8 +10,10 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.progress.PerformInBackgroundOption
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -19,6 +22,7 @@ import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
 import java.io.File
 import java.lang.management.ManagementFactory
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
@@ -121,7 +125,7 @@ object CDSManager {
             get() {
               if (!canStillWork()) return CDSTaskResult.InterruptedForRetry
               if (indicator.isCanceled) return CDSTaskResult.TerminatedByUser
-              if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress) return CDSTaskResult.InterruptedForRetry
+              if (ApplicationManager.getApplication().isDisposed) return CDSTaskResult.InterruptedForRetry
               return null
             }
 
@@ -212,8 +216,7 @@ object CDSManager {
     LOG.info("CDS classes file is generated in ${StringUtil.formatDuration(duration)}")
   }
 
-  private fun generateSharedArchive(indicator: CDSProgressIndicator,
-                                    paths: CDSPaths) {
+  private fun generateSharedArchive(indicator: CDSProgressIndicator, paths: CDSPaths) {
     indicator.text2 = "Generating classes archive..."
 
     val logLevel = if (LOG.isDebugEnabled) "=debug" else ""
@@ -221,14 +224,13 @@ object CDSManager {
       "-Djava.class.path=${ManagementFactory.getRuntimeMXBean().classPath}",
       "-Xlog:cds$logLevel",
       "-Xlog:class+path$logLevel",
-
       "-Xshare:dump",
       "-XX:+UnlockDiagnosticVMOptions",
       "-XX:SharedClassListFile=${paths.classesListFile}",
       "-XX:SharedArchiveFile=${paths.classesArchiveFile}"
     )
 
-    JdkUtil.writeArgumentsToParameterFile(paths.classesPathFile, args)
+    CommandLineWrapperUtil.writeArgumentsFile(paths.classesPathFile, args, StandardCharsets.UTF_8)
 
     val durationLink = measureTimeMillis {
       val ext = if (SystemInfo.isWindows) ".exe" else ""

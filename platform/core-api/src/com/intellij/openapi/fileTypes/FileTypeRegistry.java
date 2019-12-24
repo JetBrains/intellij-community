@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +47,13 @@ public abstract class FileTypeRegistry {
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
   /**
-   * Checks if the given file has the given file type. This is faster than getting the file type
-   * and comparing it, because for file types that are identified by virtual file, it will only
-   * check if the given file type matches, and will not run other detectors. However, this can
-   * lead to inconsistent results if two file types report the same file as matching (which should
-   * generally be avoided).
+   * Checks if the given file has the given file type.
    */
-  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    FileType actualType = file.getFileType();
+    //todo remove scratch check after IDEA-228078 is fixed
+    return actualType == type || "Scratch".equals(actualType.getName()) && type == getFileTypeByFileName(file.getNameSequence());
+  }
 
   @Nullable
   public LanguageFileType findFileTypeByLanguage(@NotNull Language language) {
@@ -137,7 +138,10 @@ public abstract class FileTypeRegistry {
   public interface FileTypeDetector {
     ExtensionPointName<FileTypeDetector> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeDetector");
     /**
-     * Detects file type by its content
+     * Detects file type by its (may be binary) content on disk.
+     * Your detector must be as light as possible.
+     * In particular, it must not perform any heavy processing, e.g. PSI access, indices, Documents etc.
+     * The detector must refrain from throwing exceptions (including pervasive {@link com.intellij.openapi.progress.ProcessCanceledException})
      * @param file to analyze
      * @param firstBytes of the file for identifying its file type
      * @param firstCharsIfText - characters, converted from first bytes parameter if the file content was determined to be text, or null otherwise
@@ -150,6 +154,8 @@ public abstract class FileTypeRegistry {
      * Returns the file type that this detector is capable of detecting, or null if it can detect
      * multiple file types.
      */
+    @Deprecated
+    @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     @Nullable
     default Collection<? extends FileType> getDetectedFileTypes() {
       return null;

@@ -29,13 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class FieldMayBeStaticInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "field.may.be.static.display.name");
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new FieldMayBeStaticVisitor();
   }

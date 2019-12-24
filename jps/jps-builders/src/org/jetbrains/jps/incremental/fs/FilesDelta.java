@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /** */
 public final class FilesDelta {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
+  private static final Logger LOG = Logger.getInstance(FilesDelta.class);
   private final ReentrantLock myDataLock = new ReentrantLock();
 
   private final Set<String> myDeletedPaths = new ObjectLinkedOpenHashSet<>(FileUtil.PATH_HASHING_STRATEGY);

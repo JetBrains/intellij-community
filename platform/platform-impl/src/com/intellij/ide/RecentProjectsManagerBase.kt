@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
-import com.intellij.configurationStore.readProjectNameFile
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
@@ -10,34 +9,28 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.FrameInfo
-import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.SystemDock
-import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.toArray
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
@@ -47,10 +40,13 @@ import com.intellij.util.ui.UIUtil
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
-import java.io.IOException
 import java.nio.ByteBuffer
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.IIOImage
@@ -63,8 +59,6 @@ import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private const val MAX_PROJECTS_IN_MAIN_MENU = 6
-
 /**
  * Used directly by IntelliJ IDEA.
  *
@@ -73,6 +67,8 @@ private const val MAX_PROJECTS_IN_MAIN_MENU = 6
 @State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
+    const val MAX_PROJECTS_IN_MAIN_MENU = 6
+
     @JvmStatic
     val instanceEx: RecentProjectsManagerBase
       get() = getInstance() as RecentProjectsManagerBase
@@ -105,10 +101,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun getState(): RecentProjectManagerState {
     synchronized(stateLock) {
+      // https://youtrack.jetbrains.com/issue/TBX-3756
       @Suppress("DEPRECATION")
       state.recentPaths.clear()
       @Suppress("DEPRECATION")
-      state.recentPaths.addAll(ContainerUtil.reverse(state.additionalInfo.keys.toList()))
+      state.recentPaths.addAll(state.additionalInfo.keys.reversed())
       if (state.pid == null) {
         //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
         state.pid = null
@@ -127,17 +124,26 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     synchronized(stateLock) {
       this.state = state
       state.pid = null
+
       @Suppress("DEPRECATION")
-      val openPaths = state.openPaths
-      if (openPaths.isNotEmpty()) {
-        migrateOpenPaths(openPaths)
+      migrateOpenPaths(state.openPaths)
+
+      // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
+      @Suppress("DEPRECATION")
+      if (state.recentPaths.isNotEmpty() && state.recentPaths.size != state.additionalInfo.size) {
+        val existingPaths = state.recentPaths.toSet()
+        state.additionalInfo.keys.removeIf { !existingPaths.contains(it) }
       }
     }
   }
 
   // reorder according to openPaths order and mark as opened
   private fun migrateOpenPaths(openPaths: MutableList<String>) {
-    val oldInfoMap: MutableMap<String, RecentProjectMetaInfo> = THashMap()
+    if (openPaths.isEmpty()) {
+      return
+    }
+
+    val oldInfoMap = mutableMapOf<String, RecentProjectMetaInfo>()
     for (path in openPaths) {
       val info = state.additionalInfo.remove(path)
       if (info != null) {
@@ -145,7 +151,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       }
     }
 
-    for (path in ContainerUtil.reverse(openPaths)) {
+    for (path in openPaths.asReversed()) {
       val info = oldInfoMap.get(path) ?: RecentProjectMetaInfo()
       info.opened = true
       state.additionalInfo.put(path, info)
@@ -154,13 +160,11 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     modCounter.incrementAndGet()
   }
 
-  override fun removePath(path: String?) {
-    if (path == null) {
-      return
-    }
-
+  override fun removePath(path: String) {
     synchronized(stateLock) {
-      state.additionalInfo.remove(path)
+      if (state.additionalInfo.remove(path) != null) {
+        modCounter.incrementAndGet()
+      }
       for (group in state.groups) {
         if (group.removeProject(path)) {
           modCounter.incrementAndGet()
@@ -221,107 +225,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     return projectIconHelper.getProjectOrAppIcon(path)
   }
 
-  private fun getDuplicateProjectNames(openedPaths: Set<String>, recentPaths: Set<String>): Set<String> {
-    val names: MutableSet<String> = THashSet()
-    val duplicates: MutableSet<String> = THashSet()
-    for (path in ContainerUtil.union(openedPaths, recentPaths)) {
-      val name = getProjectName(path)
-      if (!names.add(name)) {
-        duplicates.add(name)
-      }
-    }
-    return duplicates
+  override fun getRecentProjectsActions(addClearListItem: Boolean): Array<AnAction> {
+    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem).toTypedArray()
   }
 
-  override fun getRecentProjectsActions(forMainMenu: Boolean): Array<AnAction?> {
-    return getRecentProjectsActions(forMainMenu, false)
-  }
-
-  override fun getRecentProjectsActions(forMainMenu: Boolean, useGroups: Boolean): Array<AnAction?> {
-    var paths: MutableSet<String>
-    synchronized(stateLock) {
-      state.validateRecentProjects(modCounter)
-      paths = LinkedHashSet(ContainerUtil.reverse(state.additionalInfo.keys.toList()))
-    }
-
-    val openedPaths = THashSet<String>()
-    for (openProject in ProjectManager.getInstance().openProjects) {
-      ContainerUtil.addIfNotNull(openedPaths, getProjectPath(openProject))
-    }
-
-    val actions: MutableList<AnAction?> = SmartList()
-    val duplicates = getDuplicateProjectNames(openedPaths, paths)
-    if (useGroups) {
-      val groups = synchronized(stateLock) {
-        state.groups.toMutableList()
-      }
-
-      val projectPaths: List<String?> = ArrayList(paths)
-      groups.sortWith(object : Comparator<ProjectGroup> {
-        override fun compare(o1: ProjectGroup, o2: ProjectGroup): Int {
-          val ind1 = getGroupIndex(o1)
-          val ind2 = getGroupIndex(o2)
-          return if (ind1 == ind2) StringUtil.naturalCompare(o1.name, o2.name) else ind1 - ind2
-        }
-
-        private fun getGroupIndex(group: ProjectGroup): Int {
-          var index = Integer.MAX_VALUE
-          for (path in group.projects) {
-            val i = projectPaths.indexOf(path)
-            if (i in 0 until index) {
-              index = i
-            }
-          }
-          return index
-        }
-      })
-
-      for (group in groups) {
-        paths.removeAll(group.projects)
-      }
-
-      for (group in groups) {
-        val children: MutableList<AnAction?> = ArrayList()
-        for (path in group.projects) {
-          children.add(createOpenAction(path!!, duplicates))
-          if (forMainMenu && children.size >= MAX_PROJECTS_IN_MAIN_MENU) {
-            break
-          }
-        }
-        actions.add(ProjectGroupActionGroup(group, children))
-        if (group.isExpanded) {
-          actions.addAll(children)
-        }
-      }
-    }
-
-    for (path in paths) {
-      actions.add(createOpenAction(path, duplicates))
-    }
-
-    return when {
-      actions.isEmpty() -> AnAction.EMPTY_ARRAY
-      else -> actions.toArray(AnAction.EMPTY_ARRAY)
-    }
-  }
-
-  // for Rider
-  @Suppress("MemberVisibilityCanBePrivate")
-  protected open fun createOpenAction(path: String, duplicates: Set<String>): AnAction {
-    var displayName = synchronized(stateLock) {
-      state.additionalInfo.get(path)?.displayName
-    }
-
-    val projectName = getProjectName(path)
-
-    if (displayName.isNullOrBlank()) {
-      displayName = if (duplicates.contains(projectName)) FileUtil.toSystemDependentName(path) else projectName
-    }
-
-    // It's better don't to remove non-existent projects. Sometimes projects stored
-    // on USB-sticks or flash-cards, and it will be nice to have them in the list
-    // when USB device or SD-card is mounted
-    return ReopenProjectAction(path, projectName, displayName)
+  override fun getRecentProjectsActions(addClearListItem: Boolean, useGroups: Boolean): Array<AnAction?> {
+    return RecentProjectListActionProvider.getInstance().getActions(addClearListItem = addClearListItem, useGroups = useGroups).toTypedArray()
   }
 
   private fun markPathRecent(path: String, project: Project) {
@@ -340,7 +249,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
       val appInfo = ApplicationInfoEx.getInstanceEx()
       info.displayName = getProjectDisplayName(project)
       info.projectWorkspaceId = project.stateStore.projectWorkspaceId
-      info.frame = getInstance(project).state
+      info.frame = ProjectFrameBounds.getInstance(project).state
       info.build = appInfo!!.build.asString()
       info.productionCode = appInfo.build.productCode
       info.eap = appInfo.isEAP
@@ -355,7 +264,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   // for Rider
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
-  protected open fun getProjectPath(project: Project): String? {
+  open fun getProjectPath(project: Project): String? {
     return PathUtil.toSystemIndependentName(project.presentableUrl)
   }
 
@@ -419,6 +328,19 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  fun getRecentPaths(): List<String> {
+    synchronized(stateLock) {
+      state.validateRecentProjects(modCounter)
+      return state.additionalInfo.keys.toList().asReversed()
+    }
+  }
+
+  fun getDisplayName(path: String): String? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.displayName
+    }
+  }
+
   fun getProjectName(path: String): String {
     val cached = nameCache.get(path)
     if (cached != null) {
@@ -466,10 +388,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
     get() = synchronized(stateLock) {
-      return ContainerUtil.reverse(ContainerUtil.findAll(state.additionalInfo.entries) { it.value.opened })
+      return state.additionalInfo.entries.filter { it.value.opened }.asReversed()
     }
 
-  override fun getGroups(): List<ProjectGroup?> {
+  override fun getGroups(): List<ProjectGroup> {
     synchronized(stateLock) {
       return Collections.unmodifiableList(state.groups)
     }
@@ -485,7 +407,17 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   override fun removeGroup(group: ProjectGroup) {
     synchronized(stateLock) {
+      for (path in group.projects) {
+        state.additionalInfo.remove(path)
+        for (anotherGroup in state.groups) {
+          if (anotherGroup !== group) {
+            group.removeProject(path)
+          }
+        }
+      }
+
       state.groups.remove(group)
+      modCounter.incrementAndGet()
     }
   }
 
@@ -500,7 +432,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     val workspaceId = project.stateStore.projectWorkspaceId
 
     // ensure that last closed project frame bounds will be used as newly created project frame bounds (if will be no another focused opened project)
-    val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
+    val frameInfo = ProjectFrameBounds.getInstance(project).getActualFrameInfoInDeviceSpace(frame, windowManager)
     val path = getProjectPath(project)
     synchronized(stateLock) {
       val info = state.additionalInfo.get(path)
@@ -611,15 +543,14 @@ int32 "extendedState"
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       val manager = instanceEx
-      val openProjects = serviceIfCreated<ProjectManager>()?.openProjects ?: return
+      val openProjects = ProjectUtil.getOpenProjects()
       // do not delete info file if ProjectManager not created - it means that it was simply not loaded, so, unlikely something is changed
       if (openProjects.isEmpty() || !isUseProjectFrameAsSplash()) {
         Files.deleteIfExists(getLastProjectFrameInfoFile())
       }
-      else {
-        for ((index, project) in openProjects.withIndex()) {
-          manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
-        }
+
+      for ((index, project) in openProjects.withIndex()) {
+        manager.updateProjectInfo(project, windowManager, writLastProjectInfo = index == 0)
       }
     }
 
@@ -643,17 +574,9 @@ private fun readProjectName(path: String): String {
     return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
   }
 
-  val nameFile = file.resolve(Project.DIRECTORY_STORE_FOLDER).resolve(ProjectImpl.NAME_FILE)
-  try {
-    val result = readProjectNameFile(nameFile)
-    if (result != null) {
-      return result
-    }
-  }
-  catch (ignore: NoSuchFileException) { }
-  catch (ignored: IOException) { }
-
-  return file.fileName?.toString() ?: "<unknown>"
+  val projectDir = file.resolve(Project.DIRECTORY_STORE_FOLDER)
+  return JpsPathUtil.readProjectName(projectDir) ?:
+         JpsPathUtil.getDefaultProjectName(projectDir)
 }
 
 private fun getLastProjectFrameInfoFile() = appSystemDir.resolve("lastProjectFrameInfo")

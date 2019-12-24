@@ -25,7 +25,7 @@ import java.io.InputStream;
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolWrapper");
+  private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);
 
   protected T myTool;
   protected final E myEP;

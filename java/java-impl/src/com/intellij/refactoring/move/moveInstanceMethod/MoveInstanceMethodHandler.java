@@ -47,7 +47,7 @@ import java.util.*;
  * @author ven
  */
 public class MoveInstanceMethodHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler");
+  private static final Logger LOG = Logger.getInstance(MoveInstanceMethodHandler.class);
   static final String REFACTORING_NAME = RefactoringBundle.message("move.instance.method.title");
 
   @Override

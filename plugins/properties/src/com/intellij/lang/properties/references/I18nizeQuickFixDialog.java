@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuickFixModel {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog");
+  protected static final Logger LOG = Logger.getInstance(I18nizeQuickFixDialog.class);
 
   private static final Pattern PATTERN = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 

@@ -6,7 +6,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,13 +30,14 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+  private static final Logger LOG = Logger.getInstance(OSProcessHandler.class);
   private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
   static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");
 
   private final boolean myHasErrorStream;
+  private final ModalityState myModality;
   private boolean myHasPty;
   private boolean myDestroyRecursively = true;
   private final Set<File> myFilesToDelete;
@@ -46,6 +50,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(getProcess()));
     myHasErrorStream = !commandLine.isRedirectErrorStream();
     myFilesToDelete = commandLine.getUserData(DELETE_FILES_ON_TERMINATION);
+    myModality = getDefaultModality();
+  }
+
+  @NotNull
+  private static ModalityState getDefaultModality() {
+    Application app = ApplicationManager.getApplication();
+    return app == null ? ModalityState.NON_MODAL : app.getDefaultModalityState();
   }
 
   /** @deprecated use {@link #OSProcessHandler(Process, String)} (or any other constructor) */
@@ -71,6 +82,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(isPtyProcess(process));
     myFilesToDelete = null;
     myHasErrorStream = true;
+    myModality = getDefaultModality();
   }
 
   @NotNull
@@ -178,7 +190,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   @Override
   protected void onOSProcessTerminated(int exitCode) {
-    super.onOSProcessTerminated(exitCode);
+    if (myModality != ModalityState.NON_MODAL) {
+      ProgressManager.getInstance().runProcess(() -> super.onOSProcessTerminated(exitCode), new EmptyProgressIndicator(myModality));
+    } else {
+      super.onOSProcessTerminated(exitCode);
+    }
     deleteTempFiles(myFilesToDelete);
   }
 
@@ -244,13 +260,13 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   /**
-   * In case of pty this process handler will use blocking read because {@link InputStream#available()} doesn't work for pty4j, and there
-   * is no reason to "disconnect" leaving pty alive.
-   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for more info.
-   * The value should be set before
-   * startNotify invocation. It is set by default in case of using GeneralCommandLine based constructor.
+   * <p>In case of PTY this process handler will use blocking read because {@link InputStream#available()} doesn't work for Pty4j, and there
+   * is no reason to "disconnect" leaving PTY alive. See {@link BaseDataReader.SleepingPolicy} for more info.</p>
    *
-   * @param hasPty true if process is pty based
+   * <p>The value should be set before {@link #startNotify()} invocation.
+   * It is set by default in case of using GeneralCommandLine based constructor.</p>
+   *
+   * @param hasPty {@code true} if process is PTY-based.
    */
   public void setHasPty(boolean hasPty) {
     myHasPty = hasPty;
@@ -258,7 +274,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
 
   /**
    * Rule of thumb: use {@link BaseOutputReader.Options#BLOCKING} for short-living process that you never want to "disconnect" from.
-   * See {@link com.intellij.util.io.BaseDataReader.SleepingPolicy} for the whole story.
+   * See {@link BaseDataReader.SleepingPolicy} for the whole story.
    */
   @NotNull
   @Override

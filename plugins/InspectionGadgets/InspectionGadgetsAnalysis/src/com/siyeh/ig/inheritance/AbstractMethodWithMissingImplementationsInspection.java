@@ -38,13 +38,6 @@ public class AbstractMethodWithMissingImplementationsInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "abstract.method.with.missing.implementations.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.method.with.missing.implementations.problem.descriptor");

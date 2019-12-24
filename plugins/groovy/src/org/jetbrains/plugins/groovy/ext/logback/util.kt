@@ -32,7 +32,7 @@ internal val PsiFile.appenderDeclarations: Map<String, GrLiteral> get() = Cached
 private fun PsiFile.computeAppenderDeclarations(): Map<String, GrLiteral> {
   val result = mutableMapOf<String, GrLiteral>()
   val visitor = object : PsiRecursiveElementWalkingVisitor() {
-    override fun visitElement(currentElement: PsiElement?) {
+    override fun visitElement(currentElement: PsiElement) {
       super.visitElement(currentElement)
       if (appenderDeclarationPattern.accepts(currentElement)) {
         val literal = currentElement as GrLiteral

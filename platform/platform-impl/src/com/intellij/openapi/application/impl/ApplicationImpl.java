@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -45,7 +45,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
@@ -58,7 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
+  private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
 
   final ReadMostlyRWLock myLock;
 
@@ -163,6 +162,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isInImpatientReader();
   }
 
+  @TestOnly
+  public void disposeContainer() {
+    startDispose();
+    runWriteAction(() -> Disposer.dispose(this));
+    Disposer.assertIsEmpty();
+  }
+
   private boolean disposeSelf(boolean checkCanCloseProject) {
     ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
     if (manager != null) {
@@ -176,10 +182,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
-    myContainerState = ContainerState.DISPOSE_IN_PROGRESS;
-    runWriteAction(() -> Disposer.dispose(this));
-
-    Disposer.assertIsEmpty();
+    //noinspection TestOnlyProblems
+    disposeContainer();
     return true;
   }
 
@@ -216,61 +220,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
-    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
-    return ourThreadExecutorsService.submit(new Runnable() {
-      @Override
-      public String toString() {
-        return action.toString();
-      }
-
-      @Override
-      public void run() {
-        if (isDisposedOrDisposeInProgress()) {
-          return;
-        }
-
-        // see the comment in "executeOnPooledThread(Callable)"
-        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
-          if (isDisposedOrDisposeInProgress()) {
-            return;
-          }
-
-          action.run();
-        }
-        catch (ProcessCanceledException e) {
-          // ignore
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
-      }
-    });
+    return executeOnPooledThread(new RunnableCallable(action));
   }
 
   @NotNull
   @Override
-  public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
-    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
+  public <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        if (isDisposedOrDisposeInProgress()) {
+        if (isDisposed()) {
           return null;
         }
 
-        // This is very special magic only needed by threads that need read actions and can be executed
-        // during "executeSuspendingWriteAction" (e.g. dumb mode, indexing). Threads created via "executeOnPooledThread"
-        // in these circumstances may run read actions immediately, instead of waiting until the write action is resumed and finished.
-
-        // For everyone else, "executeOnPooledThread" should be equivalent to "AppExecutorUtil" AKA "PooledThreadExecutor" pool
-        try (AccessToken ignored = myLock.applyReadPrivilege(suspensionId)) {
-          if (isDisposedOrDisposeInProgress()) {
-            return null;
-          }
-
+        try {
           return action.call();
         }
         catch (ProcessCanceledException e) {
@@ -325,11 +288,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public final void load(@Nullable String configPath) {
-    List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
-    registerComponents(plugins);
+    @SuppressWarnings("unchecked")
+    List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
+    registerComponents(plugins, false);
     ApplicationLoader.initConfigurationStore(this, configPath);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-    preloadServices(plugins, executor).getSyncPreloadedServices().join();
+    preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
     loadComponents(null);
     ApplicationLoader.callAppInitialized(this, executor).join();
   }
@@ -354,17 +318,18 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void dispose() {
-    fireApplicationExiting();
+    //noinspection deprecation
+    myDispatcher.getMulticaster().applicationExiting();
 
     ShutDownTracker.getInstance().ensureStopperThreadsFinished();
 
-    disposeComponents();
+    super.dispose();
 
+    // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.shutdownAppScheduledExecutorService();
 
-    super.dispose();
-    Disposer.dispose(myLastDisposable); // dispose it last
+    Disposer.dispose(myLastDisposable);
 
     if (gatherStatistics) {
       //noinspection TestOnlyProblems
@@ -372,8 +337,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.info(ActionUtil.ActionPauses.STAT.statistics());
       //noinspection TestOnlyProblems
       LOG.info(service.statistics()
-               + "; ProcessIOExecutorService threads: "+((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter()
-      );
+               + "; ProcessIOExecutorService threads: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
     }
   }
 
@@ -411,11 +375,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
-        || isHeadlessEnvironment() && !isUnitTestMode()
       ) {
-      if (writeAccessAllowed) {
-        LOG.debug("Starting process with progress from within write action makes no sense");
-      }
+      LOG.debug("Starting process with progress from within write action makes no sense");
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
@@ -541,7 +502,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   @NotNull
   public ModalityState getModalityStateForComponent(@NotNull Component c) {
-    Window window = UIUtil.getWindow(c);
+    Window window = ComponentUtil.getWindow(c);
     if (window == null) return getNoneModalityState(); //?
     return LaterInvocator.modalityStateForWindow(window);
   }
@@ -575,28 +536,24 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void exit() {
-    exit(false, false);
-  }
-
-  @Override
-  public void exit(boolean force, final boolean exitConfirmed) {
-    exit(false, exitConfirmed, false);
-  }
-
-  @Override
-  public void restart() {
-    restart(false);
-  }
-
-  @Override
-  public void restart(boolean exitConfirmed) {
-    exit(false, exitConfirmed, true);
+  public final void restart(boolean exitConfirmed) {
+    int flags = SAVE;
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
   public final void restart(boolean exitConfirmed, boolean elevate) {
-    exit(false, exitConfirmed, true, elevate, ArrayUtilRt.EMPTY_STRING_ARRAY);
+    int flags = SAVE;
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    if (elevate) {
+      flags |= ELEVATE;
+    }
+    exit(flags, true, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   /**
@@ -609,34 +566,47 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
   @Override
-  public void exit(boolean force, boolean exitConfirmed, boolean restart) {
-    exit(force, exitConfirmed, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  public final void exit(boolean force, boolean exitConfirmed, boolean restart) {
+    int flags = SAVE;
+    if (force) {
+      flags |= FORCE_EXIT;
+    }
+    if (exitConfirmed) {
+      flags |= EXIT_CONFIRMED;
+    }
+    exit(flags, restart, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
-    exit(force, exitConfirmed, restart, false, beforeRestart);
+  public void restart(int flags, @NotNull String[] beforeRestart) {
+    exit(flags, true, beforeRestart);
   }
 
-  private void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
-    if (!force) {
-      if (myExitInProgress) return;
-      if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
+  @Override
+  public final void exit(int flags) {
+    exit(flags, false, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  private void exit(int flags, boolean restart, @NotNull String[] beforeRestart) {
+    if (!BitUtil.isSet(flags, FORCE_EXIT) &&
+        (myExitInProgress || (!BitUtil.isSet(flags, EXIT_CONFIRMED) && getDefaultModalityState() != ModalityState.NON_MODAL))) {
+      return;
     }
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
+      doExit(flags, restart, beforeRestart);
     }
     else {
       invokeLater(() -> {
-        doExit(force, exitConfirmed, restart, elevate, beforeRestart);
+        doExit(flags, restart, beforeRestart);
       }, ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
+  private void doExit(int flags, boolean restart, String[] beforeRestart) {
+    boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try {
-      if (!force && !confirmExitIfNeeded(exitConfirmed)) {
+      if (!force && !confirmExitIfNeeded(BitUtil.isSet(flags, EXIT_CONFIRMED))) {
         return;
       }
 
@@ -650,10 +620,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
-      SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+      if (BitUtil.isSet(flags, SAVE)) {
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(this, /* isSaveAppAlso = */ false);
+      }
 
       boolean success = disposeSelf(!force);
+      //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
+        //noinspection SpellCheckingInspection
         if (Boolean.getBoolean("idea.test.guimode")) {
           shutdown();
         }
@@ -663,7 +637,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(elevate, beforeRestart);
+          Restarter.scheduleRestart(BitUtil.isSet(flags, ELEVATE), beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
@@ -1005,16 +979,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isHeadlessEnvironment()) return true;
-
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-
-    if (ApplicationActivationStateManager.getState().isInactive()
-      && activeWindow != null) {
-      ApplicationActivationStateManager.updateState(activeWindow);
+    if (isHeadlessEnvironment()) {
+      return true;
     }
 
-    return ApplicationActivationStateManager.getState().isActive();
+    if (isDisposed()) {
+      return false;
+    }
+
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (activeWindow != null) {
+      ApplicationActivationStateManager.updateState(this, activeWindow);
+    }
+
+    return ApplicationActivationStateManager.isActive();
   }
 
   @NotNull
@@ -1141,6 +1119,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
     }
 
+    @Nullable
     private String id() {
       Class<?> aClass = getClass();
       String name = aClass.getName();
@@ -1185,6 +1164,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isWriteLocked();
   }
 
+  /**
+   * If called inside a write action, executes the given code under a modal progress with write lock released (e.g. to allow for read-action parallelization).
+   * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write actions itself,
+   * callers should be ready for those.
+   */
+  @ApiStatus.Internal
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     assertIsDispatchThread();
     if (!myLock.isWriteLocked()) {
@@ -1192,19 +1178,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    myTransactionGuard.submitTransactionAndWait(() -> {
-      int prevBase = myWriteStackBase;
-      myWriteStackBase = myWriteActionsStack.size();
-      try (AccessToken ignored = myLock.writeSuspend()) {
-        runModalProgress(project, title, () -> {
-          try (AccessToken ignored1 = myLock.grantReadPrivilege()) {
-            runnable.run();
-          }
-        });
-      } finally {
-        myWriteStackBase = prevBase;
-      }
-    });
+    int prevBase = myWriteStackBase;
+    myWriteStackBase = myWriteActionsStack.size();
+    try (AccessToken ignored = myLock.writeSuspend()) {
+      runModalProgress(project, title, runnable);
+    } finally {
+      myWriteStackBase = prevBase;
+    }
   }
 
   private static void runModalProgress(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
@@ -1231,9 +1211,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.removeListener(l);
   }
 
-  private void fireApplicationExiting() {
-    myDispatcher.getMulticaster().applicationExiting();
-  }
   private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
@@ -1273,31 +1250,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public boolean isDisposeInProgress() {
-    return myContainerState == ContainerState.DISPOSE_IN_PROGRESS || ShutDownTracker.isShutdownHookRunning();
-  }
-
-  @Override
   public boolean isRestartCapable() {
     return Restarter.isSupported();
   }
 
   @Override
-  @TestOnly
-  public void setDisposeInProgress(boolean disposeInProgress) {
-    myContainerState = disposeInProgress ? ContainerState.DISPOSE_IN_PROGRESS : ContainerState.ACTIVE;
-  }
-
-  @Override
   public String toString() {
-    return "Application (containerState=" + myContainerState.name() + ") " +
+    return "Application (containerState=" + containerState.get().name() + ") " +
            (isUnitTestMode() ? " (Unit test)" : "") +
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +
            (isCommandLine() ? " (Command line)" : "");
   }
 
-  @Nullable
+  @NotNull
   @ApiStatus.Internal
   @Override
   public String activityNamePrefix() {

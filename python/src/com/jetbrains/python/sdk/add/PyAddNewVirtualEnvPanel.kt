@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -11,13 +10,11 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
@@ -103,7 +100,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     if (!shared) {
       sdk.associateWithModule(module, newProjectPath)
     }
-    excludeDirectoryFromProject(root, project)
+    moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
     with(PySdkSettings.instance) {
       setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
       preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
@@ -120,23 +117,14 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     baseSdkField.childComponent.addItemListener { listener.run() }
   }
 
-  private fun excludeDirectoryFromProject(path: String, project: Project?) {
+  private fun moduleToExcludeSdkFrom(path: String, project: Project?): Module? {
     val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
-    val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return
-    val module = possibleProjects
-                   .asSequence()
-                   .map { ModuleUtil.findModuleForFile(rootFile, it) }
-                   .filterNotNull()
-                   .firstOrNull() ?: return
-    val model = ModuleRootManager.getInstance(module).modifiableModel
-    val contentEntry = model.contentEntries.firstOrNull {
-      val contentFile = it.file
-      contentFile != null && VfsUtil.isAncestor(contentFile, rootFile, true)
-    } ?: return
-    contentEntry.addExcludeFolder(rootFile)
-    WriteAction.run<Throwable> {
-      model.commit()
-    }
+    val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return null
+    return possibleProjects
+      .asSequence()
+      .map { ModuleUtil.findModuleForFile(rootFile, it) }
+      .filterNotNull()
+      .firstOrNull()
   }
 
   private val projectBasePath: @SystemIndependent String?

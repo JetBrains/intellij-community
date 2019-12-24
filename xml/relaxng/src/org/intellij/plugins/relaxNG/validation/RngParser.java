@@ -70,7 +70,7 @@ import java.io.StringReader;
 import java.util.concurrent.ConcurrentMap;
 
 public class RngParser {
-  private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
+  private static final Logger LOG = Logger.getInstance(RngParser.class);
 
   private static final NotNullLazyValue<DatatypeLibraryFactory> DT_LIBRARY_FACTORY = new AtomicNotNullLazyValue<DatatypeLibraryFactory>() {
     @NotNull

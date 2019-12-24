@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -148,15 +149,15 @@ public class ColorProgressBar extends JComponent {
         g2.setPaint(myColor);
 
         int startXOffset = x_offset + (BRICK_WIDTH + BRICK_SPACE) * i;
-        UIUtil.drawLine(g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
+        LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
 
         for (int j = 0; j < y_steps; j++) {
           Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          UIUtil.drawLine(g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
+          LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
 
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            UIUtil.drawLine(g2, startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
+            LinePainter2D.paint((Graphics2D)g2, startXOffset, y_center + 1 + j, startXOffset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(
@@ -167,13 +168,13 @@ public class ColorProgressBar extends JComponent {
     } else {
       for (int i = 0; i < bricksToDraw; i++) {
         g2.setPaint(myColor);
-        UIUtil.drawLine(g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
+        LinePainter2D.paint((Graphics2D)g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
         for (int j = 0; j < y_steps; j++) {
           Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
-          UIUtil.drawLine(g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
+          LinePainter2D.paint((Graphics2D)g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
-            UIUtil.drawLine(g2, x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
+            LinePainter2D.paint((Graphics2D)g2, x_offset, y_center + 1 + j, x_offset + BRICK_WIDTH - 1, y_center + 1 + j);
           }
         }
         g2.setColor(

@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class TempWithQueryHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.tempWithQuery.TempWithQueryHandler");
+  private static final Logger LOG = Logger.getInstance(TempWithQueryHandler.class);
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("replace.temp.with.query.title");
 

@@ -23,13 +23,6 @@ import java.util.Collection;
 public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspectionBase {
   public boolean myCaseInsensitiveEnum = false;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return YAMLBundle.message("inspections.schema.validation.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
@@ -47,7 +40,7 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
     JsonComplianceCheckerOptions options = new JsonComplianceCheckerOptions(myCaseInsensitiveEnum);
     return new YamlPsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!roots.contains(element)) return;
         final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, object);
         if (walker == null) return;

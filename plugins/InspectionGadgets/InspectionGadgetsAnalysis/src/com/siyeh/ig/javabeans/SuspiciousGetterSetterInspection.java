@@ -25,7 +25,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,13 +37,6 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
   public boolean onlyWarnWhenFieldPresent = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.getter.setter.display.name");
-  }
 
   @NotNull
   @Override

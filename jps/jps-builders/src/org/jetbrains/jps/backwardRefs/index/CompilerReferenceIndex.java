@@ -78,7 +78,7 @@ public class CompilerReferenceIndex<Input> {
       if (versionDiffers(buildDir, version)) {
         saveVersion(buildDir, version);
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
+      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
         @Override
         public int enumerate(String path) throws IOException {
           String caseAwarePath = convertToCaseAwarePath(path);
@@ -273,7 +273,7 @@ public class CompilerReferenceIndex<Input> {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs")),
+            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs").toPath(), false),
             readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
     }
 
@@ -293,7 +293,7 @@ public class CompilerReferenceIndex<Input> {
                                                                           @NotNull IndexId<Key, Value> indexId,
                                                                           @NotNull File indexDir,
                                                                           boolean readOnly) throws IOException {
-    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()),
+    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()).toPath(),
                                            keyDescriptor,
                                            valueExternalizer,
                                            16 * 1024,

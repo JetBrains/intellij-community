@@ -3,11 +3,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.TimerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -155,7 +155,7 @@ public class JBPopupMenu extends JPopupMenu {
         myShift = newShift;
         myTarget.revalidate();
         myTarget.repaint();
-        Window w = UIUtil.getWindow(myTarget.getComponent());
+        Window w = ComponentUtil.getWindow(myTarget.getComponent());
         if (w != null) {
           for (Window window : w.getOwnedWindows()) {
             window.dispose();

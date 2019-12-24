@@ -17,6 +17,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.List;
  * Provides services for drawing custom text annotations in the editor gutter.
  * Such annotations are used, for example, by the "Annotate" feature of version
  * control integrations.
+ * <br>
+ * It's also possible to control the display of line numbers in gutter.
  *
  * @author lesya
  * @see Editor#getGutter()
@@ -59,4 +62,21 @@ public interface EditorGutter {
   void closeAllAnnotations();
 
   void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations);
+
+  /**
+   * Changes the display of line numbers in gutter. Disables showing additional line numbers.
+   *
+   * @see #setLineNumberConverter(LineNumberConverter, LineNumberConverter)
+   */
+  default void setLineNumberConverter(@NotNull LineNumberConverter converter) {
+    setLineNumberConverter(converter, null);
+  }
+
+  /**
+   * Changes the display of line numbers in gutter
+   *
+   * @param primaryConverter converter for primary line number shown in gutter
+   * @param additionalConverter if not {@code null}, defines an additional column of numbers to be displayed in gutter
+   */
+  void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter);
 }

@@ -25,7 +25,7 @@ import java.util.Set;
  * @author peter
  */
 public class GroovyNoVariantsDelegator extends CompletionContributor {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.GroovyNoVariantsDelegator");
+  private static final Logger LOG = Logger.getInstance(GroovyNoVariantsDelegator.class);
 
   private static boolean suggestAnnotations(CompletionParameters parameters) {
     return PsiJavaPatterns.psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class).accepts(parameters.getPosition());

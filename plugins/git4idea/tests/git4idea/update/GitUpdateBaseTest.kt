@@ -20,18 +20,18 @@ import git4idea.test.GitPlatformTest
 
 abstract class GitUpdateBaseTest : GitPlatformTest() {
 
-  private lateinit var originalPreservingPolicy : GitVcsSettings.UpdateChangesPolicy
+  private lateinit var originalPreservingPolicy : GitVcsSettings.SaveChangesPolicy
 
   override fun setUp() {
     super.setUp()
 
-    originalPreservingPolicy = settings.updateChangesPolicy()
-    settings.setUpdateChangesPolicy(GitVcsSettings.UpdateChangesPolicy.STASH)
+    originalPreservingPolicy = settings.saveChangesPolicy
+    settings.saveChangesPolicy = GitVcsSettings.SaveChangesPolicy.STASH
   }
 
   override fun tearDown() {
     try {
-      settings.setUpdateChangesPolicy(originalPreservingPolicy)
+      settings.saveChangesPolicy = originalPreservingPolicy
     }
     finally {
       super.tearDown()

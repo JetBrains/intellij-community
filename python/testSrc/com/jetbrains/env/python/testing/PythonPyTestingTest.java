@@ -120,7 +120,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         final CharBuffer data = Charset.defaultCharset().decode(ByteBuffer.wrap(file.contentsToByteArray()));
         final Element element = builder.build(new StringReader(data.toString())).getRootElement();
 
-        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), PyTestFactory.INSTANCE);
+        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), new PyTestFactory());
         configuration.readExternal(element);
         return configuration;
       }
@@ -484,7 +484,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyAbstractTestFactory<PyTestConfiguration> createFactory() {
-        return PyTestFactory.INSTANCE;
+        return new PyTestFactory();
       }
 
       @Override
@@ -600,7 +600,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         @NotNull
         @Override
         protected PyTestFactory createFactory() {
-          return PyTestFactory.INSTANCE;
+          return new PyTestFactory();
         }
       });
   }

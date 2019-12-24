@@ -529,8 +529,9 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
       return false;
     }
 
+    @NotNull
     @Override
-    protected JFrame createJFrame(IdeFrame parent) {
+    protected JFrame createJFrame(@NotNull IdeFrame parent) {
       JFrame frame = super.createJFrame(parent);
       installListeners(frame);
 

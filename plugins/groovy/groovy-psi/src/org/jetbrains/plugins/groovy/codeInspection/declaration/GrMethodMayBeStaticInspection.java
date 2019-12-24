@@ -89,11 +89,8 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
       return false;
     }
 
-    final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
-    for (Condition<PsiElement> addin : addins) {
-      if (addin.value(method)) {
-        return false;
-      }
+    for (Condition<PsiElement> addin : InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensionList()) {
+      if (addin.value(method)) return false;
     }
 
 

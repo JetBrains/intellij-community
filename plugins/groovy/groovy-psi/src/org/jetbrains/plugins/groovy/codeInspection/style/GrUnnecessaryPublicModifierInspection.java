@@ -39,7 +39,7 @@ public class GrUnnecessaryPublicModifierInspection extends GroovySuppressableIns
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement modifier) {
+      public void visitElement(@NotNull PsiElement modifier) {
         if (modifier.getNode().getElementType() != GroovyTokenTypes.kPUBLIC) return;
 
         PsiElement list = modifier.getParent();

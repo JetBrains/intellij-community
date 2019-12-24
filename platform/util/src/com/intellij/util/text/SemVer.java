@@ -27,10 +27,6 @@ import static com.intellij.openapi.util.text.StringUtil.isNotNegativeNumber;
  * Holds <a href="http://semver.org">Semantic Version</a>.
  */
 public final class SemVer implements Comparable<SemVer> {
-  /**
-   * @deprecated use {@code null} instead
-   */
-  @Deprecated public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
 
   private final String myRawVersion;
   private final int myMajor;
@@ -96,6 +92,10 @@ public final class SemVer implements Comparable<SemVer> {
     if (myMajor != major) return myMajor > major;
     if (myMinor != minor) return myMinor > minor;
     return myPatch >= patch;
+  }
+
+  public boolean isGreaterOrEqualThan(@NotNull SemVer version) {
+    return compareTo(version) >= 0;
   }
 
   @Override

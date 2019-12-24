@@ -44,12 +44,6 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.parentheses.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.parentheses.problem.descriptor");
   }

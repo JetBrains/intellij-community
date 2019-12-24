@@ -2,9 +2,11 @@
 package com.intellij.psi.meta;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface MetaDataContributor {
+  @ApiStatus.Internal
   ExtensionPointName<MetaDataContributor> EP_NAME = ExtensionPointName.create("com.intellij.metaDataContributor");
 
   void contributeMetaData(@NotNull MetaDataRegistrar registrar);

@@ -15,15 +15,14 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.content.ContentManagerListener
 
-class VcsToolWindowEditorSynchronizer {
-
+internal class VcsToolWindowEditorSynchronizer {
   companion object {
     fun getInstance(project: Project): VcsToolWindowEditorSynchronizer = project.service()
   }
 
   private fun addContentManagerListener(window: ToolWindowImpl, listener: ContentManagerListener) {
     window.contentManager.addContentManagerListener(listener)
-    Disposer.register(window, Disposable {
+    Disposer.register(window.contentManager, Disposable {
       if (!window.isDisposed) {
         window.contentManager.removeContentManagerListener(listener)
       }
@@ -46,9 +45,8 @@ class VcsToolWindowEditorSynchronizer {
     }
   }
 
-  class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
+  internal class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
     override fun toolWindowRegistered(id: String) {
-
       if (!Registry.`is`("show.log.as.editor.tab")) return
       if (id != TOOLWINDOW_ID) return
 

@@ -53,7 +53,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InvokeIntention extends ActionOnFile {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
+  private static final Logger LOG = Logger.getInstance(InvokeIntention.class);
   private final IntentionPolicy myPolicy;
 
   public InvokeIntention(@NotNull PsiFile file, @NotNull IntentionPolicy policy) {
@@ -246,6 +246,24 @@ public class InvokeIntention extends ActionOnFile {
       messages.add("Intentions removed after parenthesizing:\n" + describeIntentions(removed));
     }
     if (!messages.isEmpty()) {
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        getDocument().deleteString(range.getStartOffset(), range.getStartOffset() + prefix.length());
+        getDocument().deleteString(range.getEndOffset(), range.getEndOffset() + suffix.length());
+        editor.getCaretModel().moveToOffset(offset);
+      });
+      intentions = getAvailableIntentions(editor, file);
+      Map<String, IntentionAction> namesBackAgain =
+        StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a, b) -> a);
+      if (!namesBackAgain.keySet().equals(names.keySet())) {
+        if (namesBackAgain.keySet().equals(namesWithParentheses.keySet())) {
+          messages.add(0, "Unstable result: intentions changed after parenthesizing, but remain the same when parentheses removed");
+        }
+        else {
+          messages
+            .add(0, "Unstable result: intentions changed after parenthesizing, but restored in a different way when parentheses removed");
+        }
+      }
+      LOG.debug("Error occurred, file text before adding parentheses:\n" + file.getText());
       throw new AssertionError(String.join("\n", messages));
     }
     return intentions;

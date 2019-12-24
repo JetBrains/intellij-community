@@ -36,7 +36,7 @@ import java.util.*;
  */
 @ApiStatus.Internal
 public class ContentEntryImpl extends RootModelComponentBase implements ContentEntry, ClonableContentEntry, Comparable<ContentEntryImpl> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
+  private static final Logger LOG = Logger.getInstance(ContentEntryImpl.class);
   @NotNull private final VirtualFilePointer myRoot;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.CONTENT_TAG;
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<>();

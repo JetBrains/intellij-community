@@ -37,12 +37,6 @@ import java.util.stream.Collectors;
 
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("disjoint.package.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(

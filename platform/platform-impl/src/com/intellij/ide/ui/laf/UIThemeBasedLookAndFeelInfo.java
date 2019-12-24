@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,7 +39,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     return myTheme;
   }
 
-  public void installTheme(UIDefaults defaults) {
+  public void installTheme(UIDefaults defaults, boolean sync) {
     myTheme.applyProperties(defaults);
     IconPathPatcher patcher = myTheme.getPatcher();
     if (patcher != null) {
@@ -51,8 +52,13 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     }
 
     installBackgroundImage();
-    installEditorScheme();
 
+    if (sync) {
+      installEditorScheme();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> installEditorScheme());
+    }
     myInitialised = true;
   }
 

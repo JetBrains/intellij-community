@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction");
+  private static final Logger LOG = Logger.getInstance(CreateLocalVarFromInstanceofAction.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

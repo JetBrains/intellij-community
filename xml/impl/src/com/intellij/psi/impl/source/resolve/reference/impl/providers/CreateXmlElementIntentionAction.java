@@ -42,7 +42,7 @@ class CreateXmlElementIntentionAction implements IntentionAction {
   private final String myDeclarationTagName;
 
   CreateXmlElementIntentionAction(
-    @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
+    @PropertyKey(resourceBundle = XmlBundle.BUNDLE) String messageKey,
     @NonNls @NotNull String declarationTagName,
     TypeOrElementOrAttributeReference ref) {
 

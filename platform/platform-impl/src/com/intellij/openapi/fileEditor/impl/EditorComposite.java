@@ -287,11 +287,6 @@ public class EditorComposite implements Disposable {
   }
 
   @NotNull
-  public List<JComponent> getBottomComponents(@NotNull FileEditor editor) {
-    return getTopBottomComponents(editor, false);
-  }
-
-  @NotNull
   private List<JComponent> getTopBottomComponents(@NotNull FileEditor editor, boolean top) {
     SmartList<JComponent> result = new SmartList<>();
     JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
@@ -377,7 +372,7 @@ public class EditorComposite implements Disposable {
    */
   @NotNull
   FileEditor getSelectedEditor() {
-    return getSelectedEditorWithProvider().getFirst();
+    return getSelectedWithProvider().getFileEditor();
   }
 
   public boolean isDisposed() {

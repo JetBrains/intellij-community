@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class CompositeDocumentationProvider extends DocumentationProviderEx implements ExternalDocumentationProvider, ExternalDocumentationHandler {
+public class CompositeDocumentationProvider implements DocumentationProvider, ExternalDocumentationProvider, ExternalDocumentationHandler {
   private static final Logger LOG = Logger.getInstance(CompositeDocumentationProvider.class);
 
   private final List<DocumentationProvider> myProviders;
@@ -249,14 +249,13 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof DocumentationProviderEx) {
-        PsiElement element = ((DocumentationProviderEx)provider).getCustomDocumentationElement(editor, file, contextElement);
-        if (element != null) {
-          LOG.debug("getCustomDocumentationElement: ", provider);
-          return element;
-        }
+      PsiElement element = provider.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
+      if (element != null) {
+        LOG.debug("getCustomDocumentationElement: ", provider);
+        return element;
       }
     }
     return null;

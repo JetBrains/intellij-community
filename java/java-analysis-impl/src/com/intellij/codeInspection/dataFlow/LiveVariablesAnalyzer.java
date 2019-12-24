@@ -8,19 +8,17 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Queue;
-import com.intellij.util.containers.*;
 import gnu.trove.TIntHashSet;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 
 /**
@@ -31,23 +29,6 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
-    FactoryMap.create(closure -> {
-      final Set<DfaVariableValue> result = new LinkedHashSet<>();
-      closure.accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          if (element instanceof PsiReferenceExpression) {
-            DfaValue value = myFactory.createValue((PsiReferenceExpression)element);
-            if (value instanceof DfaVariableValue) {
-              result.add((DfaVariableValue)value);
-            }
-          }
-          super.visitElement(element);
-        }
-      });
-      return new ArrayList<>(result);
-    });
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;
@@ -102,17 +83,17 @@ public class LiveVariablesAnalyzer {
   }
 
   @NotNull
-  private List<DfaVariableValue> getReadVariables(Instruction instruction) {
+  private static List<DfaVariableValue> getReadVariables(Instruction instruction) {
     if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
       DfaValue value = ((PushInstruction)instruction).getValue();
       if (value instanceof DfaVariableValue) {
         return Collections.singletonList((DfaVariableValue)value);
       }
-    } else {
-      PsiElement closure = DfaUtil.getClosureInside(instruction);
-      if (closure != null) {
-        return myClosureReads.get(closure);
-      }
+    }
+    else if (instruction instanceof EscapeInstruction) {
+      return StreamEx.of(((EscapeInstruction)instruction).getEscapedVars())
+        .flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v))
+        .distinct().toList();
     }
     return Collections.emptyList();
   }

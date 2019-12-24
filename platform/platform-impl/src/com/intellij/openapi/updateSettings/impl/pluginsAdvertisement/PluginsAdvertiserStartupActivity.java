@@ -21,6 +21,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -66,7 +67,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       return;
     }
 
-    MultiMap<String, UnknownFeature> features = new MultiMap<>();
+    MultiMap<PluginId, UnknownFeature> features = new MultiMap<>();
     Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins = new THashMap<>();
     List<IdeaPluginDescriptor> allPlugins = RepositoryHelper.loadPluginsFromAllRepositories(null);
     if (project.isDisposed()) {
@@ -77,23 +78,24 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       if (project.isDisposed()) return;
       EditorNotifications.getInstance(project).updateAllNotifications();
     }
-    final Map<String, PluginsAdvertiser.Plugin> ids = new HashMap<>();
+    final Map<PluginId, PluginsAdvertiser.Plugin> ids = new HashMap<>();
     for (UnknownFeature feature : unknownFeatures) {
       ProgressManager.checkCanceled();
       final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
       if (pluginId != null) {
         for (PluginsAdvertiser.Plugin plugin : pluginId) {
-          ids.put(plugin.myPluginId, plugin);
-          features.putValue(plugin.myPluginId, feature);
+          PluginId id = PluginId.getId(plugin.myPluginId);
+          ids.put(id, plugin);
+          features.putValue(id, feature);
         }
       }
     }
 
     //include disabled plugins
-    for (String id : ids.keySet()) {
+    for (PluginId id : ids.keySet()) {
       PluginsAdvertiser.Plugin plugin = ids.get(id);
       if (PluginManagerCore.isDisabled(id)) {
-        final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(id));
+        final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(id);
         if (pluginDescriptor != null) {
           disabledPlugins.put(plugin, pluginDescriptor);
         }
@@ -104,8 +106,8 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     Set<PluginDownloader> plugins = new THashSet<>();
     for (IdeaPluginDescriptor loadedPlugin : allPlugins) {
       PluginId pluginId = loadedPlugin.getPluginId();
-      if (ids.containsKey(pluginId.getIdString()) &&
-          !PluginManagerCore.isDisabled(pluginId.getIdString()) &&
+      if (ids.containsKey(pluginId) &&
+          !PluginManagerCore.isDisabled(pluginId) &&
           !PluginManagerCore.isBrokenPlugin(loadedPlugin)) {
         plugins.add(PluginDownloader.createDownloader(loadedPlugin));
       }
@@ -126,7 +128,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
             "Enable Plugins...", () -> {
               FeatureUsageData data = new FeatureUsageData()
                 .addData("source", "notification")
-                .addData("plugin", disabledPlugins.values().iterator().next().getPluginId().getIdString());
+                .addData("plugins", ContainerUtil.map(disabledPlugins.values(), (plugin) -> plugin.getPluginId().getIdString()));
               FUCounterUsageLogger.getInstance().logEvent(PluginsAdvertiser.FUS_GROUP_ID, "enable.plugins", data);
               PluginsAdvertiser.enablePlugins(project, disabledPlugins.values());
             }));
@@ -181,16 +183,16 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
   @NotNull
   private static String getAddressedMessagePresentation(@NotNull Set<PluginDownloader> plugins,
                                                         @NotNull Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins,
-                                                        @NotNull MultiMap<String, UnknownFeature> features) {
+                                                        @NotNull MultiMap<PluginId, UnknownFeature> features) {
     final MultiMap<String, String> addressedFeatures = MultiMap.createSet();
-    final Set<String> ids = new LinkedHashSet<>();
+    final Set<PluginId> ids = new LinkedHashSet<>();
     for (PluginDownloader plugin : plugins) {
-      ids.add(plugin.getPluginId());
+      ids.add(plugin.getId());
     }
     for (PluginsAdvertiser.Plugin plugin : disabledPlugins.keySet()) {
-      ids.add(plugin.myPluginId);
+      ids.add(PluginId.getId(plugin.myPluginId));
     }
-    for (String id : ids) {
+    for (PluginId id : ids) {
       for (UnknownFeature feature : features.get(id)) {
         addressedFeatures.putValue(feature.getFeatureDisplayName(), feature.getImplementationDisplayName());
       }

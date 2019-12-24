@@ -1,16 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history
 
+import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.MainVcsLogUi
+import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
@@ -43,16 +46,16 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
     triggerFileHistoryUsage(paths, hash)
 
-    val historyUiConsumer = { ui: AbstractVcsLogUi, firstTime: Boolean ->
+    val logManager = VcsProjectLog.getInstance(project).logManager!!
+
+    val historyUiConsumer = { ui: VcsLogUiEx, firstTime: Boolean ->
       if (hash != null) {
-        ui.jumpToNearestCommit(hash, root, true)
+        ui.jumpToNearestCommit(logManager.dataManager.storage, hash, root, true)
       }
       else if (firstTime) {
         ui.jumpToRow(0, true)
       }
     }
-
-    val logManager = VcsProjectLog.getInstance(project).logManager!!
 
     if (paths.size == 1) {
       val correctedPath = getCorrectedPath(project, paths.single(), root, revisionNumber != null)
@@ -85,7 +88,7 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
   private fun findOrOpenHistory(project: Project, logManager: VcsLogManager,
                                 root: VirtualFile, path: FilePath, hash: Hash?,
-                                consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
+                                consumer: (VcsLogUiEx, Boolean) -> Unit) {
     var fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi::class.java) { ui -> ui.matches(path, hash) }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
@@ -97,8 +100,8 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
   }
 
   private fun findOrOpenFolderHistory(project: Project, hashFilter: VcsLogFilter, pathsFilter: VcsLogFilter,
-                                      consumer: (AbstractVcsLogUi, Boolean) -> Unit) {
-    var ui = VcsLogContentUtil.findAndSelect(project, VcsLogUiImpl::class.java) { logUi ->
+                                      consumer: (VcsLogUiEx, Boolean) -> Unit) {
+    var ui = VcsLogContentUtil.findAndSelect(project, MainVcsLogUi::class.java) { logUi ->
       matches(logUi.filterUi.filters, pathsFilter, hashFilter)
     }
     val firstTime = ui == null
@@ -163,4 +166,18 @@ class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
     return correctedPath
   }
+}
+
+private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
+  jumpTo(hash, { model: GraphTableModel, h: Hash? ->
+    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
+
+    val commitIndex: Int = storage.getCommitIndex(h, root)
+    val visiblePack = model.visiblePack
+    var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
+    if (rowIndex == null) {
+      rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
+    }
+    rowIndex ?: GraphTableModel.COMMIT_DOES_NOT_MATCH
+  }, SettableFuture.create<Boolean>(), silently)
 }

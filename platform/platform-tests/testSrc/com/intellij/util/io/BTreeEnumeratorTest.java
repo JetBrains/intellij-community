@@ -26,7 +26,7 @@ public class BTreeEnumeratorTest {
 
   static class TestStringEnumerator extends PersistentBTreeEnumerator<String> {
     TestStringEnumerator(File file) throws IOException {
-      super(file, new EnumeratorStringDescriptor(), 4096);
+      super(file.toPath(), new EnumeratorStringDescriptor(), 4096);
     }
   }
 

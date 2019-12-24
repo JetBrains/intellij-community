@@ -63,4 +63,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testBlock() = doTest("Simple/Block.java")
+
+  @Test
+  fun testTryCatch() = doTest("Simple/TryCatch.java")
 }

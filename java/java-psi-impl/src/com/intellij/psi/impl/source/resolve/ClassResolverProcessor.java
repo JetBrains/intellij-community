@@ -20,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ClassResolverProcessor");
+  private static final Logger LOG = Logger.getInstance(ClassResolverProcessor.class);
   private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
   private final String myClassName;
@@ -190,6 +190,9 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
     PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
+    if (psiClass instanceof PsiAnonymousClass && myPlace == ((PsiAnonymousClass)psiClass).getBaseClassReference()) {
+      psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass.class);
+    }
     while (psiClass != null) {
       if (psiClass.isInheritor(containingClass1, false)) {
         return true;

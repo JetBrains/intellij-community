@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBusyStateTracker
 import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsMetadataService
@@ -79,20 +80,21 @@ internal class GHPRMetadataPanel(private val project: Project,
   override fun dispose() {}
 
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GHUser>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
-    override fun extractItems(details: GHPullRequest): List<GHUser> = details.reviewRequests.map { it.requestedReviewer }
-      .filterIsInstance(GHUser::class.java)
+    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService, busyStateTracker, "No Reviewers", "Reviewers:") {
+    override fun extractItems(details: GHPullRequest): List<GHPullRequestRequestedReviewer> =
+      details.reviewRequests.mapNotNull { it.requestedReviewer }
 
-    override fun getItemComponent(item: GHUser) = createUserLabel(item)
+    override fun getItemComponent(item: GHPullRequestRequestedReviewer) = createUserLabel(item)
 
     override fun editList() {
       val details = model.value ?: return
-      val reviewers = details.reviewRequests.map { it.requestedReviewer }.filterIsInstance<GHUser>()
+      val author = model.value?.author as? GHUser ?: return
+      val reviewers = details.reviewRequests.mapNotNull { it.requestedReviewer }
       GithubUIUtil
         .showChooserPopup("Reviewers", editButton, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-          GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-        }, reviewers, metadataService.collaboratorsWithPushAccess)
+          GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
+        }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
         .handleOnEdt(getAdjustmentHandler(details.number, "reviewer") { indicator, delta ->
           metadataService.adjustReviewers(indicator, details.number, delta)
         })
@@ -119,9 +121,9 @@ internal class GHPRMetadataPanel(private val project: Project,
     }
   }
 
-  private fun createUserLabel(user: GHUser) = JLabel(user.login,
-                                                     avatarIconsProvider.getIcon(user.avatarUrl),
-                                                     SwingConstants.LEFT).apply {
+  private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
+                                                                             avatarIconsProvider.getIcon(user.avatarUrl),
+                                                                             SwingConstants.LEFT).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP / 2)
   }
 

@@ -50,7 +50,7 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public class ApplyPatchAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
+  private static final Logger LOG = Logger.getInstance(ApplyPatchAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {

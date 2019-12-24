@@ -308,7 +308,7 @@ cdef PyObject * get_bytecode_while_frame_eval(PyFrameObject * frame_obj, int exc
         if thread_info.thread_trace_func is None:
             trace_func, apply_to_global = fix_top_level_trace_and_get_trace_func(main_debugger, frame)
             if apply_to_global:
-                thread_info.thread_trace_func = trace_func
+                thread_info.thread_trace_func = trace_func  # ThreadTracer.__call__
 
         if additional_info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_SMART_STEP_INTO) or \
                 main_debugger.break_on_caught_exceptions or \

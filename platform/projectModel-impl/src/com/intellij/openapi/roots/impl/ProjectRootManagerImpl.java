@@ -27,13 +27,14 @@ import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 @State(name = "ProjectRootManager")
 public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectRootManagerImpl.class);
 
   private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
@@ -204,13 +205,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
+  @Nullable
   @Override
   public String getProjectSdkName() {
     return myProjectSdkName;
   }
 
+  @Nullable
   @Override
-  public void setProjectSdk(Sdk sdk) {
+  public String getProjectSdkTypeName() {
+    return myProjectSdkType;
+  }
+
+  @Override
+  public void setProjectSdk(@Nullable Sdk sdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (sdk == null) {
       myProjectSdkName = null;
@@ -233,9 +241,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
+  @Deprecated
   public void setProjectSdkName(@NotNull String name) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myProjectSdkName = name;
+    myProjectSdkType = null;
+
+    projectJdkChanged();
+  }
+
+  @Override
+  public void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    myProjectSdkName = name;
+    myProjectSdkType = sdkTypeName;
 
     projectJdkChanged();
   }
@@ -597,13 +616,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     synchronized (myRegisteredRootProviders) {
       if (!myRegisteredRootProviders.isEmpty()) {
         StringBuilder details = new StringBuilder();
+        int count = 0;
         for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
+          if (count++ >= 10) {
+            details.append(myRegisteredRootProviders.entrySet().size() - 10).append(" more providers.\n");
+            break;
+          }
           details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
           for (OrderEntry orderEntry : entry.getValue()) {
-            details.append("   ").append(orderEntry).append("\n");
+            details.append("   ").append(orderEntry);
+            if (orderEntry instanceof RootModelComponentBase) {
+              details.append(", isDisposed = ").append(((RootModelComponentBase)orderEntry).isDisposed());
+              details.append(", root model = ").append(((RootModelComponentBase)orderEntry).getRootModel());
+              details.append(", module.isDisposed = ").append(((RootModelComponentBase)orderEntry).getRootModel().getModule().isDisposed());
+            }
+            details.append("\n");
           }
         }
-        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
+        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers in " + myProject + " aren't disposed:" + details);
         for (RootProvider provider : myRegisteredRootProviders.keySet()) {
           provider.removeRootSetChangedListener(myRootProviderChangeListener);
         }

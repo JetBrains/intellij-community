@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class MoveClassesOrPackagesImpl {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
+  private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesImpl.class);
 
   public static void doMove(Project project, PsiElement[] adjustedElements, PsiElement initialTargetElement, MoveCallback moveCallback) {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {

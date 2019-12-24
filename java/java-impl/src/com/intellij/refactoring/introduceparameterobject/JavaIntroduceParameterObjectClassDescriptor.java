@@ -166,7 +166,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     if (paramsToMerge.length == 1) {
       final ParameterInfoImpl parameterInfo = paramsToMerge[0];
       final PsiType paramType = parameterInfo.getTypeWrapper().getType(aClass);
-      if (TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName())) {
+      String fqn = aClass.getQualifiedName();
+      if (fqn != null && TypeConversionUtil.isPrimitiveWrapper(fqn)) {
         ParameterBean bean = new ParameterBean();
         bean.setField(aClass.findFieldByName("value", false));
         bean.setGetter(paramType.getCanonicalText() + "Value");

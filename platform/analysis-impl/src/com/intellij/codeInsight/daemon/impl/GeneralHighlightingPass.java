@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -54,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
+  private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
@@ -143,7 +142,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       LOG.error("No visitors registered. list=" +
                 list +
                 "; all visitors are:" +
-                Arrays.asList(HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(myProject)));
+                HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(myProject));
     }
 
     return visitors.toArray(new HighlightVisitor[0]);
@@ -439,14 +438,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                   @NotNull final Project project) throws ProcessCanceledException {
     RESTART_REQUESTS.incrementAndGet();
     progress.cancel();
-    Application application = ApplicationManager.getApplication();
-    int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       RESTART_REQUESTS.decrementAndGet();
       if (!project.isDisposed()) {
         DaemonCodeAnalyzer.getInstance(project).restart();
       }
-    }, delay, TimeUnit.MILLISECONDS);
+    }
+    else {
+      int delay = RESTART_DAEMON_RANDOM.nextInt(100);
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+        RESTART_REQUESTS.decrementAndGet();
+        if (!project.isDisposed()) {
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        }
+      }, delay, TimeUnit.MILLISECONDS);
+    }
     throw new ProcessCanceledException();
   }
 
@@ -474,12 +480,19 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         return actualScheme;
       }
 
+      @Override
       public void queueToUpdateIncrementally() {
         for (int i = queued; i < size(); i++) {
           HighlightInfo info = get(i);
           queueInfoToUpdateIncrementally(info);
         }
         queued = size();
+      }
+
+      @Override
+      public void clear() {
+        super.clear();
+        queued = 0;
       }
     };
   }

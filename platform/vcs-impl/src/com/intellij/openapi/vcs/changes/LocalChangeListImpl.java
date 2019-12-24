@@ -14,7 +14,7 @@ import java.util.*;
  * @author yole
  */
 public class LocalChangeListImpl extends LocalChangeList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
+  private static final Logger LOG = Logger.getInstance(ChangeList.class);
 
   @NotNull private final Project myProject;
   @NotNull private final String myId;

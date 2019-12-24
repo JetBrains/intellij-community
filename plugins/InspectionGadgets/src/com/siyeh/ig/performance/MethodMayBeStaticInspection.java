@@ -90,12 +90,6 @@ public class MethodMayBeStaticInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.may.be.static.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.may.be.static.problem.descriptor");
   }
@@ -142,11 +136,8 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final Condition<PsiElement>[] addins = InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensions();
-      for (Condition<PsiElement> addin : addins) {
-        if (addin.value(method)) {
-          return;
-        }
+      for (Condition<PsiElement> addin : InspectionManager.CANT_BE_STATIC_EXTENSION.getExtensionList()) {
+        if (addin.value(method)) return;
       }
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) && !containingClass.hasModifierProperty(PsiModifier.STATIC) && !containingClass.isInterface()) {

@@ -33,12 +33,6 @@ public class ErrorRethrownInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("error.rethrown.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("error.rethrown.problem.descriptor");
   }

@@ -30,7 +30,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -101,7 +101,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     Disposable disposable = Disposer.newDisposable();
     final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
-      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, disposable, true));
+      repositoryManager.addExternalRepository(root, GitRepositoryImpl.createInstance(root, project, disposable, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(GitExternalLogTabsProperties.class),
                                               ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
@@ -110,7 +110,8 @@ public class GitShowExternalLogAction extends DumbAwareAction {
         repositoryManager.removeExternalRepository(root);
       }
     }));
-    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab, true);
+    MainVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab ? VcsLogManager.LogWindowKind.TOOL_WINDOW :
+                                                                VcsLogManager.LogWindowKind.STANDALONE, true);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
   }

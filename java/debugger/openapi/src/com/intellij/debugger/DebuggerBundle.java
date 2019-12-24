@@ -15,44 +15,30 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
-
-public class DebuggerBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
+public class DebuggerBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.DebuggerBundle";
+  private static final DebuggerBundle INSTANCE = new DebuggerBundle();
 
-  private DebuggerBundle() {
+  private DebuggerBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
   public static String getAddressDisplayName(final RemoteConnection connection) {
-    return connection.isUseSockets() ? StringUtil.notNullize(connection.getDebuggerHostName()) + ":" + connection.getDebuggerPort()
-                                     : connection.getDebuggerPort();
+    return connection.isUseSockets() ? StringUtil.notNullize(connection.getDebuggerHostName()) + ":" + connection.getDebuggerAddress()
+                                     : connection.getDebuggerAddress();
   }
 
   public static String getTransportName(final RemoteConnection connection) {
     return connection.isUseSockets() ? message("transport.name.socket") : message("transport.name.shared.memory");
-  }
-
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }

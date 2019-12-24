@@ -27,7 +27,7 @@ import java.util.*;
  * @author traff
  */
 public class MultiProcessDebugger implements ProcessDebugger {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.MultiProcessDebugger");
+  private static final Logger LOG = Logger.getInstance(MultiProcessDebugger.class);
 
   private final IPyDebugProcess myDebugProcess;
   private final ServerSocket myServerSocket;
@@ -53,6 +53,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       myDebugServerSocket = createServerSocket();
     }
     catch (ExecutionException e) {
+      LOG.error("Failed to start debugger:", e);
     }
     myMainDebugger = new RemoteDebugger(myDebugProcess, myDebugServerSocket, myTimeoutInMillis);
   }
@@ -85,18 +86,25 @@ public class MultiProcessDebugger implements ProcessDebugger {
     ApplicationManager.getApplication().executeOnPooledThread(myDebugProcessAcceptor);
   }
 
-  private static void sendDebuggerPort(Socket socket, ServerSocket serverSocket, IPyDebugProcess processHandler) throws IOException {
+  private static void sendDebuggerPort(@NotNull Socket socket, @NotNull ServerSocket serverSocket, @NotNull IPyDebugProcess processHandler)
+    throws IOException {
     int port = processHandler.handleDebugPort(serverSocket.getLocalPort());
     PrintWriter writer = new PrintWriter(socket.getOutputStream());
-    writer.println(99 + "\t" + -1 + "\t" + port);
-    writer.flush();
-    socket.close();
+    try {
+      writer.println(99 + "\t" + -1 + "\t" + port);
+      writer.flush();
+    }
+    finally {
+      socket.close();
+      writer.close();
+    }
   }
 
+  @NotNull
   private static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
-      //noinspection SocketOpenedButNotSafelyClosed
+      //noinspection IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
@@ -263,6 +271,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     if (myOtherDebuggers.size() > 0) {
       //here we add process id to thread name in case there are more then one process
       return Collections.unmodifiableCollection(Collections2.transform(threads, t -> {
+        if (t == null) return null;
         String threadName = ThreadRegistry.threadName(t.getName(), t.getId());
         PyThreadInfo newThread =
           new PyThreadInfo(t.getId(), threadName, t.getFrames(),

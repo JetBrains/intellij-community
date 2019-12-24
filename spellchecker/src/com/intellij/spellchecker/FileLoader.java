@@ -28,7 +28,7 @@ import java.nio.charset.Charset;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class FileLoader implements Loader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
+  private static final Logger LOG = Logger.getInstance(FileLoader.class);
 
   private final String url;
   private final String name;

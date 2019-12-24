@@ -443,11 +443,13 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
       @Override
       protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
         return new BaseOccurrenceManager(occurrence -> true) {
+          @NotNull
           @Override
           protected PsiExpression[] defaultOccurrences() {
             return expressions;
           }
 
+          @NotNull
           @Override
           protected PsiExpression[] findOccurrences() {
             return expressions;

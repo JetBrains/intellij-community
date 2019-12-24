@@ -34,12 +34,6 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.unary.minus.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.unary.minus.problem.descriptor");
   }

@@ -37,12 +37,6 @@ public class AssignmentToNullInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("assignment.to.null.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("assignment.to.null.problem.descriptor");
   }

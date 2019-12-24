@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.NonClasspathDirectoriesScope;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class AlternativeJreClassFinder extends NonClasspathClassFinder {
     if (sessions.isEmpty()) {
       return Collections.emptyList();
     }
-    List<VirtualFile> res = ContainerUtil.newSmartList();
+    List<VirtualFile> res = new SmartList<>();
     for (DebuggerSession session : sessions) {
       Sdk jre = session.getAlternativeJre();
       if (jre != null) {

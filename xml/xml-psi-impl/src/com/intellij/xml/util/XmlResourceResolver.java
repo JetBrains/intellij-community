@@ -48,7 +48,7 @@ import java.util.Map;
  * @author Maxim.Mossienko
  */
 public class XmlResourceResolver implements XMLEntityResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
+  private static final Logger LOG = Logger.getInstance(XmlResourceResolver.class);
   private final XmlFile myFile;
   private final Project myProject;
   private final Map<String,String> myExternalResourcesMap = new HashMap<>(1);

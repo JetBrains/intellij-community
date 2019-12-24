@@ -17,6 +17,7 @@ package com.intellij.uast;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -40,7 +41,7 @@ public class UastVisitorAdapter extends PsiElementVisitor {
   }
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     super.visitElement(element);
     UElement uElement = UastContextKt.toUElement(element);
     if (uElement != null && (!directOnly || uElement.getSourcePsi() == element)) {

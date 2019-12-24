@@ -42,7 +42,7 @@ import java.util.Map;
  * @author novokrest
  */
 public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.call.PyCallHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(PyCallHierarchyBrowser.class);
 
   public PyCallHierarchyBrowser(PsiElement function) {
     super(function.getProject(), function);

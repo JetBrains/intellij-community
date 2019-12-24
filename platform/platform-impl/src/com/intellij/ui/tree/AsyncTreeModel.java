@@ -228,6 +228,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     if (node == null) return true;
     if (node.leafState == LeafState.ALWAYS) return true;
     if (node.leafState == LeafState.NEVER) return false;
+    if (node.leafState == LeafState.ASYNC && node.children == null) promiseChildren(node);
     List<Node> children = node.children;
     // leaf only if no children were loaded
     return children != null && children.isEmpty();
@@ -235,7 +236,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   @Override
   public void valueForPathChanged(@NotNull TreePath path, Object value) {
-    processor.background.runOrInvokeLater(() -> model.valueForPathChanged(path, value));
+    processor.background.invoke(() -> model.valueForPathChanged(path, value));
   }
 
   @Override
@@ -306,7 +307,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   public void onValidThread(@NotNull Runnable runnable) {
-    processor.foreground.runOrInvokeLater(runnable);
+    processor.foreground.invoke(runnable);
   }
 
   @NotNull

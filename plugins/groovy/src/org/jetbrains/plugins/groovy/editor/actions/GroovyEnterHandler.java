@@ -141,7 +141,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       }
       boolean afterArrow = !iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
       if (afterArrow) {
-        originalHandler.execute(editor, dataContext);
+        originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
         PsiDocumentManager.getInstance(project).commitDocument(document);
         CodeStyleManager.getInstance(project).adjustLineIndent(file, caretModel.getOffset());
       }
@@ -227,7 +227,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     int toRemove = element.getTextRange().getStartOffset();
     document.deleteString(caretOffset + 1, toRemove);
 
-    originalHandler.execute(editor, dataContext);
+    originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
 
     String text = document.getText();
     int nextLineFeed = text.indexOf('\n', caretOffset + 1);
@@ -253,8 +253,8 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       if (text.length() > caret) {
         iterator = highlighter.createIterator(caret);
         if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
-          originalHandler.execute(editor, context);
-          originalHandler.execute(editor, context);
+          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
+          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
           editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
           insertSpacesByGroovyContinuationIndent(editor, project);
           return true;
@@ -307,7 +307,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
         else {
           EditorModificationUtil.insertStringAtCaret(editor, "'+");
-          originalHandler.execute(editor, dataContext);
+          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
           EditorModificationUtil.insertStringAtCaret(editor, "'");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
@@ -351,7 +351,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         }
         else {
           EditorModificationUtil.insertStringAtCaret(editor, "\"+");
-          originalHandler.execute(editor, dataContext);
+          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
           EditorModificationUtil.insertStringAtCaret(editor, "\"");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
@@ -424,7 +424,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                              EditorActionHandler originalHandler,
                                              boolean isInsertIndent) {
     if (isInsertIndent) {
-      originalHandler.execute(editor, dataContext);
+      originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
     }
     else {
       EditorModificationUtil.insertStringAtCaret(editor, "\n");

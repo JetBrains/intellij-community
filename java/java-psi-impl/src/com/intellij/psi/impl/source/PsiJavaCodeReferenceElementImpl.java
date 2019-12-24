@@ -42,7 +42,7 @@ import java.util.List;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiAnnotatedJavaCodeReferenceElement, SourceJavaCodeReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiJavaCodeReferenceElementImpl.class);
 
   private volatile String myCachedQName;
   private volatile String myCachedNormalizedText;

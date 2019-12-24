@@ -23,12 +23,6 @@ import java.util.Collection;
  * User: dcheryasov
  */
 public class PyReturnFromInitInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.init.return");
-  }
 
   @NotNull
   @Override

@@ -9,7 +9,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
@@ -22,6 +21,8 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -36,7 +37,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -57,6 +60,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
 public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameWrapper {
   private static final int UPDATE_DIFFS = 1;
@@ -433,10 +437,18 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setFileName(getDefaultPatchFile());
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
-      myModel.createPatch(p.getFileName(), p.getBaseDirName(), p.isReversePatch(), p.getEncoding());
 
-      showNotification(LocalHistoryBundle.message("message.patch.created"));
-      RevealFileAction.openFile(new File(p.getFileName()));
+      String base = p.getBaseDirName();
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch());
+      if (p.isToClipboard()) {
+        writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
+        showNotification("Patch copied to clipboard");
+      }
+      else {
+        PatchWriter.writePatches(myProject, p.getFileName(), base, patches, null, p.getEncoding());
+        showNotification(message("message.patch.created"));
+        RevealFileAction.openFile(new File(p.getFileName()));
+      }
     }
     catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));

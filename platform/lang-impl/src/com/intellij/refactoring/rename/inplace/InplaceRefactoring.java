@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
@@ -13,7 +14,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -78,7 +78,7 @@ import java.util.List;
 import java.util.*;
 
 public abstract class InplaceRefactoring {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
+  protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
   protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
@@ -445,7 +445,7 @@ public abstract class InplaceRefactoring {
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     if (lookup != null && lookup.getLookupStart() <= (restoreCaretOffset(offset))) {
-      lookup.setFocusDegree(LookupImpl.FocusDegree.UNFOCUSED);
+      lookup.setLookupFocusDegree(LookupFocusDegree.UNFOCUSED);
       lookup.performGuardedChange(runnable);
     }
     else {
@@ -759,8 +759,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected boolean isIdentifier(final String newName, final Language language) {
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
-    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
+    return LanguageNamesValidation.isIdentifier(language, newName, myProject);
   }
 
   protected static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

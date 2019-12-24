@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,12 +52,26 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
    * @throws IllegalStateException    if it's not possible to resolve target project info
    */
   @Nullable
-  DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+  default DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                            @NotNull String projectPath,
                                            boolean isPreviewMode,
                                            @Nullable S settings,
                                            @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException, IllegalArgumentException, IllegalStateException;
+    throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+    return resolveProjectInfo(id, projectPath, isPreviewMode, settings, null, listener);
+  }
+
+  @Nullable
+  @ApiStatus.Experimental
+  default DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                                   @NotNull String projectPath,
+                                                   boolean isPreviewMode,
+                                                   @Nullable S settings,
+                                                   @Nullable ProjectResolverPolicy resolverPolicy,
+                                                   @NotNull ExternalSystemTaskNotificationListener listener)
+    throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+    return resolveProjectInfo(id, projectPath, isPreviewMode, settings, listener);
+  }
 
   /**
    * @param taskId   id of the 'resolve project info' task

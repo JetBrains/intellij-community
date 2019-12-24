@@ -74,7 +74,6 @@ public class ClsPsiTest extends LightIdeaTestCase {
     vFile.refresh(false, false);
     assertEquals(FileUtil.loadFileBytes(file1).length, vFile.contentsToByteArray().length);
     assertNotNull(testFile.getPath(), vFile);
-    FileBasedIndex.getInstance().requestReindex(vFile);
     PsiFile file = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(file);
 

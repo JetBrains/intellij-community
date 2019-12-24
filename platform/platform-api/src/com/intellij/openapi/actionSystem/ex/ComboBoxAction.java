@@ -34,32 +34,24 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Path2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static Icon myIcon = null;
-  private static Icon myDisabledIcon = null;
-  private static Icon myWin10ComboDropTriangleIcon = null;
+  private static Icon myIcon;
+  private static Icon myDisabledIcon;
 
   public static Icon getArrowIcon(boolean enabled) {
-    if (UIUtil.isUnderWin10LookAndFeel()) {
-      if (myWin10ComboDropTriangleIcon == null) {
-        myWin10ComboDropTriangleIcon = IconLoader.findLafIcon("win10/comboDropTriangle", ComboBoxAction.class, true);
-      }
-      return myWin10ComboDropTriangleIcon;
-    }
     if (myIcon != AllIcons.General.ArrowDown) {
-      myIcon = AllIcons.General.ArrowDown;
-      myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+      myIcon = UIManager.getIcon("ComboBoxButton.arrowIcon");
+      myDisabledIcon = UIManager.getIcon("ComboBoxButton.arrowIconDisabled");
+
+      if (myIcon == null) myIcon = AllIcons.General.ArrowDown;
+      if (myDisabledIcon == null) myDisabledIcon = IconLoader.getDisabledIcon(AllIcons.General.ArrowDown);
     }
     return enabled ? myIcon : myDisabledIcon;
   }
-
   private boolean mySmallVariant = true;
   private String myPopupTitle;
 
-  private static final JBValue ICON_SIZE = new JBValue.Float(16);
 
   protected ComboBoxAction() {
   }
@@ -146,8 +138,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
-    private boolean myForcePressed = false;
-    private PropertyChangeListener myButtonSynchronizer;
+    private boolean myForcePressed;
     private String myTooltipText;
 
     public ComboBoxButton(Presentation presentation) {
@@ -193,6 +184,23 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getModifiers() | e.getModifiersEx(),
                                                e.getX(),
                                                e.getY()));
+        }
+      });
+
+      myPresentation.addPropertyChangeListener(evt -> {
+        String propertyName = evt.getPropertyName();
+        if (Presentation.PROP_TEXT.equals(propertyName)) {
+          setText((String)evt.getNewValue());
+        }
+        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+          myTooltipText = (String)evt.getNewValue();
+          updateTooltipText();
+        }
+        else if (Presentation.PROP_ICON.equals(propertyName)) {
+          setIcon((Icon)evt.getNewValue());
+        }
+        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+          setEnabled((Boolean)evt.getNewValue());
         }
       });
     }
@@ -245,10 +253,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void removeNotify() {
-      if (myButtonSynchronizer != null) {
-        myPresentation.removePropertyChangeListener(myButtonSynchronizer);
-        myButtonSynchronizer = null;
-      }
       HelpTooltip.dispose(this);
       super.removeNotify();
     }
@@ -256,10 +260,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void addNotify() {
       super.addNotify();
-      if (myButtonSynchronizer == null) {
-        myButtonSynchronizer = new MyButtonSynchronizer();
-        myPresentation.addPropertyChangeListener(myButtonSynchronizer);
-      }
       updateTooltipText();
     }
 
@@ -285,26 +285,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
-    private class MyButtonSynchronizer implements PropertyChangeListener {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        String propertyName = evt.getPropertyName();
-        if (Presentation.PROP_TEXT.equals(propertyName)) {
-          setText((String)evt.getNewValue());
-        }
-        else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-          myTooltipText = (String)evt.getNewValue();
-          updateTooltipText();
-        }
-        else if (Presentation.PROP_ICON.equals(propertyName)) {
-          setIcon((Icon)evt.getNewValue());
-        }
-        else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-          setEnabled(((Boolean)evt.getNewValue()).booleanValue());
-        }
-      }
-    }
-
     @Override
     public boolean isOpaque() {
       return !isSmallVariant();
@@ -313,10 +293,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
-      int width = prefSize.width
-                  + (myPresentation != null && isArrowVisible(myPresentation) ?
-                     (UIUtil.isUnderWin10LookAndFeel() ? getArrowIcon(isEnabled()).getIconWidth() + JBUIScale.scale(6) : ICON_SIZE.get()) : 0)
-                  + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0);
+      int width = prefSize.width + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0) +
+       (myPresentation == null || !isArrowVisible(myPresentation) ? 0 : JBUIScale.scale(16));
 
       Dimension size = new Dimension(width, isSmallVariant() ? JBUIScale.scale(24) : Math.max(JBUIScale.scale(24), prefSize.height));
       JBInsets.addTo(size, getMargin());
@@ -354,7 +332,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       else {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
-          int iconSize = ICON_SIZE.get();
+          int iconSize = JBUIScale.scale(16);
           int x = getWidth() - iconSize - getInsets().right - getMargin().right; // Different icons correction
           int y = (getHeight() - iconSize)/2;
 

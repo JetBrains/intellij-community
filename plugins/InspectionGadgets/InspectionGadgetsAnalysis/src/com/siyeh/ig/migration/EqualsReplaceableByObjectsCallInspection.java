@@ -39,13 +39,6 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("equals.replaceable.by.objects.check.not.null.option"), this, "checkNotNull");
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

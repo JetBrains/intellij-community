@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency
@@ -52,6 +53,7 @@ class GroovySanityTest {
 
   @Test
   void 'psi accessors'() {
+    RecursionManager.disableMissedCacheAssertions(fixture.testRootDisposable)
     PropertyChecker.checkScenarios(actionsOnGroovyFiles(MadTestingUtil.randomEditsWithPsiAccessorChecks {
       it.name == "getOrCreateInitializingClass" && it.declaringClass == GrEnumConstantImpl
     }))

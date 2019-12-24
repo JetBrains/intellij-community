@@ -53,7 +53,7 @@ import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandl
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 
 public abstract class LocalToFieldHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.LocalToFieldHandler");
+  private static final Logger LOG = Logger.getInstance(LocalToFieldHandler.class);
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
   private final Project myProject;

@@ -45,6 +45,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public CommittedChangesFilterKey getKey() {
     return new CommittedChangesFilterKey(toString(), CommittedChangesFilterPriority.STRUCTURE);
@@ -64,7 +65,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void setFilterBase(List<? extends CommittedChangeList> changeLists) {
+  public void setFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     // todo cycle here
     if (myUI == null) {
       myUI = new MyUI();
@@ -74,12 +75,12 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void addChangeListener(ChangeListener listener) {
+  public void addChangeListener(@NotNull ChangeListener listener) {
     myListeners.add(listener);
   }
 
   @Override
-  public void removeChangeListener(ChangeListener listener) {
+  public void removeChangeListener(@NotNull ChangeListener listener) {
     myListeners.remove(listener);
   }
 
@@ -89,13 +90,13 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
   }
 
   @Override
-  public void appendFilterBase(List<? extends CommittedChangeList> changeLists) {
+  public void appendFilterBase(@NotNull List<? extends CommittedChangeList> changeLists) {
     myUI.append(changeLists);
   }
 
   @Override
   @NotNull
-  public List<CommittedChangeList> filterChangeLists(List<? extends CommittedChangeList> changeLists) {
+  public List<CommittedChangeList> filterChangeLists(@NotNull List<? extends CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
       return new ArrayList<>(changeLists);
     }

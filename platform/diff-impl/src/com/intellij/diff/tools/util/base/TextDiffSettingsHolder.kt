@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
+import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
@@ -45,6 +46,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var USE_SOFT_WRAPS: Boolean = false,
     var HIGHLIGHTING_LEVEL: HighlightingLevel = HighlightingLevel.INSPECTIONS,
     var READ_ONLY_LOCK: Boolean = true,
+    var BREADCRUMBS_PLACEMENT: BreadcrumbsPlacement = BreadcrumbsPlacement.HIDDEN,
 
     // Fragments settings
     var EXPAND_BY_DEFAULT: Boolean = true
@@ -126,6 +128,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       get()      = PLACE_SETTINGS.READ_ONLY_LOCK
       set(value) { PLACE_SETTINGS.READ_ONLY_LOCK = value }
 
+    var breadcrumbsPlacement: BreadcrumbsPlacement
+      get()      = PLACE_SETTINGS.BREADCRUMBS_PLACEMENT
+      set(value) { PLACE_SETTINGS.BREADCRUMBS_PLACEMENT = value
+                   PLACE_SETTINGS.eventDispatcher.multicaster.breadcrumbsPlacementChanged() }
+
     //
     // Impl
     //
@@ -142,6 +149,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     interface Listener : EventListener {
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
+      fun breadcrumbsPlacementChanged() {}
+
+      abstract class Adapter : Listener
     }
   }
 
@@ -162,6 +172,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     val settings = PlaceSettings()
     if (place == DiffPlaces.CHANGES_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
+      settings.SHOW_LINE_NUMBERS = false
     }
     if (place == DiffPlaces.COMMIT_DIALOG) {
       settings.EXPAND_BY_DEFAULT = false

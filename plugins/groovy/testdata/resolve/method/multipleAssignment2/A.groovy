@@ -7,4 +7,4 @@ private List foo() {
 }
 
 
-c.<ref>toLowerCase()
+c.<caret>toLowerCase()

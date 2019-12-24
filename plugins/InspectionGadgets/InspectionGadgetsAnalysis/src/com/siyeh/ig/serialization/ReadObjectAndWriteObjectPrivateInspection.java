@@ -37,13 +37,6 @@ public class ReadObjectAndWriteObjectPrivateInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "readwriteobject.private.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readwriteobject.private.problem.descriptor");

@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
  * @author Vladislav.Soroka
  */
 class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
-  private val LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerImporter")
+  private val LOG = Logger.getInstance(MavenCompilerImporter::class.java)
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
     return super.isApplicable(mavenProject) && Registry.`is`("maven.import.compiler.arguments", true)

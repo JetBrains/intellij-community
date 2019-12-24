@@ -57,7 +57,7 @@ public class JavaSliceUsage extends SliceUsage {
 
   @Override
   protected void processUsagesFlownDownTo(PsiElement element, Processor<SliceUsage> uniqueProcessor) {
-    SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this, mySubstitutor, indexNesting,syntheticField);
+    SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, this, mySubstitutor, indexNesting, syntheticField);
   }
 
   @Override
@@ -71,15 +71,6 @@ public class JavaSliceUsage extends SliceUsage {
   @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
-  }
-
-  public int getIndexNesting() {
-    return indexNesting;
-  }
-
-  @NotNull
-  public String getSyntheticField() {
-    return syntheticField;
   }
 
   @Override

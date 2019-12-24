@@ -20,13 +20,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EscapedMetaCharacterInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Escaped meta character";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

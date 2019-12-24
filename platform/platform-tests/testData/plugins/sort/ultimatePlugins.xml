@@ -14,8 +14,8 @@
     <name>Maven</name>
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.maven">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.maven">-Error-prone plugin-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-Error-prone plugin-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.xpath/META-INF/plugin.xml">
     <id>-XPathView-</id>
@@ -25,9 +25,9 @@
   <idea-plugin url="file://out/intellij.platform.langInjection/META-INF/plugin.xml">
     <id>-org-intellij-intelliLang-</id>
     <name>IntelliLang</name>
-    <depends optional="true" config-file="intellij.platform.langInjection">-XPathView-</depends>
-    <depends optional="true" config-file="intellij.platform.langInjection">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.platform.langInjection">com.intellij.modules.xml</depends>
+    <depends optional="true">-XPathView-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.modules.xml</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.properties/META-INF/plugin.xml">
     <id>-com-intellij-properties-</id>
@@ -39,13 +39,13 @@
     <name>Groovy</name>
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.groovy">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.groovy">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.groovy">-AntSupport-</depends>
-    <depends optional="true" config-file="intellij.groovy">-ByteCodeViewer-</depends>
-    <depends optional="true" config-file="intellij.groovy.duplicates">com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.groovy.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
-    <depends optional="true" config-file="intellij.groovy.structuralSearch">com.intellij.modules.structuralsearch</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-AntSupport-</depends>
+    <depends optional="true">-ByteCodeViewer-</depends>
+    <depends optional="true">com.intellij.modules.ultimate</depends>
+    <depends optional="true">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true">com.intellij.modules.structuralsearch</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.ant/META-INF/plugin.xml">
     <id>-AntSupport-</id>
@@ -88,15 +88,15 @@
     <module value="org.jetbrains.plugins.gradle.java"/>
     <depends>-com-intellij-java-</depends>
     <depends>-com-intellij-gradle-</depends>
-    <depends optional="true" config-file="intellij.gradle.java">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.gradle.java">-Coverage-</depends>
-    <depends optional="true" config-file="intellij.gradle.java">-org-intellij-groovy-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-Coverage-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.coverage/META-INF/plugin.xml">
     <id>-Coverage-</id>
     <name>Coverage</name>
-    <depends optional="true" config-file="intellij.java.coverage">-TestNG-J-</depends>
-    <depends optional="true" config-file="intellij.java.coverage">-JUnit-</depends>
+    <depends optional="true">-TestNG-J-</depends>
+    <depends optional="true">-JUnit-</depends>
     <depends>com.intellij.modules.coverage</depends>
     <depends>com.intellij.modules.java</depends>
   </idea-plugin>
@@ -104,7 +104,7 @@
     <id>-com-android-tools-idea-smali-</id>
     <name>Smali Support</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends>com.intellij.modules.android-capable</depends>
+    <depends>com.intellij.modules.java-capable</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.guiForms.designer/META-INF/plugin.xml">
     <id>-com-intellij-uiDesigner-</id>
@@ -122,12 +122,12 @@
     <depends>-com-intellij-database-</depends>
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.javaee.impl">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.javaee.impl">-Coverage-</depends>
-    <depends optional="true" config-file="intellij.javaee.langInjection">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.javaee.impl">-org-jetbrains-plugins-gradle-</depends>
-    <depends optional="true" config-file="intellij.webDeployment.transport">-com-jetbrains-plugins-webDeployment-</depends>
-    <depends optional="true" config-file="intellij.javaee.impl">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-Coverage-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
+    <depends optional="true">-com-jetbrains-plugins-webDeployment-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.plugin/META-INF/plugin.xml">
     <id>-com-intellij-java-</id>
@@ -139,25 +139,25 @@
     <depends>com.intellij.modules.xdebugger</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.java-capable</depends>
-    <depends optional="true" config-file="intellij.java.plugin">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.profiler.ultimate">com.intellij.modules.profiler</depends>
-    <depends optional="true" config-file="intellij.java.structuralSearch">com.intellij.modules.structuralsearch</depends>
-    <depends optional="true" config-file="intellij.java.remoteServers.impl">com.intellij.modules.remoteServers</depends>
-    <depends optional="true" config-file="intellij.java.plugin">com.intellij.modules.clion.cmake</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">com.intellij.modules.profiler</depends>
+    <depends optional="true">com.intellij.modules.structuralsearch</depends>
+    <depends optional="true">com.intellij.modules.remoteServers</depends>
+    <depends optional="true">com.intellij.modules.clion.cmake</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.css.impl/META-INF/plugin.xml">
     <id>-com-intellij-css-</id>
     <name>CSS</name>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.css.impl">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.css.impl">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.fileWatcher/META-INF/plugin.xml">
     <id>-com-intellij-plugins-watcher-</id>
     <name>File Watchers</name>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.fileWatcher">-com-jetbrains-plugins-webDeployment-</depends>
+    <depends optional="true">-com-jetbrains-plugins-webDeployment-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.webDeployment/META-INF/plugin.xml">
     <id>-com-jetbrains-plugins-webDeployment-</id>
@@ -179,9 +179,9 @@
     <id>-com-intellij-diagram-</id>
     <name>UML</name>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.diagram.properties">-com-intellij-properties-</depends>
-    <depends optional="true" config-file="intellij.diagram.java">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.diagram.impl">com.intellij.modules.vcs</depends>
+    <depends optional="true">-com-intellij-properties-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.modules.vcs</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.database.plugin/META-INF/plugin.xml">
     <id>-com-intellij-database-</id>
@@ -189,8 +189,8 @@
     <module value="com.intellij.modules.database"/>
     <module value="com.intellij.modules.sql"/>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.database.diagrams">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.database.sql.impl">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.settingsRepository/META-INF/plugin.xml">
     <id>-org-jetbrains-settingsRepository-</id>
@@ -209,14 +209,14 @@
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.php-capable</depends>
-    <depends optional="true" config-file="intellij.php.impl">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.php.impl">com.intellij.modules.coverage</depends>
-    <depends optional="true" config-file="intellij.php.impl">-com-jetbrains-plugins-webDeployment-</depends>
-    <depends optional="true" config-file="intellij.php.impl">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.php.impl">-com-intellij-plugins-html-instantEditing-</depends>
-    <depends optional="true" config-file="intellij.php.impl">-com-jetbrains-restClient-</depends>
-    <depends optional="true" config-file="intellij.php.impl">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.php.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
+    <depends optional="true">-com-jetbrains-plugins-webDeployment-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-plugins-html-instantEditing-</depends>
+    <depends optional="true">-com-jetbrains-restClient-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">com.intellij.modules.duplicatesDetector</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.restClient/META-INF/plugin.xml">
     <id>-com-jetbrains-restClient-</id>
@@ -224,8 +224,8 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.restClient">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.restClient">-JavaScript-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-JavaScript-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.weblogic/META-INF/plugin.xml">
     <id>-Weblogic-</id>
@@ -248,9 +248,9 @@
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.modules.json</depends>
-    <depends optional="true" config-file="intellij.devkit">-org-jetbrains-plugins-gradle-</depends>
-    <depends optional="true" config-file="intellij.devkit">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.devkit">-com-intellij-uiDesigner-</depends>
+    <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-com-intellij-uiDesigner-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.zkm/META-INF/plugin.xml">
     <id>-ZKM-</id>
@@ -264,7 +264,6 @@
     <module value="com.intellij.modules.idea"/>
     <module value="com.intellij.modules.idea.ultimate"/>
     <module value="com.intellij.modules.java-capable"/>
-    <module value="com.intellij.modules.android-capable"/>
     <module value="com.intellij.modules.php-capable"/>
     <module value="com.intellij.modules.ruby-capable"/>
     <module value="com.intellij.modules.c-capable"/>
@@ -303,35 +302,35 @@
     <name>PostCSS</name>
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.postcss">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javascript.impl/META-INF/plugin.xml">
     <id>-JavaScript-</id>
     <name>JavaScript and TypeScript</name>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.javascript.impl">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.javascript.langInjection">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.javascript.nashorn">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.javascript.impl">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.javascript.impl">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.javascript.impl">-org-jetbrains-plugins-terminal-</depends>
-    <depends optional="true" config-file="intellij.javascript.impl">com.intellij.modules.coverage</depends>
-    <depends optional="true" config-file="intellij.javascript.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-org-jetbrains-plugins-terminal-</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
+    <depends optional="true">com.intellij.modules.duplicatesDetector</depends>
     <depends>-com-intellij-css-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.terminal/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-terminal-</id>
     <name>Terminal</name>
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="intellij.terminal">com.intellij.modules.remoteServers</depends>
+    <depends optional="true">com.intellij.modules.remoteServers</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.prettierJS/META-INF/plugin.xml">
     <id>-intellij-prettierJS-</id>
     <name>Prettier</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="intellij.prettierJS">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.websphere/META-INF/plugin.xml">
     <id>-WebSphere-</id>
@@ -351,20 +350,20 @@
     <depends>-com-intellij-java-i18n-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.gwt">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.gwt">-org-jetbrains-plugins-gradle-</depends>
-    <depends optional="true" config-file="intellij.gwt">-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.gwt">-JavaScriptDebugger-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
+    <depends optional="true">-com-intellij-spring-</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javascript.debugger/META-INF/plugin.xml">
     <id>-JavaScriptDebugger-</id>
     <name>JavaScript Debugger</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.javascript.debugger">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.javascript.debugger">-com-jetbrains-plugins-webDeployment-</depends>
-    <depends optional="true" config-file="intellij.javascript.debugger">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.javascript.debugger">com.intellij.modules.coverage</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">-com-jetbrains-plugins-webDeployment-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.apacheConfig/META-INF/plugin.xml">
     <id>-com-intellij-apacheConfig-</id>
@@ -382,16 +381,16 @@
     <name>Spring Support</name>
     <depends>-com-intellij-java-i18n-</depends>
     <depends>-com-intellij-properties-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-jsp-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-jsf-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-hibernate-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-com-intellij-aop-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-org-jetbrains-idea-eclipse-</depends>
-    <depends optional="true" config-file="intellij.spring.core">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
+    <depends optional="true">-com-intellij-jsf-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">-com-intellij-hibernate-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-aop-</depends>
+    <depends optional="true">-org-jetbrains-idea-eclipse-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.jsp.base.impl/META-INF/plugin.xml">
@@ -399,8 +398,8 @@
     <name>Java Server Pages (JSP)</name>
     <depends>com.intellij.modules.xml</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.javaee.jsp.base.impl">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.javaee.jsp.base.impl">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.aspectj/META-INF/plugin.xml">
     <id>-com-intellij-aspectj-</id>
@@ -408,8 +407,8 @@
     <depends>com.intellij.modules.java</depends>
     <depends>-com-intellij-aop-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.aspectj">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.aspectj">-com-intellij-copyright-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.hibernate/META-INF/plugin.xml">
     <id>-com-intellij-hibernate-</id>
@@ -424,14 +423,14 @@
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-jsp-</depends>
     <depends>-JavaScript-</depends>
-    <depends optional="true" config-file="intellij.javaee.jsf">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.javaee.jsf">-com-intellij-cdi-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-cdi-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.cdi/META-INF/plugin.xml">
     <id>-com-intellij-cdi-</id>
     <name>Java EE: Contexts and Dependency Injection</name>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.javaee.cdi">-com-intellij-diagram-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.dsm/META-INF/plugin.xml">
     <id>-com-intellij-dsm-</id>
@@ -442,8 +441,8 @@
   <idea-plugin url="file://out/intellij.maven.ext/META-INF/plugin.xml">
     <id>-org-jetbrains-idea-maven-ext-</id>
     <name>Maven Extension</name>
-    <depends optional="true" config-file="intellij.maven.ext">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.maven.ext">-com-intellij-diagram-</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
     <depends>-org-jetbrains-idea-maven-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
@@ -457,21 +456,21 @@
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.microservices</depends>
     <depends>-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-JavaScript-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-com-intellij-freemarker-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-com-intellij-velocity-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-com-intellij-thymeleaf-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.spring.mvc.impl">-com-jetbrains-restClient-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-JavaScript-</depends>
+    <depends optional="true">-com-intellij-freemarker-</depends>
+    <depends optional="true">-com-intellij-velocity-</depends>
+    <depends optional="true">-com-intellij-thymeleaf-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-com-jetbrains-restClient-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.freemarker/META-INF/plugin.xml">
     <id>-com-intellij-freemarker-</id>
     <name>FreeMarker</name>
-    <depends optional="true" config-file="intellij.freemarker">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.freemarker">-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.freemarker">-com-intellij-java-i18n-</depends>
-    <depends optional="true" config-file="intellij.freemarker">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">-com-intellij-spring-</depends>
+    <depends optional="true">-com-intellij-java-i18n-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.ultimate</depends>
@@ -479,7 +478,7 @@
   <idea-plugin url="file://out/intellij.velocity/META-INF/plugin.xml">
     <id>-com-intellij-velocity-</id>
     <name>Velocity</name>
-    <depends optional="true" config-file="intellij.velocity">-com-intellij-java-i18n-</depends>
+    <depends optional="true">-com-intellij-java-i18n-</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.ultimate</depends>
@@ -490,8 +489,8 @@
     <depends>-JavaScript-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-jsp-</depends>
-    <depends optional="true" config-file="intellij.thymeleaf">-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.thymeleaf">-com-intellij-spring-security-</depends>
+    <depends optional="true">-com-intellij-spring-</depends>
+    <depends optional="true">-com-intellij-spring-security-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.security/META-INF/plugin.xml">
     <id>-com-intellij-spring-security-</id>
@@ -499,8 +498,8 @@
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-aop-</depends>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.spring.security">-com-intellij-jsp-</depends>
-    <depends optional="true" config-file="intellij.spring.security">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.html.tools/META-INF/plugin.xml">
     <id>-HtmlTools-</id>
@@ -517,7 +516,7 @@
   <idea-plugin url="file://out/intellij.javaee.jax.ws/META-INF/plugin.xml">
     <id>-Java EE: Web Services (JAX-WS)-</id>
     <name>Java EE: Web Services (JAX-WS)</name>
-    <depends optional="true" config-file="intellij.javaee.jax.ws">-com-intellij-spring-</depends>
+    <depends optional="true">-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.java</depends>
@@ -579,37 +578,37 @@
     <depends>com.intellij.modules.java</depends>
     <depends>-Coverage-</depends>
     <depends>-org-jetbrains-plugins-yaml-</depends>
-    <depends optional="true" config-file="intellij.python.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
-    <depends optional="true" config-file="???">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="???">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="???">-org-jetbrains-plugins-rest-</depends>
-    <depends optional="true" config-file="???">-org-jetbrains-plugins-localization-</depends>
-    <depends optional="true" config-file="???">com.intellij.modules.database</depends>
-    <depends optional="true" config-file="intellij.python.remoteInterpreter">-org-jetbrains-plugins-remote-run-</depends>
-    <depends optional="true" config-file="???">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.python.plugin">-gherkin-</depends>
-    <depends optional="true" config-file="intellij.python.wsl">-org-jetbrains-plugins-wsl-</depends>
-    <depends optional="true" config-file="???">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.python.docker">-Docker-</depends>
-    <depends optional="true" config-file="intellij.python.jupyter">-org-intellij-plugins-markdown-</depends>
-    <depends optional="true" config-file="???">-org-jetbrains-plugins-terminal-</depends>
+    <depends optional="true">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">-org-jetbrains-plugins-rest-</depends>
+    <depends optional="true">-org-jetbrains-plugins-localization-</depends>
+    <depends optional="true">com.intellij.modules.database</depends>
+    <depends optional="true">-org-jetbrains-plugins-remote-run-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">-gherkin-</depends>
+    <depends optional="true">-org-jetbrains-plugins-wsl-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-Docker-</depends>
+    <depends optional="true">-org-intellij-plugins-markdown-</depends>
+    <depends optional="true">-org-jetbrains-plugins-terminal-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.docker/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-docker-</id>
     <name>Python Docker</name>
     <depends>com.intellij.modules.pycharm.professional</depends>
-    <depends optional="true" config-file="intellij.python.docker">-Docker-</depends>
+    <depends optional="true">-Docker-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.clouds.docker.impl/META-INF/plugin.xml">
     <id>-Docker-</id>
     <name>Docker</name>
     <depends>com.intellij.modules.remoteServers</depends>
     <depends>com.intellij.modules.json</depends>
-    <depends optional="true" config-file="intellij.clouds.docker.file">com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.clouds.docker.impl">com.intellij.modules.ssh</depends>
-    <depends optional="true" config-file="intellij.clouds.docker.java">-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.clouds.docker.java">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.clouds.docker.compose">-org-jetbrains-plugins-yaml-</depends>
+    <depends optional="true">com.intellij.modules.lang</depends>
+    <depends optional="true">com.intellij.modules.ssh</depends>
+    <depends optional="true">-com-intellij-javaee-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.struts2/META-INF/plugin.xml">
     <id>-com-intellij-struts2-</id>
@@ -617,10 +616,10 @@
     <depends>-com-intellij-javaee-</depends>
     <depends>-JavaScript-</depends>
     <depends>-com-intellij-java-i18n-</depends>
-    <depends optional="true" config-file="intellij.struts2">-com-intellij-freemarker-</depends>
-    <depends optional="true" config-file="intellij.struts2">-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.struts2">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.struts2">-com-intellij-velocity-</depends>
+    <depends optional="true">-com-intellij-freemarker-</depends>
+    <depends optional="true">-com-intellij-spring-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-com-intellij-velocity-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.webflow/META-INF/plugin.xml">
     <id>-com-intellij-spring-webflow-</id>
@@ -628,9 +627,9 @@
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-jsp-</depends>
-    <depends optional="true" config-file="intellij.spring.webflow">-com-intellij-spring-mvc-</depends>
-    <depends optional="true" config-file="intellij.spring.webflow">-com-intellij-spring-security-</depends>
-    <depends optional="true" config-file="intellij.spring.webflow">-com-intellij-diagram-</depends>
+    <depends optional="true">-com-intellij-spring-mvc-</depends>
+    <depends optional="true">-com-intellij-spring-security-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.w3validators/META-INF/plugin.xml">
     <id>-W3Validators-</id>
@@ -652,16 +651,16 @@
     <depends>-com-intellij-css-</depends>
     <depends>-com-intellij-properties-</depends>
     <depends>com.intellij.modules.idea.ultimate</depends>
-    <depends optional="true" config-file="intellij.flex">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.flex">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.flex">-AntSupport-</depends>
-    <depends optional="true" config-file="intellij.flex">-com-intellij-copyright-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-AntSupport-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.vcs.git/META-INF/plugin.xml">
     <id>-Git4Idea-</id>
     <name>Git</name>
     <depends>com.intellij.modules.vcs</depends>
-    <depends optional="true" config-file="intellij.java.remoteServers.git">-com-intellij-java-</depends>
+    <depends optional="true">-com-intellij-java-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.vcs.changeReminder/META-INF/plugin.xml">
     <id>-com-jetbrains-changeReminder-</id>
@@ -679,17 +678,17 @@
     <name>Spring Data</name>
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.spring.data">-com-intellij-jsp-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.integration.core/META-INF/plugin.xml">
     <id>-com-intellij-spring-integration-</id>
     <name>Spring Integration Patterns</name>
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.spring.integration.core">-org-intellij-groovy-</depends>
-    <depends optional="true" config-file="intellij.spring.integration.core">-com-intellij-spring-security-</depends>
-    <depends optional="true" config-file="intellij.spring.integration.core">-XPathView-</depends>
-    <depends optional="true" config-file="intellij.spring.integration.core">-com-intellij-diagram-</depends>
+    <depends optional="true">-org-intellij-groovy-</depends>
+    <depends optional="true">-com-intellij-spring-security-</depends>
+    <depends optional="true">-XPathView-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.ws/META-INF/plugin.xml">
     <id>-com-intellij-spring-ws-</id>
@@ -719,37 +718,37 @@
     <depends>-org-jetbrains-plugins-yaml-</depends>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.ruby-capable</depends>
-    <depends optional="true" config-file="intellij.ruby.duplicatesDetection">com.intellij.modules.duplicatesDetector</depends>
-    <depends optional="true" config-file="intellij.ruby.plugin">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.ruby.coverage">com.intellij.modules.coverage</depends>
-    <depends optional="true" config-file="intellij.ruby.dbConfig">com.intellij.modules.database</depends>
-    <depends optional="true" config-file="intellij.ruby.javascriptDebugger">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="intellij.ruby.uml">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.ruby.css">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.ruby.css">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.ruby.css">-org-jetbrains-plugins-sass-</depends>
-    <depends optional="true" config-file="intellij.ruby.haml">-org-jetbrains-plugins-haml-</depends>
-    <depends optional="true" config-file="intellij.ruby.slim">-org-jetbrains-plugins-slim-</depends>
-    <depends optional="true" config-file="intellij.ruby.puppet">-com-intellij-lang-puppet-</depends>
-    <depends optional="true" config-file="intellij.ruby.remoteInterpreter">-org-jetbrains-plugins-remote-run-</depends>
-    <depends optional="true" config-file="intellij.ruby.cucumber">-gherkin-</depends>
-    <depends optional="true" config-file="intellij.ruby.docker">-Docker-</depends>
-    <depends optional="true" config-file="intellij.ruby.wsl">-org-jetbrains-plugins-wsl-</depends>
-    <depends optional="true" config-file="???">-com-jetbrains-performancePlugin-</depends>
+    <depends optional="true">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
+    <depends optional="true">com.intellij.modules.database</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-org-jetbrains-plugins-sass-</depends>
+    <depends optional="true">-org-jetbrains-plugins-haml-</depends>
+    <depends optional="true">-org-jetbrains-plugins-slim-</depends>
+    <depends optional="true">-com-intellij-lang-puppet-</depends>
+    <depends optional="true">-org-jetbrains-plugins-remote-run-</depends>
+    <depends optional="true">-gherkin-</depends>
+    <depends optional="true">-Docker-</depends>
+    <depends optional="true">-org-jetbrains-plugins-wsl-</depends>
+    <depends optional="true">-com-jetbrains-performancePlugin-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.sass/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-sass-</id>
     <name>Sass</name>
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.sass">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.sass">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.puppet/META-INF/plugin.xml">
     <id>-com-intellij-lang-puppet-</id>
     <name>Puppet</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.puppet">-org-jetbrains-plugins-yaml-</depends>
+    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.slim/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-slim-</id>
@@ -769,21 +768,21 @@
     <name>Haml</name>
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.haml">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.haml">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.coffeescript/META-INF/plugin.xml">
     <id>-org-coffeescript-</id>
     <name>CoffeeScript</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-NodeJS-</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-JSIntentionPowerPack-</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.coffeescript">com.intellij.modules.sql</depends>
-    <depends optional="true" config-file="intellij.coffeescript">-com-intellij-plugins-html-instantEditing-</depends>
+    <depends optional="true">-NodeJS-</depends>
+    <depends optional="true">-JSIntentionPowerPack-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">com.intellij.modules.sql</depends>
+    <depends optional="true">-com-intellij-plugins-html-instantEditing-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.wsl/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-wsl-</id>
@@ -802,21 +801,21 @@
     <id>-com-intellij-tasks-</id>
     <name>Task Management</name>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.tasks.core">com.intellij.modules.java</depends>
-    <depends optional="true" config-file="???">-XPathView-</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">-XPathView-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.tapestry/META-INF/plugin.xml">
     <id>-com-intellij-tapestry-</id>
     <name>Tapestry</name>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-properties-</depends>
-    <depends optional="true" config-file="intellij.javaee.tapestry">-com-intellij-css-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.osgi/META-INF/plugin.xml">
     <id>-Osmorc-</id>
     <name>OSGi</name>
     <depends>com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.osgi">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.asp/META-INF/plugin.xml">
     <id>-com-jetbrains-plugins-asp-</id>
@@ -826,14 +825,14 @@
   <idea-plugin url="file://out/intellij.groovy.grails/META-INF/plugin.xml">
     <id>-org-intellij-grails-</id>
     <name>Grails</name>
-    <depends optional="true" config-file="intellij.groovy.grails">-JavaScript-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-com-intellij-java-i18n-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-com-intellij-hibernate-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.groovy.grails">com.intellij.modules.coverage</depends>
+    <depends optional="true">-JavaScript-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-java-i18n-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-com-intellij-hibernate-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-jsp-</depends>
     <depends>-org-intellij-groovy-</depends>
@@ -877,15 +876,15 @@
     <name>GitHub</name>
     <depends>com.intellij.modules.lang</depends>
     <depends>-Git4Idea-</depends>
-    <depends optional="true" config-file="intellij.vcs.github">-com-intellij-tasks-</depends>
+    <depends optional="true">-com-intellij-tasks-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.less/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-less-</id>
     <name>Less</name>
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.less">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.less">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.textmate/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-textmate-</id>
@@ -906,14 +905,14 @@
     <id>-com-intellij-phing-</id>
     <name>Phing</name>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.phing">-com-intellij-properties-</depends>
-    <depends optional="true" config-file="intellij.phing">-com-jetbrains-php-</depends>
+    <depends optional="true">-com-intellij-properties-</depends>
+    <depends optional="true">-com-jetbrains-php-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.php.commandLineTool/META-INF/plugin.xml">
     <id>-com-jetbrains-php-framework-</id>
     <name>Command Line Tool Support</name>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.php.commandLineTool">-com-jetbrains-php-</depends>
+    <depends optional="true">-com-jetbrains-php-</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.view/META-INF/plugin.xml">
@@ -934,23 +933,23 @@
     <depends>-JavaScript-</depends>
     <depends>-JavaScriptDebugger-</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.nodeJS">com.intellij.modules.coverage</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.play/META-INF/plugin.xml">
     <id>-com-intellij-play-</id>
     <name>Play Framework</name>
     <depends>-org-intellij-groovy-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.play">-com-intellij-persistence-</depends>
+    <depends optional="true">-com-intellij-persistence-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.dart/META-INF/plugin.xml">
     <id>-Dart-</id>
     <name>Dart</name>
     <depends>com.intellij.modules.xml</depends>
-    <depends optional="true" config-file="intellij.dart">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="intellij.dart">-org-jetbrains-plugins-yaml-</depends>
-    <depends optional="true" config-file="intellij.dart">-com-intellij-copyright-</depends>
-    <depends optional="true" config-file="intellij.dart">com.intellij.modules.coverage</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.vcs.svn/META-INF/plugin.xml">
     <id>-Subversion-</id>
@@ -962,7 +961,7 @@
     <name>JBoss jBPM</name>
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.jboss.jbpm">-com-intellij-jsp-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.jboss.drools/META-INF/plugin.xml">
     <id>-com-intellij-drools-</id>
@@ -988,7 +987,7 @@
     <id>-com-intellij-spring-batch-</id>
     <name>Spring Batch</name>
     <depends>-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.spring.batch">-com-intellij-jsp-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.remoteInterpreter/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-remote-interpreter-</id>
@@ -1001,7 +1000,7 @@
     <id>-com-intellij-vaadin-</id>
     <name>Vaadin</name>
     <depends>-com-intellij-gwt-</depends>
-    <depends optional="true" config-file="intellij.vaadin">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.tasks.timeTracking/META-INF/plugin.xml">
     <id>-com-intellij-tasks-timeTracking-</id>
@@ -1016,7 +1015,7 @@
     <depends>-com-intellij-diagram-</depends>
     <depends>-org-jetbrains-plugins-gradle-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.profiler.ultimate">com.intellij.modules.profiler</depends>
+    <depends optional="true">com.intellij.modules.profiler</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.cucumber.java/META-INF/plugin.xml">
     <id>-cucumber-java-</id>
@@ -1029,17 +1028,17 @@
     <name>JavaFX</name>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.java</depends>
-    <depends optional="true" config-file="intellij.javaFX">-com-intellij-properties-</depends>
-    <depends optional="true" config-file="intellij.javaFX.css">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.javaFX.css">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-properties-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.java.googleAppEngine.ultimate/META-INF/plugin.xml">
     <id>-com-intellij-appengine-</id>
     <name>Google App Engine</name>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.java.googleAppEngine.ultimate">-com-intellij-gwt-</depends>
+    <depends optional="true">-com-intellij-gwt-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.java.googleAppEngine">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.websocket/META-INF/plugin.xml">
     <id>-com-intellij-javaee-webSocket-</id>
@@ -1051,7 +1050,7 @@
     <name>Polymer &amp; Web Components</name>
     <depends>com.intellij.modules.xml</depends>
     <depends>-JavaScript-</depends>
-    <depends optional="true" config-file="intellij.webComponents">-com-intellij-css-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.ini/META-INF/plugin.xml">
     <id>-com-jetbrains-plugins-ini4idea-</id>
@@ -1068,7 +1067,7 @@
   <idea-plugin url="file://out/intellij.javaee.jax.rs/META-INF/plugin.xml">
     <id>-com-jetbrains-restWebServices-</id>
     <name>Java EE: RESTful Web Services (JAX-RS)</name>
-    <depends optional="true" config-file="intellij.javaee.jax.rs">-com-jetbrains-restClient-</depends>
+    <depends optional="true">-com-jetbrains-restClient-</depends>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>-com-intellij-javaee-</depends>
@@ -1080,11 +1079,6 @@
     <depends>-com-intellij-javaee-</depends>
     <depends>-com-intellij-cdi-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clouds.openShift/META-INF/plugin.xml">
-    <id>-OpenShift-</id>
-    <name>OpenShift integration</name>
-    <depends>com.intellij.modules.ultimate</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.errorProne/META-INF/plugin.xml">
     <id>-Error-prone plugin-</id>
     <name>Error Prone Compiler</name>
@@ -1095,7 +1089,7 @@
     <name>Spring WebSocket</name>
     <depends>-com-intellij-spring-</depends>
     <depends>-com-intellij-javaee-</depends>
-    <depends optional="true" config-file="intellij.spring.websocket">-JavaScript-</depends>
+    <depends optional="true">-JavaScript-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.ruby.chef/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-ruby-chef-</id>
@@ -1119,29 +1113,29 @@
     <name>Karma</name>
     <depends>com.intellij.modules.lang</depends>
     <depends>-JavaScript-</depends>
-    <depends optional="true" config-file="intellij.karma">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="intellij.karma">com.intellij.modules.coverage</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">com.intellij.modules.coverage</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.jboss.arquillian/META-INF/plugin.xml">
     <id>-com-intellij-jboss-arquillian-</id>
     <name>Arquillian</name>
     <depends>com.intellij.modules.ultimate</depends>
     <depends>-com-intellij-jboss-core-</depends>
-    <depends optional="true" config-file="intellij.jboss.arquillian">-TestNG-J-</depends>
-    <depends optional="true" config-file="intellij.jboss.arquillian">-JUnit-</depends>
+    <depends optional="true">-TestNG-J-</depends>
+    <depends optional="true">-JUnit-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.boot.core/META-INF/plugin.xml">
     <id>-com-intellij-spring-boot-</id>
     <name>Spring Boot</name>
     <depends>-com-intellij-spring-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-org-intellij-intelliLang-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-com-intellij-jsp-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-com-intellij-spring-mvc-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-com-intellij-spring-integration-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-org-jetbrains-plugins-yaml-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-org-jetbrains-plugins-gradle-</depends>
-    <depends optional="true" config-file="intellij.spring.boot.core">-com-intellij-diagram-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-com-intellij-jsp-</depends>
+    <depends optional="true">-com-intellij-spring-mvc-</depends>
+    <depends optional="true">-com-intellij-spring-integration-</depends>
+    <depends optional="true">-org-jetbrains-plugins-yaml-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.editorconfig/META-INF/plugin.xml">
     <id>-org-editorconfig-editorconfigjetbrains-</id>
@@ -1157,16 +1151,16 @@
     <depends>-JavaScript-</depends>
     <depends>-JavaScriptDebugger-</depends>
     <depends>-NodeJS-</depends>
-    <depends optional="true" config-file="intellij.nodeJS.remoteInterpreter">-Docker-</depends>
+    <depends optional="true">-Docker-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.angularJS/META-INF/plugin.xml">
     <id>-AngularJS-</id>
     <name>Angular and AngularJS</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="intellij.angularJS">-com-intellij-css-</depends>
-    <depends optional="true" config-file="intellij.angularJS">-com-intellij-diagram-</depends>
-    <depends optional="true" config-file="intellij.angularJS">-tslint-</depends>
+    <depends optional="true">-com-intellij-css-</depends>
+    <depends optional="true">-com-intellij-diagram-</depends>
+    <depends optional="true">-tslint-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.tslint/META-INF/plugin.xml">
     <id>-tslint-</id>
@@ -1183,12 +1177,12 @@
     <id>-org-intellij-plugins-markdown-</id>
     <name>Markdown</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.markdown">-org-intellij-intelliLang-</depends>
+    <depends optional="true">-org-intellij-intelliLang-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.android.plugin/META-INF/plugin.xml">
     <id>-org-jetbrains-android-</id>
     <name>Android Support</name>
-    <depends>com.intellij.modules.android-capable</depends>
+    <depends>com.intellij.modules.java-capable</depends>
     <depends>com.intellij.modules.java</depends>
     <depends>-org-intellij-intelliLang-</depends>
     <depends>-JUnit-</depends>
@@ -1196,13 +1190,13 @@
     <depends>-org-jetbrains-plugins-gradle-</depends>
     <depends>-org-intellij-groovy-</depends>
     <depends>-com-android-tools-idea-smali-</depends>
-    <depends optional="true" config-file="intellij.android.core">-org-jetbrains-kotlin-</depends>
-    <depends optional="true" config-file="intellij.android.core">-org-jetbrains-idea-maven-</depends>
-    <depends optional="true" config-file="intellij.android.core">-TestNG-J-</depends>
-    <depends optional="true" config-file="intellij.android.core">com.intellij.modules.androidstudio</depends>
-    <depends optional="true" config-file="intellij.android.sdkUpdates">com.intellij.modules.androidstudio</depends>
-    <depends optional="true" config-file="intellij.android.core">-org-jetbrains-idea-eclipse-</depends>
-    <depends optional="true" config-file="intellij.android.core">-com-intellij-database-</depends>
+    <depends optional="true">-org-jetbrains-kotlin-</depends>
+    <depends optional="true">-org-jetbrains-idea-maven-</depends>
+    <depends optional="true">-TestNG-J-</depends>
+    <depends optional="true">com.intellij.modules.androidstudio</depends>
+    <depends optional="true">com.intellij.modules.androidstudio</depends>
+    <depends optional="true">-org-jetbrains-idea-eclipse-</depends>
+    <depends optional="true">-com-intellij-database-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.statsCollector/META-INF/plugin.xml">
     <id>-com-intellij-stats-completion-</id>
@@ -1238,7 +1232,7 @@
     <depends>com.intellij.modules.php-capable</depends>
     <depends>-com-jetbrains-plugins-webDeployment-</depends>
     <depends>-org-jetbrains-plugins-remote-run-</depends>
-    <depends optional="true" config-file="intellij.php.remoteInterpreter">-com-jetbrains-php-</depends>
+    <depends optional="true">-com-jetbrains-php-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.clouds.kubernetes/META-INF/plugin.xml">
     <id>-com-intellij-kubernetes-</id>
@@ -1247,7 +1241,7 @@
     <depends>com.intellij.modules.json</depends>
     <depends>-org-jetbrains-plugins-yaml-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-    <depends optional="true" config-file="intellij.clouds.kubernetes.charts.gotpl">-org-jetbrains-plugins-go-template-</depends>
+    <depends optional="true">-org-jetbrains-plugins-go-template-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/go-template-192.5118.1.2576.jar/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-go-template-</id>
@@ -1265,8 +1259,8 @@
     <name>Vue.js</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="intellij.vuejs">-JavaScriptDebugger-</depends>
-    <depends optional="true" config-file="intellij.vuejs">-com-intellij-copyright-</depends>
+    <depends optional="true">-JavaScriptDebugger-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.yeoman/META-INF/plugin.xml">
     <id>-com-jetbrains-plugins-yeoman-</id>
@@ -1291,15 +1285,15 @@
     <id>-com-jetbrains-performancePlugin-</id>
     <name>Performance Testing</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="???">-Git4Idea-</depends>
+    <depends optional="true">-Git4Idea-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.stylus/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-stylus-</id>
     <name>Stylus</name>
     <depends>-com-intellij-css-</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.stylus">-com-intellij-plugins-watcher-</depends>
-    <depends optional="true" config-file="intellij.stylus">-com-intellij-copyright-</depends>
+    <depends optional="true">-com-intellij-plugins-watcher-</depends>
+    <depends optional="true">-com-intellij-copyright-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.configurationScript/META-INF/plugin.xml">
     <id>-com-intellij-configurationScript-</id>
@@ -1323,7 +1317,7 @@
     <name>Gradle native</name>
     <depends>com.intellij.modules.clion</depends>
     <depends>-com-intellij-gradle-</depends>
-    <depends optional="true" config-file="intellij.clion.gradle">com.intellij.modules.clion.ide</depends>
+    <depends optional="true">com.intellij.modules.clion.ide</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.clion.compdb/META-INF/plugin.xml">
     <id>-com-intellij-clion-compdb-</id>
@@ -1337,13 +1331,13 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.modules.clion</depends>
     <depends>-com-jetbrains-plugins-webDeployment-</depends>
-    <depends optional="true" config-file="intellij.clion.webDeployment">com.intellij.modules.clion.ide</depends>
+    <depends optional="true">com.intellij.modules.clion.ide</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.clion.embedded/META-INF/plugin.xml">
     <id>-com-intellij-clion-embedded-</id>
     <name>Embedded Development Support</name>
     <depends>com.intellij.modules.clion</depends>
-    <depends>com.intellij.modules.clion.cmake</depends>
+    <depends optional="true">com.intellij.modules.clion.cmake</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.cidr.clangFormat/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-clangFormat-</id>
@@ -1355,7 +1349,7 @@
     <id>-com-jetbrains-sh-</id>
     <name>Shell Script</name>
     <depends>com.intellij.modules.lang</depends>
-    <depends optional="true" config-file="intellij.sh">-org-jetbrains-plugins-terminal-</depends>
+    <depends optional="true">-org-jetbrains-plugins-terminal-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.jupyter/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-notebooks-jupyter-</id>

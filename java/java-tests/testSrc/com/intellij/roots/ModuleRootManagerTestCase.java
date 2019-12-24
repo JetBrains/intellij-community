@@ -145,11 +145,11 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
   }
 
-  protected boolean underTreeProjectModel() {
-    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.treeProjectModel.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
+  protected boolean underWorkspaceModel() {
+    return ModuleManager.getInstance(myProject).getClass().getName() == "com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent";
   }
 
-  protected void ignoreTestUnderTreeProjectModel() {
-    Assume.assumeFalse("Not applicable to treeProjectModel", underTreeProjectModel());
+  protected void ignoreTestUnderWorkspaceModel() {
+    Assume.assumeFalse("Not applicable to workspace model", underWorkspaceModel());
   }
 }

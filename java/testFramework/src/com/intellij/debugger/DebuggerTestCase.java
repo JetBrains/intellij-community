@@ -36,7 +36,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -51,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,6 +69,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       if (myDebugProcess != null) {
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
+        myDebugProcess.dispose();
       }
       myTearDownRunnables.forEach(Runnable::run);
       myTearDownRunnables.clear();
@@ -274,43 +273,22 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession[0];
   }
 
-  private static String generateShmemAddress() {
-    return "javadebug_" + (int)(Math.random() * 1000);
-  }
-
   protected DebuggerSession createRemoteProcess(final int transport, final boolean serverMode, JavaParameters javaParameters)
           throws ExecutionException {
-    boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
-
-    RemoteConnection remoteConnection = new RemoteConnection(
-      useSockets,
-      "127.0.0.1",
-      useSockets ? String.valueOf(DEFAULT_ADDRESS) : generateShmemAddress(),
-      serverMode);
-
-    String launchCommandLine = remoteConnection.getLaunchCommandLine();
-
-    launchCommandLine = StringUtil.replace(launchCommandLine,  RemoteConnection.ONTHROW, "");
-    launchCommandLine = StringUtil.replace(launchCommandLine,  RemoteConnection.ONUNCAUGHT, "");
-
-    launchCommandLine = StringUtil.replace(launchCommandLine, "suspend=n", "suspend=y");
-
-    //println(launchCommandLine, ProcessOutputTypes.SYSTEM);
-
-    for(StringTokenizer tokenizer = new StringTokenizer(launchCommandLine);tokenizer.hasMoreTokens();) {
-      String token = tokenizer.nextToken();
-      javaParameters.getVMParametersList().add(token);
-    }
+    RemoteConnection remoteConnection =
+      new RemoteConnectionBuilder(serverMode, transport, null)
+        .suspend(true)
+        .create(javaParameters);
 
     GeneralCommandLine commandLine = javaParameters.toCommandLine();
 
-
     DebuggerSession debuggerSession;
 
-    if(serverMode) {
+    if (serverMode) {
       debuggerSession = attachVM(remoteConnection, false);
       commandLine.createProcess();
-    } else {
+    }
+    else {
       commandLine.createProcess();
       debuggerSession = attachVM(remoteConnection, true);
     }

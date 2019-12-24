@@ -27,7 +27,7 @@ import java.util.*;
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 @Deprecated
 public class AbstractTreeUpdater implements Disposable, Activatable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
+  private static final Logger LOG = Logger.getInstance(AbstractTreeUpdater.class);
 
   private final LinkedList<TreeUpdatePass> myNodeQueue = new LinkedList<>();
   private final AbstractTreeBuilder myTreeBuilder;

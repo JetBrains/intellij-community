@@ -15,12 +15,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
-  protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
+  protected DiscoveredTestsIndex(@NotNull Path file) throws IOException {
     super(INDEX_EXTENSION,
           new MyIndexStorage(file),
-          new PersistentMapBasedForwardIndex(new File(file, "forward.idx")),
+          new PersistentMapBasedForwardIndex(file.resolve("forward.idx"), false),
           new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
@@ -39,7 +40,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   }
 
   private static class MyIndexStorage extends MapIndexStorage<Integer, TIntArrayList> {
-    protected MyIndexStorage(@NotNull File storageFile) throws IOException {
+    protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
     }
 

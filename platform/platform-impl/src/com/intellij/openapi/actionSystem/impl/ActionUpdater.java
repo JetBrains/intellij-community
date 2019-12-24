@@ -43,7 +43,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 class ActionUpdater {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionUpdater");
+  private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
 
   private final boolean myModalContext;

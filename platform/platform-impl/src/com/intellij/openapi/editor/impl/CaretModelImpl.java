@@ -45,7 +45,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
   @NotNull
   private volatile CaretImpl myPrimaryCaret;
-  private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
+  private final ThreadLocal<CaretImpl> myCurrentCaret = new ThreadLocal<>(); // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
   private boolean myVisualPositionUpdateScheduled;
   private boolean myEditorSizeValidationScheduled;
@@ -221,8 +221,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   @NotNull
   public CaretImpl getCurrentCaret() {
-    CaretImpl currentCaret = myCurrentCaret;
-    return ApplicationManager.getApplication().isDispatchThread() && currentCaret != null ? currentCaret : getPrimaryCaret();
+    CaretImpl currentCaret = myCurrentCaret.get();
+    return currentCaret != null ? currentCaret : getPrimaryCaret();
   }
 
   @Override
@@ -339,27 +339,32 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
-    EditorImpl.assertIsDispatchThread();
-    if (myCurrentCaret != null) {
+    if (myCurrentCaret.get() != null) {
       throw new IllegalStateException("Recursive runForEachCaret invocations are not allowed");
     }
-    myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
-    doWithCaretMerging(() -> {
+    Runnable iteration = () -> {
       try {
         List<Caret> sortedCarets = getAllCarets();
         if (reverseOrder) {
           Collections.reverse(sortedCarets);
         }
         for (Caret caret : sortedCarets) {
-          myCurrentCaret = (CaretImpl)caret;
+          myCurrentCaret.set((CaretImpl)caret);
           action.perform(caret);
         }
       }
       finally {
-        myCurrentCaret = null;
+        myCurrentCaret.set(null);
       }
-    });
-    myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      myCaretActionListeners.getMulticaster().beforeAllCaretsAction();
+      doWithCaretMerging(iteration);
+      myCaretActionListeners.getMulticaster().afterAllCaretsAction();
+    }
+    else {
+      iteration.run();
+    }
   }
 
   @Override
@@ -593,7 +598,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public boolean isIteratingOverCarets() {
-    return myCurrentCaret != null;
+    return myCurrentCaret.get() != null;
   }
 
   @NotNull
@@ -602,7 +607,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     return "[in update: " + myIsInUpdate +
            ", update counter: " + myDocumentUpdateCounter +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +
-           ", current caret: " + myCurrentCaret +
+           ", current caret: " + myCurrentCaret.get() +
            ", all carets: " + ContainerUtil.map(myCarets, CaretImpl::dumpState) + "]";
   }
 

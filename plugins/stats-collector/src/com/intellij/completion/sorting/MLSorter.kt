@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -18,6 +19,7 @@ import com.intellij.stats.personalization.session.SessionFactorsUtils
 import com.intellij.stats.storage.factors.MutableLookupStorage
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
@@ -121,7 +123,7 @@ class MLSorter : CompletionFinalSorter() {
       val position = positionsBefore.getValue(element)
       val (relevance, additional) = RelevanceUtil.asRelevanceMaps(relevanceObjects.getOrDefault(element, emptyList()))
       SessionFactorsUtils.saveElementFactorsTo(additional, lookupStorage, element)
-      calculateAdditionalFeaturesTo(additional, element, prefixLength, position, parameters)
+      calculateAdditionalFeaturesTo(additional, element, prefixLength, position, items.size, parameters)
       val score = when {
         rankingModel != null -> tracker.measure {
           calculateElementScore(rankingModel, element, position, features.withElementFeatures(relevance, additional), prefixLength)
@@ -147,7 +149,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     if (mlScoresUsed) {
-      lookupStorage.performanceTracker.reorderedByML()
+      lookupStorage.fireReorderedUsingMLScores()
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount)
     }
@@ -160,9 +162,11 @@ class MLSorter : CompletionFinalSorter() {
     lookupElement: LookupElement,
     prefixLength: Int,
     position: Int,
+    itemsCount: Int,
     parameters: CompletionParameters) {
 
     additionalMap["position"] = position
+    additionalMap["relative_position"] = position.toDouble() / itemsCount
     additionalMap["query_length"] = prefixLength
     additionalMap["result_length"] = lookupElement.lookupString.length
     additionalMap["auto_popup"] = parameters.isAutoPopup
@@ -177,14 +181,11 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int): Iterable<LookupElement> {
-    if (Registry.`is`("completion.stats.show.ml.ranking.diff")) {
+    if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
       this.forEachIndexed { position, element ->
         val before = positionsBefore.getValue(element)
         if (before < reordered || position < reordered) {
-          val diff = position - before
-          if (diff != 0) {
-            element.putUserData(ItemsDiffCustomizingContributor.DIFF_KEY, diff)
-          }
+          element.updateDiffValue(position - before)
         }
       }
     }
@@ -213,6 +214,13 @@ class MLSorter : CompletionFinalSorter() {
     cachedScore[element] = info
 
     return info.mlRank
+  }
+
+  private fun LookupElement.updateDiffValue(newValue: Int) {
+    val diff = getUserData(ItemsDiffCustomizingContributor.DIFF_KEY) ?: AtomicInteger()
+      .apply { putUserData(ItemsDiffCustomizingContributor.DIFF_KEY, this) }
+
+    diff.set(newValue)
   }
 
   /*

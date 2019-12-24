@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -86,7 +87,7 @@ public class HgCheckoutProvider implements CheckoutProvider {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
     return new HgCloneDialogComponent(project);
   }
 }

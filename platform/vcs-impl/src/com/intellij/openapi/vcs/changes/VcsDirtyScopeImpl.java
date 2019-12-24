@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -49,20 +49,20 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyFiles = new HashMap<>();
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<>();
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private final AbstractVcs myVcs;
+  @NotNull private final AbstractVcs myVcs;
   private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
   private final boolean myWasEverythingDirty;
 
-  public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
-    this(vcs, project, false);
+  public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
+    this(vcs, false);
   }
 
-  public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project, boolean wasEverythingDirty) {
-    myProject = project;
+  public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs, boolean wasEverythingDirty) {
     myVcs = vcs;
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myProject = vcs.getProject();
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myWasEverythingDirty = wasEverythingDirty;
     myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
       @NotNull
@@ -104,11 +104,13 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return myAffectedContentRoots;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
     return myVcs;
@@ -424,7 +426,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
 
     final VirtualFile vcsRoot = rootObject.getPath();
     boolean pathIsRoot = vcsRoot.equals(path.getVirtualFile());
-    for (VirtualFile contentRoot : myAffectedContentRoots) {
+    for (VirtualFile contentRoot : myDirtyDirectoriesRecursively.keySet()) {
       // since we don't know exact dirty mechanics, maybe we have 3 nested mappings like:
       // /root -> vcs1, /root/child -> vcs2, /root/child/inner -> vcs1, and we have file /root/child/inner/file,
       // mapping is detected as vcs1 with root /root/child/inner, but we could possibly have in scope
@@ -432,7 +434,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       boolean strict = pathIsRoot && !myVcs.areDirectoriesVersionedItems();
       if (VfsUtilCore.isAncestor(contentRoot, vcsRoot, strict)) {
         THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
-        if (dirsByRoot != null && hasAncestor(dirsByRoot, path)) {
+        if (hasAncestor(dirsByRoot, path)) {
           return true;
         }
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -32,9 +18,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -84,7 +70,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   private static boolean isRequestValid(@Nullable DiffRequest request) {
-    if (request instanceof ErrorDiffRequest) return false;
     if (request instanceof ContentDiffRequest) {
       for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
         // We compare CurrentContentRevision by their FilePath in cache map
@@ -403,28 +388,28 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   protected static class UnversionedFileWrapper extends Wrapper {
-    @NotNull protected final VirtualFile file;
+    @NotNull protected final FilePath path;
 
-    public UnversionedFileWrapper(@NotNull VirtualFile file) {
-      this.file = file;
+    public UnversionedFileWrapper(@NotNull FilePath path) {
+      this.path = path;
     }
 
     @NotNull
     @Override
     public Object getUserObject() {
-      return file;
+      return path;
     }
 
     @Nullable
     @Override
     public String getPresentableName() {
-      return file.getName();
+      return path.getName();
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return UnversionedDiffRequestProducer.create(project, file);
+      return UnversionedDiffRequestProducer.create(project, path);
     }
   }
 

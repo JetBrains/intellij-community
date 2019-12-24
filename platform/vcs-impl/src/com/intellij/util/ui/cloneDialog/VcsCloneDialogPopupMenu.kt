@@ -36,11 +36,13 @@ sealed class AccountMenuItem(val showSeparatorAbove: Boolean) {
 }
 
 class AccountMenuPopupStep(items: List<AccountMenuItem>) : BaseListPopupStep<AccountMenuItem>(null, items) {
-  override fun hasSubstep(selectedValue: AccountMenuItem?) = selectedValue is AccountMenuItem.Account && selectedValue.actions.isNotEmpty()
+  override fun hasSubstep(selectedValue: AccountMenuItem?): Boolean {
+    return selectedValue is AccountMenuItem.Account && selectedValue.actions.isNotEmpty()
+  }
 
   override fun onChosen(selectedValue: AccountMenuItem, finalChoice: Boolean): PopupStep<*>? = when (selectedValue) {
     is AccountMenuItem.Action -> doFinalStep(selectedValue.runnable)
-    is AccountMenuItem.Account -> AccountMenuPopupStep(selectedValue.actions)
+    is AccountMenuItem.Account -> if (selectedValue.actions.isEmpty()) null else AccountMenuPopupStep(selectedValue.actions)
   }
 
   override fun getBackgroundFor(value: AccountMenuItem?) = UIUtil.getPanelBackground()

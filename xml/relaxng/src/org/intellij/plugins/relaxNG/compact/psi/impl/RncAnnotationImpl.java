@@ -34,6 +34,7 @@ public class RncAnnotationImpl extends RncElementImpl implements RncAnnotation {
     visitor.visitAnnotation(this);
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getNode().getElementType();

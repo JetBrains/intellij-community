@@ -28,7 +28,7 @@ import java.util.function.Predicate;
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleInsight {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
+  private static final Logger LOG = Logger.getInstance(ModuleInsight.class);
   @NotNull protected final ProgressIndicatorWrapper myProgress;
 
   private final Set<File> myEntryPointRoots = new HashSet<>();

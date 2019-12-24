@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.NavigationItem;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> extends ProjectViewNode<Type> implements PsiElementNavigationItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
+  private static final Logger LOG = Logger.getInstance(BasePsiNode.class);
 
   BaseSmartPointerPsiNode(@NotNull Project project, @NotNull Type value, @NotNull ViewSettings viewSettings) {
     super(project, value, viewSettings);

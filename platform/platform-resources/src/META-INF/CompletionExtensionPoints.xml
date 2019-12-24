@@ -1,0 +1,41 @@
+<idea-plugin>
+  <extensionPoints>
+
+    <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.ml.contextFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ContextFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.ml.model" interface="com.intellij.internal.ml.completion.RankingModelProvider" dynamic="true"/>
+
+    <extensionPoint name="completion.ml.elementFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.ElementFeatureProvider"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.plainTextSymbol" beanClass="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributorEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.PlainTextSymbolCompletionContributor"/>
+    </extensionPoint>
+
+    <extensionPoint name="completion.preselectionBehaviourProvider" interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider" dynamic="true"/>
+
+    <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
+    <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
+
+    <extensionPoint name="createDirectoryCompletionContributor" beanClass="com.intellij.ide.actions.CreateDirectoryCompletionContributorEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.ide.actions.CreateDirectoryCompletionContributor"/>
+    </extensionPoint>
+
+    <extensionPoint name="codeInsight.wordCompletionFilter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.WordCompletionElementFilter"/>
+    </extensionPoint>
+
+    <extensionPoint name="templateParameterTraversalPolicy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy"/>
+    </extensionPoint>
+
+    <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

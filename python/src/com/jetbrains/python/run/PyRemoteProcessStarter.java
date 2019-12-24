@@ -26,9 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ public class PyRemoteProcessStarter {
   public static final Key<Boolean> OPEN_FOR_INCOMING_CONNECTION = Key.create("OPEN_FOR_INCOMING_CONNECTION");
   public static final Key<HostAndPort> WEB_SERVER_HOST_AND_PORT = new Key<>("WEB_SERVER_HOST_AND_PORT");
 
+  @NotNull
   public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,
                                            @NotNull GeneralCommandLine commandLine,
                                            @Nullable Project project,
@@ -48,6 +51,9 @@ public class PyRemoteProcessStarter {
 
     try {
       processHandler = doStartRemoteProcess(sdk, commandLine, project, pathMapper);
+    }
+    catch (UnsupportedPythonSdkTypeException e) {
+      throw new ExecutionException(PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()), e);
     }
     catch (ExecutionException e) {
       final Application application = ApplicationManager.getApplication();
@@ -60,6 +66,21 @@ public class PyRemoteProcessStarter {
     return processHandler;
   }
 
+  /**
+   * Starts a process using corresponding support (e.g. SSH, Vagrant, Docker,
+   * etc.) for the provided {@code sdk}.
+   *
+   * @param sdk         the Python SDK
+   * @param commandLine the command line to start the Python interpreter
+   * @param project     the optional project for additional path mappings
+   * @param pathMapper  the mapping between paths on the host machine and the one
+   *                    the process will be executed on
+   * @return process handler for created process
+   * @throws ExecutionException
+   * @throws UnsupportedPythonSdkTypeException if support cannot be found for
+   *                                           the type of the provided sdk
+   */
+  @NotNull
   protected ProcessHandler doStartRemoteProcess(@NotNull Sdk sdk,
                                                 @NotNull final GeneralCommandLine commandLine,
                                                 @Nullable final Project project,

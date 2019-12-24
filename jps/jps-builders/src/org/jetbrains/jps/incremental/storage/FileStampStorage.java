@@ -4,33 +4,30 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.FileStamp;
 import static org.jetbrains.jps.incremental.storage.FileStampStorage.HashStampPerTarget;
 import static org.jetbrains.jps.incremental.storage.FileTimestampStorage.Timestamp;
+import static org.jetbrains.jps.incremental.storage.MurmurHashingService.*;
 
 public class FileStampStorage extends AbstractStateStorage<String, HashStampPerTarget[]> implements TimestampStorage<FileStamp> {
-  private static final ThreadLocal<MessageDigest> MESSAGE_DIGEST_THREAD_LOCAL = new ThreadLocal<>();
-  private static final String HASH_FUNCTION = "MD5";
-  private static final byte CARRIAGE_RETURN_CODE = 13;
-  private static final byte LINE_FEED_CODE = 10;
-  private static final int HASH_FUNCTION_SIZE = 16;
   private final FileTimestampStorage myTimestampStorage;
   private final PathRelativizerService myRelativizer;
   private final BuildTargetsState myTargetsState;
   private final File myFileStampRoot;
 
   public FileStampStorage(File dataStorageRoot, PathRelativizerService relativizer, BuildTargetsState targetsState) throws IOException {
-    super(new File(calcStorageRoot(dataStorageRoot), "data"), ProjectStamps.PORTABLE_CACHES ? new PortablePathStringDescriptor() : new PathStringDescriptor(),
-          new StateExternalizer());
+    super(new File(calcStorageRoot(dataStorageRoot), "data"), PathStringDescriptor.INSTANCE, new StateExternalizer());
     myTimestampStorage = new FileTimestampStorage(dataStorageRoot, targetsState);
     myFileStampRoot = calcStorageRoot(dataStorageRoot);
     myRelativizer = relativizer;
@@ -112,45 +109,21 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
     return FileStamp.EMPTY;
   }
 
+  @Nullable
+  public byte[] getStoredFileHash(File file, BuildTarget<?> target) throws IOException {
+    HashStampPerTarget[] state = getState(relativePath(file));
+    if (state == null) return null;
+    int targetId = myTargetsState.getBuildTargetId(target);
+    for (HashStampPerTarget filesStampPerTarget : state) {
+      if (filesStampPerTarget.targetId == targetId) return filesStampPerTarget.hash;
+    }
+    return null;
+  }
+
   @Override
   public FileStamp getCurrentStamp(File file) throws IOException {
     Timestamp currentTimestamp = myTimestampStorage.getCurrentStamp(file);
     return new FileStamp(getFileHash(file), currentTimestamp.asLong());
-  }
-
-  private static byte[] getFileHash(@NotNull File file) throws IOException {
-    MessageDigest md = getMessageDigest();
-    md.reset();
-    try (FileInputStream fis = new FileInputStream(file)) {
-      byte[] buffer = new byte[1024 * 1024];
-      int length;
-      while ((length = fis.read(buffer)) != -1) {
-        byte[] result = new byte[length];
-        int copiedBytes = 0;
-        for (int i = 0; i < length; i++) {
-          if (buffer[i] != CARRIAGE_RETURN_CODE && ((i + 1) >= length || buffer[i + 1] != LINE_FEED_CODE)) {
-            result[copiedBytes] = buffer[i];
-            copiedBytes++;
-          }
-        }
-        md.update(copiedBytes != result.length ? Arrays.copyOf(result, result.length - (result.length - copiedBytes)) : result);
-      }
-    }
-    return md.digest();
-  }
-
-  @NotNull
-  private static MessageDigest getMessageDigest() throws IOException {
-    MessageDigest messageDigest = MESSAGE_DIGEST_THREAD_LOCAL.get();
-    if (messageDigest != null) return messageDigest;
-    try {
-      messageDigest = MessageDigest.getInstance(HASH_FUNCTION);
-      MESSAGE_DIGEST_THREAD_LOCAL.set(messageDigest);
-      return messageDigest;
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new IOException(e);
-    }
   }
 
   @Override
@@ -238,7 +211,7 @@ public class FileStampStorage extends AbstractStateStorage<String, HashStampPerT
       HashStampPerTarget[] targets = new HashStampPerTarget[size];
       for (int i = 0; i < size; i++) {
         int id = in.readInt();
-        byte[] bytes = new byte[HASH_FUNCTION_SIZE];
+        byte[] bytes = new byte[HASH_SIZE];
         in.readFully(bytes);
         targets[i] = new HashStampPerTarget(id, bytes);
       }

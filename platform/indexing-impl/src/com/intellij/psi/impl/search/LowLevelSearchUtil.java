@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 import static com.intellij.openapi.util.text.StringUtil.isEscapedBackslash;
 
 public class LowLevelSearchUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
+  private static final Logger LOG = Logger.getInstance(LowLevelSearchUtil.class);
 
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found

@@ -39,7 +39,7 @@ import java.io.IOException;
  */
 public class SshConnectionSettings extends CvsConnectionSettings {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ssh.SshConnectionSettings");
+  private static final Logger LOG = Logger.getInstance(SshConnectionSettings.class);
 
   public SshConnectionSettings(CvsRootConfiguration cvsRootConfiguration) {
     super(cvsRootConfiguration);

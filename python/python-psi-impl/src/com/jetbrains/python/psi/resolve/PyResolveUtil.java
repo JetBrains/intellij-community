@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author vlan
@@ -215,7 +216,7 @@ public class PyResolveUtil {
     final String firstName = qualifiedName.getFirstComponent();
     if (firstName == null || !(scopeOwner instanceof PyTypedElement)) return Collections.emptyList();
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
     final List<? extends RatedResolveResult> unqualifiedResults;
     if (scopeOwner instanceof PyiFile) {
@@ -223,6 +224,23 @@ public class PyResolveUtil {
       // `resolveMember` delegates to `multiResolveName(..., true)` and
       // it skips elements that are imported without `as`
       unqualifiedResults = ((PyiFile)scopeOwner).multiResolveName(firstName, false);
+    }
+    else if (scopeOwner instanceof PyFunction) {
+      final Stream<PsiNamedElement> targets = StreamEx
+        .of(PsiTreeUtil.getStubChildrenOfTypeAsList(scopeOwner, PyTargetExpression.class))
+        .filter(it -> !it.isQualified())
+        .select(PsiNamedElement.class);
+
+      final Stream<PsiNamedElement> parameters = StreamEx
+        .of(((PyFunction)scopeOwner).getParameterList().getParameters())
+        .select(PsiNamedElement.class);
+
+      unqualifiedResults = StreamEx
+        .of(targets)
+        .append(parameters)
+        .filter(it -> firstName.equals(it.getName()))
+        .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .toList();
     }
     else {
       final PyType scopeType = context.getType((PyTypedElement)scopeOwner);

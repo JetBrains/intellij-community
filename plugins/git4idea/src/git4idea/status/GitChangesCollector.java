@@ -320,6 +320,10 @@ class GitChangesCollector {
           else if (yStatus == 'R') {
             reportRename(filepath, oldFilepath, head);
           }
+          else if (yStatus == 'A') {
+            // [DA] status is not documented, but might be reported by git
+            reportModified(filepath, head);
+          }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -12,11 +13,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateConstructorHandler");
+  private static final Logger LOG = Logger.getInstance(GenerateConstructorHandler.class);
 
   private boolean myCopyJavadoc;
 
@@ -61,6 +65,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
                                  CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return null;
+    }
+
+    if (aClass.isRecord() && JavaPsiRecordUtil.findCanonicalConstructor(aClass) == null) {
+      RecordConstructorChooserDialog dialog = new RecordConstructorChooserDialog(aClass);
+      if (!dialog.showAndGet()) return null;
+      ClassMember member = dialog.getClassMember();
+      if (member != null) {
+        return new ClassMember[]{member};
+      }
     }
 
     myCopyJavadoc = false;
@@ -146,10 +159,15 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+    if (members.length == 1 && members[0] instanceof RecordConstructorMember) {
+      boolean compact = ((RecordConstructorMember)members[0]).isCompact();
+      return Collections.singletonList(new PsiGenerationInfo<>(generateRecordConstructor(aClass, compact)));
+    }
+
     List<PsiMethod> baseConstructors = new ArrayList<>();
     List<PsiField> fieldsVector = new ArrayList<>();
     for (ClassMember member1 : members) {
-      PsiElement member = ((PsiElementClassMember)member1).getElement();
+      PsiElement member = ((PsiElementClassMember<?>)member1).getElement();
       if (member instanceof PsiMethod) {
         baseConstructors.add((PsiMethod)member);
       }
@@ -177,6 +195,43 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     final List<GenerationInfo> constructors =
       Collections.singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
     return filterOutAlreadyInsertedConstructors(aClass, constructors);
+  }
+
+  @NotNull
+  private static PsiMethod generateRecordConstructor(PsiClass aClass, boolean compact) {
+    String constructor;
+    if (compact) {
+      constructor = "public " + aClass.getName() + "{\n}";
+    }
+    else {
+      PsiRecordComponent[] components = aClass.getRecordComponents();
+      String parameters = StreamEx.of(components).map(PsiRecordComponent::getText).joining(",", "(", ")");
+      String body =
+        StreamEx.of(components).map(PsiRecordComponent::getName).map(name -> "this." + name + "=" + name + ";\n").joining("", "{", "}");
+      constructor = "public " + aClass.getName() + parameters + body;
+    }
+    Project project = aClass.getProject();
+    PsiMethod ctor = JavaPsiFacade.getElementFactory(project).createMethodFromText(constructor, aClass);
+    if (!compact) {
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
+      boolean finalParameters = settings.isGenerateFinalParameters();
+      PsiParameterList parameterList = ctor.getParameterList();
+      for (PsiParameter parameter : parameterList.getParameters()) {
+        PsiModifierList modifierList = parameter.getModifierList();
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.FINAL, finalParameters);
+          PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(modifierList);
+          for (PsiAnnotation annotation : parameter.getAnnotations()) {
+            PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
+            if (applicable == null) {
+              annotation.delete();
+            }
+          }
+        }
+      }
+    }
+    CodeStyleManager.getInstance(project).reformat(ctor);
+    return ctor;
   }
 
   private static List<? extends GenerationInfo> filterOutAlreadyInsertedConstructors(PsiClass aClass, List<? extends GenerationInfo> constructors) {

@@ -36,7 +36,8 @@ object UpdateInfoPanelUI {
   private const val PATCH_SIZE_IS = "Patch size is"
   private val FROM_TO_PATCHES_REGEXP: Regex = "from \\d+ to (\\d+)".toRegex()
   private val DIVIDER_COLOR = JBColor(0xd9d9d9, 0x515151)
-  private const val DEFAULT_HEIGHT = 600
+  private const val DEFAULT_MIN_HEIGHT = 300
+  private const val DEFAULT_MAX_HEIGHT = 600
   private const val DEFAULT_WIDTH = 700
 
   fun createPanel(newBuild: BuildInfo,
@@ -72,7 +73,8 @@ object UpdateInfoPanelUI {
     val updateHighlightsScrollPane = ScrollPaneFactory.createScrollPane(updateHighlightsComponent, true)
       .also {
         it.border = JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0)
-        it.preferredSize = Dimension(min(it.preferredSize.width, DEFAULT_WIDTH), min(it.preferredSize.height, DEFAULT_HEIGHT))
+        it.preferredSize = Dimension(min(it.preferredSize.width, DEFAULT_WIDTH),
+                                     it.preferredSize.height.coerceIn(DEFAULT_MIN_HEIGHT, DEFAULT_MAX_HEIGHT))
       }
 
     val updatingVersionAndPatches = JBLabel()
@@ -158,8 +160,10 @@ object UpdateInfoPanelUI {
       message = IdeBundle.message("updates.new.version.available", appNames.fullProductName, downloadUrl(newBuildInfo, updateChannel))
     }
 
-    return "$message<br><br>" + newBuildInfo.buttons.filter { !it.isDownload }
-      .joinToString("<br>") { "<a href=\"${it.url}\">${it.name}</href>" }
+    return "$message<br><br>" + newBuildInfo.buttons
+      .filter { !it.isDownload }
+      .filter { it.name != "More Information"}
+      .joinToString("<br><br>") { "<a href=\"${it.url}\">${it.name}</href>" }
   }
 
   private fun calculatePatchSize(patchesChain: UpdateChain?, testPatch: File?): String {

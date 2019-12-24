@@ -7,7 +7,6 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
@@ -15,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -22,6 +22,7 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.Git;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +30,11 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.concurrent.ExecutorService;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
@@ -81,36 +83,43 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   }
 
   /**
-   * @see GitRepositoryManager#getRepositoryForRoot
+   * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
    */
   @NotNull
   @Deprecated
   public static GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
-    return getInstance(root, project, project, listenToRepoChanges);
+    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    return notNull(repository, () -> createInstance(root, project, project, listenToRepoChanges));
   }
 
+  /**
+   * Creates a new instance of the GitRepository for the given Git root directory. <br/>
+   * Use {@link GitRepositoryManager#getRepositoryForRoot(VirtualFile)} if you need to obtain an instance
+   */
+  @ApiStatus.Internal
   @NotNull
-  public static GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
-                                          boolean listenToRepoChanges) {
-    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
+  public static GitRepository createInstance(@NotNull VirtualFile root,
+                                             @NotNull Project project,
+                                             @NotNull Disposable parentDisposable,
+                                             boolean listenToRepoChanges) {
+    return createInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, parentDisposable, listenToRepoChanges);
   }
 
+  @ApiStatus.Internal
   @NotNull
-  public static GitRepository getInstance(@NotNull VirtualFile root,
-                                          @NotNull VirtualFile gitDir,
-                                          @NotNull Project project,
-                                          @NotNull Disposable parentDisposable,
-                                          boolean listenToRepoChanges) {
+  static GitRepository createInstance(@NotNull VirtualFile root,
+                                      @NotNull VirtualFile gitDir,
+                                      @NotNull Project project,
+                                      @NotNull Disposable parentDisposable,
+                                      boolean listenToRepoChanges) {
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable, !listenToRepoChanges);
     if (listenToRepoChanges) {
       repository.getUntrackedFilesHolder().setupVfsListener(project);
       repository.getIgnoredFilesHolder().setupListeners();
       repository.setupUpdater();
-      notifyListenersAsync(repository);
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     }
     return repository;
   }
@@ -274,17 +283,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
   }
 
-  private static void notifyIfRepoChanged(@NotNull final GitRepository repository,
+  private static void notifyIfRepoChanged(@NotNull GitRepository repository,
                                           @NotNull GitRepoInfo previousInfo,
                                           @NotNull GitRepoInfo info) {
-    if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
-      notifyListenersAsync(repository);
+    Project project = repository.getProject();
+    if (!project.isDisposed() && !info.equals(previousInfo)) {
+      GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
     }
-  }
-
-  private static void notifyListenersAsync(@NotNull GitRepository repository) {
-    Runnable task = () -> syncPublisher(repository.getProject(), GIT_REPO_CHANGE).repositoryChanged(repository);
-    BackgroundTaskUtil.executeOnPooledThread(repository, task);
   }
 
   @NotNull

@@ -32,7 +32,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    */
   enum TargetType {
     // see java.lang.annotation.ElementType
-    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE,
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE, RECORD_COMPONENT,
     // auxiliary value, used when it's impossible to determine annotation's targets
     UNKNOWN;
 

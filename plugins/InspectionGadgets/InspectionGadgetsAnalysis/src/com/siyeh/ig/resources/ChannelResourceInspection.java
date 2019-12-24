@@ -18,7 +18,6 @@ package com.siyeh.ig.resources;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +27,6 @@ public class ChannelResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "ChannelOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("channel.opened.not.closed.display.name");
   }
 
   @Override

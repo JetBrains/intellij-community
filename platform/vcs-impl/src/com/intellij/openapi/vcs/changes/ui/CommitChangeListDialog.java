@@ -13,11 +13,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
@@ -190,13 +192,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     Set<AbstractVcs> affectedVcses = new HashSet<>();
     if (forceCommitInVcs != null) affectedVcses.add(forceCommitInVcs);
     for (LocalChangeList list : changeLists) {
-      //noinspection unchecked
-      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcses(list.getChanges(), project));
+      affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
     }
     if (showVcsCommit) {
       List<VirtualFile> unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles();
-      //noinspection unchecked
-      affectedVcses.addAll((Set)ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
+      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
     }
 
 
@@ -311,6 +311,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     showDetailsIfSaved();
+
+    LaterInvocator.markTransparent(ModalityState.stateForComponent(getComponent()));
   }
 
   @NotNull
@@ -588,6 +590,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myCommitMessageArea.getEditorField();
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return mySplitter;
@@ -666,13 +669,13 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @NotNull
   @Override
-  public List<VirtualFile> getDisplayedUnversionedFiles() {
+  public List<FilePath> getDisplayedUnversionedFiles() {
     return getBrowser().getDisplayedUnversionedFiles();
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> getIncludedUnversionedFiles() {
+  public List<FilePath> getIncludedUnversionedFiles() {
     return getBrowser().getIncludedUnversionedFiles();
   }
 
@@ -798,9 +801,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Stream<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends VirtualFile> unversioned) {
-      return Stream.concat(changes.stream().map(ChangeWrapper::new),
-                           unversioned.stream().map(UnversionedFileWrapper::new));
+    private Stream<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+      return Stream.concat(
+        changes.stream().map(ChangeWrapper::new),
+        unversioned.stream().map(UnversionedFileWrapper::new)
+      );
     }
 
     @Override

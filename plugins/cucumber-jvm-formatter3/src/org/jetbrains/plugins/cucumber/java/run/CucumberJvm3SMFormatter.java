@@ -1,98 +1,73 @@
 package org.jetbrains.plugins.cucumber.java.run;
 
-import cucumber.api.HookTestStep;
-import cucumber.api.PickleStepTestStep;
-import cucumber.api.TestCase;
-import cucumber.api.TestStep;
-import cucumber.api.event.TestCaseStarted;
-import cucumber.api.event.TestStepFinished;
-import cucumber.api.event.TestStepStarted;
+import cucumber.api.event.*;
+import cucumber.api.formatter.Formatter;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.FILE_RESOURCE_PREFIX;
-
-@SuppressWarnings("unused")
-public class CucumberJvm3SMFormatter extends CucumberJvm2SMFormatter {
+@SuppressWarnings({"unused", "Convert2Lambda"})
+public class CucumberJvm3SMFormatter extends CucumberJvmSMConverter implements Formatter {
   public CucumberJvm3SMFormatter() {
     super();
   }
 
-  @Override
-  protected String getEventUri(TestCaseStarted event) {
-    return event.testCase.getUri();
-  }
-
-  @Override
-  protected int getEventLine(TestCaseStarted event) {
-    return event.testCase.getLine();
-  }
-
-  @Override
-  protected String getEventName(TestCaseStarted event) {
-    return event.testCase.getName();
-  }
-
-  @Override
-  protected String getStepLocation(TestStepStarted testStepStarted) {
-    return getStepLocation(testStepStarted.testStep);
-  }
-
-  @Override
-  protected String getStepLocation(TestStepFinished testStepFinished) {
-    return getStepLocation(testStepFinished.testStep);
-  }
-
-  @Override
-  protected String getStepName(TestStepStarted testStepStarted) {
-    return getStepName(testStepStarted.testStep);
-  }
-
-  @Override
-  protected String getStepName(TestStepFinished testStepFinished) {
-    return getStepName(testStepFinished.testStep);
-  }
-
-  @Override
-  protected String getScenarioNameFromTestCase(TestCase testCase) {
-    return "Scenario: " + testCase.getName();
-  }
-
-  private static String getStepLocation(TestStep step) {
-    if (step instanceof HookTestStep) {
-      try {
-        Field definitionMatchField = step.getClass().getSuperclass().getDeclaredField("stepDefinitionMatch");
-        definitionMatchField.setAccessible(true);
-        Object definitionMatchFieldValue = definitionMatchField.get(step);
-
-        Field hookDefinitionField = definitionMatchFieldValue.getClass().getDeclaredField("hookDefinition");
-        hookDefinitionField.setAccessible(true);
-        Object hookDefinitionFieldValue = hookDefinitionField.get(definitionMatchFieldValue);
-
-        Field methodField = hookDefinitionFieldValue.getClass().getDeclaredField("method");
-        methodField.setAccessible(true);
-        Object methodFieldValue = methodField.get(hookDefinitionFieldValue);
-        if (methodFieldValue instanceof Method) {
-          Method method = (Method)methodFieldValue;
-          return String.format("java:test://%s/%s", method.getDeclaringClass().getName(), method.getName());
-        }
-      }
-      catch (Exception ignored) {
-      }
-      return "";
+  private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
+    @Override
+    public void receive(TestCaseStarted event) {
+      CucumberJvm3SMFormatter.this.handleTestCaseStarted(new CucumberJvm3Adapter.CucumberJvmTestCase(event.testCase));
     }
-    PickleStepTestStep pickleStepTestStep = (PickleStepTestStep) step;
-    return FILE_RESOURCE_PREFIX + pickleStepTestStep.getStepLocation() + ":" + pickleStepTestStep.getStepLine();
-  }
+  };
 
-  private static String getStepName(TestStep step) {
-    String stepName;
-    if (step instanceof HookTestStep) {
-      stepName = "Hook: " + ((HookTestStep)step).getHookType().toString();
-    } else {
-      stepName = ((PickleStepTestStep) step).getPickleStep().getText();
+  private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
+    @Override
+    public void receive(TestCaseFinished event) {
+      handleTestCaseFinished(new CucumberJvm3Adapter.CucumberJvmTestCase(event.testCase));
     }
-    return stepName;
+  };
+
+  private final EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
+    @Override
+    public void receive(TestRunFinished event) {
+      CucumberJvm3SMFormatter.this.handleTestRunFinished();
+    }
+  };
+
+  private final EventHandler<WriteEvent> writeEventHandler = new EventHandler<WriteEvent>() {
+    @Override
+    public void receive(WriteEvent event) {
+      CucumberJvm3SMFormatter.this.handleWriteEvent(new CucumberJvmWriteEvent(event.text));
+    }
+  };
+
+  private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
+    @Override
+    public void receive(TestStepStarted event) {
+      handleTestStepStarted(new CucumberJvm3Adapter.CucumberJvmTestStep(event.testStep));
+    }
+  };
+
+  private final EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
+    @Override
+    public void receive(TestStepFinished event) {
+      handleTestStepFinished(new CucumberJvm3Adapter.CucumberJvmTestStepFinishedEvent(event));
+    }
+  };
+
+  private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
+    @Override
+    public void receive(TestSourceRead event) {
+      CucumberJvm3SMFormatter.this.handleTestSourceRead(new CucumberJvmTestSourceReadEvent(event.uri, event.source));
+    }
+  };
+
+  @Override
+  public void setEventPublisher(EventPublisher publisher) {
+    publisher.registerHandlerFor(TestCaseStarted.class, this.testCaseStartedHandler);
+    publisher.registerHandlerFor(TestCaseFinished.class, this.testCaseFinishedHandler);
+
+    publisher.registerHandlerFor(TestStepStarted.class, this.testStepStartedHandler);
+    publisher.registerHandlerFor(TestStepFinished.class, this.testStepFinishedHandler);
+    publisher.registerHandlerFor(TestSourceRead.class, this.testSourceReadHandler);
+
+    publisher.registerHandlerFor(TestRunFinished.class, this.testRunFinishedHandler);
+    publisher.registerHandlerFor(WriteEvent.class, this.writeEventHandler);
   }
 }

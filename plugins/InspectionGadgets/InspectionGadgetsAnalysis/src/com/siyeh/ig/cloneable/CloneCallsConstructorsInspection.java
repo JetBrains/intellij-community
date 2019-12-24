@@ -28,12 +28,6 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("clone.instantiates.objects.with.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     return type instanceof PsiArrayType

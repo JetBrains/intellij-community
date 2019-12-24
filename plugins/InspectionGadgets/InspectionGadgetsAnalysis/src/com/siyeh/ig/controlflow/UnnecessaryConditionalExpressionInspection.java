@@ -40,12 +40,6 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.conditional.expression.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.tree.TreePopupImpl");
+  private static final Logger LOG = Logger.getInstance(TreePopupImpl.class);
   private MyTree myWizardTree;
 
   private MouseMotionListener myMouseMotionListener;
@@ -65,6 +66,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         return getTreeStep().isSelectable(nodeObject, nodeObject);
       }
     };
+    Disposer.register(this, myBuilder);
 
     myBuilder.updateFromRoot();
 
@@ -221,17 +223,24 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private void expandAll() {
+  public void expandAll() {
     for (int i = 0; i < myWizardTree.getRowCount(); i++) {
       myWizardTree.expandRow(i);
     }
   }
 
-  private void collapseAll() {
+  public void collapseAll() {
     int row = myWizardTree.getRowCount() - 1;
     while (row > 0) {
       myWizardTree.collapseRow(row);
       row--;
+    }
+  }
+
+  public void scrollToSelection() {
+    TreePath selectionPath = myWizardTree.getSelectionPath();
+    if (selectionPath != null) {
+      TreeUtil.scrollToVisible(myWizardTree, selectionPath, false);
     }
   }
 

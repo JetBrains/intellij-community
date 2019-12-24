@@ -123,6 +123,8 @@ class X extends <error descr="Classes cannot directly extend 'java.lang.Enum'">E
     public X(String name, int ordinal) {
         super(name, ordinal);
     }
+
+    Enum e = new <error descr="Classes cannot directly extend 'java.lang.Enum'">Enum</error>("", 0) {};
 }
 
 enum StaticInEnumConstantInitializer {

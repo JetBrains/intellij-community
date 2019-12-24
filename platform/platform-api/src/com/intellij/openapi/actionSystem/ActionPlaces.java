@@ -29,6 +29,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
+  public static final String TABS_MORE_TOOLBAR = "TabsMoreToolbar";
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
   public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
@@ -141,6 +142,8 @@ public abstract class ActionPlaces {
 
   public static final String TEXT_EDITOR_WITH_PREVIEW = "TextEditorWithPreview";
 
+  public static final String NOTIFICATION = "Notification";
+
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
            KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
@@ -148,7 +151,7 @@ public abstract class ActionPlaces {
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
     UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
-    TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
+    TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, TABS_MORE_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
     PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
     METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
     STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,

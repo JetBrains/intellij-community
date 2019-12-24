@@ -291,7 +291,7 @@ public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyV
     private static final HasError FOUND = new HasError();
 
     @Override
-    public void visitErrorElement(PsiErrorElement element) {
+    public void visitErrorElement(@NotNull PsiErrorElement element) {
       throw FOUND;
     }
 

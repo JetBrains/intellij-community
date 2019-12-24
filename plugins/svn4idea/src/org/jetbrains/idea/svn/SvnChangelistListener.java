@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnChangelistListener implements ChangeListListener {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangelistListener");
+  private final static Logger LOG = Logger.getInstance(SvnChangelistListener.class);
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final Condition<FilePath> myUnderSvnCondition;

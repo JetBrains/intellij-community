@@ -7,7 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -53,65 +53,22 @@ import java.util.concurrent.TimeUnit;
   name = "CommittedChangesCache",
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
-public class CommittedChangesCache implements PersistentStateComponent<CommittedChangesCache.State> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesCache");
+public class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
+  private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
   private final Project myProject;
-  private final MessageBus myBus;
   private final ProgressManagerQueue myTaskQueue;
-  private final MessageBusConnection myConnection;
   private boolean myRefreshingIncomingChanges = false;
   private int myPendingUpdateCount = 0;
-  private State myState = new State();
   private ScheduledFuture myFuture;
   private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
-  private final ProjectLevelVcsManager myVcsManager;
 
   private MyRefreshRunnable myRefresnRunnable;
 
   private final Map<String, Pair<Long, List<CommittedChangeList>>> myExternallyLoadedChangeLists;
   private final CachesHolder myCachesHolder;
   private final RepositoryLocationCache myLocationCache;
-
-  public static class State {
-    private int myInitialCount = 500;
-    private int myInitialDays = 90;
-    private int myRefreshInterval = 30;
-    private boolean myRefreshEnabled = false;
-
-    public int getInitialCount() {
-      return myInitialCount;
-    }
-
-    public void setInitialCount(final int initialCount) {
-      myInitialCount = initialCount;
-    }
-
-    public int getInitialDays() {
-      return myInitialDays;
-    }
-
-    public void setInitialDays(final int initialDays) {
-      myInitialDays = initialDays;
-    }
-
-    public int getRefreshInterval() {
-      return myRefreshInterval;
-    }
-
-    public void setRefreshInterval(final int refreshInterval) {
-      myRefreshInterval = refreshInterval;
-    }
-
-    public boolean isRefreshEnabled() {
-      return myRefreshEnabled;
-    }
-
-    public void setRefreshEnabled(final boolean refreshEnabled) {
-      myRefreshEnabled = refreshEnabled;
-    }
-  }
 
   public static final Topic<CommittedChangesListener> COMMITTED_TOPIC = new Topic<>("committed changes updates",
                                                                                     CommittedChangesListener.class);
@@ -120,11 +77,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return project.getComponent(CommittedChangesCache.class);
   }
 
-  public CommittedChangesCache(final Project project, final MessageBus bus) {
+  public CommittedChangesCache(@NotNull Project project) {
+    super(new CommittedChangesCacheState());
     myProject = project;
-    myBus = bus;
-    myConnection = myBus.connect();
-    final VcsListener vcsListener = new VcsListener() {
+    VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
         myLocationCache.reset();
@@ -142,60 +98,41 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myLocationCache = new RepositoryLocationCache(project);
     myCachesHolder = new CachesHolder(project, myLocationCache);
     myTaskQueue = new ProgressManagerQueue(project, VcsBundle.message("committed.changes.refresh.progress"));
-    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    vcsManager.addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE,
-                                        () -> ApplicationManager.getApplication().runReadAction(() -> {
-                                          if (myProject.isDisposed()) return;
-                                          myTaskQueue.start();
-                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
-                                          myConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
-                                        }));
-    myVcsManager = vcsManager;
+    ProjectLevelVcsManagerImpl.getInstanceImpl(project)
+      .addInitializationRequest(VcsInitObject.COMMITTED_CHANGES_CACHE, () -> {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          if (myProject.isDisposed()) {
+            return;
+          }
+
+          myTaskQueue.start();
+
+          MessageBusConnection connection = project.getMessageBus().connect();
+          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+          connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
+        });
+      });
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
         cancelRefreshTimer();
-        myConnection.disconnect();
       }
     });
     myExternallyLoadedChangeLists = ContainerUtil.newConcurrentMap();
   }
 
   public MessageBus getMessageBus() {
-    return myBus;
+    return myProject.getMessageBus();
   }
 
   @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
+  public void loadState(@NotNull CommittedChangesCacheState state) {
+    super.loadState(state);
     updateRefreshTimer();
   }
 
-  @Nullable
-  public CommittedChangesProvider getProviderForProject() {
-    final AbstractVcs[] vcss = myVcsManager.getAllActiveVcss();
-    List<AbstractVcs> vcsWithProviders = new ArrayList<>();
-    for(AbstractVcs vcs: vcss) {
-      if (vcs.getCommittedChangesProvider() != null) {
-        vcsWithProviders.add(vcs);
-      }
-    }
-    if (vcsWithProviders.isEmpty()) {
-      return null;
-    }
-    if (vcsWithProviders.size() == 1) {
-      return vcsWithProviders.get(0).getCommittedChangesProvider();
-    }
-    return new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[0]));
-  }
-
   public boolean isMaxCountSupportedForProject() {
-    for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider instanceof CachingCommittedChangesProvider) {
         final CachingCommittedChangesProvider cachingProvider = (CachingCommittedChangesProvider)provider;
@@ -229,7 +166,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
     @Override
     public void run() {
-      for(AbstractVcs vcs: myVcsManager.getAllActiveVcss()) {
+      for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
         final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
         if (provider == null) continue;
 
@@ -453,26 +390,27 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     debug("Finished refreshing all caches");
   }
 
-  private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+  @NotNull
+  private List<CommittedChangeList> initCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Initializing cache for " + cacheFile.getLocation());
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
     final RepositoryLocation location = cacheFile.getLocation();
     final ChangeBrowserSettings settings = provider.createDefaultSettings();
     int maxCount = 0;
     if (isMaxCountSupportedForProject()) {
-      maxCount = myState.getInitialCount();
+      maxCount = getState().getInitialCount();
     }
     else {
       settings.USE_DATE_AFTER_FILTER = true;
       Calendar calendar = Calendar.getInstance();
-      calendar.add(Calendar.DAY_OF_YEAR, -myState.getInitialDays());
+      calendar.add(Calendar.DAY_OF_YEAR, -getState().getInitialDays());
       settings.setDateAfter(calendar.getTime());
     }
     //noinspection unchecked
     final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, maxCount);
     // when initially initializing cache, assume all changelists are locally available
     writeChangesInReadAction(cacheFile, changes); // this sorts changes in chronological order
-    if (maxCount > 0 && changes.size() < myState.getInitialCount()) {
+    if (maxCount > 0 && changes.size() < getState().getInitialCount()) {
       cacheFile.setHaveCompleteHistory(true);
     }
     if (changes.size() > 0) {
@@ -481,7 +419,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return changes;
   }
 
-  private void fireChangesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
+  private void fireChangesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
   }
 
@@ -491,7 +429,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
-  private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+  @NotNull
+  private List<CommittedChangeList> refreshCache(@NotNull ChangesCacheFile cacheFile) throws VcsException, IOException {
     debug("Refreshing cache for " + cacheFile.getLocation());
     final List<CommittedChangeList> newLists = new ArrayList<>();
 
@@ -501,7 +440,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final Pair<Long, List<CommittedChangeList>> externalLists = myExternallyLoadedChangeLists.get(location.getKey());
     final long latestChangeList = getLatestListForFile(cacheFile);
     if ((externalLists != null) && (latestChangeList == externalLists.first.longValue())) {
-      newLists.addAll(appendLoadedChanges(cacheFile, location, externalLists.second));
+      newLists.addAll(appendLoadedChanges(cacheFile, externalLists.second));
       myExternallyLoadedChangeLists.clear();
     }
 
@@ -515,7 +454,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         defaultSettings.USE_CHANGE_AFTER_FILTER = true;
       }
       else {
-        maxCount = myState.getInitialCount();
+        maxCount = getState().getInitialCount();
       }
     }
     else {
@@ -527,7 +466,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     defaultSettings.STRICTLY_AFTER = true;
     final List<CommittedChangeList> newChanges = provider.getCommittedChanges(defaultSettings, location, maxCount);
     debug("Loaded " + newChanges.size() + " new changelists");
-    newLists.addAll(appendLoadedChanges(cacheFile, location, newChanges));
+    newLists.addAll(appendLoadedChanges(cacheFile, newChanges));
 
     return newLists;
   }
@@ -536,19 +475,20 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     LOG.debug(message);
   }
 
-  private List<CommittedChangeList> appendLoadedChanges(final ChangesCacheFile cacheFile, final RepositoryLocation location,
-                                                        final List<? extends CommittedChangeList> newChanges) throws IOException {
+  private List<CommittedChangeList> appendLoadedChanges(@NotNull ChangesCacheFile cacheFile,
+                                                        @NotNull List<? extends CommittedChangeList> newChanges) throws IOException {
     final List<CommittedChangeList> savedChanges = writeChangesInReadAction(cacheFile, newChanges);
     if (savedChanges.size() > 0) {
-      fireChangesLoaded(location, savedChanges);
+      fireChangesLoaded(cacheFile.getLocation(), savedChanges);
     }
     return savedChanges;
   }
 
   private static List<CommittedChangeList> writeChangesInReadAction(final ChangesCacheFile cacheFile,
-                                                                    final List<? extends CommittedChangeList> newChanges) throws IOException {
+                                                                    @NotNull List<? extends CommittedChangeList> newChanges)
+    throws IOException {
     // ensure that changes are loaded before taking read action, to avoid stalling UI
-    for(CommittedChangeList changeList: newChanges) {
+    for (CommittedChangeList changeList : newChanges) {
       changeList.getChanges();
     }
     final Ref<IOException> ref = new Ref<>();
@@ -567,9 +507,10 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return savedChanges;
   }
 
-  private static List<CommittedChangeList> trimToSize(final List<CommittedChangeList> changes, final int maxCount) {
+  @NotNull
+  private static List<CommittedChangeList> trimToSize(@NotNull List<CommittedChangeList> changes, int maxCount) {
     if (maxCount > 0) {
-      while(changes.size() > maxCount) {
+      while (changes.size() > maxCount) {
         changes.remove(0);
       }
     }
@@ -633,13 +574,15 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       myVcsZipper = vcsZipper;
     }
 
+    @NotNull
     @Override
-    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(final List<? extends RepositoryLocation> in) {
+    public Pair<List<RepositoryLocationGroup>, List<RepositoryLocation>> groupLocations(@NotNull List<? extends RepositoryLocation> in) {
       return myVcsZipper.groupLocations(in);
     }
 
+    @NotNull
     @Override
-    public CommittedChangeList zip(final RepositoryLocationGroup group, final List<? extends CommittedChangeList> lists) {
+    public CommittedChangeList zip(@NotNull RepositoryLocationGroup group, @NotNull List<? extends CommittedChangeList> lists) {
       if (lists.size() == 1) {
         return lists.get(0);
       }
@@ -663,13 +606,12 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     }
 
     @Override
-    public long getNumber(final CommittedChangeList list) {
+    public long getNumber(@NotNull CommittedChangeList list) {
       return myVcsZipper.getNumber(list);
     }
   }
 
-  public void commitMessageChanged(final AbstractVcs vcs,
-                                   final RepositoryLocation location, final long number, final String newMessage) {
+  public void commitMessageChanged(@NotNull RepositoryLocation location, long number, String newMessage) {
     myTaskQueue.run(() -> {
       final ChangesCacheFile file = myCachesHolder.haveCache(location);
       if (file != null) {
@@ -698,11 +640,11 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     myTaskQueue.run(task);
   }
 
-  public void clearCaches(final Runnable continuation) {
+  public void clearCaches(@Nullable Runnable continuation) {
     myTaskQueue.run(() -> {
       myCachesHolder.clearAllCaches();
       myCachedIncomingChangeLists = null;
-      continuation.run();
+      if (continuation != null) continuation.run();
       MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
     });
   }
@@ -970,13 +912,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   private void updateRefreshTimer() {
     cancelRefreshTimer();
-    if (myState.isRefreshEnabled()) {
+    if (getState().isRefreshEnabled()) {
       myRefresnRunnable = new MyRefreshRunnable(this);
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
       myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
-                                                                    myState.getRefreshInterval() * 60L,
-                                                                    myState.getRefreshInterval() * 60L,
+                                                                    getState().getRefreshInterval() * 60L,
+                                                                    getState().getRefreshInterval() * 60L,
                                                                     TimeUnit.SECONDS);
     }
   }

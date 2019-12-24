@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.FileContentUtil
 import com.intellij.util.SmartList
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectResolver
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -27,7 +28,7 @@ class MavenOutputActionProcessor(private val myProject: Project, private val myW
       return
     }
 
-    MavenProjectsTree.showNotificationInvalidConfig(myProject, mavenProject, message)
+    MavenProjectResolver.showNotificationInvalidConfig(myProject, mavenProject, message)
     mavenProject.configFileError = message
 
     MavenUtil.restartConfigHighlightning(myProject, SmartList(mavenProject))

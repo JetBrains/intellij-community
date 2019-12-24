@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.actions.createConstructorActions
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.IncorrectOperationException
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil.intentionsToFixes
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requests.CreateConstructorFromGroovyUsageRequest
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
@@ -15,19 +14,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
-class GrNewExpressionHighlighter(val newExpression: GrNewExpression,
-                                 reference: GroovyCallReference,
-                                 sink: HighlightSink) : ConstructorCallHighlighter(reference, sink) {
+class GrNewExpressionHighlighter(
+  private val newExpression: GrNewExpression,
+  reference: GroovyCallReference,
+  sink: HighlightSink
+) : ConstructorCallHighlighter(reference, sink) {
 
-  override fun getArgumentList(): GrArgumentList? = newExpression.argumentList
+  override val argumentList: GrArgumentList? get() = newExpression.argumentList
 
-  override fun getHighlightElement(): PsiElement {
-    val element = getArgumentList() ?: newExpression.referenceElement
-    if (element != null) return element
-    throw IncorrectOperationException("reference of new expression should exist if it is a constructor call")
-  }
+  override val highlightElement: PsiElement
+    get() = requireNotNull(argumentList ?: newExpression.referenceElement) {
+      "reference of new expression should exist if it is a constructor call"
+    }
 
-  override fun generateFixes(results: Set<GroovyMethodResult>): Array<LocalQuickFix> {
+  override fun generateFixes(results: Collection<GroovyMethodResult>): Array<LocalQuickFix> {
     val fixes = super.generateFixes(results)
     val constructor = reference.advancedResolve().element
     val targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass::class.java) ?: return fixes

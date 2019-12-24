@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -23,6 +23,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementDescriptorWithCDataContent;
@@ -33,9 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public class XmlGtTypedHandler extends TypedHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.TypedHandler");
+  private static final Logger LOG = Logger.getInstance(TypedHandler.class);
 
   @NotNull
   @Override
@@ -196,11 +198,11 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
       final XmlElementDescriptor descriptor = tag.getDescriptor();
 
       EditorModificationUtil.insertStringAtCaret(editor, "</" + name + ">", false, 0);
-      
+
       if (descriptor instanceof XmlElementDescriptorWithCDataContent) {
         final XmlElementDescriptorWithCDataContent cDataContainer = (XmlElementDescriptorWithCDataContent)descriptor;
 
-        cdataReformatRanges = ContainerUtil.newSmartList();
+        cdataReformatRanges = new SmartList<>();
         if (cDataContainer.requiresCdataBracesInContext(tag)) {
           @NonNls final String cDataStart = "><![CDATA[";
           final String inserted = cDataStart + "\n]]>";
@@ -214,7 +216,7 @@ public class XmlGtTypedHandler extends TypedHandlerDelegate {
 
       if (cdataReformatRanges != null && !cdataReformatRanges.isEmpty()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        try {          
+        try {
           CodeStyleManager.getInstance(project).reformatText(file, cdataReformatRanges);
         }
         catch (IncorrectOperationException e) {

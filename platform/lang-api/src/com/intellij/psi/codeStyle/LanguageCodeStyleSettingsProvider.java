@@ -368,6 +368,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   private static final AtomicReference<List<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
 
+  @ApiStatus.Internal
+  public static void resetSettingsPagesProviders() {
+    ourSettingsPagesProviders.set(null);
+  }
+
   /**
    * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
    */

@@ -24,3 +24,7 @@ class UnsupportedFeatures {
     String raw = <error descr="Text block literals are not supported at language level '1.4'">"""hi there"""</error>;
   }
 }
+
+<error descr="Records are not supported at language level '1.4'">record</error> UnsuportedRecord(String s) {
+
+}

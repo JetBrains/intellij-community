@@ -117,7 +117,7 @@ public final class XmlLanguageInjector implements MultiHostInjector {
 
           xmlTag.acceptChildren(new PsiElementVisitor() {
             @Override
-            public void visitElement(final PsiElement element) {
+            public void visitElement(@NotNull final PsiElement element) {
               if (element instanceof XmlText) {
                 if (!(element instanceof PsiLanguageInjectionHost) || element.getTextLength() == 0) return;
                 final List<TextRange> list = injection.getInjectedArea(element);

@@ -19,6 +19,8 @@ import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
+import com.intellij.vcs.log.ui.table.GraphCommitCellController;
+import com.intellij.vcs.log.ui.table.VcsLogCellRenderer;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,8 @@ import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Objects;
 
-public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell> {
+public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
+  implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
   private static final int VERTICAL_PADDING = JBUIScale.scale(7);
 
@@ -64,7 +67,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Nullable
-  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
+  private JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
@@ -107,7 +110,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return myTemplateComponent.getGraphWidth(cell.getPrintElements());
   }
 
-  public int getTooltipXCoordinate(int row) {
+  private int getTooltipXCoordinate(int row) {
     int referencesWidth = getReferencesWidth(row);
     if (referencesWidth != 0) {
       if (myComponent.getReferencePainter().isLeftAligned()) return getGraphWidth(row) + referencesWidth / 2;
@@ -133,6 +136,24 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   public void setLeftAligned(boolean leftAligned) {
     myComponent.getReferencePainter().setLeftAligned(leftAligned);
     myTemplateComponent.getReferencePainter().setLeftAligned(leftAligned);
+  }
+
+  @NotNull
+  @Override
+  public GraphCommitCellController getCellController() {
+    return new GraphCommitCellController(myLogData, myGraphTable, myComponent.myPainter) {
+
+      @Override
+      protected int getTooltipXCoordinate(int row) {
+        return GraphCommitCellRenderer.this.getTooltipXCoordinate(row);
+      }
+
+      @Nullable
+      @Override
+      protected JComponent getTooltip(@NotNull Object value, @NotNull Point point, int row) {
+        return GraphCommitCellRenderer.this.getTooltip(value, point, row);
+      }
+    };
   }
 
   public static Font getLabelFont() {

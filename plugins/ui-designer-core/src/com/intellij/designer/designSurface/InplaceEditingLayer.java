@@ -35,7 +35,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class InplaceEditingLayer extends JComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.InplaceEditingLayer");
+  private static final Logger LOG = Logger.getInstance(InplaceEditingLayer.class);
 
   private final FocusWatcher myFocusWatcher = new FocusWatcher() {
     @Override

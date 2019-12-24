@@ -27,6 +27,7 @@ import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.RebuildRequestedException;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;

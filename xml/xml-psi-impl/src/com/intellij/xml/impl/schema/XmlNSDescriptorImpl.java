@@ -11,16 +11,14 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
@@ -52,7 +50,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @NonNls static final String ATTRIBUTE_TAG_NAME = "attribute";
   @NonNls static final String COMPLEX_TYPE_TAG_NAME = "complexType";
   @NonNls static final String SEQUENCE_TAG_NAME = "sequence";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.schema.XmlNSDescriptorImpl");
+  private static final Logger LOG = Logger.getInstance(XmlNSDescriptorImpl.class);
   @NonNls private static final Set<String> STD_TYPES = new HashSet<>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<>();
   @NonNls private static final String INCLUDE_TAG_NAME = "include";
@@ -310,19 +308,14 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return null;
   }
 
-  public static XmlFile getRedefinedElementDescriptorFile(final XmlTag parentTag) {
-    final String schemaL = parentTag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
-
-    if (schemaL != null) {
-      final PsiReference[] references = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
-
-      if (references.length > 0) {
-        final PsiElement psiElement = references[references.length - 1].resolve();
-
+  private static XmlFile getRedefinedElementDescriptorFile(final XmlTag parentTag) {
+    XmlAttribute attribute = parentTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT);
+    if (attribute != null) {
+      XmlAttributeValue element = attribute.getValueElement();
+      PsiElement psiElement = new URLReference(element).resolve();
         if (psiElement instanceof XmlFile) {
           return ((XmlFile)psiElement);
         }
-      }
     }
     return null;
   }

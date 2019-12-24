@@ -55,6 +55,8 @@
                         serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
+    <getDataRule key="Vcs.Log.Main.Ui" implementationClass="com.intellij.vcs.log.ui.MainVcsLogUiDataRule"/>
+    <getDataRule key="Vcs.Log.UiEx" implementationClass="com.intellij.vcs.log.ui.VcsLogUiExDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider
         implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider"/>
@@ -73,6 +75,10 @@
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
+
+    <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
+    <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorTabTitleProvider"/>
   </extensions>
 
   <actions>

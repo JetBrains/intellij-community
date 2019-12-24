@@ -4,9 +4,11 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
@@ -30,6 +32,14 @@ public class JarFileSystemImpl extends JarFileSystem {
     // to prevent platform .jar files from copying
     boolean runningFromDist = new File(PathManager.getLibPath(), "openapi.jar").exists();
     myNoCopyJarDir = !runningFromDist ? null : new File(PathManager.getHomePath());
+  }
+
+  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(super::getAttributes);
+
+  @Nullable
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    return myAttrGetter.accessDiskWithCheckCanceled(file);
   }
 
   @Override

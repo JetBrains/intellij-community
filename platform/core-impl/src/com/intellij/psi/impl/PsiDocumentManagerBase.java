@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
-  static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
+  static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
@@ -69,7 +69,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
     myPsiManager.addPsiTreeChangeListener(mySynchronizer);
 
-    project.getMessageBus().connect(this).subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
+    project.getMessageBus().connect().subscribe(PsiDocumentTransactionListener.TOPIC, (document, file) -> {
       myUncommittedDocuments.remove(document);
     });
   }
@@ -215,12 +215,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public boolean commitAllDocumentsUnderProgress() {
     Application application = ApplicationManager.getApplication();
-    //backward compatibility with unit tests
-    if (application.isUnitTestMode()) {
+    if (application.isWriteAccessAllowed()) {
       commitAllDocuments();
+      //there are lot of existing actions/processors/tests which execute it under write lock
+      //do not show this message in unit test mode
+      if (!application.isUnitTestMode()) {
+        LOG.error("Do not call commitAllDocumentsUnderProgress inside write-action");
+      }
       return true;
     }
-    assert !application.isWriteAccessAllowed() : "Do not call commitAllDocumentsUnderProgress inside write-action";
     final int semaphoreTimeoutInMs = 50;
     final Runnable commitAllDocumentsRunnable = () -> {
       Semaphore semaphore = new Semaphore(1);
@@ -325,7 +328,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private boolean isEventSystemEnabled(Document document) {
+  boolean isEventSystemEnabled(@NotNull Document document) {
     FileViewProvider viewProvider = getCachedViewProvider(document);
     return viewProvider != null && viewProvider.isEventSystemEnabled() && !AbstractFileViewProvider.isFreeThreaded(viewProvider);
   }
@@ -449,7 +452,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (psiFile != null) {
       psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (!element.isValid()) {
             throw new AssertionError("Commit to '" + psiFile.getVirtualFile() + "' has led to invalid element: " + element + "; Reason: '" + reason + "'");
           }
@@ -530,7 +533,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
       if (executed) break;
 
-      TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
+      ModalityState modality = ModalityState.defaultModalityState();
       Semaphore semaphore = new Semaphore(1);
       application.invokeLater(() -> {
         if (myProject.isDisposed()) {
@@ -539,7 +542,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
           return;
         }
 
-        performWhenAllCommitted(() -> semaphore.up(), contextTransaction);
+        performWhenAllCommitted(() -> semaphore.up(), modality);
       }, ModalityState.any());
 
       while (!semaphore.waitFor(10)) {
@@ -555,10 +558,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    */
   @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
-    return performWhenAllCommitted(action, TransactionGuard.getInstance().getContextTransaction());
+    return performWhenAllCommitted(action, ModalityState.defaultModalityState());
   }
 
-  private boolean performWhenAllCommitted(@NotNull Runnable action, @Nullable TransactionId context) {
+  private boolean performWhenAllCommitted(@NotNull Runnable action, @NotNull ModalityState modality) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkWeAreOutsideAfterCommitHandler();
 
@@ -574,12 +577,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
     actions.add(action);
 
-    if (context != null) {
+    if (modality != ModalityState.NON_MODAL) {
       // re-add all uncommitted documents into the queue with this new modality
       // because this client obviously expects them to commit even inside modal dialog
       for (Document document : myUncommittedDocuments) {
         myDocumentCommitProcessor.commitAsynchronously(myProject, document,
-                                                       "re-added with context "+context+" because performWhenAllCommitted("+context+") was called", context);
+                                                       "re-added because performWhenAllCommitted("+modality+") was called", modality);
       }
     }
     return false;
@@ -890,7 +893,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         commitDocument(document);
       }
       else if (!document.isInBulkUpdate() && myPerformBackgroundCommit) {
-        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, TransactionGuard.getInstance().getContextTransaction());
+        myDocumentCommitProcessor.commitAsynchronously(myProject, document, event, ModalityState.defaultModalityState());
       }
     }
     else {
@@ -906,10 +909,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void bulkUpdateFinished(@NotNull Document document) {
     myDocumentCommitProcessor.commitAsynchronously(myProject, document, "Bulk update finished",
-                                                   TransactionGuard.getInstance().getContextTransaction());
+                                                   ModalityState.defaultModalityState());
   }
 
-  class PriorityEventCollector implements PrioritizedInternalDocumentListener {
+  @ApiStatus.Internal
+  public class PriorityEventCollector implements PrioritizedInternalDocumentListener {
     @Override
     public int getPriority() {
       return EditorDocumentPriorities.RANGE_MARKER;
@@ -1042,7 +1046,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return false;
   }
 
-  @VisibleForTesting
   @TestOnly
   public void clearUncommittedDocuments() {
     myUncommittedInfos.clear();
@@ -1058,9 +1061,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public void dispose() {
-    clearUncommittedDocuments();
-  }
+  public void dispose() {}
 
   @NotNull
   public PsiToDocumentSynchronizer getSynchronizer() {

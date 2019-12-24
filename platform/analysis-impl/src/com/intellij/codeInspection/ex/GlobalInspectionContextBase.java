@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class GlobalInspectionContextBase extends UserDataHolderBase implements GlobalInspectionContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
+  private static final Logger LOG = Logger.getInstance(GlobalInspectionContextBase.class);
   private static final TObjectHashingStrategy<Tools> TOOLS_HASHING_STRATEGY = new TObjectHashingStrategy<Tools>() {
     @Override
     public int computeHashCode(Tools object) {

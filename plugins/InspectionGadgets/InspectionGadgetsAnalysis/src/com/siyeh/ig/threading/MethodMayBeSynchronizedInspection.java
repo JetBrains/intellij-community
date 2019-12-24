@@ -31,13 +31,6 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.may.be.synchronized.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.may.be.synchronized.problem.descriptor");

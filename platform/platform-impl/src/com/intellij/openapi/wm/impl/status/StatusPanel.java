@@ -72,17 +72,9 @@ class StatusPanel extends JPanel {
     protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
       if (myTimeText != null && text.endsWith(myTimeText)) {
         int withoutTime = maxWidth - fm.stringWidth(myTimeText);
-        int end = Math.min(text.length() - myTimeText.length() - 1, 1000);
-        while (end > 0) {
-          final String truncated = text.substring(0, end) + "... ";
-          if (fm.stringWidth(truncated) < withoutTime) {
-            text = truncated + myTimeText;
-            break;
-          }
-          end--;
-        }
+        Rectangle boundsForTrim = new Rectangle(withoutTime, bounds.height);
+        return super.truncateText(text, boundsForTrim, fm, textR, iconR, withoutTime) + myTimeText;
       }
-
       return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
     }
   };
@@ -174,7 +166,7 @@ class StatusPanel extends JPanel {
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
-      if (project != null) {
+      if (project != null && !project.isDisposed()) {
         myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
       }
     }
@@ -201,9 +193,10 @@ class StatusPanel extends JPanel {
           assert statusMessage != null;
           String text = statusMessage.second;
           if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
-            myTimeText = "(" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
-            text += " " + myTimeText;
-          } else {
+            myTimeText = " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
+            text += myTimeText;
+          }
+          else {
             myTimeText = null;
           }
           setStatusText(text);

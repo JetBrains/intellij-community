@@ -16,10 +16,9 @@
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
@@ -30,55 +29,9 @@ public class JavaSliceNullnessAnalyzer extends SliceNullnessAnalyzerBase {
   @NotNull
   @Override
   protected Nullability checkNullability(PsiElement element) {
-    // null
-    PsiElement value = element;
-    if (value instanceof PsiExpression) {
-      value = PsiUtil.deparenthesizeExpression((PsiExpression)value);
+    if (element instanceof PsiExpression) {
+      return NullabilityUtil.getExpressionNullability((PsiExpression)element, true);
     }
-    if (value instanceof PsiLiteralExpression) {
-      return ((PsiLiteralExpression)value).getValue() == null ? Nullability.NULLABLE : Nullability.NOT_NULL;
-    }
-
-    // not null
-    if (value instanceof PsiNewExpression) return Nullability.NOT_NULL;
-    if (value instanceof PsiThisExpression) return Nullability.NOT_NULL;
-    if (value instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
-      if (method != null) {
-        return NullableNotNullManager.getNullability(method);
-      }
-    }
-    if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
-      return Nullability.NOT_NULL; // "xxx" + var
-    }
-
-    // unfortunately have to resolve here, since there can be no subnodes
-    PsiElement context = value;
-    if (value instanceof PsiReference) {
-      PsiElement resolved = ((PsiReference)value).resolve();
-      if (resolved instanceof PsiCompiledElement) {
-        resolved = resolved.getNavigationElement();
-      }
-      value = resolved;
-    }
-    if (value instanceof PsiParameter && ((PsiParameter)value).getDeclarationScope() instanceof PsiCatchSection) {
-      // exception thrown is always not null
-      return Nullability.NOT_NULL;
-    }
-
-    if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
-      Nullability result = DfaUtil.checkNullability((PsiVariable)value, context);
-      if (result != Nullability.UNKNOWN) {
-        return result;
-      }
-    }
-
-    if (value instanceof PsiEnumConstant) return Nullability.NOT_NULL;
-
-    if (value instanceof PsiModifierListOwner) {
-      return NullableNotNullManager.getNullability((PsiModifierListOwner)value);
-    }
-
     return Nullability.UNKNOWN;
   }
 }

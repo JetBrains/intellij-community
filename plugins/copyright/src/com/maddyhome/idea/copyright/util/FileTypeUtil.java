@@ -4,9 +4,12 @@ package com.maddyhome.idea.copyright.util;
 
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,8 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.KeyedLazyInstance;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
+import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,12 +32,14 @@ public class FileTypeUtil {
 
   public FileTypeUtil() {
     createMappings();
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+    Application application = ApplicationManager.getApplication();
+    application.getMessageBus().connect().subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
       @Override
       public void fileTypesChanged(@NotNull FileTypeEvent event) {
         types = null;
       }
     });
+    Objects.requireNonNull(CopyrightUpdaters.INSTANCE.getPoint()).addExtensionPointListener((e, pd) -> types = null, false, application);
   }
 
   public static String buildComment(FileType type, String template, LanguageOptions options) {
@@ -284,7 +291,7 @@ public class FileTypeUtil {
       if (type.equals(StdFileTypes.XHTML)) {
         return true;
       }
-      if (type.equals(StdFileTypes.PROPERTIES)) {
+      if (type.getName().equals("Properties")) {
         return true;
       }
       if (CopyrightUpdaters.INSTANCE.forFileType(type) == null) {

@@ -16,12 +16,8 @@ public interface CustomScopesProvider {
 
   @NotNull
   default List<NamedScope> getFilteredScopes() {
-    CustomScopesFilter[] filters = CustomScopesFilter.EP_NAME.getExtensions();
     return ContainerUtil.filter(getCustomScopes(), scope -> {
-      for (CustomScopesFilter filter : filters) {
-        if (filter.excludeScope(scope)) return false;
-      }
-      return true;
+      return CustomScopesFilter.EP_NAME.getExtensionList().stream().noneMatch(filter -> filter.excludeScope(scope));
     });
   }
 }

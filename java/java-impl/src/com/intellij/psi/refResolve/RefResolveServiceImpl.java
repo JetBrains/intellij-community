@@ -215,12 +215,8 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
       public void writeActionFinished(@NotNull Object action) {
         enable();
       }
-
-      @Override
-      public void applicationExiting() {
-        disable();
-      }
     }, this);
+    Disposer.register(this, () -> disable());
 
     VirtualFileManager.getInstance().addVirtualFileManagerListener(new VirtualFileManagerListener() {
       @Override
@@ -722,7 +718,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
           else {
             psiFile.accept(new PsiRecursiveElementWalkingVisitor() {
               @Override
-              public void visitElement(PsiElement element) {
+              public void visitElement(@NotNull PsiElement element) {
                 for (PsiReference reference : element.getReferences()) {
                   indicator.checkCanceled();
                   resolveReference(reference, resolved);

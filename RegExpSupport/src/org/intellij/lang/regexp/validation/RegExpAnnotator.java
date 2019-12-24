@@ -223,16 +223,25 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myHolder.createErrorAnnotation(property, "Property escape sequences are not supported in this regex dialect"); 
       return;
     }
-    String propertyName = category.getText();
-    if(!myLanguageHosts.isValidCategory(category.getPsi(), propertyName)) {
-      final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
-      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
-      return;
+    final String propertyName = category.getText();
+    final ASTNode next = category.getTreeNext();
+    if (next == null || next.getElementType() != RegExpTT.EQ) {
+      if(!myLanguageHosts.isValidCategory(category.getPsi(), propertyName)) {
+        final Annotation a = myHolder.createErrorAnnotation(category, "Unknown character category");
+        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
     }
-    ASTNode valueNode = property.getValueNode();
-    if (valueNode != null && !myLanguageHosts.isValidPropertyValue(category.getPsi(), propertyName, valueNode.getText())) {
-      final Annotation a = myHolder.createErrorAnnotation(valueNode, "Unknown property value");
-      a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    else {
+      if(!myLanguageHosts.isValidPropertyName(category.getPsi(), propertyName)) {
+        final Annotation a = myHolder.createErrorAnnotation(category, "Unknown property name");
+        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        return;
+      }
+      final ASTNode valueNode = property.getValueNode();
+      if (valueNode != null && !myLanguageHosts.isValidPropertyValue(category.getPsi(), propertyName, valueNode.getText())) {
+        final Annotation a = myHolder.createErrorAnnotation(valueNode, "Unknown property value");
+        a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
     }
   }
 
@@ -339,7 +348,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
-  public void visitComment(PsiComment comment) {
+  public void visitComment(@NotNull PsiComment comment) {
     if (comment.getText().startsWith("(?#")) {
       if (!myLanguageHosts.supportsPerl5EmbeddedComments(comment)) {
         myHolder.createErrorAnnotation(comment, "Embedded comments are not supported in this regex dialect");
@@ -576,7 +585,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       myLength++;
     }
 
-    public void stopAndReportError(RegExpElement element, String message) {
+    public void stopAndReportError(RegExpElement element, @NotNull String message) {
       myHolder.createErrorAnnotation(element, message);
       myStop = true;
     }

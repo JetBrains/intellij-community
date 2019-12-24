@@ -2,7 +2,6 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -196,7 +195,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         performRefactoring.run();
       } else {
-        TransactionGuard.getInstance().submitTransactionLater(myProject, performRefactoring);
+        ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);

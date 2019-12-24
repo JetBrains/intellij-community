@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -29,9 +30,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings("SSBasedInspection")
 public class LaterInvocator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.LaterInvocator");
+  private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
   private static final boolean DEBUG = LOG.isDebugEnabled();
 
   private static final Object LOCK = new Object();
@@ -238,6 +238,17 @@ public class LaterInvocator {
     modalEntitiesStack.push(new ModalityStateEx(ArrayUtil.toObjectArray(ourModalEntities)));
   }
 
+  /**
+   * Marks the given modality state (not {@code any()}} as transparent, i.e. {@code invokeLater} calls with its "parent" modality state
+   * will also be executed within it. NB: this will cause all VFS/PSI/etc events be executed inside your modal dialog, so you'll need
+   * to handle them appropriately, so please consider making the dialog non-modal instead of using this API.
+   */
+  @ApiStatus.Internal
+  public static void markTransparent(@NotNull ModalityState state) {
+    ((ModalityStateEx)state).markTransparent();
+    reincludeSkippedItems();
+    requestFlush();
+  }
 
   public static void leaveModal(Project project, Dialog dialog) {
     LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in event-dispatch thread");
@@ -276,6 +287,7 @@ public class LaterInvocator {
         ourModalityStack.get(i).removeModality(modalEntity);
       }
     }
+    ModalityStateEx.unmarkTransparent(modalEntity);
   }
 
   private static void reincludeSkippedItems() {
@@ -348,6 +360,7 @@ public class LaterInvocator {
 
   private static void requestFlush() {
     if (FLUSHER_SCHEDULED.compareAndSet(false, true)) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(ourFlushQueueRunnable);
     }
   }
@@ -361,6 +374,7 @@ public class LaterInvocator {
    */
   public static boolean ensureFlushRequested() {
     if (getNextEvent(false) != null) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(ourFlushQueueRunnable);
       return true;
     }
@@ -420,17 +434,30 @@ public class LaterInvocator {
       myLastInfo = lastInfo;
 
       if (lastInfo != null) {
+        EventsWatcher watcher = EventsWatcher.getInstance();
+        Runnable runnable = lastInfo.runnable;
+        if (watcher != null) {
+          watcher.runnableStarted(runnable);
+        }
+
         try {
           doRun(lastInfo);
           lastInfo.markDone();
         }
-        catch (ProcessCanceledException ignored) { }
+        catch (ProcessCanceledException ignored) {
+
+        }
         catch (Throwable t) {
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            ExceptionUtil.rethrow(t);
+          }
           LOG.error(t);
         }
         finally {
           if (!DEBUG) myLastInfo = null;
-          TransactionGuardImpl.logTimeMillis(startedAt, lastInfo.runnable);
+          if (watcher != null) {
+            watcher.runnableFinished(runnable, startedAt);
+          }
         }
       }
       return lastInfo != null;
@@ -448,6 +475,7 @@ public class LaterInvocator {
   }
 
   @TestOnly
+  @NotNull
   public static Collection<RunnableInfo> getLaterInvocatorQueue() {
     synchronized (LOCK) {
       // used by leak hunter as root, so we must not copy it here to another list

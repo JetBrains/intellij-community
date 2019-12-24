@@ -72,6 +72,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(String winDistPath) {
     def jreSuffix = buildContext.bundledJreManager.secondJreSuffix()
     String jreDirectoryPath64 = null
+    String jreDirectoryPath = null
     //do not include win32 launcher into winzip with 9+ jbr bundled
     List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
     if (buildContext.bundledJreManager.doBundleSecondJre()) {
@@ -82,7 +83,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         File archive = buildContext.bundledJreManager.findSecondBundledJreArchiveForWin(JvmArchitecture.x32)
         if (archive != null && archive.exists()) {
           //prepare folder with jre x86 for win archive
-          def jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
+          jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x32)
           buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
             tarfileset(dir: "${jreDirectoryPath}/jre32") {
               include(name: "**/**")
@@ -96,7 +97,20 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
+    if (customizer.getBaseDownloadUrlForJre() != null) {
+      File archive = buildContext.bundledJreManager.findJreArchive(OsFamily.WINDOWS,JvmArchitecture.x32)
+      if (archive != null && archive.exists()) {
+        //prepare folder with jre x86 for win archive
+        jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS, JvmArchitecture.x32)
+        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
+          tarfileset(dir: "${jreDirectoryPath}/jre32") {
+            include(name: "**/**")
+          }
+        }
+      }
+    }
+
+    jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
       buildWinZip([jreDirectoryPath], ".win", winDistPath, excludeList)
     }
@@ -114,7 +128,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
-        .buildInstaller(winDistPath, productJsonDir, '', !buildContext.bundledJreManager.bundledJreModular)
+        .buildInstaller(winDistPath, productJsonDir, '', buildContext.bundledJreManager.is32JreSupported())
     }
   }
 

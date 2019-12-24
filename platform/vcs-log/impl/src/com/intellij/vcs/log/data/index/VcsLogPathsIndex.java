@@ -35,6 +35,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
@@ -59,7 +60,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   @Override
   protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, List<ChangeKind>>> createdForwardIndex() throws IOException {
     if (!isPathsForwardIndexRequired()) return null;
-    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx")),
+    return Pair.create(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), false),
                        new KeyCollectionForwardIndexAccessor<Integer, List<ChangeKind>>(new IntCollectionDataExternalizer()) {
                          @Nullable
                          @Override
@@ -76,7 +77,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull StorageId storageId) throws IOException {
-    File storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
+    Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentBTreeEnumerator<>(storageFile, new LightFilePathKeyDescriptor(),
                                            Page.PAGE_SIZE, null, storageId.getVersion());
   }
@@ -84,7 +85,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   @NotNull
   private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId)
     throws IOException {
-    File storageFile = storageId.getStorageFile(RENAMES_MAP);
+    Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
                                    storageId.getVersion());
   }
@@ -243,7 +244,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
                                                               int pathId, int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
-        changeDataList = ContainerUtil.newSmartList();
+        changeDataList = new SmartList<>();
         for (int i = 0; i < parentsCount; i++) {
           changeDataList.add(ChangeKind.NOT_CHANGED);
         }
@@ -281,7 +282,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     @Override
     public List<ChangeKind> read(@NotNull DataInput in) throws IOException {
-      List<ChangeKind> value = ContainerUtil.newSmartList();
+      List<ChangeKind> value = new SmartList<>();
 
       int size = DataInputOutputUtil.readINT(in);
       for (int i = 0; i < size; i++) {

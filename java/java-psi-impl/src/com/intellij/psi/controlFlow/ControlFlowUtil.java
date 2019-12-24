@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ControlFlowUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowUtil");
+  private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
 
   private static class SSAInstructionState implements Cloneable {
     private final int myWriteCount;
@@ -1254,7 +1254,8 @@ public class ControlFlowUtil {
   }
 
   public static boolean isVariableDefinitelyAssigned(@NotNull final PsiVariable variable, @NotNull final ControlFlow flow) {
-    final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+    PsiElement parent = variable.getParent();
+    final int variableDeclarationOffset = parent == null ? -1 : flow.getStartOffset(parent);
     int offset = variableDeclarationOffset > -1 ? variableDeclarationOffset : 0;
     boolean[] unassignedOffsets = getVariablePossiblyUnassignedOffsets(variable, flow);
     return !unassignedOffsets[offset];

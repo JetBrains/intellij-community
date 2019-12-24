@@ -34,13 +34,6 @@ public class ClassComplexityInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.class.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return DEFAULT_COMPLEXITY_LIMIT;
   }

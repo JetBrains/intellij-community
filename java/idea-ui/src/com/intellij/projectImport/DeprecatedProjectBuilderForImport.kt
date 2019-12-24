@@ -11,4 +11,6 @@ import org.jetbrains.annotations.ApiStatus
  * Needed to remove the redundant import action.
  */
 @ApiStatus.Experimental
-interface DeprecatedProjectBuilderForImport
+interface DeprecatedProjectBuilderForImport {
+  fun getProjectOpenProcessor(): ProjectOpenProcessor
+}

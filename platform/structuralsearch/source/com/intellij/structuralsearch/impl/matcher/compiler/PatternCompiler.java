@@ -7,6 +7,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -15,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.reference.SoftReference;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -46,31 +46,31 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
-  private static final Object LOCK = new Object();
-  private static SoftReference<CompiledPattern> ourLastCompiledPattern;
-  private static MatchOptions ourLastMatchOptions;
-  private static boolean ourLastCompileSuccessful = true;
+  private static final Key<LastResult> SSR_LAST_COMPILED_PATTERN = new Key<>("SSR_LAST_COMPILED_PATTERN");
+
   private static String ourLastSearchPlan;
 
-  public static CompiledPattern compilePattern(Project project, MatchOptions options,
-                                               boolean checkForErrors, boolean optimizeScope)
+  public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
     if (!checkForErrors) {
-      synchronized (LOCK) {
-        if (options.equals(ourLastMatchOptions) &&
-            (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == ourLastMatchOptions.getScope())) {
-          if (!ourLastCompileSuccessful) return null;
-          assert ourLastCompiledPattern != null;
-          final CompiledPattern lastCompiledPattern = ourLastCompiledPattern.get();
-          if (lastCompiledPattern != null) {
-            return lastCompiledPattern;
-          }
-        }
+      final LastResult lastResult = SSR_LAST_COMPILED_PATTERN.get(project);
+      if (lastResult != null && options.equals(lastResult.options) &&
+          (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == lastResult.options.getScope())) {
+        return lastResult.pattern;
       }
     }
-    return !ApplicationManager.getApplication().isDispatchThread()
-           ? ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope))
-           : doCompilePattern(project, options, checkForErrors, optimizeScope);
+    return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
+  }
+
+  private static class LastResult {
+
+    public final MatchOptions options;
+    public final CompiledPattern pattern;
+
+    private LastResult(MatchOptions options, CompiledPattern pattern) {
+      this.options = options;
+      this.pattern = pattern;
+    }
   }
 
   @NotNull
@@ -93,17 +93,9 @@ public class PatternCompiler {
       try {
         checkForUnknownVariables(pattern, elements);
         pattern.setNodes(elements);
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = new SoftReference<>(result);
-          ourLastCompileSuccessful = true;
-        }
+        project.putUserData(SSR_LAST_COMPILED_PATTERN, new LastResult(options.copy(), result));
       } catch (MalformedPatternException e) {
-        synchronized (LOCK) {
-          ourLastMatchOptions = options.copy();
-          ourLastCompiledPattern = null;
-          ourLastCompileSuccessful = false;
-        }
+        project.putUserData(SSR_LAST_COMPILED_PATTERN, new LastResult(options.copy(), null));
         throw e;
       }
       if (checkForErrors) {
@@ -146,7 +138,7 @@ public class PatternCompiler {
       pattern.putVariableNode(Configuration.CONTEXT_VAR_NAME, element);
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
@@ -172,7 +164,7 @@ public class PatternCompiler {
       });
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           collectNode(element, element.getUserData(CompiledPattern.HANDLER_KEY));
           super.visitElement(element);
 
@@ -324,7 +316,7 @@ public class PatternCompiler {
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
 
         if (element instanceof LeafElement) {
@@ -364,7 +356,7 @@ public class PatternCompiler {
 
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitErrorElement(PsiErrorElement element) {
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
         super.visitErrorElement(element);
 
         final int startOffset = element.getTextRange().getStartOffset();

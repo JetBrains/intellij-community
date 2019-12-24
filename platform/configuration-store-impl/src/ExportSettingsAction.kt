@@ -1,14 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
-import com.intellij.AbstractBundle
 import com.intellij.CommonBundle
+import com.intellij.DynamicBundle
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ImportSettingsFilenameFilter
 import com.intellij.ide.actions.RevealFileAction
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
@@ -16,7 +15,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -24,24 +22,20 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.ServiceManagerImpl
+import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
 import gnu.trove.THashMap
 import gnu.trove.THashSet
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 internal fun isImportExportActionApplicable(): Boolean {
   val app = ApplicationManager.getApplication()
@@ -122,26 +116,11 @@ fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
 fun exportInstalledPlugins(zip: Compressor) {
-  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId.idString }.toList()
+  val plugins = PluginManagerCore.getPlugins().asSequence().filter { !it.isBundled && it.isEnabled }.map { it.pluginId }.toList()
   if (plugins.isNotEmpty()) {
     val buffer = StringWriter()
     PluginManagerCore.writePluginsList(plugins, buffer)
     zip.addFile(PluginManager.INSTALLED_TXT, buffer.toString().toByteArray())
-  }
-}
-
-@Deprecated("Please use `#exportInstalledPlugins(Compressor)` instead.")
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-fun exportInstalledPlugins(zipOut: ZipOutputStream) {
-  val plugins = PluginManagerCore.getPlugins().mapNotNull { if (!it.isBundled && it.isEnabled) it.pluginId.idString else null }
-  if (plugins.isNotEmpty()) {
-    zipOut.putNextEntry(ZipEntry(PluginManager.INSTALLED_TXT))
-    try {
-      PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, Charsets.UTF_8))
-    }
-    finally {
-      zipOut.closeEntry()
-    }
   }
 }
 
@@ -159,7 +138,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
     }
   }
 
-  val app = ApplicationManager.getApplication() as ComponentManagerImpl
+  val app = ApplicationManager.getApplication() as PlatformComponentManagerImpl
 
   @Suppress("DEPRECATION")
   app.getComponentInstancesOfType(ExportableApplicationComponent::class.java).forEach(processor)
@@ -188,7 +167,7 @@ fun getExportableComponentsMap(isOnlyExisting: Boolean,
 
   val fileToContent = THashMap<Path, String>()
 
-  ServiceManagerImpl.processAllImplementationClasses(app) { aClass, pluginDescriptor ->
+  processAllImplementationClasses(app.picoContainer) { aClass, pluginDescriptor ->
     val stateAnnotation = getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
@@ -286,11 +265,11 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
   }
 
   var resourceBundleName: String?
-  if (pluginDescriptor is IdeaPluginDescriptor && PluginManagerCore.CORE_PLUGIN_ID != pluginDescriptor.pluginId.idString) {
+  if (pluginDescriptor != null && PluginManagerCore.CORE_ID != pluginDescriptor.pluginId) {
     resourceBundleName = pluginDescriptor.resourceBundleBaseName
     if (resourceBundleName == null) {
       if (pluginDescriptor.vendor == "JetBrains") {
-        resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
+        resourceBundleName = OptionsBundle.BUNDLE
       }
       else {
         return trimDefaultName()
@@ -298,7 +277,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
     }
   }
   else {
-    resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
+    resourceBundleName = OptionsBundle.BUNDLE
   }
 
   val classLoader = pluginDescriptor?.pluginClassLoader ?: aClass.classLoader
@@ -307,16 +286,17 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
     if (message !== defaultName) {
       return message
     }
-
-    if (PlatformUtils.isRubyMine()) {
-      // ruby plugin in RubyMine has id "com.intellij", so, we cannot set "resource-bundle" in plugin.xml
-      return messageOrDefault(classLoader, "org.jetbrains.plugins.ruby.RBundle", defaultName)
-    }
   }
   return trimDefaultName()
 }
 
 private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, defaultName: String): String {
-  val bundle = AbstractBundle.getResourceBundle(bundleName, classLoader) ?: return defaultName
-  return CommonBundle.messageOrDefault(bundle, "exportable.$defaultName.presentable.name", defaultName)
+  try {
+    return CommonBundle.messageOrDefault(
+      DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader), "exportable.$defaultName.presentable.name", defaultName)
+  }
+  catch (e: MissingResourceException) {
+    LOG.warn("Missing bundle ${bundleName} at ${classLoader}: ${e.message}")
+    return defaultName
+  }
 }

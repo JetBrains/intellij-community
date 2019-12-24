@@ -31,12 +31,6 @@ public class LambdaParameterNamingConventionInspection extends ConventionInspect
   private static final int DEFAULT_MAX_LENGTH = 20;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.display.name");
-  }
-
-  @Override
   protected String getElementDescription() {
     return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.element.description");
   }

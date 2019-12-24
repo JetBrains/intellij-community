@@ -6,6 +6,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.SplashManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -155,6 +156,9 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     if (ourInstance != null) {
       return null;
     }
+
+    // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
+    ApplicationManager.getApplication().executeOnPooledThread(() -> ActionManager.getInstance());
 
     IdeFrame frame = createWelcomeFrame();
     return () -> {

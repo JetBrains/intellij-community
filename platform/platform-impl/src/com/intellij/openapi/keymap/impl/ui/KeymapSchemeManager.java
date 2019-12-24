@@ -175,6 +175,21 @@ public final class KeymapSchemeManager extends AbstractSchemeActions<KeymapSchem
     selector.selectKeymap(getSchemeToSelect(null), true);
   }
 
+  void handleKeymapAdded(Keymap keymap) {
+    list.add(new KeymapScheme(keymap));
+  }
+
+  void handleKeymapRemoved(Keymap keymap) {
+    list.removeIf(scheme -> scheme.contains(keymap));
+  }
+
+  void handleActiveKeymapChanged(Keymap keymap) {
+    final KeymapScheme scheme = find(keymap);
+    if (scheme != null) {
+      selector.selectKeymap(scheme, false);
+    }
+  }
+
   /**
    * Applies a changes in the internal list of schemes.
    *

@@ -387,7 +387,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
 
   @NotNull
   private static Instruction[] buildFlowForField(@NotNull GrOpenBlock block) {
-    return new ControlFlowBuilder(block.getProject(), GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
+    return new ControlFlowBuilder(GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
   }
 
 
@@ -416,7 +416,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   private static Instruction[] getFlow(@NotNull PsiElement element) {
     return element instanceof GrControlFlowOwner
            ? ((GrControlFlowOwner)element).getControlFlow()
-           : new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
+           : new ControlFlowBuilder().buildControlFlow((GroovyPsiElement)element);
   }
 
 

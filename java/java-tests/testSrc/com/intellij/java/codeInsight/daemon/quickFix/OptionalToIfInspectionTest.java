@@ -13,8 +13,7 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
 /**
  * @see OptionalToIfInspection
  */
-public class
-OptionalToIfInspectionTest extends LightQuickFixParameterizedTestCase {
+public class OptionalToIfInspectionTest extends LightQuickFixParameterizedTestCase {
 
   @NotNull
   @Override

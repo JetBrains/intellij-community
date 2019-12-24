@@ -30,15 +30,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class XsdRegExpInjector implements MultiHostInjector {
-
-  private static final XmlAttributeValuePattern PATTERN =
-    XmlPatterns.xmlAttributeValue("value").withSuperParent(2, XmlPatterns.xmlTag().withLocalName("pattern").withNamespace(
-      XmlUtil.SCHEMA_URIS));
-
+  private static class Holder {
+    private static final XmlAttributeValuePattern PATTERN =
+      XmlPatterns.xmlAttributeValue("value").withSuperParent(2, XmlPatterns.xmlTag().withLocalName("pattern").withNamespace(
+        XmlUtil.SCHEMA_URIS));
+  }
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
 
-    if (PATTERN.accepts(context)) {
+    if (Holder.PATTERN.accepts(context)) {
       registrar.startInjecting(XsdRegExpParserDefinition.LANGUAGE).
         addPlace(null, null, (PsiLanguageInjectionHost)context, ElementManipulators.getValueTextRange(context)).
         doneInjecting();

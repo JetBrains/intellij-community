@@ -58,7 +58,14 @@ public class JsonFileResolver {
 
     boolean isHttpPath = isHttpPath(schemaUrl);
 
-    if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
+    if (!isHttpPath && currentFile instanceof HttpVirtualFile) {
+      // relative http paths
+      String url = StringUtil.trimEnd(currentFile.getUrl(), "/");
+      int lastSlash = url.lastIndexOf('/');
+      assert lastSlash != -1;
+      schemaUrl = url.substring(0, lastSlash) + "/" + schemaUrl;
+    }
+    else if (StringUtil.startsWithChar(schemaUrl, '.') || !isHttpPath) {
       // relative path
       VirtualFile parent = currentFile == null ? null : currentFile.getParent();
       schemaUrl = parent == null ? null :

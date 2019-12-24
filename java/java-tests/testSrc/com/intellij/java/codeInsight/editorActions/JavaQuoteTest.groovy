@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.editorActions
 
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 
@@ -32,6 +33,11 @@ class JavaQuoteTest extends LightJavaCodeInsightFixtureTestCase {
     doTest ' """.""<caret>" ', ' """."""<caret> '
   }
   void testPrecedingTextBlock() { doTest 'f(""<caret> + """\n  .""")', 'f("""\n          <caret>""" + """\n  .""")' }
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_13
+  }
 
   private void doTest(String before, String after, char c = '"') {
     myFixture.configureByText("a.java", "class C {{\n  ${before}\n}}")

@@ -24,12 +24,12 @@ public final class CliResult {
     return CompletableFuture.completedFuture(new CliResult(exitCode, message));
   }
 
-  public static @NotNull CliResult unmap(@NotNull Future<CliResult> future, int timeoutCode) {
+  public static @NotNull CliResult unmap(@NotNull Future<CliResult> future, int errorCode) {
     try {
       return future.get();
     }
     catch (InterruptedException | ExecutionException e) {
-      return new CliResult(timeoutCode, e.getMessage());
+      return new CliResult(errorCode, e.getMessage());
     }
   }
 }

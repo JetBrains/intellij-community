@@ -36,13 +36,6 @@ public class SerializableHasSerialVersionUIDFieldInspection extends Serializable
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serializable.class.without.serialversionuid.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serializable.class.without.serialversionuid.problem.descriptor");

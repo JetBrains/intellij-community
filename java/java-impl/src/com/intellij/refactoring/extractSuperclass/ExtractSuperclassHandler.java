@@ -22,7 +22,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -38,7 +38,6 @@ import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements ElementsHandler, ExtractSuperclassDialog.Callback, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler");
+  private static final Logger LOG = Logger.getInstance(ExtractSuperclassHandler.class);
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.superclass.title");
 
@@ -117,10 +116,11 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      final Runnable action = () -> doRefactoring(project, mySubclass, dialog);
-      ApplicationManager.getApplication().runWriteAction(action);
-    }, REFACTORING_NAME, null);
+    PsiClass superClass = WriteCommandAction
+      .writeCommandAction(project)
+      .withName(REFACTORING_NAME)
+      .compute(() -> doRefactoring(project, mySubclass, dialog));
+    ExtractClassUtil.askAndTurnRefsToSuper(mySubclass, superClass);
   }
 
   @Override
@@ -142,26 +142,17 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
   }
 
   // invoked inside Command and Atomic action
-  private static void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
+  private static PsiClass doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
     final DocCommentPolicy javaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
-      final PsiClass superclass;
-      try {
-        superclass = ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
-      }
-      finally {
-        a.finish();
-      }
-
-      // ask whether to search references to subclass and turn them into refs to superclass if possible
-      ExtractClassUtil.suggestToTurnRefsToSuper(project, superclass, subclass);
+      return ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    finally {
+      a.finish();
     }
   }
 

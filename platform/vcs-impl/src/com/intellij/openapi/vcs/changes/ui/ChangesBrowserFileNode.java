@@ -77,7 +77,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
 
   @NotNull
   private FileStatus getFileStatus() {
-    if (myProject == null) return FileStatus.NOT_CHANGED;
+    if (myProject == null || myProject.isDisposed()) return FileStatus.NOT_CHANGED;
     return ChangeListManager.getInstance(myProject).getStatus(getUserObject());
   }
 }

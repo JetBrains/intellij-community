@@ -46,11 +46,6 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   };
   private final Map<String, Boolean> mySettings = new LinkedHashMap<>();
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inconsistent.resource.bundle.display.name");
-  }
 
   @Override
   @NotNull

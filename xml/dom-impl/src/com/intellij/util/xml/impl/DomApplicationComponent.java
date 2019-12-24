@@ -2,19 +2,25 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomFileDescription;
-import com.intellij.util.xml.TypeChooserManager;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -43,6 +49,32 @@ public class DomApplicationComponent {
 
 
   public DomApplicationComponent() {
+    registerDescriptions();
+
+    Runnable onChange = () -> extensionsChanged();
+    //noinspection deprecation
+    addChangeListener(DomFileDescription.EP_NAME, onChange);
+    addChangeListener(DomFileMetaData.EP_NAME, onChange);
+  }
+
+  private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable runnable) {
+    Application app = ApplicationManager.getApplication();
+    if (Disposer.isDisposing(app)) return;
+
+    ep.addExtensionPointListener(new ExtensionPointListener<T>() {
+      @Override
+      public void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
+        runnable.run();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
+        runnable.run();
+      }
+    }, app);
+  }
+
+  private void registerDescriptions() {
     //noinspection deprecation
     for (DomFileDescription<?> description : DomFileDescription.EP_NAME.getExtensionList()) {
       registerFileDescription(description);
@@ -50,6 +82,17 @@ public class DomApplicationComponent {
     for (DomFileMetaData meta : DomFileMetaData.EP_NAME.getExtensionList()) {
       registerFileDescription(meta);
     }
+  }
+
+  private synchronized void extensionsChanged() {
+    myRootTagName2FileDescription.clear();
+    myAcceptingOtherRootTagNamesDescriptions.clear();
+    myClass2Annotator.clear();
+
+    myCachedImplementationClasses.clearCache();
+    myTypeChooserManager.clearCache();
+
+    registerDescriptions();
   }
 
   public static DomApplicationComponent getInstance() {

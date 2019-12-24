@@ -3,9 +3,11 @@ package com.intellij.openapi.project.ex;
 
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
+import java.util.Objects;
 
 public abstract class ProjectManagerEx extends ProjectManager {
   public static ProjectManagerEx getInstanceEx() {
@@ -32,11 +34,14 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract Project newProject(@Nullable String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @TestOnly
-  public final Project newProjectForTest(@NotNull Path file) {
+  @NotNull
+  public final Project newProjectForTest(@NotNull Path file, @NotNull Disposable parentDisposable) {
     OpenProjectTask options = new OpenProjectTask();
     options.useDefaultProjectAsTemplate = false;
     options.isNewProject = true;
-    return newProject(file, null, options);
+    Project project = Objects.requireNonNull(newProject(file, null, options));
+    Disposer.register(parentDisposable, () -> forceCloseProject(project));
+    return project;
   }
 
   @Nullable
@@ -90,17 +95,9 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract void openTestProject(@NotNull Project project);
 
   /**
-   * Without save and "check can close".
-   * Returns remaining open test projects.
-   */
-  @TestOnly
-  @NotNull
-  public abstract Collection<Project> closeTestProject(@NotNull Project project);
-
-  /**
    * The project and the app settings will be not saved.
    */
-  public abstract boolean forceCloseProject(@NotNull Project project, boolean dispose);
+  public abstract boolean forceCloseProject(@NotNull Project project);
 
   // return true if successful
   public abstract boolean closeAndDisposeAllProjects(boolean checkCanClose);

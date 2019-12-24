@@ -16,6 +16,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Modifier;
@@ -39,12 +40,12 @@ public class MemberSignature implements Comparable<MemberSignature> {
   public MemberSignature(PsiField field) {
     modifiers = calculateModifierBitmap(field.getModifierList());
     name = field.getName();
-    signature = createTypeSignature(field.getType());
+    signature = ClassUtil.getBinaryPresentation(field.getType());
   }
 
   public MemberSignature(PsiMethod method) {
     modifiers = calculateModifierBitmap(method.getModifierList());
-    signature = createMethodSignature(method).replace('/', '.');
+    signature = ClassUtil.getAsmMethodSignature(method).replace('/', '.');
     name = method.isConstructor() ? CONSTRUCTOR_NAME : method.getName();
   }
 
@@ -101,113 +102,12 @@ public class MemberSignature implements Comparable<MemberSignature> {
     return signature.compareTo(other.signature);
   }
 
-  public static String createMethodSignature(PsiMethod method) {
-    final PsiParameterList parameterList = method.getParameterList();
-    final PsiParameter[] parameters = parameterList.getParameters();
-    final StringBuilder signatureBuffer = new StringBuilder();
-    signatureBuffer.append('(');
-    for (final PsiParameter parameter : parameters) {
-      final PsiType type = parameter.getType();
-      signatureBuffer.append(createTypeSignature(type));
-    }
-    signatureBuffer.append(')');
-    final PsiType returnType = method.getReturnType();
-    final String returnTypeSignature;
-    if (returnType == null) {
-      // constructors have void return type.
-      returnTypeSignature = createTypeSignature(PsiType.VOID);
-    }
-    else {
-      returnTypeSignature = createTypeSignature(returnType);
-    }
-    signatureBuffer.append(returnTypeSignature);
-    return signatureBuffer.toString();
-  }
-
-  public static String createPrimitiveTypeSignature(PsiPrimitiveType primitiveType) {
-    if (primitiveType.equals(PsiType.INT)) {
-      return "I";
-    }
-    else if (primitiveType.equals(PsiType.BYTE)) {
-      return "B";
-    }
-    else if (primitiveType.equals(PsiType.LONG)) {
-      return "J";
-    }
-    else if (primitiveType.equals(PsiType.FLOAT)) {
-      return "F";
-    }
-    else if (primitiveType.equals(PsiType.DOUBLE)) {
-      return "D";
-    }
-    else if (primitiveType.equals(PsiType.SHORT)) {
-      return "S";
-    }
-    else if (primitiveType.equals(PsiType.CHAR)) {
-      return "C";
-    }
-    else if (primitiveType.equals(PsiType.BOOLEAN)) {
-      return "Z";
-    }
-    else if (primitiveType.equals(PsiType.VOID)) {
-      return "V";
-    }
-    else {
-      throw new InternalError();
-    }
-  }
-
+  /**
+   * @deprecated use {@link ClassUtil#getBinaryPresentation(PsiType)} instead
+   */
+  @Deprecated
   public static String createTypeSignature(PsiType type) {
-    final StringBuilder buffer = new StringBuilder();
-    PsiType internalType = type;
-    while (internalType instanceof PsiArrayType) {
-      buffer.append('[');
-      final PsiArrayType arrayType = (PsiArrayType)internalType;
-      internalType = arrayType.getComponentType();
-    }
-    if (internalType instanceof PsiPrimitiveType) {
-      final PsiPrimitiveType primitiveType = (PsiPrimitiveType)internalType;
-      buffer.append(createPrimitiveTypeSignature(primitiveType));
-    }
-    else {
-      buffer.append('L');
-      if (internalType instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)internalType;
-        PsiClass psiClass = classType.resolve();
-        if (psiClass instanceof PsiTypeParameter) {
-          final PsiTypeParameter typeParameter = (PsiTypeParameter)psiClass;
-          final PsiReferenceList extendsList = typeParameter.getExtendsList();
-          final PsiClassType[] types = extendsList.getReferencedTypes();
-          if (types.length > 0) {
-            psiClass = types[0].resolve();
-          }
-        }
-        if (psiClass != null) {
-          final StringBuilder postFix = new StringBuilder();
-          PsiClass containingClass = psiClass.getContainingClass();
-          while (containingClass != null) {
-            // construct name for inner classes
-            postFix.insert(0, psiClass.getName()).insert(0, '$');
-            psiClass = containingClass;
-            containingClass = psiClass.getContainingClass();
-          }
-          final String qualifiedName = psiClass.getQualifiedName();
-          if (qualifiedName == null) {
-            // for type parameters
-            buffer.append(CommonClassNames.JAVA_LANG_OBJECT);
-          }
-          else {
-            buffer.append(qualifiedName.replace('.', '/')).append(postFix);
-          }
-        }
-      }
-      else {
-        // todo test this code path
-        buffer.append(internalType.getCanonicalText().replace('.', '/'));
-      }
-      buffer.append(';');
-    }
-    return buffer.toString();
+    return ClassUtil.getBinaryPresentation(type);
   }
 
   public boolean equals(Object object) {

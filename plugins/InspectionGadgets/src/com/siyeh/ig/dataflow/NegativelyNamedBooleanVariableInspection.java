@@ -23,7 +23,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InvertBooleanFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +41,6 @@ public class NegativelyNamedBooleanVariableInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("negatively.named.boolean.variable.display.name");
   }
 
   @NotNull

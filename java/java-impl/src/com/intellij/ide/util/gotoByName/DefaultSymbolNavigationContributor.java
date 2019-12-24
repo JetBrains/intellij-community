@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
+  private static final Logger LOG = Logger.getInstance(DefaultSymbolNavigationContributor.class);
 
   @Nullable
   @Override

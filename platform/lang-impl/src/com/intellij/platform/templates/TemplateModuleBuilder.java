@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -110,17 +111,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           }
         });
 
-        StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-            modifiableModuleModel.renameModule(module, module.getProject().getName());
-            modifiableModuleModel.commit();
-            fixModuleName(module);
-          }
-          catch (ModuleWithNameAlreadyExists exists) {
-            // do nothing
-          }
-        }));
+        StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+              modifiableModuleModel.renameModule(module, module.getProject().getName());
+              modifiableModuleModel.commit();
+              fixModuleName(module);
+            }
+            catch (ModuleWithNameAlreadyExists exists) {
+              // do nothing
+            }
+          });
+        });
         return module;
       }
       return null;
@@ -371,6 +374,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     }
     return StringUtilRt.convertLineSeparators(patchedContent, CodeStyle.getDefaultSettings().getLineSeparator()).
       getBytes(StandardCharsets.UTF_8);
+  }
+
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdkType) {
+    return myType.createModuleBuilder().isSuitableSdkType(sdkType);
   }
 
   @Nullable

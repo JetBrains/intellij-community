@@ -72,7 +72,7 @@ import java.util.List;
 import java.util.*;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
+  private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
 
@@ -282,7 +282,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
   private void saveAllDocumentsLater() {
     // later because some document might have been blocked by PSI right now
-    TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       final Document[] unsavedDocuments = getUnsavedDocuments();
       for (Document document : unsavedDocuments) {
         VirtualFile file = getFile(document);
@@ -680,11 +680,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
-  public void contentsChanged(VFileContentChangeEvent event) {
+  public void contentsChanged(@NotNull VFileContentChangeEvent event) {
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
-    if (event.isFromSave()) return;
+    if (event.isFromSave()) {
+      return;
+    }
 
     if (document == null || isBinaryWithDecompiler(virtualFile)) {
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
@@ -701,6 +703,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
     final VirtualFile file = getFile(document);
     assert file != null;
+    if (!file.isValid()) return;
 
     if (!fireBeforeFileContentReload(file, document)) {
       return;

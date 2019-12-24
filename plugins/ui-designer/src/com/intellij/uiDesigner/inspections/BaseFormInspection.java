@@ -33,12 +33,6 @@ public abstract class BaseFormInspection extends AbstractBaseJavaLocalInspection
   }
 
   @Override
-  @Nls @NotNull
-  public String getDisplayName() {
-    return "";
-  }
-
-  @Override
   @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");

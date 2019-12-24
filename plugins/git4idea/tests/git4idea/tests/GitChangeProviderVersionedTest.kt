@@ -239,6 +239,9 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
 
     // do not trigger move via VcsVFSListener
     rm("RENAME.txt")
+    assertFalse(child("RENAME.txt").exists())
+    assertFalse(child("rename.txt").exists())
+
     touch("rename.txt", "rename_file_content")
     repo.git("add -N rename.txt")
 

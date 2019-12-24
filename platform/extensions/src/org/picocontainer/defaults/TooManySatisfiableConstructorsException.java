@@ -7,29 +7,23 @@
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant   *
  *****************************************************************************/
-
 package org.picocontainer.defaults;
 
 import org.picocontainer.PicoIntrospectionException;
 
+import java.lang.reflect.Constructor;
 import java.util.Collection;
 
-public class TooManySatisfiableConstructorsException extends PicoIntrospectionException {
+public final class TooManySatisfiableConstructorsException extends PicoIntrospectionException {
+  private final Collection<Constructor<?>> constructors;
 
-    private Class forClass;
-    private Collection constructors;
+  public TooManySatisfiableConstructorsException(Collection<Constructor<?>> constructors) {
+    super("Too many satisfiable constructors:" + constructors.toString());
 
-    public TooManySatisfiableConstructorsException(Class forClass, Collection constructors) {
-        super( "Too many satisfiable constructors:" + constructors.toString());
-        this.forClass = forClass;
-        this.constructors = constructors;
-    }
+    this.constructors = constructors;
+  }
 
-    public Class getForImplementationClass() {
-        return forClass;
-    }
-
-    public Collection getConstructors() {
-        return constructors;
-    }
+  public Collection<Constructor<?>> getConstructors() {
+    return constructors;
+  }
 }

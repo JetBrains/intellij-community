@@ -14,8 +14,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 class DropJShellStateAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");
-  private static final AnAction ourInstance = new DropJShellStateAction();
+  private static final Logger LOG = Logger.getInstance(ExecuteJShellAction.class);
+  private static class Holder {
+    private static final AnAction ourInstance = new DropJShellStateAction();
+  }
 
   private DropJShellStateAction() {
     super("Drop All Code Snippets", "Invalidate all code snippets in the associated JShell instance", AllIcons.Actions.GC);
@@ -45,6 +47,6 @@ class DropJShellStateAction extends AnAction{
   }
 
   public static AnAction getSharedInstance() {
-    return ourInstance;
+    return Holder.ourInstance;
   }
 }

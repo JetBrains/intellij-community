@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -60,6 +60,15 @@ public interface PsiClass
    * @return true if the class is an enumeration, false otherwise.
    */
   boolean isEnum();
+
+  /**
+   * Checks if the class is a record.
+   *
+   * @return true if the class is an record, false otherwise.
+   */
+  default boolean isRecord() {
+    return false;
+  }
 
   /**
    * Returns the list of classes that this class or interface extends.
@@ -375,5 +384,15 @@ public interface PsiClass
   @Override
   default JvmReferenceType[] getInterfaceTypes() {
     return PsiJvmConversionHelper.getClassInterfaces(this);
+  }
+
+  @NotNull
+  default PsiRecordComponent[] getRecordComponents() {
+    return PsiRecordComponent.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  default PsiRecordHeader getRecordHeader() {
+    return null;
   }
 }

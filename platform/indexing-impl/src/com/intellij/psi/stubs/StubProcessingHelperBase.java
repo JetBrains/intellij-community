@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +39,7 @@ import java.util.List;
  * Author: dmitrylomov
  */
 public abstract class StubProcessingHelperBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubProcessingHelperBase");
+  protected static final Logger LOG = Logger.getInstance(StubProcessingHelperBase.class);
 
   public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
                                                              @NotNull VirtualFile file,
@@ -48,7 +49,9 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " + file.getFileType() + ", used scope " + scope);
+      LOG.error("Stub index points to a file without PSI: " +
+                getFileTypeInfo(file, project) + ", " +
+                "used scope = " + scope);
       onInternalError(file);
       return true;
     }
@@ -109,7 +112,7 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass,
                                                              @NotNull PsiFile psiFile) {
     if (BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) == null) {
-      LOG.error("unable to get stub builder for " + psiFile.getFileType() + ", " +
+      LOG.error("unable to get stub builder for file with " + getFileTypeInfo(file, psiFile.getProject()) + ", " +
                 StubTreeLoader.getFileViewProviderMismatchDiagnostics(psiFile.getViewProvider()));
       onInternalError(file);
       return true;
@@ -124,12 +127,12 @@ public abstract class StubProcessingHelperBase {
 
     ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
-      LOG.error("Stub index points to a file without indexed stubs: " + psiFile.getFileType());
+      LOG.error("Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
       return true;
     }
     if (objectStubTree instanceof StubTree) {
-      LOG.error("Stub index points to a file with PSI stubs (instead of non-PSI ones): " + psiFile.getFileType());
+      LOG.error("Stub index points to a file with PSI stubs (instead of non-PSI ones): " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
       return true;
     }
@@ -153,5 +156,9 @@ public abstract class StubProcessingHelperBase {
 
   protected abstract void onInternalError(VirtualFile file);
 
+  private static String getFileTypeInfo(VirtualFile file, Project project) {
+    return "file type = " + file.getFileType() + ", " +
+           "indexed file type =  " + FileTypeIndex.getIndexedFileType(file, project);
+  }
 
 }

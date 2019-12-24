@@ -15,11 +15,11 @@
  */
 package org.jetbrains.lang.manifest;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class ManifestBundle extends AbstractBundle {
+public class ManifestBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return BUNDLE.getMessage(key, params);

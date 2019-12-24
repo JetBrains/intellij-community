@@ -42,13 +42,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
 
   @Override
   @NotNull
-  @Nls
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.unbound");
-  }
-
-  @Override
-  @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
     session.putUserData(LARGE_FUNCTIONS_KEY, new HashSet<>());
     return new Visitor(holder, session);
@@ -137,7 +130,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (resolvedUnderWithStatement(node, resolved) || resolvedUnderAssignmentExpressionAndCondition(node, resolved)) {
           return;
         }
-        if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
+        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
         if (owner instanceof PyFile) {

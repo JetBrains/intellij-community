@@ -35,7 +35,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 public class ActionsTreeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil");
+  private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   public static final String MAIN_MENU_TITLE = KeyMapBundle.message("main.menu.action.title");
   public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
@@ -60,7 +60,9 @@ public class ActionsTreeUtil {
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
       visited.add(id);
-      if (PluginManagerCore.CORE_PLUGIN_ID.equals(id.getIdString())) continue;
+      if (PluginManagerCore.CORE_ID == id) {
+        continue;
+      }
       for (String actionId : ActionManagerEx.getInstanceEx().getPluginActions(id)) {
         result.put(actionId, descriptor.getName());
       }

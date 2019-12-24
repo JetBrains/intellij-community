@@ -20,7 +20,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.XmlInspectionGroupNames;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +45,6 @@ public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableIn
   @NotNull
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.XML_INSPECTIONS;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.check.file.with.xerces");
   }
 
   @Override

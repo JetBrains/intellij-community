@@ -10,8 +10,7 @@ class ResourcesMetadataReader(private val metadataHolder: Class<*>, private val 
   fun featureOrderDirect(): List<String> = resourceContent("features_order.txt").lines()
 
   fun extractVersion(): String? {
-    val resource = metadataHolder.classLoader.getResource("$featuresDirectory/binary.json")
-    if (resource == null) return null
+    val resource = metadataHolder.classLoader.getResource("$featuresDirectory/binary.json") ?: return null
     val result = resource.file.substringBeforeLast(".jar!", "").substringAfterLast("-", "")
     return if (result.isBlank()) null else result
   }
@@ -19,7 +18,7 @@ class ResourcesMetadataReader(private val metadataHolder: Class<*>, private val 
   private fun resourceContent(fileName: String): String {
     val resource = "$featuresDirectory/$fileName"
     val fileStream = metadataHolder.classLoader.getResourceAsStream(resource)
-    if (fileStream == null) throw InconsistentMetadataException("Metadata file not found: $resource")
-    return fileStream.bufferedReader().readText()
+                     ?: throw InconsistentMetadataException("Metadata file not found: $resource")
+    return fileStream.bufferedReader().use { it.readText() }
   }
 }

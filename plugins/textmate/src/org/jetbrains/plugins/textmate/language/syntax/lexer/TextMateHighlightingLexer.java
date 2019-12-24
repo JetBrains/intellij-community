@@ -5,8 +5,6 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.ex.util.DataStorage;
-import com.intellij.openapi.editor.ex.util.DataStorageFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class TextMateHighlightingLexer extends LexerBase implements DataStorageFactory {
+public class TextMateHighlightingLexer extends LexerBase {
   private static final Logger LOG = Logger.getInstance(TextMateHighlightingLexer.class);
   private final Stack<TextMateLexerState> myStates = new Stack<>();
   private final Queue<Token> currentLineTokens = new LinkedList<>();
@@ -330,12 +328,6 @@ public class TextMateHighlightingLexer extends LexerBase implements DataStorageF
   private void setLastSuccessState(@Nullable ArrayList<TextMateLexerState> state) {
     lastSuccessState = state;
     lastSuccessStateOccursCount = 0;
-  }
-
-  @NotNull
-  @Override
-  public DataStorage createDataStorage() {
-    return new TextMateLexerDataStorage();
   }
 
   private static class Token {

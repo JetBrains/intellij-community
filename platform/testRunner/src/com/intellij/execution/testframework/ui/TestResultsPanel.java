@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -49,13 +49,8 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     mySplitterDefaultProportion = splitterDefaultProportion;
     final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
       @Override
-      public void toolWindowRegistered(@NotNull String id) {
-      }
-
-      @Override
-      public void stateChanged() {
-        final boolean splitVertically = splitVertically();
-        mySplitter.setOrientation(splitVertically);
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        mySplitter.setOrientation(splitVertically());
         revalidate();
         repaint();
       }

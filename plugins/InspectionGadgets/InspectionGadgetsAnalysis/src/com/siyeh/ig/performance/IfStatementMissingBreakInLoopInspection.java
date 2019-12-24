@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
-import java.util.HashSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -21,21 +20,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("inspection.if.statement.missing.break.in.loop.name");
-  }
 
   @NotNull
   @Override
@@ -85,19 +74,20 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
-      visitLoopStatement(statement, statement.getCondition());
+      visitLoopStatement(statement);
     }
 
     @Override
     public void visitDoWhileStatement(PsiDoWhileStatement statement) {
-      visitLoopStatement(statement, statement.getCondition());
+      visitLoopStatement(statement);
     }
 
-    private void visitLoopStatement(@NotNull PsiLoopStatement loopStatement, @Nullable PsiExpression condition) {
+    private void visitLoopStatement(@NotNull PsiConditionalLoopStatement loopStatement) {
       PsiStatement body = loopStatement.getBody();
       if (body == null) return;
       Set<PsiVariable> nonFinalVariables = new HashSet<>();
       Set<PsiVariable> declaredVariables = new HashSet<>();
+      PsiExpression condition = loopStatement.getCondition();
       if (condition != null) {
         if (mayHaveOutsideOfLoopSideEffects(condition, declaredVariables)) return;
         Set<PsiVariable> conditionVariables = VariableAccessUtils.collectUsedVariables(condition);

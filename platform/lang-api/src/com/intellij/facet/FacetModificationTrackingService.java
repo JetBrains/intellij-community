@@ -16,16 +16,18 @@
 
 package com.intellij.facet;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ModificationTrackerListener;
-import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
+@ApiStatus.NonExtendable
 public abstract class FacetModificationTrackingService {
 
   public static FacetModificationTrackingService getInstance(@NotNull Module module) {

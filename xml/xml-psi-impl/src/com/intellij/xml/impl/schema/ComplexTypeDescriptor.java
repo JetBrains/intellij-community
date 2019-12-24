@@ -19,7 +19,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
@@ -206,16 +206,13 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         if (location != null) {
           XmlAttributeValue valueElement = location.getValueElement();
           if (valueElement != null) {
-            PsiReference reference = valueElement.getReference();
-            if (reference != null) {
-              PsiElement element = reference.resolve();
-              if (element instanceof XmlFile) {
-                XmlDocument document = ((XmlFile)element).getDocument();
-                if (document != null) {
-                  PsiMetaData metaData = document.getMetaData();
-                  if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
-                    addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
-                  }
+            PsiElement element = new FileReferenceSet(valueElement).resolve();
+            if (element instanceof XmlFile) {
+              XmlDocument document = ((XmlFile)element).getDocument();
+              if (document != null) {
+                PsiMetaData metaData = document.getMetaData();
+                if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
+                  addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
                 }
               }
             }
@@ -435,7 +432,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
       if (OTHER_NAMESPACE_ATTR_VALUE.equals(ns)) {
         return !namespace.equals(myDocumentDescriptor.getDefaultNamespace()) ? canContainAttributeType : CanContainAttributeType.CanNotContain;
       }
-      else if ("##any".equals(ns)) {
+      else if (ns == null || "##any".equals(ns)) {
         return CanContainAttributeType.CanContainAny;
       }
       return canContainAttributeType;

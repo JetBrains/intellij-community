@@ -53,7 +53,7 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
     final Ref<Pair<PsiElement, PsiClass>> result = Ref.create();
     scope.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (element instanceof PsiMethod ||
             element instanceof PsiReferenceParameterList ||
             element instanceof PsiTypeElement ||

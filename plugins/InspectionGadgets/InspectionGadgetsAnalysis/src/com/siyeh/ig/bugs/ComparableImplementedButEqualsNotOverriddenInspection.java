@@ -47,12 +47,6 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.problem.descriptor");
   }

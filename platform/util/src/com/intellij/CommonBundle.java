@@ -2,22 +2,19 @@
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
+
+import static com.intellij.BundleUtil.loadLanguageBundle;
 
 /**
  * @author yole
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class CommonBundle extends BundleBase {
+public final class CommonBundle extends BundleBase {
   private static final String BUNDLE = "messages.CommonBundle";
-  private static Reference<ResourceBundle> ourBundle;
+  private static ResourceBundle ourBundle;
 
   private CommonBundle() { }
 
@@ -29,17 +26,19 @@ public class CommonBundle extends BundleBase {
 
   @NotNull
   private static ResourceBundle getCommonBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+    if (ourBundle != null) return ourBundle;
+    return ourBundle = ResourceBundle.getBundle(BUNDLE);
   }
 
-  public static String messageOrDefault(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
-    if (bundle == null) return defaultValue;
-    if (!bundle.containsKey(key)) {
+  @Contract("null, _, _, _ -> param3")
+  public static String messageOrDefault(@Nullable ResourceBundle bundle,
+                                        @NotNull String key,
+                                        @Nullable String defaultValue,
+                                        @NotNull Object... params) {
+    if (bundle == null) {
+      return defaultValue;
+    }
+    else if (!bundle.containsKey(key)) {
       return postprocessValue(bundle, useDefaultValue(bundle, key, defaultValue), params);
     }
     return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
@@ -61,10 +60,6 @@ public class CommonBundle extends BundleBase {
   @NotNull
   public static String getCancelButtonText() {
     return message("button.cancel");
-  }
-
-  public static String getBackgroundButtonText() {
-    return message("button.background");
   }
 
   public static String getHelpButtonText() {
@@ -111,6 +106,7 @@ public class CommonBundle extends BundleBase {
     return message("button.close");
   }
 
+  @Deprecated
   public static String getNoForAllButtonText() {
     return message("button.no.for.all");
   }
@@ -137,5 +133,10 @@ public class CommonBundle extends BundleBase {
 
   public static String settingsActionPath() {
     return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
+  }
+
+  public static void setBundle(@Nullable ClassLoader pluginClassLoader) {
+    ResourceBundle bundle = loadLanguageBundle(pluginClassLoader, BUNDLE);
+    if (bundle != null) ourBundle = bundle;
   }
 }

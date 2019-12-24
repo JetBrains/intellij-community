@@ -62,8 +62,9 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
+import static icons.ExternalSystemIcons.Task;
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
-import static org.jetbrains.idea.maven.project.ProjectBundle.message;
+import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
@@ -998,7 +999,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       myMavenProject = findParent(ProjectNode.class).getMavenProject();
       myGoal = goal;
       myDisplayName = displayName;
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     public MavenProject getMavenProject() {
@@ -1080,7 +1081,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1110,7 +1111,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.PhasesClosed);
+      setUniformIcon(AllIcons.Nodes.ConfigFolder);
     }
 
     @Override
@@ -1126,7 +1127,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
 
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
-      MavenUtil.runInBackground(myProject, "Updating plugins", false, new UpdatePluginsTreeTask(this, plugins), boundedUpdateService);
+      boundedUpdateService.execute(new UpdatePluginsTreeTask(this, plugins));
     }
   }
 
@@ -1413,7 +1414,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public RunConfigurationsNode(ProjectNode parent) {
       super(parent);
-      setUniformIcon(MavenIcons.Phase);
+      setUniformIcon(Task);
     }
 
     @Override
@@ -1510,7 +1511,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  private class UpdatePluginsTreeTask implements MavenTask {
+  private class UpdatePluginsTreeTask implements Runnable {
     @NotNull private final PluginsNode myParentNode;
     private final List<MavenPlugin> myPlugins;
     private final List<PluginNode> myNodes;
@@ -1531,7 +1532,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     @Override
-    public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    public void run() {
       Map<MavenPlugin, MavenPluginInfo> pluginsToUpdate = new HashMap<>();
       Map<MavenPlugin, MavenPluginInfo> pluginsToAdd = new HashMap<>();
       List<MavenPlugin> pluginsToDelete = new ArrayList<>();

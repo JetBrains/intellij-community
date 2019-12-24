@@ -53,7 +53,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       final PyCallExpression call = argumentList.getCallExpression();
       if (call != null) {
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withRemote().withTypeEvalContext(typeEvalContext);
 
         context.setItemsToShow(
           PyUtil
@@ -101,11 +101,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
-    if (context.getParameterOwner() != argumentList) {
-      context.removeHint();
-      return;
-    }
-
     // align offset to nearest expression; context may point to a space, etc.
     final List<PyExpression> flattenedArguments = PyUtil.flattenedParensAndLists(argumentList.getArguments());
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces

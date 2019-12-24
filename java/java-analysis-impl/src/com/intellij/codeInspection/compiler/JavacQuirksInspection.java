@@ -21,12 +21,6 @@ public class JavacQuirksInspection extends AbstractBaseJavaLocalInspectionTool {
     return GroupNames.COMPILER_ISSUES;
   }
 
-  @Nls @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.compiler.javac.quirks.name");
-  }
-
   @NotNull
   @Override
   public String getShortName() {

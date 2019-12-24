@@ -32,13 +32,6 @@ public class SerializableHasSerializationMethodsInspection extends SerializableI
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serializable.has.serialization.methods.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean hasReadObject = ((Boolean)infos[0]).booleanValue();
     final boolean hasWriteObject = ((Boolean)infos[1]).booleanValue();

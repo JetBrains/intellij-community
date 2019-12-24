@@ -7,18 +7,12 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
-import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
@@ -88,32 +82,23 @@ public abstract class XmlAttributeDelegate {
 
   void setValue(@NotNull String valueText) throws IncorrectOperationException {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(myAttribute.getNode());
-    final PomModel model = PomManager.getModel(myAttribute.getProject());
     final XmlAttribute attribute = createAttribute(StringUtil.defaultIfEmpty(myAttribute.getName(), "a"), valueText);
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(attribute.getNode());
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    model.runTransaction(new PomTransactionBase(myAttribute, aspect) {
-      @Override
-      public PomModelEvent runInner() {
-        final ASTNode att = myAttribute.getNode();
-        if (value != null) {
-          if (newValue != null) {
-            att.replaceChild(value, newValue.copyElement());
-          }
-          else {
-            att.removeChild(value);
-          }
-        }
-        else {
-          if (newValue != null) {
-            att.addChild(newValue.getTreePrev().copyElement());
-            att.addChild(newValue.copyElement());
-          }
-        }
-        return XmlAttributeSetImpl
-          .createXmlAttributeSet(model, myAttribute.getParent(), myAttribute.getName(), newValue != null ? newValue.getText() : null);
+    final ASTNode att = myAttribute.getNode();
+    if (value != null) {
+      if (newValue != null) {
+        att.replaceChild(value, newValue.copyElement());
       }
-    });
+      else {
+        att.removeChild(value);
+      }
+    }
+    else {
+      if (newValue != null) {
+        att.addChild(newValue.getTreePrev().copyElement());
+        att.addChild(newValue.copyElement());
+      }
+    }
   }
 
   protected XmlAttribute createAttribute(@NotNull String qname, @NotNull String value) {
@@ -289,33 +274,17 @@ public abstract class XmlAttributeDelegate {
   @NotNull
   PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(myAttribute.getNode());
-    final String oldName = name == null ? "" : name.getText();
     final String oldValue = ObjectUtils.notNull(myAttribute.getValue(), "");
-    final PomModel model = PomManager.getModel(myAttribute.getProject());
     final XmlAttribute newAttribute = createAttribute(nameText, oldValue);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(newAttribute.getNode());
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final Ref<XmlAttribute> replaced = Ref.create(myAttribute);
-    model.runTransaction(new PomTransactionBase(myAttribute.getParent(), aspect) {
-      @Override
-      public PomModelEvent runInner() {
-        final PomModelEvent event = new PomModelEvent(model);
-        PsiFile file = myAttribute.getContainingFile();
-        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, file instanceof XmlFile ? (XmlFile)file : null);
-        xmlAspectChangeSet.add(new XmlAttributeSetImpl(myAttribute.getParent(), oldName, null));
-        xmlAspectChangeSet.add(new XmlAttributeSetImpl(myAttribute.getParent(), nameText, oldValue));
-        event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-        if (!oldValue.isEmpty() && myAttribute.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
-          CodeEditUtil.replaceChild(myAttribute.getNode().getTreeParent(), myAttribute.getNode(), newAttribute.getNode());
-          replaced.set(newAttribute);
-        }
-        else if (name != null && newName != null) {
-          CodeEditUtil.replaceChild(myAttribute.getNode(), name, newName);
-        }
-        return event;
-      }
-    });
-    return replaced.get();
+    if (!oldValue.isEmpty() && myAttribute.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
+      CodeEditUtil.replaceChild(myAttribute.getNode().getTreeParent(), myAttribute.getNode(), newAttribute.getNode());
+      return newAttribute;
+    }
+    else if (name != null && newName != null) {
+      CodeEditUtil.replaceChild(myAttribute.getNode(), name, newName);
+    }
+    return myAttribute;
   }
 
   int displayToPhysical(int displayIndex) {

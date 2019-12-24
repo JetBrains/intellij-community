@@ -26,12 +26,6 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("suspicious.indent.after.control.statement.problem.descriptor");
   }

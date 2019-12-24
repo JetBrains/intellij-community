@@ -16,11 +16,13 @@
 
 package com.intellij.facet.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
+@ApiStatus.NonExtendable
 public interface FacetEditor {
 
   FacetEditorTab[] getEditorTabs();

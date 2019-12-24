@@ -41,7 +41,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public final class UndoManagerImpl extends UndoManager implements Disposable {
+// Android team doesn't want to use new mockito for now, so, class cannot be final
+public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly
@@ -225,8 +226,9 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical()) {
-      addFocusedDocumentAsAffected();
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical() &&
+        myOriginatorReference != null) {
+      addDocumentAsAffected(myOriginatorReference);
     }
     myOriginatorReference = null;
 
@@ -236,10 +238,14 @@ public final class UndoManagerImpl extends UndoManager implements Disposable {
     disposeCurrentMerger();
   }
 
-  private void addFocusedDocumentAsAffected() {
-    if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
+  public void addDocumentAsAffected(@NotNull Document document) {
+    addDocumentAsAffected(DocumentReferenceManager.getInstance().create(document));
+  }
 
-    final DocumentReference[] refs = {myOriginatorReference};
+  private void addDocumentAsAffected(@NotNull DocumentReference documentReference) {
+    if (myCurrentMerger.hasChangesOf(documentReference, true)) return;
+
+    final DocumentReference[] refs = {documentReference};
     myCurrentMerger.addAction(new MentionOnlyUndoableAction(refs));
   }
 

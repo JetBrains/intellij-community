@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.hash;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -33,9 +33,9 @@ public class MergedInvertedIndex<Key, Value> implements UpdatableIndex<Key, Valu
                                                                     @NotNull FileBasedIndexExtension<Key, Value> originalExtension,
                                                                     @NotNull UpdatableIndex<Key, Value, FileContent> baseIndex)
     throws IOException {
-    File file = providedExtension.getIndexPath();
+    Path file = providedExtension.getIndexPath();
     HashBasedMapReduceIndex<Key, Value> index = HashBasedMapReduceIndex.create(providedExtension, originalExtension);
-    return new MergedInvertedIndex<>(index, ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getFileContentHashIndex(file), baseIndex);
+    return new MergedInvertedIndex<>(index, ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getFileContentHashIndex(file.toFile()), baseIndex);
   }
 
   public MergedInvertedIndex(@NotNull HashBasedMapReduceIndex<Key, Value> index,
@@ -129,7 +129,7 @@ public class MergedInvertedIndex<Key, Value> implements UpdatableIndex<Key, Valu
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     myBaseIndex.setIndexedStateForFile(fileId, file);
   }
 
@@ -139,7 +139,7 @@ public class MergedInvertedIndex<Key, Value> implements UpdatableIndex<Key, Valu
   }
 
   @Override
-  public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
+  public boolean isIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
     return myBaseIndex.isIndexedStateForFile(fileId, file);
   }
 

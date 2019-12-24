@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -50,6 +51,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -102,6 +104,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
     private static final String LONG_TEXT1 = "In advance of the dogs, on wide snowshoes, toiled a man. At the rear of the sled toiled a second man.<p/>On the sled, in the box, lay a third man whose toil was over, - a man whom the Wild had conquered and beaten down until he would never move nor struggle again.";
     private static final String LONG_TEXT2 = "It is not the way of the Wild to like movement.<p/>Life is an offence to it, for life is movement; and the Wild aims always to destroy movement.";
+    private static final String LONG_TEXT3 = "<p>Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.</p>" +
+      "<br style=\"font-size:8;\"/><p>Please note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"#sometag\">JetBrains Privacy Policy</a></p>";
 
     private final Alarm myAlarm = new Alarm(getDisposable());
     private ProgressTimerRequest progressTimerRequest;
@@ -124,10 +128,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane = new JBTabbedPane(SwingConstants.TOP);
       pane.addTab("Component", createComponentPanel());
       pane.addTab("Component Grid", createComponentGridPanel());
+      pane.addTab("Titled Border", createTiledBorderPanel());
       pane.addTab("Progress Grid", createProgressGridPanel());
       pane.addTab("Validators", createValidatorsPanel());
       pane.addTab("Multilines", createMultilinePanel());
       pane.addTab("JSliderUI", createJSliderTab());
+      pane.addTab("ComboBox", createComboBoxTab());
 
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
@@ -241,6 +247,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       topPanel.add(UI.PanelFactory.panel(cb2).
         withTooltip("Enable full border around the tabbed pane").createPanel(), gc);
 
+      JCheckBox cb3 = new JCheckBox("Send usage statistics when using EAP versions");
+      gc.gridy++;
+      topPanel.add(UI.PanelFactory.panel(cb3).withComment(LONG_TEXT3).
+          withCommentHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              System.out.println("Long text link activated: " + e.getDescription());
+            }
+          }).createPanel(), gc);
+
       gc.gridy++;
       JButton button = new JButton("Abracadabra");
       new HelpTooltip().setDescription(LONG_TEXT2).installOn(button);
@@ -249,7 +264,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withComment("Abracadabra comment").resizeX(false).createPanel(), gc);
 
       gc.gridy++;
-      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).
+      topPanel.add(UI.PanelFactory.panel(new JComboBox<>(STRING_VALUES)).resizeX(false).
         withComment("Combobox comment").createPanel(), gc);
 
       JBScrollPane pane = new JBScrollPane(createTable());
@@ -257,7 +272,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
       BorderLayoutPanel mainPanel = JBUI.Panels.simplePanel(UI.PanelFactory.panel(pane).
-        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").resizeY(true).createPanel());
+        withLabel("Table label:").moveLabelOnTop().
+        withComment("&lt;Project&gt; is content roots of all modules, all immediate descendants<br/>of the projects base directory, and .idea directory contents").resizeY(true).createPanel());
       mainPanel.addToTop(topPanel);
 
       return mainPanel;
@@ -410,8 +426,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTopRightComponent(linkLabel)
       ).createPanel();
 
-      JCheckBox cb1 = new JCheckBox("Checkbox 1");
-      JCheckBox cb2 = new JCheckBox("Checkbox 2");
+      JCheckBox cb1 = new JCheckBox("Build project automatically");
+      JCheckBox cb2 = new JCheckBox("Compile independent modules in parallel");
       JCheckBox cb3 = new JCheckBox("Checkbox 3");
 
       ButtonGroup bg = new ButtonGroup();
@@ -446,14 +462,20 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       rb3.addActionListener(al);
 
       JPanel p2 = UI.PanelFactory.grid().
-        add(UI.PanelFactory.panel(cb1).withComment("Comment 1").moveCommentRight()).
-        add(UI.PanelFactory.panel(cb2).withComment("Comment 2")).
-        add(UI.PanelFactory.panel(cb3).withTooltip(LONG_TEXT1)).
+        add(UI.PanelFactory.panel(cb1).resizeX(false).withComment("Works while not running / debugging").moveCommentRight()).
+        add(UI.PanelFactory.panel(cb2).resizeX(false).withComment("May require larger heap size").moveCommentRight()).
+        add(UI.PanelFactory.panel(cb3).resizeX(false).withTooltip(LONG_TEXT1)).
 
-        add(UI.PanelFactory.panel(rb1).withComment("No validation").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb2).withComment("Warning checkbox validation").moveCommentRight()).
-        add(UI.PanelFactory.panel(rb3).withComment("Error checkbox validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb1).resizeX(false).withComment("No validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb2).resizeX(false).withComment("Warning checkbox validation").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb3).resizeX(false).withComment("Error checkbox validation").moveCommentRight()).
 
+        createPanel();
+
+      JPanel p3 = UI.PanelFactory.grid().splitColumns().
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"Default", "Non default"})).
+          withLabel("Plugin update policy:").withComment("Ignore by Maven 3+").moveCommentRight()).
+        add(UI.PanelFactory.panel(new JTextField()).withLabel("Thread count:").withComment("-T option").moveCommentRight()).
         createPanel();
 
       JPanel panel = new JPanel();
@@ -462,9 +484,25 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(p1);
       panel.add(Box.createVerticalStrut(JBUIScale.scale(5)));
       panel.add(p2);
+      panel.add(Box.createVerticalStrut(JBUIScale.scale(5)));
+      panel.add(p3);
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
 
       return panel;
+    }
+
+    private static final String INNER_COMMENT = "<p>By default IntelliJ IDEA uses Gradle to build the project and run the tasks.</p>"+
+        "<br style=\"font-size: 8;\"/><p>In a pure Java/Kotlin project, building and running by means of IDE might be faster, thanks to optimizations. Note, that the IDE doesn't support all Gradle plugins and the project might not be built correctly with some of them.</p>";
+
+    private JComponent createTiledBorderPanel() {
+      JPanel innerGrid = UI.PanelFactory.grid().splitColumns().
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"IntelliJ IDEA", "Gradle"})).resizeX(false).withLabel("Build and run with:")).
+        add(UI.PanelFactory.panel(new JComboBox<>(new String [] {"IntelliJ IDEA", "Gradle"})).resizeX(false).withLabel("Run tests with:")).
+        createPanel();
+
+      JPanel panel = UI.PanelFactory.panel(innerGrid).withComment(INNER_COMMENT).createPanel();
+      panel.setBorder(IdeBorderFactory.createTitledBorder("Build and Run"));
+      return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
     private JComponent createValidatorsPanel() {
@@ -560,7 +598,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       // Panels factory
       return UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(tfbb).
-          withLabel("&TextField:").withComment("Text field with browse button")).
+          withLabel("Default directory:").withComment("Preselected in \"Open ...\" and \"New | Project\" dialogs")).
 
         add(UI.PanelFactory.panel(etfbb).
           withLabel("&EditorTextField:").withComment("EditorTextField with browse button")).
@@ -785,8 +823,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
     }
 
     private JComponent createJSliderTab() {
-      JPanel panel = new JPanel(new MigLayout("ins 0, gap 10, flowy"));
-      JSlider hSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 0){
+      JPanel panel = new JPanel(new MigLayout("fillx, ins 0, gap 10, flowy"));
+      JSlider hSlider = new JSlider(JSlider.HORIZONTAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -794,7 +832,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider vSlider = new JSlider(JSlider.VERTICAL){
+      JSlider vSlider = new JSlider(SwingConstants.VERTICAL){
         @Override
         public void updateUI() {
           setUI(DarculaSliderUI.createUI(this));
@@ -802,9 +840,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       };
 
-      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL, 0, 100, 0);
+      JSlider hSliderBase = new JSlider(JSlider.HORIZONTAL);
 
-      JPanel pane1 = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      JPanel pane1 = new JPanel(new MigLayout("fillx, debug, ins 0, gap 5"));
       pane1.add(new JLabel("A color key and IntelliJ: "), "baseline");
       pane1.add(hSliderBase, "baseline");
 
@@ -812,17 +850,102 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       setupSlider(vSlider);
       setupSlider(hSliderBase);
 
-      panel.add(wrap((hSlider)));
-      panel.add(wrap(hSliderBase));
+      panel.add(wrap((hSlider)), "growx");
+      panel.add(wrap(hSliderBase), "growx");
       panel.add(wrap(vSlider));
 
       return panel;
     }
 
+    @NotNull
+    private JComponent createComboBoxTab() {
+      JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5"));
+      pane.add(new JLabel("Shows a combobox with custom JBPopup and multiple layers of items"), "baseline, wrap");
+
+      class Item {
+        final Icon myIcon;
+        final String myText;
+        final ImmutableList<Item> myChildren;
+
+        Item(@NotNull Icon icon, @NotNull String text) {
+          this(icon, text, ImmutableList.of());
+        }
+
+        Item(@NotNull Icon icon, @NotNull String text, @NotNull List<Item> myChildren) {
+          this.myIcon = icon;
+          this.myText = text;
+          this.myChildren = ImmutableList.copyOf(myChildren);
+        }
+      }
+
+      class Model extends DefaultComboBoxModel<Item> implements ComboBoxPopupState<Item> {
+        Model(List<Item> items) {
+          super(items.toArray(new Item[0]));
+        }
+
+        @Nullable
+        @Override
+        public ListModel<Item> onChosen(Item selectedValue) {
+          if (selectedValue.myChildren.isEmpty()) return null;
+          return new Model(selectedValue.myChildren);
+        }
+
+        @Override
+        public boolean hasSubstep(Item selectedValue) {
+          return !selectedValue.myChildren.isEmpty();
+        }
+
+        @Override
+        public void setSelectedItem(Object anObject) {
+          //sub-items are not contained here, so selector login has to be tweaked
+          super.setSelectedItem(anObject);
+        }
+      }
+
+      ImmutableList.Builder<Item> builder2 = ImmutableList.builder();
+      builder2.add(new Item(AllIcons.General.Add, "Add"));
+      builder2.add(new Item(AllIcons.General.ArrowDown, "ArrowDown"));
+      builder2.add(new Item(AllIcons.General.Balloon, "Balloon"));
+      builder2.add(new Item(AllIcons.General.Filter, "Filter"));
+      builder2.add(new Item(AllIcons.General.Remove, "Remove"));
+      ImmutableList<Item> level2 = builder2.build();
+
+      ImmutableList.Builder<Item> builder1 = ImmutableList.builder();
+      builder1.add(new Item(AllIcons.Icons.Ide.NextStep, "Next"));
+      builder1.add(new Item(AllIcons.Vcs.Patch_applied, "Patch"));
+      builder1.add(new Item(AllIcons.General.Settings, "SubList", level2));
+      builder1.add(new Item(AllIcons.General.Remove, "Remove"));
+
+      ComboBox<Item> comboBox = new ComboBox<>(new Model(builder1.build()));
+      comboBox.setSwingPopup(false);
+      comboBox.setRenderer(new ColoredListCellRenderer<Item>() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList<? extends Item> list,
+                                             Item value,
+                                             int index,
+                                             boolean selected,
+                                             boolean hasFocus) {
+          setIcon(value.myIcon);
+          append(value.myText);
+          append(" ");
+          append("this text is gray", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(" ");
+          append("error", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          if (!value.myChildren.isEmpty()) {
+            append(" ->");
+          }
+        }
+      });
+      pane.add(new JLabel("The ComboBox:"), "baseline");
+      pane.add(comboBox, "baseline");
+
+      return pane;
+    }
+
     private JComponent wrap(JComponent component) {
-      JPanel pane = new JPanel(new MigLayout("debug, ins 0, gap 5"));
+      JPanel pane = new JPanel(new MigLayout("fillx, debug, novisualpadding, ins 0, gap 5", "[min!][]"));
       pane.add(new JLabel("A color key and IntelliJ: "), "baseline");
-      pane.add(component, "baseline");
+      pane.add(component, "baseline, growx");
       return pane;
     }
 

@@ -51,7 +51,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
+  private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
@@ -162,7 +162,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater = new ToolbarUpdater(KeymapManagerEx.getInstanceEx(), this) {
       @Override
       protected void updateActionsImpl(boolean transparentOnly, boolean forced) {
-        if (!ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+        if (!ApplicationManager.getApplication().isDisposed()) {
           ActionToolbarImpl.this.updateActionsImpl(transparentOnly, forced);
         }
       }
@@ -1150,7 +1150,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private static void updateWhenFirstShown(@NotNull JComponent targetComponent, @NotNull ToolbarReference ref) {
-    Activatable activatable = new Activatable.Adapter() {
+    Activatable activatable = new Activatable() {
       @Override
       public void showNotify() {
         ActionToolbarImpl toolbar = ref.get();

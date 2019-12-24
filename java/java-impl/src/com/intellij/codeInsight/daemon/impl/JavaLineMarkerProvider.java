@@ -202,13 +202,17 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     Object lock = new Object();
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    List<LineMarkerInfo<PsiElement>> found = new ArrayList<>();
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
       List<LineMarkerInfo<PsiElement>> infos = computable.compute();
       synchronized (lock) {
-        result.addAll(infos);
+        found.addAll(infos);
       }
       return true;
     });
+    synchronized (lock) {
+      result.addAll(found);
+    }
   }
 
   @NotNull

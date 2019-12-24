@@ -77,7 +77,7 @@ class RecurrentTaskExecutor<out T>(threadsName: String,
   init {
     val threadFactory = ConcurrencyUtil.newNamedThreadFactory(threadsName)
     executorService = Executors.newFixedThreadPool(FIXED_THREAD_POOL_SIZE, threadFactory)
-    repeat(FIXED_THREAD_POOL_SIZE, { executorService.submit(TaskRunnable()) })
+    repeat(FIXED_THREAD_POOL_SIZE) { executorService.submit(TaskRunnable()) }
   }
 
   fun incrementRequests() {

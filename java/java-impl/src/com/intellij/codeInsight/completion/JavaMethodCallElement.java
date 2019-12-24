@@ -290,7 +290,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static void showParameterHints(LookupElement element, InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
-    if (methodCall == null ||
+    if (!CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION ||
+        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
+        context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
+        methodCall == null ||
         methodCall.getContainingFile() instanceof PsiCodeFragment ||
         element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null) {
       return;
@@ -298,10 +301,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
     PsiExpressionList parameterOwner = methodCall.getArgumentList();
-    if (parameterOwner == null || !"()".equals(parameterOwner.getText()) ||
-        parametersCount == 0 ||
-        context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
-        !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+    if (parameterOwner == null || !"()".equals(parameterOwner.getText()) || parametersCount == 0) {
       return;
     }
 
@@ -338,17 +338,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     setCompletionMode(methodCall, true);
-    ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                     methodCall.getArgumentList(), handler, false, false);
-    Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
-    if (Disposer.isDisposed(controller)) {
-      Disposer.dispose(hintsDisposal);
-      document.deleteString(offset, offset + commas.length());
-    }
-    else {
-      ParameterHintsPass.syncUpdate(methodCall, editor);
-      Disposer.register(controller, hintsDisposal);
-    }
+    context.setLaterRunnable(() -> {
+      ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
+                                                                       methodCall.getArgumentList(), handler, false, false);
+      Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
+      if (Disposer.isDisposed(controller)) {
+        Disposer.dispose(hintsDisposal);
+        document.deleteString(offset, offset + commas.length());
+      }
+      else {
+        ParameterHintsPass.syncUpdate(methodCall, editor);
+        Disposer.register(controller, hintsDisposal);
+      }
+    });
+
   }
 
   public static int getCompletionHintsLimit() {

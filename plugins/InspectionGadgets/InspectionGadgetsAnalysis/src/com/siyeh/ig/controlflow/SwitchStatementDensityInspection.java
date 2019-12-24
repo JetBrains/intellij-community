@@ -33,12 +33,6 @@ public class SwitchStatementDensityInspection extends BaseInspection {
   public int m_limit = DEFAULT_DENSITY_LIMIT;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("switch.statement.density.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.density.min.option"), this, "m_limit");
   }

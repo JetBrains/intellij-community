@@ -324,13 +324,13 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
     val superClass = containingUClass.javaPsi.superClass ?: return
     val uastBody = constructor.uastBody
     val uastAnchor = constructor.uastAnchor
-    if (uastAnchor != null && isImplicitCallOfSuperConstructorFromSubclassConstructorBody(uastBody)) {
+    if (uastAnchor != null && isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(uastBody)) {
       val emptyConstructor = superClass.constructors.find { it.parameterList.isEmpty }
       apiUsageProcessor.processConstructorInvocation(uastAnchor, superClass, emptyConstructor, null)
     }
   }
 
-  private fun isImplicitCallOfSuperConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
+  private fun isImplicitCallOfSuperEmptyConstructorFromSubclassConstructorBody(constructorBody: UExpression?): Boolean {
     if (constructorBody == null || constructorBody is UBlockExpression && constructorBody.expressions.isEmpty()) {
       //Empty constructor body => implicit super() call.
       return true
@@ -340,7 +340,12 @@ class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor) : Ab
       //First expression is not super() => the super() is implicit.
       return true
     }
-    return firstExpression.methodName != "super"
+    if (firstExpression.valueArgumentCount > 0) {
+      //Invocation of non-empty super(args) constructor.
+      return false
+    }
+    val methodName = firstExpression.methodIdentifier?.name ?: firstExpression.methodName
+    return methodName != "super" && methodName != "this"
   }
 
   private fun checkMethodOverriding(node: UMethod) {

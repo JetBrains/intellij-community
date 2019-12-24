@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
@@ -52,18 +51,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private Object variant;
   private int cursor;
 
-  @Deprecated
-  protected JTextField myTextField;
-
   public TextFieldWithPopupHandlerUI() {}
-
-  @Deprecated
-  public TextFieldWithPopupHandlerUI(JTextField textField) {
-    myTextField = textField;
-  }
-
-  @Deprecated
-  public static void updateBorderInsets(Component c, Insets insets) {}
 
   /**
    * @return a search icon in one of the four states or {@code null} to hide it
@@ -201,7 +189,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   protected Caret createCaret() {
-    return Registry.is("ide.text.mouse.selection.new", true) ? new MouseDragAwareCaret() : new MarginAwareCaret();
+    return new MouseDragAwareCaret();
   }
 
   @Override
@@ -229,7 +217,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Nullable
   public static AbstractAction getNewLineAction(Component c) {
-    if (!isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint", true)) return null;
+    if (!isSearchField(c)) return null;
     Object action = ((JTextField)c).getClientProperty("JTextField.Search.NewLineAction");
     return action instanceof AbstractAction ? (AbstractAction)action : null;
   }

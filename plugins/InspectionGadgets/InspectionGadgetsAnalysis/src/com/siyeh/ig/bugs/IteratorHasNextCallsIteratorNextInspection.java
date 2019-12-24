@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -30,16 +31,10 @@ public class IteratorHasNextCallsIteratorNextInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "iterator.hasnext.which.calls.next.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
+    String methodName = (String)infos[0];
     return InspectionGadgetsBundle.message(
-      "iterator.hasnext.which.calls.next.problem.descriptor");
+      "iterator.hasnext.which.calls.next.problem.descriptor", methodName);
   }
 
   @Override
@@ -52,13 +47,15 @@ public class IteratorHasNextCallsIteratorNextInspection
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // note: no call to super
-      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.HAS_NEXT)) {
+      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.HAS_NEXT) &&
+          !MethodUtils.methodMatches(method, "java.util.ListIterator", null, "hasPrevious")) {
         return;
       }
-      if (!IteratorUtils.containsCallToIteratorNext(method, null, true)) {
+      PsiMethodCallExpression call = IteratorUtils.getIllegalCallInHasNext(method, null, true);
+      if (call == null) {
         return;
       }
-      registerMethodError(method);
+      registerMethodCallError(call, method.getName());
     }
   }
 }

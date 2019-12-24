@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
@@ -99,6 +100,19 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
 
   public void testDeprecatedUsageInJavadoc() {
     doTest();
+  }
+
+  public void testDeprecatedDefaultConstructor() {
+    myFixture.enableInspections(new DeprecationInspection());
+    myFixture.configureByText("B.java", "class B extends A {\n" +
+                                        "    B() { this(0); }\n" +
+                                        "    B(int i) { super(i); }\n" +
+                                        "}\n" +
+                                        "class A {\n" +
+                                        "    @Deprecated A() {}\n" +
+                                        "    A(int i) {}\n" +
+                                        "}");
+    assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING));
   }
 
   @NotNull

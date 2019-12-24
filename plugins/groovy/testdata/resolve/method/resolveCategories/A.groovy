@@ -7,5 +7,5 @@ class Cat {
 }
 
 use(Cat) {
-  [1, 2, 3].injec<ref>t_(2, {initial, item -> initial+item})
+  [1, 2, 3].injec<caret>t_(2, {initial, item -> initial+item})
 }

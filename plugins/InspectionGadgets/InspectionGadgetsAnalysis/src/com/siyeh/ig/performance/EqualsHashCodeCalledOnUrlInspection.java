@@ -30,12 +30,6 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("equals.hashcode.called.on.url.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("equals.hashcode.called.on.url.problem.descriptor");
   }

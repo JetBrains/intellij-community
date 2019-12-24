@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -116,6 +116,19 @@ public class PluginUpdatesService {
     }
   }
 
+  public void finishUpdate() {
+    checkAccess();
+
+    if (!myPrepared || myCache == null) {
+      return;
+    }
+
+    Integer countValue = getCount();
+    for (PluginUpdatesService service : SERVICES) {
+      service.runCountCallbacks(countValue);
+    }
+  }
+
   public void recalculateUpdates() {
     checkAccess();
 
@@ -154,11 +167,9 @@ public class PluginUpdatesService {
     checkAccess();
 
     PluginId pluginId = descriptor.getPluginId();
-    String idString = pluginId.getIdString();
-
     if (myPrepared && myCache != null) {
       for (PluginDownloader downloader : myCache) {
-        if (idString.equals(downloader.getPluginId())) {
+        if (pluginId == downloader.getId()) {
           return true;
         }
       }

@@ -21,7 +21,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.componentTree.QuickFixManagerImpl");
+  private static final Logger LOG = Logger.getInstance(QuickFixManagerImpl.class);
 
   public QuickFixManagerImpl(final GuiEditor editor, @NotNull final ComponentTree componentTree, final JViewport viewPort) {
     super(editor, componentTree, viewPort);

@@ -26,7 +26,7 @@ import java.util.stream.Stream;
  * Date: 05-Dec-17
  */
 public final class ConsentOptions {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.ConsentOptions");
+  private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private final boolean myIsEAP;

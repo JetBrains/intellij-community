@@ -378,11 +378,10 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  protected boolean unregisterInTree() {
-    if (!isValid()) return false;
+  protected void unregisterInTree() {
+    if (!isValid()) return;
     // we store highlighters in MarkupModel
     getMarkupModel().removeHighlighter(this);
-    return true;
   }
 
   @Override

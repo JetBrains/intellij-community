@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -90,5 +91,9 @@ public class SuggestVariableNameMacro extends Macro {
     return context instanceof JavaCodeContextType;
   }
 
-
+  @NotNull
+  @Override
+  public LookupFocusDegree getLookupFocusDegree() {
+    return LookupFocusDegree.UNFOCUSED;
+  }
 }

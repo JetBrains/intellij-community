@@ -211,7 +211,7 @@ public class GitUpdateProcess {
       final Ref<GitUpdateResult> compoundResult = Ref.create();
       final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
       new GitPreservingProcess(myProject, myGit, myRootsToSave, "Update", "Remote",
-                               GitVcsSettings.getInstance(myProject).updateChangesPolicy(), myProgressIndicator, () -> {
+                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, () -> {
                                  LOG.info("updateImpl: updating...");
                                  GitRepository currentlyUpdatedRoot = null;
                                  try {

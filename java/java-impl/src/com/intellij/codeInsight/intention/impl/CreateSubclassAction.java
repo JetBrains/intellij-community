@@ -32,7 +32,6 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -62,7 +61,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CreateSubclassAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
+  private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
 
   @Override
@@ -310,7 +309,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
                   LOG.assertTrue(aTargetClass != null, psiElement);
                 }
                 if (!brokenOff) {
-                  TransactionGuard.getInstance().submitTransactionAndWait(() -> chooseAndImplement(psiClass, project, aTargetClass, editor));
+                  chooseAndImplement(psiClass, project, aTargetClass, editor);
                 }
               }
               finally {

@@ -29,12 +29,6 @@ public class NestingDepthInspection extends MethodMetricInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("nesting.depth.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return 5;
   }

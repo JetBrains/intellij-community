@@ -33,13 +33,6 @@ public class StringBufferMustHaveInitialCapacityInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "string.buffer.must.have.initial.capacity.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "string.buffer.must.have.initial.capacity.problem.descriptor");

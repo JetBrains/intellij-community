@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Eugene Zhuravlev
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder");
+  private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String NAME = "Maven Dependency Resolver";
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";

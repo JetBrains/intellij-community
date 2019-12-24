@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class IdeaWideProxySelector extends ProxySelector {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
+  private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();

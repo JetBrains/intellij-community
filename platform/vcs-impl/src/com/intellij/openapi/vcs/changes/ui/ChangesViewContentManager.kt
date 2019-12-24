@@ -11,6 +11,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
@@ -30,6 +31,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
 
     for (content in addedContents) {
       addIntoCorrectPlace(manager, content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
     }
     addedContents.clear()
 
@@ -107,6 +109,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
       val content = event.content
       val provider = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
       provider.initTabContent(content)
+      IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
     }
   }
@@ -116,6 +119,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     REPOSITORY(ChangesViewContentManager.REPOSITORY, 20),
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
+    BRANCHES(ChangesViewContentManager.BRANCHES, 50),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
   }
@@ -156,6 +160,7 @@ class ChangesViewContentManager : ChangesViewContentI, Disposable {
     const val REPOSITORY = "Repository"
     const val INCOMING = "Incoming"
     const val SHELF = "Shelf"
+    const val BRANCHES = "Branches"
 
     private fun getContentWeight(content: Content): Int {
       val userData = content.getUserData(ORDER_WEIGHT_KEY)

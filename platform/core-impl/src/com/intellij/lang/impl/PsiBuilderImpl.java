@@ -47,7 +47,7 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
  * @author max
  */
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.PsiBuilderImpl");
+  private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
 
   // function stored in PsiBuilderImpl' user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>

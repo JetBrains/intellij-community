@@ -9,22 +9,20 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
-import java.io.Serializable;
-
 /**
  * @author Aslak Helles&oslash;y
  * @version $Revision: 940 $
  */
-public class SimpleReference implements ObjectReference, Serializable {
-    private Object instance;
+public final class SimpleReference implements ObjectReference {
+  private Object instance;
 
-    @Override
-    public Object get() {
-        return instance;
-    }
+  @Override
+  public Object get() {
+    return instance;
+  }
 
-    @Override
-    public void set(Object item) {
-        this.instance = item;
-    }
+  @Override
+  public void set(Object item) {
+    this.instance = item;
+  }
 }

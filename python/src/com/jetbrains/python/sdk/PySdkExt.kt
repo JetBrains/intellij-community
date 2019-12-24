@@ -17,6 +17,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
@@ -26,15 +27,19 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.messages.Topic
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
@@ -51,7 +56,7 @@ import java.nio.file.Paths
  * @author vlan
  */
 
-val BASE_DIR = Key.create<Path>("PYTHON_BASE_PATH")
+val BASE_DIR: Key<Path> = Key.create("PYTHON_BASE_PATH")
 
 fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
   val context: UserDataHolder = UserDataHolderBase()
@@ -63,7 +68,7 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
 }
 
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = existingSdks.filter { it.sdkType is PythonSdkUtil && it.isSystemWide }
+  val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
   val detected = detectSystemWideSdks(module, existingSdks, context)
   return existing + detected
 }
@@ -162,13 +167,21 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 
 var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
-  set(value) = ModuleRootModificationUtil.setModuleSdk(this, value)
+  set(value) {
+    ModuleRootModificationUtil.setModuleSdk(this, value)
+    fireActivePythonSdkChanged(value)
+  }
+
+fun Module.fireActivePythonSdkChanged(value: Sdk?): Unit = project
+  .messageBus
+  .syncPublisher(ACTIVE_PYTHON_SDK_TOPIC)
+  .activeSdkChanged(this, value)
 
 var Project.pythonSdk: Sdk?
   get() {
     val sdk = ProjectRootManager.getInstance(this).projectSdk
     return when (sdk?.sdkType) {
-      is PythonSdkUtil -> sdk
+      is PythonSdkType -> sdk
       else -> null
     }
   }
@@ -187,6 +200,21 @@ val Module.baseDir: VirtualFile?
 val Module.basePath: String?
   get() = baseDir?.path
 
+fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
+  val root = sdk.homePath?.let { PythonSdkUtil.getVirtualEnvRoot(it) }?.let { LocalFileSystem.getInstance().findFileByIoFile(it) } ?: return
+
+  val model = ModuleRootManager.getInstance(this).modifiableModel
+
+  val contentEntry = model.contentEntries.firstOrNull {
+    val contentFile = it.file
+    contentFile != null && VfsUtil.isAncestor(contentFile, root, true)
+  } ?: return
+  contentEntry.addExcludeFolder(root)
+
+  WriteAction.run<Throwable> {
+    model.commit()
+  }
+}
 
 private fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return null
@@ -272,4 +300,13 @@ private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
     .sortedWith(compareBy<PyDetectedSdk>({ it.isAssociatedWithModule(module) },
                                          { it.homePath }).reversed())
     .toList()
+}
+
+val ACTIVE_PYTHON_SDK_TOPIC: Topic<ActiveSdkListener> = Topic("Active SDK changed", ActiveSdkListener::class.java)
+
+/**
+ * The listener that is used with [ACTIVE_PYTHON_SDK_TOPIC] message bus topic.
+ */
+interface ActiveSdkListener {
+  fun activeSdkChanged(module: Module, sdk: Sdk?)
 }

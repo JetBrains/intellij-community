@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -80,6 +81,33 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
+      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionConfigBean>() {
+        @Override
+        public void extensionAdded(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+          reloadInjections();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull LanguageInjectionConfigBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+          reloadInjections();
+        }
+      }, null);
+      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageInjectionSupport>() {
+        @Override
+        public void extensionAdded(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
+          reloadInjections();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull LanguageInjectionSupport extension, @NotNull PluginDescriptor pluginDescriptor) {
+          reloadInjections();
+        }
+      }, null);
+    }
+
+    private void reloadInjections() {
+      myDefaultInjections.clear();
+      myDefaultInjections.addAll(Configuration.loadDefaultInjections());
     }
 
     @Override
@@ -478,10 +506,10 @@ public class Configuration extends SimpleModificationTracker implements Persiste
    * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, List, List, List)},
    * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
    * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2019.2
+   * To be removed in IDEA 2020.1
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public void replaceInjectionsWithUndo(final Project project,
                                         final List<? extends BaseInjection> newInjections,
                                         final List<? extends BaseInjection> originalInjections,
@@ -506,20 +534,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   protected void replaceInjectionsWithUndoInner(final List<? extends BaseInjection> add, final List<? extends BaseInjection> remove) {
     replaceInjections(add, remove, false);
-  }
-
-  /**
-   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, Object, Object, boolean, List, PairProcessor)},
-   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
-   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
-   * To be removed in IDEA 2019.2
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
-  public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
-                                                   final List<? extends PsiElement> psiElementsToRemove,
-                                                   final PairProcessor<T, T> actualProcessor) {
-    replaceInjectionsWithUndo(project, null, add, remove, true, psiElementsToRemove, actualProcessor);
   }
 
   public static <T> void replaceInjectionsWithUndo(final Project project,

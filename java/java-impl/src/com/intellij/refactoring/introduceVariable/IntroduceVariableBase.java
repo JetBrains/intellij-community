@@ -61,6 +61,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,7 +121,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
+  private static final Logger LOG = Logger.getInstance(IntroduceVariableBase.class);
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
   @NonNls private static final String REFACTORING_ID = "refactoring.extractVariable";
 
@@ -432,23 +433,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
       tempExpr = elementFactory.createExpressionFromText(text, parent);
 
-      final boolean [] hasErrors = new boolean[1];
-      final JavaRecursiveElementWalkingVisitor errorsVisitor = new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitElement(final PsiElement element) {
-          if (hasErrors[0]) {
-            return;
-          }
-          super.visitElement(element);
-        }
-
-        @Override
-        public void visitErrorElement(final PsiErrorElement element) {
-          hasErrors[0] = true;
-        }
-      };
-      tempExpr.accept(errorsVisitor);
-      if (hasErrors[0]) return null;
+      if (ErrorUtil.containsDeepError(tempExpr)) return null;
 
       tempExpr.putUserData(ElementToWorkOn.PREFIX, prefix);
       tempExpr.putUserData(ElementToWorkOn.SUFFIX, suffix);
@@ -476,8 +461,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final String fakeInitializer = "intellijidearulezzz";
       final int[] refIdx = new int[1];
       final PsiElement toBeExpression = createReplacement(fakeInitializer, project, prefix, suffix, parent, rangeMarker, refIdx);
-      toBeExpression.accept(errorsVisitor);
-      if (hasErrors[0]) return null;
+      if (ErrorUtil.containsDeepError(toBeExpression)) return null;
       if (literalExpression != null && toBeExpression instanceof PsiExpression) {
         PsiType type = ((PsiExpression)toBeExpression).getType();
         if (type != null && !type.equals(literalExpression.getType())) {

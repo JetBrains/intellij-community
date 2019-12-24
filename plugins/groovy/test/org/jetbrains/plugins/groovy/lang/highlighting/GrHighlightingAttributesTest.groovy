@@ -13,4 +13,8 @@ class GrHighlightingAttributesTest extends GrHighlightingTestBase {
   void 'test highlighting attributes'() {
     fixture.testHighlighting false, true, false, "highlightingAttributes/test.groovy"
   }
+
+  void 'test todo highlighting'() {
+    fixture.testHighlighting false, true, false, "highlightingAttributes/todo.groovy"
+  }
 }

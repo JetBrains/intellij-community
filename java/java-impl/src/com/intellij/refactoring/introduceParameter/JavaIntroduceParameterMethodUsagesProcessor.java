@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG =
-    Logger.getInstance("#com.intellij.refactoring.introduceParameter.JavaIntroduceParameterMethodUsagesProcessor");
+    Logger.getInstance(JavaIntroduceParameterMethodUsagesProcessor.class);
   private static final JavaLanguage myLanguage = Language.findInstance(JavaLanguage.class);
 
   private static boolean isJavaUsage(UsageInfo usage) {

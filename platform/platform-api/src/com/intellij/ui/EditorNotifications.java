@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,9 @@ public abstract class EditorNotifications {
   public abstract void updateNotifications(@NotNull VirtualFile file);
 
   public abstract void updateAllNotifications();
+
+  @ApiStatus.Internal
+  public abstract void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass);
 
   public static void updateAll() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

@@ -13,7 +13,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +43,7 @@ import java.util.List;
  */
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
+  private static final Logger LOG = Logger.getInstance(SimpleColoredComponent.class);
 
   public static final int FRAGMENT_ICON = -2;
 
@@ -373,7 +372,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {
       // Calculate width
-      int width = myIpad.left;
+      float width = myIpad.left;
 
       if (myIcon != null) {
         width += myIcon.getIconWidth() + myIconTextGap;
@@ -395,7 +394,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       int height = computePreferredHeight();
 
-      return new Dimension(width, height);
+      return new Dimension((int)Math.ceil(width), height);
     }
   }
 
@@ -530,6 +529,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    */
   public int findFragmentAt(int x) {
     float curX = myIpad.left;
+    if (myBorder != null) {
+      curX += myBorder.getBorderInsets(this).left;
+    }
+    curX += getInsets().left;
+
     if (myIcon != null && !myIconOnTheRight) {
       final int iconRight = myIcon.getIconWidth() + myIconTextGap;
       if (x < iconRight) {
@@ -543,6 +547,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int baseSize = font.getSize();
     boolean wasSmaller = false;
     synchronized (myFragments) {
+      curX += computeTextAlignShift();
+
       for (int i = 0; i < myFragments.size(); i++) {
         ColoredFragment fragment = myFragments.get(i);
         SimpleTextAttributes attributes = fragment.attributes;

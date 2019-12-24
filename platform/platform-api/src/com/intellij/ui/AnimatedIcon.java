@@ -93,28 +93,6 @@ public class AnimatedIcon implements Icon {
       AllIcons.Ide.Macro.Recording_4);
   }
 
-  /**
-   * @deprecated icons are not applicable for our user interface and will be removed
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static class Grey extends AnimatedIcon {
-    public Grey() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
-    }
-
-    public static final int DELAY = 130;
-    public static final List<Icon> ICONS = immutableList(
-      AllIcons.Process.State.GreyProgr_1,
-      AllIcons.Process.State.GreyProgr_2,
-      AllIcons.Process.State.GreyProgr_3,
-      AllIcons.Process.State.GreyProgr_4,
-      AllIcons.Process.State.GreyProgr_5,
-      AllIcons.Process.State.GreyProgr_6,
-      AllIcons.Process.State.GreyProgr_7,
-      AllIcons.Process.State.GreyProgr_8);
-  }
-
   @ApiStatus.Internal
   public static class FS extends AnimatedIcon {
     public FS() {

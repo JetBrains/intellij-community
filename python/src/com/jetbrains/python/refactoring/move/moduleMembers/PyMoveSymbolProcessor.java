@@ -203,7 +203,7 @@ public class PyMoveSymbolProcessor {
     // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
     final List<PsiElement> resolvedElements = new ArrayList<>();
     if (usage instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.defaultContext());
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.implicitContext());
       for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }

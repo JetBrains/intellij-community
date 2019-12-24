@@ -24,7 +24,7 @@ import com.intellij.usageView.UsageInfo;
 import java.util.List;
 
 public class JavaUnresolvableLocalCollisionDetector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector");
+  private static final Logger LOG = Logger.getInstance(JavaUnresolvableLocalCollisionDetector.class);
 
   private JavaUnresolvableLocalCollisionDetector() {
   }

@@ -29,7 +29,7 @@ import java.util.Set;
  * @author Vladimir Kondratyev
  */
 public final class ComponentTreeBuilder extends AbstractTreeBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.componentTree.ComponentTreeBuilder");
+  private static final Logger LOG = Logger.getInstance(ComponentTreeBuilder.class);
 
   private final GuiEditor myEditor;
   private final MySelectionWatcher mySelectionWatcher;

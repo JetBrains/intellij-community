@@ -16,11 +16,15 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +40,12 @@ import java.util.List;
  * @author yole
  */
 public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
+
+  @Override
+  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    return "Cannot resolve extension point property '" + s + "'";
+  }
+
   @NotNull
   @Override
   public Collection<? extends PsiField> getVariants(ConvertContext context) {
@@ -58,29 +68,44 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
 
   @Nullable
   @Override
+  public LookupElement createLookupElement(PsiField field) {
+    final String fieldName = ObjectUtils.chooseNotNull(getAnnotationValue(field), field.getName());
+    return JavaLookupElementBuilder.forField(field, fieldName, null);
+  }
+
+  @Nullable
+  @Override
   public PsiField fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
     PsiClass value = getEPBeanClass(context);
     if (value == null) return null;
     PsiField field = value.findFieldByName(s, true);
-    if (field != null) {
+    if (field != null && getAnnotationValue(field) == null) {
       return field;
     }
-    return findFieldByAttributeValue(value, s);
+
+    return findFieldByAnnotationValue(value, s);
   }
 
-  private static PsiField findFieldByAttributeValue(PsiClass psiClass, @NotNull String attrNameToFind) {
+  @Nullable
+  private PsiField findFieldByAnnotationValue(PsiClass psiClass, @NotNull String attrNameToFind) {
     for (PsiField psiField : psiClass.getAllFields()) {
-      if (attrNameToFind.equals(getAttributeAnnotationValue(psiField))) {
+      if (psiField.hasModifierProperty(PsiModifier.STATIC)) continue;
+
+      if (attrNameToFind.equals(getAnnotationValue(psiField))) {
         return psiField;
       }
     }
     return null;
   }
 
+  protected Class getAnnotationClass() {
+    return Attribute.class;
+  }
+
   @Nullable
-  public static String getAttributeAnnotationValue(PsiField psiField) {
-    return getAnnotationValue(psiField, Attribute.class);
+  private String getAnnotationValue(PsiField field) {
+    return getAnnotationValue(field, getAnnotationClass());
   }
 
   @Nullable
@@ -105,5 +130,13 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
     ExtensionPoint ep = context.getInvocationElement().getParentOfType(ExtensionPoint.class, true);
     if (ep == null) return null;
     return ep.getBeanClass().getValue();
+  }
+
+  public static class ForTag extends PluginFieldNameConverter {
+
+    @Override
+    protected Class getAnnotationClass() {
+      return Tag.class;
+    }
   }
 }

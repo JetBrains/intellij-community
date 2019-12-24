@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnFix");
+  private static final Logger LOG = Logger.getInstance(MethodParameterFix.class);
 
   private final PsiType myParameterType;
   private final int myIndex;

@@ -114,7 +114,7 @@ public class JBZipEntry implements Cloneable {
    * @param mode an {@code int} value
    */
   public void setUnixMode(int mode) {
-    setExternalAttributes((mode << 16)
+    setExternalAttributes(((long)(mode & SHORT_MASK) << 16)
                           // MS-DOS read-only attribute
                           | ((mode & 0200) == 0 ? 1 : 0)
                           // MS-DOS directory flag
@@ -457,7 +457,7 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
-  private long calcDataOffset() throws IOException {
+  public long calcDataOffset() throws IOException {
     long offset = getHeaderOffset();
     myFile.archive.seek(offset + JBZipFile.LFH_OFFSET_FOR_FILENAME_LENGTH);
     byte[] b = new byte[JBZipFile.WORD];

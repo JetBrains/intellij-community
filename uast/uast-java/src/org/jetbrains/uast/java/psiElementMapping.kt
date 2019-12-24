@@ -97,6 +97,7 @@ private val conversionMapping = UElementToPsiElementMapping(
   UReturnExpression::class.java to ClassSet(PsiReturnStatement::class.java),
   UThrowExpression::class.java to ClassSet(PsiThrowStatement::class.java),
   UTryExpression::class.java to ClassSet(PsiTryStatement::class.java),
+  UCatchClause::class.java to ClassSet(PsiCatchSection::class.java),
   UastEmptyExpression::class.java to ClassSet(PsiEmptyStatement::class.java),
   UExpressionList::class.java to ClassSet(PsiSwitchLabelStatementBase::class.java),
 

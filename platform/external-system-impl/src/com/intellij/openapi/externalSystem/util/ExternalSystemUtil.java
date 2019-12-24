@@ -269,8 +269,6 @@ public class ExternalSystemUtil {
 
     Set<String> toRefresh = new HashSet<>();
     for (ExternalProjectSettings setting : projectsSettings) {
-      // don't refresh project when auto-import is disabled if such behavior needed (e.g. on project opening when auto-import is disabled)
-      if (!setting.isUseAutoImport() && spec.whenAutoImportEnabled()) continue;
       toRefresh.add(setting.getExternalProjectPath());
     }
 
@@ -357,8 +355,6 @@ public class ExternalSystemUtil {
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
-    String arguments = importSpec.getArguments();
-    String vmOptions = importSpec.getVmOptions();
 
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -369,14 +365,13 @@ public class ExternalSystemUtil {
       projectName = projectFile.getName();
     }
 
-    AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
+    AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     AbstractExternalSystemLocalSettings.SyncType syncType =
       isPreviewMode ? PREVIEW :
       localSettings.getProjectSyncType().get(externalProjectPath) == PREVIEW ? IMPORT : RE_IMPORT;
     localSettings.getProjectSyncType().put(externalProjectPath, syncType);
 
-    final ExternalSystemResolveProjectTask resolveProjectTask =
-      new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
+    ExternalSystemResolveProjectTask resolveProjectTask = new ExternalSystemResolveProjectTask(project, externalProjectPath, importSpec);
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 

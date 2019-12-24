@@ -59,7 +59,7 @@ public class StubGenerator implements ClassItemGenerator {
   };
 
   private final ClassNameProvider classNameProvider;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.StubGenerator");
+  private static final Logger LOG = Logger.getInstance(StubGenerator.class);
 
   public StubGenerator(ClassNameProvider classNameProvider) {
     this.classNameProvider = classNameProvider;

@@ -37,13 +37,6 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   public boolean warnOnAllExceptions = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "throw.from.finally.block.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

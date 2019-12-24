@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
@@ -12,7 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImpl;
@@ -29,9 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.ConcurrencyUtil.withLock;
 import static java.util.Collections.emptyMap;
 
 public abstract class VcsVFSListener implements Disposable {
@@ -94,7 +95,7 @@ public abstract class VcsVFSListener implements Disposable {
     private final ReentrantReadWriteLock PROCESSING_LOCK = new ReentrantReadWriteLock();
 
     public boolean addException(@NotNull VcsException exception) {
-      return computeUnderLock(PROCESSING_LOCK.writeLock(), () -> myExceptions.add(exception));
+      return withLock(PROCESSING_LOCK.writeLock(), () -> myExceptions.add(exception));
     }
 
     @NotNull
@@ -114,7 +115,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @NotNull
     public AllDeletedFiles acquireAllDeletedFiles() {
-      return computeUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<FilePath> deletedWithoutConfirmFiles = new ArrayList<>(myDeletedWithoutConfirmFiles);
         List<FilePath> deletedFiles = new ArrayList<>(myDeletedFiles);
         myDeletedWithoutConfirmFiles.clear();
@@ -128,7 +129,7 @@ public abstract class VcsVFSListener implements Disposable {
      */
     @NotNull
     private <T> List<T> acquireListUnderLock(@NotNull Collection<T> files) {
-      return computeUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      return withLock(PROCESSING_LOCK.writeLock(), () -> {
         List<T> copiedFiles = new ArrayList<>(files);
         files.clear();
         return copiedFiles;
@@ -140,7 +141,7 @@ public abstract class VcsVFSListener implements Disposable {
      */
     @NotNull
     public Map<VirtualFile, VirtualFile> acquireCopiedFiles() {
-      return computeUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      return withLock(PROCESSING_LOCK.writeLock(), () -> {
         Map<VirtualFile, VirtualFile> copyFromMap = new HashMap<>(myCopyFromMap);
         myCopyFromMap.clear();
         return copyFromMap;
@@ -190,7 +191,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
 
     private boolean isAnythingToProcess() {
-      return computeUnderLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
+      return withLock(PROCESSING_LOCK.readLock(), () -> !myAddedFiles.isEmpty() ||
                                                                 !myDeletedFiles.isEmpty() ||
                                                                 !myDeletedWithoutConfirmFiles.isEmpty() ||
                                                                 !myMovedFiles.isEmpty());
@@ -199,7 +200,7 @@ public abstract class VcsVFSListener implements Disposable {
     @CalledInBackground
     private void process(@NotNull List<VFileEvent> events) {
       processEvents(events);
-      runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      withLock(PROCESSING_LOCK.writeLock(), () -> {
         doNotDeleteAddedCopiedOrMovedFiles();
         checkMovedAddedSourceBack();
       });
@@ -221,7 +222,7 @@ public abstract class VcsVFSListener implements Disposable {
         if (file == null) return;
 
         LOG.debug("Adding [", file, "] to added files");
-        runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(file);
         });
       }
@@ -231,7 +232,7 @@ public abstract class VcsVFSListener implements Disposable {
       VirtualFile file = event.getFile();
       VirtualFile oldParent = event.getOldParent();
       if (!isUnderMyVcs(oldParent)) {
-        runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           myAddedFiles.add(file);
         });
       }
@@ -241,7 +242,7 @@ public abstract class VcsVFSListener implements Disposable {
       VirtualFile newFile = event.getNewParent().findChild(event.getNewChildName());
       if (newFile == null || myChangeListManager.isIgnoredFile(newFile)) return;
       VirtualFile originalFile = event.getFile();
-      runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      withLock(PROCESSING_LOCK.writeLock(), () -> {
         if (isFileCopyingFromTrackingSupported() && isUnderMyVcs(originalFile)) {
           myAddedFiles.add(newFile);
           myCopyFromMap.put(newFile, originalFile);
@@ -266,7 +267,7 @@ public abstract class VcsVFSListener implements Disposable {
         if (type == VcsDeleteType.IGNORE) return;
 
         FilePath filePath = VcsUtil.getFilePath(file);
-        runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+        withLock(PROCESSING_LOCK.writeLock(), () -> {
           if (type == VcsDeleteType.CONFIRM) {
             myDeletedFiles.add(filePath);
           }
@@ -282,7 +283,7 @@ public abstract class VcsVFSListener implements Disposable {
       LOG.debug("Checking moved file ", file, "; status=", status);
 
       String newPath = newParentPath + "/" + newName;
-      runUnderLock(PROCESSING_LOCK.writeLock(), () -> {
+      withLock(PROCESSING_LOCK.writeLock(), () -> {
         if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
           MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, info -> Comparing.equal(info.myFile, file));
           if (existingMovedFile != null) {
@@ -518,8 +519,11 @@ public abstract class VcsVFSListener implements Disposable {
   @Nullable
   protected Collection<FilePath> selectFilePathsToDelete(@NotNull List<FilePath> deletedFiles) {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-    return helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
-                                           getSingleFileDeletePromptTemplate(), myRemoveOption);
+    Ref<Collection<FilePath>> ref = Ref.create();
+    ApplicationManager.getApplication()
+      .invokeAndWait(() -> ref.set(helper.selectFilePathsToProcess(deletedFiles, getDeleteTitle(), null, getSingleFileDeleteTitle(),
+                                                                   getSingleFileDeletePromptTemplate(), myRemoveOption)));
+    return ref.get();
   }
 
   protected void beforeContentsChange(@NotNull VFileContentChangeEvent event) {
@@ -685,23 +689,6 @@ public abstract class VcsVFSListener implements Disposable {
         ProgressManager.getInstance()
           .runProcessWithProgressSynchronously(() -> myProcessor.process(events),
                                                "Version Control: Processing Changed Files", true, myProject);
-      }
-    }
-
-    private static void runUnderLock(@NotNull Lock lock, @NotNull Runnable runnable) {
-      computeUnderLock(lock, (Computable<Void>)() -> {
-        runnable.run();
-        return null;
-      });
-    }
-
-    private static <V> V computeUnderLock(@NotNull Lock lock, @NotNull Computable<V> computable) {
-      lock.lock();
-      try {
-        return computable.compute();
-      }
-      finally {
-        lock.unlock();
       }
     }
 }

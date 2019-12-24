@@ -75,6 +75,8 @@ public class XMLCatalogManager {
     try {
       Catalog catalog = myManager.getCatalog();
       if (catalog == null) return null;
+      String byUri = catalog.resolveURI(uri);
+      if (byUri != null) return byUri;
       String resolved = catalog.resolveSystem(uri);
       return resolved == null ? catalog.resolvePublic(uri, null) : resolved;
     }

@@ -41,7 +41,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void fill3DRect(int x, int y, int width, int height, boolean raised) {
-    log(String.format("draw3DRect(%d, %d, %d, %d, %b)", x, y, width, height, raised));
+    log(String.format("fill3DRect(%d, %d, %d, %d, %b)", x, y, width, height, raised));
     myPeer.fill3DRect(x, y, width, height, raised);
   }
 
@@ -148,7 +148,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public Object getRenderingHint(RenderingHints.Key hintKey) {
-    log(String.format("getRenderingHints(%s)", hintKey));
+    log(String.format("getRenderingHint(%s)", hintKey));
     return myPeer.getRenderingHint(hintKey);
   }
 
@@ -166,7 +166,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public RenderingHints getRenderingHints() {
-    log(String.format("getRenderingHints()"));
+    log("getRenderingHints()");
     return myPeer.getRenderingHints();
   }
 
@@ -284,7 +284,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void setPaintMode() {
-    log(String.format("setPaintMode()"));
+    log("setPaintMode()");
     myPeer.setPaintMode();
   }
 
@@ -452,7 +452,11 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-    log(String.format("drawImage(Image(%d,%d), %d, %d, ImageObserver)", img.getWidth(null), img.getHeight(null), x, y));
+    if(img == null) {
+      log(String.format("drawImage(Image(null), %d, %d, ImageObserver)", x, y));
+    } else {
+      log(String.format("drawImage(Image(%d,%d), %d, %d, ImageObserver)", img.getWidth(null), img.getHeight(null), x, y));
+    }
     return myPeer.drawImage(img, x, y, observer);
   }
 
@@ -498,7 +502,7 @@ public class Graphics2DLog extends Graphics2D {
 
   @Override
   public void dispose() {
-    log(String.format("dispose()"));
+    log("dispose()");
     myPeer.dispose();
   }
 

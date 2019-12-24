@@ -37,9 +37,9 @@ import static com.intellij.vcs.log.VcsLogDataKeys.*;
 
 public class VcsLogPanel extends JBPanel implements DataProvider {
   @NotNull private final VcsLogManager myManager;
-  @NotNull private final AbstractVcsLogUi myUi;
+  @NotNull private final VcsLogUiEx myUi;
 
-  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull AbstractVcsLogUi logUi) {
+  public VcsLogPanel(@NotNull VcsLogManager manager, @NotNull VcsLogUiEx logUi) {
     super(new BorderLayout());
     myManager = manager;
     myUi = logUi;
@@ -47,7 +47,7 @@ public class VcsLogPanel extends JBPanel implements DataProvider {
   }
 
   @NotNull
-  public AbstractVcsLogUi getUi() {
+  public VcsLogUiEx getUi() {
     return myUi;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -141,12 +141,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   };
 
   private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
-  private final ScopeTreeViewPanel.MyChangesListListener myChangesListListener = new MyChangesListListener();
   protected ActionCallback myActionCallback;
 
   public ScopeTreeViewPanel(@NotNull Project project) {
     super(new BorderLayout());
-    myUpdateQueue.setPassThrough(false);  // we don't want passthrough mode, even in unit tests
     myProject = project;
     initTree();
 
@@ -167,7 +165,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter);
     connection.subscribe(ProblemListener.TOPIC, new MyProblemListener());
-    ChangeListManager.getInstance(myProject).addChangeListListener(myChangesListListener);
+    connection.subscribe(ChangeListListener.TOPIC, new MyChangesListListener());
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, myProject);
   }
 
@@ -175,7 +173,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   public void dispose() {
     FileTreeModelBuilder.clearCaches(myProject);
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
-    ChangeListManager.getInstance(myProject).removeChangeListListener(myChangesListListener);
   }
 
   public void selectNode(final PsiElement element, final PsiFileSystemItem file, final boolean requestFocus) {

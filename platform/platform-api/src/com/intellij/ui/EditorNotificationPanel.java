@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -48,6 +49,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUIScale.scale(16)));
   protected Color myBackgroundColor;
   protected ColorKey myBackgroundColorKey;
+  @Nullable private Key<?> myProviderKey;
+  private Project myProject;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
     this();
@@ -71,6 +74,14 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
     setBorder(JBUI.Borders.empty(0, 10));
+  }
+
+  public void setProject(Project project) {
+    myProject = project;
+  }
+
+  public void setProviderKey(@Nullable Key<?> key) {
+    myProviderKey = key;
   }
 
   public static Color getToolbarBackground() {
@@ -124,6 +135,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     label.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
+        if (myProject != null) {
+          EditorNotifications.getInstance(myProject).logNotificationActionInvocation(myProviderKey, action.getClass());
+        }
+
         action.run();
       }
     });

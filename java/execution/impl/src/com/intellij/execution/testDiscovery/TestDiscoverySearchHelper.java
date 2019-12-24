@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +85,7 @@ public class TestDiscoverySearchHelper {
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       byte frameworkId) {
-    List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(classFQName, methodName));
+    List<Couple<String>> classesAndMethods = new SmartList<>(Couple.of(classFQName, methodName));
     TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, Collections.emptyList(), (c, m, p) -> {
       patterns.add(c + "," + m);
       return true;

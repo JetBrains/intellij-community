@@ -23,7 +23,6 @@ import java.util.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyMoveExceptQuickFix;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -32,12 +31,6 @@ import java.util.Set;
  * @author Alexey.Ivanov
  */
 public class PyExceptClausesOrderInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.bad.except.clauses.order");
-  }
 
   @NotNull
   @Override

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -75,7 +76,7 @@ public final class SocketLock {
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
-  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef = new AtomicReference<>();
+  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
   private final String myConfigPath;
   private final String mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
@@ -87,6 +88,7 @@ public final class SocketLock {
     if (FileUtil.pathsEqual(myConfigPath, mySystemPath)) {
       throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
     }
+    myCommandProcessorRef = new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
   private static String canonicalPath(String path) {
@@ -286,11 +288,7 @@ public final class SocketLock {
           String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
           @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-          String currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR);
-          log(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR + ": " + currentDirectory);
-          if (currentDirectory == null)
-            currentDirectory = ".";
-
+          String currentDirectory = ObjectUtils.notNull(System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR), ".");
           out.writeUTF(ACTIVATE_COMMAND + token + '\0' + new File(currentDirectory).getAbsolutePath() + '\0' + StringUtil.join(args, "\0"));
           out.flush();
 
@@ -414,13 +412,8 @@ public final class SocketLock {
                 result = new CliResult(Main.ACTIVATE_WRONG_TOKEN_CODE, IdeBundle.message("activation.auth.message"));
               }
               else {
-                Function<List<String>, Future<CliResult>> listener = myCommandProcessorRef.get();
-                if (listener != null) {
-                  result = CliResult.unmap(listener.apply(args.subList(1, args.size())), Main.ACTIVATE_RESPONSE_TIMEOUT);
-                }
-                else {
-                  result = new CliResult(Main.ACTIVATE_LISTENER_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized"));
-                }
+                Future<CliResult> future = myCommandProcessorRef.get().apply(args.subList(1, args.size()));
+                result = CliResult.unmap(future, Main.ACTIVATE_ERROR);
               }
 
               List<String> response = new ArrayList<>();

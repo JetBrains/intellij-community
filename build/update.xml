@@ -14,6 +14,7 @@
       <java classname="org.apache.tools.ant.Main" dir="${project.home}" fork="true" failonerror="true">
         <jvmarg line="-Xmx512m"/>
         <jvmarg line="&quot;-Dintellij.build.output.root=@{deploy}&quot;"/>
+        <jvmarg line="&quot;-Dintellij.build.local.plugins.repository=${intellij.build.local.plugins.repository}&quot;"/>
         <jvmarg line="&quot;-DdistOutputRelativePath=@{distOutputRelativePath}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>

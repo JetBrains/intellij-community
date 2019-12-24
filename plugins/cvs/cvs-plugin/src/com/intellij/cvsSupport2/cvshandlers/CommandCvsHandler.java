@@ -71,7 +71,7 @@ import java.util.*;
  */
 public class CommandCvsHandler extends CvsHandler {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler");
+  private static final Logger LOG = Logger.getInstance(CommandCvsHandler.class);
 
   protected final CvsOperation myCvsOperation;
 

@@ -33,9 +33,9 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -52,9 +52,9 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || dataProvider == null || !(ui instanceof VcsLogUiImpl)) {
+    if (project == null || dataProvider == null || ui == null) {
       return false;
     }
     return DeepComparator.getInstance(project, dataProvider, ui).hasHighlightingOrInProgress();
@@ -63,12 +63,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    MainVcsLogUi ui = e.getData(VcsLogInternalDataKeys.MAIN_UI);
     VcsLogData dataProvider = e.getData(VcsLogInternalDataKeys.LOG_DATA);
-    if (project == null || dataProvider == null || !(logUi instanceof VcsLogUiImpl)) {
+    if (project == null || dataProvider == null || ui == null) {
       return;
     }
-    VcsLogUiImpl ui = (VcsLogUiImpl)logUi;
 
     final DeepComparator dc = DeepComparator.getInstance(project, dataProvider, ui);
     if (selected) {
@@ -90,7 +89,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     }
   }
 
-  private static void selectBranchAndPerformAction(@NotNull VcsLogUi ui,
+  private static void selectBranchAndPerformAction(@NotNull VcsLogUiEx ui,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Consumer<? super String> consumer,
                                                    @NotNull Collection<? extends VirtualFile> visibleRoots) {
@@ -113,11 +112,8 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
     }
-    else if (ui instanceof AbstractVcsLogUi) {
-      popup.showInCenterOf(((AbstractVcsLogUi)ui).getTable());
-    }
     else {
-      popup.showInBestPositionFor(event.getDataContext());
+      popup.showInCenterOf(ui.getTable());
     }
   }
 

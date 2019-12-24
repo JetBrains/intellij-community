@@ -13,7 +13,7 @@ import java.util.List;
  * @author max
  */
 public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Result> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ExecutorsQuery"); 
+  private static final Logger LOG = Logger.getInstance(ExecutorsQuery.class);
 
   private final List<? extends QueryExecutor<Result, Parameter>> myExecutors;
   private final Parameter myParameters;

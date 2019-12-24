@@ -105,7 +105,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    *
    * @return the unique ID of the configuration.
    */
-  @Deprecated
   default int getUniqueID() {
     return System.identityHashCode(this);
   }

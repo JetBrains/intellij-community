@@ -51,6 +51,10 @@ public interface PyCallExpression extends PyCallSiteExpression {
         return null;
       }
 
+      if (resolvedCallee != null && PyNames.CALL.equals(resolvedCallee.getName()) && !PyNames.CALL.equals(qualifiedCallee.getName())) {
+        return qualifiedCallee;
+      }
+
       return qualifiedCallee.getQualifier();
     }
 
@@ -229,14 +233,17 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
-   * May be <strong>heavy</strong>.
-   * Use {@link NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider)}
-   * if you can.
+   * May be <strong>heavy</strong>, and it is not recommended to use.
+   * Use {@link NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider...)} or
+   * {@link com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)}.
    *
    * @param name providers that provides one or more names to check
    * @return true if matches, false otherwise
    * @see com.jetbrains.python.nameResolver
+   * @see com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)
+   * @deprecated use {@link com.jetbrains.extensions.python.PyCallExpressionExtKt#isCalleeName(PyCallExpression, FQNamesProvider...)}.
    */
+  @Deprecated
   default boolean isCallee(@NotNull FQNamesProvider... name) {
     final PyExpression callee = getCallee();
     return callee instanceof PyReferenceExpression && NameResolverTools.isName(callee, name);

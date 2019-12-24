@@ -26,22 +26,25 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
 public abstract class AutocreatingMoveDestination implements MoveDestination {
+  @NotNull
   protected final PackageWrapper myPackage;
   protected final PsiManager myManager;
   protected final ProjectFileIndex myFileIndex;
 
-  public AutocreatingMoveDestination(PackageWrapper targetPackage) {
+  public AutocreatingMoveDestination(@NotNull PackageWrapper targetPackage) {
     myPackage = targetPackage;
     myManager = myPackage.getManager();
     myFileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
   }
 
+  @NotNull
   @Override
   public abstract PackageWrapper getTargetPackage();
 

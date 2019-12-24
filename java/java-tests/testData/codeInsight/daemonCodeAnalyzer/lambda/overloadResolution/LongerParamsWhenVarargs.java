@@ -19,3 +19,19 @@ interface Node<<warning descr="Type parameter 'T' is never used">T</warning>> {
     Node.<Integer>of(1, Node.<Integer>of(2), Node.<Integer> of(3));
   }
 }
+
+class MyTest {
+      void foo(String... s) {
+        System.out.println(s);
+      }
+
+  <T> void foo(T t, String t3, T... s) {
+    System.out.println(t);
+    System.out.println(t3);
+    System.out.println(s);
+  }
+
+  {
+    foo(" ", " ", "");
+  }
+}

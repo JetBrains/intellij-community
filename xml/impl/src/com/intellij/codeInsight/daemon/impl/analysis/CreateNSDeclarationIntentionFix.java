@@ -57,7 +57,7 @@ import java.util.Set;
  */
 public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix");
+  private static final Logger LOG = Logger.getInstance(CreateNSDeclarationIntentionFix.class);
 
   private final String myNamespacePrefix;
   private final PsiAnchor myElement;

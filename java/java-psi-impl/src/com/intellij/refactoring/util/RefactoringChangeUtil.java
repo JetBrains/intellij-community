@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefactoringChangeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.ChangeUtil");
+  private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
     PsiType type = expr != null ? expr.getType() : null;

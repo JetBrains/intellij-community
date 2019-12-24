@@ -38,7 +38,7 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +51,98 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author cdr
  */
-public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
+public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Map<VirtualFile, ProblemFileInfo> myProblems = new THashMap<>(); // guarded by myProblems
   private final Map<VirtualFile, Set<Object>> myProblemsFromExternalSources = new THashMap<>(); // guarded by myProblemsFromExternalSources
   private final Collection<VirtualFile> myCheckingQueue = new THashSet<>(10);
 
   private final Project myProject;
+
+  protected WolfTheProblemSolverImpl(@NotNull Project project) {
+    myProject = project;
+    PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
+      @Override
+      public void childAdded(@NotNull PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      @Override
+      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      @Override
+      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      @Override
+      public void childMoved(@NotNull PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      @Override
+      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
+        childrenChanged(event);
+      }
+
+      @Override
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
+        clearSyntaxErrorFlag(event);
+      }
+    };
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(changeListener);
+    MessageBusConnection busConnection = project.getMessageBus().connect();
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        boolean dirChanged = false;
+        Set<VirtualFile> toRemove = new THashSet<>();
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+            VirtualFile file = event.getFile();
+            if (file.isDirectory()) {
+              dirChanged = true;
+            }
+            else {
+              toRemove.add(file);
+            }
+          }
+        }
+        if (dirChanged) {
+          clearInvalidFiles();
+        }
+        for (VirtualFile file : toRemove) {
+          doRemove(file);
+        }
+      }
+    });
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
+    if (fileStatusManager != null) { //tests?
+      fileStatusManager.addFileStatusListener(new FileStatusListener() {
+        @Override
+        public void fileStatusesChanged() {
+          clearInvalidFiles();
+        }
+
+        @Override
+        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+          fileStatusesChanged();
+        }
+      });
+    }
+
+    busConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        // Ensure we don't have any leftover problems referring to classes from plugin being unloaded
+        Set<VirtualFile> allFiles = new HashSet<>(myProblems.keySet());
+        for (VirtualFile file : allFiles) {
+          doRemove(file);
+        }
+      }
+    });
+  }
 
   private void doRemove(@NotNull VirtualFile problemFile) {
     ProblemFileInfo old;
@@ -97,93 +183,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       result = 31 * result + (hasSyntaxErrors ? 1 : 0);
       return result;
     }
-  }
-
-  WolfTheProblemSolverImpl(@NotNull Project project,
-                           @NotNull PsiManager psiManager,
-                           @NotNull MessageBus messageBus) {
-    myProject = project;
-    PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
-      @Override
-      public void childAdded(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childMoved(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-        childrenChanged(event);
-      }
-
-      @Override
-      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-        clearSyntaxErrorFlag(event);
-      }
-    };
-    psiManager.addPsiTreeChangeListener(changeListener);
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        boolean dirChanged = false;
-        Set<VirtualFile> toRemove = new THashSet<>();
-        for (VFileEvent event : events) {
-          if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
-            VirtualFile file = event.getFile();
-            if (file.isDirectory()) {
-              dirChanged = true;
-            }
-            else {
-              toRemove.add(file);
-            }
-          }
-        }
-        if (dirChanged) {
-          clearInvalidFiles();
-        }
-        for (VirtualFile file : toRemove) {
-          doRemove(file);
-        }
-      }
-    });
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    if (fileStatusManager != null) { //tests?
-      fileStatusManager.addFileStatusListener(new FileStatusListener() {
-        @Override
-        public void fileStatusesChanged() {
-          clearInvalidFiles();
-        }
-
-        @Override
-        public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-          fileStatusesChanged();
-        }
-      });
-    }
-
-    messageBus.connect(project).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        // Ensure we don't have any leftover problems referring to classes from plugin being unloaded
-        Set<VirtualFile> allFiles = new HashSet<>(myProblems.keySet());
-        for (VirtualFile file : allFiles) {
-          doRemove(file);
-        }
-      }
-    });
   }
 
   private void clearInvalidFiles() {

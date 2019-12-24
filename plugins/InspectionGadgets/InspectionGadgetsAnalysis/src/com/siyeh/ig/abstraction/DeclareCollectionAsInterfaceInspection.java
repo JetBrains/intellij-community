@@ -55,13 +55,6 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "collection.declared.by.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final String type = (String)infos[0];
     return InspectionGadgetsBundle.message(

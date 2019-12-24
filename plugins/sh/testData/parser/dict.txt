@@ -318,7 +318,7 @@ SHELL_SCRIPT
                       PsiElement(word)('-nv')
                     PsiWhiteSpace(' ')
                     LITERAL
-                      PsiElement(word)('http://repo.labs.intellij.net/download/oracle/')
+                      PsiElement(word)('https://repo.labs.intellij.net/download/oracle/')
                     VARIABLE
                       PsiElement(var)('$FILE')
                     PsiWhiteSpace(' ')

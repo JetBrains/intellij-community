@@ -23,7 +23,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class MethodHierarchyBrowser extends MethodHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.MethodHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(MethodHierarchyBrowser.class);
 
   public MethodHierarchyBrowser(final Project project, final PsiMethod method) {
     super(project, method);

@@ -11,7 +11,6 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -122,7 +121,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((value) -> TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value)))
+        .setItemChosenCallback((value) -> moveClass(project, editor, file, value))
         .createPopup()
         .showInBestPositionFor(editor);
     }

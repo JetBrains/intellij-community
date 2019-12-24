@@ -4,8 +4,6 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.VcsLogData
 import com.jetbrains.changeReminder.getGitRootFiles
@@ -15,10 +13,8 @@ import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 internal class PredictionRequest(private val project: Project,
                                  private val dataManager: VcsLogData,
                                  private val filesHistoryProvider: FilesHistoryProvider,
-                                 changes: Collection<Change>) {
-  private val changeListFiles = changes.map { ChangesUtil.getFilePath(it) }
-
-  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<FilePath> =
+                                 private val changeListFiles: Collection<FilePath>) {
+  private fun getPredictedFiles(files: Collection<FilePath>, root: VirtualFile): Collection<VirtualFile> =
     PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,
                                     System.currentTimeMillis(),
@@ -26,7 +22,7 @@ internal class PredictionRequest(private val project: Project,
                                     changeListFiles.toSet()),
                              filesHistoryProvider.getFilesHistory(root, files))
 
-  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>): Collection<FilePath> =
+  private fun getPredictedFiles(rootFiles: Map<VirtualFile, Collection<FilePath>>): Collection<VirtualFile> =
     rootFiles.mapNotNull { (root, files) ->
       if (dataManager.index.isIndexed(root)) {
         getPredictedFiles(files, root)
@@ -36,8 +32,11 @@ internal class PredictionRequest(private val project: Project,
       }
     }.flatten()
 
-  fun calculate(): Collection<FilePath> {
+  fun calculate(): PredictionData.Prediction {
     val rootFiles = getGitRootFiles(project, changeListFiles)
-    return getPredictedFiles(rootFiles)
+    return PredictionData.Prediction(
+      requestedFiles = changeListFiles,
+      prediction = getPredictedFiles(rootFiles)
+    )
   }
 }

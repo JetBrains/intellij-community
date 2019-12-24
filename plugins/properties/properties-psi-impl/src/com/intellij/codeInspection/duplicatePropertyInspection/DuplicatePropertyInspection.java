@@ -16,6 +16,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -218,7 +219,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     for (String key : keyToFiles.keySet()) {
       if (progress!= null){
         progress.setText2(InspectionsBundle.message("duplicate.property.key.progress.indicator.text", key));
-        if (progress.isCanceled()) throw new ProcessCanceledException();
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
       StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
@@ -259,7 +260,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     for (String key : keyToDifferentValues.keySet()) {
       if (progress != null) {
         progress.setText2(InspectionsBundle.message("duplicate.property.diff.key.progress.indicator.text", key));
-        if (progress.isCanceled()) throw new ProcessCanceledException();
+        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
       final Set<String> values = keyToDifferentValues.get(key);
       if (values == null || values.size() < 2){
@@ -303,12 +304,6 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       if (resultFiles.isEmpty()) return;
     }
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("duplicate.property.display.name");
   }
 
   @Override

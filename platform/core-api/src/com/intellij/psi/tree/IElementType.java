@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  * @see com.intellij.lang.ASTNode#getElementType()
  */
 public class IElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
+  private static final Logger LOG = Logger.getInstance(IElementType.class);
 
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
   public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
@@ -97,7 +97,6 @@ public class IElementType {
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
@@ -105,7 +104,7 @@ public class IElementType {
       synchronized (lock) {
         myIndex = size++;
         if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(i->i!=null).collect(Collectors.groupingBy(ie -> ie.myLanguage));
+          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
           Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
           List<IElementType> types = max.getValue();
           LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
@@ -114,6 +113,7 @@ public class IElementType {
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
         newRegistry[myIndex] = this;
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
     }

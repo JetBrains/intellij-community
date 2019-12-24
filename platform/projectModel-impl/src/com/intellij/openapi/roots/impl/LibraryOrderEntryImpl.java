@@ -37,7 +37,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  *  @author dsl
  */
 class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
+  private static final Logger LOG = Logger.getInstance(LibraryOrderEntryImpl.class);
   private Library myLibrary;
   @Nullable private String myLibraryName; // is non-null if myLibrary == null
   private String myLibraryLevel; // is non-null if myLibrary == null
@@ -179,11 +179,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   @Override
   @NotNull
-  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+  public OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
     ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
-    return new LibraryOrderEntryImpl(this, rootModel, rootManager);
+    return new LibraryOrderEntryImpl(this, (RootModelImpl)rootModel, rootManager);
   }
 
   @Override

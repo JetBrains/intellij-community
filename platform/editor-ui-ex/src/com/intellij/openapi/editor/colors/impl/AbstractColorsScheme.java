@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -43,12 +42,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   public static final int CURR_VERSION = 142;
 
-  // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
-  private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
-
   protected EditorColorsScheme myParentScheme;
-
-  protected FontSize myQuickDocFontSize = DEFAULT_FONT_SIZE;
 
   @NotNull private FontPreferences                 myFontPreferences
     = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
@@ -90,7 +84,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NonNls private static final String CONSOLE_FONT_SIZE              = "CONSOLE_FONT_SIZE";
   @NonNls private static final String EDITOR_LIGATURES               = "EDITOR_LIGATURES";
   @NonNls private static final String CONSOLE_LIGATURES              = "CONSOLE_LIGATURES";
-  @NonNls private static final String EDITOR_QUICK_JAVADOC_FONT_SIZE = "EDITOR_QUICK_DOC_FONT_SIZE";
 
 
   //region Meta info-related fields
@@ -153,7 +146,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public abstract Object clone();
 
   public void copyTo(AbstractColorsScheme newScheme) {
-    newScheme.myQuickDocFontSize = myQuickDocFontSize;
     if (myConsoleFontPreferences instanceof DelegatingFontPreferences) {
       newScheme.setUseEditorFontPreferencesInConsole();
     }
@@ -216,14 +208,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
-  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    if (myQuickDocFontSize != fontSize) {
-      myQuickDocFontSize = fontSize;
-      myIsSaveNeeded = true;
-    }
-  }
-
-  @Override
   public void setLineSpacing(float lineSpacing) {
     ensureEditableFontPreferences().setLineSpacing(lineSpacing);
   }
@@ -259,12 +243,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public int getEditorFontSize() {
     return myFontPreferences.getSize(myFontPreferences.getFontFamily());
-  }
-
-  @NotNull
-  @Override
-  public FontSize getQuickDocFontSize() {
-    return myQuickDocFontSize;
   }
 
   @Override
@@ -462,11 +440,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         if (value != null) setConsoleFontName(value);
         break;
       }
-      case EDITOR_QUICK_JAVADOC_FONT_SIZE: {
-        FontSize value = myValueReader.read(FontSize.class, childNode);
-        if (value != null) myQuickDocFontSize = value;
-        break;
-      }
       case EDITOR_LIGATURES: {
         Boolean value = myValueReader.read(Boolean.class, childNode);
         if (value != null) ensureEditableFontPreferences().setUseLigatures(value);
@@ -575,10 +548,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       if ((myFontPreferences instanceof DelegatingFontPreferences) || getConsoleLineSpacing() != getLineSpacing()) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
       }
-    }
-
-    if (DEFAULT_FONT_SIZE != getQuickDocFontSize()) {
-      JdomKt.addOptionTag(parentNode, EDITOR_QUICK_JAVADOC_FONT_SIZE, getQuickDocFontSize().toString());
     }
 
     Element colorElements = new Element(COLORS_ELEMENT);

@@ -68,13 +68,6 @@ public class PublicMethodNotExposedInInterfaceInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "public.method.not.in.interface.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.method.not.in.interface.problem.descriptor");

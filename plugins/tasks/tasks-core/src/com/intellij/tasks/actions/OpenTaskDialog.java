@@ -35,7 +35,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class OpenTaskDialog extends DialogWrapper {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.SimpleOpenTaskDialog");
+  private final static Logger LOG = Logger.getInstance(OpenTaskDialog.class);
   private static final String UPDATE_STATE_ENABLED = "tasks.open.task.update.state.enabled";
 
   private JPanel myPanel;

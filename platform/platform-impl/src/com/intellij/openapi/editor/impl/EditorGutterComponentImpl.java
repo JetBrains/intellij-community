@@ -143,8 +143,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
   private String myLastGutterToolTip;
-  @NotNull private TIntFunction myLineNumberConvertor = value -> value;
-  @Nullable private TIntFunction myAdditionalLineNumberConvertor;
+  @NotNull private LineNumberConverter myLineNumberConverter = LineNumberConverter.DEFAULT;
+  @Nullable private LineNumberConverter myAdditionalLineNumberConverter;
   private boolean myShowDefaultGutterPopup = true;
   private boolean myCanCloseAnnotations = true;
   @Nullable private ActionGroup myCustomGutterPopupGroup;
@@ -537,9 +537,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void paintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine) {
     if (isLineNumbersShown()) {
       int offset = getLineNumberAreaOffset() + myLineNumberAreaWidth;
-      doPaintLineNumbers(g, startVisualLine, endVisualLine, offset, myLineNumberConvertor);
-      if (myAdditionalLineNumberConvertor != null) {
-        doPaintLineNumbers(g, startVisualLine, endVisualLine, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth), myAdditionalLineNumberConvertor);
+      doPaintLineNumbers(g, startVisualLine, endVisualLine, offset, myLineNumberConverter);
+      if (myAdditionalLineNumberConverter != null) {
+        doPaintLineNumbers(g, startVisualLine, endVisualLine, offset + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth),
+                           myAdditionalLineNumberConverter);
       }
     }
   }
@@ -566,10 +567,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private int calcLineNumbersAreaWidth(int maxLineNumber) {
-    return FontLayoutService.getInstance().stringWidth(getFontMetrics(getFontForLineNumbers()), Integer.toString(maxLineNumber + 1));
+    return FontLayoutService.getInstance().stringWidth(getFontMetrics(getFontForLineNumbers()), Integer.toString(maxLineNumber));
   }
 
-  private void doPaintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine, int offset, @NotNull TIntFunction convertor) {
+  private void doPaintLineNumbers(Graphics2D g, int startVisualLine, int endVisualLine, int offset,
+                                  @NotNull LineNumberConverter converter) {
     int lastLine = myEditor.logicalToVisualPosition(
       new LogicalPosition(endLineNumber(), 0))
       .line;
@@ -590,8 +592,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         if (!visLinesIterator.startsWithSoftWrap()) {
           int logicalLine = visLinesIterator.getStartLogicalLine();
-          int lineToDisplay = convertor.execute(logicalLine);
-          if (lineToDisplay >= 0) {
+          Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
+          if (lineToDisplay != null) {
             int startY = visLinesIterator.getY();
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
@@ -604,7 +606,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               g.setColor(colorUnderCaretRow);
             }
 
-            String s = String.valueOf(lineToDisplay + 1);
+            String s = String.valueOf(lineToDisplay);
             int textOffset = isMirrored() ?
                              offset - getLineNumberAreaWidth() - 1 :
                              offset - FontLayoutService.getInstance().stringWidth(g.getFontMetrics(), s);
@@ -1390,24 +1392,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void calcLineNumberAreaWidth() {
     if (!isLineNumbersShown()) return;
 
-    int maxLineNumber = getMaxLineNumber(myLineNumberConvertor);
-    myLineNumberAreaWidth = calcLineNumbersAreaWidth(maxLineNumber);
+    Integer maxLineNumber = myLineNumberConverter.getMaxLineNumber(myEditor);
+    myLineNumberAreaWidth = maxLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxLineNumber);
 
     myAdditionalLineNumberAreaWidth = 0;
-    if (myAdditionalLineNumberConvertor != null) {
-      int maxAdditionalLineNumber = getMaxLineNumber(myAdditionalLineNumberConvertor);
-      myAdditionalLineNumberAreaWidth = calcLineNumbersAreaWidth(maxAdditionalLineNumber);
+    if (myAdditionalLineNumberConverter != null) {
+      Integer maxAdditionalLineNumber = myAdditionalLineNumberConverter.getMaxLineNumber(myEditor);
+      myAdditionalLineNumberAreaWidth = maxAdditionalLineNumber == null ? 0 : calcLineNumbersAreaWidth(maxAdditionalLineNumber);
     }
-  }
-
-  private int getMaxLineNumber(@NotNull TIntFunction convertor) {
-    for (int i = endLineNumber(); i >= 0; i--) {
-      int number = convertor.execute(i);
-      if (number >= 0) {
-        return number;
-      }
-    }
-    return 0;
   }
 
   @Nullable
@@ -1937,14 +1929,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
-    setLineNumberConvertor(lineNumberConvertor, null);
-  }
-
-  @Override
-  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
-    myLineNumberConvertor = lineNumberConvertor1 != null ? lineNumberConvertor1 : value -> value;
-    myAdditionalLineNumberConvertor = lineNumberConvertor2;
+  public void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter) {
+    myLineNumberConverter = primaryConverter;
+    myAdditionalLineNumberConverter = additionalConverter;
     repaint();
   }
 

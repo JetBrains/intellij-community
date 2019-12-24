@@ -33,6 +33,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -76,7 +77,7 @@ public final class PluginsAdvertiser {
           final JsonElement pluginId = jsonObject.get("pluginId");
           final JsonElement pluginName = jsonObject.get("pluginName");
           final JsonElement bundled = jsonObject.get("bundled");
-          result.add(new Plugin(PluginId.getId(StringUtil.unquoteString(pluginId.toString())),
+          result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
                                 pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
                                 Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
         }
@@ -102,17 +103,23 @@ public final class PluginsAdvertiser {
         JsonElement bundledExt = jsonObject.get("bundled");
         boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
         IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-        if (fromServerPluginDescription == null && !isBundled) continue;
+        if (fromServerPluginDescription == null && !isBundled) {
+          continue;
+        }
 
         IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-        if (loadedPlugin != null && loadedPlugin.isEnabled()) continue;
+        if (loadedPlugin != null && loadedPlugin.isEnabled()) {
+          continue;
+        }
 
         if (loadedPlugin != null && fromServerPluginDescription != null &&
             StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
           continue;
         }
 
-        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) continue;
+        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) {
+          continue;
+        }
 
         JsonElement ext = jsonObject.get("implementationName");
         String extension = StringUtil.unquoteString(ext.toString());
@@ -123,7 +130,7 @@ public final class PluginsAdvertiser {
         }
         JsonElement pluginNameElement = jsonObject.get("pluginName");
         String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
-        pluginIds.add(new Plugin(PluginId.getId(pluginId), pluginName, isBundled));
+        pluginIds.add(new Plugin(pluginId, pluginName, isBundled));
       }
       saveExtensions(result);
       return result;
@@ -165,7 +172,7 @@ public final class PluginsAdvertiser {
     return new File(PathManager.getPluginsPath(), CASHED_EXTENSIONS);
   }
 
-  private static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
+  static void saveExtensions(Map<String, Set<Plugin>> extensions) throws IOException {
     File plugins = getExtensionsFile();
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
@@ -184,16 +191,20 @@ public final class PluginsAdvertiser {
   @Nullable
   static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
     for (Plugin plugin : plugins) {
-      if (PluginManagerCore.isDisabled(plugin.myPluginId)) {
-        return PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId));
+      PluginId pluginId = PluginId.getId(plugin.myPluginId);
+      if (PluginManagerCore.isDisabled(pluginId)) {
+        return PluginManagerCore.getPlugin(pluginId);
       }
     }
     return null;
   }
 
   static List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
-    if (PlatformUtils.isIdeaUltimate()) return null;
-    final List<String> bundled = new ArrayList<>();
+    if (PlatformUtils.isIdeaUltimate()) {
+      return null;
+    }
+
+    List<String> bundled = new ArrayList<>();
     for (Plugin plugin : plugins) {
       if (plugin.myBundled && PluginManagerCore.getPlugin(PluginId.getId(plugin.myPluginId)) == null) {
         bundled.add(plugin.myPluginName != null ? plugin.myPluginName : plugin.myPluginId);
@@ -202,7 +213,15 @@ public final class PluginsAdvertiser {
     return bundled.isEmpty() ? null : bundled;
   }
 
-  public static void installAndEnablePlugins(final @NotNull Set<String> pluginIds, final @NotNull Runnable onSuccess) {
+  /**
+   * @deprecated Use {@link #installAndEnable(Set, Runnable)}
+   */
+  @Deprecated
+  public static void installAndEnablePlugins(@NotNull Set<String> pluginIds, @NotNull Runnable onSuccess) {
+    installAndEnable(new LinkedHashSet<>(ContainerUtil.map(pluginIds, it -> PluginId.getId(it))), onSuccess);
+  }
+
+  public static void installAndEnable(@NotNull Set<PluginId> pluginIds, @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(null, "Search for Plugins in Repository", true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
       private List<IdeaPluginDescriptor> myAllPlugins;
@@ -212,12 +231,12 @@ public final class PluginsAdvertiser {
         try {
           myAllPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId().getIdString())) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(descriptor));
             }
           }
           for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-            if (pluginIds.contains(loadedPlugin.getPluginId().getIdString())) {
+            if (pluginIds.contains(loadedPlugin.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
           }
@@ -282,8 +301,16 @@ public final class PluginsAdvertiser {
     public String myPluginName;
     public boolean myBundled;
 
+    /**
+     * @deprecated Please use {@link #Plugin(String, String, boolean)}
+     */
+    @Deprecated
     public Plugin(PluginId pluginId, String pluginName, boolean bundled) {
-      myPluginId = pluginId.getIdString();
+      this(pluginId.getIdString(), pluginName, bundled);
+    }
+
+    public Plugin(String pluginId, String pluginName, boolean bundled) {
+      myPluginId = pluginId;
       myBundled = bundled;
       myPluginName = pluginName;
     }

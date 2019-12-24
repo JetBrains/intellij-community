@@ -46,12 +46,6 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("local.variable.naming.convention.display.name");
-  }
-
-  @Override
   protected String getElementDescription() {
     return InspectionGadgetsBundle.message("local.variable.naming.convention.element.description");
   }

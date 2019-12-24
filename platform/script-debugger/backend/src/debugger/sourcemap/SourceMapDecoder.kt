@@ -340,7 +340,7 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
 }
 
 interface MutableEntry : MappingEntry {
-  override var nextGenerated: MappingEntry
+  override var nextGenerated: MappingEntry?
 }
 
 /**
@@ -351,7 +351,7 @@ private data class UnmappedEntry(override val generatedLine: Int, override val g
 
   override val sourceColumn = UNMAPPED
 
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 /**
@@ -362,7 +362,7 @@ private data class UnnamedEntry(override val generatedLine: Int,
                                 override val source: Int,
                                 override val sourceLine: Int,
                                 override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 /**
@@ -374,7 +374,7 @@ private data class NamedEntry(override val name: String,
                               override val source: Int,
                               override val sourceLine: Int,
                               override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry by notNull()
+  override var nextGenerated: MappingEntry? = null
 }
 
 // java CharacterIterator is ugly, next() impl, so, we reinvent

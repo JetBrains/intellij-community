@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 public abstract class InterruptibleProcess extends InterruptibleActivity {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.process.InterruptibleProcess");
+  private static final Logger LOG = Logger.getInstance(InterruptibleProcess.class);
   private final Process myProcess;
   private final InputStream myInputStream;
   private final InputStream myErrorStream;

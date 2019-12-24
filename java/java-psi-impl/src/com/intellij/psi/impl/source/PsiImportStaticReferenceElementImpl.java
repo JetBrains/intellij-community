@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
  * @author dsl
  */
 public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiImportStaticReferenceElementImpl.class);
   private volatile String myCanonicalText;
 
   public PsiImportStaticReferenceElementImpl() {
@@ -221,8 +221,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   @NotNull
   public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     PsiFile file = getContainingFile();
-    final ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
-    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode,file);
+    ResolveCache resolveCache = ResolveCache.getInstance(file.getProject());
+    ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode, file);
     return results instanceof JavaResolveResult[] ? (JavaResolveResult[])results : JavaResolveResult.EMPTY_ARRAY;
   }
 

@@ -80,16 +80,7 @@ public class PropertiesAnnotator implements Annotator {
           int start = lexer.getTokenStart() + node.getTextRange().getStartOffset();
           int end = lexer.getTokenEnd() + node.getTextRange().getStartOffset();
           TextRange textRange = new TextRange(start, end);
-          final Annotation annotation;
-          if (severity == HighlightSeverity.WARNING) {
-            annotation = holder.createWarningAnnotation(textRange, displayName);
-          }
-          else if (severity == HighlightSeverity.ERROR) {
-            annotation = holder.createErrorAnnotation(textRange, displayName);
-          }
-          else {
-            annotation = holder.createInfoAnnotation(textRange, displayName);
-          }
+          Annotation annotation = holder.createAnnotation(severity, textRange, displayName);
           TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
           annotation.setEnforcedTextAttributes(attributes);
           if (key == PropertiesHighlighter.PROPERTIES_INVALID_STRING_ESCAPE) {

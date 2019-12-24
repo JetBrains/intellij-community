@@ -22,7 +22,7 @@ import java.util.concurrent.Future;
 public final class LowMemoryWatcherManager implements Disposable {
   @NotNull
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
+    return Logger.getInstance(LowMemoryWatcherManager.class);
   }
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
@@ -78,6 +78,7 @@ public final class LowMemoryWatcherManager implements Disposable {
   private final NotificationListener myLowMemoryListener = new NotificationListener() {
     @Override
     public void handleNotification(Notification notification, Object __) {
+      if (LowMemoryWatcher.notificationsSuppressed()) return;
       boolean memoryThreshold = MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(notification.getType());
       boolean memoryCollectionThreshold = MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(notification.getType());
 

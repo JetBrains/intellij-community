@@ -621,7 +621,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
       throw e;
     }
     catch (Throwable e) {
-      LOG.error("In file: " + file.getName(), e);
+      LOG.error("In file: " + file.getViewProvider().getVirtualFile().getPath(), e);
     }
     finally {
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
@@ -740,14 +740,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
               throw e;
             }
           }
-          ApplicationManager.getApplication().runReadAction(() -> {
+          ThrowableRunnable<RuntimeException> runnable = () -> {
             tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
             //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
             if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
                 tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
               needRepeatSearchRequest.add(toolWrapper);
             }
-          });
+          };
+          if (tool.isReadActionNeeded()) {
+            ReadAction.run(runnable);
+          }
+          else {
+            runnable.run();
+          }
         }
         catch (ProcessCanceledException | IndexNotReadyException e) {
           throw e;
@@ -1004,7 +1010,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
       scope.accept(new PsiElementVisitor() {
         private int myCount;
         @Override
-        public void visitFile(PsiFile file) {
+        public void visitFile(@NotNull PsiFile file) {
           progressIndicator.setFraction((double)++myCount / fileCount);
           if (isBinary(file)) return;
           final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();

@@ -47,11 +47,6 @@ public class DelegatingExternalSystemSettingsListener<S extends ExternalProjectS
   }
 
   @Override
-  public void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {
-    myDelegate.onUseAutoImportChange(currentValue, linkedProjectPath); 
-  }
-
-  @Override
   public void onBulkChangeStart() {
     myDelegate.onBulkChangeStart(); 
   }

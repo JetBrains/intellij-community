@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CacheUpdateRunner {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
+  private static final Logger LOG = Logger.getInstance(CacheUpdateRunner.class);
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
@@ -44,6 +45,8 @@ public class CacheUpdateRunner {
     final FileContentQueue queue = new FileContentQueue(project, files, indicator);
     final double total = files.size();
     queue.startLoading();
+
+    indicator.setIndeterminate(false);
 
     ProgressUpdater progressUpdater = new ProgressUpdater() {
       final Set<VirtualFile> myFilesBeingProcessed = new THashSet<>();
@@ -163,7 +166,7 @@ public class CacheUpdateRunner {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     try {
       for (Future<?> future : futures) {
-        future.get();
+        ProgressIndicatorUtils.awaitWithCheckCanceled(future);
       }
 
       boolean allFinished = true;
@@ -175,7 +178,8 @@ public class CacheUpdateRunner {
       }
       return allFinished;
     }
-    catch (InterruptedException ignored) {
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable throwable) {
       LOG.error(throwable);
@@ -211,7 +215,7 @@ public class CacheUpdateRunner {
     @Override
     public void run() {
       while (true) {
-        if (myProject.isDisposedOrDisposeInProgress() || myInnerIndicator.isCanceled()) {
+        if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
           return;
         }
 
@@ -226,7 +230,7 @@ public class CacheUpdateRunner {
 
           final Runnable action = () -> {
             myInnerIndicator.checkCanceled();
-            if (!myProject.isDisposedOrDisposeInProgress()) {
+            if (!myProject.isDisposed()) {
               final VirtualFile file = fileContent.getVirtualFile();
               try {
                 myProgressUpdater.processingStarted(file);
@@ -247,7 +251,7 @@ public class CacheUpdateRunner {
             ProgressManager.getInstance().runProcess(() -> {
               // in wait methods we don't want to deadlock by grabbing write lock (or having it in queue) and trying to run read action in separate thread
               ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-              if (app.isDisposedOrDisposeInProgress() || !app.tryRunReadAction(action)) {
+              if (app.isDisposed() || !app.tryRunReadAction(action)) {
                 throw new ProcessCanceledException();
               }
             }, ProgressWrapper.wrap(myInnerIndicator));

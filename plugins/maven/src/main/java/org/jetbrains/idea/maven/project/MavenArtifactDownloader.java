@@ -90,10 +90,10 @@ public class MavenArtifactDownloader {
       if (downloadDocs) types.add(MavenExtraArtifactType.DOCS);
 
       String caption = downloadSources && downloadDocs
-                       ? ProjectBundle.message("maven.downloading")
+                       ? MavenProjectBundle.message("maven.downloading")
                        : (downloadSources
-                          ? ProjectBundle.message("maven.downloading.sources")
-                          : ProjectBundle.message("maven.downloading.docs"));
+                          ? MavenProjectBundle.message("maven.downloading.sources")
+                          : MavenProjectBundle.message("maven.downloading.docs"));
       myProgress.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);

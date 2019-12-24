@@ -6,6 +6,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -31,7 +32,7 @@ import java.util.ResourceBundle;
  * @author Denis Zhdanov
  */
 public abstract class AbstractBundle {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.AbstractBundle");
+  private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
   private Reference<ResourceBundle> myBundle;
   @NonNls private final String myPathToBundle;
 
@@ -41,10 +42,25 @@ public abstract class AbstractBundle {
 
   @NotNull
   public String getMessage(@NotNull String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return CommonBundle.message(getResourceBundle(), key, params);
   }
 
-  private ResourceBundle getBundle() {
+  @Nullable
+  public String messageOfNull(@NotNull String key, @NotNull Object... params) {
+    return CommonBundle.messageOfNull(getResourceBundle(), key, params);
+  }
+
+  public String messageOrDefault(@NotNull String key,
+                                 @Nullable String defaultValue,
+                                 @NotNull Object... params) {
+    return CommonBundle.messageOrDefault(getResourceBundle(), key, defaultValue, params);
+  }
+  
+  public boolean containsKey(@NotNull String key) {
+    return getResourceBundle().containsKey(key);
+  }
+
+  public ResourceBundle getResourceBundle() {
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(myBundle);
     if (bundle == null) {
       bundle = getResourceBundle(myPathToBundle, getClass().getClassLoader());
@@ -56,13 +72,13 @@ public abstract class AbstractBundle {
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
     ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
 
-  public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+  public ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> map = ourCache.get(loader);
     ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
       try {
         ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
-        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
+        result = findBundle(pathToBundle, loader, control);
       }
       catch (MissingResourceException e) {
         LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
@@ -72,5 +88,9 @@ public abstract class AbstractBundle {
       map.put(pathToBundle, result);
     }
     return result;
+  }
+
+  protected ResourceBundle findBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+    return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
 }

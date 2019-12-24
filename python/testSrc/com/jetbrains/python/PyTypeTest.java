@@ -3591,6 +3591,192 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-33663
+  public void testAnnotatedSelfReturnProperty() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("A",
+                   "from typing import TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class A:\n" +
+                   "    @property\n" +
+                   "    def foo(self: T) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = A().foo")
+    );
+  }
+
+  // PY-30861
+  public void testDontReplaceSpecifiedReturnTypeWithSelf() {
+    doTest("dict",
+           "from collections import defaultdict\n" +
+           "data = defaultdict(dict)\n" +
+           "expr = data['name']");
+  }
+
+  // PY-37601
+  public void testClassWithOwnInitInheritsClassWithGenericCall() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Derived",
+                   "from typing import Any, Generic, TypeVar\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\")\n" +
+                   "\n" +
+                   "class Base(Generic[T]):\n" +
+                   "    def __call__(self, p: Any) -> T:\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Derived(Base):\n" +
+                   "    def __init__():\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "expr = Derived()")
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpression() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a['x']");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionUndefinedKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Any",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a[x]");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionRequiredKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionOptionalKey() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Optional[int]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionSameValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("int",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', 42)");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictSubscriptionExpressionDifferentValueTypeAndDefaultArgument() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("Union[int, str]",
+               "from typing import TypedDict\n" +
+               "class A(TypedDict, total=False):\n" +
+               "    x: int\n" +
+               "a: A = {'x': 42}\n" +
+               "expr = a.get('x', '')");
+      }
+    );
+  }
+
+  // PY-36008
+  public void testTypedDictAlternativeSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> {
+        doTest("A",
+               "from typing import TypedDict\n" +
+               "A = TypedDict('A', {'x': int}, total=False)\n" +
+               "expr = A");
+      }
+    );
+  }
+
+  // PY-37678
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doMultiFileTest("Foo",
+                            "import dataclasses as dc\n" +
+                            "\n" +
+                            "@dc.dataclass\n" +
+                            "class Foo:\n" +
+                            "    x: int\n" +
+                            "    y: int\n" +
+                            "\n" +
+                            "foo = Foo(1, 2)\n" +
+                            "expr = dc.replace(foo, x=3)")
+    );
+  }
+
+  // PY-35881
+  public void testResolveToAnotherFileClassWithBuiltinNameField() {
+    doMultiFileTest(
+      "int",
+      "from foo import Foo\n" +
+      "foo = Foo(0)\n" +
+      "expr = foo.id"
+    );
+  }
+
+  // PY-35885
+  public void testFunctionDunderDoc() {
+    doTest("str",
+           "def example():\n" +
+           "    \"\"\"Example Docstring\"\"\"\n" +
+           "    return 0\n" +
+           "expr = example.__doc__");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

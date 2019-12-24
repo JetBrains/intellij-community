@@ -180,8 +180,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           browser.setText("");
         }
         else {
-          FeatureDescriptor feature = (FeatureDescriptor)selection.iterator().next();
-          TipUIUtil.openTipInBrowser(TipUIUtil.getTip(feature.getTipFileName()), browser);
+          TipUIUtil.openTipInBrowser(TipUIUtil.getTip((FeatureDescriptor)selection.iterator().next()), browser);
         }
       }
     });

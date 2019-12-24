@@ -90,7 +90,6 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     }
     try {
       inExecution = true;
-      //noinspection deprecation
       executeWriteAction(editor, dataContext);
     }
     finally {

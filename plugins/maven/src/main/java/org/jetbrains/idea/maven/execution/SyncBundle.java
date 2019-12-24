@@ -2,16 +2,17 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class SyncBundle extends AbstractBundle {
+public class SyncBundle extends DynamicBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
     return ourInstance.getMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "SyncBundle";
+  private static final String PATH_TO_BUNDLE = "messages.MavenSyncBundle";
   private static final AbstractBundle ourInstance = new SyncBundle();
 
   private SyncBundle() {

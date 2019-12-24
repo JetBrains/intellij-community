@@ -51,7 +51,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   protected Icon getIcon(@NotNull T repository) {
     if (repository.getState() != Repository.State.NORMAL) return AllIcons.General.Warning;
-    return null;
+    return AllIcons.Vcs.Branch;
   }
 
   protected abstract boolean isMultiRoot(@NotNull Project project);
@@ -110,7 +110,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   @Override
   public String getSelectedValue() {
-    return StringUtil.isEmpty(myText) ? "" : myPrefix + ": " + myText;
+    return StringUtil.defaultIfEmpty(myText, "");
   }
 
   @Nullable

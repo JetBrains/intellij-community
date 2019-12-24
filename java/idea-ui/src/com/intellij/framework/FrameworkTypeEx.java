@@ -6,6 +6,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * @see #getUnderlyingFrameworkTypeId()
    */
   @Nullable
+  @Contract(pure = true)
   public FrameworkGroup<?> getParentGroup() {
     return null;
   }
@@ -41,13 +43,16 @@ public abstract class FrameworkTypeEx extends FrameworkType implements PossiblyD
    * @see #getParentGroup()
    */
   @Nullable
+  @Contract(pure = true)
   public String getUnderlyingFrameworkTypeId() {
     return null;
   }
 
   @NotNull
+  @Contract(pure = true)
   public abstract FrameworkSupportInModuleProvider createProvider();
 
+  @Contract(pure = true)
   public <V extends FrameworkVersion> List<V> getVersions() {
     return Collections.emptyList();
   }

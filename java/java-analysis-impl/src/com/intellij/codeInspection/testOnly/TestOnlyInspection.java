@@ -3,10 +3,7 @@ package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,11 +22,6 @@ import java.util.List;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.test.only.problems.display.name");
-  }
 
   @Override
   @NotNull
@@ -85,6 +77,24 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
         }
         PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiClass) validate(reference, (PsiClass)resolve, h);
+      }
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof PsiMember) {
+          PsiAnnotation vft = findVisibleForTestingAnnotation((PsiMember)element);
+          if (vft != null && isDirectlyTestOnly((PsiMember)element)) {
+            PsiElement toHighlight = null;
+            if (element instanceof PsiNameIdentifierOwner) {
+              toHighlight = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+            }
+            if (toHighlight == null) {
+              toHighlight = element;
+            }
+            h.registerProblem(toHighlight, "@VisibleForTesting makes little sense on @TestOnly code", new RemoveAnnotationQuickFix(vft, (PsiModifierListOwner)element));
+          }
+        }
+        super.visitElement(element);
       }
     };
   }
@@ -161,8 +171,11 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMember m) {
     if (m == null) return false;
-    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, CHECK_EXTERNAL)
-           || isAnnotatedAsTestOnly(m.getContainingClass());
+    return isDirectlyTestOnly(m) || isAnnotatedAsTestOnly(m.getContainingClass());
+  }
+
+  private static boolean isDirectlyTestOnly(@NotNull PsiMember m) {
+    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, CHECK_EXTERNAL);
   }
 
   private static boolean isInsideTestClass(PsiElement e) {

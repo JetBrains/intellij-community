@@ -1,109 +1,206 @@
 <!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <template>
-  <div v-loading="isLoading" class="aggregatedChart" ref="chartContainer"></div>
+  <el-popover
+    placement="top"
+    trigger="manual"
+    v-model="infoIsVisible">
+    <div>
+      <div>
+        <!-- cell text has 10px padding - so, add link margin to align text  -->
+        <el-link v-if="reportName.length !== 0" style="margin-left: 10px" :href="reportLink" target="_blank" type="text">{{reportName}}</el-link>
+        <small v-else style="margin-left: 10px">use <code>as is</code> granularity to see report</small>
+
+        <el-link type="default"
+                 style="float: right"
+                 :underline="false"
+                 icon="el-icon-close"
+                 @click='infoIsVisible = false'/>
+      </div>
+      <el-table :data="reportTableData" :show-header="false">
+        <el-table-column property="name" class-name="infoMetricName" min-width="180"/>
+        <el-table-column property="value" align="right" class-name="infoMetricValue"/>
+      </el-table>
+    </div>
+    <div slot="reference" v-loading="isLoading" class="aggregatedChart" ref="chartContainer"></div>
+  </el-popover>
 </template>
 
+<style>
+  .el-table .cell {
+    word-break: normal;
+  }
+
+  .infoMetricName {
+    white-space: nowrap;
+  }
+  .infoMetricValue {
+    font-family: monospace;
+  }
+</style>
+
 <script lang="ts">
-  import {Component, Prop, Vue, Watch} from "vue-property-decorator"
+  import {Component, Prop, Watch} from "vue-property-decorator"
   import {LineChartManager} from "@/aggregatedStats/LineChartManager"
   import {ChartSettings} from "@/aggregatedStats/ChartSettings"
-  import {AppState, mainModuleName} from "@/state/StateStorageManager"
-  import {loadJson} from "@/httpUtil"
-  import {AggregatedStatComponent, DataRequest} from "@/aggregatedStats/AggregatedStatComponent"
   import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
-  import PQueue from "p-queue"
+  import {
+    DataQuery,
+    DataQueryDimension,
+    DataRequest,
+    encodeQuery,
+    expandMachineAsFilterValue,
+    MetricDescriptor,
+    Metrics
+  } from "@/aggregatedStats/model"
+  import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
 
   @Component
-  export default class LineChartComponent extends Vue {
-    @Prop(String)
+  export default class LineChartComponent extends BaseStatChartComponent<LineChartManager> {
+    @Prop({type: String, required: true})
     type!: "duration" | "instant"
 
     @Prop(String)
     order!: "date" | "buildNumber"
 
-    @Prop(Object)
-    dataRequest!: DataRequest | null
-
-    private chartManager: LineChartManager | null = null
-
-    // ensure that if several tasks were added, the last one will set the chart data
-    private readonly queue = new PQueue({concurrency: 1})
-
-    private dataRequestCounter = 0
-
-    isLoading: boolean = false
-
-    get chartSettings(): ChartSettings | null {
-      return (this.$store.state[mainModuleName] as AppState).chartSettings
-    }
-
-    created() {
-      Object.seal(this.queue)
-    }
-
-    mounted() {
-      const configurator = this.order == "date" ? new SortedByDate() : new SortedByCategory()
-      this.chartManager = new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", configurator)
-      if (this.dataRequest != null) {
-        this.reloadData(this.dataRequest)
-      }
-    }
-
-    @Watch("chartSettings")
-    chartSettingsChanged(value: ChartSettings): void {
-      this.chartManager!!.scrollbarXPreviewOptionChanged(value)
-    }
-
-    @Watch("dataRequest")
-    dataRequestChanged(request: DataRequest | null): void {
-      console.log(`dataRequestChanged: LineChartComponent(type=${this.type}, order=${this.order})`, request)
-      if (request != null) {
-        this.reloadData(request)
-      }
-    }
-
-    beforeDestroy() {
+    @Watch("chartSettings.showScrollbarXPreview")
+    showScrollbarXPreviewChanged(): void {
       const chartManager = this.chartManager
       if (chartManager != null) {
-        console.log("unset chart manager")
-        this.chartManager = null
-        chartManager.dispose()
+        chartManager.scrollbarXPreviewOptionChanged(this.chartSettings)
       }
     }
 
-    private reloadData(request: DataRequest) {
-      if (this.chartManager == null) {
-        console.log("skip data reloading: chartManager is null", this)
-        return
+    infoIsVisible: boolean = false
+    reportTableData: Array<any> = []
+    reportName: string = ""
+
+    reportLink: string | null = null
+
+    @Watch("chartSettings.granularity")
+    granularityChanged() {
+      this.loadDataAfterDelay()
+    }
+
+    protected reloadData(request: DataRequest) {
+      const dataQuery: DataQuery = {
+        fields: this.metrics,
+        filters: [
+          {field: "product", value: request.product},
+          {field: "project", value: request.project},
+          {field: "machine", value: expandMachineAsFilterValue(request)},
+        ],
       }
 
-      const productAndMachineParams = `product=${encodeURIComponent(request.product)}&machine=${encodeURIComponent(AggregatedStatComponent.expandMachine(request))}`
-      const url = `${request.chartSettings.serverUrl}/api/v1/metrics/` + productAndMachineParams
-      const reportUrlPrefix = `${request.chartSettings.serverUrl}/api/v1/report/` + productAndMachineParams
-
-      const onFinish = () => {
-        this.isLoading = false
+      const chartSettings = this.chartSettings
+      let granularity = chartSettings.granularity
+      if (granularity == null || granularity == null) {
+        granularity = "2 hour"
       }
-      this.isLoading = true
 
-      this.dataRequestCounter++
-      const dataRequestCounter = this.dataRequestCounter
-      this.queue.add(() => {
-        loadJson(`${url}&eventType=${this.type[0]}&order=${this.order[0]}`, null, this.$notify)
-          .then(data => {
-            if (data == null || dataRequestCounter !== this.dataRequestCounter) {
-              return
-            }
+      if (this.order === "buildNumber") {
+        dataQuery.dimensions = [
+          {name: "build_c1"},
+          {name: "build_c2"},
+          {name: "build_c3"},
+        ]
 
-            const chartManager = this.chartManager
-            if (chartManager == null) {
-              return
-            }
+        const fields: Array<string | DataQueryDimension> = [{name: "t", sql: `toUnixTimestamp(anyHeavy(generated_time)) * 1000`}]
+        fields.push(...this.metrics)
+        dataQuery.fields = fields
+        dataQuery.order = dataQuery.dimensions.map(it => it.name)
+      }
+      else {
+        if (granularity !== "as is") {
+          let sql = "toStartOfInterval(generated_time, interval "
+          // hour - backward compatibility
+          if (granularity == null || granularity === "2 hour" || granularity === "hour" as any) {
+            sql += "2 hour"
+          }
+          else if (granularity === "day") {
+            sql += "1 day"
+          }
+          else if (granularity === "week") {
+            sql += "1 week"
+          }
+          else {
+            sql += "1 month"
+          }
+          sql += ")"
 
-            chartManager.setData(data, request.infoResponse, reportUrlPrefix)
+          dataQuery.dimensions = [
+            // seconds to milliseconds
+            {name: "t", sql: `toUnixTimestamp(${sql}) * 1000`}
+          ]
+
+          dataQuery.fields = ["build_c1", "build_c2", "build_c3"].map(it => {
+            return {name: it, sql: `anyHeavy(${it})`}
           })
+          dataQuery.fields = dataQuery.fields.concat(this.metrics)
+        }
+        else {
+          const fields: Array<string | DataQueryDimension> = [{name: "t", sql: `toUnixTimestamp(generated_time) * 1000`}, "build_c1", "build_c2", "build_c3"]
+          fields.push(...this.metrics)
+          dataQuery.fields = fields
+        }
+        dataQuery.order = ["t"]
+      }
+
+      if (granularity !== "as is") {
+        dataQuery.aggregator = "medianTDigest"
+      }
+
+      this.loadData(`${chartSettings.serverUrl}/api/v1/metrics/${encodeQuery(dataQuery)}`, (data: Array<Metrics>, chartManager: LineChartManager) => {
+        chartManager.render(data)
       })
-      .then(onFinish, onFinish)
+    }
+
+    protected createChartManager() {
+      const metricDescriptors: Array<MetricDescriptor> = this.metrics.map(key => {
+        return {
+          key,
+          name: (key.endsWith("_d") || key.endsWith("_i")) ? key.substring(0, key.length - 2) : key,
+          hiddenByDefault: false,
+        }
+      })
+
+      const configurator = this.order === "date" ? new SortedByDate(data => {
+        if (data == null) {
+          this.infoIsVisible = false
+          return
+        }
+
+        const tableData = []
+        for (const metricDescriptor of metricDescriptors) {
+          tableData.push({
+            name: metricDescriptor.name,
+            value: data[metricDescriptor.key],
+          })
+        }
+
+        const request = this.dataRequest!!
+        const reportQuery: DataQuery = {
+          filters: [
+            {field: "product", value: request.product},
+            {field: "machine", value: expandMachineAsFilterValue(request)},
+            {field: "generated_time", value: data.t / 1000},
+          ],
+        }
+
+        if (this.chartSettings.granularity === "as is") {
+          const reportUrl = `/api/v1/report/${encodeQuery(reportQuery)}`
+          this.reportLink = `/#/report?reportUrl=${encodeURIComponent(this.chartSettings.serverUrl)}${reportUrl}`
+          const generatedTime = new Date(data.t)
+          // 18 Oct, 13:01:49
+          this.reportName = `${generatedTime.getDate()} ${generatedTime.toLocaleString("default", {month: "short"})}, ${generatedTime.toLocaleTimeString("default", {hour12: false})}`
+        }
+        else {
+          this.reportName = ""
+        }
+
+        this.reportTableData = tableData
+        this.infoIsVisible = true
+      }) : new SortedByCategory()
+      return new LineChartManager(this.$refs.chartContainer as HTMLElement, this.chartSettings || new ChartSettings(), this.type === "instant", metricDescriptors, configurator)
     }
   }
 </script>

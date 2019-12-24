@@ -59,6 +59,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myPinnable = isPinnable;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -86,7 +87,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setPreferredFocusedComponent(@SuppressWarnings("BoundedWildcard") Computable<? extends JComponent> computable) {
+  public void setPreferredFocusedComponent(Computable<? extends JComponent> computable) {
     myFocusRequest = computable;
   }
 
@@ -302,15 +303,15 @@ public class ContentImpl extends UserDataHolderBase implements Content {
       Disposer.dispose((Disposable)myComponent);
     }
 
-    myComponent = null;
-    myFocusRequest = null;
-    myManager = null;
-
-    clearUserData();
     if (myDisposer != null) {
       Disposer.dispose(myDisposer);
       myDisposer = null;
     }
+
+    myComponent = null;
+    myFocusRequest = null;
+    myManager = null;
+    clearUserData();
   }
 
   @Override

@@ -156,7 +156,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL,
                                                    null, 0, 0);
-    addToPanel(panel, gc);
+    addToPanel(panel, gc, false);
     return panel;
   }
 
@@ -166,7 +166,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   }
 
   @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc) {
+  public void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns) {
     if (constrainsValid()) {
       new LabeledPanelImpl().addToPanel(panel, gc);
     }

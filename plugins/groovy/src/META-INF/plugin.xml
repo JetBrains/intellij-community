@@ -22,6 +22,11 @@
 
   <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
 
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex$MyFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </applicationListeners>
+
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="overloadResolver" interface="org.jetbrains.plugins.groovy.lang.resolve.api.GroovyOverloadResolver"/>
@@ -87,7 +92,7 @@
     <extensionPoint name="gdslScriptProvider" interface="org.jetbrains.plugins.groovy.dsl.GdslScriptProvider"/>
     <extensionPoint name="expectedPackageNameProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.ExpectedPackageNameProvider"/>
     <extensionPoint name="delegatesToProvider" interface="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToProvider"/>
-    <extensionPoint name="expressionFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyExpressionFilter"/>
+    <extensionPoint name="elementFilter" interface="org.jetbrains.plugins.groovy.lang.GroovyElementFilter"/>
     <extensionPoint name="inlayHintFilter" interface="org.jetbrains.plugins.groovy.editor.GroovyInlayHintFilter"/>
   </extensionPoints>
 
@@ -254,8 +259,7 @@
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCollectionToArrayConverter"/>
-
-    <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.typing.GrCollectionConstructorConverter"/>
 
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
@@ -281,6 +285,7 @@
     <mvc.runCommandHandler implementation="org.jetbrains.plugins.groovy.mvc.actions.DefaultMvcRunCommandActionHandler" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtMethodFilter" order="last"/>
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.GrDefaultMethodComparator" order="last"/>
+    <overloadResolver implementation="org.jetbrains.plugins.groovy.lang.resolve.DGMGetAtOverloadResolver" order="last"/>
     <overloadResolver implementation="org.jetbrains.plugins.groovy.lang.resolve.impl.DistanceOverloadResolver" order="last"/>
     <expectedPackageNameProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.DefaultExpectedPackageNameProvider"
                                  order="last"/>
@@ -309,6 +314,7 @@
     <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
                  description="Allows to collect method usages for more precise type inference"/>
 
+    <postStartupActivity implementation="org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer$MyPostStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -460,7 +466,7 @@
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Statement"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Declaration"/>
 
-    <defaultLiveTemplatesProvider implementation="org.jetbrains.plugins.groovy.template.GroovyTemplatesProvider"/>
+    <defaultLiveTemplates file="liveTemplates/Groovy.xml"/>
 
     <liveTemplateOptionalProcessor implementation="org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor"/>
     <variableTypeCalculator implementation="org.jetbrains.plugins.groovy.template.GroovyVariableTypeCalculator"/>
@@ -554,7 +560,6 @@
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.GroovyDebuggerSettings"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
-    <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
     <externalSystem.codeStyleConfigurationImporter implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleImporter"/>
 
@@ -644,8 +649,6 @@
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyTraitFieldSearcher"/>
 
-    <antCustomCompiler implementation="org.jetbrains.plugins.groovy.ant.GroovyAntCustomCompilerProvider"/>
-
     <fileIconProvider implementation="org.jetbrains.plugins.groovy.GroovyFileIconProvider"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory"
@@ -658,7 +661,7 @@
                               implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
+    <resolveScopeEnlarger implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
@@ -1198,9 +1201,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
-    <psi.referenceContributor language="Groovy"
-                              implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
@@ -1368,12 +1368,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcPathMacros</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.mvc.MvcModuleStructureSynchronizer</implementation-class>
-    </component>
-  </project-components>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>

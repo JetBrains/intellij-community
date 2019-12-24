@@ -34,13 +34,6 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "upper.case.field.name.not.constant.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "NonConstantFieldWithUpperCaseName";
   }

@@ -4,11 +4,12 @@ package com.intellij.util.io;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 
 abstract class DirectBufferWrapper extends ByteBufferWrapper {
   private volatile ByteBuffer myBuffer;
 
-  DirectBufferWrapper(File file, long offset, long length) {
+  DirectBufferWrapper(Path file, long offset, long length) {
     super(file, offset, length);
   }
 

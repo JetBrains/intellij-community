@@ -126,7 +126,11 @@ public class ConfigurableExtensionPointUtil {
     if (!withIdeSettings && project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
+
+    Project finalProject = project;
+    return new EpBasedConfigurableGroup(finalProject, () -> {
+      return getConfigurableGroup(getConfigurables(finalProject, withIdeSettings), finalProject);
+    });
   }
 
   /**
@@ -207,7 +211,7 @@ public class ConfigurableExtensionPointUtil {
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
-      bundle = OptionsBundle.getBundle();
+      bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if ("root".equals(groupId)) {
         try {
           String value = bundle.getString("configurable.group.root.settings.display.name");
@@ -400,7 +404,7 @@ public class ConfigurableExtensionPointUtil {
   public static ResourceBundle getBundle(@NotNull String resource,
                                          @Nullable Iterable<? extends Configurable> configurables,
                                          @Nullable ResourceBundle alternative) {
-    ResourceBundle bundle = OptionsBundle.getBundle();
+    ResourceBundle bundle = OptionsBundle.INSTANCE.getResourceBundle();
     if (getString(bundle, resource) != null) {
       return bundle;
     }

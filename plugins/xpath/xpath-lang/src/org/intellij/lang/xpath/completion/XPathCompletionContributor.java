@@ -17,7 +17,7 @@
 package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +33,6 @@ import java.util.Collection;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 public class XPathCompletionContributor extends CompletionContributor {
-  public static final XPathInsertHandler INSERT_HANDLER = new XPathInsertHandler();
 
   public XPathCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(XPathNodeTest.class), new CompletionProvider<CompletionParameters>() {
@@ -123,17 +122,9 @@ public class XPathCompletionContributor extends CompletionContributor {
     };
   }
 
-  private static void addResult(CompletionResultSet result, Collection<Lookup> collection, PsiElement position, int offset) {
-    result = result.withPrefixMatcher(findPrefixStatic(position, offset));
-
-    for (Lookup lookup : collection) {
-      final LookupItem<Lookup> item = new LookupItem<>(lookup, lookup.toString());
-      item.setInsertHandler(INSERT_HANDLER);
-      if (lookup.isKeyword()) {
-        item.setBold();
-      }
-      result.addElement(item);
-    }
+  private static void addResult(CompletionResultSet result, Collection<LookupElement> collection, PsiElement position, int offset) {
+    result.withPrefixMatcher(findPrefixStatic(position, offset)).addAllElements(ContainerUtil.map(collection, e ->
+      PrioritizedLookupElement.withPriority(e, e instanceof VariableLookup ? 2 : 1)));
   }
 
   private static String findPrefixStatic(PsiElement element, int i) {

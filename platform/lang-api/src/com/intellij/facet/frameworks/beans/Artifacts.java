@@ -5,7 +5,9 @@ package com.intellij.facet.frameworks.beans;
 
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class Artifacts {
   @Property(surroundWithTag = false)
   @XCollection

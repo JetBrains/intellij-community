@@ -16,35 +16,18 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.CommonBundle;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
-
-/**
- * @author ilyas
- */
-public class GroovyBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
+public class GroovyBundle extends DynamicBundle {
   public static final String BUNDLE = "org.jetbrains.plugins.groovy.GroovyBundle";
+  private static final GroovyBundle INSTANCE = new GroovyBundle();
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
+  private GroovyBundle() { super(BUNDLE); }
 
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 }

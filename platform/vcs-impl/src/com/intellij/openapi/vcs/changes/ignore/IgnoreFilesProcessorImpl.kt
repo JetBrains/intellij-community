@@ -35,13 +35,12 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
         AsyncVfsEventsPostProcessor.getInstance().addListener(this, parentDisposable)
       }
     }
@@ -151,8 +150,13 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     val storeDir = findStoreDir(project)
 
     val ignoreFileRoot =
-      if (ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
-          && storeDir != null && file.underProjectStoreDir(storeDir)) storeDir
+      if (storeDir != null
+          && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
+          && file.underProjectStoreDir(storeDir)) {
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+          storeDir
+        } else return null
+      }
       else VcsUtil.getVcsRootFor(project, file) ?: return null
 
     return ignoreFileRoot.findChild(ignoredContentProvider.fileName) ?: runWriteAction {
@@ -172,7 +176,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>) =
-    changeListManager.unversionedFiles.filter { isUnder(files, it) }
+    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles.filter { isUnder(files, it) }
 
   override fun rememberForAllProjects() {
     val applicationSettings = VcsApplicationSettings.getInstance()

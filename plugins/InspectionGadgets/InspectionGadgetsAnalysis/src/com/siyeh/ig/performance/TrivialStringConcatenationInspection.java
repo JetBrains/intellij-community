@@ -41,12 +41,6 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("trivial.string.concatenation.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("trivial.string.concatenation.problem.descriptor");
   }

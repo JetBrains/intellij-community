@@ -46,7 +46,7 @@ import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 
 public class SpellCheckerManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
+  private static final Logger LOG = Logger.getInstance(SpellCheckerManager.class);
 
   private static final int MAX_METRICS = 1;
   public static final String PROJECT = "project";

@@ -29,7 +29,6 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
-    <antBuildGen implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactBuildExtension"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>
     <compileServer.plugin classpath="ant-jps-plugin.jar"/>
@@ -81,14 +80,11 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <programRunner implementation="com.intellij.lang.ant.config.execution.AntRunner"/>
 
     <applicationService serviceImplementation="com.intellij.lang.ant.config.impl.GlobalAntConfiguration"/>
-  </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.lang.ant.config.impl.AntToolwindowRegistrar</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </project-components>
+    <compiler.task execute="BEFORE" implementation="com.intellij.lang.ant.config.impl.AntBeforeCompileTask"/>
+    <compiler.task execute="AFTER" implementation="com.intellij.lang.ant.config.impl.AntAfterCompileTask"/>
+    <postStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
+  </extensions>
 
   <actions>
     <group id="AntBuildGroup" class="com.intellij.lang.ant.config.actions.AntBuildGroup">

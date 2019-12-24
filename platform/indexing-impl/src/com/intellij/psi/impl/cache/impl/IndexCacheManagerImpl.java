@@ -18,6 +18,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +57,9 @@ public class IndexCacheManagerImpl implements CacheManager{
 
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
-    collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    FileBasedIndex.getInstance().ignoreDumbMode(() -> {
+      collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
+    }, myProject, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 

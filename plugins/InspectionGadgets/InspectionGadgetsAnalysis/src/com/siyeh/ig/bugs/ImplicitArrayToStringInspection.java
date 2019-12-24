@@ -34,13 +34,6 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "implicit.array.to.string.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     if (((Boolean)infos[1]).booleanValue()) {
       return InspectionGadgetsBundle.message(

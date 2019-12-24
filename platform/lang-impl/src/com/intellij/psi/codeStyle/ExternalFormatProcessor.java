@@ -4,7 +4,10 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +35,7 @@ public interface ExternalFormatProcessor {
    * @return the range after formatting or null, if external format procedure cannot be applied to the source
    */
   @Nullable
-  TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly);
+  TextRange format(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly, boolean keepLineBreaks);
 
   /**
    * Indents the line.
@@ -70,12 +73,7 @@ public interface ExternalFormatProcessor {
 
   @Nullable
   static ExternalFormatProcessor activeExternalFormatProcessor(@NotNull PsiFile source) {
-    for (ExternalFormatProcessor efp : EP_NAME.getExtensionList()) {
-      if (efp.activeForFile(source)) {
-        return efp;
-      }
-    }
-    return null;
+    return EP_NAME.getExtensionList().stream().filter(efp -> efp.activeForFile(source)).findFirst().orElse(null);
   }
 
   /**
@@ -98,9 +96,12 @@ public interface ExternalFormatProcessor {
    * @return the range after formatting or null, if external format procedure was not found or inactive (disabled)
    */
   @Nullable
-  static TextRange formatRangeInFile(@NotNull PsiFile source, @NotNull TextRange range, boolean canChangeWhiteSpacesOnly) {
+  static TextRange formatRangeInFile(@NotNull PsiFile source,
+                                     @NotNull TextRange range,
+                                     boolean canChangeWhiteSpacesOnly,
+                                     boolean keepLineBreaks) {
     ExternalFormatProcessor efp = activeExternalFormatProcessor(source);
-    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly) : null;
+    return efp != null ? efp.format(source, range, canChangeWhiteSpacesOnly, keepLineBreaks) : null;
   }
 
   /**
@@ -112,11 +113,12 @@ public interface ExternalFormatProcessor {
   @NotNull
   static PsiElement formatElement(@NotNull PsiElement elementToFormat,
                                   @NotNull TextRange range,
-                                  boolean canChangeWhiteSpacesOnly) {
+                                  boolean canChangeWhiteSpacesOnly,
+                                  boolean keepLineBreaks) {
     final PsiFile file = elementToFormat.getContainingFile();
     final Document document = file.getViewProvider().getDocument();
     if (document != null) {
-      final TextRange rangeAfterFormat = formatRangeInFile(file, range, canChangeWhiteSpacesOnly);
+      final TextRange rangeAfterFormat = formatRangeInFile(file, range, canChangeWhiteSpacesOnly, keepLineBreaks);
       if (rangeAfterFormat != null) {
         PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
         if (!elementToFormat.isValid()) {

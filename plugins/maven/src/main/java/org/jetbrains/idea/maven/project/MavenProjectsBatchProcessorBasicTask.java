@@ -20,10 +20,13 @@ import java.util.Collection;
 public abstract class MavenProjectsBatchProcessorBasicTask implements MavenProjectsProcessorTask {
   protected final Collection<MavenProject> myMavenProjects;
   protected final MavenProjectsTree myTree;
+  protected final MavenProjectResolver myResolver;
+
 
   public MavenProjectsBatchProcessorBasicTask(Collection<MavenProject> mavenProjects, MavenProjectsTree tree) {
     myMavenProjects = mavenProjects;
     myTree = tree;
+    myResolver = new MavenProjectResolver(myTree);
   }
 
   @Override

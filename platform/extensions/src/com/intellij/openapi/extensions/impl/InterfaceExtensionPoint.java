@@ -6,21 +6,30 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
-  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull ComponentManager componentManager) {
-    super(name, clazz.getName(), componentManager, new UndefinedPluginDescriptor(), false);
+@ApiStatus.Internal
+public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
+  InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
+    super(name, clazz.getName(), pluginDescriptor, false);
 
     myExtensionClass = clazz;
   }
 
-  InterfaceExtensionPoint(@NotNull String name,
-                          @NotNull String className,
-                          @NotNull ComponentManager componentManager,
-                          @NotNull PluginDescriptor pluginDescriptor,
-                          boolean dynamic) {
-    super(name, className, componentManager, pluginDescriptor, dynamic);
+  public InterfaceExtensionPoint(@NotNull String name,
+                                 @NotNull String className,
+                                 @NotNull PluginDescriptor pluginDescriptor,
+                                 boolean dynamic) {
+    super(name, className, pluginDescriptor, dynamic);
+  }
+
+  @NotNull
+  @Override
+  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+    InterfaceExtensionPoint<T> result = new InterfaceExtensionPoint<>(getName(), getClassName(), getDescriptor(), isDynamic());
+    result.setComponentManager(manager);
+    return result;
   }
 
   @Override

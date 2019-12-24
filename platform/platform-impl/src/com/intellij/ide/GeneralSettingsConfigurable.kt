@@ -58,76 +58,68 @@ class GeneralSettingsConfigurable: BoundCompositeConfigurable<SearchableConfigur
     val projectConceptName = IdeUICustomization.getInstance().projectConceptName
 
     return panel {
-      row {
-        titledRow("Startup/Shutdown") {
-          row {
-            checkBox(myChkReopenLastProject)
-          }
-          row {
-            checkBox(myConfirmExit)
-          }
+      titledRow("Startup/Shutdown") {
+        row {
+          checkBox(myChkReopenLastProject)
+        }
+        row {
+          checkBox(myConfirmExit)
+        }
 
-          if (PlatformUtils.isDataGrip()) {
-            row {
-              checkBox(myShowWelcomeScreen)
-            }
+        if (PlatformUtils.isDataGrip()) {
+          row {
+            checkBox(myShowWelcomeScreen)
           }
         }
       }
-      row {
-        titledRow(IdeBundle.message("border.title.project.opening", projectConceptName.capitalize())) {
-          row("Default directory:") {
-            textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
-                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                                        .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) },
-                                      growPolicy = GrowPolicy.MEDIUM_TEXT)
-              .comment("This directory is preselected in \"Open...\" and \"New | Project...\" dialogs.", 80)
+      titledRow(IdeBundle.message("border.title.project.opening", projectConceptName.capitalize())) {
+        row("Default directory:") {
+          textFieldWithBrowseButton(model::getDefaultProjectDirectory, model::setDefaultProjectDirectory,
+                                    fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) },
+                                    growPolicy = GrowPolicy.MEDIUM_TEXT)
+            .comment("This directory is preselected in \"Open...\" and \"New | Project...\" dialogs.", 80)
+        }
+        buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
+          row {
+            radioButton(IdeBundle.message("radio.button.open.project.in.the.new.window", projectConceptName), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
           }
-          buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
-            row {
-              radioButton(IdeBundle.message("radio.button.open.project.in.the.new.window", projectConceptName), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
-            }
-            row {
-              radioButton(IdeBundle.message("radio.button.open.project.in.the.same.window", projectConceptName), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
-            }
-            row {
-              radioButton(IdeBundle.message("radio.button.confirm.window.to.open.project.in", projectConceptName), GeneralSettings.OPEN_PROJECT_ASK)
-            }
+          row {
+            radioButton(IdeBundle.message("radio.button.open.project.in.the.same.window", projectConceptName), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+          }
+          row {
+            radioButton(IdeBundle.message("radio.button.confirm.window.to.open.project.in", projectConceptName), GeneralSettings.OPEN_PROJECT_ASK)
           }
         }
       }
-      row {
-        titledRow("Synchronization") {
-          row {
-            checkBox(myChkSyncOnFrameActivation)
-          }
-          row {
-            checkBox(myChkSaveOnFrameDeactivation)
-          }
-          row {
-            cell(isFullWidth = true) {
-              val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive)
-              intTextField(model::getInactiveTimeout, model::setInactiveTimeout, columns = 4).enableIf(autoSaveCheckbox.selected)
-              label(IdeBundle.message("label.inactive.timeout.sec"))
-            }
-          }
-          row {
-            checkBox(myChkUseSafeWrite)
+      titledRow("Synchronization") {
+        row {
+          checkBox(myChkSyncOnFrameActivation)
+        }
+        row {
+          checkBox(myChkSaveOnFrameDeactivation)
+        }
+        row {
+          cell(isFullWidth = true) {
+            val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive)
+            intTextField(model::getInactiveTimeout, model::setInactiveTimeout, columns = 4).enableIf(autoSaveCheckbox.selected)
+            label(IdeBundle.message("label.inactive.timeout.sec"))
           }
         }
+        row {
+          checkBox(myChkUseSafeWrite)
+        }
       }
-      row {
-        titledRow(IdeBundle.message("group.settings.process.tab.close")) {
-          buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
-            row {
-              radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
-            }
-            row {
-              radioButton(IdeBundle.message("radio.process.close.disaconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
-            }
-            row {
-              radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
-            }
+      titledRow(IdeBundle.message("group.settings.process.tab.close")) {
+        buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
+          row {
+            radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
+          }
+          row {
+            radioButton(IdeBundle.message("radio.process.close.disaconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
+          }
+          row {
+            radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
           }
         }
       }

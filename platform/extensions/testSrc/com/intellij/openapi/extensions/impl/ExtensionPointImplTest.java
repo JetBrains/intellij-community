@@ -24,7 +24,6 @@ import java.util.function.BiConsumer;
 
 import static org.assertj.core.api.Assertions.*;
 
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class ExtensionPointImplTest {
   private Disposable disposable = Disposer.newDisposable();
 
@@ -142,7 +141,7 @@ public class ExtensionPointImplTest {
   public void testIncompatibleAdapter() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
 
-    extensionPoint.addExtensionAdapter(stringAdapter());
+    extensionPoint.addExtensionAdapter(newStringAdapter());
 
     try {
       assertThat(extensionPoint.getExtensionList()).isEmpty();
@@ -195,7 +194,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("first", disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
     extensionPoint.addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw ExtensionNotApplicableException.INSTANCE;
@@ -213,7 +212,7 @@ public class ExtensionPointImplTest {
 
   private void doTestInterruptedAdapterProcessing(@NotNull Runnable firework, @NotNull BiConsumer<ExtensionPointImpl<String>, MyShootingComponentAdapter> test) {
     ExtensionPointImpl<String> extensionPoint = buildExtensionPoint(String.class);
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
 
     extensionPoint.registerExtension("first", disposable);
     assertThat(extensionPoint.getExtensionList()).hasSize(1);
@@ -243,7 +242,7 @@ public class ExtensionPointImplTest {
 
     extensionPoint.registerExtension("second", LoadingOrder.FIRST, disposable);
 
-    MyShootingComponentAdapter adapter = stringAdapter();
+    MyShootingComponentAdapter adapter = newStringAdapter();
     ((ExtensionPointImpl<?>)extensionPoint).addExtensionAdapter(adapter);
     adapter.setFire(() -> {
       throw new ProcessCanceledException();
@@ -268,6 +267,7 @@ public class ExtensionPointImplTest {
       }
     }, true, null);
 
+    //noinspection deprecation
     extensionPoint.registerExtension("first");
     assertThat(extensionPoint.getExtensionList().size()).isEqualTo(1);
     extensionPoint.unregisterExtensions((adapterName, adapter) -> false, false);
@@ -290,10 +290,12 @@ public class ExtensionPointImplTest {
 
   @NotNull
   private static <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    return new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new MyComponentManager());
+    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass, new DefaultPluginDescriptor("test"));
+    point.setComponentManager(new MyComponentManager());
+    return point;
   }
 
-  private static MyShootingComponentAdapter stringAdapter() {
+  private static MyShootingComponentAdapter newStringAdapter() {
     return new MyShootingComponentAdapter(String.class.getName());
   }
 

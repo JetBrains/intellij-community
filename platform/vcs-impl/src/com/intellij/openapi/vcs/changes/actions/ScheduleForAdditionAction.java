@@ -113,7 +113,8 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                            @NotNull ProjectLevelVcsManager vcsManager,
                                            @NotNull ChangeListManager changeListManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
-    return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
+    return vcs != null &&
+           (!vcs.areDirectoriesVersionedItems() && file.isDirectory() && changeListManager.getStatus(file) != FileStatus.IGNORED) ||
            changeListManager.getStatus(file) == FileStatus.UNKNOWN;
   }
 

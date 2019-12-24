@@ -15,15 +15,15 @@ import org.jetbrains.annotations.Nullable;
  * e.g. {@link com.intellij.execution.application.JvmMainMethodRunConfigurationOptions#getShortenClasspath()}.</p>
  */
 public enum ShortenCommandLine {
-  NONE("none", "java [options] classname [args]"),
-  MANIFEST("JAR manifest", "java -cp classpath.jar classname [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"){
+  NONE("none", "java [options] className [args]"),
+  MANIFEST("JAR manifest", "java -cp classpath.jar className [args]"),
+  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile className [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
       return jreRoot == null || !JdkUtil.isModularRuntime(jreRoot);
     }
   },
-  ARGS_FILE("@argFiles (java 9+)", "java @argFile [args]") {
+  ARGS_FILE("@argfile (Java 9+)", "java @argfile className [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
       return jreRoot != null && JdkUtil.isModularRuntime(jreRoot);
@@ -50,7 +50,7 @@ public enum ShortenCommandLine {
     return myPresentableName;
   }
 
-  public static ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
+  public static @NotNull ShortenCommandLine getDefaultMethod(@Nullable Project project, String rootPath) {
     if (!JdkUtil.useDynamicClasspath(project)) return NONE;
     if (rootPath != null && JdkUtil.isModularRuntime(rootPath)) return ARGS_FILE;
     if (JdkUtil.useClasspathJar()) return MANIFEST;

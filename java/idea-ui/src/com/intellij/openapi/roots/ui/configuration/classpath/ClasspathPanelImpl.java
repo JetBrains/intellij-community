@@ -65,7 +65,7 @@ import java.util.*;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl");
+  private static final Logger LOG = Logger.getInstance(ClasspathPanelImpl.class);
   private final JBTable myEntryTable;
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);

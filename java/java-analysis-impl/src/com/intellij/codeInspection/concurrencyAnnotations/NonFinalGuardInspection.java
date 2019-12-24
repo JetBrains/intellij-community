@@ -19,13 +19,6 @@ public class NonFinalGuardInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Non-final @GuardedBy field";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "NonFinalGuard";

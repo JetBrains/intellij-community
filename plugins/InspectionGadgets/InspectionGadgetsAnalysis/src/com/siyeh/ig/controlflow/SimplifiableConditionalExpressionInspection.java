@@ -36,12 +36,6 @@ import org.jetbrains.annotations.NotNull;
 public class SimplifiableConditionalExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("simplifiable.conditional.expression.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

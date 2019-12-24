@@ -9,11 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.CacheUpdateRunner;
-import com.intellij.openapi.project.DumbModeTask;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -30,14 +26,14 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class UnindexedFilesUpdater extends DumbModeTask {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
+public final class UnindexedFilesUpdater extends DumbModeTask {
+  private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
   private final PushedFilePropertiesUpdater myPusher;
 
-  public UnindexedFilesUpdater(final Project project) {
+  public UnindexedFilesUpdater(@NotNull Project project) {
     myProject = project;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -62,7 +58,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     myIndex.clearIndicesIfNecessary();
 
-    CollectingContentIterator finder = myIndex.createContentIterator();
+    CollectingContentIterator finder = myIndex.createContentIterator(myProject);
     snapshot = PerformanceWatcher.takeSnapshot();
 
     myIndex.iterateIndexableFilesConcurrently(finder, myProject, indicator);
@@ -99,9 +95,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     if (!app.isCommandLine()) {
       long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
       MessageBusConnection connection = app.getMessageBus().connect();
-      connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
-        public void afterProjectClosed(@NotNull Project project) {
+        public void projectClosed(@NotNull Project project) {
           if (project == myProject) {
             RefreshQueue.getInstance().cancelSession(sessionId);
             connection.disconnect();

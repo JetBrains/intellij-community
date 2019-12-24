@@ -1,8 +1,10 @@
+import os
 import sys
 
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
+from _pydevd_bundle.pydevd_constants import IS_PY37_OR_GREATER
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 
@@ -82,6 +84,10 @@ def _pydev_stop_at_break(line):
             else:
                 debugger = get_global_debugger()
                 frame.f_trace = debugger.get_thread_local_trace_func()
+
+            # For bytecode patching issue diagnosis. Can make the debugger really slow.
+            if os.environ.get('PYDEVD_TRACE_OPCODES') == 'True' and IS_PY37_OR_GREATER:
+                frame.f_trace_opcodes = True
 
     finally:
         t.additional_info.is_tracing = False

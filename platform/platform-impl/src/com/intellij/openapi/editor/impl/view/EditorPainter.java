@@ -23,6 +23,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -664,6 +665,10 @@ public class EditorPainter implements TextDrawingCallback {
       return Math.max(1, Math.round(scale * unscaledSize));
     }
 
+    private static float roundToPixelCenter(double value, Graphics2D g) {
+      return (float)(PaintUtil.alignToInt(value, g, PaintUtil.RoundingMode.FLOOR) + PaintUtil.devPixel(g) / 2);
+    }
+
     private void paintWhitespace(float x, int y, int start, int end,
                                  LineWhitespacePaintingStrategy whitespacePaintingStrategy,
                                  VisualLineFragmentsIterator.Fragment fragment, BasicStroke stroke, float scale) {
@@ -686,37 +691,54 @@ public class EditorPainter implements TextDrawingCallback {
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
           if (c == ' ') {
-            float size = 2 * scale;
-            myTextDrawingTasks.add((g) -> {
-              // making center point lie exactly between pixels
-              //noinspection IntegerDivisionInFloatingPointContext
-              CachingPainter.paint(g, (startX + endX) / 2 - size / 2, yToUse + 1 - myAscent + myLineHeight / 2 - size / 2, size, size,
+            // making center point lie at the center of device pixel
+            float dotX = roundToPixelCenter((startX + endX) / 2., myGraphics) - scale / 2;
+            float dotY = roundToPixelCenter(yToUse + 1 - myAscent + myLineHeight / 2., myGraphics) - scale / 2;
+            myTextDrawingTasks.add(g -> {
+              CachingPainter.paint(g, dotX, dotY, scale, scale,
                                    _g -> {
                                      _g.setColor(color);
                                      _g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                                     _g.fill(new Ellipse2D.Float(0, 0, size, size));
+                                     _g.fill(new Ellipse2D.Float(0, 0, scale, scale));
                                    }, ourCachedDot, color);
             });
           }
           else if (c == '\t') {
-            int tabLineHeight = calcFeatureSize(4, scale);
-            int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
-            int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
-            myTextDrawingTasks.add((g) -> {
-              g.setColor(color);
-              g.setStroke(stroke);
-              Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-              g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-              g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
-              g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
-              g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
-            });
-            restoreStroke = true;
+            if (Registry.is("editor.old.tab.painting")) {
+              int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
+              int height = myView.getCharHeight();
+              Color tabColor = color == null ? null : ColorUtil.mix(myBackgroundColor, color, 0.7);
+              myTextDrawingTasks.add(g -> {
+                int halfHeight = height / 2;
+                int yMid = yToUse - halfHeight;
+                int yTop = yToUse - height;
+                double strokeWidth = Math.max(scale, PaintUtil.devPixel(g));
+                g.setColor(tabColor);
+                LinePainter2D.paint(g, startX, yMid, tabEndX, yMid, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                LinePainter2D.paint(g, tabEndX, yToUse, tabEndX, yTop, LinePainter2D.StrokeType.INSIDE, strokeWidth);
+                g.fillPolygon(new int[]{tabEndX - halfHeight, tabEndX - halfHeight, tabEndX}, new int[]{yToUse, yTop, yMid}, 3);
+              });
+            }
+            else {
+              int tabLineHeight = calcFeatureSize(4, scale);
+              int tabLineWidth = Math.min(endX - startX, calcFeatureSize(3, scale));
+              int xToUse = Math.min(endX - tabLineWidth, startX + tabLineWidth);
+              myTextDrawingTasks.add(g -> {
+                g.setColor(color);
+                g.setStroke(stroke);
+                Object oldHint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.drawLine(xToUse, yToUse, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.drawLine(xToUse, yToUse - tabLineHeight * 2, xToUse + tabLineWidth, yToUse - tabLineHeight);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldHint);
+              });
+              restoreStroke = true;
+            }
           }
           else if (c == '\u3000') { // ideographic space
             int charHeight = myView.getCharHeight();
             int strokeWidth = Math.round(stroke.getLineWidth());
-            myTextDrawingTasks.add((g) -> {
+            myTextDrawingTasks.add(g -> {
               g.setColor(color);
               g.setStroke(stroke);
               g.drawRect(startX + JBUIScale.scale(2) + strokeWidth / 2, yToUse - charHeight + strokeWidth / 2,
@@ -1150,6 +1172,7 @@ public class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintCaret() {
+      if (myEditor.isPurePaintingMode()) return;
       EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(true);
       if (locations == null) return;
 

@@ -15,7 +15,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -44,7 +43,6 @@ import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 
@@ -61,15 +59,14 @@ import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.UsefulTestCase.*;
+import static com.intellij.testFramework.UsefulTestCase.assertDoesntExist;
+import static com.intellij.testFramework.UsefulTestCase.assertExists;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.lang.CompoundRuntimeException.throwIfNotEmpty;
 import static java.util.Collections.singletonMap;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
@@ -114,13 +111,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return getPluginHomePath("svn4idea");
   }
 
-  @BeforeClass
-  public static void assumeWindowsUnderTeamCity() {
-    if (IS_UNDER_TEAMCITY) {
-      IoTestUtil.assumeWindows();
-    }
-  }
-
   @Before
   public void setUp() throws Exception {
     runInEdtAndWait(() -> {
@@ -151,7 +141,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
       vcs = SvnVcs.getInstance(myProject);
       myGate = new MockChangeListManagerGate(changeListManager);
 
-      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+      ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivitiesRegisteredDynamically();
       refreshSvnMappingsSynchronously();
     });
 

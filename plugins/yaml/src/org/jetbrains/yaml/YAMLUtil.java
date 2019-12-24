@@ -12,7 +12,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
@@ -54,7 +53,6 @@ public class YAMLUtil {
    * }</pre>
    * Flattened {@code needKey} is {@code top.next.list[0].needKey}
    */
-  @ApiStatus.Experimental
   @NotNull
   public static String getConfigFullName(@NotNull YAMLPsiElement target) {
     final StringBuilder builder = new StringBuilder();

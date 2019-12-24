@@ -8,8 +8,12 @@
   <vendor>JetBrains</vendor>
 
   <extensionPoints>
-    <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
-    <extensionPoint name="alphaUnsortedInspectionSuppressor" interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"/>
+    <extensionPoint name="implicitPropertyUsageProvider"
+                    interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"
+                    dynamic="true"/>
+    <extensionPoint name="alphaUnsortedInspectionSuppressor"
+                    interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -108,7 +112,6 @@
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesLanguageCodeStyleSettingsProvider"/>
 
     <internalFileTemplate name="XML Properties File.xml"/>
@@ -124,9 +127,10 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
-
-    <postStartupActivity implementation="com.intellij.lang.properties.Native2AsciiListenerStartupActivity"/>
   </extensions>
+  <projectListeners>
+    <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
+  </projectListeners>
 
   <actions>
     <action id="DissociateResourceBundleAction" text="Dissociate Resource Bundle" class="com.intellij.lang.properties.customizeActions.DissociateResourceBundleAction">

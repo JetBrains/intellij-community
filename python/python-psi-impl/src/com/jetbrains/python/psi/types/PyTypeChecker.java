@@ -222,8 +222,9 @@ public class PyTypeChecker {
       if (expected.equals(actual) || substitution.equals(expected)) {
         return true;
       }
-      if (context.recursive) {
-        Optional<Boolean> recursiveMatch = match(substitution, actual, context.notRecursive());
+      if (context.typeVarsInMatching.add(expected)) {
+        Optional<Boolean> recursiveMatch = match(substitution, actual, context);
+        context.typeVarsInMatching.remove(expected);
         if (recursiveMatch.isPresent()) {
           return recursiveMatch.get();
         }
@@ -424,7 +425,7 @@ public class PyTypeChecker {
       }
     }
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     return StreamEx
       .of(expected.getAttributeNames())
       .noneMatch(attribute -> ContainerUtil.isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
@@ -644,7 +645,7 @@ public class PyTypeChecker {
         collectGenerics(elementType, context, collected, visited);
       }
     }
-    else if (type instanceof PyCallableType) {
+    else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       final PyCallableType callable = (PyCallableType)type;
       final List<PyCallableParameter> parameters = callable.getParameters(context);
       if (parameters != null) {
@@ -715,7 +716,7 @@ public class PyTypeChecker {
 
         return new PyTupleType(tupleClass, newElementTypes, tupleType.isHomogeneous());
       }
-      else if (type instanceof PyCallableType) {
+      else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
         final PyCallableType callable = (PyCallableType)type;
         List<PyCallableParameter> substParams = null;
         final List<PyCallableParameter> parameters = callable.getParameters(context);
@@ -955,7 +956,7 @@ public class PyTypeChecker {
 
   @Nullable
   private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
     return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;
   }
@@ -1017,29 +1018,25 @@ public class PyTypeChecker {
     @NotNull
     private final Map<PyGenericType, PyType> substitutions; // mutable
 
-    private final boolean recursive;
+    @NotNull
+    private final Set<PyGenericType> typeVarsInMatching; // mutable
 
     @NotNull
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
     MatchContext(@NotNull TypeEvalContext context,
                  @NotNull Map<PyGenericType, PyType> substitutions) {
-      this(context, substitutions, true, new HashSet<>());
+      this(context, substitutions, new HashSet<>(), new HashSet<>());
     }
 
     private MatchContext(@NotNull TypeEvalContext context,
                          @NotNull Map<PyGenericType, PyType> substitutions,
-                         boolean recursive,
+                         @NotNull Set<PyGenericType> typeVarsInMatching,
                          @NotNull Set<Pair<PyType, PyType>> matching) {
       this.context = context;
       this.substitutions = substitutions;
-      this.recursive = recursive;
+      this.typeVarsInMatching = typeVarsInMatching;
       this.matching = matching;
-    }
-
-    @NotNull
-    public MatchContext notRecursive() {
-      return new MatchContext(context, substitutions, false, matching);
     }
   }
 }

@@ -46,7 +46,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
-    this.appendable = System.err;
+    this.appendable = System.out;
     queue = new ArrayDeque<String>();
     currentSteps = new ArrayDeque<Step>();
     outCommand(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime());
@@ -154,7 +154,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
       scenarioPassed = false;
       String message = "Undefined step: " + getName(currentStep);
       String details = "";
-      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "error = 'true'");
+      outCommand(TEMPLATE_TEST_FAILED, true, getCurrentTime(), details, message, stepFullName, "");
     }
     else if (result.equals(Result.SKIPPED)) {
       skippedStepCount++;
@@ -167,7 +167,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
     final String currentTime = getCurrentTime();
     final Long duration = result.getDuration();
-    double durationInSeconds = 1.0 * (duration == null ? 0 : duration.longValue()) / MILLION;
+    long durationInSeconds = (duration == null ? 0 : duration.longValue()) / MILLION;
     outCommand(TEMPLATE_TEST_FINISHED, true, currentTime, String.valueOf(durationInSeconds), stepFullName);
   }
 
@@ -322,7 +322,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   }
 
   private static String getName(Step step) {
-    return step.getKeyword() + " " + step.getName();
+    return step.getKeyword() + step.getName();
   }
 
   private static String getName(Feature feature) {

@@ -38,7 +38,7 @@ abstract class AbstractEditor extends JPanel implements Disposable {
 
   abstract boolean apply();
 
-  boolean cancel() {
+  boolean cancel(AWTEvent source) {
     return true;
   }
 

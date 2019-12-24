@@ -23,6 +23,9 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
   private ShortenCommandLine myShortenCommandLine = null;
 
+  private boolean myUseModulePath = true;
+  private static final String USE_CLASS_PATH_ONLY = "useClassPathOnly";
+
   public JavaTestConfigurationBase(String name,
                                    @NotNull JavaRunConfigurationModule configurationModule,
                                    @NotNull ConfigurationFactory factory) {
@@ -69,11 +72,23 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+    myUseModulePath = element.getChild(USE_CLASS_PATH_ONLY) == null;
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
+    if (!myUseModulePath) {
+      element.addContent(new Element(USE_CLASS_PATH_ONLY));
+    }
+  }
+
+  public boolean isUseModulePath() {
+    return myUseModulePath;
+  }
+
+  public void setUseModulePath(boolean useModulePath) {
+    myUseModulePath = useModulePath;
   }
 }

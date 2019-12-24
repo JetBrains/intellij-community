@@ -22,12 +22,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Segment;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,25 +49,16 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(PsiClass targetClass) {
-    assert ApplicationManager.getApplication().isWriteAccessAllowed();
-    final Project project = targetClass.getProject();
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+    PsiNewExpression newExpression = getNewExpression();
+    if (newExpression == null) {
+      return;
+    }
 
-    TransactionGuard.getInstance().submitTransactionLater(project, () -> {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      final PsiNewExpression newExpression = getNewExpression();
-      if (newExpression == null) {
-        return;
-      }
-
-      final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-      final PsiClass[] psiClass = new PsiClass[1];
-      CommandProcessor.getInstance().executeCommand(newExpression.getProject(), () ->
-        psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null), getText(), getText());
-
-      WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> setupClassFromNewExpression(psiClass[0], newExpression));
-    });
+    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
+    PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
+    WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
   }
 
   protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
@@ -102,19 +92,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
       if (editor == null) return;
-      final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
-          try {
-            editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-          }
-          finally {
-            textRange.dispose();
-          }
-        });
-        startTemplate(editor, template, project, null, getText());
-      });
+      Segment textRange = aClass.getTextRange();
+      editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+      startTemplate(editor, template, project, null, getText());
     }
     else {
       positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));

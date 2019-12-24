@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class SurroundWithIfFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
+  private static final Logger LOG = Logger.getInstance(SurroundWithIfFix.class);
   private final String myText;
   private final String mySuffix;
 
@@ -60,7 +60,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       final PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)anchorStatement.getParent());
       anchorStatement = body.getStatements()[0];
     }
-    Editor editor = PsiUtilBase.findEditor(anchorStatement);
+    Editor editor = PsiEditorUtil.findEditor(anchorStatement);
     if (editor == null) return;
     PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);

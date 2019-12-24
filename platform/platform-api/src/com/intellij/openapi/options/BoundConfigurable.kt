@@ -11,7 +11,8 @@ import javax.swing.JComponent
  * @author yole
  */
 abstract class BoundConfigurable(private val displayName: String, private val helpTopic: String? = null) : Configurable {
-  private var disposable: Disposable? = null
+  var disposable: Disposable? = null
+    private set
 
   private val panel = object : ClearableLazyValue<DialogPanel>() {
     override fun compute(): DialogPanel {

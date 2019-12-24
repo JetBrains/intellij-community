@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
+import com.intellij.util.ui.TouchScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -202,7 +203,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return {@code true} if the specified event is handled and consumed, {@code false} otherwise
    */
   public boolean handleMouseWheelEvent(MouseWheelEvent event) {
-    if (MouseWheelEvent.WHEEL_UNIT_SCROLL != event.getScrollType()) return false;
+    if (!isSupportedScrollType(event)) return false;
     if (event.isShiftDown() == (orientation == VERTICAL)) return false;
     if (!ScrollSettings.isEligibleFor(this)) return false;
 
@@ -233,6 +234,10 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     }
     event.consume();
     return true;
+  }
+
+  private static boolean isSupportedScrollType(MouseWheelEvent e) {
+    return e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL || TouchScrollUtil.isUpdate(e);
   }
 
   private JViewport getViewport() {
@@ -284,6 +289,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @return a scrolling delta for this scrollbar
    */
   private double getPreciseDelta(MouseWheelEvent event) {
+    if (TouchScrollUtil.isTouchScroll(event)) {
+      return TouchScrollUtil.getDelta(event);
+    }
     double rotation = event.getPreciseWheelRotation();
     if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible

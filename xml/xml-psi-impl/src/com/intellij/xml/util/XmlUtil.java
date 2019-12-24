@@ -131,7 +131,7 @@ public class XmlUtil {
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final String XHTML4_SCHEMA_LOCATION;
   public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = ThreadLocal.withInitial(() -> Boolean.FALSE);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
+  private static final Logger LOG = Logger.getInstance(XmlUtil.class);
   @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
   @NonNls private static final String FILE = "file:";
@@ -232,6 +232,10 @@ public class XmlUtil {
     }
 
     return null;
+  }
+
+  public static boolean isXmlToken(PsiElement element, IElementType tokenType) {
+    return element instanceof XmlToken && ((XmlToken)element).getTokenType() == tokenType;
   }
 
   @Nullable
@@ -347,7 +351,7 @@ public class XmlUtil {
       if (type instanceof ComplexTypeDescriptor) {
         final XmlTag[] simpleContent = new XmlTag[1];
 
-        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor() {
+        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor<PsiElement>() {
           @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlTag) {
@@ -762,7 +766,7 @@ public class XmlUtil {
 
     if (type == null) {
       String ns = xmlTag.getNamespace();
-      if (ourSchemaUrisList.indexOf(ns) >= 0) {
+      if (ourSchemaUrisList.contains(ns)) {
         type = xmlTag.getAttributeValue("type", null);
       }
     }
@@ -1003,7 +1007,7 @@ public class XmlUtil {
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      processXmlElements((XmlFile)currentElement, new PsiElementProcessor() {
+      processXmlElements((XmlFile)currentElement, new PsiElementProcessor<PsiElement>() {
         @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof PsiNamedElement) {
@@ -1036,7 +1040,7 @@ public class XmlUtil {
 
   public static boolean isUrlText(final String s, Project project) {
     final boolean surelyUrl = HtmlUtil.hasHtmlPrefix(s) || s.startsWith(URN);
-    if (surelyUrl) return surelyUrl;
+    if (surelyUrl) return true;
     int protocolIndex = s.indexOf(":/");
     if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
     return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;

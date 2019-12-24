@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2019 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,122 +14,189 @@
  * limitations under the License.
  */
 
-buildscript {
-  repositories {
-    maven { url "https://cache-redirector.jetbrains.com/plugins.gradle.org" }
-  }
-  dependencies {
-    classpath "de.undercouch:gradle-download-task:3.4.2"
-  }
-}
-apply plugin: "de.undercouch.download"
+import org.gradle.util.GFileUtils
 
-import de.undercouch.gradle.tasks.download.Download
-
-def currentOs = org.gradle.internal.os.OperatingSystem.current()
-
-task downloadGradleDistribution(type: Download) {
-  src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-4.10.1-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.10.1-bin.zip"
-  onlyIf { !dest.exists() }
-}
-
-ext.saveVersion = { Download task ->
-  def filename = task.dest.name.substring(0, task.dest.name.lastIndexOf('.'))
-  new File(task.dest.parentFile, filename).text = task.src.toString()
-}
-
-ext.cleanUp = { Copy task ->
-  task.destinationDir.deleteDir()
-}
-
-ext.isStale = { Download task ->
-  def filename = task.dest.name.substring(0, task.dest.name.lastIndexOf('.'))
-  def file = new File(task.dest.parentFile, filename)
-  return !file.exists() || file.text != task.src.toString()
-}
-
-task downloadGradleDistribution2(type: Download) {
-  src "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-2.4-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.4-bin.zip"
-  onlyIf { !dest.exists() }
-}
-
-task downloadOfflineRepo(type: Download) {
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-offline-repo/3.3.2/android-sdk-offline-repo.zip"
-  dest "$buildDir/android-sdk/offline_repo_repo.zip"
-  onlyIf {
-    isStale(it) || !dest.exists() && isEmpty(setupOfflineRepo.destinationDir)
-  }
-  doLast {
-    saveVersion(it)
-    cleanUp(setupOfflineRepo)
-  }
-}
-
-task downloadKotlinPlugin(type: Download) {
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk-kotlin-plugin/1.3.21-release-IJ2019.1/android-sdk-kotlin-plugin.zip"
-  dest "$buildDir/android-sdk/kotlin-plugin.zip"
-  onlyIf {
-    isStale(it) || !dest.exists() && isEmpty(setupKotlinPluginForAndroid.destinationDir)
-  }
-  doLast {
-    saveVersion(it)
-    cleanUp(setupKotlinPluginForAndroid)
-  }
-}
-
-task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
-  from zipTree(downloadKotlinPlugin.outputs.files.singleFile)
-  into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
-  onlyIf {
-    isStale(downloadKotlinPlugin) || isEmpty(destinationDir)
-  }
-}
-
-task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
-  from zipTree(downloadOfflineRepo.outputs.files.singleFile)
-  into "$buildDir/android-sdk/prebuilts/tools/common/m2/repository"
-  onlyIf {
-    isStale(downloadOfflineRepo) || isEmpty(destinationDir)
-  }
-}
-
-task downloadAndroidSdk(type: Download) {
-  def osFamily = currentOs.familyName
-  src "https://cache-redirector.jetbrains.com/intellij-third-party-dependencies/android-sdk/${osFamily}.3.3.3/android-sdk.tar.gz"
-  dest "$buildDir/android-sdk/${osFamily}.tar.gz"
-  onlyIf {
-    isStale(it) || !dest.exists() && isEmpty(untarAndroidSdk.destinationDir) && !currentOs.isMacOsX()
-  }
-  doLast {
-    saveVersion(it)
-    cleanUp(untarAndroidSdk)
-  }
-}
-
-task untarAndroidSdk(dependsOn: downloadAndroidSdk, type: Copy) {
-  from tarTree(downloadAndroidSdk.outputs.files.singleFile)
-  into "$buildDir/android-sdk/prebuilts/studio/sdk"
-  onlyIf {
-    isStale(downloadAndroidSdk) || !currentOs.isMacOsX() && isEmpty(destinationDir)
-  }
-  outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")
-  doLast {
-    file("$buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
-  }
-}
-
-task setupAndroidSdk(dependsOn: [untarAndroidSdk, downloadGradleDistribution,
-                                 downloadGradleDistribution2, setupOfflineRepo,
-                                 setupKotlinPluginForAndroid]) {
-  doLast {
-    [downloadAndroidSdk, downloadOfflineRepo, downloadKotlinPlugin].each {
-      it.outputs.files.singleFile.delete()
+repositories {
+  maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
+  maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
+  maven { url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/' }
+  ivy {
+    // TODO: re-publish android-sdk:android-sdk using maven layout and remove Ivy repository
+    url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/'
+    patternLayout {
+      artifact "[module]/[revision]/[artifact].[ext]"
     }
   }
 }
 
-static def isEmpty(File dir) {
-  dir.list() == null || dir.list().length == 0
+configurations {
+  androidOfflineRepo
+  androidSdk
+  kotlinDeps
+}
+
+def currentOs = org.gradle.internal.os.OperatingSystem.current()
+def osFamily = currentOs.familyName
+
+// infer kotlin_version from kotlin-plugin (e.g. "1.3.60-eap-143" in "1.3.60-eap-143-IJ2019.3-1:EAP")
+def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
+if (kotlinVersionLen == -1) {
+  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+}
+
+ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
+ext.android_m2_version = "26.5.0.1"
+ext.android_sdk_version = "${osFamily}.3.3.5"
+
+dependencies {
+  androidOfflineRepo "org.jetbrains.intellij.deps.android.tools:android-sdk-offline-repo:${android_m2_version}@zip"
+  androidSdk "android-sdk:android-sdk:${android_sdk_version}:@tar.gz"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
+  kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
+}
+
+/* First we setup an offline-repo. This will remove all the alien files from .../android-sdk.
+   Later we will create an overlay with Android SDK and KotlinPlugin artifacts */
+task syncOfflineRepo(dependsOn: configurations.androidOfflineRepo, type: VersionedLazyCopyTask) {
+  versionStr android_m2_version
+  from { zipTree(configurations.androidOfflineRepo.singleFile) }
+  into "${project.buildDir}/android-sdk"
+}
+
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncOfflineRepo], type: Sync) {
+  from "$buildDir/kotlin"
+  into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
+}
+
+task syncAndroidSdk(dependsOn: [configurations.androidSdk, syncOfflineRepo], type: VersionedLazyCopyTask) {
+  versionStr android_sdk_version
+  from { tarTree(resources.gzip(configurations.androidSdk.singleFile)) }
+  into "$buildDir/android-sdk/prebuilts/studio/sdk"
+}
+
+task updateKotlinLibs(dependsOn: [configurations.kotlinDeps, syncOfflineRepo], type: OfflineMavenRepository) {
+  def verFile = "${project.buildDir}/android-sdk/prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/${kotlin_version}"
+  onlyIf {
+    !(file(verFile).isFile())
+  }
+  configurationName = "kotlinDeps"
+  repoDir = file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository")
+  doLast {
+    file(verFile).write(kotlin_version)
+  }
+}
+
+task setupAndroidSdk(dependsOn: [syncOfflineRepo, syncKotlinPluginForAndroid, syncAndroidSdk, updateKotlinLibs]) {
+  // This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
+}
+
+class VersionedLazyCopyTask extends DefaultTask {
+  /*
+     Default Copy task implementation is not as lazy as we need: dependencies from androidOfflineRepo and androidSdk configurations will be
+     downloaded even if no executable task will use them later.
+     See discussions here: https://discuss.gradle.org/t/lazy-configuration-resolution-with-artifact-repack/12747/5
+     and here: https://discuss.gradle.org/t/lazy-dependency-resolution-completely-conditional-configuration-dependency/5032
+   */
+  private Closure from;
+  private File into;
+
+  File getInto() {
+    return into
+  }
+
+  void setInto(File into) {
+    this.into = into
+  }
+
+  void setInto(String into) {
+    setInto(new File(into))
+  }
+
+  Closure getFrom() {
+    return from
+  }
+
+  void setFrom(Closure from) {
+    this.from = from
+  }
+
+  void setVersionStr(String versionStr) {
+    def versionFile = { return new File(into, "${versionStr}.version") }
+    onlyIf {
+      !(versionFile.call().exists())
+    }
+
+    doFirst {
+      into.deleteDir()
+    }
+
+    doLast {
+      println ">> copying files into ${into}. Please be patient."
+      getProject().copy {
+        from this.from
+        into this.into
+      }
+      versionFile.call().write(versionStr)
+    }
+  }
+}
+
+class OfflineMavenRepository extends DefaultTask {
+  @Input
+  String configurationName = 'compile'
+
+  File repoDir
+
+  @TaskAction
+  void build() {
+    Configuration configuration = project.configurations.getByName(configurationName)
+    copyJars(configuration)
+    copyPoms(configuration)
+  }
+
+  private void copyJars(Configuration configuration) {
+    configuration.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+      def moduleVersionId = artifact.moduleVersion.id
+      File moduleDir = new File(repoDir, "${moduleVersionId.group.replace('.', '/')}/${moduleVersionId.name}/${moduleVersionId.version}")
+      GFileUtils.mkdirs(moduleDir)
+
+      File target = new File(moduleDir, artifact.file.name)
+      println "Copy: $artifact.file -> $target"
+      GFileUtils.copyFile(artifact.file, target)
+    }
+  }
+
+  private void copyPoms(Configuration configuration) {
+    def componentIds = configuration.incoming.resolutionResult.allDependencies.collect { it.selected.id }
+
+    def result = project.dependencies.createArtifactResolutionQuery()
+      .forComponents(componentIds)
+      .withArtifacts(MavenModule, MavenPomArtifact)
+      .execute()
+
+    for (component in result.resolvedComponents) {
+      def componentId = component.id
+
+      if (componentId instanceof ModuleComponentIdentifier) {
+        File moduleDir = new File(repoDir, "${componentId.group.replace('.', '/')}/${componentId.module}/${componentId.version}")
+        GFileUtils.mkdirs(moduleDir)
+        File pomFile = component.getArtifacts(MavenPomArtifact)[0].file
+        GFileUtils.copyFile(pomFile, new File(moduleDir, pomFile.name))
+      }
+    }
+  }
 }

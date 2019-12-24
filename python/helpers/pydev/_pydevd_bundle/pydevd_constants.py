@@ -2,6 +2,8 @@
 This module holds the constants used for specifying the states of the debugger.
 '''
 from __future__ import nested_scopes
+import platform
+import sys  # Note: the sys import must be here anyways (others depend on it)
 
 STATE_RUN = 1
 STATE_SUSPEND = 2
@@ -20,8 +22,9 @@ class DebugInfoHolder:
     DEBUG_TRACE_BREAKPOINTS = -1
 
 
+IS_CPYTHON = platform.python_implementation() == 'CPython'
+
 # Hold a reference to the original _getframe (because psyco will change that as soon as it's imported)
-import sys  # Note: the sys import must be here anyways (others depend on it)
 IS_IRONPYTHON = sys.platform == 'cli'
 try:
     get_frame = sys._getframe
@@ -71,6 +74,9 @@ elif IS_IRONPYTHON:
     import System
     IS_WINDOWS = "windows" in System.Environment.OSVersion.VersionString.lower()
 
+IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
+
+IS_LINUX = sys.platform in ('linux', 'linux2')
 IS_MACOS = sys.platform == 'darwin'
 
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
@@ -100,7 +106,9 @@ else:
 IS_PY3K = False
 IS_PY34_OR_GREATER = False
 IS_PY36_OR_GREATER = False
+IS_PY37_OR_GREATER = False
 IS_PY36_OR_LESSER = False
+IS_PY38_OR_GREATER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -110,7 +118,9 @@ try:
         IS_PY2 = False
         IS_PY34_OR_GREATER = sys.version_info >= (3, 4)
         IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
+        IS_PY37_OR_GREATER = sys.version_info >= (3, 7)
         IS_PY36_OR_LESSER = sys.version_info[:2] <= (3, 6)
+        IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:

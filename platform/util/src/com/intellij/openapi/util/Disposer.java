@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +19,7 @@ import java.util.Map;
  *
  * @see Disposable
  */
-public class Disposer {
+public final class Disposer {
   private static final ObjectTree ourTree = new ObjectTree();
 
   public static boolean isDebugDisposerOn() {
@@ -67,6 +54,13 @@ public class Disposer {
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
 
+  /**
+   * Registers {@code child} so it is disposed right before its {@code parent}. See {@link Disposer class JavaDoc} for more details.
+   *
+   * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
+   *                                                       if {@code parent} is being disposed ({@link #isDisposing(Disposable)}) or
+   *                                                       already disposed ({@link #isDisposed(Disposable)}.
+   */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) {
     ourTree.register(parent, child);
   }
@@ -112,8 +106,14 @@ public class Disposer {
     dispose(disposable, true);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void disposeChildren(@NotNull Disposable disposable) {
+    ourTree.executeAll(disposable, false, /* onlyChildren */ true);
+  }
+
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, processUnregistered);
+    ourTree.executeAll(disposable, processUnregistered, /* onlyChildren */ false);
   }
 
   @NotNull
@@ -157,5 +157,9 @@ public class Disposer {
 
   public static Throwable getDisposalTrace(@NotNull Disposable disposable) {
     return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
+  }
+
+  public static void clearDisposalTraces() {
+    ourTree.clearDisposedObjectTraces();
   }
 }

@@ -10,21 +10,21 @@ import org.jetbrains.annotations.NotNull;
 
 @State(name = "VcsDirectoryMappings", storages = @Storage("vcs.xml"))
 public class VcsDirectoryMappingStorage implements PersistentStateComponent<Element> {
-  private final ProjectLevelVcsManagerImpl myVcsManager;
+  @NotNull private final Project myProject;
 
   public VcsDirectoryMappingStorage(@NotNull Project project) {
-    myVcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
+    myProject = project;
   }
 
   @Override
   public Element getState() {
     final Element e = new Element("state");
-    myVcsManager.writeDirectoryMappings(e);
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).writeDirectoryMappings(e);
     return e;
   }
 
   @Override
   public void loadState(@NotNull Element state) {
-    myVcsManager.readDirectoryMappings(state);
+    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).readDirectoryMappings(state);
   }
 }

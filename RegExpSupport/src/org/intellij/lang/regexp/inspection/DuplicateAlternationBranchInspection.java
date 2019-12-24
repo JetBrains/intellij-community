@@ -24,13 +24,6 @@ import java.util.Set;
  */
 public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Duplicate branch in alternation";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

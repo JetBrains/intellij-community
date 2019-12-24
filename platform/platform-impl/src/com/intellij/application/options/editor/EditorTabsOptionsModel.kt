@@ -13,6 +13,7 @@ internal val ui = UISettings.instance.state
 internal val showDirectoryForNonUniqueFilenames  = CheckboxDescriptor(message("checkbox.show.directory.for.non.unique.files"), ui::showDirectoryForNonUniqueFilenames)
 internal val markModifiedTabsWithAsterisk        = CheckboxDescriptor(message("checkbox.mark.modified.tabs.with.asterisk"), ui::markModifiedTabsWithAsterisk)
 internal val showTabsTooltips                    = CheckboxDescriptor(message("checkbox.show.tabs.tooltips"), ui::showTabsTooltips)
+internal val showFileIcon                        = CheckboxDescriptor(message("checkbox.show.file.icon.in.editor.tabs"), ui::showFileIconInTabs)
 internal val showFileExtension                   = CheckboxDescriptor(message("checkbox.show.file.extension.in.editor.tabs"), PropertyBinding({ !ui.hideKnownExtensionInTabs }, { ui.hideKnownExtensionInTabs = !it }))
 internal val hideTabsIfNeeded                    = CheckboxDescriptor(message("checkbox.editor.scroll.if.need"), ui::hideTabsIfNeeded)
 internal val sortTabsAlphabetically              = CheckboxDescriptor(message("checkbox.sort.tabs.alphabetically"), ui::sortTabsAlphabetically)

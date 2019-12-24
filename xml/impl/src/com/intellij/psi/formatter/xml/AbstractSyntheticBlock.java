@@ -54,7 +54,7 @@ public abstract class AbstractSyntheticBlock implements Block {
 
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractSyntheticBlock");
+  private static final Logger LOG = Logger.getInstance(AbstractSyntheticBlock.class);
 
   public boolean shouldKeepWhiteSpacesInside() {
     return myTag != null && myXmlFormattingPolicy.keepWhiteSpacesInsideTag(myTag);

@@ -7,7 +7,6 @@
   <xi:include href="/componentSets/Editor.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/componentSets/Lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/componentSets/ProjectView.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <applicationListeners>
     <listener class="com.intellij.util.gist.GistManagerImpl$MyBulkFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
@@ -20,10 +19,15 @@
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.EventLog$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
+
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener" topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+
+    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.ide.bookmarks.BookmarkManager$BookmarkManagerPsiDocumentManagerListener" topic="com.intellij.psi.PsiDocumentListener" activeInTestMode="false"/>
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$PsiListener" topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
     <listener class="com.intellij.execution.lineMarker.RunLineMarkerProvider$RunnableStatusListener" topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyFileEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
 </idea-plugin>

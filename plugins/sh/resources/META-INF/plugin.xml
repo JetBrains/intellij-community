@@ -42,7 +42,9 @@ Adds support for working with shell script files
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
-    <defaultLiveTemplatesProvider implementation="com.intellij.sh.template.ShTemplateProvider"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
+    <defaultLiveTemplates file="liveTemplates/ShellScriptHidden.xml" hidden="true"/>
     <liveTemplateContext implementation="com.intellij.sh.template.ShContextType"/>
     <lineIndentProvider implementation="com.intellij.sh.formatter.ShLineIndentProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
@@ -56,6 +58,8 @@ Adds support for working with shell script files
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
     <localInspection language="Shell Script" groupName="Shell Script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
+
+    <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.spellchecker.ShSpellcheckingStrategy"/>
 
     <fileTypeDetector implementation="com.intellij.sh.ShFileTypeDetector" order="first"/>
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>

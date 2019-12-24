@@ -48,7 +48,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDontWalkLongInferenceChain() throws Exception {
-    //RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     Map<Integer, PsiClass> classes = [:]
     myFixture.addFileToProject "Foo0.groovy", """class Foo0 {
       def foo() { return 0 }

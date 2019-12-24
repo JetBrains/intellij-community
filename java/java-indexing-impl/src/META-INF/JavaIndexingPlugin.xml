@@ -20,20 +20,21 @@
     <extensionPoint qualifiedName="com.intellij.classesWithAnnotatedMembersSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint qualifiedName="com.intellij.methodReferencesSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.classInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.functionalExpressionSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint qualifiedName="com.intellij.implicitToStringSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint qualifiedName="com.intellij.customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
+    <extensionPoint qualifiedName="com.intellij.customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
 
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex"/>
+    <fileBasedIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.JavaSimplePropertyIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaFunctionalExpressionIndex"/>
@@ -78,6 +79,7 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
+    <referencesSearch implementation="com.intellij.psi.impl.search.JavaRecordComponentSearcher"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.java.JavaBinaryPlusExpressionIndex"/>
   </extensions>
 </idea-plugin>

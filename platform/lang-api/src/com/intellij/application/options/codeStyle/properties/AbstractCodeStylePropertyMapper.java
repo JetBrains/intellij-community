@@ -47,7 +47,7 @@ public abstract class AbstractCodeStylePropertyMapper {
       String fieldName = field.getName();
       if (supportedFields == null || supportedFields.contains(fieldName)) {
         final CodeStylePropertyAccessor<?> accessor = getAccessor(codeStyleObject, field);
-        if (accessor != null) {
+        if (accessor != null && !accessor.isIgnorable()) {
           accessorMap.put(accessor.getPropertyName(), accessor);
         }
       }

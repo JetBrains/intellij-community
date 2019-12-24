@@ -8,11 +8,11 @@ import java.util.Collection;
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public class GithubReviewersCollectionRequest {
   @NotNull private final Collection<String> reviewers;
-  @NotNull private final Collection<String> team_reviewers;
+  @NotNull private final Collection<String> teamReviewers;
 
   public GithubReviewersCollectionRequest(@NotNull Collection<String> reviewers,
-                                          @NotNull Collection<String> team_reviewers) {
+                                          @NotNull Collection<String> teamReviewers) {
     this.reviewers = reviewers;
-    this.team_reviewers = team_reviewers;
+    this.teamReviewers = teamReviewers;
   }
 }

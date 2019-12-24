@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -659,6 +660,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testStackOverflow2() throws Exception {
+    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
     final String url = "urn:aaa";
     final String location = getTestName(false) + ".xsd";
     ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, getTestRootDisposable());
@@ -1863,6 +1865,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testXsiType() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
     final String testName = getTestName(false);
 
     doTest(
@@ -1904,6 +1907,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testAnyAttribute() {
     configureByFiles(null, BASE_PATH + "anyAttribute.xml", BASE_PATH + "services-1.0.xsd");
+    doDoTest(true, false);
+  }
+
+  public void testAnyAttributeDefaultNamespace() {
+    configureByFiles(null, BASE_PATH + "UnityEngine.xml", BASE_PATH + "UnityEngine.UIElements.xsd");
     doDoTest(true, false);
   }
 
@@ -2087,6 +2095,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRedefine() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(getTestRootDisposable());
     doTest(
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),

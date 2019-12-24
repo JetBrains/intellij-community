@@ -13,6 +13,9 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
                                                addExceptionHandler: Boolean) : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
   private val f: CompletableFuture<T>
+  private companion object {
+    val CANCELED = CancellationException()
+  }
 
   constructor() : this(CompletableFuture(), AtomicBoolean(), addExceptionHandler = false)
 
@@ -33,11 +36,11 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun isDone() = f.isDone
+  override fun isDone(): Boolean = f.isDone
 
-  override fun get() = nullizeCancelled { f.get() }
+  override fun get(): T? = nullizeCancelled { f.get() }
 
-  override fun get(timeout: Long, unit: TimeUnit) = nullizeCancelled { f.get(timeout, unit) }
+  override fun get(timeout: Long, unit: TimeUnit): T? = nullizeCancelled { f.get(timeout, unit) }
 
   // because of the contract: get() should return null for canceled promise
   private inline fun nullizeCancelled(value: () -> T?): T? {
@@ -53,12 +56,10 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun isCancelled() = f.isCancelled
+  override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
-    return !isCancelled && f.cancel(mayInterruptIfRunning)
-  }
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED)
 
   override fun cancel() {
     cancel(true)
@@ -72,7 +73,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }
   }
 
-  override fun onSuccess(handler: Consumer<in T>): Promise<T> {
+  override fun onSuccess(handler: Consumer<in T>): AsyncPromise<T> {
     return AsyncPromise(f.whenComplete { value, error ->
       if (error != null) {
         throw error
@@ -84,7 +85,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }, hasErrorHandler, addExceptionHandler = true)
   }
 
-  override fun onError(rejected: Consumer<in Throwable>): Promise<T> {
+  override fun onError(rejected: Consumer<in Throwable>): AsyncPromise<T> {
     hasErrorHandler.set(true)
     return AsyncPromise(f.whenComplete { _, exception ->
       if (exception != null) {
@@ -95,8 +96,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     }, hasErrorHandler, addExceptionHandler = false)
   }
 
-  override fun onProcessed(processed: Consumer<in T>): Promise<T> {
-    hasErrorHandler.set(true)
+  override fun onProcessed(processed: Consumer<in T?>): AsyncPromise<T> {
     return AsyncPromise(f.whenComplete { value, _ ->
       if (!InternalPromiseUtil.isHandlerObsolete(processed)) {
         processed.accept(value)
@@ -158,7 +158,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
     return true
   }
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

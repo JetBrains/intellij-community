@@ -8,7 +8,13 @@ import com.intellij.projectImport.ProjectOpenedCallback
 class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFrame: Boolean = false,
                                                 @JvmField val projectToClose: Project? = null,
                                                 @JvmField var useDefaultProjectAsTemplate: Boolean = true,
-                                                @JvmField var isNewProject: Boolean = false) {
+                                                @JvmField var isNewProject: Boolean = false,
+                                                /**
+                                                 * Prepared project to open. If you just need to open newly created and prepared project (e.g. used by a new project action).
+                                                 */
+                                                val project: Project? = null) {
+ constructor(project: Project) : this(false, project = project)
+
   @JvmField
   var frame: FrameInfo? = null
 
@@ -31,12 +37,13 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
   @JvmField
   var callback: ProjectOpenedCallback? = null
 
-  var dummyProjectName: String? = null
+  @JvmField
+  var line: Int = -1
 
-  /**
-   * Prepared project to open. If you just need to open newly created and prepared project (e.g. used by a new project action).
-   */
-  var project: Project? = null
+  @JvmField
+  var column: Int = -1
+
+  var dummyProjectName: String? = null
 
   fun copy(): OpenProjectTask {
     val copy = OpenProjectTask(forceOpenInNewFrame, projectToClose)
@@ -50,6 +57,8 @@ class OpenProjectTask @JvmOverloads constructor(@JvmField val forceOpenInNewFram
     copy.callback = callback
     copy.isRefreshVfsNeeded = isRefreshVfsNeeded
     copy.dummyProjectName = dummyProjectName
+    copy.line = line
+    copy.column = column
     return copy
   }
 }

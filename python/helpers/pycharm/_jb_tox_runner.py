@@ -155,4 +155,4 @@ for env, tmp_config in config.envconfigs.items():
 
 session = Session(config)
 teamcity.testMatrixEntered(durationStrategy=durationStrategy)
-session.runcommand()
+sys.exit(session.runcommand())

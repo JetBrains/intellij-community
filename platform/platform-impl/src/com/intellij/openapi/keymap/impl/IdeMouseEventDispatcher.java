@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
@@ -130,7 +131,8 @@ public final class IdeMouseEventDispatcher {
       if (focusManager instanceof FocusManagerImpl) {
         Component at = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
         if (at != null && at.isFocusable()) {
-          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((IdeFrame)c, at);
+          //noinspection CastConflictsWithInstanceof
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((Window)c, at);
         }
       }
     }
@@ -428,7 +430,7 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static void requestFocusInNonFocusedWindow(@Nullable Component component) {
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window != null && !UIUtil.isFocusAncestor(window)) {
       Component focusable = UIUtil.isFocusable(component) ? component : findDefaultFocusableComponent(component);
       if (focusable != null) focusable.requestFocus();

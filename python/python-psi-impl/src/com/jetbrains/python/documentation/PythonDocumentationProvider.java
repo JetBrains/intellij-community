@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.intellij.lang.documentation.AbstractDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +43,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Provides quick docs for classes, methods, and functions.
  * Generates documentation stub
  */
-public class PythonDocumentationProvider extends AbstractDocumentationProvider {
+public class PythonDocumentationProvider implements DocumentationProvider {
   public static final String DOCUMENTATION_CONFIGURABLE_ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
@@ -442,7 +442,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
       if (expression instanceof PyReferenceExpression) {
         final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
         if (!referenceExpression.isQualified()) {
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
           for (ResolveResult result : referenceExpression.getReference(resolveContext).multiResolve(false)) {
             final PsiElement element = result.getElement();
@@ -534,7 +534,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     if (contextElement != null) {
       final IElementType elementType = contextElement.getNode().getElementType();
       if (PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementType)) {
@@ -559,7 +560,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider {
         if (docstringOwner != null) return docstringOwner;
       }
     }
-    return super.getCustomDocumentationElement(editor, file, contextElement);
+    return null;
   }
 
   private static void appendWithTags(@NotNull StringBuilder result, @NotNull String escapedContent, @NotNull String... tags) {

@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -107,7 +108,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
             DECLINE_EXIT_CODE -> {
               myFutures.remove(file)?.cancel(true)
-              PluginManagerCore.disablePlugin("org.jetbrains.java.decompiler")
+              PluginManagerCore.disablePlugin(PluginId.getId("org.jetbrains.java.decompiler"))
               ApplicationManagerEx.getApplicationEx().restart(true)
             }
 

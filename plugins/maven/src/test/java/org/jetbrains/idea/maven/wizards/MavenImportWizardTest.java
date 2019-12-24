@@ -10,6 +10,8 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import java.io.File;
 import java.io.IOException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -37,7 +39,7 @@ public class MavenImportWizardTest extends ProjectWizardTestCase {
   public void testImportProject() throws Exception {
     File pom = createPom();
     Module module = importProjectFrom(pom.getPath(), null, new MavenProjectImportProvider());
-    assertEquals("project", module.getName());
+    assertThat(module.getName()).isEqualTo("project");
   }
 
   private File createPom() throws IOException {

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlPrologImpl");
+  private static final Logger LOG = Logger.getInstance(XmlPrologImpl.class);
 
   public XmlPrologImpl() {
     super(XML_PROLOG);

@@ -192,7 +192,7 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
     final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);
       }
 
@@ -357,12 +357,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CLASS_LAYOUT_GROUP_NAME;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.field.can.be.local.display.name");
   }
 
   @Override

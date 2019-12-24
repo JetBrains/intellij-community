@@ -285,7 +285,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     disposeAllLogs(deployment.getName());
   }
 
-  private void disposeAllLogs(@NotNull String deploymentName) {
+  public void disposeAllLogs(@NotNull String deploymentName) {
     myPerProjectLogManagers.values().forEach(nextForProject -> nextForProject.disposeManager(deploymentName));
   }
 

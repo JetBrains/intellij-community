@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +41,11 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
     return new RenameFix();
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
     return "LocalVariableHidesMemberVariable";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("local.variable.hides.member.variable.display.name");
   }
 
   @Override
@@ -82,9 +78,6 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      if (m_ignoreStaticMethods && isContainedInStaticMethod(variable)) {
-        return;
-      }
       final PsiClass aClass = checkFieldNames(variable);
       if (aClass == null) {
         return;
@@ -97,9 +90,6 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
       super.visitParameter(variable);
       final PsiElement declarationScope = variable.getDeclarationScope();
       if (!(declarationScope instanceof PsiCatchSection) && !(declarationScope instanceof PsiForeachStatement)) {
-        return;
-      }
-      if (m_ignoreStaticMethods && isContainedInStaticMethod(variable)) {
         return;
       }
       final PsiClass aClass = checkFieldNames(variable);
@@ -117,32 +107,18 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
         return null;
       }
       while (aClass != null) {
-        final PsiField[] fields = aClass.getAllFields();
-        for (PsiField field : fields) {
-          final String fieldName = field.getName();
-          if (!variableName.equals(fieldName)) {
-            continue;
-          }
+        final PsiField field = aClass.findFieldByName(variableName, true);
+        if (field != null) {
           if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
-            return aClass;
-          }
-        }
-        if (m_ignoreStaticMethods) {
-          if (aClass.hasModifierProperty(PsiModifier.STATIC) || isContainedInStaticMethod(aClass)) {
-            return null;
+            if (!m_ignoreStaticMethods || field.hasModifierProperty(PsiModifier.STATIC) ||
+                !RefactoringUtil.isInStaticContext(variable, aClass)) {
+              return aClass;
+            }
           }
         }
         aClass = ClassUtils.getContainingClass(aClass);
       }
       return null;
-    }
-
-    private boolean isContainedInStaticMethod(PsiElement element) {
-      final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class, PsiClass.class);
-      if (member instanceof PsiClass) {
-        return false;
-      }
-      return member != null && member.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 }

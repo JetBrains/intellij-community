@@ -585,39 +585,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     if (e.get() != null) throw e.get();
   }
 
-  public void testSuspendWriteActionDelaysForeignReadActions() throws Throwable {
-    Semaphore mayStartForeignRead = new Semaphore();
-    mayStartForeignRead.down();
-
-    List<Future<?>> futures = new ArrayList<>();
-
-    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    List<String> log = Collections.synchronizedList(new ArrayList<>());
-    futures.add(app.executeOnPooledThread(() -> {
-      assertTrue(mayStartForeignRead.waitFor(1000));
-      ReadAction.run(() -> log.add("foreign read"));
-    }));
-
-    safeWrite(() -> {
-      log.add("write started");
-      app.executeSuspendingWriteAction(getProject(), "", () -> {
-        app.invokeAndWait(() ->
-          futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
-
-        mayStartForeignRead.up();
-        TimeoutUtil.sleep(50);
-
-        ReadAction.run(() -> log.add("progress read"));
-        app.invokeAndWait(() -> WriteAction.run(() -> log.add("nested write")));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
-      });
-      log.add("write finished");
-    });
-
-    futures.forEach(ApplicationImplTest::waitForFuture);
-    assertOrderedEquals(log, "write started", "progress read", "nested write", "forked read", "write finished", "foreign read", "foreign read");
-  }
-
   private static void waitForFuture(Future<?> future) {
     try {
       future.get(10_000, TimeUnit.MILLISECONDS);
@@ -643,70 +610,6 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     assertFalse(app.hasWriteAction(runnable.getClass()));
     safeWrite(runnable);
-  }
-
-  public void testPooledThreadsThatHappenInSuspendedWriteActionStayInSuspendedWriteAction() throws Throwable {
-    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
-
-    Ref<Future<?>> future = Ref.create();
-    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    safeWrite(() -> {
-      try {
-        Semaphore started = new Semaphore();
-        started.down();
-        app.executeSuspendingWriteAction(getProject(), "", () -> {
-          future.set(app.executeOnPooledThread(() -> {
-            started.up();
-            TimeoutUtil.sleep(1000);
-          }));
-          assertTrue(started.waitFor(1000));
-        });
-        fail("should not allow pooled thread to stay there");
-      }
-      catch (AssertionError e) {
-        assertTrue(ExceptionUtil.getThrowableText(e), isEscapingThreadAssertion(e));
-      }
-    });
-    waitForFuture(future.get());
-  }
-
-  public void testPooledThreadsStartedAfterQuickSuspendedWriteActionDontGetReadPrivileges() throws Throwable {
-    for (int i = 0; i < 1000; i++) {
-      safeWrite(this::checkPooledThreadsDontGetWrongPrivileges);
-    }
-  }
-
-  private void checkPooledThreadsDontGetWrongPrivileges() {
-    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    Ref<Future<?>> future = Ref.create();
-
-    Disposable disableStderrDumping = Disposer.newDisposable();
-    LoggedErrorProcessor.getInstance().disableStderrDumping(disableStderrDumping);
-
-    Semaphore mayFinish = new Semaphore();
-    mayFinish.down();
-    try {
-      app.executeSuspendingWriteAction(getProject(), "", () ->
-        future.set(app.executeOnPooledThread(
-          () -> assertTrue(mayFinish.waitFor(5_000)))));
-    }
-    catch (AssertionError e) {
-      if (!isEscapingThreadAssertion(e)) {
-        e.printStackTrace();
-        throw e;
-      }
-    }
-    finally {
-      Disposer.dispose(disableStderrDumping);
-    }
-
-    app.executeSuspendingWriteAction(getProject(), "", () -> {});
-    mayFinish.up();
-    waitForFuture(future.get());
-  }
-
-  private static boolean isEscapingThreadAssertion(AssertionError e) {
-    return e.getMessage().contains("should have been terminated");
   }
 
   public void testReadActionInImpatientModeShouldThrowWhenThereIsAPendingWrite() throws Throwable {

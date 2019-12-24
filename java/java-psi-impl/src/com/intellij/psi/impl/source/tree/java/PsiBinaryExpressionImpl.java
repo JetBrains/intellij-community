@@ -30,7 +30,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiBinaryExpressionImpl.class);
 
   public PsiBinaryExpressionImpl() {
     this(JavaElementType.BINARY_EXPRESSION);

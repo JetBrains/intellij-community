@@ -1,4 +1,5 @@
 audio tensorflow_core._api.v2.audio
+autodiff tensorflow_core._api.v2.autodiff
 autograph tensorflow_core._api.v2.autograph
 bitwise tensorflow_core._api.v2.bitwise
 compat tensorflow_core._api.v2.compat
@@ -22,6 +23,8 @@ lookup tensorflow_core._api.v2.lookup
 losses tensorflow_core.python.keras.api._v2.keras.losses
 math tensorflow_core._api.v2.math
 metrics tensorflow_core.python.keras.api._v2.keras.metrics
+mixed_precision tensorflow_core._api.v2.mixed_precision
+mlir tensorflow_core._api.v2.mlir
 nest tensorflow_core._api.v2.nest
 nn tensorflow_core._api.v2.nn
 optimizers tensorflow_core.python.keras.api._v2.keras.optimizers

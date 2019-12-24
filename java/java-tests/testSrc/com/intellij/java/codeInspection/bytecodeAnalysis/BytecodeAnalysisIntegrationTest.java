@@ -8,11 +8,9 @@ import com.intellij.codeInsight.InferredContractAnnotationsLineMarkerProvider;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
-import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.java.testutil.MavenDependencyUtil;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -35,12 +33,12 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.IdeaDecompiler;
 
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,7 +72,10 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       Sdk sdk = model.getSdk();
       if (sdk != null) {
         // first, remove bundled JDK Annotations because they are too thorough - can't infer them automatically yet
-        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> modificator.removeRoots(AnnotationOrderRootType.getInstance()));
+        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
+          modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
+          modificator.removeRoots(AnnotationOrderRootType.getInstance());
+        });
 
         sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
         model.setSdk(sdk);
@@ -134,30 +135,27 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
 
-    MessageDigest digest = BytecodeAnalysisConverter.getMessageDigest();
     List<String> diffs = new ArrayList<>();
     JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         for (PsiClass aClass : classes) {
           for (PsiMethod method : aClass.getMethods()) {
-            checkMethodAnnotations(method, digest, diffs);
+            checkMethodAnnotations(method, diffs);
           }
           for (PsiField field : aClass.getFields()) {
-            checkFieldAnnotations(field, digest, diffs);
+            checkFieldAnnotations(field, diffs);
           }
         }
       }
     };
     rootPackage.accept(visitor);
-    if (!diffs.isEmpty()) {
-      System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
-    }
+    System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
     assertEmpty(diffs);
   }
 
-  private void checkMethodAnnotations(PsiMethod method, MessageDigest digest, List<? super String> diffs) {
-    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(method, digest) == null) return;
+  private void checkMethodAnnotations(PsiMethod method, List<? super String> diffs) {
+    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(method) == null) return;
     String methodKey = PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE);
     if (INFERRED_TEST_METHOD.equals(methodKey)) return;
 
@@ -197,8 +195,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
-  private void checkFieldAnnotations(PsiField field, MessageDigest digest, List<? super String> diffs) {
-    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(field, digest) == null) return;
+  private void checkFieldAnnotations(PsiField field, List<? super String> diffs) {
+    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(field) == null) return;
     String fieldKey = PsiFormatUtil.getExternalName(field, false, Integer.MAX_VALUE);
 
     String externalNotNullMethodAnnotation = findExternalAnnotation(field, AnnotationUtil.NOT_NULL) == null ? "-" : "@NotNull";

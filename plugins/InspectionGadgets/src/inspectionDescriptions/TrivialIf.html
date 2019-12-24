@@ -4,19 +4,28 @@ Reports <b>if</b> statements which can be simplified to a single assignment,
 <b>return</b> or <b>assert</b> statement.
 <p>
 For example:
-<code><pre>
+<pre><code>
     <b>if</b> (foo()) {
        <b>return true</b>;
     } <b>else</b> {
        <b>return false</b>;
     }
-</pre></code>
+</code></pre>
 can be simplified to
-<code><pre>
+<pre><code>
     <b>return</b> foo();
-</pre></code>
+</code></pre>
 <!-- tooltip end -->
+<p>Use the option below to not display a warning in case of chained if statement. E.g.:
+</p>
+<pre><code>
+    if (condition1) return true;
+    if (condition2) return false;
+    return true;
+</code></pre>
 <p>
+  The fix action will still be available in this case.
+</p>
 
 </body>
 </html>

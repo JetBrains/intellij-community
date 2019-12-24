@@ -24,7 +24,6 @@ import java.util.Set;
 /**
  * Interface for performing VCS checkin / commit / submit operations.
  *
- * @author lesya
  * @see com.intellij.openapi.vcs.AbstractVcs#getCheckinEnvironment()
  */
 public interface CheckinEnvironment extends VcsProviderMarker {
@@ -35,6 +34,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return createAdditionalOptionsPanel(commitPanel, commitContext.getAdditionalDataConsumer());
   }
 
+  /**
+   * @deprecated use {@link #createCommitOptions(CheckinProjectPanel, CommitContext)}
+   */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @Nullable
@@ -42,7 +44,7 @@ public interface CheckinEnvironment extends VcsProviderMarker {
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
     // for compatibility with external plugins
     if (additionalDataConsumer instanceof PseudoMap) {
-      return createCommitOptions(panel, ((PseudoMap)additionalDataConsumer).getCommitContext());
+      return createCommitOptions(panel, ((PseudoMap<?, ?>)additionalDataConsumer).getCommitContext());
     }
     return null;
   }
@@ -72,6 +74,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
 
+  /**
+   * @deprecated use {@link #commit(List, String, CommitContext, Set)}
+   */
   @SuppressWarnings("unused")
   @Deprecated
   @Nullable

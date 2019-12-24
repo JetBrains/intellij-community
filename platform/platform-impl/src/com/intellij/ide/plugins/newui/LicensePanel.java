@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Date;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -120,12 +123,9 @@ public class LicensePanel extends NonOpaquePanel {
     }
   }
 
-  @Override
-  public void setVisible(boolean aFlag) {
-    super.setVisible(aFlag);
-    if (!aFlag) {
-      hideElements();
-    }
+  public void hideWithChildren() {
+    hideElements();
+    setVisible(false);
   }
 
   private void hideElements() {
@@ -133,5 +133,18 @@ public class LicensePanel extends NonOpaquePanel {
     myMessage.setVisible(false);
     myLink.setVisible(false);
     myPanel.setVisible(false);
+  }
+
+  public void showBuyPlugin(@NotNull Supplier<IdeaPluginDescriptor> getPlugin) {
+    IdeaPluginDescriptor plugin = getPlugin.get();
+
+    setLink("buy the plugin", () ->
+      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
+
+    PluginPriceService.getPrice(plugin, price -> updateLink("buy the plugin from " + price, false), price -> {
+      if (plugin == getPlugin.get()) {
+        updateLink("buy the plugin from " + price, true);
+      }
+    });
   }
 }

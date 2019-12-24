@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class BaseSpellChecker implements SpellCheckerEngine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
+  private static final Logger LOG = Logger.getInstance(BaseSpellChecker.class);
 
   private static final SpellcheckerCorrectionsFilter CORRECTIONS_FILTER = SpellcheckerCorrectionsFilter.getInstance();
   private final Transformation transform = new Transformation();

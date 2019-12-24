@@ -43,13 +43,6 @@ public class PackageVisibleInnerClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "package.visible.inner.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "package.visible.inner.class.problem.descriptor");

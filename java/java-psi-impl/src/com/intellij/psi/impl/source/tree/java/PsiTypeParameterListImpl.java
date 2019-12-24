@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *  @author dsl
  */
 public class PsiTypeParameterListImpl extends JavaStubPsiElement<PsiTypeParameterListStub> implements PsiTypeParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl");
+  private static final Logger LOG = Logger.getInstance(PsiTypeParameterListImpl.class);
 
   public PsiTypeParameterListImpl(final PsiTypeParameterListStub stub) {
     super(stub, JavaStubElementTypes.TYPE_PARAMETER_LIST);

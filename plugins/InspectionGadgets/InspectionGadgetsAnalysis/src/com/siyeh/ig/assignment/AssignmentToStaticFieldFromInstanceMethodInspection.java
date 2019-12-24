@@ -28,13 +28,6 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assignment.to.static.field.from.instance.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "assignment.to.static.field.from.instance.method.problem.descriptor");

@@ -2,6 +2,7 @@
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
@@ -26,6 +27,20 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert module != null
     assert module.name == "M"
     assert module.modifierList != null
+  }
+
+  void testInstanceOf() {
+    def file = configureFile("class A { void foo(A a) { a instanceof B x; } }")
+    def expression = (file.classes[0].methods[0].body.statements[0] as PsiExpressionStatement).expression as PsiInstanceOfExpression
+    def pattern = expression.pattern
+    assert pattern instanceof PsiTypeTestPattern
+    def typeTestPattern = pattern as PsiTypeTestPattern
+    assert typeTestPattern.name == "x"
+    assert typeTestPattern.checkType.text == "B"
+    WriteCommandAction.runWriteCommandAction(project, {
+      typeTestPattern.setName("bar")
+      assert expression.text == "a instanceof B bar"
+    })
   }
 
   void testPackageAccessDirectiveTargetInsertion() {
@@ -136,7 +151,22 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert immediate instanceof PsiImmediateClassType
     assert ref instanceof PsiClassReferenceType
 
-    IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass()) // shouldn't throw
+    IdempotenceChecker.checkEquivalence((PsiType)immediate, (PsiType)ref, getClass(), null) // shouldn't throw
+
+    DefaultLogger.disableStderrDumping(testRootDisposable)
+    assertThrows(Throwable, "Non-idempotent") {
+      IdempotenceChecker.checkEquivalence((PsiType)immediate, PsiType.VOID, getClass(), null)
+    }
+  }
+
+  void "test record components"() {
+    def clazz = configureFile("record A(String s, int x)").classes[0]
+    def recordHeader = clazz.recordHeader
+    assert recordHeader != null
+    def components = recordHeader.recordComponents
+    assert components[0].name == "s"
+    assert components[1].name == "x"
+    assert clazz.recordComponents == components
   }
 
   private PsiJavaFile configureFile(String text) {

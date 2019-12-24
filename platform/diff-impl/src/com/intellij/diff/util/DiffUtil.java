@@ -52,11 +52,13 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
@@ -81,10 +83,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
@@ -276,19 +275,21 @@ public class DiffUtil {
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
-    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(foldingLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
-    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
+    editor.getGutter().setLineNumberConverter(contentLineConvertor == null ? LineNumberConverter.DEFAULT
+                                                                           : new LineNumberConverterAdapter(contentLineConvertor));
   }
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
                                           @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
     TIntFunction contentLineConvertor = getContentLineConvertor(content);
     TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+    TIntFunction merged = mergeLineConverters(contentLineConvertor, foldingLineConvertor);
+    editor.getGutter().setLineNumberConverter(merged == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(merged));
   }
 
   @Nullable
@@ -741,7 +742,7 @@ public class DiffUtil {
 
   public static boolean isFocusedComponentInWindow(@Nullable Component component) {
     if (component == null) return false;
-    Window window = UIUtil.getWindow(component);
+    Window window = ComponentUtil.getWindow(component);
     if (window == null) return false;
     Component windowFocusOwner = window.getMostRecentFocusOwner();
     return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
@@ -890,6 +891,7 @@ public class DiffUtil {
   public static boolean compareStreams(@NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream1,
                                        @NotNull ThrowableComputable<? extends InputStream, ? extends IOException> stream2)
     throws IOException {
+    int i = 0;
     try (InputStream s1 = stream1.compute()) {
       try (InputStream s2 = stream2.compute()) {
         if (s1 == null && s2 == null) return true;
@@ -900,6 +902,8 @@ public class DiffUtil {
           int b2 = s2.read();
           if (b1 != b2) return false;
           if (b1 == -1) return true;
+
+          if (i++ % 10000 == 0) ProgressManager.checkCanceled();
         }
       }
     }

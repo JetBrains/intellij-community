@@ -22,7 +22,7 @@ import java.util.*;
  * @author max
  */
 public class EventDispatcher<T extends EventListener> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.EventDispatcher");
+  private static final Logger LOG = Logger.getInstance(EventDispatcher.class);
 
   private T myMulticaster;
 

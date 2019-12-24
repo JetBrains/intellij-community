@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ExpectedTypeUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
+  private static final Logger LOG = Logger.getInstance(ExpectedTypeUtil.class);
 
   @NotNull
   public static ExpectedTypeInfo[] intersect(List<ExpectedTypeInfo[]> typeInfos) {

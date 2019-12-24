@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
 
   public PsiMethodCallExpressionImpl() {
     super(JavaElementType.METHOD_CALL_EXPRESSION);
@@ -148,20 +148,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiFile file = call.getContainingFile();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
 
-      final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-      final PsiExpressionList parentArgList;
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        parentArgList = callParent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)callParent)
-                        ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class, true, PsiReferenceExpression.class);
-      }
-      else {
-        parentArgList = null;
-      }
-      final boolean genericParentOverloadResolution = parentArgList != null && 
-                                                      MethodCandidateInfo.isOverloadCheck(parentArgList) &&
-                                                      Arrays.stream(parentArgList.getExpressions())
-                                                        .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-                                                        .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
+      final boolean genericParentOverloadResolution = doWePerformGenericMethodOverloadResolutionNow(call, languageLevel);
 
       PsiType theOnly = null;
       for (int i = 0; i < results.length; i++) {
@@ -217,6 +204,23 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       }
       return TypeConversionUtil.erasure(ret);
     }
+  }
+
+  public static boolean doWePerformGenericMethodOverloadResolutionNow(PsiCall call, LanguageLevel languageLevel) {
+    final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+    final PsiExpressionList parentArgList;
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      parentArgList = callParent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)callParent)
+                      ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class, true, PsiReferenceExpression.class);
+    }
+    else {
+      parentArgList = null;
+    }
+    return parentArgList != null &&
+           MethodCandidateInfo.isOverloadCheck(parentArgList) &&
+           Arrays.stream(parentArgList.getExpressions())
+             .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
+             .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
   }
 
   private static PsiType captureReturnType(PsiMethodCallExpression call,

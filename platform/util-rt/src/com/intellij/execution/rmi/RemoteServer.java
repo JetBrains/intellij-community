@@ -111,6 +111,7 @@ public class RemoteServer {
     // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
 
+    if (RMISocketFactory.getSocketFactory() != null) return;
     // bind to localhost only
     try {
       RMISocketFactory.setSocketFactory(new RMISocketFactory() {

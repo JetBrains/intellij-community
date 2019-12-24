@@ -53,7 +53,7 @@ public class GitPreservingProcess {
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                               @NotNull String operationTitle,
                               @NotNull String destinationName,
-                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
+                              @NotNull GitVcsSettings.SaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
     myProject = project;
@@ -103,7 +103,7 @@ public class GitPreservingProcess {
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
   @NotNull
-  private GitChangesSaver configureSaver(@NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
+  private GitChangesSaver configureSaver(@NotNull GitVcsSettings.SaveChangesPolicy saveMethod) {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @NotNull
@@ -160,5 +160,21 @@ public class GitPreservingProcess {
     else {
       LOG.info("The changes were already loaded");
     }
+  }
+
+  /**
+   * @deprecated Use {@link #GitPreservingProcess(Project, Git, Collection, String, String, GitVcsSettings.SaveChangesPolicy,
+   * ProgressIndicator, Runnable)}
+   */
+  @Deprecated
+  public GitPreservingProcess(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
+                              @NotNull String operationTitle,
+                              @NotNull String destinationName,
+                              @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
+                              @NotNull ProgressIndicator indicator,
+                              @NotNull Runnable operation) {
+    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod.convert(), indicator, operation);
   }
 }

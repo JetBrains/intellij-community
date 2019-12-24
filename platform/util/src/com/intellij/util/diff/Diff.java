@@ -33,7 +33,7 @@ import java.util.BitSet;
  * @author dyoma
  */
 public class Diff {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.diff.Diff");
+  private static final Logger LOG = Logger.getInstance(Diff.class);
 
   @Nullable
   public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {

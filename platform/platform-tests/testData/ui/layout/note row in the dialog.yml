@@ -4,29 +4,29 @@ layoutConstraints:
     min: &id001 {horizontal: true, unit: 0, value: 0.0}
     preferred: *id001
   gridGapY:
-    min: &id002 {horizontal: false, value: 10.0}
+    min: &id002 {horizontal: false, value: 12.0}
     preferred: *id002
   hideMode: 2
   insets:
-  - {horizontal: false, unit: 0, value: 0.0}
-  - {horizontal: true, unit: 0, value: 0.0}
-  - {horizontal: false, unit: 0, value: 0.0}
-  - {horizontal: true, unit: 0, value: 0.0}
+  - &id003 {horizontal: false, unit: 0, value: 0.0}
+  - &id004 {horizontal: true, unit: 0, value: 0.0}
+  - *id003
+  - *id004
 rowConstraints:
   constraints:
-  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
+  - align: &id005 {horizontal: false, unit: -1, value: 0.0}
     noGrid: true
-  - align: *id003
-  - align: *id003
-  - align: *id003
+  - align: *id005
+  - align: *id005
+  - align: *id005
     noGrid: true
   count: 4
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id004 {horizontal: true, value: 6.0}
-      min: *id004
-      preferred: *id004
+      max: &id006 {horizontal: true, value: 6.0}
+      min: *id006
+      preferred: *id006
     grow: 0.0
   - {}
   count: 2
@@ -35,11 +35,11 @@ componentConstrains:
     spanX: INF
     vertical:
       gapAfter:
-        min: &id005 {horizontal: false, value: 10.0}
-        preferred: *id005
+        min: &id007 {horizontal: false, value: 12.0}
+        preferred: *id007
       gapBefore:
-        min: &id006 {horizontal: false, value: 10.0}
-        preferred: *id006
+        min: &id008 {horizontal: false, value: 12.0}
+        preferred: *id008
     wrap: true
   Sudo password [label]: {}
   'JPasswordField #2':
@@ -56,9 +56,9 @@ componentConstrains:
     spanX: INF
     vertical:
       gapAfter:
-        min: &id007 {horizontal: false, value: 10.0}
-        preferred: *id007
+        min: &id009 {horizontal: false, value: 12.0}
+        preferred: *id009
       gapBefore:
-        min: &id008 {horizontal: false, value: 12.0}
-        preferred: *id008
+        min: &id010 {horizontal: false, value: 20.0}
+        preferred: *id010
     wrap: true

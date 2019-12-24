@@ -7,7 +7,6 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -39,7 +38,7 @@ import java.util.*;
  * @author peter
  */
 public class JavaFindUsagesHandler extends FindUsagesHandler{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.findUsages.JavaFindUsagesHandler");
+  private static final Logger LOG = Logger.getInstance(JavaFindUsagesHandler.class);
   protected static final String ACTION_STRING = FindBundle.message("find.super.method.warning.action.verb");
 
   private final PsiElement[] myElementsToSearch;
@@ -78,7 +77,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean askWhetherShouldSearchForParameterInOverridingMethods(@NotNull PsiElement psiElement, @NotNull PsiParameter parameter) {
-    assertInTransaction();
     return Messages.showOkCancelDialog(psiElement.getProject(),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.prompt", parameter.getName()),
                                FindBundle.message("find.parameter.usages.in.overriding.methods.title"),
@@ -185,15 +183,10 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   private static boolean askShouldSearchAccessors(String fieldName) {
-    assertInTransaction();
     return Messages.showOkCancelDialog(FindBundle.message("find.field.accessors.prompt", fieldName),
                                        FindBundle.message("find.field.accessors.title"),
                                        CommonBundle.getYesButtonText(),
                                        CommonBundle.getNoButtonText(), Messages.getQuestionIcon()) == Messages.OK;
-  }
-
-  private static void assertInTransaction() {
-    LOG.assertTrue(TransactionGuard.getInstance().getContextTransaction() != null, "Find Usages should be shown in a transaction, see AnAction#startInTransaction");
   }
 
   @Override

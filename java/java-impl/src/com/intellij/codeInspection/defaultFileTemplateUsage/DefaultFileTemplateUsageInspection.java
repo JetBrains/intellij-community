@@ -44,12 +44,6 @@ public class DefaultFileTemplateUsageInspection extends AbstractBaseJavaLocalIns
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("default.file.template.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "DefaultFileTemplate";

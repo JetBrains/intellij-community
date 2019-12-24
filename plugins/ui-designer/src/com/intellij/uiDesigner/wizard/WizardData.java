@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladimir Kondratyev
  */
 public final class WizardData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.WizardData");
+  private static final Logger LOG = Logger.getInstance(WizardData.class);
 
   @NotNull public final Project myProject;
   /**

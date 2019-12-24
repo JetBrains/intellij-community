@@ -81,7 +81,7 @@ import static java.util.Objects.requireNonNull;
 
 @State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
+  private static final Logger LOG = Logger.getInstance(ShelveChangesManager.class);
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
@@ -388,7 +388,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
                                          boolean honorExcludedFromCommit) throws IOException, VcsException {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null) {
-      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.title"));
+      progressIndicator.setText(VcsBundle.message("shelve.changes.progress.text"));
     }
     ShelvedChangeList shelveList;
     try {
@@ -434,7 +434,28 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
 
 
     File patchFile = getPatchFileInConfigDir(schemePatchDir);
+    List<FilePatch> patches = new ArrayList<>(buildAndSavePatchInBatches(patchFile, textChanges, honorExcludedFromCommit));
+
+    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
+                                                               createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
+                                                                                                   patches));
+    changeList.markToDelete(markToBeDeleted);
+    changeList.setName(schemePatchDir.getName());
+    ProgressManager.checkCanceled();
+    mySchemeManager.addScheme(changeList, false);
+    totalSW.report(LOG);
+    return changeList;
+  }
+
+  private List<FilePatch> buildAndSavePatchInBatches(@NotNull File patchFile,
+                                                     @NotNull List<Change> textChanges,
+                                                     boolean honorExcludedFromCommit) throws VcsException, IOException {
     List<FilePatch> patches = new ArrayList<>();
+    if (textChanges.isEmpty()) {
+      ShelfFileProcessorUtil.savePatchFile(myProject, patchFile, patches, null, new CommitContext());
+      return patches;
+    }
+
     int batchIndex = 0;
     int baseContentsPreloadSize = Registry.intValue("git.shelve.load.base.in.batches", -1);
     int partitionSize = baseContentsPreloadSize > 0 ? baseContentsPreloadSize : textChanges.size();
@@ -473,16 +494,7 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
         totalSw.report(LOG);
       }
     }
-
-    final ShelvedChangeList changeList = new ShelvedChangeList(patchFile.toString(), commitMessage.replace('\n', ' '), binaryFiles,
-                                                               createShelvedChangesFromFilePatches(myProject, patchFile.toString(),
-                                                                                                   patches));
-    changeList.markToDelete(markToBeDeleted);
-    changeList.setName(schemePatchDir.getName());
-    ProgressManager.checkCanceled();
-    mySchemeManager.addScheme(changeList, false);
-    totalSW.report(LOG);
-    return changeList;
+    return patches;
   }
 
   private void preloadBaseRevisions(@NotNull List<Change> textChanges) {

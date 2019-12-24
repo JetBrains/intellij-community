@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassElement extends CompositeElement implements Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ClassElement");
+  private static final Logger LOG = Logger.getInstance(ClassElement.class);
 
   private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, ABSTRACT_KEYWORD, STATIC_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD);

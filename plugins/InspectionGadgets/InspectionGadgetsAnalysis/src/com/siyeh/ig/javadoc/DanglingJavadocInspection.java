@@ -35,13 +35,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DanglingJavadocInspection extends BaseInspection {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("dangling.javadoc.display.name");
-  }
-
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {

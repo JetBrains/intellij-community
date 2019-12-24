@@ -6,7 +6,7 @@ import com.intellij.diff.util.Side
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -45,8 +44,6 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     DEFAULT, SMART, SILENT
   }
 
-  private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
-
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
   var mode: Mode = mode
@@ -69,14 +66,9 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing and deadlock with CLM.
-      TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
+      ApplicationManager.getApplication().invokeLater(Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
-        val isEmpty = documentTracker.readLock { blocks.isEmpty() }
-        if (isEmpty) {
-          // file was modified, and now it's not -> dirty local change
-          vcsDirtyScopeManager.fileDirty(virtualFile)
-        }
-      })
+      }, project.disposed)
     }
   }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,18 +32,20 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected boolean doReformatRangeTest;
   protected TextRange myTextRange;
   protected EditorImpl myEditor;
   protected PsiFile myFile;
+
+  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
 
   @Override
   protected void setUp() throws Exception {
@@ -84,6 +88,12 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     return FileTypeManager.getInstance().getFileTypeByFileName(fileName);
   }
 
+  @NotNull
+  @Override
+  public final Disposable getTestRootDisposable() {
+    return myBeforeParentDisposeDisposable;
+  }
+
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -95,9 +105,17 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     catch (Throwable e) {
       addSuppressedException(e);
     }
+
+    myEditor = null;
+    myFile = null;
+
+    try {
+      Disposer.dispose(myBeforeParentDisposeDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
     finally {
-      myEditor = null;
-      myFile = null;
       super.tearDown();
     }
   }
@@ -114,7 +132,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
     if (doCheckDocumentUpdate()) {
       editor =(EditorImpl)FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file.getVirtualFile(), 0), false);
       assert editor != null;
-      editor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
       if (myFile != null) {
         FileEditorManager.getInstance(getProject()).closeFile(myFile.getVirtualFile());
       }

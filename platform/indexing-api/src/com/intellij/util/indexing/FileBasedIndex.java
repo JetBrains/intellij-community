@@ -42,6 +42,12 @@ public abstract class FileBasedIndex {
   @Nullable
   public abstract VirtualFile getFileBeingCurrentlyIndexed();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public DumbModeAccessType getCurrentDumbModeAccessType() {
+    throw new UnsupportedOperationException();
+  }
+
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
@@ -130,6 +136,14 @@ public abstract class FileBasedIndex {
                                                  @NotNull Processor<? super VirtualFile> processor,
                                                  @NotNull GlobalSearchScope filter);
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public void ignoreDumbMode(@NotNull Runnable runnable,
+                             @NotNull Project project,
+                             @NotNull DumbModeAccessType dumbModeAccessType) {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * It is guaranteed to return data which is up-to-date within the given project.
    */
@@ -164,7 +178,6 @@ public abstract class FileBasedIndex {
             if(!acceptsFile(canonicalFile)) return false;
           }
         }
-        if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
         return true;
@@ -212,4 +225,10 @@ public abstract class FileBasedIndex {
   // TODO we should rebuild index automatically if this option is changed
   @ApiStatus.Internal
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+
+  @ApiStatus.Internal
+  public static boolean isIndexAccessDuringDumbModeEnabled() {
+    return !ourDisableIndexAccessDuringDumbMode;
+  }
+  private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
 }

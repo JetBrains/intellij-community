@@ -14,9 +14,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -35,12 +35,12 @@ import java.io.File
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
-private val LOG: Logger = logger(::LOG)
-
 open class UpdateIdeFromSourcesAction
  @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
   : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
              "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null) {
+
+  private val LOG: Logger = Logger.getInstance(UpdateIdeFromSourcesAction::class.java)
 
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -90,7 +90,8 @@ open class UpdateIdeFromSourcesAction
     val deployDir = "$devIdeaHome/out/deploy"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
-    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile, bundledPluginDirsToSkip) ?: return
+    val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
+                                            bundledPluginDirsToSkip, state.buildDisabledPlugins) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
@@ -257,8 +258,7 @@ open class UpdateIdeFromSourcesAction
   }
 
   private fun restartWithCommand(command: Array<String>) {
-    val application = ApplicationManager.getApplication() as ApplicationImpl
-    application.invokeLater { application.exit(true, true, true, command) }
+    (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
   }
 
   private fun createScriptJavaParameters(devIdeaHome: String,
@@ -266,7 +266,8 @@ open class UpdateIdeFromSourcesAction
                                          deployDir: String,
                                          distRelativePath: String,
                                          scriptFile: File,
-                                         bundledPluginDirsToSkip: List<String>): JavaParameters? {
+                                         bundledPluginDirsToSkip: List<String>,
+                                         buildNonBundledPlugins: Boolean): JavaParameters? {
     val sdk = ProjectRootManager.getInstance(project).projectSdk
     if (sdk == null) {
       LOG.warn("Project SDK is not defined")
@@ -306,8 +307,12 @@ open class UpdateIdeFromSourcesAction
     params.programParametersList.add(scriptFile.absolutePath)
     params.programParametersList.add("update-from-sources")
     params.vmParametersList.add("-D$includeBinAndRuntimeProperty=true")
+    params.vmParametersList.add("-Dintellij.build.bundled.jre.prefix=jbrsdk-")
     if (bundledPluginDirsToSkip.isNotEmpty()) {
       params.vmParametersList.add("-Dintellij.build.bundled.plugin.dirs.to.skip=${bundledPluginDirsToSkip.joinToString(",")}")
+    }
+    if (buildNonBundledPlugins) {
+      params.vmParametersList.add("-Dintellij.build.local.plugins.repository=true")
     }
     params.vmParametersList.add("-Dintellij.build.output.root=$deployDir")
     params.vmParametersList.add("-DdistOutputRelativePath=$distRelativePath")

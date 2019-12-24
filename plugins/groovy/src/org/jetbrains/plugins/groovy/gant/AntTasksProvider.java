@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.lang.ant.ReflectedProject;
@@ -20,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -43,14 +29,14 @@ import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import static org.jetbrains.plugins.groovy.gant.AntBuilderMethod.methods;
 
 /**
  * @author ilyas, peter
  */
 public class AntTasksProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.gant.AntTasksProvider");
+  private static final Logger LOG = Logger.getInstance(AntTasksProvider.class);
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Object ourLock = new Object();
   public static final ParameterizedCachedValueProvider<Map<List<URL>,AntClassLoader>,Project> PROVIDER =
@@ -75,11 +61,12 @@ public class AntTasksProvider {
       final Set<LightMethodBuilder> methods = new HashSet<>();
 
       final Project project = file.getProject();
+      final PsiType mapType = TypesUtil.createType(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, file);
+      final PsiType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
       final PsiType closureType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, file);
-      final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, file);
 
       for (String name : antObjects.keySet()) {
-        methods.add(new AntBuilderMethod(file, name, closureType, antObjects.get(name), stringType));
+        methods.addAll(methods(file, name, antObjects.get(name), mapType, stringType, closureType));
       }
       return CachedValueProvider.Result
         .create(methods, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
@@ -105,6 +92,13 @@ public class AntTasksProvider {
       if (localFile.isInLocalFileSystem()) {
         urls.add(VfsUtilCore.convertToURL(localFile.getUrl()));
       }
+    }
+
+    if (JavaPsiFacade.getInstance(project).findClass(ReflectedProject.ANT_PROJECT_CLASS, groovyFile.getResolveScope()) == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Ant library not available in " + groovyFile.getVirtualFile().getPath() + "; urls=" + urls);
+      }
+      return Collections.emptyMap();
     }
 
     AntClassLoader loader;
@@ -159,23 +153,8 @@ public class AntTasksProvider {
     }
 
     @NotNull
-    public Map<String, Class> getAntObjects() {
-      while (true) {
-        try {
-          final Map<String, Class> map = myFuture.get(100, TimeUnit.MILLISECONDS);
-          if (map != null) {
-            return map;
-          }
-        }
-        catch (TimeoutException ignore) {
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          break;
-        }
-        ProgressManager.checkCanceled();
-      }
-      return Collections.emptyMap();
+    Map<String, Class> getAntObjects() {
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
     }
   }
 }

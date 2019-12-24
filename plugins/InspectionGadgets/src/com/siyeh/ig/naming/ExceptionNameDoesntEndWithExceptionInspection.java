@@ -43,13 +43,6 @@ public class ExceptionNameDoesntEndWithExceptionInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "exception.name.doesnt.end.with.exception.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "exception.name.doesnt.end.with.exception.problem.descriptor");

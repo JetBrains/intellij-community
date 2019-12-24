@@ -3,15 +3,19 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -21,12 +25,15 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineTransformer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author ven
@@ -532,9 +539,364 @@ public class InlineUtil {
       }
       if (ControlFlowUtils.blockCompletesWithStatement(block, returnStatement)) {
         new CommentTracker().deleteAndRestoreComments(returnStatement);
-      } else if (replaceWithContinue) {
+      }
+      else if (replaceWithContinue) {
         new CommentTracker().replaceAndRestoreComments(returnStatement, "continue;");
       }
+    }
+  }
+
+  public static PsiExpression inlineInitializer(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) {
+    Project project = variable.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
+      final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
+      if (varThisClass != null && varThisClass != RefactoringChangeUtil.getThisClass(ref)) {
+        initializer = factory.createExpressionFromText(varThisClass.getName() + ".this", variable);
+      }
+    }
+
+    PsiExpression expr = inlineVariable(variable, initializer, ref);
+
+    tryToInlineArrayCreationForVarargs(expr);
+
+    //Q: move the following code to some util? (addition to inline?)
+    if (expr instanceof PsiThisExpression) {
+      if (expr.getParent() instanceof PsiReferenceExpression) {
+        PsiReferenceExpression refExpr = (PsiReferenceExpression)expr.getParent();
+        PsiElement refElement = refExpr.resolve();
+        PsiExpression exprCopy = (PsiExpression)refExpr.copy();
+        refExpr = (PsiReferenceExpression)refExpr.replace(factory.createExpressionFromText(
+          Objects.requireNonNull(refExpr.getReferenceName()), null));
+        if (refElement != null) {
+          PsiElement newRefElement = refExpr.resolve();
+          if (!refElement.equals(newRefElement)) {
+            // change back
+            refExpr.replace(exprCopy);
+          }
+        }
+      }
+    }
+
+    if (expr instanceof PsiLiteralExpression && PsiType.BOOLEAN.equals(expr.getType())) {
+      Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
+      if (value != null) {
+        SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
+        if (fix.isAvailable()) {
+          fix.invoke(project, expr.getContainingFile(), expr, expr);
+        }
+      }
+    }
+    return initializer;
+  }
+
+  public static boolean canInlineParameterOrThisVariable(PsiLocalVariable variable) {
+    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
+    if (block == null) return false;
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, block);
+    boolean isAccessedForWriting = false;
+    for (PsiReferenceExpression refElement : refs) {
+      if (PsiUtil.isAccessedForWriting(refElement)) {
+        isAccessedForWriting = true;
+      }
+    }
+
+    PsiExpression initializer = variable.getInitializer();
+    return canInlineParameterOrThisVariable(variable.getProject(), initializer, false, false,
+                                            refs.size(), isAccessedForWriting);
+  }
+
+  private static boolean canInlineParameterOrThisVariable(Project project,
+                                                          PsiExpression initializer,
+                                                          boolean shouldBeFinal,
+                                                          boolean strictlyFinal,
+                                                          int accessCount,
+                                                          boolean isAccessedForWriting) {
+    if (strictlyFinal) {
+      class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementWalkingVisitor {
+        boolean success = true;
+
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          final PsiElement psiElement = expression.resolve();
+          if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) {
+            if (!RefactoringUtil.canBeDeclaredFinal((PsiVariable)psiElement)) {
+              success = false;
+            }
+          }
+        }
+
+        @Override
+        public void visitElement(@NotNull PsiElement element) {
+          if (success) {
+            super.visitElement(element);
+          }
+        }
+      }
+
+      final CanAllLocalsBeDeclaredFinal canAllLocalsBeDeclaredFinal = new CanAllLocalsBeDeclaredFinal();
+      initializer.accept(canAllLocalsBeDeclaredFinal);
+      if (!canAllLocalsBeDeclaredFinal.success) return false;
+    }
+    if (initializer instanceof PsiFunctionalExpression) return accessCount <= 1;
+    if (initializer instanceof PsiReferenceExpression) {
+      PsiVariable refVar = (PsiVariable)((PsiReferenceExpression)initializer).resolve();
+      if (refVar == null) {
+        return !isAccessedForWriting;
+      }
+      if (refVar instanceof PsiField) {
+        if (isAccessedForWriting) return false;
+        if (refVar.hasModifierProperty(PsiModifier.VOLATILE)) return accessCount <= 1;
+        /*
+        PsiField field = (PsiField)refVar;
+        if (isFieldNonModifiable(field)){
+          return true;
+        }
+        //TODO: other cases
+        return false;
+        */
+        return true; //TODO: "suspicious" places to review by user!
+      }
+      else {
+        if (isAccessedForWriting) {
+          if (refVar.hasModifierProperty(PsiModifier.FINAL) || shouldBeFinal) return false;
+          PsiReference[] refs = ReferencesSearch.search(refVar, GlobalSearchScope.projectScope(project), false)
+            .toArray(PsiReference.EMPTY_ARRAY);
+          return refs.length == 1; //TODO: control flow
+        }
+        else {
+          if (shouldBeFinal) {
+            return refVar.hasModifierProperty(PsiModifier.FINAL) || RefactoringUtil.canBeDeclaredFinal(refVar);
+          }
+          return true;
+        }
+      }
+    }
+    else if (isAccessedForWriting) {
+      return false;
+    }
+    else if (initializer instanceof PsiCallExpression) {
+      if (accessCount != 1) return false;//don't allow deleting probable side effects or multiply those side effects
+      if (initializer instanceof PsiNewExpression) {
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+        if (arrayInitializer != null) {
+          for (PsiExpression expression : arrayInitializer.getInitializers()) {
+            if (!canInlineParameterOrThisVariable(project, expression, shouldBeFinal, strictlyFinal, accessCount, false)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
+      final PsiExpressionList argumentList = ((PsiCallExpression)initializer).getArgumentList();
+      if (argumentList == null) return false;
+      final PsiExpression[] expressions = argumentList.getExpressions();
+      for (PsiExpression expression : expressions) {
+        if (!canInlineParameterOrThisVariable(project, expression, shouldBeFinal, strictlyFinal, accessCount, false)) {
+          return false;
+        }
+      }
+      return true; //TODO: "suspicious" places to review by user!
+    }
+    else if (initializer instanceof PsiLiteralExpression) {
+      return true;
+    }
+    else if (initializer instanceof PsiPrefixExpression &&
+             ((PsiPrefixExpression)initializer).getOperand() instanceof PsiLiteralExpression) {
+      return true;
+    }
+    else if (initializer instanceof PsiArrayAccessExpression) {
+      final PsiExpression arrayExpression = ((PsiArrayAccessExpression)initializer).getArrayExpression();
+      final PsiExpression indexExpression = ((PsiArrayAccessExpression)initializer).getIndexExpression();
+      return canInlineParameterOrThisVariable(project, arrayExpression, shouldBeFinal, strictlyFinal, accessCount, false) &&
+             canInlineParameterOrThisVariable(project, indexExpression, shouldBeFinal, strictlyFinal, accessCount, false);
+    }
+    else if (initializer instanceof PsiParenthesizedExpression) {
+      PsiExpression expr = ((PsiParenthesizedExpression)initializer).getExpression();
+      return expr == null || canInlineParameterOrThisVariable(project, expr, shouldBeFinal, strictlyFinal, accessCount, false);
+    }
+    else if (initializer instanceof PsiTypeCastExpression) {
+      PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
+      return operand != null && canInlineParameterOrThisVariable(project, operand, shouldBeFinal, strictlyFinal, accessCount, false);
+    }
+    else if (initializer instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression binExpr = (PsiPolyadicExpression)initializer;
+      for (PsiExpression op : binExpr.getOperands()) {
+        if (!canInlineParameterOrThisVariable(project, op, shouldBeFinal, strictlyFinal, accessCount, false)) return false;
+      }
+      return true;
+    }
+    else if (initializer instanceof PsiClassObjectAccessExpression) {
+      return true;
+    }
+    else if (initializer instanceof PsiThisExpression) {
+      return true;
+    }
+    else if (initializer instanceof PsiSuperExpression) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
+  /**
+   * Try to inline local variable which was generated during method inlining (e.g. to hold a parameter or this reference)
+   *
+   * @param variable      variable to inline
+   * @param strictlyFinal whether the variable is referenced in the places where final variable is required
+   * @throws IncorrectOperationException
+   */
+  public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal)
+    throws IncorrectOperationException {
+    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
+    if (scope == null) return;
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, scope);
+    PsiReferenceExpression firstRef = ContainerUtil.getFirstItem(refs);
+
+    PsiExpression initializer = variable.getInitializer();
+    if (firstRef == null) {
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)variable.getParent();
+      if (initializer != null) {
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+        for (PsiStatement statement : StatementExtractor.generateStatements(sideEffects, initializer)) {
+          declaration.getParent().addBefore(statement, declaration);
+        }
+      }
+      declaration.delete();
+      return;
+    }
+
+
+    boolean isAccessedForWriting = false;
+    for (PsiReferenceExpression refElement : refs) {
+      if (PsiUtil.isAccessedForWriting(refElement)) {
+        isAccessedForWriting = true;
+      }
+    }
+
+    boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
+    Project project = variable.getProject();
+    if (canInlineParameterOrThisVariable(project, initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting)) {
+      if (shouldBeFinal) {
+        declareUsedLocalsFinal(initializer, true);
+      }
+      for (PsiReference ref : refs) {
+        initializer = inlineInitializer(variable, initializer, (PsiJavaCodeReferenceElement)ref);
+      }
+      variable.getParent().delete();
+    }
+  }
+
+  private static void declareUsedLocalsFinal(PsiElement expr, boolean strictlyFinal) throws IncorrectOperationException {
+    if (expr instanceof PsiReferenceExpression) {
+      PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
+      if (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) {
+        if (strictlyFinal || RefactoringUtil.canBeDeclaredFinal((PsiVariable)refElement)) {
+          PsiUtil.setModifierProperty(((PsiVariable)refElement), PsiModifier.FINAL, true);
+        }
+      }
+    }
+    PsiElement[] children = expr.getChildren();
+    for (PsiElement child : children) {
+      declareUsedLocalsFinal(child, strictlyFinal);
+    }
+  }
+
+  /**
+   * Try to inline the result variable after method inlining
+   *
+   * @param resultVar   variable to inline
+   * @param resultUsage variable usage
+   * @throws IncorrectOperationException
+   */
+  public static void tryInlineResultVariable(@NotNull PsiLocalVariable resultVar, @NotNull PsiReferenceExpression resultUsage)
+    throws IncorrectOperationException {
+    PsiElement context = PsiUtil.getVariableCodeBlock(resultVar, null);
+    if (context == null) return;
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(resultVar, context);
+    if (resultVar.getInitializer() == null) {
+      PsiAssignmentExpression assignment = null;
+      for (PsiReferenceExpression ref : references) {
+        if (ref.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)ref.getParent()).getLExpression().equals(ref)) {
+          if (assignment != null) {
+            assignment = null;
+            break;
+          }
+          else {
+            assignment = (PsiAssignmentExpression)ref.getParent();
+          }
+        }
+      }
+
+      if (assignment != null) {
+        inlineSingleAssignment(resultVar, assignment, resultUsage);
+        return;
+      }
+    }
+    tryReplaceWithTarget(resultVar, resultUsage, context, references);
+  }
+
+  /**
+   * If result of the method is an initializer of another var, try to reuse that var to store the result.
+   */
+  private static void tryReplaceWithTarget(@NotNull PsiLocalVariable variable,
+                                           @NotNull PsiReferenceExpression usage,
+                                           PsiElement context,
+                                           List<PsiReferenceExpression> references) {
+    PsiLocalVariable target = tryCast(PsiUtil.skipParenthesizedExprUp(usage.getParent()), PsiLocalVariable.class);
+    if (target == null) return;
+    String name = target.getName();
+    if (!target.getType().equals(variable.getType())) return;
+    PsiDeclarationStatement declaration = tryCast(target.getParent(), PsiDeclarationStatement.class);
+    if (declaration == null || declaration.getDeclaredElements().length != 1) return;
+    PsiModifierList modifiers = target.getModifierList();
+    if (modifiers != null && modifiers.getAnnotations().length != 0) return;
+    boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
+    if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
+
+    for (PsiReferenceExpression reference : references) {
+      ExpressionUtils.bindReferenceTo(reference, name);
+    }
+    if (effectivelyFinal && target.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList != null) {
+        modifierList.setModifierProperty(PsiModifier.FINAL, true);
+      }
+    }
+    variable.setName(name);
+    new CommentTracker().deleteAndRestoreComments(declaration);
+  }
+
+  private static void inlineSingleAssignment(@NotNull PsiVariable resultVar,
+                                             @NotNull PsiAssignmentExpression assignment,
+                                             @NotNull PsiReferenceExpression resultUsage) {
+    LOG.assertTrue(assignment.getParent() instanceof PsiExpressionStatement);
+    // SCR3175 fixed: inline only if declaration and assignment is in the same code block.
+    if (!(assignment.getParent().getParent() == resultVar.getParent().getParent())) return;
+    String name = Objects.requireNonNull(resultVar.getName());
+    PsiDeclarationStatement declaration = JavaPsiFacade.getElementFactory(resultVar.getProject())
+      .createVariableDeclarationStatement(name, resultVar.getType(), assignment.getRExpression());
+    declaration = (PsiDeclarationStatement)assignment.getParent().replace(declaration);
+    resultVar.getParent().delete();
+    resultVar = (PsiVariable)declaration.getDeclaredElements()[0];
+
+    PsiElement parentStatement = RefactoringUtil.getParentStatement(resultUsage, true);
+    PsiElement next = declaration.getNextSibling();
+    boolean canInline = false;
+    while (true) {
+      if (next == null) break;
+      if (next.equals(parentStatement)) {
+        canInline = true;
+        break;
+      }
+      if (next instanceof PsiStatement) break;
+      next = next.getNextSibling();
+    }
+
+    if (canInline) {
+      inlineVariable(resultVar, resultVar.getInitializer(), resultUsage);
+      declaration.delete();
     }
   }
 

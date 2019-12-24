@@ -42,7 +42,7 @@ import java.util.*;
  * @author Jeka
  */
 public class MoveInnerProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInner.MoveInnerProcessor");
+  private static final Logger LOG = Logger.getInstance(MoveInnerProcessor.class);
 
   private MoveCallback myMoveCallback;
 

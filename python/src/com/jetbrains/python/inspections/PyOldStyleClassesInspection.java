@@ -42,12 +42,6 @@ import java.util.List;
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
 public class PyOldStyleClassesInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.oldstyle.class");
-  }
 
   @NotNull
   @Override

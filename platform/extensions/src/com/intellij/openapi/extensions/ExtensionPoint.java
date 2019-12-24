@@ -105,12 +105,24 @@ public interface ExtensionPoint<T> {
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   /**
+   * Unregisters extensions for which the specified predicate returns false and collects the callables for listener invocation into the given list
+   * so that listeners can be called later.
+   */
+  boolean unregisterExtensions(
+    @NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
+    boolean stopAfterFirstMatch,
+    List<Runnable> listenerCallbacks
+  );
+
+  /**
    * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
    */
   @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener);
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+  
+  void addExtensionPointListener(@NotNull ExtensionPointChangeListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 

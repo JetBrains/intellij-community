@@ -41,7 +41,7 @@ import java.util.HashMap;
  * @author Vladimir Kondratyev
  */
 public final class Generator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.wizard.Generator");
+  private static final Logger LOG = Logger.getInstance(Generator.class);
 
   private Generator() {
   }

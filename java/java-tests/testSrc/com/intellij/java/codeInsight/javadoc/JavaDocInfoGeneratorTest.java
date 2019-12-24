@@ -184,6 +184,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static Sdk removeAnnotationsJar(Sdk sdk) {
     SdkModificator modificator = sdk.getSdkModificator();
     VirtualFile annotationsJar = ContainerUtil.find(modificator.getRoots(OrderRootType.CLASSES), r -> r.getName().contains("annotations"));
+    modificator.setName(modificator.getName() + "-" + annotationsJar.getPath());
     modificator.removeRoot(annotationsJar, OrderRootType.CLASSES);
     modificator.commitChanges();
     return sdk;

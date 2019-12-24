@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
+  private static final Logger LOG = Logger.getInstance(RedundantSuppressInspection.class);
   public static final String SHORT_NAME = "RedundantSuppression";
   public boolean IGNORE_ALL;
   private BidirectionalMap<String, QuickFix> myQuickFixes;
@@ -37,12 +37,6 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.redundant.suppression.name");
   }
 
   @Override
@@ -70,7 +64,6 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (!((GlobalInspectionContextBase)globalContext).isToCheckFile(file, this)) return;
     InspectionSuppressor extension = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage());
     if (!(extension instanceof RedundantSuppressionDetector)) return;
     final CommonProblemDescriptor[] descriptors = checkElement(file, (RedundantSuppressionDetector)extension, manager);
@@ -100,7 +93,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
     psiElement.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         collectSuppressions(element, suppressedScopes, IGNORE_ALL, extension);
       }
@@ -330,20 +323,13 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
       return SHORT_NAME;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getDisplayName() {
-      return RedundantSuppressInspection.this.getDisplayName();
-    }
-
     @NotNull
     @Override
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return new PsiElementVisitor() {
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           super.visitElement(element);
           HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
           boolean suppressAll = collectSuppressions(element, scopes, IGNORE_ALL, mySuppressor);

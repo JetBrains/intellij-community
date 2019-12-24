@@ -126,12 +126,6 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("suspicious.name.combination.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "SuspiciousNameCombination";

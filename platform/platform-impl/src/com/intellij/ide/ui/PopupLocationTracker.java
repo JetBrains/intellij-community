@@ -4,7 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class PopupLocationTracker {
     if (!Registry.is("ide.use.screen.area.tracker", false)) {
       return true;
     }
-    Window window = UIUtil.getWindow(parent);
+    Window window = ComponentUtil.getWindow(parent);
     if (window != null) {
       for (ScreenAreaConsumer consumer : ourAreaConsumers) {
         if (consumer == excludedConsumer) continue;

@@ -17,6 +17,8 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   val isWorkspaceComponent: Boolean = false) : BaseComponentAdapter(componentManager, pluginDescriptor, null, implementationClass) {
   override fun getComponentKey() = componentKey
 
+  override fun isImplementationEqualsToInterface() = componentKey.name == implementationClassName
+
   override fun getActivityCategory(componentManager: PlatformComponentManagerImpl): ActivityCategory? {
     if (componentManager.activityNamePrefix() == null) {
       return null
@@ -34,13 +36,25 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
     try {
       val instance = componentManager.instantiateClassWithConstructorInjection(implementationClass, componentKey, pluginId)
       if (instance is Disposable) {
-        Disposer.register(componentManager, instance)
+        Disposer.register(componentManager.serviceParentDisposable, instance)
       }
-      componentManager.registerComponentInstance(instance, indicator)
+
       componentManager.initializeComponent(instance, null)
       if (instance is BaseComponent) {
-        (instance as BaseComponent).initComponent()
+        @Suppress("DEPRECATION")
+        instance.initComponent()
+        if (instance !is Disposable) {
+          @Suppress("ObjectLiteralToLambda")
+          Disposer.register(componentManager.serviceParentDisposable, object : Disposable {
+            override fun dispose() {
+              @Suppress("DEPRECATION")
+              instance.disposeComponent()
+            }
+          })
+        }
       }
+
+      componentManager.componentCreated(indicator)
       return instance
     }
     catch (e: ProcessCanceledException) {

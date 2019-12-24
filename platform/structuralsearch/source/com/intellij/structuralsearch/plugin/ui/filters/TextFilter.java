@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class TextFilter extends FilterAction {
 
-  boolean showHierarchy;
+  boolean myShowHierarchy;
 
   public TextFilter(FilterTable filterTable) {
     super("Text", filterTable);
@@ -54,7 +54,7 @@ public class TextFilter extends FilterAction {
       return false;
     }
     final StructuralSearchProfile profile = myTable.getProfile();
-    showHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
+    myShowHierarchy = profile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, target);
     return profile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, target);
   }
 
@@ -124,7 +124,7 @@ public class TextFilter extends FilterAction {
         myTextField.setText((myConstraint.isInvertRegExp() ? "!" : "") + myConstraint.getRegExp());
         myWordsCheckBox.setSelected(myConstraint.isWholeWordsOnly());
         myHierarchyCheckBox.setSelected(myConstraint.isWithinHierarchy());
-        myHierarchyCheckBox.setVisible(showHierarchy);
+        myHierarchyCheckBox.setVisible(myShowHierarchy);
       }
 
       @Override

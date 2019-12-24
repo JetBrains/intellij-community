@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.easymock.MockType;
 import org.easymock.internal.MocksControl;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class PyPullUpInfoModelTest extends PyTestCase {
     myFixture.configureByFile("/refactoring/pullup/pyPullUpInfoModel.py");
     final PyClass childClass = getClassByName("ChildWithDependencies");
     final PyClass parentClass = getClassByName("SomeParent");
-    mySut = new PyPullUpInfoModel(childClass, new MocksControl(MocksControl.MockType.NICE).createMock(PyPullUpView.class));
+    mySut = new PyPullUpInfoModel(childClass, new MocksControl(MockType.NICE).createMock(PyPullUpView.class));
     mySut.setSuperClass(parentClass);
     myMemberInfos = new PyMemberInfoStorage(childClass).getClassMemberInfos(childClass);
   }

@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * @author vlan
 */
-public class ParserException extends Exception {
+public final class ParserException extends Exception {
   @NotNull private final FunctionalParserBase.State myState;
 
   public ParserException(@NotNull String message, @NotNull FunctionalParserBase.State state) {
@@ -31,5 +31,10 @@ public class ParserException extends Exception {
   @NotNull
   FunctionalParserBase.State getState() {
     return myState;
+  }
+
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
   }
 }

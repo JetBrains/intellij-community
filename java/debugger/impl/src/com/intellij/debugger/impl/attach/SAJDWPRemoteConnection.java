@@ -33,7 +33,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
   public SAJDWPRemoteConnection(String pid, List<String> commands) {
     super(pid);
     setServerMode(true);
-    setDebuggerPort("0");
+    setDebuggerAddress("0");
     myCommands = commands;
   }
 
@@ -47,7 +47,7 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
     private final ListeningConnector mySocketListeningConnector;
 
     public SAJDWPListeningConnector(DebugProcessImpl process) throws ExecutionException {
-      mySocketListeningConnector = (ListeningConnector)DebugProcessImpl.findConnector(DebugProcessImpl.SOCKET_LISTENING_CONNECTOR_NAME);
+      mySocketListeningConnector = (ListeningConnector)DebugProcessImpl.findConnector(true, true);
       myDebugProcess = process;
     }
 

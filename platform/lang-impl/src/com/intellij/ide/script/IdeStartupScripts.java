@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
@@ -52,10 +50,10 @@ final class IdeStartupScripts implements ApplicationInitializedListener {
         if (future == null) {
           future = ApplicationManager.getApplication().executeOnPooledThread(() -> prepareScriptsAndEngines());
         }
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-          if (!project.isOpen()) return;
+
+        StartupManager.getInstance(project).runAfterOpened(() -> {
           connection.disconnect();
-          runAllScriptsImpl(project, future);
+          ApplicationManager.getApplication().executeOnPooledThread(() -> runAllScriptsImpl(project, future));
         });
       }
     });
@@ -110,9 +108,8 @@ final class IdeStartupScripts implements ApplicationInitializedListener {
 
   @Nullable
   private static File getScriptsRootDirectory() {
-    PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
     try {
-      return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
+      return ExtensionsRootType.getInstance().findResourceDirectory(PluginManagerCore.CORE_ID, SCRIPT_DIR, false);
     }
     catch (IOException ignore) {
     }

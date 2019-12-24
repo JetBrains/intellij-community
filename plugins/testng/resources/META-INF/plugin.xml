@@ -7,7 +7,10 @@
     <p>Originally developed by Theory In Practice.</p>
     ]]></description>
     <vendor>JetBrains</vendor>
-    <depends>com.intellij.java-i18n</depends>
+    <depends>com.intellij.modules.java</depends>
+
+    <depends optional="true" config-file="testng-intellilang.xml">org.intellij.intelliLang</depends>
+
     <extensions defaultExtensionNs="com.intellij">
         <deadCode implementation="com.theoryinpractice.testng.inspection.TestNGEntryPoint"/>
         <cantBeStatic implementation="com.theoryinpractice.testng.inspection.TestNGCanBeStaticExtension" />

@@ -46,8 +46,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener;
 import gnu.trove.THashSet;
-import icons.MavenIcons;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
@@ -92,6 +92,7 @@ import static com.intellij.openapi.util.io.JarUtil.getJarAttribute;
 import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
+import static icons.ExternalSystemIcons.Task;
 
 public class MavenUtil {
   @ApiStatus.Experimental
@@ -154,11 +155,11 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeAndWait(Project p, Runnable r) {
+  public static void invokeAndWait(@NotNull Project p, @NotNull Runnable r) {
     invokeAndWait(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeAndWait(final Project p, final ModalityState state, final Runnable r) {
+  public static void invokeAndWait(final Project p, final ModalityState state, @NotNull Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
@@ -186,11 +187,11 @@ public class MavenUtil {
     }
   }
 
-  public static void invokeAndWaitWriteAction(Project p, final Runnable r) {
+  public static void invokeAndWaitWriteAction(@NotNull Project p, @NotNull Runnable r) {
     invokeAndWait(p, () -> ApplicationManager.getApplication().runWriteAction(r));
   }
 
-  public static void runDumbAware(final Project project, final Runnable r) {
+  public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
     if (DumbService.isDumbAware(r)) {
       r.run();
     }
@@ -199,20 +200,20 @@ public class MavenUtil {
     }
   }
 
-  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable r) {
+  public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
     if (project.isDisposed()) return;
 
     if (isNoBackgroundMode()) {
-      r.run();
+      runnable.run();
       return;
     }
 
     if (!project.isInitialized()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(DisposeAwareRunnable.create(r, project));
+      StartupManager.getInstance(project).runAfterOpened(runnable);
       return;
     }
 
-    runDumbAware(project, r);
+    runDumbAware(project, runnable);
   }
 
   public static boolean isNoBackgroundMode() {
@@ -731,7 +732,7 @@ public class MavenUtil {
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        resolveGlobalSettingsFile(overriddenMavenHome));
+                                                resolveGlobalSettingsFile(overriddenMavenHome));
     }
     try {
       return result.getCanonicalFile();
@@ -856,7 +857,7 @@ public class MavenUtil {
 
     List<LookupElement> res = new ArrayList<>(goals.size());
     for (String goal : goals) {
-      res.add(LookupElementBuilder.create(goal).withIcon(MavenIcons.Phase));
+      res.add(LookupElementBuilder.create(goal).withIcon(Task));
     }
 
     return res;
@@ -882,6 +883,10 @@ public class MavenUtil {
     for (MavenId id : unresolvedIds) {
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY).showError(id.getKey());
     }
+  }
+
+  public static boolean newModelEnabled(Project project) {
+    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project);
   }
 
   public interface MavenTaskHandler {
@@ -1152,5 +1157,15 @@ public class MavenUtil {
       return baseDir.findFileByRelativePath(fileRelativePath);
     }
     return null;
+  }
+
+  public static Path toPath(@Nullable MavenProject mavenProject, String path) {
+    if (!FileUtil.isAbsolute(path)) {
+      if(mavenProject == null) {
+        throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
+      }
+      path = new File(mavenProject.getDirectory(), path).getPath();
+    }
+    return new Path(path);
   }
 }

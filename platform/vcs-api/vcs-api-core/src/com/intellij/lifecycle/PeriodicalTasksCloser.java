@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lifecycle;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,8 +19,9 @@ import org.jetbrains.annotations.NotNull;
  * e.g. via {@link ProgressManager#run(Task)} or {@code BackgroundTaskUtil#executeOnPooledThread}.
  */
 @Deprecated
-public class PeriodicalTasksCloser {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lifecycle.PeriodicalTasksCloser");
+@Service
+public final class PeriodicalTasksCloser {
+  private static final Logger LOG = Logger.getInstance(PeriodicalTasksCloser.class);
   private final Object myLock = new Object();
 
   public static PeriodicalTasksCloser getInstance() {
@@ -41,23 +43,6 @@ public class PeriodicalTasksCloser {
       throwCanceledException(project, new NullPointerException());
     }
     return component;
-  }
-
-  public <T> T safeGetService(@NotNull final Project project, final Class<T> componentClass) throws ProcessCanceledException {
-    try {
-      T service = ServiceManager.getService(project, componentClass);
-      if (service == null) {
-        ProgressManager.checkCanceled();
-        if (project.isDefault()) {
-          LOG.info("no service in default project: " + componentClass.getName());
-        }
-      }
-      return service;
-    }
-    catch (NullPointerException | AssertionError e) {
-      throwCanceledException(project, e);
-    }
-    return null;
   }
 
   private void throwCanceledException(final Project project, final Throwable t) {

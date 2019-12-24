@@ -1,2 +1,2 @@
 def a = long
-print a.<ref>'package'
+print a.<caret>'package'

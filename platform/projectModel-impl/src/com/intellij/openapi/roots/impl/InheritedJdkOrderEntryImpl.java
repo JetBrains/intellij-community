@@ -52,10 +52,10 @@ class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implements In
 
   @NotNull
   @Override
-  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+  public OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
-    return new InheritedJdkOrderEntryImpl(rootModel, projectRootManager);
+    return new InheritedJdkOrderEntryImpl((RootModelImpl)rootModel, projectRootManager);
   }
 
   @Override

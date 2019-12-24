@@ -18,9 +18,9 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" scope="TEST" />
     <orderEntry type="module-library" exported="">
       <library name="intellij-markdown" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.33" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains:markdown:0.1.41" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.33/markdown-0.1.33.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/markdown/0.1.41/markdown-0.1.41.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -43,5 +43,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="library" name="jcef" level="project" />
   </component>
 </module>

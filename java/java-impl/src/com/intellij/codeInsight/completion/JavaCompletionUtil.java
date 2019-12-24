@@ -60,7 +60,7 @@ import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceList
 
 public class JavaCompletionUtil {
   public static final Key<Boolean> FORCE_SHOW_SIGNATURE_ATTR = Key.create("forceShowSignature");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionUtil");
+  private static final Logger LOG = Logger.getInstance(JavaCompletionUtil.class);
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   private static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"

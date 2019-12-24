@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @see com.intellij.psi.util.PsiUtilBase#findEditor
+ * @see com.intellij.psi.util.PsiEditorUtilBase#findEditorByPsiElement
  */
 public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 

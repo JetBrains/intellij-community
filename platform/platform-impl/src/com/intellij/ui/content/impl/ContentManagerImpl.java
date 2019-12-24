@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
@@ -57,14 +56,23 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
    * must be created on already OPENED projects, otherwise there will be memory leak!
    */
   public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project) {
+    this(contentUI, canCloseContents, project, project);
+  }
+
+  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
     myProject = project;
     myCanCloseContents = canCloseContents;
     myUI = contentUI;
     myUI.setManager(this);
 
-    // register on FileManager because before Content disposal the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work for which the findFile() must access filemanager for which it must be alive
-    Disposer.register(PsiManagerEx.getInstanceEx(project).getFileManager(), this);
-    Disposer.register(this, contentUI);
+    // register on project (will be disposed before services) because before Content disposal
+    // the UsageView is disposed before which virtual file pointers should be externalized for which they need to be restored
+    // for which com.intellij.psi.impl.smartPointers.SelfElementInfo.restoreFileFromVirtual() must be able to work
+    // for which the findFile() must access fileManager for which it must be alive
+    Disposer.register(parentDisposable, this);
+    if (contentUI instanceof Disposable) {
+      Disposer.register(this, (Disposable)contentUI);
+    }
   }
 
   @Override
@@ -159,15 +167,15 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public boolean removeContent(@NotNull Content content, final boolean dispose) {
+  public boolean removeContent(@NotNull Content content, boolean dispose) {
     boolean wasFocused = content.getComponent() != null && UIUtil.isFocusAncestor(content.getComponent());
     return removeContent(content, dispose, wasFocused, false).isDone();
   }
 
   @NotNull
   @Override
-  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean requestFocus, final boolean forcedFocus) {
-    final ActionCallback result = new ActionCallback();
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean requestFocus, boolean forcedFocus) {
+    ActionCallback result = new ActionCallback();
     doRemoveContent(content, dispose).doWhenDone(() -> {
       if (requestFocus) {
         Content current = getSelectedContent();
@@ -256,7 +264,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        if (!myDisposed) {
+        if (!myDisposed && myContents.isEmpty()) {
+          // Cleanup visibleComponent in TabbedPaneUI only if there is no content left,
+          // otherwise immediate adding of a new content will lead to having visible two TabWrapper component
+          // at at the same time.
           myUI.getComponent().updateUI(); //cleanup visibleComponent from Alloy...TabbedPaneUI
         }
       }
@@ -264,9 +275,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void removeAllContents(final boolean dispose) {
-    Content[] contents = getContents();
-    for (Content content : contents) {
+  public void removeAllContents(boolean dispose) {
+    if (myContents.isEmpty()) {
+      return;
+    }
+
+    for (Content content : new ArrayList<>(myContents)) {
       removeContent(content, dispose);
     }
   }
@@ -282,7 +296,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myContents.toArray(new Content[0]);
   }
 
-  //TODO[anton,vova] is this method needed?
   @Override
   public Content findContent(String displayName) {
     for (Content content : myContents) {
@@ -495,7 +508,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public void setSelectedContent(@NotNull final Content content) {
+  public void setSelectedContent(@NotNull Content content) {
     setSelectedContentCB(content);
   }
 
@@ -536,7 +549,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   public void removeContentManagerListener(@NotNull ContentManagerListener l) {
     myDispatcher.removeListener(l);
   }
-
 
   private void fireContentAdded(@NotNull Content content, int newIndex) {
     ContentManagerEvent e = new ContentManagerEvent(this, content, newIndex, ContentManagerEvent.ContentOperation.add);
@@ -598,8 +610,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void beforeTreeDispose() {
-    if (myDisposed) return;
-    myUI.beforeDispose();
+    if (!myDisposed) {
+      myUI.beforeDispose();
+    }
   }
 
   @Override

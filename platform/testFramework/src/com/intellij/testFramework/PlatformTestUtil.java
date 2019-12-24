@@ -4,9 +4,20 @@ package com.intellij.testFramework;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.*;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.CapturingProcessAdapter;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -18,12 +29,11 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -31,22 +41,18 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
@@ -83,9 +89,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -100,6 +104,7 @@ import static org.junit.Assert.*;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
 public class PlatformTestUtil {
+  private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
   private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
@@ -259,7 +264,8 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
-    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
+    long took = getMillisSince(startTimeMillis);
+    assert took <= timeout : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms", timeout, took);
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -308,7 +314,7 @@ public class PlatformTestUtil {
 
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
-    callback.doWhenDone(() -> promise.setResult(null));
+    callback.doWhenDone(() -> promise.setResult(null)).doWhenRejected(() -> promise.cancel());
     waitForPromise(promise);
   }
 
@@ -329,27 +335,44 @@ public class PlatformTestUtil {
   @Nullable
   private static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout, boolean assertSucceeded) {
     assertDispatchThreadWithoutWriteAccess();
-    AtomicBoolean complete = new AtomicBoolean(false);
-    promise.onProcessed(ignore -> complete.set(true));
-    T result = null;
     long start = System.currentTimeMillis();
-    do {
-      UIUtil.dispatchAllInvocationEvents();
+    while (true) {
+      if (promise.getState() == Promise.State.PENDING) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
       try {
-        result = promise.blockingGet(20, TimeUnit.MILLISECONDS);
+        return promise.blockingGet(20, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
+        } else {
+          return null;
         }
       }
       assertMaxWaitTimeSince(start, timeout);
     }
-    while (!complete.get());
-    UIUtil.dispatchAllInvocationEvents();
-    return result;
+  }
+
+  public static <T> T waitForFuture(@NotNull Future<T> future, long timeoutMillis) {
+    assertDispatchThreadWithoutWriteAccess();
+    long start = System.currentTimeMillis();
+    while (true) {
+      if (!future.isDone()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      try {
+        return future.get(10, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (Exception e) {
+        throw new AssertionError(e);
+      }
+      assertMaxWaitTimeSince(start, timeoutMillis);
+    }
   }
 
   public static void waitForAlarm(final int delay) {
@@ -595,9 +618,7 @@ public class PlatformTestUtil {
   }
 
   public static void forceCloseProjectWithoutSaving(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
-    // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+    ProjectManagerEx.getInstanceEx().forceCloseProject(project);
   }
 
   public static void saveProject(@NotNull Project project) {
@@ -618,7 +639,6 @@ public class PlatformTestUtil {
     }
   }
 
-
   public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
     assertTiming(message, expected, 4, actionToMeasure);
   }
@@ -638,7 +658,7 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        String s = e.getMessage() + "\n  " + attempts + " attempts remain";
+        String s = e.getMessage() + "\n  " + attempts + " " + StringUtil.pluralize("attempt", attempts) + " remain";
         TeamCityLogger.warning(s, null);
         System.err.println(s);
       }
@@ -843,7 +863,7 @@ public class PlatformTestUtil {
     List<WebReference> refs = new ArrayList<>();
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         for (PsiReference ref : element.getReferences()) {
           if (ref instanceof WebReference) {
             refs.add((WebReference)ref);
@@ -878,47 +898,6 @@ public class PlatformTestUtil {
       each.run();
     }
     ourProjectCleanups.clear();
-  }
-
-  /**
-   * Disposes the application (it also stops some application-related threads)
-   * and checks for project leaks.
-   */
-  public static void disposeApplicationAndCheckForProjectLeaks() {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-
-      cleanupAllProjects();
-
-      UIUtil.dispatchAllInvocationEvents();
-
-      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-      System.out.println(application.writeActionStatistics());
-      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
-      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
-      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
-
-      try {
-        LeakHunter.checkNonDefaultProjectLeak();
-      }
-      catch (AssertionError | Exception e) {
-        captureMemorySnapshot();
-        ExceptionUtil.rethrow(e);
-      }
-      finally {
-        application.setDisposeInProgress(true);
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    });
   }
 
   public static void captureMemorySnapshot() {
@@ -1015,5 +994,81 @@ public class PlatformTestUtil {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Nullable
+  public static RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer producer) {
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(CommonDataKeys.PROJECT, element.getProject());
+    dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(element));
+    final Location<PsiElement> location = PsiLocation.fromPsiElement(element);
+    dataContext.put(Location.DATA_KEY, location);
+
+    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext);
+
+    final ConfigurationFromContext configuration = producer.createConfigurationFromContext(cc);
+    return configuration != null ? configuration.getConfiguration() : null;
+  }
+
+  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+    return executeConfiguration(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  }
+
+  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull String executorId) throws InterruptedException {
+    Project project = runConfiguration.getProject();
+    ConfigurationFactory factory = runConfiguration.getFactory();
+    if (factory == null) {
+      fail("No factory found for: " + runConfiguration);
+    }
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
+      RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
+    ProgramRunner runner = ProgramRunner.getRunner(executorId, runConfiguration);
+    if (runner == null) {
+      fail("No runner found for: " + executorId + " and " + runConfiguration);
+    }
+    Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
+    ExecutionEnvironment executionEnvironment =
+      new ExecutionEnvironment(DefaultRunExecutor.getRunExecutorInstance(), runner, runnerAndConfigurationSettings,
+                               project);
+    CountDownLatch latch = new CountDownLatch(1);
+    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
+      @Override
+      public void processStarted(RunContentDescriptor descriptor) {
+        LOG.debug("Process started");
+        refRunContentDescriptor.set(descriptor);
+        latch.countDown();
+      }
+    });
+    latch.await(60, TimeUnit.SECONDS);
+    ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
+    if (processHandler == null) {
+      fail("No process handler found");
+    }
+
+    CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
+    processHandler.addProcessListener(capturingProcessAdapter);
+    processHandler.waitFor(60000);
+
+    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    ProcessOutput processOutput = capturingProcessAdapter.getOutput();
+    LOG.debug("Exit code: " + processOutput.getExitCode());
+    LOG.debug("Stdout: " + processOutput.getStdout());
+    LOG.debug("Stderr: " + processOutput.getStderr());
+
+    return executionEnvironment;
+  }
+
+  public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
+    String filePath = project.getBasePath() + File.separator + fileRelativePath;
+    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath);
+    if (virtualFile == null || !virtualFile.exists()) {
+      throw new IllegalArgumentException(String.format("File '%s' doesn't exist", filePath));
+    }
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    if (psiFile == null) {
+      return null;
+    }
+    int offset = psiFile.getText().indexOf(signature);
+    return psiFile.findElementAt(offset);
   }
 }

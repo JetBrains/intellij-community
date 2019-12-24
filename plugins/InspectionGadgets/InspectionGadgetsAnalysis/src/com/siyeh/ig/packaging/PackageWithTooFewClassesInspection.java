@@ -36,13 +36,6 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
   @SuppressWarnings({"PublicField"})
   public int limit = 3;
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "package.with.too.few.classes.display.name");
-  }
-
   @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(

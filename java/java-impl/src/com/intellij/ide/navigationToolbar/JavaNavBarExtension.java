@@ -1,29 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -34,7 +26,13 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
   @Override
   public String getPresentableText(final Object object) {
     if (object instanceof PsiClass) {
-      return ClassPresentationUtil.getNameForClass((PsiClass)object, false);
+      if (object instanceof PsiAnonymousClass) {
+        return ClassPresentationUtil.getNameForClass((PsiClass)object, false);
+      }
+      return ((PsiClass) object).getName();
+    }
+    if (object instanceof PsiMethod) {
+      return ((PsiMethod) object).getName();
     }
     else if (object instanceof PsiPackage) {
       final String name = ((PsiPackage)object).getName();
@@ -54,12 +52,15 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
         return parentPackage;
       }
     }
+    if (psiElement instanceof PsiMember) {
+      return PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, PsiMethod.class);
+    }
     return null;
   }
 
   @Nullable
   @Override
-  public PsiElement adjustElement(final PsiElement psiElement) {
+  public PsiElement adjustElement(@NotNull final PsiElement psiElement) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex();
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) {
@@ -75,12 +76,29 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
             }
           }
         }
-        if (psiElement instanceof PsiClass) {
+        if (!Registry.is("navBar.show.members") && psiElement instanceof PsiClass) {
           return psiElement;
         }
       }
-      return containingFile;
+      if (!Registry.is("navBar.show.members")) {
+        return containingFile;
+      }
     }
     return psiElement;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getLeafElement(@NotNull DataContext dataContext) {
+    if (Registry.is("navBar.show.members")) {
+      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      if (psiFile == null || editor == null) return null;
+      PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+      if (psiElement != null && psiElement.getLanguage() == JavaLanguage.INSTANCE) {
+        return PsiTreeUtil.getParentOfType(psiElement, PsiMember.class);
+      }
+    }
+    return null;
   }
 }

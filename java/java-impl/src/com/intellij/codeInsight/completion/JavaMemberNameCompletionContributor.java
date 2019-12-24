@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -422,7 +423,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtilBase.suggestGetterName(field);
+        final String getterName = field instanceof LightRecordField ? field.getName() : PropertyUtilBase.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);

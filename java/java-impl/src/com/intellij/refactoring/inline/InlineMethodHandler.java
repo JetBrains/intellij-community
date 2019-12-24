@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -21,7 +22,6 @@ import java.util.Collections;
 import java.util.function.Supplier;
 
 public class InlineMethodHandler extends JavaInlineActionHandler {
-  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
 
   private InlineMethodHandler() {
   }
@@ -57,15 +57,15 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
     if (methodBody == null){
       String message;
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", REFACTORING_NAME);
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.abstract.methods", getRefactoringName());
       }
       else if (method.hasModifierProperty(PsiModifier.NATIVE)) {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", REFACTORING_NAME);
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.to.native.methods", getRefactoringName());
       }
       else {
-        message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", REFACTORING_NAME);
+        message = RefactoringBundle.message("refactoring.cannot.be.applied.no.sources.attached", getRefactoringName());
       }
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
       return;
     }
 
@@ -74,36 +74,46 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
       if (!isJavaLanguage(refElement.getLanguage())) {
         String message = RefactoringBundle
           .message("refactoring.is.not.supported.for.language", "Inline of Java method", refElement.getLanguage().getDisplayName());
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
         return;
       }
     }
 
     if (reference == null && checkRecursive(method)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_METHOD);
+      String message = RefactoringBundle.message("refactoring.is.not.supported.for.recursive.methods", getRefactoringName());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_METHOD);
       return;
     }
 
     if (reference != null) {
       final String errorMessage = InlineMethodProcessor.checkUnableToInsertCodeBlock(methodBody, reference.getElement());
       if (errorMessage != null) {
-        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, REFACTORING_NAME, HelpID.INLINE_METHOD);
+        CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, getRefactoringName(), HelpID.INLINE_METHOD);
         return;
       }
     }
 
     if (method.isConstructor()) {
       if (method.isVarArgs()) {
-        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
+        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.vararg.constructors", getRefactoringName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
         return;
       }
       final boolean chainingConstructor = InlineUtil.isChainingConstructor(method);
       if (!chainingConstructor) {
+        InlineObjectProcessor processor = InlineObjectProcessor.create(reference, method);
+        if (processor != null) {
+          if (Messages.showOkCancelDialog("Do you want to inline the object and the subsequent call?", "Inline Object", "Inline", "Cancel",
+                                      Messages.getQuestionIcon()) == Messages.OK) {
+            processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
+            processor.run();
+          }
+          return;
+        }
         if (!isThisReference(reference)) {
-          String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
+          String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors",
+                                                     getRefactoringName());
+          CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_CONSTRUCTOR);
           return;
         }
         allowInlineThisOnly = true;
@@ -177,6 +187,10 @@ public class InlineMethodHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME + "...";
+    return getRefactoringName() + "...";
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("inline.method.title");
   }
 }

@@ -29,16 +29,7 @@ public class ThrowableInterner {
   private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
-      String message = throwable.getMessage();
-      if (message != null) {
-        return message.hashCode();
-      }
-      Object[] backtrace = getBacktrace(throwable);
-      if (backtrace != null) {
-        Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
-        return Arrays.hashCode(stack);
-      }
-      return Arrays.hashCode(throwable.getStackTrace());
+      return ThrowableInterner.computeHashCode(throwable);
     }
 
     @Override
@@ -58,6 +49,19 @@ public class ThrowableInterner {
     }
   });
 
+  public static int computeHashCode(@NotNull Throwable throwable) {
+    String message = throwable.getMessage();
+    if (message != null) {
+      return message.hashCode();
+    }
+    Object[] backtrace = getBacktrace(throwable);
+    if (backtrace != null) {
+      Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
+      return Arrays.hashCode(stack);
+    }
+    return Arrays.hashCode(throwable.getStackTrace());
+  }
+
   private static final Field BACKTRACE_FIELD;
   // can be UNKNOWN if the memory layout or JDK is unknown or ancient so we skip interning altogether, (e.g. jdk <=6)
   // or LUCKILY_NOT_NEEDED when the JDK supports reflection to the "backtrace" field (e.g. jdk 9)
@@ -65,6 +69,7 @@ public class ThrowableInterner {
   private static final int BACKTRACE_FIELD_OFFSET;
   private static final int UNKNOWN = -1;
   private static final int LUCKILY_NOT_NEEDED = -2;
+  private static final int BACKTRACE_INFO_LENGTH;
 
   static {
     BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
@@ -84,6 +89,7 @@ public class ThrowableInterner {
     else {
       BACKTRACE_FIELD_OFFSET = UNKNOWN;
     }
+    BACKTRACE_INFO_LENGTH = SystemInfo.isJavaVersionAtLeast(14, 0, 0) ? 6 : 5;
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
@@ -98,7 +104,7 @@ public class ThrowableInterner {
       return null;
     }
     // obsolete jdk
-    return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
+    return backtrace instanceof Object[] && ((Object[])backtrace).length == BACKTRACE_INFO_LENGTH ? (Object[])backtrace : null;
   }
 
   @NotNull

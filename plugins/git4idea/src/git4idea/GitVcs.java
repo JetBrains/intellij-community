@@ -283,7 +283,6 @@ public final class GitVcs extends AbstractVcs {
 
   /**
    * @return the version number of Git, which is used by IDEA. Or {@link GitVersion#NULL} if version info is unavailable yet.
-   * @see GitExecutableManager#getVersionOrCancel
    */
   @NotNull
   public GitVersion getVersion() {
@@ -361,7 +360,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Nullable
   @Override
-  public CommittedChangeList loadRevisions(VirtualFile vf, VcsRevisionNumber number) {
+  public CommittedChangeList loadRevisions(@NotNull VirtualFile vf, @NotNull VcsRevisionNumber number) {
     GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
     if (repository == null) return null;
 

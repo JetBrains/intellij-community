@@ -48,7 +48,7 @@ import java.util.Set;
  */
 class JavaChangeSignatureUsageSearcher {
   private final JavaChangeInfo myChangeInfo;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageSearcher");
+  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageSearcher.class);
 
   JavaChangeSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;

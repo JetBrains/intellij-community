@@ -39,12 +39,6 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   public boolean ignoreAfterEnumConstants = false;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.semicolon.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -107,7 +101,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
   private class UnnecessarySemicolonVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       findTopLevelSemicolons(file);
       super.visitFile(file);
     }

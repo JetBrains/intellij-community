@@ -21,7 +21,11 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   }
 
   public OneLineProgressIndicator(boolean withText) {
-    super(true, task(withText ? "Downloading..." : ""));
+    this(withText, true);
+  }
+
+  public OneLineProgressIndicator(boolean withText, boolean canBeCancelled) {
+    super(true, task(withText ? "Downloading..." : "", canBeCancelled));
 
     if (!withText) {
       myText.getParent().remove(myText);
@@ -37,7 +41,9 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   @Override
   protected void cancelRequest() {
     super.cancelRequest();
-    myCancelRunnable.run();
+    if (myCancelRunnable != null) {
+      myCancelRunnable.run();
+    }
   }
 
   @NotNull
@@ -52,7 +58,12 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
 
   @NotNull
   public static TaskInfo task(@NotNull String title) {
-    return new Task.Modal(null, title, true) {
+    return task(title, true);
+  }
+
+  @NotNull
+  private static TaskInfo task(@NotNull String title, boolean canBeCancelled) {
+    return new Task.Modal(null, title, canBeCancelled) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
       }

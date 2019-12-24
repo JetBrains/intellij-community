@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -173,7 +172,10 @@ public class SvnVcs extends AbstractVcs {
   }
 
   public void postStartup() {
-    if (myProject.isDefault()) return;
+    if (myProject.isDefault()) {
+      return;
+    }
+
     myCopiesRefreshManager = new SvnCopiesRefreshManager((SvnFileUrlMappingImpl)getSvnFileUrlMapping());
     if (!myConfiguration.isCleanupRun()) {
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -300,7 +302,7 @@ public class SvnVcs extends AbstractVcs {
   public void activate() {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
+      busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
       busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
         @Override
         public void directoryMappingChanged() {
@@ -330,7 +332,7 @@ public class SvnVcs extends AbstractVcs {
     }
 
     // do one time after project loaded
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
       postStartup();
 
       // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sense...
@@ -381,9 +383,6 @@ public class SvnVcs extends AbstractVcs {
     SvnApplicationSettings.getInstance().svnDeactivated();
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
-    }
-    if (myChangeListListener != null && !myProject.isDefault()) {
-      ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListListener);
     }
     myRootsToWorkingCopies.clear();
 

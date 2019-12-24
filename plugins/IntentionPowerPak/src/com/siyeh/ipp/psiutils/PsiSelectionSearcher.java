@@ -63,7 +63,7 @@ public class PsiSelectionSearcher {
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!selection.intersects(element.getTextRange())) {
           return;
         }

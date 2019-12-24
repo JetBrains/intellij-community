@@ -381,4 +381,34 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testTypedDict() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
   }
+
+  // PY-36008
+  public void testTypedDictKeywordArguments() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictMethods() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictWithTotal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictWithInheritance() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictAlternativeSyntaxDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  // PY-36008
+  public void testTypedDictAlternativeSyntaxUsage() {
+    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
 }

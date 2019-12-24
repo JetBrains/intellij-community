@@ -231,7 +231,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
           List<State> thisComputed = computed[insnIndex];
           if (thisComputed != null) {
             for (State prevState : thisComputed) {
-              if (stateEquiv(state, prevState)) {
+              if (state.equiv(prevState)) {
                 baseState = prevState;
                 break;
               }
@@ -436,7 +436,7 @@ class NullableInAnalysis extends Analysis<PResult> {
         List<State> thisComputed = computed[insnIndex];
         if (thisComputed != null) {
           for (State prevState : thisComputed) {
-            if (stateEquiv(state, prevState)) {
+            if (state.equiv(prevState)) {
               baseState = prevState;
               break;
             }

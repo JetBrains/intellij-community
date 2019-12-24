@@ -91,7 +91,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @Override
-  public void expire(@NotNull final Notification notification) {
+  public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
@@ -311,6 +311,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         if (wrapper == null || !wrapper.isModalProgress()) break;
         frame = frame.getOwner();
       }
+    }
+    if (frame == null && project == null) {
+      frame = WindowManager.getInstance().findVisibleFrame();
     }
     return frame;
   }
@@ -990,12 +993,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static boolean isDummyEnvironment() {
-    final Application application = ApplicationManager.getApplication();
-    return application.isUnitTestMode() || application.isCommandLine();
+    Application app = ApplicationManager.getApplication();
+    return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  public static class ProjectNotificationsComponent {
-    public ProjectNotificationsComponent(@NotNull final Project project) {
+  static final class ProjectNotificationsComponent {
+    ProjectNotificationsComponent(@NotNull Project project) {
       if (isDummyEnvironment()) {
         return;
       }

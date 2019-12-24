@@ -35,7 +35,7 @@ public class PropertiesStripTrailingSpacesFilterFactory extends PsiBasedStripTra
       protected void process(@NotNull PsiFile psiFile) {
         new PsiRecursiveElementVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (element instanceof PropertyImpl) {
               final ASTNode valueNode = ((PropertyImpl)element).getValueNode();
               if (valueNode != null) {

@@ -133,8 +133,7 @@ fun <T : UElement> PsiElement?.toUElementOfExpectedTypes(vararg clss: Class<out 
   }
 
 
-inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
-  this?.let { UastFacade.convertElementWithParent(this, T::class.java) as T? }
+inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? = toUElement(T::class.java)
 
 /**
  * Finds an UAST element of a given type at the given [offset] in the specified file. Returns null if there is no UAST

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -39,6 +40,9 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+    }
+    if (HighlightUtil.Feature.RECORDS.isAvailable(directory)) {
+      builder.addKind("Record (Preview feature)", PlatformIcons.CLASS_ICON, JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME);
     }
 
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {

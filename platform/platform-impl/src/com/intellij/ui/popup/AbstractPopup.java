@@ -65,7 +65,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
   public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
+  private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
@@ -856,7 +856,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
-      LOG.warn("huge popup requested: " + targetBounds.width + " x " + targetBounds.height);
+      StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
+      sb.append(targetBounds.width).append("x").append(targetBounds.height);
+      IJSwingUtilities.appendComponentClassNames(sb, myContent);
+      LOG.warn(sb.toString());
     }
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
@@ -1664,8 +1667,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     Rectangle bounds = popupWindow.getBounds();
 
     ScreenUtil.moveRectangleToFitTheScreen(bounds);
-    setLocation(bounds.getLocation());
-    setSize(bounds.getSize(), false);
+    // calling #setLocation or #setSize makes the window move for a bit because of tricky computations
+    // our aim here is to just move the window as-is to make it fit the screen
+    // no tricks are included here
+    popupWindow.setBounds(bounds);
+    updateMaskAndAlpha(popupWindow);
   }
 
 
@@ -1771,11 +1777,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     if (owner == null) return false;
 
-    Window wnd = UIUtil.getWindow(owner);
+    Window wnd = ComponentUtil.getWindow(owner);
 
     for (Component each : components) {
       if (each != null && SwingUtilities.isDescendingFrom(owner, each)) {
-        Window eachWindow = UIUtil.getWindow(each);
+        Window eachWindow = ComponentUtil.getWindow(each);
         if (eachWindow == wnd) {
           return true;
         }
@@ -2000,12 +2006,17 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   /**
-   * @return {@code true} if focus moved to a popup window or its child window
+   * @param event a {@code WindowEvent} for the activated or focused window
+   * @param popup a window that corresponds to the current popup
+   * @return {@code false} if a focus moved to a popup window or its child window in the whole hierarchy
    */
-  private static boolean isCancelNeeded(@NotNull WindowEvent event, Window window) {
-    if (window == null) return true;
-    Window focused = event.getWindow();
-    return focused != window && (focused == null || window != focused.getOwner());
+  private static boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
+    Window window = event.getWindow(); // the activated or focused window
+    while (window != null) {
+      if (popup == window) return false; // do not close a popup, which child is activated or focused
+      window = window.getOwner(); // consider a window owner as activated or focused
+    }
+    return true;
   }
 
   @Nullable

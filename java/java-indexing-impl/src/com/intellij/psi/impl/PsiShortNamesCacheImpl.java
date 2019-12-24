@@ -106,22 +106,22 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   }
 
   @Override
-  public boolean processAllClassNames(@NotNull Processor<String> processor) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor) {
     return JavaShortClassNameIndex.getInstance().processAllKeys(myProject, processor);
   }
 
   @Override
-  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllClassNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, processor, scope, filter);
   }
 
   @Override
-  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllMethodNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.METHODS, processor, scope, filter);
   }
 
   @Override
-  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllFieldNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     return StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.FIELDS, processor, scope, filter);
   }
 

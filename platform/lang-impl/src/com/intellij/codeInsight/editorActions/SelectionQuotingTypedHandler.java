@@ -14,6 +14,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -21,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
-  public static final ExtensionPointName<DequotingFilter> EP_NAME =
-    ExtensionPointName.create("com.intellij.selectionDequotingFilter");
+  private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
+  private static final ExtensionPointName<DequotingFilter> OLD_EP_NAME = ExtensionPointName.create("com.intellij.selectionDequotingFilter");
 
   @NotNull
   @Override
@@ -61,24 +64,33 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
         boolean restoreStickySelection = editor instanceof EditorEx && ((EditorEx)editor).isStickySelection();
         selectionModel.removeSelection();
         editor.getDocument().replaceString(selectionStart, selectionEnd, newText);
-        TextRange replacedTextRange = new TextRange(caretOffset + 1, caretOffset + newText.length() - 1);
+        
+        int startOffset = caretOffset + 1;
+        int endOffset = caretOffset + newText.length() - 1;
+        int length = editor.getDocument().getTextLength();
+        
         // selection is removed here
-        if (replacedTextRange.getEndOffset() <= editor.getDocument().getTextLength()) {
+        if (endOffset <= length) {
           if (restoreStickySelection) {
             EditorEx editorEx = (EditorEx)editor;
             CaretModel caretModel = editorEx.getCaretModel();
-            caretModel.moveToOffset(ltrSelection ? replacedTextRange.getStartOffset() : replacedTextRange.getEndOffset());
+            caretModel.moveToOffset(ltrSelection ? startOffset : endOffset);
             editorEx.setStickySelection(true);
-            caretModel.moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
+            caretModel.moveToOffset(ltrSelection ? endOffset : startOffset);
           }
           else {
             if (ltrSelection || editor instanceof EditorWindow) {
-              editor.getSelectionModel().setSelection(replacedTextRange.getStartOffset(), replacedTextRange.getEndOffset());
+              editor.getSelectionModel().setSelection(startOffset, endOffset);
             }
             else {
-              editor.getSelectionModel().setSelection(replacedTextRange.getEndOffset(), replacedTextRange.getStartOffset());
+              editor.getSelectionModel().setSelection(endOffset, startOffset);
             }
-            editor.getCaretModel().moveToOffset(ltrSelection ? replacedTextRange.getEndOffset() : replacedTextRange.getStartOffset());
+            editor.getCaretModel().moveToOffset(ltrSelection ? endOffset : startOffset);
+          }
+          if (c == '{') {
+            int startOffsetToReformat = startOffset - 1;
+            int endOffsetToReformat = length > endOffset ? endOffset + 1 : endOffset;
+            CodeStyleManager.getInstance(project).reformatText(file, startOffsetToReformat, endOffsetToReformat);
           }
         }
         return Result.STOP;
@@ -128,11 +140,9 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  private static boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
-    for(DequotingFilter filter: EP_NAME.getExtensionList()) {
-      if (filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) return true;
-    }
-    return false;
+  public static boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
+    return EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) ||
+           OLD_EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c));
   }
 
   private static char getMatchingDelimiter(char c) {
@@ -163,10 +173,21 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     document.replaceString(offset, offset + 1, String.valueOf(newChar));
   }
 
-  public static abstract class DequotingFilter {
+  public static abstract class UnquotingFilter {
     public abstract boolean skipReplacementQuotesOrBraces(@NotNull PsiFile file,
                                                           @NotNull Editor editor,
                                                           @NotNull String selectedText,
                                                           char c);
+  }
+
+  /**
+   * @deprecated in order to disable replacement of surrounding quotes/braces in some cases override {@link UnquotingFilter} and register
+   * the implementation as {@code selectionDequotingFilter} extension; if you need to check whether surrounding quotes/braces should be
+   * replaced use {@link #shouldSkipReplacementOfQuotesOrBraces}
+   */
+  @SuppressWarnings("SpellCheckingInspection")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static abstract class DequotingFilter extends UnquotingFilter {
   }
 }

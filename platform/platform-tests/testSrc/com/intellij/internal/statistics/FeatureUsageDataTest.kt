@@ -118,6 +118,14 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
   }
 
   @Test
+  fun `test add undefined path`() {
+    val build = FeatureUsageData().addAnonymizedPath(null).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("file_path"))
+    Assert.assertTrue(build["file_path"] == "undefined")
+  }
+
+  @Test
   fun `test add anonymized id`() {
     val id = "item-id"
     val build = FeatureUsageData().addAnonymizedId(id).build()

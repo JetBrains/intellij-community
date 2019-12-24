@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -31,19 +33,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MissingDeprecatedAnnotationInspection extends BaseInspection {
-
+final class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("missing.deprecated.annotation.display.name");
-  }
 
   @Override
   @NotNull
@@ -54,7 +48,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
            : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missing.deprecated.tag.option"),
@@ -69,12 +63,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final boolean annotationWarning = ((Boolean)infos[0]).booleanValue();
-    if (annotationWarning) {
-      return new MissingDeprecatedAnnotationFix();
-    }
-    else {
-      return new MissingDeprecatedTagFix();
-    }
+    return annotationWarning ? new MissingDeprecatedAnnotationFix() : new MissingDeprecatedTagFix();
   }
 
   private static class MissingDeprecatedAnnotationFix extends InspectionGadgetsFix {
@@ -104,7 +93,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
   private static class MissingDeprecatedTagFix extends InspectionGadgetsFix {
 
-    private final static String DEPRECATED_TAG_NAME = "deprecated";
+    private static final String DEPRECATED_TAG_NAME = "deprecated";
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -230,8 +219,8 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
     }
 
-    private boolean hasDeprecatedComment(PsiJavaDocumentedElement element, boolean checkContent) {
-      final PsiDocComment comment = element.getDocComment();
+    private boolean hasDeprecatedComment(PsiJavaDocumentedElement documentedElement, boolean checkContent) {
+      final PsiDocComment comment = documentedElement.getDocComment();
       if (comment == null) {
         return false;
       }
@@ -239,7 +228,16 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       if (deprecatedTag == null) {
         return false;
       }
-      return !checkContent || deprecatedTag.getValueElement() != null;
+      if (!checkContent) {
+        return true;
+      }
+      for (PsiElement element : deprecatedTag.getDataElements()) {
+        if (element instanceof PsiDocTagValue ||
+            element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

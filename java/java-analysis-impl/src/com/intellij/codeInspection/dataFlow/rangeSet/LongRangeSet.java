@@ -2,8 +2,7 @@
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -135,7 +134,7 @@ public abstract class LongRangeSet {
    * @param relation relation to be applied to current set (JavaTokenType.EQEQ/NE/GT/GE/LT/LE)
    * @return new set or null if relation is unsupported
    */
-  public LongRangeSet fromRelation(@Nullable DfaRelationValue.RelationType relation) {
+  public LongRangeSet fromRelation(@Nullable RelationType relation) {
     if (isEmpty() || relation == null) return null;
     switch (relation) {
       case EQ:
@@ -254,11 +253,24 @@ public abstract class LongRangeSet {
       return modRange(minValue(isLong), maxValue(isLong), mod, 1).plus(constVal, isLong);
     }
     if (this instanceof Point && other instanceof ModRange) {
-      if (((Point)this).myValue % ((ModRange)other).myMod == 0) {
-        return other;
+      ModRange modRange = (ModRange)other;
+      long value = ((Point)this).myValue;
+      if (value % modRange.myMod == 0) {
+        return modRange(minValue(isLong), maxValue(isLong), modRange.myMod, modRange.myBits);
       }
-      else if (((ModRange)other).myBits == 1) {
+      if (modRange.myBits == 1) {
         return this.plus(other, isLong);
+      }
+      if (value >= -64 && value < 64) {
+        int gcd = gcd(Math.abs((int)value), modRange.myMod);
+        if (gcd > 1) {
+          long count = modRange.myMod / gcd;
+          long bits = 0;
+          for(int i=0; i<count; i++) {
+            bits |= (modRange.myBits >>> (i * gcd)) & ((1L << gcd) - 1);
+          }
+          return modRange(minValue(isLong), maxValue(isLong), gcd, bits);
+        }
       }
     }
     if (other instanceof Point && this instanceof ModRange) {
@@ -397,7 +409,12 @@ public abstract class LongRangeSet {
   @NotNull
   public LongRangeSet div(LongRangeSet divisor, boolean isLong) {
     if (divisor.isEmpty() || divisor.equals(Point.ZERO)) return empty();
-    long[] left = splitAtZero(asRanges());
+    LongRangeSet dividend = this;
+    if (!isLong) {
+      divisor = divisor.intersect(Range.INT_RANGE);
+      dividend = dividend.intersect(Range.INT_RANGE);
+    } 
+    long[] left = splitAtZero(dividend.asRanges());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
@@ -673,6 +690,7 @@ public abstract class LongRangeSet {
   /**
    * @return a set containing all possible long values
    */
+  @NotNull
   public static LongRangeSet all() {
     return Range.LONG_RANGE;
   }
@@ -700,20 +718,6 @@ public abstract class LongRangeSet {
     }
     else if (val instanceof Character) {
       return point(((Character)val).charValue());
-    }
-    return null;
-  }
-
-  @Nullable
-  public static LongRangeSet fromDfaValue(DfaValue value) {
-    if (value instanceof DfaFactMapValue) {
-      return ((DfaFactMapValue)value).get(DfaFactType.RANGE);
-    }
-    if (value instanceof DfaConstValue) {
-      return fromConstant(((DfaConstValue)value).getValue());
-    }
-    if (value instanceof DfaVariableValue) {
-      return fromType(value.getType());
     }
     return null;
   }
@@ -759,7 +763,8 @@ public abstract class LongRangeSet {
       for (int newMod = (int)length; newMod <= intMod / 2; newMod++) {
         if (intMod % newMod == 0) {
           long newBits = 0;
-          for (long i = from; i <= to; i++) {
+          // `to` could be Long.MAX_VALUE; so `i >= from` condition is important to react on possible overflow
+          for (long i = from; i >= from && i <= to; i++) {
             if (isSet(bits, remainder(i, intMod))) {
               newBits = setBit(newBits, remainder(i, newMod));
             }

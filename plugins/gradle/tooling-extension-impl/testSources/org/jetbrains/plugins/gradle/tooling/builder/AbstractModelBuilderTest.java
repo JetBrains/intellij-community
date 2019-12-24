@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,9 +39,13 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
+import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
+import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
+import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +80,8 @@ public abstract class AbstractModelBuilderTest {
     {"2.6"}, /*{"2.7"}, {"2.8"}, {"2.9"}, {"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
     {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
-    {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"}
+    {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
+    {"6.0"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -189,12 +195,13 @@ public abstract class AbstractModelBuilderTest {
 
   @NotNull
   private Set<Class> getToolingExtensionClasses() {
-    final Set<Class> classes = ContainerUtil.set(
-      ExternalProject.class,
+    final Set<Class> classes = set(
+      // external-system-rt.jar
+      ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
-      ModelBuildScriptClasspathBuilderImpl.class,
+      Init.class,
       Multimap.class,
       ShortTypeHandling.class,
       // trove4j jar
@@ -225,7 +232,7 @@ public abstract class AbstractModelBuilderTest {
 
 
   protected <T> Map<String, T> getModulesMap(final Class<T> aClass) {
-    final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
+    final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
     final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {

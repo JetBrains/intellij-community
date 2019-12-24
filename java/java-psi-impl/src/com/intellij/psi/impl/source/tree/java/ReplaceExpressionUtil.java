@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 
 public class ReplaceExpressionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil");
+  private static final Logger LOG = Logger.getInstance(ReplaceExpressionUtil.class);
 
   public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
     final ASTNode oldParent = oldExpr.getTreeParent();

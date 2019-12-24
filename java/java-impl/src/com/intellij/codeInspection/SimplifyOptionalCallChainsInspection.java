@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.openapi.project.Project;
@@ -469,8 +469,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       }
       String name = call.getMethodExpression().getReferenceName();
       if ("get".equals(name)) {
-        SpecialFieldValue fact = CommonDataflow.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
-        if (DfaFactType.NULLABILITY.fromDfaValue(SpecialField.OPTIONAL_VALUE.extract(fact)) != DfaNullability.NOT_NULL) return null;
+        DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(qualifier));
+        if (dfType.isSuperType(DfTypes.NULL)) return null;
       } else if ("orElse".equals(name)) {
         if (!ExpressionUtils.isNullLiteral(call.getArgumentList().getExpressions()[0])) return null;
       }
@@ -808,10 +808,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     private static boolean isPresentOptional(PsiExpression optionalExpression) {
-      SpecialFieldValue fact = CommonDataflow.getExpressionFact(optionalExpression, DfaFactType.SPECIAL_FIELD_VALUE);
-      DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
-      if (!(value instanceof DfaFactMapValue)) return false;
-      return DfaNullability.toNullability(DfaFactType.NULLABILITY.fromDfaValue(value)) == Nullability.NOT_NULL;
+      return !SpecialField.OPTIONAL_VALUE.getFromQualifier(CommonDataflow.getDfType(optionalExpression)).isSuperType(DfTypes.NULL);
     }
 
     private static class Context {

@@ -34,7 +34,7 @@ import java.io.IOException;
 
 @Deprecated
 public class MergeRequestImpl extends MergeRequest {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.mergeTool.MergeRequestImpl");
+  private static final Logger LOG = Logger.getInstance(MergeRequestImpl.class);
 
   private final DiffContent[] myDiffContents = new DiffContent[3];
   private String myWindowTitle = null;

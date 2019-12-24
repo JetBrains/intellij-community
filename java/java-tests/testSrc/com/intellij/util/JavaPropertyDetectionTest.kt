@@ -139,6 +139,8 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
   fun testIndexDoesntContainPolyadicExpressions() {
     assertJavaSimplePropertyIndex("""
       public class Foo {
+        public int getX() { x + 1; }
+      
         public String getName() {
           return n + a + m + e;
         }

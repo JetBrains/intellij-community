@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author peter
  */
 public class FileContentQueue {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
+  private static final Logger LOG = Logger.getInstance(FileContentQueue.class);
 
   private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024 * 1024;
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
@@ -61,15 +62,15 @@ public class FileContentQueue {
 
   public void startLoading() {
     if (myContentsToLoad.get() == 0) return;
-    
+
     ourContentLoadingQueues.addLast(this);
-    
+
     Runnable task = () -> {
       FileContentQueue contentQueue = ourContentLoadingQueues.pollFirst();
-      
+
       while (contentQueue != null) {
         PreloadState preloadState = contentQueue.preloadNextContent();
-        
+
         if (preloadState == PreloadState.PRELOADED_SUCCESSFULLY ||
             preloadState == PreloadState.TOO_MUCH_DATA_PRELOADED) {
           ourContentLoadingQueues.addLast(contentQueue);
@@ -83,14 +84,14 @@ public class FileContentQueue {
   private enum PreloadState {
     TOO_MUCH_DATA_PRELOADED, PRELOADED_SUCCESSFULLY, CANCELLED_OR_FINISHED
   }
-  
+
   private PreloadState preloadNextContent() {
     try {
       if (myLoadedBytesInQueue.get() > MAX_SIZE_OF_BYTES_IN_QUEUE) {
-        // wait a little for indexer threads to consume content, they will awake us earlier once we can proceed  
-        synchronized (ourProceedWithLoadingLock) { 
+        // wait a little for indexer threads to consume content, they will awake us earlier once we can proceed
+        synchronized (ourProceedWithLoadingLock) {
           //noinspection WaitNotInLoop
-          ourProceedWithLoadingLock.wait(300); 
+          ourProceedWithLoadingLock.wait(300);
         }
         myProgressIndicator.checkCanceled();
         return PreloadState.TOO_MUCH_DATA_PRELOADED;
@@ -105,8 +106,8 @@ public class FileContentQueue {
     if (myProgressIndicator.isCanceled()) return PreloadState.CANCELLED_OR_FINISHED;
     return loadNextContent() ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
   }
-  
-  private boolean loadNextContent() { 
+
+  private boolean loadNextContent() {
     // Contract: if file is taken from myFilesQueue then it will be loaded to myLoadedContents and myContentsToLoad will be decremented
     VirtualFile file = myFilesQueue.poll();
     if (file == null) return false;
@@ -137,8 +138,9 @@ public class FileContentQueue {
 
       // Reads the content bytes and caches them.
       // hint at the current project to avoid expensive read action in ProjectLocatorImpl
-      ProjectLocator.computeWithPreferredProject(content.getVirtualFile(), myProject, ()-> content.getBytes());
-
+      try (AccessToken ignored = ProjectLocator.runWithPreferredProject(content.getVirtualFile(), myProject)) {
+        content.getBytes();
+      }
       return true;
     }
     catch (Throwable e) {
@@ -203,19 +205,19 @@ public class FileContentQueue {
   private FileContent doTake(ProgressIndicator indicator) {
     FileContent result = null;
     boolean waitForContentsToBeLoaded = false;
- 
+
     while (result == null) {
       indicator.checkCanceled();
-      
+
       final int remainingContentsToLoad = myContentsToLoad.get();
       result = pollLoadedContent(waitForContentsToBeLoaded && remainingContentsToLoad > 0);
-      
+
       if (result == null) {  // no loaded contents by other threads
         if (remainingContentsToLoad == 0) return null; // no items to load
 
         if (!loadNextContent()) { // attempt to eagerly load content failed
           // last remaining contents are loaded by other threads, use timed poll for results
-          waitForContentsToBeLoaded = true;  
+          waitForContentsToBeLoaded = true;
         }
       }
     }
@@ -235,7 +237,7 @@ public class FileContentQueue {
   @Nullable
   private FileContent pollLoadedContent(boolean waitForContentsToBeLoaded) {
     if (waitForContentsToBeLoaded) {
-      try { 
+      try {
         return myLoadedContents.poll(50, TimeUnit.MILLISECONDS);
       } catch(InterruptedException ex) { throw new RuntimeException(ex); }
     } else {

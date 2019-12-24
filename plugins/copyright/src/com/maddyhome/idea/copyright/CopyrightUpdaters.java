@@ -22,7 +22,7 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
  * @author yole
  */
 public class CopyrightUpdaters extends FileTypeExtension<UpdateCopyrightsProvider> {
-  public static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
+  public final static CopyrightUpdaters INSTANCE = new CopyrightUpdaters();
 
   private CopyrightUpdaters() {
     super("com.intellij.copyright.updater");

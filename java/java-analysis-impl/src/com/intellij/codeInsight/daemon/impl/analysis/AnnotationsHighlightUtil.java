@@ -44,7 +44,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationsHighlightUtil.class);
 
-  @Nullable
   static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
                                           RefCountHolder refCountHolder) {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
@@ -93,7 +92,6 @@ public class AnnotationsHighlightUtil {
     }
   }
 
-  @Nullable
   private static HighlightInfo checkDuplicateAttribute(@NotNull PsiNameValuePair pair) {
     PsiAnnotationParameterList annotation = (PsiAnnotationParameterList)pair.getParent();
     PsiNameValuePair[] attributes = annotation.getAttributes();
@@ -110,7 +108,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkMemberValueType(@NotNull PsiAnnotationMemberValue value, @NotNull PsiType expectedType) {
     if (expectedType instanceof PsiClassType && expectedType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
       if (!(value instanceof PsiClassObjectAccessExpression)) {
@@ -260,7 +257,6 @@ public class AnnotationsHighlightUtil {
     return false;
   }
 
-  @Nullable
   static HighlightInfo checkMissingAttributes(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
@@ -311,7 +307,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkConstantExpression(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
@@ -324,7 +319,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkValidAnnotationType(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
     if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
@@ -340,7 +334,6 @@ public class AnnotationsHighlightUtil {
     psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT)
   );
 
-  @Nullable
   public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel level, @NotNull PsiFile file) {
     if (ANY_ANNOTATION_ALLOWED.accepts(annotation)) {
       return null;
@@ -410,7 +403,6 @@ public class AnnotationsHighlightUtil {
     return info;
   }
 
-  @Nullable
   private static HighlightInfo checkReferenceTarget(@NotNull PsiAnnotation annotation, @Nullable PsiJavaCodeReferenceElement ref) {
     if (ref == null) return null;
     PsiElement refTarget = ref.resolve();
@@ -444,7 +436,6 @@ public class AnnotationsHighlightUtil {
     return ref;
   }
 
-  @Nullable
   static HighlightInfo checkAnnotationType(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement != null) {
@@ -457,7 +448,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkCyclicMemberType(@NotNull PsiTypeElement typeElement, @NotNull PsiClass aClass) {
     PsiType type = typeElement.getType();
     Set<PsiClass> checked = new HashSet<>();
@@ -504,7 +494,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkAnnotationDeclaration(@Nullable PsiElement parent, @NotNull PsiReferenceList list) {
     if (PsiUtil.isAnnotationMethod(parent)) {
       PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
@@ -522,7 +511,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkPackageAnnotationContainingFile(@NotNull PsiPackageStatement statement, @NotNull PsiFile file) {
     PsiModifierList annotationList = statement.getAnnotationList();
     if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
@@ -532,7 +520,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkTargetAnnotationDuplicates(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
@@ -563,7 +550,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       final PsiAnnotationOwner owner = annotation.getOwner();
@@ -580,7 +566,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
     String qualifiedName = annotation.getQualifiedName();
     if (!CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE.equals(qualifiedName)) return null;
@@ -596,7 +581,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   private static String doCheckRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList)) return null;
@@ -653,7 +637,6 @@ public class AnnotationsHighlightUtil {
     return container;
   }
 
-  @Nullable
   static HighlightInfo checkReceiverPlacement(@NotNull PsiReceiverParameter parameter) {
     PsiElement owner = parameter.getParent().getParent();
     if (owner == null) return null;
@@ -678,7 +661,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkReceiverType(@NotNull PsiReceiverParameter parameter) {
     PsiElement owner = parameter.getParent().getParent();
     if (!(owner instanceof PsiMethod)) return null;

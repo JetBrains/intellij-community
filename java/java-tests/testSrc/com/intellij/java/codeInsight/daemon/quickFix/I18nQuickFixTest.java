@@ -22,6 +22,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,6 +46,13 @@ public class I18nQuickFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void beforeActionStarted(final String testName, final String contents) {
     myMustBeAvailableAfterInvoke = Comparing.strEqual(testName, "SystemCall.java");
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    // avoid "memory/disk conflict" when the document for changed annotation.xml stays in memory
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).clearUncommittedDocuments();
+    super.tearDown();
   }
 
   @Override

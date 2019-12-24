@@ -17,12 +17,14 @@
 
     <projectService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager"/>
     <statistics.counterUsagesCollector groupId="terminalShell" version="1"/>
+    <statistics.validation.customWhiteListRule implementation="org.jetbrains.plugins.terminal.TerminalCommandUsageRule"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
-    <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.impl.DiffCustomCommandHandler"/>
+    <terminal.shellCommandHandler implementation="com.intellij.diff.actions.DiffCustomCommandHandler"/>
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="0"/>
+    <terminal.shellCommandHandler implementation="com.intellij.ide.actions.runAnything.RunAnythingTerminalBridge"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -31,8 +33,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.localTerminalCustomizer"
-                    interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer"/>
+                    interface="org.jetbrains.plugins.terminal.LocalTerminalCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.terminal.shellCommandHandler"
-                    interface="com.intellij.terminal.TerminalShellCommandHandler"/>
+                    interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

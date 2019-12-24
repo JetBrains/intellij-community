@@ -135,7 +135,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
 
     if (debuggerRunnerSettings != null) {
       remoteConnection.setUseSockets(debuggerRunnerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT);
-      remoteConnection.setDebuggerPort(debuggerRunnerSettings.getDebugPort());
+      remoteConnection.setDebuggerAddress(debuggerRunnerSettings.getDebugPort());
     }
 
     return remoteConnection;
@@ -147,9 +147,9 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   }
 
   @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings, beforeExecution);
-    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class), runProfile);
+    runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
   }
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings, boolean beforeExecution)

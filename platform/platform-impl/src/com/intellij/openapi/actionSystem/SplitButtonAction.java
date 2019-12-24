@@ -30,7 +30,7 @@ import java.awt.geom.Area;
 
 import static com.intellij.openapi.actionSystem.ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
 
-public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
+public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
 
   @ApiStatus.Experimental
@@ -44,10 +44,13 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    myActionGroup.update(e);
     Presentation presentation = e.getPresentation();
-    JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
-    if (component instanceof SplitButton) {
-      ((SplitButton)component).update(e);
+    if (presentation.isVisible()) {
+      JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+      if (component instanceof SplitButton) {
+        ((SplitButton)component).update(e);
+      }
     }
   }
 
@@ -68,7 +71,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     return new SplitButton(this, presentation, place, myActionGroup);
   }
 
-  private static class SplitButton extends ActionButton implements AnActionListener {
+  private static final class SplitButton extends ActionButton {
     private enum MousePressType {
       Action, Popup, None
     }
@@ -81,7 +84,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     private MousePressType mousePressType = MousePressType.None;
     private Disposable myDisposable;
 
-    private SplitButton(AnAction action, Presentation presentation, String place, ActionGroup actionGroup) {
+    private SplitButton(@NotNull AnAction action, @NotNull Presentation presentation, String place, ActionGroup actionGroup) {
       super(action, presentation, place, DEFAULT_MINIMUM_BUTTON_SIZE);
       myActionGroup = actionGroup;
 
@@ -143,7 +146,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       int x = baseRect.x + baseRect.width - JBUIScale.scale(3) - ARROW_DOWN.getIconWidth();
       int y = baseRect.y + (baseRect.height - ARROW_DOWN.getIconHeight()) / 2 + JBUIScale.scale(1);
-      look.paintIconAt(g, ARROW_DOWN, x, y);
+      look.paintIcon(g, this, ARROW_DOWN, x, y);
 
       x -= JBUIScale.scale(4);
       if (getPopState() == POPPED || getPopState() == PUSHED) {
@@ -162,7 +165,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       x = baseRect.x + (x -  actionIcon.getIconWidth()) / 2;
       y = baseRect.y + (baseRect.height - actionIcon.getIconHeight()) / 2;
-      look.paintIconAt(g, actionIcon, x, y);
+      look.paintIcon(g, this, actionIcon, x, y);
     }
 
     private boolean isToggleActionPushed() {
@@ -190,7 +193,8 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
       if (mousePressType == MousePressType.Popup) {
         showPopupMenu(event, myActionGroup);
-      } else if (selectedActionEnabled()) {
+      }
+      else if (selectedActionEnabled()) {
         AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
         ActionUtil.performActionDumbAware(selectedAction, newEvent);
       }
@@ -227,7 +231,17 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     public void addNotify() {
       super.addNotify();
       myDisposable = Disposer.newDisposable();
-      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(AnActionListener.TOPIC, this);
+      Disposer.register(ApplicationManager.getApplication(), myDisposable);
+      ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+        @Override
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+          if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == SplitButton.this) {
+            selectedAction = action;
+            update(event);
+            repaint();
+          }
+        }
+      });
     }
 
     @Override
@@ -243,15 +257,6 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
       if (selectedAction != null) {
         selectedAction.update(event);
         copyPresentation(event.getPresentation());
-      }
-    }
-
-    @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == this) {
-        selectedAction = action;
-        update(event);
-        repaint();
       }
     }
   }

@@ -24,6 +24,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -32,13 +33,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.Element;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
@@ -59,7 +63,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JButton myUpdateButton;
   private JButton myEnableDisableButton;
   private JBOptionButton myEnableDisableUninstallButton;
-  private JButton myUninstallButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myVersionSize;
@@ -184,20 +187,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
     myNameAndButtons.addButtonComponent(myUpdateButton = new UpdateButton());
-    myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor));
+    myUpdateButton.addActionListener(
+      e -> myPluginModel.installOrUpdatePlugin(myPlugin, myUpdateDescriptor, ModalityState.stateForComponent(myUpdateButton)));
 
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
-    myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null));
+    myInstallButton
+      .addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
     myEnableDisableButton = new JButton();
-    myEnableDisableButton.addActionListener(e -> changeEnableDisable());
+    myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
     ColorButton.setWidth72(myEnableDisableButton);
     myNameAndButtons.addButtonComponent(myEnableDisableButton);
 
     myEnableDisableAction = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        changeEnableDisable();
+        myPluginModel.changeEnableDisable(myPlugin);
       }
     };
     AbstractAction uninstallAction = new AbstractAction("Uninstall") {
@@ -208,14 +213,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
     };
     myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(myEnableDisableAction, uninstallAction));
 
-    myUninstallButton = new JButton("Uninstall");
-    myUninstallButton.addActionListener(e -> doUninstall());
-    ColorButton.setWidth72(myUninstallButton);
-    myNameAndButtons.addButtonComponent(myUninstallButton);
-
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
+  }
+
+  public void setOnlyUpdateMode() {
+    myNameAndButtons.removeButtons();
+    myPanel.setBorder(JBUI.Borders.empty(15, 20, 0, 0));
+    myEmptyPanel.setBorder(null);
   }
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {
@@ -289,7 +295,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myBottomScrollPane = new JBScrollPane(bottomPanel);
     myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myBottomScrollPane.setBorder(null);
     myPanel.add(myBottomScrollPane);
 
@@ -300,7 +305,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     bottomPanel.add(new JLabel());
 
     Object constraints = JBUIScale.scale(700);
-    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(), constraints);
+    bottomPanel.add(myDescriptionComponent = createDescriptionComponent(view -> {
+      float width = view.getPreferredSpan(View.X_AXIS);
+      if (width < 0 || width > myBottomScrollPane.getWidth()) {
+        myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+      }
+    }), constraints);
     myChangeNotesPanel = new ChangeNotesPanel(bottomPanel, constraints, myDescriptionComponent);
 
     JLabel separator = new JLabel();
@@ -313,10 +323,32 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @NotNull
-  public static JEditorPane createDescriptionComponent() {
+  public static JEditorPane createDescriptionComponent(@Nullable Consumer<View> imageViewHandler) {
     JEditorPane editorPane = new JEditorPane();
 
-    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
+    HTMLEditorKit kit;
+    if (imageViewHandler == null) {
+      kit = UIUtil.getHTMLEditorKit();
+    }
+    else {
+      kit = new JBHtmlEditorKit() {
+        private final ViewFactory myFactory = new JBHtmlFactory() {
+          @Override
+          public View create(Element e) {
+            View view = super.create(e);
+            if (view instanceof javax.swing.text.html.ImageView) {
+              imageViewHandler.accept(view);
+            }
+            return view;
+          }
+        };
+
+        @Override
+        public ViewFactory getViewFactory() {
+          return myFactory;
+        }
+      };
+    }
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
@@ -406,40 +438,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
         .linkSelected(null, "/vendor:" + (vendor.indexOf(' ') == -1 ? vendor : StringUtil.wrapWithDoubleQuote(vendor))));
     }
 
-    String productCode = myPlugin.getProductCode();
-    if (productCode == null) {
-      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
-        myLicensePanel.setText("Next plugin version is paid.\nThe 30-day trial is available.", true, false);
-        showBuyPlugin(() -> myUpdateDescriptor);
-      }
-      else {
-        myLicensePanel.setVisible(false);
-      }
-    }
-    else if (myMarketplace) {
-      myLicensePanel.setText("The 30-day trial is available.", false, false);
-      showBuyPlugin(() -> myPlugin);
-      myLicensePanel.setVisible(true);
-    }
-    else {
-      LicensingFacade instance = LicensingFacade.getInstance();
-      if (instance == null) {
-        myLicensePanel.setText("No license in EAP build.", false, false);
-      }
-      else {
-        String stamp = instance.getConfirmationStamp(productCode);
-        if (stamp == null) {
-          myLicensePanel.setText("No license.", true, false);
-        }
-        else {
-          myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
-        }
-        //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
-      }
-      myLicensePanel.setVisible(true);
-
-      ((JComponent)myTagPanel.getComponent(0)).setToolTipText(myLicensePanel.getMessage());
-    }
+    showLicensePanel();
 
     if (bundled) {
       myHomePage.hide();
@@ -452,6 +451,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
     myDate.setText(date);
     myDate.setVisible(date != null);
+
+    myBottomScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
     String description = getDescription();
     if (description != null) {
@@ -477,17 +478,47 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private void showBuyPlugin(@NotNull Supplier<IdeaPluginDescriptor> getPlugin) {
-    IdeaPluginDescriptor plugin = getPlugin.get();
-
-    myLicensePanel.setLink("Buy plugin", () ->
-      BrowserUtil.browse("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode()), true);
-
-    PluginPriceService.getPrice(plugin, price -> myLicensePanel.updateLink("Buy plugin from " + price, false), price -> {
-      if (plugin == getPlugin.get()) {
-        myLicensePanel.updateLink("Buy plugin from " + price, true);
+  private void showLicensePanel() {
+    String productCode = myPlugin.getProductCode();
+    if (productCode == null) {
+      if (myUpdateDescriptor != null && myUpdateDescriptor.getProductCode() != null) {
+        myLicensePanel.setText("Next plugin version is paid.\nUse the trial for up to 30 days or", true, false);
+        myLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myLicensePanel.setVisible(true);
       }
-    });
+      else {
+        myLicensePanel.hideWithChildren();
+      }
+    }
+    else if (myMarketplace) {
+      myLicensePanel.setText("Use the trial for up to 30 days or", false, false);
+      myLicensePanel.showBuyPlugin(() -> myPlugin);
+      myLicensePanel.setVisible(true);
+    }
+    else {
+      LicensingFacade instance = LicensingFacade.getInstance();
+      if (instance == null) {
+        myLicensePanel.hideWithChildren();
+        return;
+      }
+
+      String stamp = instance.getConfirmationStamp(productCode);
+      if (stamp == null) {
+        if (ApplicationManager.getApplication().isEAP()) {
+          myTagPanel.setFirstTagTooltip("The license is not required for EAP version");
+          myLicensePanel.hideWithChildren();
+          return;
+        }
+        myLicensePanel.setText("No license.", true, false);
+      }
+      else {
+        myLicensePanel.setTextFromStamp(stamp, instance.getExpirationDate(productCode));
+      }
+
+      myTagPanel.setFirstTagTooltip(myLicensePanel.getMessage());
+      //myLicensePanel.setLink("Manage licenses", () -> { XXX }, false);
+      myLicensePanel.setVisible(true);
+    }
   }
 
   public void updateButtons() {
@@ -502,7 +533,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myUpdateButton.setVisible(false);
       myEnableDisableButton.setVisible(false);
       myEnableDisableUninstallButton.setVisible(false);
-      myUninstallButton.setVisible(false);
     }
     else {
       myInstallButton.setVisible(false);
@@ -527,24 +557,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
         myUpdateButton.setVisible(false);
         myEnableDisableButton.setVisible(false);
         myEnableDisableUninstallButton.setVisible(false);
-        myUninstallButton.setVisible(false);
       }
       else {
         myRestartButton.setVisible(false);
 
         boolean bundled = myPlugin.isBundled();
         String title = myPluginModel.getEnabledTitle(myPlugin);
-        boolean errors = myPluginModel.hasErrors(myPlugin);
 
-        myUpdateButton.setVisible(myUpdateDescriptor != null && !errors && !installedWithoutRestart);
+        myUpdateButton.setVisible(myUpdateDescriptor != null && !installedWithoutRestart);
 
-        myEnableDisableButton.setVisible(bundled && !errors);
+        myEnableDisableButton.setVisible(bundled);
         myEnableDisableButton.setText(title);
 
-        myEnableDisableUninstallButton.setVisible(!bundled && !errors);
+        myEnableDisableUninstallButton.setVisible(!bundled);
         myEnableDisableAction.putValue(Action.NAME, title);
-
-        myUninstallButton.setVisible(!bundled && errors);
       }
 
       updateEnableForNameAndIcon();
@@ -553,33 +579,25 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateIcon() {
-    boolean jb = PluginManagerConfigurable.isJBPlugin(myPlugin);
     boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
 
     myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, false));
-    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, jb, errors, true));
+    myIconLabel.setIcon(PluginLogo.getIcon(myPlugin, true, false, errors, false));
+    myIconLabel.setDisabledIcon(PluginLogo.getIcon(myPlugin, true, false, errors, true));
   }
 
   private void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
     if (errors) {
       Ref<String> enableAction = new Ref<>();
-      Ref<String> disableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction, disableAction);
-      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors(true),
-                          disableAction.get(), disableAction.isNull() ? null : () -> handleErrors(false));
+      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
     }
     myErrorComponent.setVisible(errors);
   }
 
-  private void handleErrors(boolean enable) {
-    if (enable) {
-      myPluginModel.enableRequiredPlugins(myPlugin);
-    }
-    else {
-      myPluginModel.disableWithRequiredPlugins(myPlugin);
-    }
+  private void handleErrors() {
+    myPluginModel.enableRequiredPlugins(myPlugin);
 
     updateIcon();
     updateEnabledState();
@@ -618,11 +636,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
   }
 
-  private void changeEnableDisable() {
-    myPluginModel.changeEnableDisable(myPlugin);
-    updateEnabledState();
-  }
-
   private void updateEnableForNameAndIcon() {
     boolean enabled = myPluginModel.isEnabled(myPlugin);
     myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
@@ -639,15 +652,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateErrors();
 
     boolean bundled = myPlugin.isBundled();
-    boolean errors = myPluginModel.hasErrors(myPlugin);
     String title = myPluginModel.getEnabledTitle(myPlugin);
 
     myEnableDisableButton.setText(title);
     myEnableDisableUninstallButton.setText(title);
-    myUpdateButton.setVisible(myUpdateDescriptor != null && !errors);
-    myEnableDisableButton.setVisible(bundled && !errors);
-    myEnableDisableUninstallButton.setVisible(!bundled && !errors);
-    myUninstallButton.setVisible(!bundled && errors);
+    myUpdateButton.setVisible(myUpdateDescriptor != null);
+    myEnableDisableButton.setVisible(bundled);
+    myEnableDisableUninstallButton.setVisible(!bundled);
 
     fullRepaint();
   }

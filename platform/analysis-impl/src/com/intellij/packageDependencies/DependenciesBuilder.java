@@ -50,10 +50,6 @@ public abstract class DependenciesBuilder {
     myTotalFileCount = totalFileCount;
   }
 
-  public int getTotalFileCount() {
-    return myTotalFileCount;
-  }
-
   @NotNull
   public Map<PsiFile, Set<PsiFile>> getDependencies() {
     return myDependencies;
@@ -160,7 +156,7 @@ public abstract class DependenciesBuilder {
     return 0;
   }
 
-  public String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
+  String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 
@@ -171,12 +167,18 @@ public abstract class DependenciesBuilder {
   public static void analyzeFileDependencies(@NotNull PsiFile file,
                                              @NotNull DependencyProcessor processor,
                                              @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    Boolean prev = file.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING);
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
+    try {
+      file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
+    }
+    finally {
+      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, prev);
+    }
   }
 
+  @FunctionalInterface
   public interface DependencyProcessor {
-    void process(PsiElement place, PsiElement dependency);
+    void process(@NotNull PsiElement place, @NotNull PsiElement dependency);
   }
 }

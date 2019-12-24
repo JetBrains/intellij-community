@@ -36,10 +36,6 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
     val EXTENDS_WITH = listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)
   }
 
-  @Nls
-  override fun getDisplayName(): String = InspectionGadgetsBundle.message("junit5.valid.parameterized.configuration.display.name")
-
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val file = holder.file
     if (!JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) return PsiElementVisitor.EMPTY_VISITOR

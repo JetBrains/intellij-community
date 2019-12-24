@@ -35,10 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author max
- */
-@SuppressWarnings("HardCodedStringLiteral")
 public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final boolean MIGRATE_TEST = false;
   private static final DefaultLightProjectDescriptor ourDescriptor = new DefaultLightProjectDescriptor() {
@@ -201,7 +197,7 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
       }
     };
 
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, getTestRootDisposable());
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.getPoint(null).registerExtension(myUnusedCodeExtension, myFixture.getProjectDisposable());
   }
 
   @Override

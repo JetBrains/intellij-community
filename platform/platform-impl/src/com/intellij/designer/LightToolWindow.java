@@ -312,7 +312,7 @@ public class LightToolWindow extends JPanel {
     if (component != null) {
       return true;
     }
-    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getIdeFrame(myProject));
+    Component owner = fm.getLastFocusedFor(WindowManager.getInstance().getFrame(myProject));
     return owner != null && SwingUtilities.isDescendingFrom(owner, this);
   }
 

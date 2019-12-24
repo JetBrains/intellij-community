@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -78,7 +79,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class InspectionApplication implements CommandLineInspectionProgressReporter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
+  private static final Logger LOG = Logger.getInstance(InspectionApplication.class);
 
   public InspectionToolCmdlineOptionHelpProvider myHelpProvider;
   public String myProjectPath;
@@ -582,10 +583,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
 
   private static void closeProject(@NotNull Project project) {
     if (!project.isDisposed()) {
-      // see PlatformTestUtil.forceCloseProjectWithoutSaving about why we don't dispose as part of forceCloseProject
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project, false /* do not dispose */);
-      // explicitly dispose because `dispose` option for forceCloseProject doesn't work todo why?
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
     }
   }
 
@@ -662,12 +660,9 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
 
   @Nullable
   private static InspectionsReportConverter getReportConverter(@Nullable final String outputFormat) {
-    for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
-      if (converter.getFormatName().equals(outputFormat)) {
-        return converter;
-      }
-    }
-    return null;
+    return InspectionsReportConverter.EP_NAME.getExtensionList().stream()
+      .filter(converter -> converter.getFormatName().equals(outputFormat))
+      .findFirst().orElse(null);
   }
 
   private ConversionListener createConversionListener() {
@@ -747,6 +742,7 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
       if (name != null) {
         xmlWriter.addAttribute(PROFILE, name);
       }
+      List<String> inspectionsWithoutDescriptions = new ArrayList<>(1);
       for (Map.Entry<String, Set<InspectionToolWrapper>> entry : map.entrySet()) {
         xmlWriter.startNode("group");
         String groupName = entry.getKey();
@@ -764,13 +760,17 @@ public class InspectionApplication implements CommandLineInspectionProgressRepor
             xmlWriter.setValue(description);
           }
           else {
-            LOG.error(shortName + " descriptionUrl==" + toolWrapper);
+            inspectionsWithoutDescriptions.add(shortName);
           }
           xmlWriter.endNode();
         }
         xmlWriter.endNode();
       }
       xmlWriter.endNode();
+
+      if (!inspectionsWithoutDescriptions.isEmpty()) {
+        LOG.error("Descriptions are missed for tools: " + StringUtil.join(inspectionsWithoutDescriptions, ", "));
+      }
     }
   }
 

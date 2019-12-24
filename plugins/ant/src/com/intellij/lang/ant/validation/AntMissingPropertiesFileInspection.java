@@ -34,13 +34,6 @@ public class AntMissingPropertiesFileInspection extends AntInspection {
   @NonNls private static final String SHORT_NAME = "AntMissingPropertiesFileInspection";
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return AntBundle.message("ant.missing.properties.file.inspection");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

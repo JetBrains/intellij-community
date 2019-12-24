@@ -169,7 +169,7 @@ public class PyiUtil {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                               PyResolveContext.noImplicits(), false);
+                                                                                               PyResolveContext.defaultContext(), false);
           final PsiElement result = takeTopPriorityElement(resolveResults);
           return result == element ? null : result;
         }

@@ -203,7 +203,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     if (!isDefaultBreakpoint(breakpoint)) {
       throw new IllegalStateException("Trying to remove not default breakpoint " + breakpoint);
     }
-    doRemoveBreakpointImpl(breakpoint);
+    doRemoveBreakpointImpl(breakpoint, true);
   }
 
   private void doRemoveBreakpoint(XBreakpoint<?> breakpoint) {
@@ -212,14 +212,21 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       breakpoint.setEnabled(false);
     }
     else {
-      doRemoveBreakpointImpl(breakpoint);
+      doRemoveBreakpointImpl(breakpoint, false);
     }
   }
 
-  private void doRemoveBreakpointImpl(XBreakpoint<?> breakpoint) {
+  private void doRemoveBreakpointImpl(XBreakpoint<?> breakpoint, boolean isDefaultBreakpoint) {
     XBreakpointType type = breakpoint.getType();
     XBreakpointBase<?,?,?> breakpointBase = (XBreakpointBase<?,?,?>)breakpoint;
-    myBreakpoints.remove(type, breakpointBase);
+    if (isDefaultBreakpoint) {
+      Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints = myDefaultBreakpoints.get(breakpoint.getType());
+      if (typeDefaultBreakpoints != null) {
+        typeDefaultBreakpoints.remove(breakpoint);
+      }
+    } else {
+      myBreakpoints.remove(type, breakpointBase);
+    }
     myAllBreakpoints.remove(breakpointBase);
     if (breakpointBase instanceof XLineBreakpointImpl) {
       myLineBreakpointManager.unregisterBreakpoint((XLineBreakpointImpl)breakpointBase);

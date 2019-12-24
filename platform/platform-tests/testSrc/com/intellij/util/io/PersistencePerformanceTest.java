@@ -58,7 +58,7 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       myMaps.add(map);
     }
     PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
-    myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum"), storageLockContext);
+    myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum").toPath(), storageLockContext);
   }
 
   @Override

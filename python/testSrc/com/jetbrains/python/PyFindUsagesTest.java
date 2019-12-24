@@ -33,6 +33,10 @@ public class PyFindUsagesTest extends PyTestCase {
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ImplicitlyResolvedUsages.py");
     assertEquals(1, usages.size());
   }
+  public void testImplicitlyResolvedFieldUsages() {
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ImplicitlyResolvedFieldUsages.py");
+    assertEquals(2, usages.size());
+  }
 
   public void testQualifiedVsUnqualifiedUsages() {  // PY-939
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/QualifiedVsUnqualifiedUsages.py");

@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
+  private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
 
@@ -526,7 +525,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     try {
-      if (!((DocumentEx)event.getDocument()).isInBulkUpdate()) {
+      if (!event.getDocument().isInBulkUpdate()) {
         updateCachedOffsets();
       }
     }
@@ -730,7 +729,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
           }
           else {
             otherNode.setValid(false);
-            ((RMNode)otherNode).onRemoved();
+            ((RMNode<FoldRegionImpl>)otherNode).onRemoved();
           }
         }
       };

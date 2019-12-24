@@ -13,12 +13,8 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.Staging;
 import com.jetbrains.env.StagingOn;
-import com.jetbrains.env.ut.PyTestTestProcessRunner;
-import com.jetbrains.env.ut.PyUnitTestProcessRunner;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
@@ -26,7 +22,6 @@ import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -83,104 +78,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testPydevTests_Debugger() {
-    pytests("pydev_tests_python/test_debugger.py", Sets.newHashSet("pytest", "-iron", "untangle"));
-  }
-
-  @Test
-  public void testPydevMonkey() {
-    unittests("pydev_tests_python/test_pydev_monkey.py", null);
-  }
-
-  @Test
-  public void testBytecodeModification() {
-    unittests("pydev_tests_python/test_bytecode_modification.py", Sets.newHashSet("python3.6", "pytest"));
-  }
-
-  @Test
-  public void testFrameEvalAndTracing() {
-    pytests("pydev_tests_python/test_frame_eval_and_tracing.py", Sets.newHashSet("pytest", "-iron"));
-  }
-
-  private void pytests(final String script, @Nullable Set<String> tags) {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/helpers/pydev/", SdkCreationType.SDK_PACKAGES_ONLY) {
-                    @NotNull
-                    @Override
-                    protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-                      return new PyTestTestProcessRunner(script, 0);
-                    }
-
-                    @Override
-                    protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
-                                                    @NotNull String stdout,
-                                                    @NotNull String stderr,
-                                                    @NotNull String all,
-                                                    int exitCode) {
-                      runner.assertNoFailures();
-                    }
-
-                    @NotNull
-                    @Override
-                    public String getTestDataPath() {
-                      return PythonHelpersLocator.getPythonCommunityPath();
-                    }
-
-                    @NotNull
-                    @Override
-                    public Set<String> getTags() {
-                      if (tags == null) {
-                        return super.getTags();
-                      }
-                      return tags;
-                    }
-                  }
-    );
-  }
-
-  private void unittests(final String script, @Nullable Set<String> tags) {
-    unittests(script, tags, false);
-  }
-
-  private void unittests(final String script, @Nullable Set<String> tags, boolean isSkipAllowed) {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
-
-      @NotNull
-      @Override
-      protected PyUnitTestProcessRunner createProcessRunner() {
-        return new PyUnitTestProcessRunner(script, 0);
-      }
-
-      @NotNull
-      @Override
-      public String getTestDataPath() {
-        return PythonHelpersLocator.getPythonCommunityPath();
-      }
-
-      @Override
-      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all, int exitCode) {
-        if (isSkipAllowed) {
-          runner.assertNoFailures();
-        }
-        else {
-          runner.assertAllTestsPassed();
-        }
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        if (tags == null) {
-          return super.getTags();
-        }
-        return tags;
-      }
-    });
-  }
-
-  @Test
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -207,42 +104,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
 
         eval("i").hasValue("111");
-      }
-    });
-  }
-
-  @Test
-  public void testDebugConsole() {
-    runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
-        setWaitForTermination(false);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-
-        eval("i").hasValue("0");
-
-        resume();
-
-        waitForPause();
-
-        consoleExec("'i=%d'%i");
-
-        waitForOutput("'i=1'");
-
-        consoleExec("x");
-
-        waitForOutput("name 'x' is not defined");
-
-        consoleExec("1-;");
-
-        waitForOutput("SyntaxError");
-
-        resume();
       }
     });
   }
@@ -800,149 +661,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testMultiprocess() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
-      @Override
-      public void before() {
-        toggleBreakpoint(getScriptName(), 9);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-
-        eval("i").hasValue("'Result:OK'");
-
-        resume();
-
-        waitForOutput("Result:OK");
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return Sets.newHashSet("python3");
-      }
-    });
-  }
-
-  @Test
-  public void testMultiprocessingSubprocess() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_args.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath("test_remote.py"), 2);
-        setWaitForTermination(false);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        eval("sys.argv[1]").hasValue("'subprocess'");
-        eval("sys.argv[2]").hasValue("'etc etc'");
-
-        resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
-      }
-    });
-  }
-
-  @Test
-  public void testMultiprocessPool() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_pool.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForOutput("Done");
-        assertFalse(output().contains("KeyboardInterrupt"));
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
-      }
-    });
-  }
-
-  @Test
-  public void testPythonSubprocessWithCParameter() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_python_subprocess_with_c_parameter.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath("test_python_subprocess_another_helper.py"), 2);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        eval("x").hasValue("42");
-        resume();
-        waitForOutput("Hello!");
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython");
-      }
-    });
-  }
-
-  @Test
-  public void testMultiprocessProcess() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_process.py") {
-      @Override
-      protected void init() {
-        setMultiprocessDebug(true);
-      }
-
-      @Override
-      public void before() {
-        toggleBreakpoint(getFilePath("test_multiprocess_process.py"), 5);
-        setWaitForTermination(false);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        eval("name").hasValue("'subprocess'");
-        resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
-      }
-    });
-  }
-
-  @Test
   public void testStepOverYieldFrom() {
     runPythonTest(new PyDebuggerTask("/debug", "test_step_over_yield.py") {
       @Override
@@ -1278,6 +996,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testSetNextStatement() {
     runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
       @Override
@@ -1317,7 +1036,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return ImmutableSet.of("-iron", "-python3.8"); // PY-38604
       }
     });
   }
@@ -1347,6 +1066,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
   @Test
+  @Staging
   public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
@@ -1372,7 +1092,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return ImmutableSet.of("-iron", "-python3.8");  // PY-38603
       }
     });
   }
@@ -1983,24 +1703,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testSubprocess() {
-    runPythonTest(new PyDebuggerTask("/debug", "test_subprocess.py") {
-      @Override
-      public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 8);
-      }
-
-      @Override
-      public void testing() throws Exception {
-        waitForPause();
-        resume();
-        waitForTerminate();
-        outputContains("The subprocess finished with the return code 0.");
-      }
-    });
-  }
-
-  @Test
   public void testCodeEvaluationWithGeneratorExpression() {
     runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_code_eval_with_generator_expr.py") {
 
@@ -2167,6 +1869,26 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public Set<String> getTags() {
         return ImmutableSet.of("pandas");
+      }
+    });
+  }
+
+  @Test
+  public void testPathWithAmpersand() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_path_with_&.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        // Source position can be `null` because of troubles while decoding the message from the debugger.
+        // The troubles can be a result of an unescaped symbol, wrongly encoded message, etc.
+        assertNotNull(getCurrentStackFrame().getSourcePosition());
+        resume();
+        waitForTerminate();
       }
     });
   }

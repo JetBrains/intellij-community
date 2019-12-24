@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ import java.util.TreeMap;
 public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final ExtensionPointName<VisibilityExtension> EP_NAME = new ExtensionPointName<>("com.intellij.visibility");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
+  private static final Logger LOG = Logger.getInstance(VisibilityInspection.class);
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
@@ -122,12 +123,6 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return new AccessCanBeTightenedInspection(this);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override
@@ -354,8 +349,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  private boolean isAccessible(RefJavaElement to, @PsiModifier.ModifierConstant String accessModifier) {
-
+  private boolean isAccessible(@NotNull RefJavaElement to, @NotNull @PsiModifier.ModifierConstant String accessModifier) {
     for (RefElement refElement : to.getInReferences()) {
       if (!isAccessibleFrom(refElement, to, accessModifier)) return false;
     }
@@ -502,7 +496,8 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
     for (RefElement entryPoint : entryPointsManager.getEntryPoints(manager)) {
       //don't ignore entry points with explicit visibility requirements
-      if (entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0) {
+      if (ReadAction.nonBlocking(() -> entryPoint instanceof RefJavaElement && getMinVisibilityLevel((RefJavaElement)entryPoint) > 0)
+        .executeSynchronously()) {
         continue;
       }
       ignoreElement(processor, entryPoint);

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -52,9 +53,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       @NotNull
       @Override
       protected Set<String> compute() {
-      return ContainerUtil.map2Set(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
+        return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
+    JsonSchemaProviderFactory.EP_NAME.addExtensionPointListener((e, pd) -> reset(), myProject);
+
     myCatalogManager = new JsonSchemaCatalogManager(myProject);
 
     MessageBusConnection connection = project.getMessageBus().connect();

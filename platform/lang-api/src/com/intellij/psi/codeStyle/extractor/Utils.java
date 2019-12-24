@@ -112,10 +112,7 @@ public class Utils {
       if (language.equals(provider.getLanguage())) {
         CustomCodeStyleSettings modelSettings = provider.createCustomSettings(settings);
         if (modelSettings == null) continue;
-        CustomCodeStyleSettings customSettings = settings.getCustomSettings(modelSettings.getClass());
-        if (customSettings != null) {
-          return customSettings;
-        }
+        return settings.getCustomSettings(modelSettings.getClass());
       }
     }
     logError("Failed to load CustomCodeStyleSettings for " + language);

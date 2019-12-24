@@ -1339,19 +1339,9 @@ public class FileUtil extends FileUtilRt {
 
   /** @deprecated use {@link FileUtil#setExecutable(File)} or {@link File#setExecutable} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     FileUtilRt.setExecutableAttribute(path, executableFlag);
-  }
-
-  /** @deprecated not very useful; use {@link Files#setLastModifiedTime} or {@link File#setLastModified} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
-  @SuppressWarnings("RedundantThrows")
-  public static void setLastModified(@NotNull File file, long timeStamp) throws IOException {
-    if (!file.setLastModified(timeStamp)) {
-      LOG.warn(file.getPath());
-    }
   }
 
   @NotNull
@@ -1430,10 +1420,15 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static List<String> splitPath(@NotNull String path) {
+    return splitPath(path, File.separatorChar);
+  }
+
+  @NotNull
+  public static List<String> splitPath(@NotNull String path, char separatorChar) {
     ArrayList<String> list = new ArrayList<>();
     int index = 0;
     int nextSeparator;
-    while ((nextSeparator = path.indexOf(File.separatorChar, index)) != -1) {
+    while ((nextSeparator = path.indexOf(separatorChar, index)) != -1) {
       list.add(path.substring(index, nextSeparator));
       index = nextSeparator + 1;
     }

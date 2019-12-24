@@ -2,8 +2,7 @@
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
@@ -21,7 +20,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
-import com.intellij.vcs.log.VcsUserRegistry
+import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import git4idea.GitUserRegistry
@@ -52,9 +51,6 @@ internal var CommitContext.commitAuthorDate: Date? by commitProperty(COMMIT_AUTH
 internal var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OFF_COMMIT_KEY)
 internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
 
-private fun getAllUsers(project: Project): List<String> =
-  project.service<VcsUserRegistry>().users.map { VcsUserUtil.toExactString(it) }
-
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
 
 class GitCommitOptionsUi(
@@ -65,6 +61,7 @@ class GitCommitOptionsUi(
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent,
     AmendCommitModeListener,
+    ChangeListListener,
     Disposable {
 
   private val project get() = commitPanel.project
@@ -74,6 +71,7 @@ class GitCommitOptionsUi(
 
   private var authorDate: Date? = null
   private var currentChangeList: LocalChangeList? = null
+  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
@@ -133,7 +131,12 @@ class GitCommitOptionsUi(
 
   override fun getComponent(): JComponent = panel
 
-  override fun restoreState() = refresh()
+  override fun restoreState() {
+    if (commitPanel.isNonModalCommit) {
+      changeListManager.addChangeListListener(this, this)
+    }
+    refresh()
+  }
 
   override fun refresh() = refresh(null)
 
@@ -184,12 +187,23 @@ class GitCommitOptionsUi(
 
   private fun updateCurrentCommitAuthor() {
     if (!commitPanel.isNonModalCommit) return
-
-    val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    val newAuthor = getAuthor()
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData(getAuthor(), authorDate))
+    if (newAuthor != changeList.author) {
+      changeListManager.editChangeListData(changeList.name, ChangeListData.of(newAuthor, authorDate))
+    }
   }
+
+  override fun changeListDataChanged(list: ChangeList) =
+    runInEdt {
+      val changeList = list as? LocalChangeList ?: return@runInEdt
+      if (changeList.id != currentChangeList?.id) return@runInEdt
+
+      if (getAuthor() != changeList.author) {
+        setAuthor(changeList.author)
+      }
+    }
 
   private fun updateRenamesCheckboxState() {
     val canCommitRenamesSeparately = explicitMovementProviders.isNotEmpty() && Registry.`is`("git.allow.explicit.commit.renames")

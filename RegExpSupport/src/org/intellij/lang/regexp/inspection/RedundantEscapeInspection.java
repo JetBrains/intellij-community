@@ -20,13 +20,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RedundantEscapeInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Redundant character escape";
-  }
-
   @NotNull
   @Override
   public RegExpElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

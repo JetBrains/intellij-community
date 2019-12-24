@@ -103,7 +103,7 @@ public class StringIndex {
     };
     myIndex = new MapReduceIndex<String, String, PathContentPair>(extension,
                                                                   storage,
-                                                                  new PersistentMapBasedForwardIndex(forwardIndexFile),
+                                                                  new PersistentMapBasedForwardIndex(forwardIndexFile.toPath(), false),
                                                                   new KeyCollectionForwardIndexAccessor<>(anotherStringExternalizer)) {
       @Override
       public void checkCanceled() {

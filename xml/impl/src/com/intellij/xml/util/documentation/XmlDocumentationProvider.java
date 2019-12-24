@@ -35,7 +35,7 @@ import java.util.List;
 public class XmlDocumentationProvider implements DocumentationProvider {
   private static final Key<XmlElementDescriptor> DESCRIPTOR_KEY = Key.create("Original element");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.documentation.XmlDocumentationProvider");
+  private static final Logger LOG = Logger.getInstance(XmlDocumentationProvider.class);
 
   @NonNls private static final String NAME_ATTR_NAME = "name";
   @NonNls private static final String BASE_SITEPOINT_URL = "http://reference.sitepoint.com/html/";

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
@@ -393,9 +392,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
-      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
-      else argument = unescape(argument);
-      constraint.setNameOfExprType(argument);
+      argument = unescape(argument);
+      constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
     else if (option.equalsIgnoreCase(FORMAL)) {
@@ -403,9 +401,8 @@ public class StringToConstraintsTransformer {
         argument = argument.substring(1);
         constraint.setFormalArgTypeWithinHierarchy(true);
       }
-      if (Registry.is("ssr.use.regexp.to.specify.type")) checkRegex(argument);
-      else argument = unescape(argument);
-      constraint.setNameOfFormalArgType(argument);
+      argument = unescape(argument);
+      constraint.setExpressionTypes(argument);
       constraint.setInvertFormalType(invert);
     }
     else if (option.equalsIgnoreCase(SCRIPT)) {
@@ -437,10 +434,10 @@ public class StringToConstraintsTransformer {
   }
 
   private static String unescape(String s) {
-    StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder();
     boolean escaped = false;
     for (int i = 0, length = s.length(); i < length; i++) {
-      int c = s.codePointAt(i);
+      final int c = s.codePointAt(i);
       if (c == '\\' && !escaped) {
         escaped = true;
       }

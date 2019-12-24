@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PhysicalDomParentStrategy implements DomParentStrategy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.PhysicalDomParentStrategy");
+  private static final Logger LOG = Logger.getInstance(PhysicalDomParentStrategy.class);
   private XmlElement myElement;
   private final DomManagerImpl myDomManager;
 

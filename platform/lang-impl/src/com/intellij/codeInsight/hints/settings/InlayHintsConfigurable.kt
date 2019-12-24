@@ -22,19 +22,11 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
       .flatMap { it.getSupportedLanguages(project) }
       .toSortedSet(compareBy { it.displayName })
     configurables = allInlayLanguages.map { SingleLanguageInlayHintsConfigurable(project, it) }
-    panel = InlayHintsPanel(allInlayLanguages, this, settings)
+    panel = InlayHintsPanel(allInlayLanguages, settings)
 
-    //ApplicationManager.getApplication().messageBus.connect().subscribe(
-    //  InlayHintsSettings.INLAY_SETTINGS_CHANGED,
-    //  object : InlayHintsSettings.SettingsListener {
-    //    override fun didGlobalEnabledStatusChanged(newEnabled: Boolean) {}
-    //
-    //    override fun didSettingsChanged() {
-    //      for (configurable in configurables) {
-    //        configurable.reset()
-    //      }
-    //    }
-    //  })
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(
+      InlayHintsSettings.INLAY_SETTINGS_CHANGED,
+      ConfigurationChangeListener(configurables))
   }
 
   override fun getConfigurables(): Array<Configurable> {
@@ -87,6 +79,22 @@ class InlayHintsConfigurable(val project: Project) : Configurable, Configurable.
       val displayName = language.displayName
       ShowSettingsUtil.getInstance()
         .showSettingsDialog(project, { it.displayName == displayName && it is SingleLanguageInlayHintsConfigurable }, {})
+    }
+  }
+
+  private class ConfigurationChangeListener(val configurables: List<Configurable>) : InlayHintsSettings.SettingsListener {
+    override fun languageStatusChanged() {
+      reset()
+    }
+
+    override fun globalEnabledStatusChanged(newEnabled: Boolean) {
+      reset()
+    }
+
+    private fun reset() {
+      for (configurable in configurables) {
+        configurable.reset()
+      }
     }
   }
 }

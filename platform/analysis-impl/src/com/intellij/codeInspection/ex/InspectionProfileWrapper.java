@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class InspectionProfileWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
+  private static final Logger LOG = Logger.getInstance(InspectionProfileWrapper.class);
 
   /**
    * Key that is assumed to hold strategy that customizes {@link InspectionProfileWrapper} object to use.

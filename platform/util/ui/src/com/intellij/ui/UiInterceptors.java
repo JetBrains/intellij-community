@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class UiInterceptors {
+public final class UiInterceptors {
   private static final Queue<UiInterceptor<?>> ourInterceptors = new ConcurrentLinkedQueue<>();
 
   /**
@@ -36,7 +36,7 @@ public class UiInterceptors {
   }
 
   /**
-   * Should be called in test tearDown to ensure that all registered interceptors were actually used. 
+   * Should be called in test tearDown to ensure that all registered interceptors were actually used.
    */
   @TestOnly
   public static void clear() {

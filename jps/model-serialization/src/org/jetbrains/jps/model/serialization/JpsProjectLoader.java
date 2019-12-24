@@ -33,6 +33,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerialize
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationSerializer;
 import org.jetbrains.jps.service.SharedThreadPool;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +44,6 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Stream;
 
 /**
  * @author nik
@@ -101,20 +101,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   @NotNull
   public static String getDirectoryBaseProjectName(@NotNull Path dir) {
-    try (Stream<String> stream = Files.lines(dir.resolve(".name"))) {
-      String value = stream.findFirst().map(String::trim).orElse(null);
-      if (value != null) {
-        return value;
-      }
-    }
-    catch (IOException ignored) { }
-    return dir.getParent().getFileName().toString();
-  }
-
-  @Nullable
-  @Override
-  protected Element loadRootElement(@NotNull Path file) {
-    return super.loadRootElement(file);
+    String name = JpsPathUtil.readProjectName(dir);
+    return name != null ? name : JpsPathUtil.getDefaultProjectName(dir);
   }
 
   @Nullable
@@ -445,7 +433,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, "FacetManager");
+    Element facetsTag = JDomSerializationUtil.findComponent(moduleRoot, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME);
     Element externalFacetsTag = JDomSerializationUtil.findComponent(moduleRoot, "ExternalFacetManager");
     Element mergedFacetsTag;
     if (facetsTag == null) {

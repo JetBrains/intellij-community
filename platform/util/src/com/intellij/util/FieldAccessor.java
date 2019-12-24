@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
  * @param <T> the type of the field
  */
 public class FieldAccessor<E, T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.FieldAccessor");
+  private static final Logger LOG = Logger.getInstance(FieldAccessor.class);
 
   private Ref<Field> myFieldRef;
   private final Class<E> myClass;

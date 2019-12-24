@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
+import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -50,7 +51,7 @@ open class ApplicationRule : ExternalResource() {
   }
 
   public final override fun before() {
-    IdeaTestApplication.getInstance()
+    TestApplicationManager.getInstance()
     TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
@@ -90,7 +91,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       val project = sharedProject ?: return
       sharedProject = null
       sharedModule = null
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project, true)
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project)
       // TODO uncomment and figure out where to put this statement
 //      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).assertPointersAreDisposed()
     }
@@ -99,12 +100,17 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
   public override fun after() {
     if (projectOpened.compareAndSet(true, false)) {
       if (sharedProject != null) {
+        val undoManager = UndoManager.getInstance(sharedProject!!) as UndoManagerImpl
         ApplicationManager.getApplication().invokeAndWait {
-          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).dropHistoryInTests()
-          (UndoManager.getInstance(sharedProject!!) as UndoManagerImpl).flushCurrentCommandMerger()
+          undoManager.dropHistoryInTests()
+          undoManager.flushCurrentCommandMerger()
         }
       }
-      sharedProject?.let { runInEdtAndWait { ProjectManagerEx.getInstanceEx().forceCloseProject(it, false) } }
+      sharedProject?.let {
+        runInEdtAndWait {
+          (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false)
+        }
+      }
     }
   }
 
@@ -115,7 +121,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     get() {
       var result = sharedProject
       if (result == null) {
-        synchronized(IdeaTestApplication.getInstance()) {
+        synchronized(TestApplicationManager.getInstance()) {
           result = sharedProject
           if (result == null) {
             result = createLightProject()
@@ -247,7 +253,7 @@ suspend fun Project.use(task: suspend (Project) -> Unit) {
   }
   finally {
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-      projectManager.forceCloseProject(this@use, true)
+      projectManager.forceCloseProject(this@use)
     }
   }
 }
@@ -257,7 +263,7 @@ class DisposeNonLightProjectsRule : ExternalResource() {
     val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManagerEx.getInstanceEx()
     projectManager?.openProjects?.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
-        runInEdtAndWait { projectManager.forceCloseProject(it, true) }
+        runInEdtAndWait { projectManager.forceCloseProject(it) }
       }
     }
   }
@@ -322,30 +328,34 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
                                 loadComponentState: Boolean = false,
                                 useDefaultProjectSettings: Boolean = true,
                                 task: suspend (Project) -> Unit) {
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
-    val file = if (projectCreator == null) {
-      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
-    }
-    else {
-      val dir = tempDirManager.newVirtualDirectory()
+  val file = if (projectCreator == null) {
+    tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true)
+  }
+  else {
+    val dir = tempDirManager.newVirtualDirectory()
+    withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
       runNonUndoableWriteAction(dir) {
         projectCreator(dir)
       }
     }
+  }
 
-    val project = when (projectCreator) {
-      null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
-      else -> ProjectManagerEx.getInstanceEx().loadProject(file, null)
+  val project = when (projectCreator) {
+    null -> createHeavyProject(file, useDefaultProjectAsTemplate = useDefaultProjectSettings)
+    else -> ProjectManagerImpl.loadProject(file, null) { project ->
+     if (loadComponentState) {
+       project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+     }
     }
+  }
 
-    if (loadComponentState) {
-      project.runInLoadComponentStateMode {
-        project.use(task)
-      }
-    }
-    else {
+  if (loadComponentState) {
+    project.runInLoadComponentStateMode {
       project.use(task)
     }
+  }
+  else {
+    project.use(task)
   }
 }
 
@@ -371,6 +381,7 @@ class SystemPropertyRule(private val name: String, private val value: String = "
   }
 
   public override fun after() {
+    val oldValue = oldValue
     if (oldValue == null) {
       System.clearProperty(name)
     }

@@ -23,9 +23,9 @@ public class IncorrectOperationException extends RuntimeException {
     super(message, t);
   }
 
-  /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} (to be removed in IDEA 2020.1) */
+  /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public IncorrectOperationException(String message, Exception e) {
     super(message, e);
   }

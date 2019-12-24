@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +33,11 @@ public class MoveChanges implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
+  public void doNotify(final ChangeListListener listener) {
     if (myMovedFrom != null && myListCopy != null) {
       for (LocalChangeList fromList : myMovedFrom.keySet()) {
         Collection<Change> changesInList = myMovedFrom.get(fromList);
-        dispatcher.getMulticaster().changesMoved(changesInList, fromList, myListCopy);
+        listener.changesMoved(changesInList, fromList, myListCopy);
       }
     }
   }

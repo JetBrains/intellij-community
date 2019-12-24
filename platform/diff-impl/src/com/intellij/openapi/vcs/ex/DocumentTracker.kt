@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterable
-import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
@@ -242,7 +242,7 @@ class DocumentTracker : Disposable {
     if (isDisposed) return false
 
     LOCK.write {
-      if (!isValidState(content1, content2, lineRanges)) return false
+      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       freezeHelper.setFrozenContent(Side.LEFT, content1)
       freezeHelper.setFrozenContent(Side.RIGHT, content2)
@@ -260,38 +260,13 @@ class DocumentTracker : Disposable {
     LOCK.write {
       val content1 = getContent(Side.LEFT)
       val content2 = getContent(Side.RIGHT)
-      if (!isValidState(content1, content2, lineRanges)) return false
+      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       tracker.setRanges(lineRanges, true)
 
       return true
     }
   }
-
-  private fun isValidState(content1: CharSequence,
-                           content2: CharSequence,
-                           lineRanges: List<Range>): Boolean {
-    val lineOffset1 = content1.lineOffsets
-    val lineOffset2 = content2.lineOffsets
-
-    if (lineRanges.any { !isValidLineRange(lineOffset1, it.start1, it.end1) ||
-                         !isValidLineRange(lineOffset2, it.start2, it.end2) }) {
-      return false
-    }
-
-    val iterable = DiffIterableUtil.create(lineRanges, lineOffset1.lineCount, lineOffset2.lineCount)
-    for (range in iterable.unchanged()) {
-      val lines1 = DiffUtil.getLines(content1, lineOffset1, range.start1, range.end1)
-      val lines2 = DiffUtil.getLines(content2, lineOffset2, range.start2, range.end2)
-      if (lines1 != lines2) return false
-    }
-    return true
-  }
-
-  private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
-    return start >= 0 && start <= end && end <= lineOffsets.lineCount
-  }
-
 
   private inner class MyApplicationListener : ApplicationListener {
     override fun afterWriteActionFinished(action: Any) {

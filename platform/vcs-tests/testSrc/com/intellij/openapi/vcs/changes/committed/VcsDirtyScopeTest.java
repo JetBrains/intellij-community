@@ -85,7 +85,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
   public void testAddRemove() throws Exception {
     final Data data = createData();
 
-    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject), myProject);
+    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject));
     scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir1));
     scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir3));
     scope.addDirtyDirRecursively(VcsUtil.getFilePath(data.dir4));
@@ -111,7 +111,7 @@ public class VcsDirtyScopeTest extends FileBasedTest {
   public void testRecursivelyDirtyDirectoriesUnderNonRecursively() throws Exception {
     final Data data = createData();
 
-    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject), myProject);
+    final VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(new MockAbstractVcs(myProject));
 
     scope.addDirtyData(Arrays.asList(VcsUtil.getFilePath(data.dir1), VcsUtil.getFilePath(data.dir2)),
                        Collections.singletonList(VcsUtil.getFilePath(data.baseDir)));

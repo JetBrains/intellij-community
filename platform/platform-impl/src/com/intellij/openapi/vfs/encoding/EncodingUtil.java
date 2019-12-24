@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -22,7 +21,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
@@ -112,21 +113,21 @@ public class EncodingUtil {
     }
   }
 
-  static void saveIn(@NotNull final Document document,
-                     final Editor editor,
-                     @NotNull final VirtualFile virtualFile,
-                     @NotNull final Charset charset) {
+  static void saveIn(@NotNull Project project,
+                     @NotNull Document document,
+                     Editor editor,
+                     @NotNull VirtualFile virtualFile,
+                     @NotNull Charset charset) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     documentManager.saveDocument(document);
-    final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    boolean writable = project == null ? virtualFile.isWritable() : ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
+    boolean writable = ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
     if (!writable) {
       CommonRefactoringUtil.showErrorHint(project, editor, "Cannot save the file " + virtualFile.getPresentableUrl(), "Unable to Save", null);
       return;
     }
 
     EncodingProjectManagerImpl.suppressReloadDuring(() -> {
-      EncodingManager.getInstance().setEncoding(virtualFile, charset);
+      EncodingProjectManager.getInstance(project).setEncoding(virtualFile, charset);
       try {
         ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Object, IOException>)() -> {
           virtualFile.setCharset(charset);
@@ -140,17 +141,14 @@ public class EncodingUtil {
     });
   }
 
-  static void reloadIn(@NotNull final VirtualFile virtualFile, @NotNull final Charset charset, final Project project) {
-    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-
+  static void reloadIn(@NotNull VirtualFile virtualFile,
+                       @NotNull Charset charset,
+                       @NotNull Project project) {
     Consumer<VirtualFile> setEncoding = file -> {
-      if (project == null) {
-        EncodingManager.getInstance().setEncoding(file, charset);
-      }
-      else {
-        EncodingProjectManager.getInstance(project).setEncoding(file, charset);
-      }
+      EncodingProjectManager.getInstance(project).setEncoding(file, charset);
     };
+
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
     if (documentManager.getCachedDocument(virtualFile) == null) {
       // no need to reload document
       setEncoding.accept(virtualFile);
@@ -173,8 +171,9 @@ public class EncodingUtil {
 
     // if file was modified, the user will be asked here
     try {
-      EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(
-        new VFileContentChangeEvent(null, virtualFile, 0, 0, false)));
+      EncodingProjectManagerImpl.suppressReloadDuring(() -> {
+        ((FileDocumentManagerImpl)documentManager).contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+      });
     }
     finally {
       Disposer.dispose(disposable);

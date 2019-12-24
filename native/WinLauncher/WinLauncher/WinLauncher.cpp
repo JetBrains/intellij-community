@@ -32,7 +32,7 @@ volatile bool terminating = false;
 volatile int hookExitCode = 0;
 
 //tools.jar doesn't exist in jdk 9 and later. So check it for jdk 1.8 only.
-bool toolsArchiveExists = true;
+bool toolsArchiveExists = false;
 
 HANDLE hFileMapping;
 HANDLE hEvent;
@@ -85,9 +85,11 @@ bool Is64BitJRE(const char* path)
 {
   std::string cfgPath(path);
   std::string cfgJava9Path(path);
+  std::string accessbridgeVersion(path);
   cfgPath += "\\lib\\amd64\\jvm.cfg";
   cfgJava9Path += "\\lib\\jvm.cfg";
-  return FileExists(cfgPath) || FileExists(cfgJava9Path);
+  accessbridgeVersion += "\\bin\\windowsaccessbridge-32.dll";
+  return FileExists(cfgPath) || (FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion));
 }
 
 bool FindValidJVM(const char* path)
@@ -231,34 +233,22 @@ bool FindJVMInRegistry()
 {
 #ifndef _M_X64
   if (FindJVMInRegistryWithVersion("1.8", true))
+    toolsArchiveExists = true;
     return true;
   if (FindJVMInRegistryWithVersion("9", true))
-    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", true))
-    toolsArchiveExists = false;
-    return true;
-
-  //obsolete java versions
-  if (FindJVMInRegistryWithVersion("1.7", true))
-    return true;
-  if (FindJVMInRegistryWithVersion("1.6", true))
     return true;
 #endif
 
   if (FindJVMInRegistryWithVersion("1.8", false))
+    toolsArchiveExists = true;
     return true;
   if (FindJVMInRegistryWithVersion("9", false))
-    toolsArchiveExists = false;
     return true;
   if (FindJVMInRegistryWithVersion("10", false))
-    toolsArchiveExists = false;
     return true;
-
-  //obsolete java versions
-  if (FindJVMInRegistryWithVersion("1.7", false))
-    return true;
-  if (FindJVMInRegistryWithVersion("1.6", false))
+  if (FindJVMInRegistryWithVersion("11", false))
     return true;
   return false;
 }

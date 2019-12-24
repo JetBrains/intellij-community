@@ -49,13 +49,6 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.name.differs.from.file.name.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "class.name.differs.from.file.name.problem.descriptor");

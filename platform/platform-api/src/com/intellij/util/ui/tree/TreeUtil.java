@@ -54,7 +54,7 @@ import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
   public static final TreePath[] EMPTY_TREE_PATH = new TreePath[0];
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.tree.TreeUtil");
+  private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
 
@@ -744,15 +744,6 @@ public final class TreeUtil {
       lastRow = tree.getClosestRowForLocation(visible.x, visible.y + visible.height);
     }
     return lastRow - firstRow + 1;
-  }
-
-  /**
-   * @deprecated use {@link #getVisibleRowCount(JTree)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static int getVisibleRowCountForFixedRowHeight(@NotNull final JTree tree) {
-    return getVisibleRowCount(tree);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

@@ -34,13 +34,6 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "equals.between.inconvertible.types.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

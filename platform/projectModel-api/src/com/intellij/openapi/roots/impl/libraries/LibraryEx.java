@@ -65,6 +65,13 @@ public interface LibraryEx extends Library {
   @Nullable("will return non-null value only for module level libraries")
   Module getModule();
 
+  /**
+   * In case of modifiable library returns origin library it was created from
+   */
+  @ApiStatus.Internal
+  @Nullable
+  Library getSource();
+
   interface ModifiableModelEx extends ModifiableModel {
     void setProperties(LibraryProperties properties);
 

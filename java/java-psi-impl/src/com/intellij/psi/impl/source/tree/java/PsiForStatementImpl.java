@@ -29,7 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiForStatementImpl.class);
 
   public PsiForStatementImpl() {
     super(FOR_STATEMENT);

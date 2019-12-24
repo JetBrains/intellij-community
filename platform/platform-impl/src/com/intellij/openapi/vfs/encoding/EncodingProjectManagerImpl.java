@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -15,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
@@ -30,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -40,7 +44,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -75,17 +78,17 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
   }
 
-  // in EDT
-  static final class EncodingProjectManagerStartUpActivity implements StartupActivity {
+  static final class EncodingProjectManagerStartUpActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        ((EncodingProjectManagerImpl)getInstance(project)).reloadAlreadyLoadedDocuments();
+      }, ModalityState.NON_MODAL, project.getDisposed());
     }
   }
 
   @Override
   public void dispose() {
-
   }
 
   @Override
@@ -160,12 +163,13 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       return;
     }
 
-    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
     for (VirtualFilePointer pointer : myMapping.keySet()) {
       VirtualFile file = pointer.getFile();
       Document cachedDocument = file == null ? null : fileDocumentManager.getCachedDocument(file);
       if (cachedDocument != null) {
-        reload(file); // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
+        // reload document in the right encoding if someone sneaky (you, BreakpointManager) managed to load the document before project opened
+        reload(file, myProject, fileDocumentManager);
       }
     }
   }
@@ -215,16 +219,16 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
   }
 
-  private static void clearAndReload(@NotNull VirtualFile virtualFileOrDir) {
+  private static void clearAndReload(@NotNull VirtualFile virtualFileOrDir, @NotNull Project project) {
     virtualFileOrDir.setCharset(null);
-    reload(virtualFileOrDir);
+    reload(virtualFileOrDir, project, (FileDocumentManagerImpl)FileDocumentManager.getInstance());
   }
 
-  private static void reload(@NotNull final VirtualFile virtualFile) {
+  private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      ((FileDocumentManagerImpl)documentManager)
-        .contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+      try (AccessToken ignored = ProjectLocator.runWithPreferredProject(virtualFile, project)) {
+        documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+      }
     });
   }
 
@@ -327,7 +331,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     changed.remove(null);
 
     if (!changed.isEmpty()) {
-      Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor();
+      Processor<VirtualFile> reloadProcessor = createChangeCharsetProcessor(myProject);
       tryStartReloadWithProgress(() -> {
         Set<VirtualFile> processed = new THashSet<>();
         next:
@@ -347,7 +351,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   @NotNull
-  private static Processor<VirtualFile> createChangeCharsetProcessor() {
+  private static Processor<VirtualFile> createChangeCharsetProcessor(@NotNull Project project) {
     return file -> {
       if (file.isDirectory()) {
         return true;
@@ -361,7 +365,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         return true;
       }
       ProgressManager.progress("Reloading files...", file.getPresentableUrl());
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file));
+      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file, project));
       return true;
     };
   }
@@ -421,7 +425,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
       if (cachedDocument != null) {
         ProgressManager.progress("Reloading file...", file.getPresentableUrl());
-        TransactionGuard.submitTransaction(myProject, () -> reload(file));
+        TransactionGuard.submitTransaction(myProject, () -> reload(file, myProject, (FileDocumentManagerImpl)FileDocumentManager.getInstance()));
       }
       // for not loaded files deep under project, reset encoding to give them chance re-detect the right one later
       else if (file.isCharsetSet() && !file.equals(root)) {
@@ -445,7 +449,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {
     if (myNative2AsciiForPropertiesFiles != native2Ascii) {
       myNative2AsciiForPropertiesFiles = native2Ascii;
-      myIdeEncodingManager.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii);
+      myIdeEncodingManager.firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii, myProject);
     }
   }
 
@@ -472,13 +476,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Charset old = myDefaultCharsetForPropertiesFiles;
     if (!Comparing.equal(old, charset)) {
       myDefaultCharsetForPropertiesFiles = charset;
-      myIdeEncodingManager.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset);
+      myIdeEncodingManager.firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset, myProject);
     }
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
-    myIdeEncodingManager.addPropertyChangeListener(listener,parentDisposable);
   }
 
   @Override

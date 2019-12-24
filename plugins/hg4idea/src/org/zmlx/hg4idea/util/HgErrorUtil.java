@@ -153,7 +153,9 @@ public final class HgErrorUtil {
 
   public static boolean isWLockError(@Nullable HgCommandResult result) {
     //abort: working directory of repo_name: timed out waiting for lock held by 'process:id'
+    // or
+    //waiting for lock on working directory of repo_name
     if (result == null) return false;
-    return isAbort(result) && result.getRawError().contains("timed out waiting for lock");
+    return isAbort(result) && result.getRawError().contains("waiting for lock");
   }
 }

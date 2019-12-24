@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.sun.scenario.effect.light.Light;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,5 +33,14 @@ public interface StatusBarWidgetProvider {
   @NotNull
   default String getAnchor() {
     return StatusBar.Anchors.DEFAULT_ANCHOR;
+  }
+
+  /**
+   * Checks if the provider is compatible with a given frame.
+   * @param frame The frame to check the compatibility with.
+   * @return True if the provider can be used to create a widget for the given frame's status bar.
+   */
+  default boolean isCompatibleWith(@NotNull IdeFrame frame) {
+    return !(frame instanceof LightEditFrame);
   }
 }

@@ -41,7 +41,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport(syncView: BuildProgressListener, fromAutoImport: Boolean) {
+  fun startImport(syncView: BuildProgressListener) {
     if (started) {
       return
     }
@@ -52,8 +52,8 @@ class MavenSyncConsole(private val myProject: Project) {
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
     mySyncView = syncView
     val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, "Sync")
-    runDescr.isActivateToolWindowWhenFailed = !fromAutoImport
-    runDescr.isActivateToolWindowWhenAdded = !fromAutoImport
+    runDescr.isActivateToolWindowWhenFailed = true
+    runDescr.isActivateToolWindowWhenAdded = false
     mySyncView.onEvent(mySyncId,
                        StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
                          .withContentDescriptorSupplier {

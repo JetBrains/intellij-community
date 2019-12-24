@@ -2,4 +2,4 @@ package pack
 
 import static Foo.foo
 
-print fo<ref>o()
+print fo<caret>o()

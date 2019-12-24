@@ -53,64 +53,72 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
+  private static class Holder {
+    private static final ColumnInfo<TreeNodeAdapter, String> BRANCH_COLUMN =
+      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+        @Override
+        public String valueOf(final TreeNodeAdapter object) {
+          return object.getRevision().getBranchName();
+        }
+      };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> BRANCH_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.branch")){
-    @Override
-    public String valueOf(final TreeNodeAdapter object) {
-      return object.getRevision().getBranchName();
-    }
-  };
+    private static final ColumnInfo<TreeNodeAdapter, String> REVISION_COLUMN =
+      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")) {
+        @Override
+        public String valueOf(final TreeNodeAdapter object) {
+          return object.getRevision().getRevisionNumber().asString();
+        }
+      };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> REVISION_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.revision")){
-    @Override
-    public String valueOf(final TreeNodeAdapter object) {
-      return object.getRevision().getRevisionNumber().asString();
-    }
-  };
+    private static final ColumnInfo<TreeNodeAdapter, String> DATE_COLUMN =
+      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")) {
+        @Override
+        public String valueOf(final TreeNodeAdapter object) {
+          return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
+        }
+      };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> DATE_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revisions.list.filter")){
-    @Override
-    public String valueOf(final TreeNodeAdapter object) {
-      return DateFormatUtil.formatPrettyDateTime(object.getRevision().getRevisionDate());
-    }
-  };
+    private static final ColumnInfo<TreeNodeAdapter, String> AUTHOR_COLUMN =
+      new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")) {
+        @Override
+        public String valueOf(final TreeNodeAdapter object) {
+          return object.getRevision().getAuthor();
+        }
+      };
 
-  private static final ColumnInfo<TreeNodeAdapter,String> AUTHOR_COLUMN = new ColumnInfo<TreeNodeAdapter, String>(VcsBundle.message("column.name.revision.list.author")){
-    @Override
-    public String valueOf(final TreeNodeAdapter object) {
-      return object.getRevision().getAuthor();
-    }
-  };
+    private static final ColumnInfo<VcsFileRevision, String> REVISION_TABLE_COLUMN =
+      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+        @Override
+        public String valueOf(final VcsFileRevision vcsFileRevision) {
+          return vcsFileRevision.getRevisionNumber().asString();
+        }
+      };
 
-  private static final ColumnInfo<VcsFileRevision, String> REVISION_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
-    @Override
-    public String valueOf(final VcsFileRevision vcsFileRevision) {
-      return vcsFileRevision.getRevisionNumber().asString();
-    }
-  };
+    private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN =
+      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
+        @Override
+        public String valueOf(final VcsFileRevision vcsFileRevision) {
+          final Date date = vcsFileRevision.getRevisionDate();
+          return date == null ? "" : DateFormatUtil.formatPrettyDateTime(date);
+        }
+      };
 
-  private static final ColumnInfo<VcsFileRevision, String> DATE_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.revision")) {
-    @Override
-    public String valueOf(final VcsFileRevision vcsFileRevision) {
-      final Date date = vcsFileRevision.getRevisionDate();
-      return date == null ? "" : DateFormatUtil.formatPrettyDateTime(date);
-    }
-  };
+    private static final ColumnInfo<VcsFileRevision, String> AUTHOR_TABLE_COLUMN =
+      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.author")) {
+        @Override
+        public String valueOf(final VcsFileRevision vcsFileRevision) {
+          return vcsFileRevision.getAuthor();
+        }
+      };
 
-  private static final ColumnInfo<VcsFileRevision,String> AUTHOR_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revision.list.author")){
-    @Override
-    public String valueOf(final VcsFileRevision vcsFileRevision) {
-      return vcsFileRevision.getAuthor();
-    }
-  };
-
-  private static final ColumnInfo<VcsFileRevision,String> BRANCH_TABLE_COLUMN = new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revisions.list.branch")){
-    @Override
-    public String valueOf(final VcsFileRevision vcsFileRevision) {
-      return vcsFileRevision.getBranchName();
-    }
-  };
-
+    private static final ColumnInfo<VcsFileRevision, String> BRANCH_TABLE_COLUMN =
+      new ColumnInfo<VcsFileRevision, String>(VcsBundle.message("column.name.revisions.list.branch")) {
+        @Override
+        public String valueOf(final VcsFileRevision vcsFileRevision) {
+          return vcsFileRevision.getBranchName();
+        }
+      };
+  }
   @Override
   public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
     final FilePath filePath = e.getSelectedFilePath();
@@ -167,8 +175,8 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                                     final Consumer<? super VcsFileRevision> selectedRevisionConsumer) {
 
     final TreeTableView treeTable = new TreeTableView(new ListTreeTableModelOnColumns(new TreeNodeAdapter(null, null, roots),
-                                                                                      new ColumnInfo[]{BRANCH_COLUMN, REVISION_COLUMN,
-                                                                                      DATE_COLUMN, AUTHOR_COLUMN}));
+                                                                                      new ColumnInfo[]{Holder.BRANCH_COLUMN, Holder.REVISION_COLUMN,
+                                                                                        Holder.DATE_COLUMN, Holder.AUTHOR_COLUMN}));
     Runnable runnable = () -> {
       int index = treeTable.getSelectionModel().getMinSelectionIndex();
       if (index == -1) {
@@ -245,10 +253,10 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<? super VcsFileRevision> selectedRevisionConsumer,
                                    final boolean showComments) {
-    ColumnInfo[] columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
+    ColumnInfo[] columns = new ColumnInfo[] { Holder.REVISION_TABLE_COLUMN, Holder.DATE_TABLE_COLUMN, Holder.AUTHOR_TABLE_COLUMN };
     for(VcsFileRevision revision: revisions) {
       if (revision.getBranchName() != null) {
-        columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, BRANCH_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
+        columns = new ColumnInfo[] { Holder.REVISION_TABLE_COLUMN, Holder.BRANCH_TABLE_COLUMN, Holder.DATE_TABLE_COLUMN, Holder.AUTHOR_TABLE_COLUMN };
         break;
       }
     }

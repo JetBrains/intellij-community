@@ -107,12 +107,6 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("wrong.package.statement");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "WrongPackageStatement";

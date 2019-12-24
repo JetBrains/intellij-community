@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
@@ -90,7 +92,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private int myLastTopLeftCornerOffset;
 
   private VisibleAreaWidthProvider       myWidthProvider;
-  private LineWrapPositionStrategy       myLineWrapPositionStrategy;
+  private volatile LineWrapPositionStrategy myLineWrapPositionStrategy;
   private IncrementalCacheUpdateEvent    myEventBeingProcessed;
   private boolean                        myCustomIndentUsedLastTime;
   private int                            myCustomIndentValueUsedLastTime;
@@ -104,7 +106,8 @@ public class SoftWrapApplianceManager implements Dumpable {
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
-                                  CachingSoftWrapDataMapper dataMapper)
+                                  CachingSoftWrapDataMapper dataMapper,
+                                  @NotNull Disposable disposable)
   {
     myStorage = storage;
     myEditor = editor;
@@ -115,6 +118,9 @@ public class SoftWrapApplianceManager implements Dumpable {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
     });
+    Disposer.register(disposable, this::release);
+    LanguageLineWrapPositionStrategy.EP_NAME.addExtensionPointListener(
+      (a,b) -> release(), disposable);
   }
 
   public void registerSoftWrapIfNecessary() {
@@ -127,7 +133,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       listener.reset();
     }
   }
-  
+
   public void release() {
     myLineWrapPositionStrategy = null;
   }

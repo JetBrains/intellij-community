@@ -85,12 +85,6 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.empty.tag");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckEmptyScriptTag";

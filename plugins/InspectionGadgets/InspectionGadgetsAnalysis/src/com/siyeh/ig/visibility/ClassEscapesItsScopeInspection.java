@@ -53,12 +53,6 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     return "ClassEscapesDefinedScope";
   }
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("class.escapes.defined.scope.display.name");
-  }
-
   @Nullable
   @Override
   public JComponent createOptionsPanel() {

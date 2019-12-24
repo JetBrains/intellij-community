@@ -93,10 +93,10 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
 
   @NotNull
   @Override
-  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
+  public OrderEntry cloneEntry(@NotNull ModifiableRootModel rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager,
                                @NotNull VirtualFilePointerManager filePointerManager) {
-    return new ModuleSourceOrderEntryImpl(rootModel);
+    return new ModuleSourceOrderEntryImpl((RootModelImpl)rootModel);
   }
 
   @Override

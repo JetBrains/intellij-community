@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -26,9 +27,13 @@ import java.util.jar.JarFile;
  * @author nik
  */
 public class BuildProcessClasspathManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.impl.BuildProcessClasspathManager");
+  private static final Logger LOG = Logger.getInstance(BuildProcessClasspathManager.class);
 
-  private List<String> myCompileServerPluginsClasspath;
+  private volatile List<String> myCompileServerPluginsClasspath;
+
+  public BuildProcessClasspathManager(Disposable parentDisposable) {
+    CompileServerPlugin.EP_NAME.addExtensionPointListener((e, pd) -> { myCompileServerPluginsClasspath = null; }, parentDisposable);
+  }
 
   public List<String> getBuildProcessPluginsClasspath(Project project) {
     List<String> staticClasspath = getStaticClasspath();
@@ -44,10 +49,11 @@ public class BuildProcessClasspathManager {
   }
 
   private List<String> getStaticClasspath() {
-    if (myCompileServerPluginsClasspath == null) {
-      myCompileServerPluginsClasspath = computeCompileServerPluginsClasspath();
+    List<String> cp = myCompileServerPluginsClasspath;
+    if (cp == null) {
+      myCompileServerPluginsClasspath = cp = Collections.unmodifiableList(computeCompileServerPluginsClasspath());
     }
-    return myCompileServerPluginsClasspath;
+    return cp;
   }
 
   private static List<String> computeCompileServerPluginsClasspath() {

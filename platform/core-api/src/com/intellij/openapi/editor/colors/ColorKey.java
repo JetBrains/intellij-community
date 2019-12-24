@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,10 @@ public final class ColorKey implements Comparable<ColorKey> {
     return myDefaultColor;
   }
 
+  /**
+   * @deprecated Do not use
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Nullable
   @Deprecated
   public ColorKey getFallbackColorKey() {

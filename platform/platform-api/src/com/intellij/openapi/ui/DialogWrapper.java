@@ -75,7 +75,7 @@ import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html">DialogWrapper on SDK DevGuide</a>
  */
 public abstract class DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
+  private static final Logger LOG = Logger.getInstance(DialogWrapper.class);
 
   public enum IdeModalityType {
     IDE,
@@ -334,6 +334,8 @@ public abstract class DialogWrapper {
    * or validation description with component where problem has been found.
    *
    * @return {@code null} if everything is OK or validation descriptor
+   * 
+   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @Nullable
   protected ValidationInfo doValidate() {
@@ -349,6 +351,8 @@ public abstract class DialogWrapper {
    *
    * @return {@code List<ValidationInfo>} of invalid fields. List
    * is empty if no errors found.
+   * 
+   * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
    */
   @NotNull
   protected List<ValidationInfo> doValidateAll() {
@@ -465,7 +469,7 @@ public abstract class DialogWrapper {
   }
 
   protected static boolean isMoveHelpButtonLeft() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
+    return true;
   }
 
   private static boolean isRemoveHelpButton() {
@@ -1899,7 +1903,7 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
-      doCancelAction();
+      doCancelAction(e);
     }
   }
 

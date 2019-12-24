@@ -23,11 +23,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Pavel.Dolgov
+ * <stong>This extension point is not executed any more</stong>
+ *
+ * @deprecated {@link com.intellij.openapi.projectRoots.impl.UnknownSdkTracker} takes care about
+ *             possible actions to fix the Sdks in the project.
  */
+@Deprecated
 public interface ProjectSdkSetupValidator {
-  ExtensionPointName<ProjectSdkSetupValidator>
-    PROJECT_SDK_SETUP_VALIDATOR_EP = ExtensionPointName.create("com.intellij.projectSdkSetupValidator");
+  ExtensionPointName<ProjectSdkSetupValidator> EP_NAME = ExtensionPointName.create("com.intellij.projectSdkSetupValidator");
 
   boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file);
 

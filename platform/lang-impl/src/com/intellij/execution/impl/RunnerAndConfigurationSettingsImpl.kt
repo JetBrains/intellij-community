@@ -7,7 +7,6 @@ import com.intellij.configurationStore.serializeStateInto
 import com.intellij.diagnostic.PluginException
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Executor
-import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
@@ -364,7 +363,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
   }
 
-  override fun <T : RunnerSettings> getRunnerSettings(runner: ProgramRunner<T>): T? = runnerSettings.getOrCreateSettings(runner) as T?
+  override fun <T : RunnerSettings> getRunnerSettings(runner: ProgramRunner<T>): T? {
+    @Suppress("UNCHECKED_CAST")
+    return runnerSettings.getOrCreateSettings(runner) as T?
+  }
 
   override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
@@ -459,7 +461,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
       val iterator = element.getChildren(childTagName).iterator()
       while (iterator.hasNext()) {
         val state = iterator.next()
-        val runner = findRunner(state.getAttributeValue(RUNNER_ID))
+        val runner = state.getAttributeValue(RUNNER_ID)?.let { findRunner(it) }
         if (runner == null) {
           iterator.remove()
         }
@@ -469,13 +471,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensionList.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.iterable.filter { runnerId == it.runnerId }
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
         else -> {
           RunManagerImpl.LOG.error("More than one runner found for ID: $runnerId")
-          for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
+          for (executor in Executor.EXECUTOR_EXTENSION_NAME.extensionList) {
             runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
               return it
             }
@@ -519,7 +521,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     private fun add(state: Element, runner: ProgramRunner<*>?, data: T?) {
       if (runner == null) {
         if (unloadedSettings == null) {
-          unloadedSettings = SmartList<Element>()
+          unloadedSettings = SmartList()
         }
         unloadedSettings!!.add(JDOMUtil.internElement(state))
         return
@@ -551,7 +553,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         val element = Element(childTagName)
         runnerSettings.writeExternal(element)
         if (unloadedSettings == null) {
-          unloadedSettings = SmartList<Element>()
+          unloadedSettings = SmartList()
         }
         unloadedSettings!!.add(JDOMUtil.internElement(element))
         loadedIds.remove(runner.runnerId)

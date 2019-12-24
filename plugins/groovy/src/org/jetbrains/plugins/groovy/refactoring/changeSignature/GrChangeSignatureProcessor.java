@@ -38,7 +38,7 @@ import java.util.Set;
  */
 public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   public static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureProcessor");
+    Logger.getInstance(GrChangeSignatureProcessor.class);
 
   public GrChangeSignatureProcessor(Project project, GrChangeInfoImpl changeInfo) {
     super(project, changeInfo);

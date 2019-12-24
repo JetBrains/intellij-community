@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
 /**
@@ -18,10 +17,6 @@ public interface JBTabsEx extends JBTabs {
   boolean isEditorTabs();
 
   void updateTabActions(boolean validateNow);
-
-  boolean canShowMorePopup();
-
-  void showMorePopup(@Nullable MouseEvent e);
 
   TabInfo addTabSilently(TabInfo info, int index);
 

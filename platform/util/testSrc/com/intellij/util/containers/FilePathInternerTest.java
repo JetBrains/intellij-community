@@ -31,7 +31,7 @@ public class FilePathInternerTest extends LightPlatformTestCase {
       return true;
     });
 
-    System.out.println("done in " + (System.currentTimeMillis() - start)/1000 + "s; size="+uniq.size());
+    LOG.debug("done in " + (System.currentTimeMillis() - start)/1000 + "s; size="+uniq.size());
 
     checkInterner(thm, interner, uniq);
     checkInterner2(thm, interner, uniq);

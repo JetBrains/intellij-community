@@ -50,12 +50,6 @@ public class FieldCountInspection extends ClassMetricInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.many.fields.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("too.many.fields.problem.descriptor", infos[0]);
   }

@@ -27,6 +27,7 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLan
     super(type, text);
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();

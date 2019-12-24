@@ -21,6 +21,9 @@ public final class PsiCachedValuesFactory implements CachedValuesFactory {
     myManager = PsiManager.getInstance(project);
   }
 
+  /**
+   * @deprecated use {@link #PsiCachedValuesFactory(Project)}
+   */
   @Deprecated
   public PsiCachedValuesFactory(PsiManager manager) {
     myManager = manager;

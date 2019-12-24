@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension" dynamic="true"/>
+    <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor" dynamic="true"/>
+  </extensionPoints>
+</idea-plugin>

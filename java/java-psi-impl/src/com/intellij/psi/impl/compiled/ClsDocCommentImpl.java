@@ -90,6 +90,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     return name.equals("deprecated") ? getTags() : PsiDocTag.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return JavaDocElementType.DOC_COMMENT;

@@ -101,6 +101,12 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     myScopeDescriptor = getInitialSelectedScope();
   }
 
+  @Nullable
+  @Override
+  public String getAdvertisement() {
+    return DumbService.isDumb(myProject) ? "Results might be incomplete. The project is being indexed." : null;
+  }
+
   @NotNull
   @Override
   public String getSearchProviderId() {

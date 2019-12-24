@@ -48,7 +48,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (!(propertiesFile instanceof PropertiesFileImpl)) {
           return;
@@ -144,12 +144,6 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     final PropertiesList fakePropertiesList = PsiTreeUtil.findChildOfType(fakeFile.getContainingFile(), PropertiesList.class);
     LOG.assertTrue(fakePropertiesList != null);
     propertiesList.replace(fakePropertiesList);
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Alphabetically Unsorted Properties File or Resource Bundle";
   }
 
   @Override

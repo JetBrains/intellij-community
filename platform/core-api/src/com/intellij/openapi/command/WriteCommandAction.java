@@ -21,7 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Arrays;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
+  private static final Logger LOG = Logger.getInstance(WriteCommandAction.class);
 
   private static final String DEFAULT_COMMAND_NAME = "Undefined";
   private static final String DEFAULT_GROUP_ID = null;
@@ -231,7 +231,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
     else {
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
+        ApplicationManager.getApplication().invokeAndWait(() -> performWriteCommandAction(result));
       }
       catch (ProcessCanceledException ignored) {
       }

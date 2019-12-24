@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.refactoring.XmlTagRenameHandler");
+  private static final Logger LOG = Logger.getInstance(XmlTagRenameHandler.class);
 
 
   @Override

@@ -126,6 +126,15 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
   val smoothScrolling: Boolean
     get() = state.smoothScrolling
 
+  val animatedScrolling: Boolean
+    get() = state.animatedScrolling
+
+  val animatedScrollingDuration: Int
+    get() = state.animatedScrollingDuration
+
+  val animatedScrollingCurvePoints: Int
+    get() = state.animatedScrollingCurvePoints
+
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
@@ -186,6 +195,12 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
       state.showTreeIndentGuides = value
     }
 
+  var compactTreeIndents: Boolean
+    get() = state.compactTreeIndents
+    set(value) {
+      state.compactTreeIndents = value
+    }
+
   var moveMouseOnDefaultButton: Boolean
     get() = state.moveMouseOnDefaultButton
     set(value) {
@@ -216,7 +231,11 @@ class UISettings constructor(private val notRoamableOptions: NotRoamableUiSettin
 
   val hideTabsIfNeeded: Boolean
     get() = state.hideTabsIfNeeded
-
+  var showFileIconInTabs: Boolean
+    get() = state.showFileIconInTabs
+    set(value) {
+      state.showFileIconInTabs = value
+    }
   var hideKnownExtensionInTabs: Boolean
     get() = state.hideKnownExtensionInTabs
     set(value) {

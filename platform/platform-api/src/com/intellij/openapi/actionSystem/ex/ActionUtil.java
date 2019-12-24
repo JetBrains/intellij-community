@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
@@ -21,20 +7,24 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +39,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class ActionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.ex.ActionUtil");
+  private static final Logger LOG = Logger.getInstance(ActionUtil.class);
   @NonNls private static final String WAS_ENABLED_BEFORE_DUMB = "WAS_ENABLED_BEFORE_DUMB";
   @NonNls public static final String WOULD_BE_ENABLED_IF_NOT_DUMB_MODE = "WOULD_BE_ENABLED_IF_NOT_DUMB_MODE";
   @NonNls private static final String WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = "WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE";
@@ -169,6 +159,9 @@ public class ActionUtil {
     if (edt && insidePerformDumbAwareUpdate++ == 0) {
       ActionPauses.STAT.started();
     }
+
+    action.applyTextOverride(e);
+
     try {
       if (beforeActionPerformed) {
         action.beforeActionPerformedUpdate(e);
@@ -206,6 +199,33 @@ public class ActionUtil {
   @Deprecated
   public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
+  }
+
+  /**
+   * Show a cancellable modal progress running the given computation under read action with the same {@link DumbService#isAlternativeResolveEnabled()}
+   * as the caller. To be used in actions which need to perform potentially long-running computations synchronously without freezing UI.
+   * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
+   *   without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
+   */
+  public static <T> T underModalProgress(@NotNull Project project,
+                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                         @NotNull Computable<T> computable) throws ProcessCanceledException {
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      if (useAlternativeResolve) {
+        dumbService.setAlternativeResolveEnabled(true);
+      }
+      try {
+        ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
+        return ProgressManager.getInstance().computePrioritized(inReadAction);
+      }
+      finally {
+        if (useAlternativeResolve) {
+          dumbService.setAlternativeResolveEnabled(false);
+        }
+      }
+    }, progressTitle, true, project);
   }
 
   public static class ActionPauses {
@@ -259,28 +279,12 @@ public class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.actionPerformed(e);
-        }
-        catch (IndexNotReadyException ex) {
-          LOG.info(ex);
-          showDumbModeWarning(e);
-        }
-      }
-
-      @Override
-      public String toString() {
-        return action + " of " + action.getClass();
-      }
-    };
-
-    if (action.startInTransaction()) {
-      TransactionGuard.getInstance().submitTransactionAndWait(runnable);
-    } else {
-      runnable.run();
+    try {
+      action.actionPerformed(e);
+    }
+    catch (IndexNotReadyException ex) {
+      LOG.info(ex);
+      showDumbModeWarning(e);
     }
   }
   @NotNull

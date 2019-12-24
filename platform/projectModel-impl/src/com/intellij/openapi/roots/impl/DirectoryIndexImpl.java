@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -11,7 +12,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class DirectoryIndexImpl extends DirectoryIndex {
+public final class DirectoryIndexImpl extends DirectoryIndex implements Disposable {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 
   private final Project myProject;
@@ -43,18 +43,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   public DirectoryIndexImpl(@NotNull Project project) {
     myProject = project;
-    myConnection = project.getMessageBus().connect(project);
+    myConnection = project.getMessageBus().connect();
     subscribeToFileChanges();
-    Disposer.register(project, () -> {
-      myDisposed = true;
-      myRootIndex = null;
-    });
     LowMemoryWatcher.register(() -> {
       RootIndex index = myRootIndex;
       if (index != null) {
         index.onLowMemory();
       }
-    }, project);
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
+    myDisposed = true;
+    myRootIndex = null;
   }
 
   private void subscribeToFileChanges() {

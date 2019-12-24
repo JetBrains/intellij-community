@@ -46,9 +46,9 @@ import java.util.*;
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
  * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
- * (typical cases: version controls, Node.js and all the stuff around it, Python and Ruby interpreters and utilities, etc).
- * For GUI apps and CLI tools which aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
- * (examples: UI builders, browsers, XCode components). For the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
+ * (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc).
+ * For GUI apps and CLI tools that aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
+ * (examples: UI builders, browsers, XCode components). And for the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
  * According to an extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
  * (no one was harmed), most of them are either insensitive to an environment or fall into the first category,
  * thus backing up the choice of CONSOLE as the default value.
@@ -116,8 +116,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myCharset = original.myCharset;
     myRedirectErrorStream = original.myRedirectErrorStream;
     myInputFile = original.myInputFile;
-    // this is intentional memory waste, to avoid warning suppression. We should not copy UserData, but can't suppress a warning for a single field
-    myUserData = new HashMap<>();
+    myUserData = null;  // user data should not be copied over
   }
 
   @NotNull
@@ -427,18 +426,18 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * @implNote for subclasses:
-   *   On Windows the escapedCommands argument must never be modified or augmented in any way.
-   *   Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
-   *   depending on values of the preceding arguments.
-   *
-   *       [foo] [^]       -> [foo] [^^]
-   *
-   *   but:
-   *       [foo] ["] [^]   -> [foo] [\"] ["^"]
-   *
-   *   Notice how the last parameter escaping changes after prepending another argument.
-   *
-   *   If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.
+   * <p>On Windows the escapedCommands argument must never be modified or augmented in any way.
+   * Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
+   * depending on values of the preceding arguments.
+   * <pre>
+   *   [foo] [^] -> [foo] [^^]
+   * </pre>
+   * but:
+   * <pre>
+   *   [foo] ["] [^] -> [foo] [\"] ["^"]
+   * </pre>
+   * Notice how the last parameter escaping changes after prepending another argument.</p>
+   * <p>If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.</p>
    */
   @NotNull
   protected Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
@@ -495,8 +494,8 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Normally, double quotes in parameters are escaped so they arrive to a called program as-is.
-   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get they quotes non-escaped.
+   * Normally, double quotes in parameters are escaped, so they arrive to a called program as-is.
+   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get their quotes non-escaped.
    * Wrapping a parameter by this method (instead of using quotes) will do exactly this.
    *
    * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
@@ -514,11 +513,9 @@ public class GeneralCommandLine implements UserDataHolder {
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    if (myUserData != null) {
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) T t = (T)myUserData.get(key);
-      return t;
-    }
-    return null;
+    if (myUserData == null) return null;
+    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key);
+    return t;
   }
 
   @Override

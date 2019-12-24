@@ -27,9 +27,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.ProjectTaskRunner;
-import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.U
 import static java.util.Collections.emptyList;
 
 public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
-
   private static final Key<StringBuilder> TASKS_TRACE = KeyWithDefaultValue.create("tasks trace", StringBuilder::new);
   private static final String TEST_MODULE_NAME = "MyModule";
 
@@ -102,14 +101,14 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     taskActivator.addTask(new ExternalSystemTaskActivator.TaskActivationEntry(TEST_EXTERNAL_SYSTEM_ID, phase, projectPath, taskName));
   }
 
-  private static void build(@NotNull Module module) {
+  private void build(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).build(module);
-    ProjectTaskManagerImpl.waitForPromise(promise);
+    edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
-  private static void rebuild(@NotNull Module module) {
+  private void rebuild(@NotNull Module module) {
     Promise<ProjectTaskManager.Result> promise = ProjectTaskManager.getInstance(module.getProject()).rebuild(module);
-    ProjectTaskManagerImpl.waitForPromise(promise);
+    edt(() -> PlatformTestUtil.waitForPromise(promise));
   }
 
   private static class TestTaskConfigurationType extends AbstractExternalSystemTaskConfigurationType {

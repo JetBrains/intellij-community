@@ -4,6 +4,7 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.changeReminder.prediction.model.PredictionModel
 import com.jetbrains.changeReminder.repository.Commit
 import kotlin.math.max
@@ -116,7 +117,7 @@ class PredictionProvider(private val minProb: Double = 0.55) {
    * @param maxPredictedFileCount maximum files to be predicted
    * @return list of forgotten files
    */
-  fun predictForgottenFiles(commit: Commit, history: Collection<Commit>, maxPredictedFileCount: Int = 5): List<FilePath> =
+  fun predictForgottenFiles(commit: Commit, history: Collection<Commit>, maxPredictedFileCount: Int = 5): List<VirtualFile> =
     getRelatedFiles(commit, history)
       .asSequence()
       .map { (candidateFile, candidateFileHistory) ->
@@ -125,8 +126,9 @@ class PredictionProvider(private val minProb: Double = 0.55) {
         candidateFile to fileScore
       }
       .filter { it.second > minProb }
+      .filter { it.first.virtualFile != null }
       .sortedByDescending { it.second }
       .take(maxPredictedFileCount)
-      .map { it.first }
+      .mapNotNull { it.first.virtualFile }
       .toList()
 }

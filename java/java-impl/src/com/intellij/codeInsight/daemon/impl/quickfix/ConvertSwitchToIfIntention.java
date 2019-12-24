@@ -95,7 +95,8 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     boolean useEquals = isSwitchOnString;
     if (!useEquals) {
       final PsiClass aClass = PsiUtil.resolveClassInType(switchExpressionType);
-      useEquals = aClass != null && !aClass.isEnum() && !TypeConversionUtil.isPrimitiveWrapper(aClass.getQualifiedName());
+      String fqn;
+      useEquals = aClass != null && !aClass.isEnum() && ((fqn = aClass.getQualifiedName()) == null || !TypeConversionUtil.isPrimitiveWrapper(fqn));
     }
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) {

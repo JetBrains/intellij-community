@@ -29,7 +29,7 @@ import static java.util.Collections.*;
  * @author Maxim.Mossienko
  */
 public class FileReferenceSet {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet");
+  private static final Logger LOG = Logger.getInstance(FileReferenceSet.class);
 
   private static final FileType[] EMPTY_FILE_TYPES = {};
 
@@ -57,7 +57,7 @@ public class FileReferenceSet {
   @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   @Nullable private FileType[] mySuitableFileTypes;
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,
@@ -67,7 +67,7 @@ public class FileReferenceSet {
     this(str, element, startInElement, provider, caseSensitive, endingSlashNotAllowed, suitableFileTypes, true);
   }
 
-  public FileReferenceSet(String str,
+  public FileReferenceSet(@NotNull String str,
                           @NotNull PsiElement element,
                           int startInElement,
                           PsiReferenceProvider provider,

@@ -33,7 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class OwnBufferLeafPsiElement extends LeafElement implements PsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
+  private static final Logger LOG = Logger.getInstance(LeafPsiElement.class);
 
   public OwnBufferLeafPsiElement(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);

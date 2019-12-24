@@ -41,12 +41,6 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.min.option"),
                                               this, "m_limit");

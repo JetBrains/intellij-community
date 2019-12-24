@@ -1,10 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -18,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
@@ -104,7 +109,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     private static int[] getRedundantOperandIndices(PsiPolyadicExpression context, List<PsiExpression> operands, boolean and) {
       assert !operands.isEmpty();
       if (operands.size() == 1) {
-        Object value = DfaUtil.computeValue(operands.get(0));
+        Object value = CommonDataflow.computeValue(operands.get(0));
         return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtilRt.EMPTY_INT_ARRAY;
       }
       String text = StreamEx.ofReversed(operands)
@@ -127,15 +132,48 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
   @NotNull
   private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expressionToAnalyze);
+    DataFlowRunner runner = new DataFlowRunner(expressionToAnalyze.getProject(), expressionToAnalyze) {
+      @NotNull
+      @Override
+      protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                         @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                         @NotNull ControlFlow flow) {
+        List<DfaInstructionState> states = super.createInitialInstructionStates(psiBlock, memStates, flow);
+        List<DfaVariableValue> vars = flow.accessedVariables()
+          .filter(var -> {
+            if (!(var.getInherentType() instanceof DfReferenceType) ||
+                ((DfReferenceType)var.getInherentType()).getNullability() == DfaNullability.UNKNOWN) {
+              return false;
+            }
+            PsiVariable psi = ObjectUtils.tryCast(var.getPsiVariable(), PsiVariable.class);
+            if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
+              PsiElement block = PsiUtil.getVariableCodeBlock(psi, null);
+              return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(psi, block, null);
+            }
+            return true;
+          })
+          .collect(Collectors.toList());
+        if (!vars.isEmpty()) {
+          for (DfaInstructionState state : states) {
+            for (DfaVariableValue var : vars) {
+              state.getMemoryState().setVarValue(var, getFactory().fromDfType(((DfReferenceType)var.getInherentType()).dropNullability()));
+            }
+          }
+        }
+        return states;
+      }
+    };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
     StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
       @Override
       protected boolean checkNotNullable(DfaMemoryState state,
-                                         DfaValue value,
+                                         @NotNull DfaValue value,
                                          @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
-          state.forceVariableFact((DfaVariableValue)value, DfaFactType.NULLABILITY, DfaNullability.NULLABLE);
+          DfType dfType = state.getDfType(value);
+          if (dfType instanceof DfReferenceType) {
+            state.setDfType(value, ((DfReferenceType)dfType).dropNullability().meet(DfaNullability.NULLABLE.asDfType()));
+          }
         }
         return true;
       }
@@ -150,11 +188,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
         ThreeState result = ThreeState.UNSURE;
-        if (value instanceof DfaConstValue) {
-          Object bool = ((DfaConstValue)value).getValue();
-          if (bool instanceof Boolean) {
-            result = ThreeState.fromBoolean((Boolean)bool);
-          }
+        Boolean bool = DfConstantType.getConstantOfType(state.getDfType(value), Boolean.class);
+        if (bool != null) {
+          result = ThreeState.fromBoolean(bool);
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }

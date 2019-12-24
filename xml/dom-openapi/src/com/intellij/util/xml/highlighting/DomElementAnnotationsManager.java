@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 import java.util.List;
 
-public abstract class DomElementAnnotationsManager extends SimpleModificationTracker {
+public abstract class DomElementAnnotationsManager {
 
   public static DomElementAnnotationsManager getInstance(Project project) {
     return ServiceManager.getService(project, DomElementAnnotationsManager.class);

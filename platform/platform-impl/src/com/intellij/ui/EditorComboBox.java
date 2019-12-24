@@ -119,13 +119,6 @@ public class EditorComboBox extends ComboBox implements DocumentListener {
     }
   }
 
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-
-    MacUIUtil.drawComboboxFocusRing(this, g);
-  }
-
   public Project getProject() {
     return myProject;
   }

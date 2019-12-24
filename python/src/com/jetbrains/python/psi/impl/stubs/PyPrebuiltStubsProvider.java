@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.stubs.PrebuiltStubsProviderBase;
+import com.intellij.psi.stubs.PlatformPrebuiltStubsProviderBase;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFileElementType;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class PyPrebuiltStubsProvider extends PrebuiltStubsProviderBase {
+public class PyPrebuiltStubsProvider extends PlatformPrebuiltStubsProviderBase {
 
   public static final String NAME = PythonFileType.INSTANCE.getName();
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -17,22 +16,22 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class ExprTypePredicate extends MatchPredicate {
-  private final RegExpPredicate delegate;
-  private final boolean withinHierarchy;
+  private final RegExpPredicate myDelegate;
+  private final boolean myWithinHierarchy;
   private final boolean needsTypeParameters;
   private final boolean needsFullyQualified;
   private final boolean needsArrayType;
   private final boolean myCaseSensitive;
   private final List<String> myTypes;
 
-  public ExprTypePredicate(String type, String baseName, boolean _withinHierarchy, boolean caseSensitiveMatch, boolean target) {
-    delegate = Registry.is("ssr.use.regexp.to.specify.type") ? new RegExpPredicate(type, caseSensitiveMatch, baseName, false, target) : null;
-    withinHierarchy = _withinHierarchy;
+  public ExprTypePredicate(String type, String baseName, boolean withinHierarchy, boolean caseSensitiveMatch, boolean target, boolean regex) {
+    myDelegate = regex ? new RegExpPredicate(type, caseSensitiveMatch, baseName, false, target) : null;
+    myWithinHierarchy = withinHierarchy;
     needsTypeParameters = type.indexOf('<') >= 0;
     needsFullyQualified = type.indexOf('.') >= 0;
     needsArrayType = type.indexOf('[') >= 0;
     myCaseSensitive = caseSensitiveMatch;
-    myTypes = StringUtil.split(type, "|");
+    myTypes = regex ? null : StringUtil.split(type, "|");
   }
 
   @Override
@@ -69,11 +68,11 @@ public class ExprTypePredicate extends MatchPredicate {
   private boolean doMatchWithTheType(final PsiType type, MatchContext context, PsiElement matchedNode, Set<? super PsiType> visited) {
     final List<String> permutations = getTextPermutations(type);
     for (String permutation : permutations) {
-      if (delegate == null ? doMatch(permutation) : delegate.doMatch(permutation, context, matchedNode)) {
+      if (myDelegate == null ? doMatch(permutation) : myDelegate.doMatch(permutation, context, matchedNode)) {
         return true;
       }
     }
-    if (withinHierarchy) {
+    if (myWithinHierarchy) {
       if (visited == null) {
         visited = new THashSet<>();
         visited.add(type);

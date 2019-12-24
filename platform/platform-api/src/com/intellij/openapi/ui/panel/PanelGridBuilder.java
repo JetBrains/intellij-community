@@ -11,6 +11,7 @@ import java.util.List;
 
 public class PanelGridBuilder implements PanelBuilder {
   private boolean expand;
+  private boolean splitColumns;
   private final List<GridBagPanelBuilder> builders = new ArrayList<>();
 
   /**
@@ -37,6 +38,18 @@ public class PanelGridBuilder implements PanelBuilder {
     return this;
   }
 
+  /**
+   * Splits components and their inline comments into different columns in the resulting grid.
+   * This method is effective only when you build a grid of panels containing components with
+   * comment text resided on the right of the component. By default component and the comment
+   * text are placed in a row and different alignment rules apply to different rows.
+   *
+   * @return <code>this</code>
+   */
+  public PanelGridBuilder splitColumns() {
+    this.splitColumns = true;
+    return this;
+  }
 
   @Override
   @NotNull
@@ -59,7 +72,7 @@ public class PanelGridBuilder implements PanelBuilder {
   }
 
   private void addToPanel(JPanel panel, GridBagConstraints gc) {
-    builders.stream().filter(b -> b.constrainsValid()).forEach(b -> b.addToPanel(panel, gc));
+    builders.stream().filter(b -> b.constrainsValid()).forEach(b -> b.addToPanel(panel, gc, splitColumns));
 
     if (!expand) {
       gc.gridx = 0;

@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 // use only JDK classes here (avoid StringUtil and so on)
 public final class ActivityImpl implements Activity {
@@ -26,19 +28,29 @@ public final class ActivityImpl implements Activity {
   @Nullable
   private final String pluginId;
 
-  ActivityImpl(@Nullable String name, @Nullable String pluginId) {
-    this(name, StartUpMeasurer.getCurrentTime(), null, pluginId);
-  }
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static volatile Consumer<ActivityImpl> listener;
 
   ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId) {
+    this(name, start, parent, pluginId, null);
+  }
+
+  ActivityImpl(@Nullable String name, long start, @Nullable ActivityImpl parent, @Nullable String pluginId, @Nullable ActivityCategory category) {
     this.name = name;
     this.start = start;
     this.parent = parent;
     this.pluginId = pluginId;
+    this.category = category;
 
     Thread thread = Thread.currentThread();
     threadId = thread.getId();
     threadName = thread.getName();
+
+    Consumer<ActivityImpl> listener = ActivityImpl.listener;
+    if (listener != null) {
+      listener.accept(this);
+    }
   }
 
   @NotNull
@@ -69,9 +81,7 @@ public final class ActivityImpl implements Activity {
   @Override
   @NotNull
   public ActivityImpl startChild(@NotNull String name) {
-    ActivityImpl activity = new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId);
-    activity.category = category;
-    return activity;
+    return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId, category);
   }
 
   @NotNull
@@ -107,6 +117,11 @@ public final class ActivityImpl implements Activity {
     assert end == 0 : "not started or already ended";
     end = StartUpMeasurer.getCurrentTime();
     StartUpMeasurer.addActivity(this);
+
+    Consumer<ActivityImpl> listener = ActivityImpl.listener;
+    if (listener != null) {
+      listener.accept(this);
+    }
   }
 
   @Override
@@ -118,9 +133,7 @@ public final class ActivityImpl implements Activity {
   @NotNull
   public Activity endAndStart(@NotNull String name) {
     end();
-    ActivityImpl activity = new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId);
-    activity.setCategory(category);
-    return activity;
+    return new ActivityImpl(name, /* start = */end, parent, /* level = */ pluginId, category);
   }
 
   @Override

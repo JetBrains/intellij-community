@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
 
-    <backgroundPostStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
 
     <keymapExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension"/>
 
@@ -24,6 +24,10 @@
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
+                    serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
+    <editorFloatingToolbarProvider implementation="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
                     serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.project.ExternalStorageConfigurationManager"

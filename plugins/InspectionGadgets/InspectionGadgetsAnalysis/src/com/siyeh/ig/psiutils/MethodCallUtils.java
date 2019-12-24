@@ -201,13 +201,10 @@ public class MethodCallUtils {
     if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
       return false;
     }
-    if (member instanceof PsiClassInitializer) {
-      final PsiClassInitializer classInitializer = (PsiClassInitializer)member;
-      if (!classInitializer.hasModifierProperty(PsiModifier.STATIC)) {
-        return true;
-      }
+    if (member instanceof PsiClassInitializer || member instanceof PsiField) {
+      return !member.hasModifierProperty(PsiModifier.STATIC);
     }
-    else if (member instanceof PsiMethod) {
+    if (member instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)member;
       if (method.isConstructor()) {
         return true;
@@ -219,12 +216,6 @@ public class MethodCallUtils {
         return true;
       }
       return MethodUtils.simpleMethodMatches(method, null, "void", "readObjectNoData");
-    }
-    else if (member instanceof PsiField) {
-      final PsiField field = (PsiField)member;
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        return true;
-      }
     }
     return false;
   }

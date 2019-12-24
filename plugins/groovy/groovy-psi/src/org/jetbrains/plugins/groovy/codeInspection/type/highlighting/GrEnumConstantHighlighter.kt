@@ -6,10 +6,12 @@ import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 
-class GrEnumConstantHighlighter(val enumConstant: GrEnumConstant,
-                                sink: HighlightSink) : ConstructorCallHighlighter(enumConstant.constructorReference, sink) {
+class GrEnumConstantHighlighter(
+  private val enumConstant: GrEnumConstant,
+  sink: HighlightSink
+) : ConstructorCallHighlighter(enumConstant.constructorReference, sink) {
 
-  override fun getArgumentList(): GrArgumentList? = enumConstant.argumentList
+  override val argumentList: GrArgumentList? get() = enumConstant.argumentList
 
-  override fun getHighlightElement(): PsiElement = getArgumentList() ?: enumConstant.nameIdentifierGroovy
+  override val highlightElement: PsiElement get() = argumentList ?: enumConstant.nameIdentifierGroovy
 }

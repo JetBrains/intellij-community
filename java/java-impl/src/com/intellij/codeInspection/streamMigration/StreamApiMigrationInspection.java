@@ -70,13 +70,6 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "foreach loop can be collapsed with Stream API";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;

@@ -5,13 +5,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Expandable;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -154,7 +154,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
       .setCancelOnWindowDeactivation(false)
       .setKeyboardActions(singletonList(Pair.create(event -> {
         collapse();
-        Window window = UIUtil.getWindow(source);
+        Window window = ComponentUtil.getWindow(source);
         if (window != null) {
           window.dispatchEvent(
             new KeyEvent(source, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), CTRL_MASK, KeyEvent.VK_ENTER, '\r'));

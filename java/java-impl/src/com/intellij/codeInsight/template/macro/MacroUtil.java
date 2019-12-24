@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MacroUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
+  private static final Logger LOG = Logger.getInstance(MacroUtil.class);
 
   @Nullable public static PsiType resultToPsiType(Result result, ExpressionContext context){
     if (result instanceof PsiTypeResult) {

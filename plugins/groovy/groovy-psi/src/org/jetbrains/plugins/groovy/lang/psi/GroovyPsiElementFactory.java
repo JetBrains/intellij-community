@@ -54,6 +54,17 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrReferenceExpression createThisExpression(@Nullable PsiClass psiClass);
 
   @NotNull
+  public final GrBlockStatement createBlockStatement(GrStatement... statements) {
+    StringBuilder text = new StringBuilder();
+    text.append("{\n");
+    for (GrStatement statement : statements) {
+      text.append(statement.getText()).append("\n");
+    }
+    text.append("}");
+    return createBlockStatementFromText(text.toString(), null);
+  }
+
+  @NotNull
   public abstract GrBlockStatement createBlockStatementFromText(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
@@ -117,9 +128,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
   @NotNull
   public abstract GrStatement createStatementFromText(@NotNull CharSequence text, @Nullable PsiElement context);
-
-  @NotNull
-  public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 
   @NotNull
   public abstract GrMethodCallExpression createMethodCallByAppCall(@NotNull GrApplicationStatement callExpr);
@@ -207,9 +215,6 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
                                               @Nullable String initializer,
                                               @Nullable GroovyPsiElement context,
                                               String... modifiers) throws IncorrectOperationException;
-
-  @NotNull
-  public abstract GrCodeReferenceElement createTypeOrPackageReference(@NotNull String qName);
 
   @NotNull
   public abstract GrTypeDefinition createTypeDefinition(@NotNull String text) throws IncorrectOperationException;

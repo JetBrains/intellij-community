@@ -62,13 +62,6 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
     return "XML";
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Deprecated API usage in XML";
-  }
-
   @NotNull
   @Override
   public String getShortName() {

@@ -17,18 +17,18 @@ package org.picocontainer.defaults;
  * @author <a href="mailto:joe@thoughtworks.net">Joe Walnes</a>
  */
 public interface ObjectReference {
-    /**
-     * Retrieve an actual reference to the object. Returns null if the reference is not available
-     * or has not been populated yet.
-     * 
-     * @return an actual reference to the object.
-     */
-    Object get();
+  /**
+   * Retrieve an actual reference to the object. Returns null if the reference is not available
+   * or has not been populated yet.
+   *
+   * @return an actual reference to the object.
+   */
+  Object get();
 
-    /**
-     * Assign an object to the reference.
-     * 
-     * @param item the object to assign to the reference. May be <code>null</code>.
-     */
-    void set(Object item);
+  /**
+   * Assign an object to the reference.
+   *
+   * @param item the object to assign to the reference. May be <code>null</code>.
+   */
+  void set(Object item);
 }

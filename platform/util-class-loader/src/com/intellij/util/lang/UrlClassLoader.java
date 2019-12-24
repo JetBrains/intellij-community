@@ -3,9 +3,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +67,10 @@ public class UrlClassLoader extends ClassLoader {
   @SuppressWarnings("unused")
   void appendToClassPathForInstrumentation(@NotNull String jar) {
     try {
-      addURL(new File(jar).toURI().toURL());
+      URL url = new File(jar).toURI().toURL();
+      //noinspection deprecation
+      getClassPath().addURL(internProtocol(url));
+      myURLs.add(url);
     }
     catch (MalformedURLException ignore) { }
   }
@@ -84,7 +85,6 @@ public class UrlClassLoader extends ClassLoader {
   /**
    * See com.intellij.TestAll#getClassRoots()
    */
-  @SuppressWarnings("unused")
   @NotNull
   public List<URL> getBaseUrls() {
     return myClassPath.getBaseUrls();
@@ -98,7 +98,7 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = Collections.emptyList();
-    private Set<URL> myURLsWithProtectionDomain = new HashSet<URL>();
+    private Set<URL> myURLsWithProtectionDomain;
     private ClassLoader myParent;
     private boolean myLockJars;
     private boolean myUseCache;
@@ -109,8 +109,12 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myErrorOnMissingJar = true;
     private boolean myLazyClassloadingCaches;
     private boolean myLogJarAccess;
-    private @Nullable CachePoolImpl myCachePool;
-    private @Nullable CachingCondition myCachingCondition;
+    @Nullable
+    private CachePoolImpl myCachePool;
+    @Nullable
+    private CachingCondition myCachingCondition;
+
+    private boolean myUrlsInterned;
 
     Builder() { }
 
@@ -162,6 +166,9 @@ public class UrlClassLoader extends ClassLoader {
 
     @NotNull
     public Builder logJarAccess(boolean logJarAccess) { myLogJarAccess = logJarAccess; return this; }
+
+    @NotNull
+    public Builder urlsInterned() { myUrlsInterned = true; return this; }
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
@@ -236,12 +243,20 @@ public class UrlClassLoader extends ClassLoader {
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myURLs = ContainerUtilRt.map2List(builder.myURLs, new Function<URL, URL>() {
-      @Override
-      public URL fun(URL url) {
-        return internProtocol(url);
+
+    if (builder.myUrlsInterned) {
+      myURLs = builder.myURLs;
+    }
+    else {
+      myURLs = new ArrayList<URL>(builder.myURLs.size());
+      for (URL url : builder.myURLs) {
+        URL internedUrl = internProtocol(url);
+        if (internedUrl != null) {
+          myURLs.add(internedUrl);
+        }
       }
-    });
+    }
+
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
     myClassLoadingLocks = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new ClassLoadingLocks() : null;
@@ -249,15 +264,22 @@ public class UrlClassLoader extends ClassLoader {
 
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
+    Set<URL> urlsWithProtectionDomain = builder.myURLsWithProtectionDomain;
+    if (urlsWithProtectionDomain == null) {
+      urlsWithProtectionDomain = Collections.emptySet();
+    }
+
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                          builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                         builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, builder.myURLsWithProtectionDomain,
+                         builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches, urlsWithProtectionDomain,
                          builder.myLogJarAccess);
   }
 
   /**
    * Interns a value of the {@link URL#protocol} ("file" or "jar") and {@link URL#host} (empty string) fields.
+   * @return interned URL or null if URL was malformed
    */
+  @Nullable
   public static URL internProtocol(@NotNull URL url) {
     String protocol = url.getProtocol();
     boolean interned = false;
@@ -284,7 +306,6 @@ public class UrlClassLoader extends ClassLoader {
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public void addURL(@NotNull URL url) {
     getClassPath().addURL(internProtocol(url));
     myURLs.add(url);
@@ -409,10 +430,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings("unused")
   @NotNull
   protected Object getClassLoadingLock(String className) {
-    //noinspection RedundantStringConstructorCall
     return myClassLoadingLocks != null ? myClassLoadingLocks.getOrCreateLock(className) : this;
   }
 

@@ -53,10 +53,13 @@ private fun getBaseTypeFromResult(result: GroovyResolveResult, arguments: Argume
 
 fun getTypeFromCandidate(result: GroovyMethodResult, context: PsiElement): PsiType? {
   val candidate = result.candidate ?: return null
+  val method = candidate.method
+  val receiverType = candidate.receiverType
+  val arguments = candidate.argumentMapping?.arguments
   for (ext in ep.extensions) {
-    return ext.getType(candidate.receiver, candidate.method, candidate.argumentMapping?.arguments, context) ?: continue
+    return ext.getType(receiverType, method, arguments, context) ?: continue
   }
-  return getSmartReturnType(candidate.method)
+  return getSmartReturnType(method)
 }
 
 private val ep: ExtensionPointName<GrCallTypeCalculator> = ExtensionPointName.create("org.intellij.groovy.callTypeCalculator")

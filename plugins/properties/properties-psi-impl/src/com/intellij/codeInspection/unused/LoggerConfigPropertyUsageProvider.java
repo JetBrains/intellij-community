@@ -16,12 +16,13 @@
 package com.intellij.codeInspection.unused;
 
 import com.intellij.lang.properties.psi.Property;
+import org.jetbrains.annotations.NotNull;
 
 public class LoggerConfigPropertyUsageProvider extends ImplicitPropertyUsageProvider {
   private final static String[] LOGGER_PROPERTIES_KEYWORDS = new String[]{"log4j", "commons-logging", "logging"};
 
   @Override
-  protected boolean isUsed(Property property) {
+  protected boolean isUsed(@NotNull Property property) {
     final String propertiesFileName = property.getPropertiesFile().getName();
     for (String keyword : LOGGER_PROPERTIES_KEYWORDS) {
       if (propertiesFileName.startsWith(keyword)) {

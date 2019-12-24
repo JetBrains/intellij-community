@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.psi.*
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -18,8 +20,6 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.*
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.util.SmartList
-import com.intellij.util.component1
-import com.intellij.util.component2
 import com.intellij.util.containers.ContainerUtil
 import kotlin.math.max
 

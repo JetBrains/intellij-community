@@ -182,6 +182,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testStreamAnyMatchIsNull() { doTest(); }
+  public void testStreamCustomSumMethod() { doTest(); }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
@@ -256,4 +257,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  public void testLambdaReturnFromTypeUse() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testInlineLambdaFromLocal() { doTest(); }
+  public void testAllowRequireNonNullInCtor() { doTest(); }
 }

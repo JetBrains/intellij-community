@@ -20,7 +20,7 @@ public class BaseRevisionTextPatchEP implements PatchEP {
   public static final Key<Map<FilePath, ContentRevision>>
     ourBaseRevisions = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
   public static final Key<Map<String, String>> ourStoredTexts = Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP");
+  private final static Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
 
   private final String myBaseDir;
 

@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing
 
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.project.Project
@@ -31,24 +31,26 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     LOG.debug("Open project from $projectFile")
-    val projectDirectory = getProjectDirectory(projectFile) ?: return null
-    if (focusOnOpenedSameProject(projectDirectory.path)) return null
+    val projectDirectory = getProjectDirectory(projectFile)
+    if (focusOnOpenedSameProject(projectDirectory.path)) {
+      return null
+    }
     if (canOpenPlatformProject(projectDirectory)) {
       return openPlatformProject(projectDirectory, projectToClose, forceOpenInNewFrame)
     }
+
     val project = createProject(projectDirectory) ?: return null
     linkAndRefreshProject(projectDirectory.path, project)
-    ProjectUtil.updateLastProjectLocation(projectDirectory.path)
-    if (!forceOpenInNewFrame) closePreviousProject(projectToClose)
-    ProjectManagerEx.getInstanceEx().openProject(project)
+    updateLastProjectLocation(projectDirectory.path)
+    val path = Paths.get(projectDirectory.path)
+    PlatformProjectOpenProcessor.openExistingProject(path, path, OpenProjectTask(forceOpenInNewFrame = forceOpenInNewFrame, projectToClose = projectToClose, project = project))
     return project
   }
 
-  override fun linkToExistingProject(projectFile: VirtualFile, project: Project): Boolean {
+  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
     LOG.debug("Import project from $projectFile")
-    val projectDirectory = getProjectDirectory(projectFile) ?: return false
+    val projectDirectory = getProjectDirectory(projectFile)
     linkAndRefreshProject(projectDirectory.path, project)
-    return true
   }
 
   private fun canOpenPlatformProject(projectDirectory: VirtualFile): Boolean {
@@ -69,8 +71,8 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
 
   private fun focusOnOpenedSameProject(projectDirectory: String): Boolean {
     for (project in ProjectManager.getInstance().openProjects) {
-      if (ProjectUtil.isSameProject(projectDirectory, project)) {
-        ProjectUtil.focusProjectWindow(project, false)
+      if (isSameProject(projectDirectory, project)) {
+        focusProjectWindow(project, false)
         return true
       }
     }
@@ -84,18 +86,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     return project
   }
 
-  private fun closePreviousProject(projectToClose: Project?) {
-    val openProjects = ProjectManager.getInstance().openProjects
-    if (openProjects.isNotEmpty()) {
-      val exitCode = ProjectUtil.confirmOpenNewProject(true)
-      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-        ProjectUtil.closeAndDispose(projectToClose ?: openProjects[openProjects.size - 1])
-      }
-    }
-  }
-
-  private fun getProjectDirectory(file: VirtualFile): VirtualFile? {
-    if (!canOpenProject(file)) return null
+  private fun getProjectDirectory(file: VirtualFile): VirtualFile {
     if (!file.isDirectory) return file.parent
     return file
   }

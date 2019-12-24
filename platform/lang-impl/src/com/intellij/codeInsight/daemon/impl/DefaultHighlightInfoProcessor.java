@@ -17,7 +17,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +64,10 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
-    EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
-    markup.repaintTrafficLightIcon();
+    MarkupModel markup = editor.getMarkupModel();
+    if (markup instanceof EditorMarkupModelImpl) {
+      ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+    }
     ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
@@ -99,17 +101,14 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession session,
                                                @NotNull TextRange elementRange,
                                                @Nullable List<? extends HighlightInfo> infos) {
-    PsiFile psiFile = session.getPsiFile();
-    killAbandonedHighlightsUnder(psiFile, elementRange, infos, session);
+    killAbandonedHighlightsUnder(session.getProject(), session.getDocument(), elementRange, infos, session);
   }
 
-  private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
+  private static void killAbandonedHighlightsUnder(@NotNull Project project,
+                                                   @NotNull Document document,
                                                    @NotNull final TextRange range,
                                                    @Nullable final List<? extends HighlightInfo> infos,
                                                    @NotNull final HighlightingSession highlightingSession) {
-    final Project project = psiFile.getProject();
-    final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-    if (document == null) return;
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), existing -> {
         if (existing.isBijective() &&
             existing.getGroup() == Pass.UPDATE_ALL &&
@@ -154,7 +153,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         if (myProject.isDisposed()) return;
         Editor myeditor = editor;
         if (myeditor == null) {
-          myeditor = PsiUtilBase.findEditor(file);
+          myeditor = PsiEditorUtil.findEditor(file);
         }
         if (myeditor != null && !myeditor.isDisposed()) {
           repaintErrorStripeAndIcon(myeditor, myProject);

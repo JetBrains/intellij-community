@@ -11,8 +11,7 @@ import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 
 open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl) : RowBuilder by builder.rootRow {
-
-  override fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
+  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     builder.withButtonGroup(buttonGroup, body)
   }
 

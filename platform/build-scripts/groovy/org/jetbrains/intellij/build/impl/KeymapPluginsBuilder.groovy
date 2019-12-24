@@ -7,24 +7,25 @@ import org.jetbrains.intellij.build.BuildContext
 final class KeymapPluginsBuilder {
 
   static List<PluginRepositorySpec> buildKeymapPlugins(BuildContext buildContext, String targetDir) {
-    [["Default for GNOME"],
-     ["Default for KDE"],
-     ["Default for XWin"],
-     ["Eclipse", "Eclipse (Mac OS X)"],
-     ["Emacs"],
-     ["NetBeans 6.5"],
-     ["ReSharper", "ReSharper OSX"],
-     ["Sublime Text", "Sublime Text (Mac OS X)"],
-     ["Visual Studio"],
-     ["Xcode"]].collect {
-      keymapPlugin(buildContext, targetDir, it)
-    }
+    return [
+      keymapPlugin(["Mac OS X", "Mac OS X 10.5+"], buildContext, targetDir),
+      keymapPlugin(["Default for GNOME"], buildContext, targetDir),
+      keymapPlugin(["Default for KDE"], buildContext, targetDir),
+      keymapPlugin(["Default for XWin"], buildContext, targetDir),
+      keymapPlugin(["Eclipse", "Eclipse (Mac OS X)"], buildContext, targetDir),
+      keymapPlugin(["Emacs"], buildContext, targetDir),
+      keymapPlugin(["NetBeans 6.5"], buildContext, targetDir),
+      keymapPlugin(["ReSharper", "ReSharper OSX"], buildContext, targetDir),
+      keymapPlugin(["Sublime Text", "Sublime Text (Mac OS X)"], buildContext, targetDir),
+      keymapPlugin(["Visual Studio"], buildContext, targetDir),
+      keymapPlugin(["Xcode"], buildContext, targetDir)
+    ]
   }
 
-  static PluginRepositorySpec keymapPlugin(BuildContext buildContext, String targetDir, List<String> keymaps) {
+  static PluginRepositorySpec keymapPlugin(List<String> keymaps, BuildContext buildContext, String targetDir) {
     def keymapPath = "$buildContext.paths.communityHome/platform/platform-resources/src/keymaps"
-    def longName = keymaps[0].replaceAll("Default for ", "")
-    def shortName = keymaps[0].replaceAll("[.0-9 ]|Default for ", "")
+    def longName = keymaps[0].replace("Mac OS X", "macOS").replaceAll("Default for |[.0-9]", "").trim()
+    def shortName = longName.replaceAll(" ", "")
     def tempDir = new File(buildContext.paths.temp, "keymap-plugins/${shortName.toLowerCase()}")
     new File(tempDir, "META-INF").mkdirs()
     new File(tempDir, "META-INF/plugin.xml").text = keymapPluginXml(buildContext.buildNumber, shortName.toLowerCase(), longName, keymaps)

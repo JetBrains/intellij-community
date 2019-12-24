@@ -23,7 +23,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
-import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
@@ -57,12 +56,7 @@ public interface XmlElementType extends XmlTokenType {
   //todo: move to html
   IElementType HTML_DOCUMENT = new IXmlElementType("HTML_DOCUMENT");
   IElementType HTML_TAG = new XmlTagElementType("HTML_TAG");
-  IFileElementType HTML_FILE = new IStubFileElementType<PsiFileStub<?>>(HTMLLanguage.INSTANCE) {
-    @Override
-    public int getStubVersion() {
-      return super.getStubVersion() + 2;
-    }
-  };
+  IFileElementType HTML_FILE = new HtmlFileElementType();
   IElementType HTML_EMBEDDED_CONTENT = new EmbeddedHtmlContentElementType();
 
   IElementType XML_TEXT = new XmlTextElementType();

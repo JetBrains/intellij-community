@@ -4,4 +4,4 @@ class MyClass2 {
 
 
 def cl = new MyClass2().&ttt
-print cl().<ref>toLowerCase()
+print cl().<caret>toLowerCase()

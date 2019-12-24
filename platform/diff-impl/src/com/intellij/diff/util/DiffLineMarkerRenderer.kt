@@ -35,6 +35,9 @@ internal class DiffLineMarkerRenderer(
   private val myLastLine: Boolean
 ) : LineMarkerRendererEx {
 
+  /**
+   * Keep in sync with [DiffDividerDrawUtil.getPaintRange]
+   */
   override fun paint(editor: Editor, g: Graphics, range: Rectangle) {
     editor as EditorEx
     g as Graphics2D
@@ -43,23 +46,22 @@ internal class DiffLineMarkerRenderer(
     var x1 = 0
     val x2 = x1 + gutter.width
 
-    var y1: Int
-    var y2: Int
-    if (myEmptyRange && myLastLine) {
-      y1 = lineToY(editor, DiffUtil.getLineCount(editor.document))
-      y2 = y1
+    val startLine: Int
+    val endLine: Int
+    if (myEmptyRange) {
+      if (myLastLine) {
+        startLine = DiffUtil.getLineCount(editor.document)
+      }
+      else {
+        startLine = editor.document.getLineNumber(myHighlighter.startOffset)
+      }
+      endLine = startLine
     }
     else {
-      val startLine = editor.document.getLineNumber(myHighlighter.startOffset)
-      val endLine = editor.document.getLineNumber(myHighlighter.endOffset) + 1
-      y1 = lineToY(editor, startLine)
-      y2 = if (myEmptyRange) y1 else lineToY(editor, endLine)
+      startLine = editor.document.getLineNumber(myHighlighter.startOffset)
+      endLine = editor.document.getLineNumber(myHighlighter.endOffset) + 1
     }
-
-    if (myEmptyRange && myFirstLine) {
-      y1++
-      y2++
-    }
+    val (y1, y2) = getGutterMarkerPaintRange(editor, startLine, endLine)
 
     if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown) {
       // draw only in "editor" part of the gutter (rightmost part of foldings' "[+]" )

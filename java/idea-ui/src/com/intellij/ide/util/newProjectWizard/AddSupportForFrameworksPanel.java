@@ -51,7 +51,7 @@ import java.util.*;
  * @author nik
  */
 public class AddSupportForFrameworksPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksStep");
+  private static final Logger LOG = Logger.getInstance(AddSupportForFrameworksPanel.class);
   @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
@@ -134,15 +134,18 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myProviders = providers;
 
     myAssociatedFrameworks = createNodes(myProviders, associated, preselected);
-    for (FrameworkSupportNodeBase node : myRoots) {
-      if (preselected.contains(node.getId())) {
-        node.setChecked(true);
-      }
-    }
     setAssociatedFrameworks();
 
     myFrameworksTree.setRoots(myRoots);
     myFrameworksTree.setSelectionRow(0);
+
+    for (FrameworkSupportNodeBase<?> node : myRoots) {
+      if (preselected.contains(node.getId())) {
+        // we need to trigger `FrameworksTree::onNodeStateChanged`
+        // in order to preconfigure `FrameworkSupportNode`s
+        myFrameworksTree.setNodeState(node, true);
+      }
+    }
   }
 
   public void setAssociatedFrameworks() {

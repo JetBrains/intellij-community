@@ -27,7 +27,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   override val language: Language
     get() = JavaLanguage.INSTANCE
 
-  private fun cleanupMethodCall(methodCall: PsiMethodCallExpression): PsiMethodCallExpression? {
+  private fun cleanupMethodCall(methodCall: PsiMethodCallExpression): PsiMethodCallExpression {
     if (methodCall.typeArguments.isNotEmpty()) {
       val resolved = methodCall.resolveMethod() ?: return methodCall
       if (methodCall.typeArguments.size == resolved.typeParameters.size &&
@@ -40,8 +40,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
           )
       ) {
         val emptyTypeArgumentsMethodCall = JavaPsiFacade.getElementFactory(methodCall.project)
-                                             .createExpressionFromText("foo()", null) as? PsiMethodCallExpression
-                                           ?: return methodCall
+                                             .createExpressionFromText("foo()", null) as PsiMethodCallExpression
 
         methodCall.typeArgumentList.replace(emptyTypeArgumentsMethodCall.typeArgumentList)
       }

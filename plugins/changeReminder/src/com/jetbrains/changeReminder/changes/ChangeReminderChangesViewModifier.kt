@@ -15,11 +15,11 @@ class ChangeReminderChangesViewModifier(private val project: Project) : ChangesV
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
     if (userSettings.isPluginEnabled && project.anyGitRootsForIndexing()) {
       val predictionService = project.service<PredictionService>()
-      val prediction = predictionService.prediction
-      if (prediction.isNotEmpty()) {
+      val prediction = predictionService.predictionDataToDisplay
+      if (prediction.predictionToDisplay.isNotEmpty()) {
         val node = ChangeReminderBrowserNode(prediction, predictionService)
         builder.insertChangeNode(node)
-        builder.insertFilesIntoNode(prediction, node)
+        builder.insertFilesIntoNode(prediction.predictionToDisplay, node)
       }
     }
   }

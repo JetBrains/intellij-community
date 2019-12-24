@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.*
@@ -22,9 +22,9 @@ import com.intellij.util.ContentUtilEx
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.GHPRAccountsComponent
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import java.awt.Color
@@ -36,12 +36,17 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun focusPanel(panel: JComponent) {
+    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
+    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
+    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+  }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
@@ -182,8 +187,8 @@ object GithubUIUtil {
               available.map { SelectableWrapper(it, originalSelection.contains(it)) }
                 .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
                               .thenComparing({ listCellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
-            }.thenAcceptAsync(Consumer { possibilities ->
-              listModel.replaceAll(possibilities)
+            }.successOnEdt {
+              listModel.replaceAll(it)
 
               list.setPaintBusy(false)
               list.emptyText.text = UIBundle.message("message.noMatchesFound")
@@ -193,7 +198,7 @@ object GithubUIUtil {
               if (list.selectedIndex == -1) {
                 list.selectedIndex = 0
               }
-            }, EDT_EXECUTOR)
+            }
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
@@ -262,6 +267,12 @@ object GithubUIUtil {
     abstract fun getText(value: T): String
     abstract fun getIcon(value: T): Icon
 
+    class PRReviewers(private val iconsProvider: CachingGithubAvatarIconsProvider)
+      : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
+      override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl)
+    }
+
     class Users(private val iconsProvider: CachingGithubAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
@@ -274,3 +285,5 @@ object GithubUIUtil {
     }
   }
 }
+
+fun Action.getName(): String = (getValue(Action.NAME) as? String).orEmpty()

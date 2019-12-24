@@ -32,7 +32,7 @@ import javax.swing.*;
  * @author Vladimir Kondratyev
  */
 public final class GuiDesignerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiDesignerConfigurable");
+  private static final Logger LOG = Logger.getInstance(GuiDesignerConfigurable.class);
   private final Project myProject;
   private MyGeneralUI myGeneralUI;
 

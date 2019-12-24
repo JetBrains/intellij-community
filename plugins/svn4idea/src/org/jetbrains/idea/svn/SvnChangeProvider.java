@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
@@ -41,7 +41,7 @@ import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
  * @author yole
  */
 public class SvnChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
+  private static final Logger LOG = Logger.getInstance(SvnChangeProvider.class);
   public static final String PROPERTY_LAYER = "Property";
 
   @NotNull private final SvnVcs myVcs;
@@ -57,11 +57,6 @@ public class SvnChangeProvider implements ChangeProvider {
   @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder, @NotNull ProgressIndicator progress,
                          @NotNull ChangeListManagerGate addGate) throws VcsException {
-    final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
-    zipper.run();
-
-    final MultiMap<FilePath, FilePath> nonRecursiveMap = zipper.getNonRecursiveDirs();
-
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
@@ -71,12 +66,11 @@ public class SvnChangeProvider implements ChangeProvider {
 
       final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
 
-      for (FilePath path : zipper.getRecursiveDirs()) {
+      for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
         walker.go(path, Depth.INFINITY);
       }
 
-      walker.setNonRecursiveScope(nonRecursiveMap);
-      for (FilePath path : nonRecursiveMap.keySet()) {
+      for (FilePath path : map2SetNotNull(dirtyScope.getDirtyFilesNoExpand(), it -> it.isDirectory() ? it : it.getParentPath())) {
         walker.go(path, Depth.IMMEDIATES);
       }
 

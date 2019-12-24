@@ -21,6 +21,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 public class MarkdownFile extends PsiFileBase implements MarkdownPsiElement {
   public MarkdownFile(FileViewProvider viewProvider) {
     super(viewProvider, MarkdownLanguage.INSTANCE);
+    // It is a little bit hacky way to set a flavour but there was no any way to do it before
+    putUserData(MarkdownParserManager.FLAVOUR_DESCRIPTION, MarkdownParserManager.FLAVOUR);
   }
 
   @Override

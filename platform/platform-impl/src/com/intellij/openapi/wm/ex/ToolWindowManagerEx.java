@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,8 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
 
   public abstract boolean fallbackToEditor();
 
-  public static ToolWindowManagerEx getInstanceEx(final Project project) {
+  @NotNull
+  public static ToolWindowManagerEx getInstanceEx(@NotNull Project project) {
     return (ToolWindowManagerEx)getInstance(project);
   }
 
@@ -62,8 +63,9 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   @NotNull
   public abstract DesktopLayout getLayout();
 
-  public abstract void setLayoutToRestoreLater(DesktopLayout layout);
+  public abstract void setLayoutToRestoreLater(@Nullable DesktopLayout layout);
 
+  @Nullable
   public abstract DesktopLayout getLayoutToRestoreLater();
 
   /**

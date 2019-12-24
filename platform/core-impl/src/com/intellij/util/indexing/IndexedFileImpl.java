@@ -11,11 +11,17 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   protected final VirtualFile myFile;
   protected final String myFileName;
   protected final FileType myFileType;
+  private final Project myProject;
 
-  public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type) {
+  public IndexedFileImpl(@NotNull VirtualFile file, Project project) {
+    this(file, file.getFileType(), project);
+  }
+
+  public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type, Project project) {
     myFile = file;
     myFileName = file.getName();
     myFileType = type;
+    myProject = project;
   }
 
   @NotNull
@@ -38,6 +44,6 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
 
   @Override
   public Project getProject() {
-    return getUserData(IndexingDataKeys.PROJECT);
+    return myProject;
   }
 }

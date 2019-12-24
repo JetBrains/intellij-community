@@ -19,13 +19,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnexpectedAnchorInspection extends LocalInspectionTool {
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Begin or end anchor in unexpected position";
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

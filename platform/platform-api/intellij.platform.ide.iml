@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" exported="" />
+    <orderEntry type="library" name="jcef" level="project" />
   </component>
 </module>

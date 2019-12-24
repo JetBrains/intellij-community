@@ -34,7 +34,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void start() {
     super.start();
-    updateIndicators(true);
+    scheduleUiUpdate();
 
     myStartedTime = System.currentTimeMillis();
   }
@@ -42,12 +42,12 @@ final class RefreshProgress extends ProgressIndicatorBase {
   @Override
   public void stop() {
     super.stop();
-    updateIndicators(false);
+    scheduleUiUpdate();
 
     long finishedTime = System.currentTimeMillis();
-    long totalTime = finishedTime - myStartedTime;
+    long duration = finishedTime - myStartedTime;
     // do not report short refreshes to avoid polluting the event log and increasing its size
-    if (totalTime > 1000) {
+    if (duration > 1000) {
       Application application = ApplicationManager.getApplication();
       application.runReadAction(() -> {
         // refresh might be finished during IDE shutdown, in this case, don't report events (requred subsystems are already disposed)
@@ -57,15 +57,16 @@ final class RefreshProgress extends ProgressIndicatorBase {
                                                     "refreshed",
                                                     new FeatureUsageData()
                                                       .addData("start_time_ms", myStartedTime)
-                                                      .addData("finish_time_ms", finishedTime));
+                                                      .addData("finish_time_ms", finishedTime)
+                                                      .addData("duration_ms", duration));
       });
     }
   }
 
-  private void updateIndicators(boolean start) {
+  private void scheduleUiUpdate() {
     // wrapping in invokeLater here reduces a number of events posted to EDT in case of multiple IDE frames
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (ApplicationManager.getApplication().isDisposedOrDisposeInProgress()) {
+      if (ApplicationManager.getApplication().isDisposed()) {
         return;
       }
 
@@ -85,7 +86,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
           continue;
         }
 
-        if (start) {
+        if (isRunning()) {
           statusBar.startRefreshIndication(myMessage);
         }
         else {

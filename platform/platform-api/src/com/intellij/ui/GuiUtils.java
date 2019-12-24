@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +22,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 public final class GuiUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GuiUtils");
+  private static final Logger LOG = Logger.getInstance(GuiUtils.class);
 
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 
@@ -320,18 +320,22 @@ public final class GuiUtils {
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+    }
+    else {
+      app.invokeLater(runnable, modalityState);
     }
   }
 
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isDispatchThread()) {
       runnable.run();
-    } else {
-      ApplicationManager.getApplication().invokeLater(runnable, modalityState, expired);
+    }
+    else {
+      app.invokeLater(runnable, modalityState, expired);
     }
   }
 
@@ -351,19 +355,5 @@ public final class GuiUtils {
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;
     return size;
-  }
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static void printDebugInfo(Component component) {
-    StringBuilder builder = new StringBuilder();
-    boolean first = true;
-    while (component != null) {
-      builder.append("\n");
-      builder.append(first ? "UI debug dump:" : "\tat ").append(component.getClass().getName()).append(" with bounds ")
-        .append(component.getBounds());
-      component = component.getParent();
-      first = false;
-    }
-    LOG.warn(builder.toString());
   }
 }

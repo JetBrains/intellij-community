@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.util.Disposer.newDisposable;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class DisposerTest extends TestCase {
   private MyDisposable myRoot;
@@ -43,6 +44,7 @@ public class DisposerTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    //noinspection SSBasedInspection
     try {
       Disposer.dispose(myRoot);
     }
@@ -281,6 +283,28 @@ public class DisposerTest extends TestCase {
     }
   }
 
+  public void testRemoveOnlyChildren() {
+    Disposable parent = newDisposable("parent");
+    Disposable child = newDisposable("child");
+    Disposer.register(parent, child);
+
+    Disposable grand = newDisposable("grand");
+    Disposer.register(child, grand);
+
+    try {
+      Disposer.disposeChildren(parent);
+      assertThat(Disposer.isDisposed(parent)).isFalse();
+      assertThat(Disposer.findRegisteredObject(parent, child)).isNull();
+      assertThat(Disposer.findRegisteredObject(child, grand)).isNull();
+      Disposer.dispose(parent);
+      assertThat(Disposer.isDisposed(parent)).isTrue();
+    }
+    finally {
+      Disposer.dispose(grand);
+      Disposer.dispose(child);
+      Disposer.dispose(parent);
+    }
+  }
 
   public void testMustNotRegisterWithAlreadyDisposed() {
     Disposable disposable = newDisposable();
@@ -330,7 +354,7 @@ public class DisposerTest extends TestCase {
     catch (Throwable e) {
       assertEquals("Expected", e.getMessage());
     }
-    
+
     assertTrue(Disposer.isDisposed(parent));
     assertTrue(Disposer.isDisposed(first));
     assertTrue(Disposer.isDisposed(last));
@@ -338,7 +362,7 @@ public class DisposerTest extends TestCase {
 
   public void testMustNotAllowToRegisterDuringParentDisposal() {
     DefaultLogger.disableStderrDumping(myRoot);
-    
+
     Disposable parent = newDisposable("parent");
     Disposable last = newDisposable("child");
 

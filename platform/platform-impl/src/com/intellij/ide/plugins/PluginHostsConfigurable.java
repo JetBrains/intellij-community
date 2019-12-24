@@ -268,6 +268,8 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   @Override
   public void apply() throws ConfigurationException {
+    myTable.editingStopped(null);
+
     List<String> list = UpdateSettings.getInstance().getStoredPluginHosts();
     list.clear();
     for (UrlInfo item : myModel.getItems()) {

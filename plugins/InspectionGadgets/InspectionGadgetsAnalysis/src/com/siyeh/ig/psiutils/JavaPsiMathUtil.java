@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -84,7 +84,7 @@ public class JavaPsiMathUtil {
   public static String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
     if (!(comparison instanceof PsiBinaryExpression)) return null;
     PsiBinaryExpression binOp = (PsiBinaryExpression)comparison;
-    DfaRelationValue.RelationType relationType = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+    RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
     if (relationType == null) return null;
     String operator = binOp.getOperationSign().getText();
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());

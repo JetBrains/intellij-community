@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.text.MessageFormat;
 
 public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
-  private static final NotificationGroup GROUP = new NotificationGroup("Cached value profiling", NotificationDisplayType.BALLOON, false);
+  private static class Holder {
+    private static final NotificationGroup GROUP = new NotificationGroup("Cached value profiling", NotificationDisplayType.BALLOON, false);
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -33,10 +35,10 @@ public class DumpCachedValueProfilerInfoAction extends DumbAwareAction {
       String url = FileUtil.getUrl(file);
       String message = MessageFormat.format("Cached value snapshot ''{0}'' is captured. <a href=\"{1}\">Show in {2}</a>.",
                                             file, url, RevealFileAction.getFileManagerName());
-      GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER).notify(project);
+      Holder.GROUP.createNotification("", message, NotificationType.INFORMATION, RevealFileAction.FILE_SELECTING_LISTENER).notify(project);
     }
     catch (IOException exception) {
-      GROUP.createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR).notify(project);
+      Holder.GROUP.createNotification("Failed to capture snapshot: " + exception.getMessage(), NotificationType.ERROR).notify(project);
     }
   }
 }

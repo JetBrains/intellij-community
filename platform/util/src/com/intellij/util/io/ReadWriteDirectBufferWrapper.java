@@ -6,18 +6,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   private static final Logger LOG = Logger.getInstance(ReadWriteDirectBufferWrapper.class);
-  private static final String RW = "rw";
 
-  protected ReadWriteDirectBufferWrapper(final File file, final long offset, final long length) {
+  protected ReadWriteDirectBufferWrapper(Path file, final long offset, final long length) {
     super(file, offset, length);
     assert length <= Integer.MAX_VALUE : length;
   }
@@ -25,9 +26,8 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   @Override
   protected ByteBuffer create() throws IOException {
     try (FileContext context = new FileContext(myFile)) {
-      RandomAccessFile file = context.file;
-      assert file != null;
-      FileChannel channel = file.getChannel();
+      FileChannel channel = context.file;
+      assert channel != null;
       channel.position(myPosition);
       ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
       channel.read(buffer);
@@ -36,23 +36,23 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   static class FileContext implements AutoCloseable {
-    final RandomAccessFile file;
+    final FileChannel file;
 
-    FileContext(File path) throws IOException {
-      file = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<RandomAccessFile, IOException>() {
+    FileContext(Path path) throws IOException {
+      file = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<FileChannel, IOException>() {
         boolean parentWasCreated;
 
         @Nullable
         @Override
-        public RandomAccessFile execute(boolean finalAttempt) throws IOException {
+        public FileChannel execute(boolean finalAttempt) throws IOException {
           try {
-            return new RandomAccessFile(path, RW);
+            return FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
           }
-          catch (FileNotFoundException ex) {
-            File parentFile = path.getParentFile();
-            if (!parentFile.exists()) {
+          catch (NoSuchFileException ex) {
+            Path parentFile = path.getParent();
+            if (!Files.exists(parentFile)) {
               if (!parentWasCreated) {
-                FileUtil.createDirectory(parentFile);
+                FileUtil.createDirectory(parentFile.toFile());
                 parentWasCreated = true;
               }
               else {
@@ -94,9 +94,8 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   }
 
   private void doFlush(FileContext fileContext, ByteBuffer buffer) throws IOException {
-    RandomAccessFile file = fileContext.file;
-    assert file != null;
-    FileChannel channel = file.getChannel();
+    FileChannel channel = fileContext.file;
+    assert channel != null;
     channel.position(myPosition);
     buffer.rewind();
     channel.write(buffer);

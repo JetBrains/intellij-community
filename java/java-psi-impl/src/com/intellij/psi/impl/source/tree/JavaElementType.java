@@ -76,6 +76,8 @@ public interface JavaElementType {
   IElementType USES_STATEMENT = JavaStubElementTypes.USES_STATEMENT;
   IElementType PROVIDES_STATEMENT = JavaStubElementTypes.PROVIDES_STATEMENT;
   IElementType PROVIDES_WITH_LIST = JavaStubElementTypes.PROVIDES_WITH_LIST;
+  IElementType RECORD_COMPONENT = JavaStubElementTypes.RECORD_COMPONENT;
+  IElementType RECORD_HEADER = JavaStubElementTypes.RECORD_HEADER;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl::new);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl::new);
@@ -133,6 +135,7 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl::new);
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl::new);
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", PsiJavaModuleReferenceElementImpl::new);
+  IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", PsiTypeTestPatternImpl::new);
 
   class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {
     private ICodeBlockElementType() {

@@ -36,7 +36,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -1224,5 +1223,20 @@ class Foo {
     }
 }
 """
+  }
+
+  void "test surround with template that uses SELECTION only inside an expression"() {
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    TemplateImpl template = manager.createTemplate("ttt", "user", '$VAR$+x') as TemplateImpl
+    template.addVariable("VAR", 'regularExpression(SELECTION, "_", "")', '', false)
+    assert template.isSelectionTemplate()
+    template.templateContext.setEnabled(contextType(JavaCommentContextType.class), true)
+    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+
+    myFixture.configureByText 'a.java', '//a <selection><caret>foo_bar</selection> b'
+    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, [] as Set)
+    def action = group.find { it.templatePresentation.text.contains(template.key) }
+    (action as InvokeTemplateAction).perform()
+    myFixture.checkResult('//a foobar+x b')
   }
 }

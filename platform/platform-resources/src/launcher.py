@@ -1,6 +1,5 @@
 #!/usr/bin/env $PYTHON$
-# Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license.
-# -*- coding: utf-8 -*-
+#  Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import os
 import socket
@@ -8,7 +7,7 @@ import struct
 import sys
 import traceback
 
-# see com.intellij.idea.SocketLock for the server side of this interface
+# See com.intellij.idea.SocketLock for the server side of this interface.
 
 RUN_PATH = u'$RUN_PATH$'
 CONFIG_PATH = u'$CONFIG_PATH$'

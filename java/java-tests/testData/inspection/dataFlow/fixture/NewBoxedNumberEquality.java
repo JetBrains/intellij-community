@@ -37,4 +37,21 @@ class Testcase {
     Integer boxed = x;
     if (<warning descr="Condition 'boxed == 5' is always 'false'">boxed == 5</warning>) {}
   }
+
+  public void testUnboxObject(Object obj, int val) {
+    if (obj instanceof Integer) {
+      int objVal = (int)obj;
+      if (objVal == val) {}
+    }
+  }
+  
+  int b;
+  
+  public final Integer getKey() {
+    return b;
+  }
+  
+  public void testInlineSmallMethod(java.util.Map.Entry<Object, Object> e) {
+    if (getKey().equals(e.getKey())) {}
+  }
 }

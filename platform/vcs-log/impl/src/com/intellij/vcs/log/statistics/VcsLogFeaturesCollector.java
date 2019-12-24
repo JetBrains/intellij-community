@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.impl.*;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import kotlin.jvm.functions.Function1;
@@ -32,7 +32,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
   public Set<MetricEvent> getMetrics(@NotNull Project project) {
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     if (projectLog != null) {
-      VcsLogUiImpl ui = projectLog.getMainLogUi();
+      MainVcsLogUi ui = projectLog.getMainLogUi();
       if (ui != null) {
         MainVcsLogUiProperties properties = ui.getProperties();
         VcsLogUiProperties defaultProperties = createDefaultPropertiesInstance();
@@ -79,7 +79,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
                            "column", new FeatureUsageData().addData("name", columnName));
         }
 
-        List<String> tabs = projectLog.getTabsManager().getTabs();
+        Collection<String> tabs = projectLog.getTabsManager().getTabs();
         metricEvents.add(MetricEventFactoryKt.newCounterMetric("additionalTabs", tabs.size()));
 
         return metricEvents;
@@ -106,7 +106,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   @NotNull
   private static VcsLogUiProperties createDefaultPropertiesInstance() {
-    return new VcsLogUiPropertiesImpl(new VcsLogApplicationSettings()) {
+    return new VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State>(new VcsLogApplicationSettings()) {
       @NotNull private final State myState = new State();
 
       @NotNull
@@ -127,7 +127,7 @@ public class VcsLogFeaturesCollector extends ProjectUsagesCollector {
       }
 
       @Override
-      public void loadState(@NotNull Object state) {
+      public void loadState(@NotNull State state) {
         throw new UnsupportedOperationException();
       }
     };

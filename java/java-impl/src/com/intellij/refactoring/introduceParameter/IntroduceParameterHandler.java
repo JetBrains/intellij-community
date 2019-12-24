@@ -11,7 +11,6 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -76,7 +75,7 @@ import java.util.*;
 
 
 public class IntroduceParameterHandler extends IntroduceHandlerBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.IntroduceParameterHandler");
+  private static final Logger LOG = Logger.getInstance(IntroduceParameterHandler.class);
   static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private JBPopup myEnclosingMethodsPopup;
   private InplaceIntroduceParameterPopup myInplaceIntroduceParameterPopup;
@@ -464,22 +463,20 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                             PsiType initializerType,
                             boolean mustBeFinal,
                             List<? extends UsageInfo> classMemberRefs, NameSuggestionsGenerator nameSuggestionGenerator) {
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        final IntroduceParameterDialog dialog =
-          new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
-                                       nameSuggestionGenerator,
-                                       createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurrences), mustBeFinal);
-        dialog.setReplaceAllOccurrences(replaceAllOccurrences);
-        dialog.setGenerateDelegate(delegate);
-        if (dialog.showAndGet()) {
-          final Runnable cleanSelectionRunnable = () -> {
-            if (myEditor != null && !myEditor.isDisposed()) {
-              myEditor.getSelectionModel().removeSelection();
-            }
-          };
-          ApplicationManager.getApplication().invokeLater(cleanSelectionRunnable, ModalityState.any());
-        }
-      });
+      final IntroduceParameterDialog dialog =
+        new IntroduceParameterDialog(myProject, classMemberRefs, occurrences, myLocalVar, myExpr,
+                                     nameSuggestionGenerator,
+                                     createTypeSelectorManager(occurrences, initializerType), methodToSearchFor, method, getParamsToRemove(method, occurrences), mustBeFinal);
+      dialog.setReplaceAllOccurrences(replaceAllOccurrences);
+      dialog.setGenerateDelegate(delegate);
+      if (dialog.showAndGet()) {
+        final Runnable cleanSelectionRunnable = () -> {
+          if (myEditor != null && !myEditor.isDisposed()) {
+            myEditor.getSelectionModel().removeSelection();
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(cleanSelectionRunnable, ModalityState.any());
+      }
     }
 
     private TypeSelectorManagerImpl createTypeSelectorManager(PsiExpression[] occurrences, PsiType initializerType) {

@@ -29,7 +29,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentModel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadCommentsPanel
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewThreadModel
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewServiceAdapter
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
@@ -41,7 +41,7 @@ import kotlin.math.floor
 class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val reviewService: GHPRReviewServiceAdapter,
                                        private val avatarIconsProvider: GHAvatarIconsProvider,
-                                       private val reviewsThreadsProvider: GHPRReviewsThreadsProvider,
+                                       private val reviewsThreadsModelsProvider: GHPRReviewsThreadsModelsProvider,
                                        private val reviewDiffComponentFactory: GHPRReviewThreadDiffComponentFactory,
                                        private val eventComponentFactory: GHPRTimelineEventComponentFactory<GHPRTimelineEvent>,
                                        private val currentUser: GHUser) {
@@ -69,18 +69,16 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
          HtmlEditorPane(model.bodyHtml))
 
   private fun createComponent(review: GHPullRequestReview): Item {
-    val threads = reviewsThreadsProvider.findReviewThreads(review.id) ?: throw IllegalStateException("Can't find threads")
+    val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
     val reviewPanel = VerticalBox().apply {
+      add(Box.createRigidArea(JBDimension(0, 4)))
       if (review.bodyHTML.isNotEmpty()) {
         add(HtmlEditorPane(review.bodyHTML).apply {
-          border = JBUI.Borders.empty(4, 0)
+          border = JBUI.Borders.emptyBottom(12)
         })
       }
-      add(Box.createRigidArea(JBDimension(0, 6)))
-      add(GHPRReviewThreadsPanel(threads, ::createReviewThread).apply {
-        border = JBUI.Borders.empty(2, 0)
-      })
+      add(GHPRReviewThreadsPanel(reviewThreadsModel, ::createReviewThread))
     }
 
     val icon = when (review.state) {
@@ -101,12 +99,16 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
   }
 
   private fun createReviewThread(thread: GHPRReviewThreadModel): JComponent {
-    val panel = JBUI.Panels.simplePanel(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
-      .addToTop(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
-      .andTransparent()
+    val panel = VerticalBox().apply {
+      isOpaque = false
+      add(reviewDiffComponentFactory.createComponent(thread.filePath, thread.diffHunk))
+      add(Box.createRigidArea(JBDimension(0, 12)))
+      add(GHPRReviewThreadCommentsPanel(thread, avatarIconsProvider))
+    }
 
     if (reviewService.canComment()) {
-      panel.addToBottom(GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
+      panel.add(Box.createRigidArea(JBDimension(0, 12)))
+      panel.add(GHPRCommentsUIUtil.createTogglableCommentField(project, avatarIconsProvider, currentUser, "Reply") { text ->
         reviewService.addComment(EmptyProgressIndicator(), text, thread.firstCommentDatabaseId).successOnEdt {
           thread.addComment(GHPRReviewCommentModel(it.nodeId, it.createdAt, it.bodyHtml, it.user.login, it.user.htmlUrl, it.user.avatarUrl))
         }
@@ -143,7 +145,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
 
     init {
       isOpaque = false
-      border = JBUI.Borders.empty(10, 0, 10, 0)
       layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fill()).apply {

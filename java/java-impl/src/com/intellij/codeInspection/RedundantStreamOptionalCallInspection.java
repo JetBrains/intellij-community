@@ -72,6 +72,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "of").parameterTypes("long"),
       staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "of").parameterTypes("double")
     );
+  private static final CallMatcher STREAM_MAP =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "map").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
 
   @SuppressWarnings("PublicField")
   public boolean USELESS_BOXING_IN_STREAM_MAP = true;
@@ -109,8 +111,18 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         boolean optional = OptionalUtil.isJdkOptionalClassName(className);
         boolean stream = InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
         if (!optional && !stream) return;
-        if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), call.getType())) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (name.equals("flatMap") && args.length == 1 && isIdentityMapping(args[0], false)) {
+          PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+          if (STREAM_MAP.test(qualifierCall) && qualifierCall.getMethodExpression().getTypeParameters().length == 0 &&
+              !isIdentityMapping(qualifierCall.getArgumentList().getExpressions()[0], false)) {
+            String message = InspectionsBundle.message("inspection.redundant.stream.optional.call.message", name) +
+                             ": " + InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
+            holder.registerProblem(call, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, getRange(call),
+                                   new RemoveCallFix(name, "flatMap"));
+          }
+        }
+        if (!EquivalenceChecker.getCanonicalPsiEquivalence().typesAreEquivalent(qualifier.getType(), call.getType())) return;
         switch (name) {
           case "filter":
             if (args.length == 1 && isTruePredicate(args[0])) {
@@ -215,7 +227,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       }
 
       private void register(PsiMethodCallExpression call, String explanation, LocalQuickFix... additionalFixes) {
-        String methodName = call.getMethodExpression().getReferenceName();
+        String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = InspectionsBundle.message("inspection.redundant.stream.optional.call.message", methodName);
         if (explanation != null) {
           message += ": " + explanation;
@@ -329,9 +341,17 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   }
 
   private static class RemoveCallFix implements LocalQuickFix {
-    private final String myMethodName;
+    private final @NotNull String myMethodName;
+    private final @Nullable String myBindPreviousCallTo;
 
-    RemoveCallFix(String methodName) {myMethodName = methodName;}
+    RemoveCallFix(@NotNull String methodName) {
+      this(methodName, null);
+    }
+
+    RemoveCallFix(@NotNull String methodName, @Nullable String bindPreviousCallTo) {
+      myMethodName = methodName;
+      myBindPreviousCallTo = bindPreviousCallTo;
+    }
 
     @Nls
     @NotNull
@@ -353,6 +373,11 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
+      if (myBindPreviousCallTo != null) {
+        PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+        if (qualifierCall == null) return;
+        ExpressionUtils.bindCallTo(qualifierCall, myBindPreviousCallTo);
+      }
       new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }

@@ -22,7 +22,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizationOnLocalVariableOrMethodParameterInspection extends BaseInspection {
@@ -31,13 +30,6 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
   public boolean reportLocalVariables = true;
   @SuppressWarnings({"PublicField"})
   public boolean reportMethodParameters = true;
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("synchronization.on.local.variable.or.method.parameter.display.name");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

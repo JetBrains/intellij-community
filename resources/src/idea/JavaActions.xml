@@ -52,7 +52,7 @@
 
     <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests"
             text="Show Affected Tests">
-      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="RunTestGroup" anchor="last"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 
@@ -94,7 +94,6 @@
       <separator/>
       <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
       <separator/>
-      <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
       <separator/>
       <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
 
@@ -367,6 +366,7 @@
     <action id="IntroduceFunctionalParameter" class="com.intellij.refactoring.actions.IntroduceFunctionalParameterAction">
       <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="IntroduceParameterObject"/>
       <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
     </action>
 
     <action id="IntroduceFunctionalVariable" class="com.intellij.refactoring.actions.IntroduceFunctionalVariableAction">
@@ -401,21 +401,24 @@
     <action id="AnonymousToInner" class="com.intellij.refactoring.actions.AnonymousToInnerAction"/>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
-      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="UpdateRunningApplication"/>
+      <add-to-group group-id="DebugReloadGroup" anchor="last"/>
     </action>
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
-      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
+      <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
     <group id="ToggleBreakpointAction">
-      <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
+      <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction">
+        <override-text place="MainMenu"/>
+      </action>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
+        <override-text place="MainMenu"/>
         <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
       </action>
-      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
+      <add-to-group group-id="BreakpointActionsGroup" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
@@ -423,7 +426,7 @@
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get Thread Dump" icon="AllIcons.Actions.Dump">
-      <add-to-group group-id="RunMenu" anchor="last"/>
+      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
     </action>
 
     <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">
@@ -511,12 +514,12 @@
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
+        <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
@@ -636,7 +639,7 @@
     </group>
 
     <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ExportImportGroup"/>
     </action>
 
     <group id="Debugger.FramePanelPopup">

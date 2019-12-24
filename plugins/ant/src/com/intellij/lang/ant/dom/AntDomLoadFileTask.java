@@ -31,7 +31,7 @@ import java.io.IOException;
  */
 public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomLoadFileTask");
+  private static final Logger LOG = Logger.getInstance(AntDomLoadFileTask.class);
 
   private String myCachedText;
 

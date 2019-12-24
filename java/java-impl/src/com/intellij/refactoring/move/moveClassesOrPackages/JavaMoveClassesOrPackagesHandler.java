@@ -253,6 +253,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
               return null;
             }
             return new MoveDirectoryWithClassesProcessor(project, directories, null, searchInComments, searchForTextOccurences, true, callback) {
+              @NotNull
               @Override
               public TargetDirectoryWrapper getTargetDirectory(PsiDirectory dir) {
                 final PsiDirectory targetDirectory = destination.getTargetDirectory(dir);
@@ -274,7 +275,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     final boolean [] containsJava = new boolean[]{false};
     directory.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (containsJava[0]) return;
         if (element instanceof PsiDirectory) {
           super.visitElement(element);
@@ -282,7 +283,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       }
 
       @Override
-      public void visitFile(PsiFile file) {
+      public void visitFile(@NotNull PsiFile file) {
         containsJava[0] = file instanceof PsiJavaFile;
       }
     });

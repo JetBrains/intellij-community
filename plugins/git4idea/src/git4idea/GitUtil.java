@@ -56,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -83,6 +82,7 @@ public class GitUtil {
   public static final String HEAD = "HEAD";
   public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   public static final String MERGE_HEAD = "MERGE_HEAD";
+  public static final String REBASE_HEAD = "REBASE_HEAD";
 
   private static final String REPO_PATH_LINK_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
@@ -536,120 +536,17 @@ public class GitUtil {
   }
 
   /**
-   * <p>Unescape path returned by Git.</p>
-   * <p>
-   *   If there are quotes in the file name, Git not only escapes them, but also encloses the file name into quotes:
-   *   {@code "\"quote"}
-   * </p>
-   * <p>
-   *   If there are spaces in the file name, Git displays the name as is, without escaping spaces and without enclosing name in quotes.
-   * </p>
-   *
-   * @param path a path to unescape
-   * @return unescaped path ready to be searched in the VFS or file system.
-   * @throws VcsException if the path in invalid
+   * @throws VcsException if the path is invalid
+   * @see VcsFileUtil#unescapeGitPath(String, String)
    */
   @NotNull
   public static String unescapePath(@NotNull String path) throws VcsException {
-    final String QUOTE = "\"";
-    if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
-      path = path.substring(1, path.length() - 1);
+    try {
+      return VcsFileUtil.unescapeGitPath(path, GitConfigUtil.getFileNameEncoding());
     }
-
-    final int l = path.length();
-    StringBuilder rc = new StringBuilder(l);
-    for (int i = 0; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c == '\\') {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i >= l) {
-          throw new VcsException("Unterminated escape sequence in the path: " + path);
-        }
-        final char e = path.charAt(i);
-        switch (e) {
-          case '\\':
-            rc.append('\\');
-            break;
-          case 't':
-            rc.append('\t');
-            break;
-          case 'n':
-            rc.append('\n');
-            break;
-          case 'r':
-            rc.append('\r');
-            break;
-          case 'a':
-            rc.append('\u0007');
-            break;
-          case 'b':
-            rc.append('\b');
-            break;
-          case 'f':
-            rc.append('\f');
-            break;
-          case '"':
-            rc.append('"');
-            break;
-          default:
-            if (VcsFileUtil.isOctal(e)) {
-              // collect sequence of characters as a byte array.
-              // count bytes first
-              int n = 0;
-              for (int j = i; j < l;) {
-                if (VcsFileUtil.isOctal(path.charAt(j))) {
-                  n++;
-                  for (int k = 0; k < 3 && j < l && VcsFileUtil.isOctal(path.charAt(j)); k++) {
-                    j++;
-                  }
-                }
-                if (j + 1 >= l || path.charAt(j) != '\\' || !VcsFileUtil.isOctal(path.charAt(j + 1))) {
-                  break;
-                }
-                j++;
-              }
-              // convert to byte array
-              byte[] b = new byte[n];
-              n = 0;
-              while (i < l) {
-                if (VcsFileUtil.isOctal(path.charAt(i))) {
-                  int code = 0;
-                  for (int k = 0; k < 3 && i < l && VcsFileUtil.isOctal(path.charAt(i)); k++) {
-                    code = code * 8 + (path.charAt(i) - '0');
-                    //noinspection AssignmentToForLoopParameter
-                    i++;
-                  }
-                  b[n++] = (byte)code;
-                }
-                if (i + 1 >= l || path.charAt(i) != '\\' || !VcsFileUtil.isOctal(path.charAt(i + 1))) {
-                  break;
-                }
-                //noinspection AssignmentToForLoopParameter
-                i++;
-              }
-              //noinspection AssignmentToForLoopParameter
-              i--;
-              assert n == b.length;
-              // add them to string
-              final String encoding = GitConfigUtil.getFileNameEncoding();
-              try {
-                rc.append(new String(b, encoding));
-              }
-              catch (UnsupportedEncodingException e1) {
-                throw new IllegalStateException("The file name encoding is unsupported: " + encoding);
-              }
-            }
-            else {
-              throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
-            }
-        }
-      }
-      else {
-        rc.append(c);
-      }
+    catch (IllegalStateException e) {
+      throw new VcsException(e);
     }
-    return rc.toString();
   }
 
   public static boolean justOneGitRepository(Project project) {

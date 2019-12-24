@@ -26,6 +26,8 @@ import java.util.concurrent.ConcurrentMap;
 @ApiStatus.Internal
 public final class ImageDescriptor {
   private static final ConcurrentMap<String, Pair<Image, ImageLoader.Dimension2DDouble>> ourCache = ContainerUtil.createConcurrentSoftValueMap();
+  private static final ConcurrentMap<String, Image> ourLargeImageCache = ContainerUtil.createConcurrentWeakValueMap();
+  private static final ConcurrentMap<Image, ImageLoader.Dimension2DDouble> ourLargeImageDimensionMap = ContainerUtil.createConcurrentWeakMap();
 
   final @NotNull String path;
   public final double scale; // initial scale factor
@@ -62,6 +64,9 @@ public final class ImageDescriptor {
 
   public static void clearCache() {
     ourCache.clear();
+    ourLargeImageCache.clear();
+    ourLargeImageDimensionMap.clear();
+    ImageLoader.clearCache();
   }
 
   public ImageDescriptor(@NotNull String path, double scale, @NotNull ImageType type, boolean original) {
@@ -92,6 +97,14 @@ public final class ImageDescriptor {
       if (pair != null) {
         origUsrSize.setSize(pair.second);
         return pair.first;
+      }
+      Image image = ourLargeImageCache.get(cacheKey);
+      if (image != null) {
+        ImageLoader.Dimension2DDouble dimension = ourLargeImageDimensionMap.get(image);
+        if (dimension != null) {
+          origUsrSize.setSize(dimension);
+          return image;
+        }
       }
     }
 
@@ -127,8 +140,14 @@ public final class ImageDescriptor {
     finally {
       stream.close();
     }
-    if (image != null && cacheKey != null && 4L * image.getWidth(null) * image.getHeight(null) <= ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-      ourCache.put(cacheKey, Pair.create(image, origUsrSize));
+    if (image != null && cacheKey != null) {
+      if (4L * image.getWidth(null) * image.getHeight(null) <= ImageLoader.CACHED_IMAGE_MAX_SIZE) {
+        ourCache.put(cacheKey, Pair.create(image, origUsrSize));
+      }
+      else {
+        ourLargeImageCache.put(cacheKey, image);
+        ourLargeImageDimensionMap.put(image, origUsrSize);
+      }
     }
     return image;
   }

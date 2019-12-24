@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -50,9 +51,9 @@ import static com.intellij.openapi.util.Pair.pair;
 /**
  * @author pti
  */
-class UpdateInfoDialog extends AbstractUpdateDialog {
+final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
-  private final Collection<? extends PluginDownloader> myUpdatedPlugins;
+  private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myNewBuild;
   private final UpdateChain myPatches;
   private final boolean myWriteProtected;
@@ -65,7 +66,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
                    @NotNull BuildInfo newBuild,
                    @Nullable UpdateChain patches,
                    boolean enableLink,
-                   @Nullable Collection<? extends PluginDownloader> updatedPlugins,
+                   @Nullable Collection<PluginDownloader> updatedPlugins,
                    @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
@@ -248,7 +249,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
           String title = IdeBundle.message("updates.error.connection.title");
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl());
-          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
+          UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER).notify(null);
 
           return;
         }
@@ -264,7 +265,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("update.notifications.title");
             String message = IdeBundle.message("update.ready.message");
-            UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+            UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
                 restartLaterAndRunCommand(command);
@@ -283,7 +284,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.trigger( "dialog.update.started");
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    application.invokeLater(() -> application.exit(true, true, true, command));
+    application.invokeLater(() -> application.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 
   private String downloadUrl() {

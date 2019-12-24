@@ -5,8 +5,6 @@ import com.intellij.ui.IconManager;
 
 import javax.swing.*;
 
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
@@ -14,10 +12,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 public final class TasksCoreIcons {
   private static Icon load(String path) {
     return IconManager.getInstance().getIcon(path, TasksCoreIcons.class);
-  }
-
-  private static Icon load(String path, Class<?> clazz) {
-    return IconManager.getInstance().getIcon(path, clazz);
   }
 
   /** 16x16 */ public static final Icon Asana = load("/icons/asana.svg");
@@ -29,34 +23,6 @@ public final class TasksCoreIcons {
   /** 16x16 */ public static final Icon Jira = load("/icons/jira.svg");
   /** 16x16 */ public static final Icon Lighthouse = load("/icons/lighthouse.svg");
   /** 16x16 */ public static final Icon Mantis = load("/icons/mantis.svg");
-
-  public final static class Pivotal {
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Bug = load("/icons/pivotal/bug.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Chore = load("/icons/pivotal/chore.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Feature = load("/icons/pivotal/feature.png");
-
-    /** @deprecated to be removed in IDEA 2020 */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2020.1")
-    public static final Icon Release = load("/icons/pivotal/release.png");
-
-  }
   /** 16x16 */ public static final Icon Pivotal = load("/icons/pivotal.svg");
   /** 16x16 */ public static final Icon Redmine = load("/icons/redmine.svg");
   /** 16x16 */ public static final Icon SavedContext = load("/icons/savedContext.svg");
@@ -66,28 +32,4 @@ public final class TasksCoreIcons {
   /** 16x16 */ public static final Icon Trac = load("/icons/trac.svg");
   /** 16x16 */ public static final Icon Trello = load("/icons/trello.svg");
   /** 16x16 */ public static final Icon Youtrack = load("/icons/youtrack.svg");
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Resume */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon AutoMode = load("/actions/resume.svg", com.intellij.icons.AllIcons.class);
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon Bug = load("/actions/startDebugger.svg", com.intellij.icons.AllIcons.class);
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon Feature = load("/nodes/favorite.svg", com.intellij.icons.AllIcons.class);
-
-  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
-  @SuppressWarnings("unused")
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.1")
-  public static final Icon Github = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }

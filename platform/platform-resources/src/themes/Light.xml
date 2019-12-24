@@ -1,4 +1,4 @@
-<scheme name="IntelliJ Light Preview" version="142" parent_scheme="Default">
+<scheme name="IntelliJ Light" version="142" parent_scheme="Default">
   <metaInfo>
     <property name="created">2019-06-07T17:20:09</property>
     <property name="ide">idea</property>
@@ -144,7 +144,7 @@
     </option>
     <option name="DEFAULT_TAG">
       <value>
-        <option name="BACKGROUND" value="f2f2f2" />
+        <option name="BACKGROUND" />
       </value>
     </option>
     <option name="DEFAULT_VALID_STRING_ESCAPE">

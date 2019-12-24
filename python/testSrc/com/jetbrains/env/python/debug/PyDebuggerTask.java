@@ -65,7 +65,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
   @Nullable
   @Override
   public Set<String> getTagsToCover() {
-    return Sets.newHashSet("python2.6", "python2.7", "python3.5", "python3.6", "jython", "IronPython", "pypy");
+    return Sets.newHashSet("python2.7", "python3.5", "python3.6", "python3.7", "python3.8", "jython", "IronPython", "pypy");
   }
 
   @Override
@@ -288,5 +288,29 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     else {
       myDebugProcess.getProcessHandler().destroyProcess();
     }
+  }
+
+  /**
+   * Toggles breakpoint in the script returned by {@link PyDebuggerTask#getScriptName()}.
+   *
+   * @param line starting with 0
+   */
+  protected void toggleBreakpoint(int line) {
+    toggleBreakpoint(getFilePath(getScriptName()), line);
+  }
+
+  /**
+   * Toggles multiple breakpoints with {@link PyDebuggerTask#toggleBreakpoint(int)}.
+   */
+  protected void toggleBreakpoints(int... lines) {
+    toggleBreakpoints(getFilePath(getScriptName()), lines);
+  }
+
+  /**
+   * Toggles multiple breakpoints with {@link PyDebuggerTask#toggleBreakpoint(String, int)}.
+   */
+  protected void toggleBreakpoints(@NotNull String file, int... lines) {
+    for(int line : lines)
+      toggleBreakpoint(file, line);
   }
 }

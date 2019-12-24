@@ -4,16 +4,16 @@
 
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+    <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpLanguageHost"/>
     </extensionPoint>
-    <extensionPoint name="regExpModifierProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="regExpModifierProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpModifierProvider"/>
     </extensionPoint>
-    <extensionPoint name="regExpMatcherProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="regExpMatcherProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpMatcherProvider"/>
     </extensionPoint>
-    <extensionPoint name="regExpCapabilitiesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="regExpCapabilitiesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpCapabilitiesProvider"/>
     </extensionPoint>
   </extensionPoints>

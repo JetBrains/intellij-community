@@ -60,6 +60,14 @@ public abstract class ExecutionTarget {
     return true;
   }
 
+  /**
+   * Implementation-specific logic to determine if an external plugin is responsible for managing this target.
+   * @return true if the target is externally managed, or false for the platform to manage
+   */
+  public boolean isExternallyManaged() {
+    return false;
+  }
+
   @Override
   public boolean equals(Object obj) {
     return obj == this || (getClass().isInstance(obj) && getId().equals(((ExecutionTarget)obj).getId()));

@@ -24,7 +24,7 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         JvmElementVisitor<Boolean> visitor = null;
         for (JvmElement jvmElement : JvmDeclarationSearch.getElementsByIdentifier(element)) {
           if (visitor == null) {

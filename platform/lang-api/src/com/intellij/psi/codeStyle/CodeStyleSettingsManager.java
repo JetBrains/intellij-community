@@ -3,9 +3,14 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -19,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
@@ -42,7 +49,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
       return getInstance();
     }
 
-    return ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+    return project.getService(ProjectCodeStyleSettingsManager.class);
   }
 
   /**
@@ -50,10 +57,83 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
    */
   @Deprecated
   public static CodeStyleSettingsManager getInstance() {
-    return ServiceManager.getService(AppCodeStyleSettingsManager.class);
+    return ApplicationManager.getApplication().getService(AppCodeStyleSettingsManager.class);
   }
 
-  public CodeStyleSettingsManager() {}
+  protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
+    FileIndentOptionsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<FileIndentOptionsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull FileIndentOptionsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          notifyCodeStyleSettingsChanged();
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull FileIndentOptionsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          notifyCodeStyleSettingsChanged();
+        }
+      }, disposable);
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          registerFileTypeIndentOptions(enumSettings(), extension.getFileType(), extension.createIndentOptions());
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterFileTypeIndentOptions(enumSettings(), extension.getFileType());
+        }
+      }, disposable);
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
+      new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          registerLanguageSettings(enumSettings(), extension);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterLanguageSettings(enumSettings(), extension);
+        }
+      }, disposable
+    );
+  }
+
+  protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+
+  @ApiStatus.Internal
+  public final void registerFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+                                                  @NotNull FileType fileType,
+                                                  @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    allSettings.forEach(settings -> settings.registerAdditionalIndentOptions(fileType, indentOptions));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterFileTypeIndentOptions(@NotNull Collection<CodeStyleSettings> allSettings,
+                                                    @NotNull FileType fileType) {
+    allSettings.forEach(settings -> settings.unregisterAdditionalIndentOptions(fileType));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void registerLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                             @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.registerSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                               @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.removeSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
 
   /**
    * @deprecated Use one of the following methods:

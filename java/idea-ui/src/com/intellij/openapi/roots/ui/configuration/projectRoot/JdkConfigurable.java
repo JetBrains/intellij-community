@@ -30,7 +30,8 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   public JdkConfigurable(@NotNull ProjectJdkImpl projectJdk,
                          @NotNull ProjectSdksModel sdksModel,
                          @NotNull Runnable updateTree,
-                         @NotNull History history, @NotNull Project project) {
+                         @NotNull History history,
+                         @NotNull Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);
@@ -38,7 +39,11 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
     myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
   }
 
-  protected SdkEditor createSdkEditor(@NotNull Project project, ProjectSdksModel sdksModel, History history, ProjectJdkImpl projectJdk) {
+  @NotNull
+  protected SdkEditor createSdkEditor(@NotNull Project project,
+                                      @NotNull ProjectSdksModel sdksModel,
+                                      @NotNull History history,
+                                      @NotNull ProjectJdkImpl projectJdk) {
     return new SdkEditor(project, sdksModel, history, projectJdk);
   }
 

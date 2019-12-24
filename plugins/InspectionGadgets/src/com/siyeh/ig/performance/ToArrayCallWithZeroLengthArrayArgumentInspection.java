@@ -88,13 +88,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("to.array.call.style.display.name");
-  }
-
-  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[1];

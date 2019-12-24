@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
+  private static final Logger LOG = Logger.getInstance(MarkupModelImpl.class);
   private final DocumentEx myDocument;
 
   private RangeHighlighter[] myCachedHighlighters;

@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.diff.editor.VCSContentVirtualFile;
-import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -16,15 +15,12 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreviewProvider;
-import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,9 +47,7 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.actions.IntelliSortChooserPopupAction;
-import com.intellij.vcs.log.ui.actions.ShowPreviewEditorAction;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -62,6 +56,7 @@ import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
+import com.intellij.vcsUtil.UIVcsUtilKt;
 import kotlin.Unit;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
@@ -98,22 +93,19 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final VcsLogChangesBrowser myChangesBrowser;
   @NotNull private final Splitter myChangesBrowserSplitter;
 
-  @NotNull private final VcsLogChangeProcessor myPreviewDiff;
-  @NotNull private final Splitter myPreviewDiffSplitter;
-
   @NotNull private final VcsLogCommitDetailsListPanel myDetailsPanel;
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
   @NotNull private final AbstractVcsLogUi myLogUi;
 
-  @Nullable DiffPreviewProvider myDiffPreviewProvider;
   @Nullable private VCSContentVirtualFile myGraphViewFile;
   @NotNull private final JComponent myToolbarsAndTable;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
-                   @NotNull VcsLogFilterUiEx filterUi) {
+                   @NotNull VcsLogFilterUiEx filterUi,
+                   boolean withDiffPreview) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
@@ -142,11 +134,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                                                            ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     changesLoadingPane.add(myChangesBrowser);
 
-    myPreviewDiff = new VcsLogChangeProcessor(logData.getProject(), myChangesBrowser, false, this);
-
     myToolbar = createActionsToolbar();
     myChangesBrowser.setToolbarHeightReferent(myToolbar);
-    myPreviewDiff.getToolbarWrapper().setVerticalSizeReferent(myToolbar);
 
     MyCommitSelectionListenerForDiff listenerForDiff = new MyCommitSelectionListenerForDiff(changesLoadingPane);
     myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
@@ -176,77 +165,49 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     installGraphView();
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
-    myPreviewDiffSplitter = new OnePixelSplitter(false, DIFF_SPLITTER_PROPORTION, 0.7f);
-    myPreviewDiffSplitter.setHonorComponentsMinimumSize(false);
-    myPreviewDiffSplitter.setFirstComponent(myChangesBrowserSplitter);
-    showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
-
     setLayout(new BorderLayout());
-    add(myPreviewDiffSplitter);
+    if (withDiffPreview) {
+      add(new FrameDiffPreview<VcsLogChangeProcessor>(createDiffPreview(false, myChangesBrowser),
+                                                      myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION, false, 0.7f) {
+        @Override
+        public void updatePreview(boolean state) {
+          getPreviewDiff().updatePreview(state);
+        }
+      }.getMainComponent());
+    }
+    else {
+      add(myChangesBrowserSplitter);
+    }
 
     Disposer.register(logUi, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
-
-    final Project project = myLogData.getProject();
-    initPreviewInEditor(project);
   }
 
-  private void initPreviewInEditor(Project project) {
-    if (!Registry.is("show.diff.preview.as.editor.tab")) {
-      return;
-    }
-
-    myDiffPreviewProvider = new DiffPreviewProvider() {
-      @NotNull
-      @Override
-      public DiffRequestProcessor createDiffRequestProcessor() {
-        VcsLogChangeProcessor preview = new VcsLogChangeProcessor(project, myChangesBrowser, true,
-                                                                  myChangesBrowser);
-        preview.updatePreview(true);
-        return preview;
-      }
-
-      @NotNull
-      @Override
-      public Object getOwner() {
-        return MainFrame.this;
-      }
-
-      @Override
-      public String getEditorTabName() {
-        return "Repository Diff";
-      }
-    };
-
-    myChangesBrowser.getViewer().addSelectionListener(() -> {
-      if (myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW) && !myChangesBrowser.getSelectedChanges().isEmpty()) {
-        FileEditorManager instance = FileEditorManager.getInstance(project);
-        PreviewDiffVirtualFile file = new PreviewDiffVirtualFile(myDiffPreviewProvider);
-        instance.openFile(file, false, true);
-      }
-    }, this);
-
-    new AnAction() {
-      {
-        setShortcutSet(CommonShortcuts.ESCAPE);
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        openLogEditorTab();
-      }
-    }.registerCustomShortcutSet(myChangesBrowser, this);
+  @NotNull
+  public VcsLogChangeProcessor createDiffPreview(boolean isInEditor, @NotNull Disposable parent) {
+    VcsLogChangeProcessor processor = new VcsLogChangeProcessor(myLogData.getProject(), myChangesBrowser, isInEditor, parent);
+    if (!isInEditor) processor.getToolbarWrapper().setVerticalSizeReferent(getToolbar());
+    return processor;
   }
 
   private void installGraphView() {
     if (Registry.is("show.log.as.editor.tab")) {
       DataManager.registerDataProvider(myToolbarsAndTable, this);
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        openLogEditorTab();
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(this::openLogEditorTab, ModalityState.NON_MODAL);
+
+      new AnAction() {
+        {
+          setShortcutSet(CommonShortcuts.ESCAPE);
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          openLogEditorTab();
+        }
+      }.registerCustomShortcutSet(myChangesBrowser, this);
     }
     else {
       myChangesBrowserSplitter.setFirstComponent(myToolbarsAndTable);
@@ -294,14 +255,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   //todo move it out from MainFrame
   private String getTabName() {
-    VcsLogContentProvider instance = VcsLogContentProvider.getInstance(myLogData.getProject());
-    if (instance != null) {
-      VcsLogUiImpl ui = instance.getUi();
-      if (ui != null && ui.getMainFrame() == this) {
-        return VcsLogContentProvider.TAB_NAME;
-      }
-    }
-
     String name = "all";
     VcsLogFilterCollection filters = myFilterUi.getFilters();
     if (!filters.isEmpty()) {
@@ -339,6 +292,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myFilterUi;
   }
 
+  @NotNull
   private JComponent createActionsToolbar() {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.TOOLBAR_ACTION_GROUP));
@@ -374,6 +328,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     rightCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[left]0[left, fill]push[right]", "center"));
+    UIVcsUtilKt.installVisibilityReferent(panel, toolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());
     panel.add(rightCornerToolbar.getComponent());
@@ -385,11 +340,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar;
-  }
-
-  @NotNull
-  public JComponent getMainComponent() {
-    return this;
   }
 
   @Nullable
@@ -409,9 +359,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       Collection<VirtualFile> roots = getSelectedRoots();
       if (roots.size() != 1) return null;
       return myLogData.getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
-    }
-    else if (ShowPreviewEditorAction.DATA_KEY.is(dataId)) {
-      return myDiffPreviewProvider;
     }
     else if (VCS_LOG.is(dataId)) {
       return myLogUi.getVcsLog();
@@ -456,27 +403,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myToolbar;
   }
 
-  public void showDetails(boolean state) {
-    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
+  @NotNull
+  public VcsLogChangesBrowser getChangesBrowser() {
+    return myChangesBrowser;
   }
 
-  public void showDiffPreview(boolean state) {
-    myPreviewDiff.updatePreview(state);
-    if (Registry.is("show.diff.preview.as.editor.tab")) {
-      if (myDiffPreviewProvider != null) {
-        if (!state) {
-          //'equals' for such files is overridden and means the equality of its owner
-          FileEditorManager.getInstance(myLogData.getProject()).closeFile(new PreviewDiffVirtualFile(myDiffPreviewProvider));
-        }
-        else {
-          FileEditorManager.getInstance(myLogData.getProject()).openFile(new PreviewDiffVirtualFile(myDiffPreviewProvider), false, true);
-        }
-      }
-
-      return;
-    }
-
-    myPreviewDiffSplitter.setSecondComponent(state ? myPreviewDiff.getComponent() : null);
+  public void showDetails(boolean state) {
+    myDetailsSplitter.setSecondComponent(state ? myDetailsPanel : null);
   }
 
   @Override
@@ -546,7 +479,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected List<Component> getOrderedComponents() {
       return Arrays.asList(myGraphTable,
                            myChangesBrowser.getPreferredFocusedComponent(),
-                           myPreviewDiff.getPreferredFocusedComponent(),
                            myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
@@ -555,7 +487,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final Runnable myRefresh;
 
     MyVcsLogGraphTable(@NotNull AbstractVcsLogUi ui, @NotNull VcsLogData logData) {
-      super(ui, logData, ui::requestMore);
+      super(ui.getId(), logData, ui.getProperties(), ui.getColorManager(), ui::requestMore, ui);
       myRefresh = () -> ui.getRefresher().onRefresh();
     }
 

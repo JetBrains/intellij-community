@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
 import com.google.common.collect.ConcurrentHashMultiset;
@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -35,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 public class CoreProgressManager extends ProgressManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.impl.CoreProgressManager");
+  private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
 
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
@@ -171,13 +170,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         }
       }
     }, progress);
-  }
-
-  @Override
-  public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
-    final Ref<T> ref = new Ref<>();
-    runProcess(() -> ref.set(process.compute()), progress);
-    return ref.get();
   }
 
   @Override
@@ -429,7 +421,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {
-    
+
   }
 
   public boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {

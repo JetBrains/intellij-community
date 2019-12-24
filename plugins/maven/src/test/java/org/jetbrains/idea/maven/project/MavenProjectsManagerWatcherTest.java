@@ -1,77 +1,77 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.IOException;
 import java.util.Collections;
 
 
-public class MavenProjectsManagerWatcherTest extends MavenTestCase {
+public class MavenProjectsManagerWatcherTest extends MavenImportingTestCase {
 
-  private MavenProjectsManagerWatcher myProjectManagerWatcher;
-  private MavenProjectsProcessor myProjectsProcessor;
-  private MavenProjectsTree myProjectsTree;
-  private MavenProjectsManagerWatcher.MyFileChangeListener myListener;
+  private MavenProjectsManager myProjectsManager;
+  private ProjectNotificationAware myNotificationAware;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    MavenEmbeddersManager mavenEmbeddersManager = new MavenEmbeddersManager(myProject);
-    myProjectsProcessor = new MavenProjectsProcessor(myProject, "Project", true, mavenEmbeddersManager);
-    myProjectsTree = new MavenProjectsTree(myProject);
-    myProjectManagerWatcher = new MavenProjectsManagerWatcher(myProject, MavenProjectsManager.getInstance(myProject),
-                                                              myProjectsTree,
-                                                              new MavenGeneralSettings(),
-                                                              myProjectsProcessor,
-                                                              mavenEmbeddersManager
-    );
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>");
-    myProjectsTree
-      .addManagedFilesWithProfiles(Collections.singletonList(myProjectPom), new MavenExplicitProfiles(Collections.emptyList()));
-    myListener = myProjectManagerWatcher.new MyFileChangeListener();
+    myProjectsManager = MavenProjectsManager.getInstance(myProject);
+    myNotificationAware = ProjectNotificationAware.getInstance(myProject);
+    myProjectsManager.initForTests();
+    myProjectsManager.enableAutoImportInTests();
+
+    createProjectPom(createPomContent("test", "project"));
+    addManagedFiles(myProjectPom);
   }
 
   public void testChangeConfigInAnotherProjectShouldNotUpdateOur() throws IOException {
-
-    createPomFile(createProjectSubDir("../another"), "<groupId>another</groupId>" +
-                                                     "<artifactId>another</artifactId>" +
-                                                     "<version>1</version>");
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
     VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
-
-
-    updateFile(mavenConfig);
-    assertEmpty(myListener.getFilesToUpdate());
-  }
-
-  private void updateFile(VirtualFile file) {
-    myListener.updateFile(file, new VFileContentChangeEvent(this, file, 0, LocalTimeCounter.currentTime(), false));
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
   public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws IOException {
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
-    updateFile(mavenConfig);
-    assertContain(myListener.getFilesToUpdate(), myProjectPom);
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
+    assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 
   public void testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() throws IOException {
-    VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), "<groupId>another</groupId>" +
-                                                                              "<artifactId>another</artifactId>" +
-                                                                              "<version>1</version>");
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
     VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    addManagedFiles(anotherPom);
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
+    assertNotEmpty(myNotificationAware.getProjectsWithNotification());
+  }
 
-    myProjectsTree
-      .addManagedFilesWithProfiles(Collections.singletonList(anotherPom), new MavenExplicitProfiles(Collections.emptyList()));
+  private static String createPomContent(@NotNull String groupId, @NotNull String artifactId) {
+    return String.format("<groupId>%s</groupId>\n<artifactId>%s</artifactId>\n<version>1.0-SNAPSHOT</version>", groupId, artifactId);
+  }
 
-    updateFile(mavenConfig);
-    assertContain(myListener.getFilesToUpdate(), anotherPom);
-    assertDoNotContain(myListener.getFilesToUpdate(), myProjectPom);
+  private void addManagedFiles(@NotNull VirtualFile pom) {
+    myProjectsManager.addManagedFiles(Collections.singletonList(pom));
+    myProjectsManager.waitForResolvingCompletion();
+    myProjectsManager.performScheduledImportInTests();
+  }
+
+  private void replaceContent(@NotNull VirtualFile file, @NotNull String content) throws IOException {
+    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<?, IOException>)() -> {
+      VfsUtil.saveText(file, content);
+      return null;
+    });
   }
 }
 

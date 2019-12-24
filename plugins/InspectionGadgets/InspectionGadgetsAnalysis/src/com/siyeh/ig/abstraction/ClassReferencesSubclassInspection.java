@@ -28,13 +28,6 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.references.subclass.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiNamedElement element = (PsiNamedElement)infos[0];
     final String containingClassName = element.getName();

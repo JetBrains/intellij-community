@@ -13,9 +13,11 @@ interface ScheduleForAdditionActionExtension {
   fun getSupportedVcs(project: Project): AbstractVcs
 
   /**
-   * Additional to [FileStatus.UNKNOWN] statuses which can be scheduled for addition
+   * Additional to [FileStatus.UNKNOWN] statuses for files which can be scheduled for addition
    */
   fun isStatusForAddition(status: FileStatus): Boolean
+
+  fun isStatusForDirectoryAddition(status: FileStatus): Boolean = status != FileStatus.IGNORED
 
   @Throws(VcsException::class)
   fun doAddFiles(project: Project, vcsRoot: VirtualFile, paths: List<FilePath>, containsIgnored: Boolean)

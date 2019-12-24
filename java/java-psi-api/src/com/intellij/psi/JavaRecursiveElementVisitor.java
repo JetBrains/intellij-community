@@ -20,6 +20,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * a JavaElementVisitor which also visits all children elements
@@ -34,7 +35,7 @@ public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor imp
   private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<>();
 
   @Override
-  public void visitElement(PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     if (!myRefExprsInVisit.isEmpty() && myRefExprsInVisit.peek() == element) {
       myRefExprsInVisit.pop();
       myRefExprsInVisit.push(null);

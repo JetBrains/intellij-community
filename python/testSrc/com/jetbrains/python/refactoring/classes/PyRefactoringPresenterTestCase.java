@@ -11,6 +11,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedVi
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersViewInitializationInfo;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import org.easymock.MockType;
 import org.easymock.internal.MocksControl;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
 
     myFixture.copyDirectoryToProject("refactoring/" + myRefactoringName + "/presenter/", "");
     myFixture.configureFromTempProjectFile("file.py");
-    myMocksControl = new MocksControl(MocksControl.MockType.NICE);
+    myMocksControl = new MocksControl(MockType.NICE);
     myView = myMocksControl.createMock(myViewClass);
 
     configureMockCapture();
@@ -91,7 +92,7 @@ public abstract class PyRefactoringPresenterTestCase<C extends MembersViewInitia
    * Configures view to capture config info
    */
   private void configureMockCapture() {
-    myViewConfigCapture = new Capture<>();
+    myViewConfigCapture = Capture.newInstance();
 
     myView.configure(EasyMock.capture(myViewConfigCapture));
     EasyMock.expectLastCall().once();

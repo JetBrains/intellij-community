@@ -5,7 +5,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -28,7 +27,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static git4idea.GitUtil.*;
+import static git4idea.GitUtil.getHead;
+import static git4idea.GitUtil.updateAndRefreshChangedVfs;
 
 class GitMergeOperation extends GitBranchOperation {
 
@@ -145,11 +145,7 @@ class GitMergeOperation extends GitBranchOperation {
     switch (myDeleteOnMerge) {
       case DELETE:
         super.notifySuccess(message);
-        // bg process needs to be started from the EDT
-        ApplicationManager.getApplication().invokeLater(() -> {
-          GitBrancher brancher = GitBrancher.getInstance(myProject);
-          brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
-        });
+        new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
         break;
       case PROPOSE:
         String description = message + "<br/><a href='delete'>Delete " + myBranchToMerge + "</a>";
@@ -196,7 +192,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<? extends GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
-    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
+    GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     myPreservingProcess = new GitPreservingProcess(myProject, myGit, GitUtil.getRootsFromRepositories(repositories), "merge",
                                                    myBranchToMerge, saveMethod, getIndicator(),
                                                    () -> success.set(doMerge(repositories)));
@@ -284,7 +280,7 @@ class GitMergeOperation extends GitBranchOperation {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
     Collection<VirtualFile> roots = GitUtil.getRootsFromRepositories(repositories);
-    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
+    GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
     GitPreservingProcess preservingProcess =
       new GitPreservingProcess(myProject, myGit, roots, "merge", myBranchToMerge, saveMethod, getIndicator(), () -> {
         for (GitRepository repository : repositories) result.append(repository, rollback(repository));

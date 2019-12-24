@@ -33,12 +33,6 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.problem.descriptor");
   }

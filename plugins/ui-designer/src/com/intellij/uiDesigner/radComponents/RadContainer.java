@@ -29,7 +29,7 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public class RadContainer extends RadComponent implements IContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadContainer");
+  private static final Logger LOG = Logger.getInstance(RadContainer.class);
 
   public static class Factory extends RadComponentFactory {
     @Override

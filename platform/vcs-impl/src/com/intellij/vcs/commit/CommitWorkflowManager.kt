@@ -33,7 +33,11 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     }
   }
 
-  private fun updateWorkflow() = ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+  private fun updateWorkflow() {
+    if (project.isDisposed) return
+
+    ChangesViewManager.getInstanceEx(project).updateCommitWorkflow()
+  }
 
   fun isNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
@@ -44,7 +48,9 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
   }
 
   private fun subscribeToChanges() {
-    isForceNonModalCommit.addListener(object : RegistryValueListener.Adapter() {
+    if (project.isDisposed) return
+
+    isForceNonModalCommit.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = updateWorkflow()
     }, project)
 

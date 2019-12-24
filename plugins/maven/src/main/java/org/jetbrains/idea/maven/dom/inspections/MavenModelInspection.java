@@ -39,12 +39,6 @@ public class MavenModelInspection extends BasicDomElementsInspection<MavenDomPro
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return MavenDomBundle.message("inspection.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "MavenModelInspection";
   }

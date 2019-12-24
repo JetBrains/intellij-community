@@ -3,6 +3,7 @@ package com.intellij.usages.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +17,16 @@ public class RerunSearchAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     if (usageView instanceof UsageViewImpl) {
+      if (!((UsageViewImpl)usageView).canPerformReRun()) {
+        Messages.showErrorDialog(e.getProject(), "Targets have been invalidated", "Cannot Re-Run Search");
+        return;
+      }
       ((UsageViewImpl)usageView).refreshUsages();
     }
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
-    boolean enabled = usageView instanceof UsageViewImpl && ((UsageViewImpl)usageView).canPerformReRun();
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabled(e.getData(UsageView.USAGE_VIEW_KEY) instanceof UsageViewImpl);
   }
 }

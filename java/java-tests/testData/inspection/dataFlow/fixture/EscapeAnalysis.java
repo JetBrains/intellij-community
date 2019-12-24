@@ -37,6 +37,16 @@ class EscapeAnalysis {
     int[] x = new int[] {0};
     Runnable r = () -> x[0] = 1;
     r.run();
+    if(<warning descr="Condition 'x[0] == 1' is always 'true'">x[0] == 1</warning>) {
+      System.out.println("ok");
+    }
+  }
+
+  void testLambda2() {
+    int[] x = new int[] {0};
+    Runnable r = () -> x[0] = 1;
+    r.run();
+    r.run();
     if(x[0] == 1) {
       System.out.println("ok");
     }

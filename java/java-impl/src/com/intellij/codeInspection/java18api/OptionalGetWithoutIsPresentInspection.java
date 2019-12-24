@@ -3,9 +3,12 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaFactMapValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
@@ -38,12 +41,10 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         if (optionalClass == null) return;
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
         if (result == null || !result.expressionWasAnalyzed(qualifier)) return;
-        SpecialFieldValue fact = result.getExpressionFact(qualifier, DfaFactType.SPECIAL_FIELD_VALUE);
-        DfaValue value = SpecialField.OPTIONAL_VALUE.extract(fact);
-        if (value != null && !(value instanceof DfaFactMapValue)) return;
-        DfaNullability nullability = value != null ? ((DfaFactMapValue)value).get(DfaFactType.NULLABILITY) : null;
-        if (nullability != DfaNullability.NOT_NULL &&
-            nullability != DfaNullability.FLUSHED &&
+        DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(qualifier));
+        if (dfType != DfTypes.TOP && !(dfType instanceof DfReferenceType)) return;
+        DfaNullability nullability = DfaNullability.fromDfType(dfType);
+        if ((nullability == DfaNullability.UNKNOWN || nullability == DfaNullability.NULLABLE) &&
             !isPresentCallWithSameQualifierExists(qualifier)) {
           holder.registerProblem(nameElement,
                                  InspectionsBundle.message("inspection.optional.get.without.is.present.message", optionalClass.getName()),

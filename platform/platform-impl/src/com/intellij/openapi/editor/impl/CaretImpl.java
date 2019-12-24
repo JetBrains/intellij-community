@@ -40,7 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 
 public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretImpl");
+  private static final Logger LOG = Logger.getInstance(CaretImpl.class);
   private static final Key<CaretVisualAttributes> VISUAL_ATTRIBUTES_KEY = new Key<>("CaretAttributes");
 
   private final EditorImpl myEditor;
@@ -405,8 +405,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    myEditor.getFoldingModel().flushCaretPosition(this);
-
     VerticalInfo oldVerticalInfo = myVerticalInfo;
     LogicalPosition oldCaretPosition = myLogicalCaret;
     VisualPosition oldVisualPosition = myVisibleCaret;
@@ -439,6 +437,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         mySkipChangeRequests = false;
       }
     }
+
+    myEditor.getFoldingModel().flushCaretPosition(this);
 
     myLogicalCaret = logicalPositionToUse;
     setLastColumnNumber(myLogicalCaret.column);

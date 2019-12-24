@@ -8,17 +8,17 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -59,13 +59,20 @@ public class JsonSortPropertiesIntention implements IntentionAction, LowPriority
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "File is readonly", "Cannot sort properties", null);
+      return;
+    }
     PsiElement parentObject = findParentObject(editor, file);
     assert parentObject instanceof JsonObject;
     // cycle-sort performs the minimal amount of modifications, and we want to patch the tree as little as possible
     cycleSortProperties(((JsonObject)parentObject).getPropertyList());
+    SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(parentObject);
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+    PsiElement element = pointer.getElement();
+    if (element == null) return;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(parentObject);
+    codeStyleManager.reformatText(element.getContainingFile(), Collections.singleton(element.getTextRange()));
   }
 
   @Override

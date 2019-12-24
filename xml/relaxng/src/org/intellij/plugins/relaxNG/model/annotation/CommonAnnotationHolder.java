@@ -33,7 +33,9 @@ abstract class CommonAnnotationHolder<C> {
     return new HolderAdapter<>(holder);
   }
 
-  public abstract Annotation createAnnotation(C element, @NotNull HighlightSeverity severity, String message);
+  public abstract Annotation createAnnotation(@NotNull HighlightSeverity severity,
+                                              C element,
+                                              String message);
 
   private static class DomHolderAdapter<T extends DomElement> extends CommonAnnotationHolder<T> {
     private final DomElementAnnotationHolder myHolder;
@@ -43,7 +45,9 @@ abstract class CommonAnnotationHolder<C> {
     }
 
     @Override
-    public Annotation createAnnotation(DomElement element, @NotNull HighlightSeverity severity, String message) {
+    public Annotation createAnnotation(@NotNull HighlightSeverity severity,
+                                       DomElement element,
+                                       String message) {
       final Annotation annotation = myHolder.createAnnotation(element, severity, message);
       annotation.setTooltip(message);  // no tooltip by default??
       return annotation;
@@ -58,16 +62,8 @@ abstract class CommonAnnotationHolder<C> {
     }
 
     @Override
-    public Annotation createAnnotation(T element, @NotNull HighlightSeverity severity, String message) {
-      if (severity == HighlightSeverity.ERROR) {
-        return myHolder.createErrorAnnotation(element, message);
-      } else if (severity == HighlightSeverity.WARNING) {
-        return myHolder.createWarningAnnotation(element, message);
-      } else if (severity == HighlightSeverity.WEAK_WARNING) {
-        return myHolder.createWeakWarningAnnotation(element, message);
-      } else {
-        return myHolder.createInfoAnnotation(element, message);
-      }
+    public Annotation createAnnotation(@NotNull HighlightSeverity severity, T element, String message) {
+      return myHolder.createAnnotation(severity, element.getTextRange(), message);
     }
   }
 }

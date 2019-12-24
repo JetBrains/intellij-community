@@ -64,7 +64,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class VfsData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.impl.VfsData");
+  private static final Logger LOG = Logger.getInstance(VfsData.class);
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
@@ -105,7 +105,7 @@ public class VfsData {
   }
 
   @Nullable
-  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
     PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
     if (dir != null) return dir;
@@ -126,9 +126,16 @@ public class VfsData {
       throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
-    return o instanceof DirectoryData
-           ? persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()))
-           : new VirtualFileImpl(id, segment, parent);
+    if (o instanceof DirectoryData) {
+      if (putToMemoryCache) {
+        return persistentFS.getOrCacheDir(id, new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem()));
+      } else {
+        VirtualFileSystemEntry entry = persistentFS.getCachedDir(id);
+        if (entry != null) return entry;
+        return new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem());
+      }
+    }
+    return new VirtualFileImpl(id, segment, parent);
   }
 
   private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
@@ -302,12 +309,12 @@ public class VfsData {
     private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent) {
+    VirtualFileSystemEntry[] getFileChildren(@NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
       int[] ids = myChildrenIds;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
       for (int i = 0; i < ids.length; i++) {
         int childId = ids[i];
-        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent);
+        VirtualFileSystemEntry child = parent.mySegment.vfsData.getFileById(childId, parent, putToMemoryCache);
         if (child == null) {
           throw new AssertionError("No file for id " + childId + ", parentId = " + parent.myId);
         }

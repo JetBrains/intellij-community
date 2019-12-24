@@ -33,6 +33,8 @@ public class AnnotationTargetUtil {
   private static final TargetType[] CONSTRUCTOR_TARGETS = {TargetType.CONSTRUCTOR, TargetType.TYPE_USE};
   private static final TargetType[] METHOD_TARGETS = {TargetType.METHOD, TargetType.TYPE_USE};
   private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
+  private static final TargetType[] RECORD_COMPONENT_TARGETS = {TargetType.RECORD_COMPONENT, TargetType.FIELD, TargetType.METHOD, 
+    TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
   private static final TargetType[] MODULE_TARGETS = {TargetType.MODULE};
@@ -66,6 +68,9 @@ public class AnnotationTargetUtil {
         else {
           return TYPE_TARGETS;
         }
+      }
+      if (element instanceof PsiRecordComponent) {
+        return RECORD_COMPONENT_TARGETS;
       }
       if (element instanceof PsiMethod) {
         if (((PsiMethod)element).isConstructor()) {

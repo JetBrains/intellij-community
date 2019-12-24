@@ -26,13 +26,6 @@ public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "wait.without.corresponding.notify.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.without.corresponding.notify.problem.descriptor");
@@ -99,7 +92,7 @@ public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (containsNotify) {
         return;
       }

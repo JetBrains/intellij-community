@@ -46,7 +46,6 @@ import java.util.List;
  * @author ven
  */
 public class InlineConstantFieldHandler extends JavaInlineActionHandler {
-  private static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
 
   @Override
   public boolean canInlineElement(PsiElement element) {
@@ -61,19 +60,19 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     PsiExpression initializer = getInitializer(field);
     if (initializer == null) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
     if (field instanceof PsiEnumConstant) {
-      String message = REFACTORING_NAME + " is not supported for enum constants";
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      String message = getRefactoringName() + " is not supported for enum constants";
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
     if (ReferencesSearch.search(field, ProjectScope.getProjectScope(project), false).findFirst() == null) {
       String message = RefactoringBundle.message("field.0.is.never.used", field.getName());
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
       return;
     }
 
@@ -90,8 +89,8 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
         return;
       }
       if (hasWriteUsages.get()) {
-        String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+        String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", getRefactoringName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.INLINE_FIELD);
         return;
       }
     }
@@ -176,6 +175,10 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return REFACTORING_NAME + "...";
+    return getRefactoringName() + "...";
+  }
+
+  private static String getRefactoringName() {
+    return RefactoringBundle.message("inline.field.title");
   }
 }

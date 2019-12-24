@@ -27,8 +27,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.IntStreamEx;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -42,7 +40,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     blockUntil(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME), getTestRootDisposable());
     blockUntil(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME), getTestRootDisposable());
-    blockUntil(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME.getPoint(getProject()), getTestRootDisposable());
+    blockUntil(ConcatenationInjectorManager.EP_NAME.getPoint(getProject()), getTestRootDisposable());
     blockUntil(getProject().getExtensionArea().getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME), getTestRootDisposable());
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
@@ -124,7 +122,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
       getFile().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           for (int i = 0; i < 10; i++) {
             assertSame(myProject, element.getProject());
           }

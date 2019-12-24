@@ -45,12 +45,6 @@ public class LambdaParameterHidingMemberVariableInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("lambda.parameter.hides.member.variable.display.name");
-  }
-
-  @Override
   protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }

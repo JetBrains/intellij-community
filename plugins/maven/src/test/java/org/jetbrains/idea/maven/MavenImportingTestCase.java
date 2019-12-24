@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
+  protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
 
   @Override
@@ -68,6 +69,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
       () -> myProjectsManager = null,
       () -> myProjectsTree = null,
+      () -> myProjectResolver = null,
       () -> super.tearDown()
     ).run();
   }
@@ -381,7 +383,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Arrays.asList(files), false);
   }
 
-  private void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
+  protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
     initProjectsManager(false);
 
     readProjects(files, profiles);
@@ -412,7 +414,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void initProjectsManager(boolean enableEventHandling) {
     myProjectsManager.initForTests();
     myProjectsTree = myProjectsManager.getProjectsTreeForTests();
-    if (enableEventHandling) myProjectsManager.listenForExternalChanges();
+    myProjectResolver = new MavenProjectResolver(myProjectsTree);
+    if (enableEventHandling) myProjectsManager.enableAutoImportInTests();
   }
 
   protected void scheduleResolveAll() {

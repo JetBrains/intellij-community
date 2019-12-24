@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
+  private static final Logger LOG = Logger.getInstance(PsiNewExpressionImpl.class);
 
   public PsiNewExpressionImpl() {
     super(JavaElementType.NEW_EXPRESSION);

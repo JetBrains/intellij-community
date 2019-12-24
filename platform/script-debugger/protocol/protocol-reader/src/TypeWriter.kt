@@ -213,7 +213,12 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
           }
           out.appendName(fieldLoader).append(" = ")
 
-          fieldLoader.valueReader.writeReadCode(classScope, false, out)
+          try {
+            fieldLoader.valueReader.writeReadCode(classScope, false, out)
+          }
+          catch (e: UnsupportedOperationException) {
+            out.append("throw UnsupportedOperationException()").newLine()
+          }
 
           if (primitiveValueName != null) {
             out.closeBlock().newLine().append("else").block {

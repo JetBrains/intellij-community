@@ -25,7 +25,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 public class FragmentListImpl implements FragmentList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.fragments.FragmentList");
+  private static final Logger LOG = Logger.getInstance(FragmentList.class);
   private final ArrayList<Fragment> myFragments;
 
   private <T extends Fragment> FragmentListImpl(ArrayList<T> sortedFragments) {

@@ -3,36 +3,34 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
 
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Gregory.Shrago
  */
 public class DfaUtil {
-  private static final Object UNKNOWN_VALUE = ObjectUtils.sentinel("UNKNOWN_VALUE");
 
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
@@ -56,31 +54,20 @@ public class DfaUtil {
   private static Map<PsiElement, ValuableInstructionVisitor.PlaceResult> getCachedPlaceResults(@NotNull final PsiElement codeBlock) {
     return CachedValuesManager.getCachedValue(codeBlock, () -> {
       final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor();
-      RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+      RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock.getProject()).analyzeMethod(codeBlock, visitor);
       return CachedValueProvider.Result.create(runnerResult == RunnerResult.OK ? visitor.myResults : null, codeBlock);
     });
   }
 
+  /**
+   * @deprecated use {@link NullabilityUtil#getExpressionNullability(PsiExpression, boolean)}
+   */
+  @Deprecated
   @NotNull
   public static Nullability checkNullability(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
-    Nullability nullability = tryCheckNullability(variable, context, null);
-    return nullability != null ? nullability : Nullability.UNKNOWN;
-  }
-
-  @Nullable("null means DFA analysis has failed (too complex to analyze)")
-  public static Nullability tryCheckNullability(@Nullable final PsiVariable variable,
-                                             @Nullable final PsiElement context,
-                                             @Nullable final PsiElement outerBlock) {
-    if (variable == null || context == null) return null;
-
-    final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;
-    Map<PsiElement, ValuableInstructionVisitor.PlaceResult> results = codeBlock == null ? null : getCachedPlaceResults(codeBlock);
-    ValuableInstructionVisitor.PlaceResult placeResult = results == null ? null : results.get(context);
-    if (placeResult == null) {
-      return null;
+    if (context instanceof PsiExpression) {
+      return NullabilityUtil.getExpressionNullability((PsiExpression)context, true);
     }
-    if (placeResult.myNulls.contains(variable) && !placeResult.myNotNulls.contains(variable)) return Nullability.NULLABLE;
-    if (placeResult.myNotNulls.contains(variable) && !placeResult.myNulls.contains(variable)) return Nullability.NOT_NULL;
     return Nullability.UNKNOWN;
   }
 
@@ -104,26 +91,6 @@ public class DfaUtil {
       return Collections.singletonList((PsiLiteralExpression)qualifierExpression);
     }
     return Collections.emptyList();
-  }
-
-  @Nullable
-  static PsiElement getClosureInside(Instruction instruction) {
-    if (instruction instanceof MethodCallInstruction) {
-      PsiCall anchor = ((MethodCallInstruction)instruction).getCallExpression();
-      if (anchor instanceof PsiNewExpression) {
-        return ((PsiNewExpression)anchor).getAnonymousClass();
-      }
-    }
-    else if (instruction instanceof LambdaInstruction) {
-      return ((LambdaInstruction)instruction).getLambdaExpression();
-    }
-    else if (instruction instanceof EmptyInstruction) {
-      PsiElement anchor = ((EmptyInstruction)instruction).getAnchor();
-      if (anchor instanceof PsiClass) {
-        return anchor;
-      }
-    }
-    return null;
   }
 
   @NotNull
@@ -156,11 +123,11 @@ public class DfaUtil {
   }
 
   @NotNull
-  private static Nullability inferBlockNullability(PsiParameterListOwner owner, boolean suppressNullable) {
+  private static Nullability inferBlockNullability(@NotNull PsiParameterListOwner owner, boolean suppressNullable) {
     PsiElement body = owner.getBody();
     if (body == null) return Nullability.UNKNOWN;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
     class BlockNullabilityVisitor extends StandardInstructionVisitor {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
@@ -209,7 +176,7 @@ public class DfaUtil {
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (getAccessOffset(placeMethod) >= getWriteOffset(target)) return null;
 
-    return factory.createTypeValue(target.getType(), Nullability.NULLABLE);
+    return factory.getObjectType(target.getType(), Nullability.NULLABLE);
   }
 
   private static int getWriteOffset(PsiField target) {
@@ -305,7 +272,7 @@ public class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor, boolean)}) to cover 
+   * (e.g. passed to {@link DataFlowRunner#analyzeMethodRecursively(PsiElement, StandardInstructionVisitor)}) to cover 
    * given expression.
    *
    * @param expression expression to cover
@@ -335,73 +302,19 @@ public class DfaUtil {
     return tryCast(ContainerUtil.getOnlyItem(result.getExpressionValues(condition)), Boolean.class);
   }
 
-  public static boolean isComparedByEquals(PsiType type) {
-    return type != null && (TypeUtils.isJavaLangString(type) || TypeConversionUtil.isPrimitiveWrapper(type));
-  }
-
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
-      if (value instanceof DfaConstValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
+      if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
         DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
-        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+        return boxed == null ? value.getFactory().getUnknown() : boxed;
       }
     }
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaBoxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType()))) {
+      if (value instanceof DfaBoxedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
     }
     return value;
-  }
-
-  /**
-   * Returns the value of given expression calculated via dataflow; or null if value is null or unknown.
-   * The expression context is not taken into account; only expression itself.
-   *
-   * @param expression expression to analyze
-   * @return expression value if known
-   */
-  public static Object computeValue(PsiExpression expression) {
-    PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expressionToAnalyze == null) return null;
-    Object computed = ExpressionUtils.computeConstantExpression(expression);
-    if (computed != null) return computed;
-
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expression);
-    class Visitor extends StandardInstructionVisitor {
-      Object exprValue;
-
-      @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expr,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        super.beforeExpressionPush(value, expr, range, state);
-        if (expr != expressionToAnalyze) return;
-        Object newValue;
-        if (value instanceof DfaConstValue) {
-          newValue = ((DfaConstValue)value).getValue();
-        } else {
-          newValue = UNKNOWN_VALUE;
-        }
-        if (exprValue == null) {
-          exprValue = newValue;
-        } else if (exprValue != newValue) {
-          exprValue = UNKNOWN_VALUE;
-        }
-        if (exprValue == UNKNOWN_VALUE) {
-          runner.cancel();
-        }
-      }
-    }
-    Visitor visitor = new Visitor();
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
-    if (result == RunnerResult.OK && visitor.exprValue != UNKNOWN_VALUE) {
-      return visitor.exprValue;
-    }
-    return null;
   }
 
   @NotNull
@@ -417,13 +330,13 @@ public class DfaUtil {
       LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
       if (fromAnnotation.min() > fromType.min()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.LT, ContractValue.constant(fromAnnotation.min(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), parameter.getType()),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }
       if (fromAnnotation.max() < fromType.max()) {
         MethodContract contract = MethodContract.singleConditionContract(
-          ContractValue.argument(i), DfaRelationValue.RelationType.GT, ContractValue.constant(fromAnnotation.max(), PsiType.LONG),
+          ContractValue.argument(i), RelationType.GT, ContractValue.constant(fromAnnotation.max(), parameter.getType()),
           ContractReturnValue.fail());
         rangeContracts.add(contract);
       }
@@ -431,17 +344,25 @@ public class DfaUtil {
     return ContainerUtil.concat(rangeContracts, contracts);
   }
 
+  public static boolean isEmptyCollectionConstantField(@Nullable PsiVariable var) {
+    if (!(var instanceof PsiField)) return false;
+    PsiField field = (PsiField)var;
+    return field.getName().startsWith("EMPTY_") && field.getContainingClass() != null &&
+           JAVA_UTIL_COLLECTIONS.equals(field.getContainingClass().getQualifiedName());
+  }
+
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {
     final Map<PsiElement, PlaceResult> myResults = new HashMap<>();
 
     static class PlaceResult {
       final MultiValuesMap<PsiVariable, FList<PsiExpression>> myValues = new MultiValuesMap<>(true);
-      final Set<PsiVariable> myNulls = new THashSet<>();
-      final Set<PsiVariable> myNotNulls = new THashSet<>();
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                           DataFlowRunner runner,
+                                           DfaMemoryState memState,
+                                           DfaValue val) {
       PsiExpression place = instruction.getExpression();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
@@ -455,20 +376,8 @@ public class DfaUtil {
             }
           }
         });
-        DfaValue value = instruction.getValue();
-        if (value instanceof DfaVariableValue && isEffectivelyUnqualified((DfaVariableValue)value)) {
-          PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();
-          if (element instanceof PsiVariable) {
-            if (memState.isNotNull(value)) {
-              result.myNotNulls.add((PsiVariable)element);
-            }
-            if (memState.isNull(value)) {
-              result.myNulls.add((PsiVariable)element);
-            }
-          }
-        }
       }
-      return super.visitPush(instruction, runner, memState);
+      return super.visitPush(instruction, runner, memState, val);
     }
 
     @Override
@@ -519,8 +428,7 @@ public class DfaUtil {
   }
 
   public static boolean isNaN(Object value) {
-    if (value instanceof Double && ((Double)value).isNaN()) return true;
-    if (value instanceof Float && ((Float)value).isNaN()) return true;
-    return false;
+    return value instanceof Double && ((Double)value).isNaN() || 
+           value instanceof Float && ((Float)value).isNaN();
   }
 }

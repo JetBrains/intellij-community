@@ -95,6 +95,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     finally {
       myAnnotators.clear();
       myHolder = null;
+      myAnnotationHolder = null;
     }
     return true;
   }
@@ -119,15 +120,16 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private void runAnnotators(@NotNull PsiElement element) {
     List<Annotator> annotators = myAnnotators.get(element.getLanguage().getID());
     if (!annotators.isEmpty()) {
-      AnnotationHolderImpl aHolder = myAnnotationHolder;
+      AnnotationHolderImpl holder = myAnnotationHolder;
+      holder.myCurrentElement = element;
       for (Annotator annotator : annotators) {
         if (!myDumb || DumbService.isDumbAware(annotator)) {
           ProgressManager.checkCanceled();
-          annotator.annotate(element, aHolder);
+          annotator.annotate(element, holder);
           // assume that annotator is done messing with just created annotations after its annotate() method completed
           // and we can start applying them incrementally at last
           // (but not sooner, thanks to awfully racey Annotation.setXXX() API)
-          aHolder.queueToUpdateIncrementally();
+          holder.queueToUpdateIncrementally();
         }
       }
     }

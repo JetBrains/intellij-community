@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementExtendableSettings;
@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -105,7 +106,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   @NotNull
   private List<StdArrangementMatchRule> getRuleSequence(@NotNull final StdArrangementMatchRule rule,
                                                         @NotNull final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition) {
-    final List<StdArrangementMatchRule> seqRule = ContainerUtil.newSmartList();
+    final List<StdArrangementMatchRule> seqRule = new SmartList<>();
     rule.getMatcher().getCondition().invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {

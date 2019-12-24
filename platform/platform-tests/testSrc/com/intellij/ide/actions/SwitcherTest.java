@@ -2,9 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.util.List;
@@ -17,33 +17,35 @@ public class SwitcherTest extends FileEditorManagerTestCase {
   }
 
   public void testSwitcherPanelWithTabs() {
-    testTabPlacement(SwingConstants.TOP);
+    testTabPlacement(SwingConstants.TOP, true);
+    testTabPlacement(SwingConstants.TOP, false);
   }
 
   public void testSwitcherPanelWithoutTabs() {
-    testTabPlacement(UISettings.TABS_NONE);
+    testTabPlacement(UISettings.TABS_NONE, true);
+    testTabPlacement(UISettings.TABS_NONE, false);
   }
 
-  private void testTabPlacement(int tabPlacement) {
+  private void testTabPlacement(int tabPlacement, boolean goForward) {
     UISettings.getInstance().getState().setEditorTabPlacement(tabPlacement);
     myManager.openFile(getFile("/src/1.txt"), true);
     myManager.openFile(getFile("/src/2.txt"), true);
     myManager.openFile(getFile("/src/3.txt"), true);
-    Pair<List<Switcher.FileInfo>, Integer> filesToShowAndSelectionIndex =
-      Switcher.SwitcherPanel
-        .getFilesToShowAndSelectionIndex(getProject(), Switcher.SwitcherPanel.collectFiles(getProject(), false), 10, true);
+    List<Switcher.FileInfo> filesToShow = Switcher.SwitcherPanel.getFilesToShow(getProject(), Switcher.SwitcherPanel.collectFiles(getProject(), false), 10, true);
+    JList<Switcher.FileInfo> list = new JBList<>(filesToShow);
+    int selectedItem = Switcher.SwitcherPanel.getFilesSelectedIndex(getProject(), list, goForward);
 
     if (tabPlacement == UISettings.TABS_NONE) {
-      assertEquals(1, filesToShowAndSelectionIndex.second.intValue());
-      assertEquals(3, filesToShowAndSelectionIndex.first.size());
-      assertEquals(getFile("/src/3.txt"), filesToShowAndSelectionIndex.first.get(0).first);
-      assertEquals(getFile("/src/2.txt"), filesToShowAndSelectionIndex.first.get(1).first);
-      assertEquals(getFile("/src/1.txt"), filesToShowAndSelectionIndex.first.get(2).first);
+      assertEquals(goForward ? 1 : 2, selectedItem);
+      assertEquals(3, filesToShow.size());
+      assertEquals(getFile("/src/3.txt"), filesToShow.get(0).first);
+      assertEquals(getFile("/src/2.txt"), filesToShow.get(1).first);
+      assertEquals(getFile("/src/1.txt"), filesToShow.get(2).first);
     } else {
-      assertEquals(0, filesToShowAndSelectionIndex.second.intValue());
-      assertEquals(2, filesToShowAndSelectionIndex.first.size());
-      assertEquals(getFile("/src/2.txt"), filesToShowAndSelectionIndex.first.get(0).first);
-      assertEquals(getFile("/src/1.txt"), filesToShowAndSelectionIndex.first.get(1).first);
+      assertEquals(goForward ? 0 : 1, selectedItem);
+      assertEquals(2, filesToShow.size());
+      assertEquals(getFile("/src/2.txt"), filesToShow.get(0).first);
+      assertEquals(getFile("/src/1.txt"), filesToShow.get(1).first);
     }
   }
 }

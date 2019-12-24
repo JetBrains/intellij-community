@@ -50,8 +50,9 @@ public class PrepareToDeployAction extends AnAction {
   private static final String ZIP_EXTENSION = ".zip";
   private static final String JAR_EXTENSION = ".jar";
   private static final String TEMP_PREFIX = "temp";
-
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
+  private static class Holder {
+    private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -83,7 +84,7 @@ public class PrepareToDeployAction extends AnAction {
             String title = pluginModules.size() == 1 ?
                            DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
                            DevKitBundle.message("success.deployment.message.all");
-            NOTIFICATION_GROUP.createNotification(title, StringUtil.join(successMessages, "\n"), NotificationType.INFORMATION, null).notify(project);
+            Holder.NOTIFICATION_GROUP.createNotification(title, StringUtil.join(successMessages, "\n"), NotificationType.INFORMATION, null).notify(project);
           }
         }, project.getDisposed());
       }

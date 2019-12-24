@@ -34,6 +34,9 @@ internal class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
           capabilities = fields.next()
         }
 
+        /*
+         * There may be multiple user identities ("uid") following a single secret key ("sec").
+         */
         "uid" -> {
           // a potential letter 'D' to indicate a disabled key
           // e :: Encrypt
@@ -46,8 +49,6 @@ internal class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
             // The value is quoted like a C string to avoid control characters (the colon is quoted =\x3a=).
             result.add(PgpKey(keyId!!, fields.next().replace("=\\x3a=", ":")))
           }
-          keyId = null
-          capabilities = null
         }
       }
     }

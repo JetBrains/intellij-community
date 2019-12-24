@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -33,17 +32,8 @@ import java.util.List;
 public class PatchCreator {
   public static void create(Project p, List<? extends Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
-    create(p, ObjectUtils.assertNotNull(p.getBasePath()), changes, filePath, isReverse, commitContext, Charset.defaultCharset());
-  }
-
-  public static void create(Project p,
-                            @NotNull String basePath,
-                            List<? extends Change> changes,
-                            String filePath,
-                            boolean isReverse,
-                            CommitContext commitContext, Charset charset)
-    throws IOException, VcsException {
+    String basePath = ObjectUtils.assertNotNull(p.getBasePath());
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, basePath, isReverse);
-    PatchWriter.writePatches(p, filePath, basePath, patches, commitContext, charset);
+    PatchWriter.writePatches(p, filePath, basePath, patches, commitContext, Charset.defaultCharset());
   }
 }

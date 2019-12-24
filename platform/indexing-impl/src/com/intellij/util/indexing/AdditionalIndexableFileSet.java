@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -8,34 +10,43 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author peter
  */
 public class AdditionalIndexableFileSet implements IndexableFileSet {
+  @Nullable
   private final Project myProject;
+  private final Supplier<IndexableSetContributor[]> myExtensions;
+
   private volatile Set<VirtualFile> cachedFiles;
   private volatile Set<VirtualFile> cachedDirectories;
-  private volatile IndexableSetContributor[] myExtensions;
 
   public AdditionalIndexableFileSet(@NotNull Project project, @NotNull IndexableSetContributor... extensions) {
     myProject = project;
-    myExtensions = extensions;
-  }
-
-  public AdditionalIndexableFileSet(@NotNull Project project) {
-    myProject = project;
+    myExtensions = () -> extensions;
   }
 
   AdditionalIndexableFileSet(@NotNull IndexableSetContributor... extensions) {
     myProject = null;
-    myExtensions = extensions;
+    myExtensions = () -> extensions;
+  }
+
+  public AdditionalIndexableFileSet(@Nullable Project project) {
+    myProject = project;
+    myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
+    IndexableSetContributor.EP_NAME.addExtensionPointListener((e, pd) -> {
+      cachedDirectories = null;
+      cachedFiles = null;
+    }, project != null ? project : ApplicationManager.getApplication());
   }
 
   public AdditionalIndexableFileSet() {
-    myProject = null;
+    this((Project)null);
   }
 
   @NotNull
@@ -49,12 +60,9 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
 
   @NotNull
   private Set<VirtualFile> collectFilesAndDirectories() {
-    if (myExtensions == null) {
-      myExtensions = IndexableSetContributor.EP_NAME.getExtensions();
-    }
     Set<VirtualFile> files = new THashSet<>();
     Set<VirtualFile> directories = new THashSet<>();
-    for (IndexableSetContributor contributor : myExtensions) {
+    for (IndexableSetContributor contributor : myExtensions.get()) {
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
         (root.isDirectory() ? directories : files).add(root);
       }

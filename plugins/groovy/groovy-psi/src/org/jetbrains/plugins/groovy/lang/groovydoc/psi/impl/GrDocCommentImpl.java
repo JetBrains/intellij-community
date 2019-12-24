@@ -36,6 +36,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
     return "GrDocComment";
   }
 
+  @NotNull
   @Override
   public IElementType getTokenType() {
     return getElementType();

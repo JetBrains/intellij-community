@@ -125,7 +125,12 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     final Runnable myAction;
     boolean myEnabled = true;
 
+    // fields to be filled during packing (just for convenience)
     float fMulX = 0;
+    Icon darkIcon = null;
+    int scaledWidth = 0;
+    int scaledHeight = 0;
+    int offset = 0;
 
     ItemData(Icon icon, String text, Runnable action) {
       this.myIcon = icon;

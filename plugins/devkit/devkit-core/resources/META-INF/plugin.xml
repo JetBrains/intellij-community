@@ -37,7 +37,6 @@
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
-    <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
     <xmlStructureViewBuilderProvider
@@ -93,6 +92,11 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlCapitalizationInspection"/>
+    <localInspection language="XML" displayName="Plugin.xml dynamic plugin verification" applyToDialects="false"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"/>
+
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      groupPath="Plugin DevKit"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.code" enabledByDefault="true"
@@ -282,6 +286,7 @@
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
         implementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.IdeExternalAnnotationsLocationProvider"/>
+    <projectService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.resolve.LibrariesWithIntellijClassesSetting"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
@@ -399,6 +404,10 @@
 
     <action id="AnalyzeEPUsage" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageAction"
             text="Analyze EP Usage">
+      <add-to-group group-id="Internal.DevKit"/>
+    </action>
+    <action id="AnalyzeEPUsageIgnoreSafeClasses" internal="true" class="org.jetbrains.idea.devkit.inspections.AnalyzeEPUsageIgnoreSafeClassesAction"
+            text="Analyze EP Usage (Do not Follow Safe Types)">
       <add-to-group group-id="Internal.DevKit"/>
     </action>
 

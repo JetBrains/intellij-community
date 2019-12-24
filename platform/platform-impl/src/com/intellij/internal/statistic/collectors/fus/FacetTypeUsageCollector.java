@@ -32,7 +32,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public class FacetTypeUsageCollector extends ProjectUsagesCollector {
     @NotNull
     @Override
     protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
+      if ("invalid".equals(data) || isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final FacetType facet = findFacetById(data);
       if (facet == null) {

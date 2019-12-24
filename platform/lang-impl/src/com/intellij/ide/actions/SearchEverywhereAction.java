@@ -26,8 +26,6 @@ import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -141,8 +139,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   private static final int MAX_TOP_HIT = 15;
   private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
-  private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
-  private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
+  private static class Holder {
+    private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
+    private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
+    private static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
+    private static final AtomicBoolean showAll = new AtomicBoolean(false);
+  }
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
@@ -161,8 +163,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private final Set<AnAction> myDisabledActions = new HashSet<>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private static final AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId;
   private final Object myWorkerRestartRequestLock = new Object();
@@ -178,7 +178,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (event instanceof KeyEvent) {
         final int keyCode = ((KeyEvent)event).getKeyCode();
         if (keyCode == KeyEvent.VK_SHIFT) {
-          ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
+          Holder.ourShiftIsPressed.set(event.getID() == KeyEvent.KEY_PRESSED);
         }
       }
       return false;
@@ -279,8 +279,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myNonProjectCheckBox.setOpaque(false);
     myNonProjectCheckBox.setAlignmentX(1.0f);
     myNonProjectCheckBox.addActionListener(e -> {
-      if (showAll.get() != myNonProjectCheckBox.isSelected()) {
-        showAll.set(!showAll.get());
+      if (Holder.showAll.get() != myNonProjectCheckBox.isSelected()) {
+        Holder.showAll.set(!Holder.showAll.get());
         final JTextField editor = myBalloon.isDisposed() ? null : UIUtil.findComponentOfType(myBalloon.getContent(), JTextField.class);
         if (editor != null) {
           final String pattern = editor.getText();
@@ -589,7 +589,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return;
       }
 
-      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID);
+      FeatureUsageData data = SearchEverywhereUsageTriggerCollector.createData(searchProviderID).addInputEvent(e);
       SearchEverywhereUsageTriggerCollector.trigger(e.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, data);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e);
@@ -598,8 +598,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     if (myBalloon != null && myBalloon.isVisible()) {
-      showAll.set(!showAll.get());
-      myNonProjectCheckBox.setSelected(showAll.get());
+      Holder.showAll.set(!Holder.showAll.get());
+      myNonProjectCheckBox.setSelected(Holder.showAll.get());
 //      myPopupField.getTextEditor().setBackground(showAll.get() ? new JBColor(new Color(0xffffe4), new Color(0x494539)) : UIUtil.getTextFieldBackground());
       rebuildList(myPopupField.getText());
       return;
@@ -692,7 +692,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
 
-    JLabel settings = new JLabel(AllIcons.General.SearchEverywhereGear);
+    JLabel settings = new JLabel(AllIcons.General.GearPlain);
     new ClickListener(){
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -877,7 +877,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
-    Executor executor = ourShiftIsPressed.get() ? runExecutor : debugExecutor;
+    Executor executor = Holder.ourShiftIsPressed.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
     if (executor == null) return null;
     ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), runConf);
@@ -979,16 +979,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       JTextField editor = getTextEditor();
       editor.setOpaque(false);
       editor.putClientProperty(SearchEverywhereUI.SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
-        editor.setBorder(new MacIntelliJTextBorder());
-      }
-      else if (!UIUtil.isUnderWin10LookAndFeel()){
-        editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
-        editor.setBorder(new DarculaTextBorder());
-      }
-
       editor.putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
+
       if (StartupUiUtil.isUnderDarcula()) {
         editor.setBackground(Gray._45);
         editor.setForeground(Gray._240);
@@ -1118,7 +1110,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       JPanel wrapped = new JPanel(new BorderLayout());
       wrapped.setBackground(bg);
-      wrapped.setBorder(RENDERER_BORDER);
+      wrapped.setBorder(Holder.RENDERER_BORDER);
       wrapped.add(cmp, BorderLayout.CENTER);
       myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
@@ -1514,7 +1506,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private synchronized void buildFiles(final String pattern) {
-      final SearchResult files = getFiles(pattern, showAll.get(), MAX_FILES, myFileChooseByName);
+      final SearchResult files = getFiles(pattern, Holder.showAll.get(), MAX_FILES, myFileChooseByName);
 
       check();
 
@@ -1564,7 +1556,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildSymbols(final String pattern) {
-      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, showAll.get(), mySymbolsChooseByName);
+      final SearchResult symbols = getSymbols(pattern, MAX_SYMBOLS, Holder.showAll.get(), mySymbolsChooseByName);
       check();
 
       if (!symbols.isEmpty()) {
@@ -1629,7 +1621,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
     private synchronized void buildClasses(final String pattern) {
-      final SearchResult classes = getClasses(pattern, showAll.get(), MAX_CLASSES, myClassChooseByName);
+      final SearchResult classes = getClasses(pattern, Holder.showAll.get(), MAX_CLASSES, myClassChooseByName);
       check();
 
       if (!classes.isEmpty()) {
@@ -2036,7 +2028,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 final AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
                 if (event instanceof MouseEvent) {
                   final Component comp = ((MouseEvent)event).getComponent();
-                  if (balloon != null && !balloon.isDisposed() && UIUtil.getWindow(comp) == UIUtil.getWindow(balloon.getContent())) {
+                  if (balloon != null && !balloon.isDisposed() && ComponentUtil.getWindow(comp) ==
+                                                                  ComponentUtil.getWindow(balloon.getContent())) {
                     return false;
                   }
                 }
@@ -2112,10 +2105,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
          try {
            runReadAction(() -> {
              final SearchResult result
-               = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
-               : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
+               = id == WidgetID.CLASSES ? getClasses(pattern, Holder.showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
+               : id == WidgetID.FILES ? getFiles(pattern, Holder.showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
                : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-               : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
+               : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, Holder.showAll.get(), mySymbolsChooseByName)
                : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
                : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
                : new SearchResult();
@@ -2205,7 +2198,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup = null;
           myHistoryIndex = 0;
           myPopupActualWidth = 0;
-          showAll.set(false);
+          Holder.showAll.set(false);
           myCurrentWorker = myCalcThread.cancel();
           myCalcThread = null;
           myEditor = null;
@@ -2523,7 +2516,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return JBUI.Panels.simplePanel(5, 10)
       .addToCenter(separatorComponent)
       .addToLeft(titleLabel)
-      .withBorder(RENDERER_TITLE_BORDER)
+      .withBorder(Holder.RENDERER_TITLE_BORDER)
       .withBackground(UIUtil.getListBackground());
   }
 

@@ -34,7 +34,7 @@ import java.util.*;
 @SomeQueue
 // TODO: Used only in RemoteRevisionsNumberCache
 public class LazyRefreshingSelfQueue<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.LazyRefreshingSelfQueue");
+  private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);
 
   // provides update interval in milliseconds.
   private final Getter<Long> myUpdateInterval;

@@ -35,7 +35,7 @@ class LanguageExtensionOrderTest extends LightPlatformTestCase {
     <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
     </extensionPoint>    
-    ''')), ApplicationManager.getApplication())
+    ''')))
     Disposer.register(testRootDisposable) {
       myArea.unregisterExtensionPoint("langExt")
     }

@@ -37,7 +37,7 @@ import java.util.Map;
  * @author Vladislav.Kaznacheev
 */
 class AntKeymapExtension implements KeymapExtension {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntProjectKeymap");
+  private static final Logger LOG = Logger.getInstance(AntKeymapExtension.class);
 
   @Override
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {

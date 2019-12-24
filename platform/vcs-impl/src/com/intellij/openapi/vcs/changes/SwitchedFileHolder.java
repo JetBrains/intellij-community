@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,14 +18,12 @@ import java.util.*;
 public class SwitchedFileHolder implements FileHolder {
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
-  private final HolderType myHolderType;
   private final TreeMap<VirtualFile, Pair<Boolean, String>> myMap; // true = recursively, branch name
 
-  public SwitchedFileHolder(final Project project, final HolderType holderType) {
+  public SwitchedFileHolder(final Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myMap = new TreeMap<>(FilePathComparator.getInstance());
-    myHolderType = holderType;
   }
 
   @Override
@@ -35,17 +32,8 @@ public class SwitchedFileHolder implements FileHolder {
   }
 
   @Override
-  public void notifyVcsStarted(AbstractVcs scope) {
-  }
-
-  @Override
-  public HolderType getType() {
-    return myHolderType;
-  }
-
-  @Override
   public synchronized SwitchedFileHolder copy() {
-    final SwitchedFileHolder copyHolder = new SwitchedFileHolder(myProject, myHolderType);
+    final SwitchedFileHolder copyHolder = new SwitchedFileHolder(myProject);
     copyHolder.myMap.putAll(myMap);
     return copyHolder;
   }

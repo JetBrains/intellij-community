@@ -43,13 +43,6 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "redundant.implements.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "redundant.implements.problem.descriptor");

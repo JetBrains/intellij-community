@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class UndoableGroup implements Dumpable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
+  private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
   private final String myCommandName;

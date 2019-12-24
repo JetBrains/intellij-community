@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class VfsEventGenerationHelper {
-  static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+  static final Logger LOG = Logger.getInstance(RefreshWorker.class);
 
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private int myMarkedStart = -1;
@@ -76,12 +77,11 @@ class VfsEventGenerationHelper {
           children = scanChildren(child, relevantExcluded, checkCanceled);
         }
       }
-      catch (InvalidPathException ignored) {
-        // Paths.get() throws sometimes
+      catch (InvalidPathException e) {
+        LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true,
-                                                  children);
+    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
     myEvents.add(event);
   }
 
@@ -100,10 +100,10 @@ class VfsEventGenerationHelper {
     return false;
   }
 
-
   void beginTransaction() {
     myMarkedStart = myEvents.size();
   }
+
   void endTransaction(boolean success) {
     if (!success) {
       myEvents.subList(myMarkedStart, myEvents.size()).clear();
@@ -117,7 +117,7 @@ class VfsEventGenerationHelper {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
-    stack.push(ContainerUtil.newSmartList(fakeRoot));
+    stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
       int checkCanceledCount;
       @Override

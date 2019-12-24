@@ -222,7 +222,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
         listener.onDataPackChange(dataPack);
       }
-    });
+    }, o -> Disposer.isDisposed(this));
   }
 
   public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {

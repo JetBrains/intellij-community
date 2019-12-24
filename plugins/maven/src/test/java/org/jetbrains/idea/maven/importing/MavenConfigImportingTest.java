@@ -117,12 +117,12 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
 
-    myProjectsManager.listenForExternalChanges();
     WriteAction.runAndWait(() -> {
       byte[] content = "-Dver=2".getBytes(StandardCharsets.UTF_8);
       configFile.setBinaryContent(content, -1, configFile.getTimeStamp() + 1);
     });
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    importProject();
     myProjectsManager.performScheduledImportInTests();
 
     mavenProject = myProjectsManager.findProject(getModule("project"));

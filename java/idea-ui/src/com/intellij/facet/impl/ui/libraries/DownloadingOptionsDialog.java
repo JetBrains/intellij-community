@@ -49,7 +49,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class DownloadingOptionsDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.DownloadingOptionsDialog");
+  private static final Logger LOG = Logger.getInstance(DownloadingOptionsDialog.class);
 
   private enum AdditionalDownloadType {SOURCES, DOCUMENTATION}
 

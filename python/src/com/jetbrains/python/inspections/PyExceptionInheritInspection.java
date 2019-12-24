@@ -20,11 +20,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyAddExceptionSuperClassQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +30,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PyExceptionInheritInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.exception.not.inherit");
-  }
 
   @NotNull
   @Override

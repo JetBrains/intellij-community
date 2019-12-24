@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddTypeArgumentsFix extends MethodArgumentFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix");
+  private static final Logger LOG = Logger.getInstance(AddTypeArgumentsFix.class);
 
   private AddTypeArgumentsFix(PsiExpressionList list, int i, PsiType toType, final ArgumentFixerActionFactory factory) {
     super(list, i, toType, factory);
@@ -123,5 +123,5 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
     return null;
   }
 
-  public static ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
+  public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();
 }

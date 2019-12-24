@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
@@ -34,7 +33,6 @@ import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Substring;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +40,6 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PyDocstringTypesInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.docstring.types");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

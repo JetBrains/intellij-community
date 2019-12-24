@@ -15,8 +15,6 @@
  */
 
 /**
- * Extension methods for various classes.
- * Methods are transparent for Kotlin, while in Java you must use following pattern: class MyClass has extensions in MyClassExtKt.
- * @author Ilya.Kazakevich
+ * @deprecated use [com.jetbrains.extensions]
  */
 package com.jetbrains.extenstions;

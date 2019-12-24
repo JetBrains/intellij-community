@@ -16,8 +16,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> extends RunAnythingGroupBase {
-  public static final Collection<RunAnythingGroup> MAIN_GROUPS = createCompletionGroups();
-
   @NotNull private final P myProvider;
 
   public RunAnythingCompletionGroup(@NotNull P provider) {
@@ -52,7 +50,7 @@ public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> ext
     return StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
                    .map(provider -> createCompletionGroup(provider))
                    .filter(Objects::nonNull)
-                   .distinct()
+                   .distinct(group -> group.getTitle())
                    .collect(Collectors.toList());
   }
 
@@ -63,8 +61,8 @@ public class RunAnythingCompletionGroup<V, P extends RunAnythingProvider<V>> ext
       return null;
     }
 
-    if (RunAnythingGeneralGroup.GENERAL_GROUP_TITLE.equals(title)) {
-      return RunAnythingGeneralGroup.INSTANCE;
+    if (RunAnythingGeneralGroup.TITLE.equals(title)) {
+      return new RunAnythingGeneralGroup();
     }
 
     //noinspection unchecked

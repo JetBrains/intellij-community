@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -38,7 +37,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -56,20 +54,18 @@ public final class PerformanceWatcher implements Disposable {
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
-  private volatile long myLastSampling = System.currentTimeMillis();
-  private long myLastDumpTime;
+  private volatile long myLastSampling = System.nanoTime();
+
   private long myFreezeStart;
   private int myActiveEvents;
   private boolean myFreezeDuringStartup;
-  private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
   private static final long ourIdeStart = System.currentTimeMillis();
-  private long myLastEdtAlive = System.currentTimeMillis();
 
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
   private FreezeCheckerTask myCurrentEDTEventChecker;
 
-  private static final boolean PRECISE_MODE = shouldWatch() && Registry.is("performance.watcher.precise");
+  private static final boolean SHOULD_WATCH = shouldWatch();
 
   @NotNull
   public static PerformanceWatcher getInstance() {
@@ -94,15 +90,13 @@ public final class PerformanceWatcher implements Disposable {
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-        if ("Code Cache".equals(bean.getName())) {
-          watchCodeCache(bean);
-          break;
-        }
+    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+      if ("Code Cache".equals(bean.getName())) {
+        watchCodeCache(bean);
+        break;
       }
-      cleanOldFiles(myLogDir, 0);
-    });
+    }
+    cleanOldFiles(myLogDir, 0);
 
     myThread =
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
@@ -194,30 +188,24 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private void samplePerformance() {
-    long millis = System.currentTimeMillis();
-    long diff = millis - myLastSampling - getSamplingInterval();
-    myLastSampling = millis;
+    long current = System.nanoTime();
+    long diffMs = TimeUnit.NANOSECONDS.toMillis(current - myLastSampling) - getSamplingInterval();
+    myLastSampling = current;
 
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
-    while (diff >= 0) {
-      myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diff);
-      diff -= getSamplingInterval();
+    while (diffMs >= 0) {
+      myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diffMs);
+      diffMs -= getSamplingInterval();
     }
 
-    if (!PRECISE_MODE) {
-      int edtRequests = myEdtRequestsQueued.get();
-      if (edtRequests >= getMaxAttempts()) {
-        edtFrozen(millis);
-      }
-      else if (edtRequests == 0) {
-        edtResponds(millis);
-      }
-    }
-
-    myEdtRequestsQueued.incrementAndGet();
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
+    SwingUtilities.invokeLater(() -> {
+      long latencyMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current);
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latencyMs);
+      if (ApplicationManager.getApplication().isDisposed()) return;
+      getPublisher().uiResponded(latencyMs);
+    });
   }
 
   @NotNull
@@ -248,18 +236,6 @@ public final class PerformanceWatcher implements Disposable {
     return Registry.intValue("performance.watcher.dump.duration.s") * 1000;
   }
 
-  private void edtFrozen(long currentMillis) {
-    if (currentMillis - myLastDumpTime >= getUnresponsiveInterval()) {
-      myLastDumpTime = currentMillis;
-      if (myFreezeStart == 0) {
-        myFreezeStart = myLastEdtAlive;
-        myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
-        getPublisher().uiFreezeStarted();
-      }
-      dumpThreads();
-    }
-  }
-
   @NotNull
   private String getFreezeFolderName(long freezeStartMs) {
     return THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(freezeStartMs) + "-" + buildName();
@@ -284,7 +260,8 @@ public final class PerformanceWatcher implements Disposable {
     stopDumping();
 
     if (myFreezeStart != 0) {
-      int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
+      long durationMs = currentMillis - myFreezeStart;
+      int unresponsiveDuration = (int)durationMs / 1000;
       File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
       File reportDir = null;
       if (dir.exists()) {
@@ -294,7 +271,8 @@ public final class PerformanceWatcher implements Disposable {
           reportDir = null;
         }
       }
-      getPublisher().uiFreezeFinished(currentMillis - myFreezeStart, reportDir);
+      LOG.warn("UI was frozen for " + durationMs + "ms, details saved to " + reportDir);
+      getPublisher().uiFreezeFinished(durationMs, reportDir);
       myFreezeStart = 0;
 
       myStacktraceCommonPart = null;
@@ -307,7 +285,7 @@ public final class PerformanceWatcher implements Disposable {
 
   public void edtEventStarted(long start) {
     myActiveEvents++;
-    if (PRECISE_MODE) {
+    if (SHOULD_WATCH) {
       finishTracking();
       startTracking(start);
     }
@@ -316,7 +294,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventFinished() {
     myActiveEvents--;
     finishTracking();
-    if (PRECISE_MODE && myActiveEvents > 0) {
+    if (SHOULD_WATCH && myActiveEvents > 0) {
       startTracking(System.currentTimeMillis());
     }
   }
@@ -339,15 +317,6 @@ public final class PerformanceWatcher implements Disposable {
       return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
     }
     return "";
-  }
-
-  private void dumpThreads() {
-    if (myFreezeStart != 0 && System.currentTimeMillis() - myFreezeStart <= getMaxDumpDuration()) {
-      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false, ThreadDumper.getThreadInfos(), true);
-    }
-    else {
-      stopDumping();
-    }
   }
 
   @Nullable
@@ -443,25 +412,6 @@ public final class PerformanceWatcher implements Disposable {
            Objects.equals(el1.getFileName(), el2.getFileName());
   }
 
-  private class SwingThreadRunnable implements Runnable {
-    private final long myCreationMillis;
-
-    SwingThreadRunnable(long creationMillis) {
-      myCreationMillis = creationMillis;
-    }
-
-    @Override
-    public void run() {
-      myEdtRequestsQueued.decrementAndGet();
-      myLastEdtAlive = System.currentTimeMillis();
-      final long latency = System.currentTimeMillis() - myCreationMillis;
-      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
-      final Application application = ApplicationManager.getApplication();
-      if (application.isDisposed()) return;
-      getPublisher().uiResponded(latency);
-    }
-  }
-
   public class Snapshot {
     private final ApdexData myStartGeneralSnapshot = myGeneralApdex;
     private final ApdexData myStartSwingSnapshot = mySwingApdex;
@@ -519,6 +469,8 @@ public final class PerformanceWatcher implements Disposable {
     private void edtFrozenPrecise(long start) {
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         myFreezeStart = start;
+        //TODO always true for some reason
+        //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
         getPublisher().uiFreezeStarted();
         stopDumping();
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {

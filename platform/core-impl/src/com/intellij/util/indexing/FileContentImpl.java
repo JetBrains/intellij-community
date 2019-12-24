@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,7 +36,8 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   private byte[] myContent;
   private CharSequence myContentAsText;
   private final long myStamp;
-  private byte[] myHash;
+  private byte[] myFileContentHash;
+  private byte[] myDocumentHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
@@ -58,7 +58,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
                           byte[] content,
                           long stamp,
                           boolean physicalContent) {
-    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content));
+    super(file, FileTypeRegistry.getInstance().getFileTypeByFile(file, content), null);
     myContentAsText = contentAsText;
     myContent = content;
     myStamp = stamp;
@@ -141,11 +141,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     }
   }
 
-  @NotNull
-  private FileType getSubstitutedFileType() {
-    return SubstitutedFileType.substituteFileType(myFile, myFileType, getProject());
-  }
-
   @TestOnly
   public static FileContent createByFile(@NotNull VirtualFile file) {
     try {
@@ -156,14 +151,9 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     }
   }
 
-  private FileType getFileTypeWithoutSubstitution() {
-    return myFileType;
-  }
-
   @NotNull
-  @Override
-  public FileType getFileType() {
-    return getSubstitutedFileType();
+  public FileType getFileTypeWithoutSubstitution() {
+    return myFileType;
   }
 
   @NotNull
@@ -189,6 +179,10 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
 
   public long getStamp() {
     return myStamp;
+  }
+
+  public boolean isPhysicalContent() {
+    return myPhysicalContent;
   }
 
   @NotNull
@@ -225,12 +219,13 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   }
 
   @Nullable
-  public byte[] getHash() {
-    return myHash;
+  public byte[] getHash(boolean fromDocument) {
+    return fromDocument ? myDocumentHash : myFileContentHash;
   }
 
-  public void setHash(byte[] hash) {
-    myHash = hash;
+  public void setHashes(@NotNull byte[] fileContentHash, @NotNull byte[] documentHash) {
+    myFileContentHash = fileContentHash;
+    myDocumentHash = documentHash;
   }
 
   /**
@@ -258,5 +253,10 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
       psi = getFileFromText();
     }
     return psi;
+  }
+
+  @Override
+  public Project getProject() {
+    return getUserData(IndexingDataKeys.PROJECT);
   }
 }

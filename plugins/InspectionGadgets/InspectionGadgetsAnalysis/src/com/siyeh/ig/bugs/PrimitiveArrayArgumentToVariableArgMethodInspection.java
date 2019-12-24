@@ -44,12 +44,6 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("primitive.array.argument.to.var.arg.method.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("primitive.array.argument.to.var.arg.method.problem.descriptor");
   }

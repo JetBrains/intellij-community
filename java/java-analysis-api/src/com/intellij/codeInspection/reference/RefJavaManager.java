@@ -76,6 +76,8 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
     ArrayList<Language> languages = new ArrayList<>(Language.findInstance(UastMetaLanguage.class).getMatchingLanguages());
     // TODO uast is not implemented in case of groovy
     languages.removeIf(l -> l.isKindOf("Groovy"));
+    // Scala uast is also too experimental
+    languages.removeIf(l -> l.isKindOf("Scala"));
 
     // TODO enable it in production when will be ready
     if (!Registry.is("batch.jvm.inspections") && !ApplicationManager.getApplication().isUnitTestMode()) {

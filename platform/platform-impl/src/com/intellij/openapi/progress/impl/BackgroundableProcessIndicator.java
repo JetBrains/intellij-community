@@ -20,8 +20,6 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.DumbModeAction;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -40,16 +38,6 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task, task);
-
-    if (task.getDumbModeAction() == DumbModeAction.CANCEL) {
-      task.getProject().getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
-        @Override
-        public void enteredDumbMode() {
-          cancel();
-        }
-      });
-    }
   }
 
   public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {

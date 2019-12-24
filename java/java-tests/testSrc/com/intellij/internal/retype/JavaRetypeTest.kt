@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.retype
 
 import com.intellij.JavaTestUtil
@@ -58,7 +58,7 @@ class JavaRetypeTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun doTestWithLookup() {
     val autopopupOldValue = TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true)
-    val filePath = "/retype/${getTestName(false)}.java"
+    val filePath = "retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
     RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
@@ -69,7 +69,7 @@ class JavaRetypeTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun doTestWithoutLookup() {
-    val filePath = "/retype/${getTestName(false)}.java"
+    val filePath = "retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
     RetypeSession(project, myFixture.editor as EditorImpl, 50, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {

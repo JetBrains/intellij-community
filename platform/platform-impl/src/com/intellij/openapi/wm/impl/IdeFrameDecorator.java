@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
   public static IdeFrameDecorator decorate(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
     try {
       if (SystemInfo.isMac) {
-        return new MacMainFrameDecorator(frame, PlatformUtils.isAppCode(), parentDisposable);
+        return new MacMainFrameDecorator(frame, parentDisposable);
       }
       else if (SystemInfo.isWindows) {
         return new WinMainFrameDecorator(frame);
@@ -122,11 +122,8 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
         notifyFrameComponents(state);
       }
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
-        }
+      EventQueue.invokeLater(() -> {
+        myFrame.getRootPane().putClientProperty(IdeFrameImpl.TOGGLING_FULL_SCREEN_IN_PROGRESS, null);
       });
       return Promises.resolvedPromise(state);
     }
@@ -149,7 +146,7 @@ public abstract class IdeFrameDecorator implements IdeFrameImpl.FrameDecorator {
         }
       });
 
-      if (SystemInfo.isKDE && UIUtil.DISABLE_AUTO_REQUEST_FOCUS) {
+      if (SystemInfo.isKDE && ComponentUtil.isDisableAutoRequestFocus()) {
         // KDE sends an unexpected MapNotify event if a window is deiconified.
         // suppress.focus.stealing fix handles the MapNotify event differently
         // if the application is not active

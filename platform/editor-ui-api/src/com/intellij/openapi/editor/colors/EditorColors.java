@@ -1,10 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -69,7 +73,7 @@ public interface EditorColors {
   ColorKey IGNORED_DELETED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_DELETED_LINES_BORDER_COLOR");
 
   TextAttributesKey INJECTED_LANGUAGE_FRAGMENT = TextAttributesKey.createTextAttributesKey("INJECTED_LANGUAGE_FRAGMENT");
-  
+
   TextAttributesKey BREADCRUMBS_DEFAULT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_DEFAULT");
   TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
   TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
@@ -78,4 +82,24 @@ public interface EditorColors {
   TextAttributesKey CODE_LENS_BORDER_COLOR = TextAttributesKey.createTextAttributesKey("CODE_LENS_BORDER_COLOR");
 
   ColorKey VISUAL_INDENT_GUIDE_COLOR = ColorKey.createColorKey("VISUAL_INDENT_GUIDE");
+
+  ColorKey DOCUMENTATION_COLOR = ColorKey.createColorKey("DOCUMENTATION_COLOR", new JBColor(new Color(0xf7f7f7), new Color(0x46484a)));
+
+  @NotNull
+  static TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
+    Stack<Language> languages = new Stack<>();
+    while (language != null && language != Language.ANY) {
+      languages.push(language);
+      language = language.getBaseLanguage();
+    }
+
+    TextAttributesKey currentKey = INJECTED_LANGUAGE_FRAGMENT;
+    while(!languages.empty()) {
+      Language current = languages.pop();
+      currentKey = TextAttributesKey.createTextAttributesKey(
+        current.getID() + ":INJECTED_LANGUAGE_FRAGMENT",
+        currentKey);
+    }
+    return currentKey;
+  }
 }

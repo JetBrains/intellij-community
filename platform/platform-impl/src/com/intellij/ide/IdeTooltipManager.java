@@ -43,7 +43,8 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
-public final class IdeTooltipManager implements Disposable, AWTEventListener {
+// Android team doesn't want to use new mockito for now, so, class cannot be final
+public class IdeTooltipManager implements Disposable, AWTEventListener {
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
 
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
@@ -83,19 +84,19 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myHelpTooltip = Registry.get("ide.helptooltip.enabled");
 
-    RegistryValueListener.Adapter listener = new RegistryValueListener.Adapter() {
+    RegistryValueListener listener = new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
     };
-    Application application = ApplicationManager.getApplication();
-    myIsEnabled.addListener(listener, application);
-    myHelpTooltip.addListener(listener, application);
+    Application app = ApplicationManager.getApplication();
+    myIsEnabled.addListener(listener, app);
+    myHelpTooltip.addListener(listener, app);
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    application.getMessageBus().connect(application).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    app.getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
@@ -656,7 +657,7 @@ public final class IdeTooltipManager implements Disposable, AWTEventListener {
   }
 
   public static IdeTooltipManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(IdeTooltipManager.class);
+    return ApplicationManager.getApplication().getService(IdeTooltipManager.class);
   }
 
   public void hide(@Nullable IdeTooltip tooltip) {

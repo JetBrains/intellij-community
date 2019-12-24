@@ -2,6 +2,7 @@
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -239,7 +240,17 @@ public class CodeStyle {
    */
   @TestOnly
   public static void dropTemporarySettings(@Nullable Project project) {
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    CodeStyleSettingsManager codeStyleSettingsManager;
+    if (project == null || project.isDefault()) {
+      codeStyleSettingsManager = ApplicationManager.getApplication().getServiceIfCreated(AppCodeStyleSettingsManager.class);
+    }
+    else {
+      codeStyleSettingsManager = project.getServiceIfCreated(ProjectCodeStyleSettingsManager.class);
+    }
+
+    if (codeStyleSettingsManager != null) {
+      codeStyleSettingsManager.dropTemporarySettings();
+    }
   }
 
   /**

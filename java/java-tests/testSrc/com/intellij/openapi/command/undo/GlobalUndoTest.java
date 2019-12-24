@@ -125,6 +125,18 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     checkAllFilesDeleted();
   }
 
+  public void testUndoFileCopy() throws Exception {
+    VirtualFile file = createFile("a.txt", "").getVirtualFile();
+
+    VirtualFile dir = file.getParent();
+    VirtualFile copy = WriteCommandAction.writeCommandAction(myProject).compute(() -> file.copy(this, dir, "b.txt"));
+
+    globalUndo();
+
+    assertTrue(file.isValid());
+    assertFalse(copy.isValid());
+  }
+
   public void testUndoRenameClass() {
     String firstClassName = "Class1";
     String secondClassName = "Class223467234678234678236478263478";

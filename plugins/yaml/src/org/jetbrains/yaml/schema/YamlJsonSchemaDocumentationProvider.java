@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema;
 
-import com.intellij.lang.documentation.DocumentationProviderEx;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,7 +11,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx {
+public class YamlJsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
@@ -38,7 +38,8 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
   @Override
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
-                                                  @Nullable PsiElement contextElement) {
+                                                  @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
     if (service == null || service.getSchemaObject(file) == null) return null;
     return contextElement;

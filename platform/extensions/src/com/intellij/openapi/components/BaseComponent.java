@@ -6,15 +6,16 @@ package com.intellij.openapi.components;
  */
 public interface BaseComponent extends NamedComponent {
   /**
-   * Component should perform initialization and communication with other components in this method.
-   * This is called after {@link com.intellij.openapi.components.PersistentStateComponent#loadState(Object)}.
+   * @deprecated Use {@link com.intellij.openapi.components.PersistentStateComponent#initializeComponent()} or perform initialization in constructor for non-persistence component.
    */
+  @Deprecated
   default void initComponent() {
   }
 
   /**
-   * Prefer to use {@link com.intellij.openapi.Disposable}
+   * @deprecated Use {@link com.intellij.openapi.Disposable}
    */
+  @Deprecated
   default void disposeComponent() {
   }
 }

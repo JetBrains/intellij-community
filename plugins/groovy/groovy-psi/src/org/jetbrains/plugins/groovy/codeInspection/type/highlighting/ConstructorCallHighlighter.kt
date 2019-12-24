@@ -8,17 +8,14 @@ import org.jetbrains.plugins.groovy.highlighting.HighlightSink
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
-import org.jetbrains.plugins.groovy.lang.resolve.api.*
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
 
-abstract class ConstructorCallHighlighter(reference: GroovyCallReference,
-                                          sink: HighlightSink) : CallReferenceHighlighter(reference, sink) {
+abstract class ConstructorCallHighlighter(reference: GroovyCallReference, sink: HighlightSink) : CallReferenceHighlighter(reference, sink) {
 
-  abstract fun getArgumentList(): GrArgumentList?
-
-  override val unknownArgsMessage: String
-    get() = GroovyBundle.message("cannot.infer.argument.types")
-  override val ambiguousMethodMessage: String
-    get() = GroovyBundle.message("method.call.is.ambiguous")
+  protected abstract val argumentList: GrArgumentList?
 
   override fun getInapplicableMethodMessage(result: GroovyMethodResult, containingType: PsiType, arguments: Arguments): String {
     val method = result.element
@@ -28,15 +25,14 @@ abstract class ConstructorCallHighlighter(reference: GroovyCallReference,
     }
     else {
       val canonicalText = containingType.internalCanonicalText
-      return GroovyBundle.message("cannot.apply.constructor", methodName, canonicalText,
-                                  argumentsString(arguments))
+      return GroovyBundle.message("cannot.apply.constructor", methodName, canonicalText, argumentsString(arguments))
     }
   }
 
   override fun buildFix(argument: Argument, expectedType: PsiType): ParameterCastFix? {
     if (argument !is ExpressionArgument) return null
     val arguments = reference.arguments ?: return null
-    val list = getArgumentList() ?: return null
+    val list = argumentList ?: return null
     if (argument !in arguments) return null
 
     val position = list.getExpressionArgumentIndex(argument.expression)

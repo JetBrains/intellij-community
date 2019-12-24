@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,8 @@ public final class CompletionParameters {
   private final CompletionProcess myProcess;
   private boolean isTestingMode = false;
 
-  CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
+  @ApiStatus.Internal
+  public CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
                        @NotNull CompletionType completionType, int offset, int invocationCount, @NotNull Editor editor,
                        @NotNull CompletionProcess process) {
     PsiUtilCore.ensureValid(position);
@@ -33,11 +35,6 @@ public final class CompletionParameters {
     myInvocationCount = invocationCount;
     myEditor = editor;
     myProcess = process;
-  }
-
-  @NotNull
-  public CompletionParameters delegateToClassName() {
-    return withType(CompletionType.CLASS_NAME).withInvocationCount(myInvocationCount - 1);
   }
 
   @NotNull

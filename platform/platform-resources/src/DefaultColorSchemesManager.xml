@@ -5,7 +5,7 @@
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
       <option name="CARET_ROW_COLOR" value="fffae3"/>
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
-      <option name="WHITESPACES" value="c5c5c5"/>
+      <option name="WHITESPACES" value="adadad"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
       <option name="GUTTER_BACKGROUND" value="f0f0f0" />
       <option name="NOTIFICATION_BACKGROUND" value="fff8d1" />
@@ -1239,7 +1239,7 @@
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
-      <option name="WHITESPACES" value="505050" />
+      <option name="WHITESPACES" value="606060" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="212121"/>
       <option name="STRING_CONTENT_INDENT_GUIDE" value="4a5f3e"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>

@@ -36,10 +36,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public class JUnit4TestRunnerUtil {
-  /**
-   * @noinspection HardCodedStringLiteral
-   */
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
   public static Request buildRequest(String[] suiteClassNames, final String name, boolean notForked) {
     if (suiteClassNames.length == 0) {
@@ -320,17 +316,13 @@ public class JUnit4TestRunnerUtil {
       if (clazz == null) {
         clazz = suiteClassName;
       }
-      System.err.print(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[]{clazz}));
+      System.err.print(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.class.not.found"), new Object[]{clazz}));
       System.exit(1);
     }
     catch (Exception e) {
-      System.err.println(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()}));
+      System.err.println(MessageFormat.format(ResourceBundle.getBundle("RuntimeBundle").getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()}));
       System.exit(1);
     }
     return null;
-  }
-
-  public static String testsFoundInPackageMesage(int testCount, String name) {
-    return MessageFormat.format(ourBundle.getString("tests.found.in.package"), new Object[]{new Integer(testCount), name});
   }
 }

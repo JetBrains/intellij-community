@@ -44,7 +44,8 @@
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="easymock" level="project" />
+    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
@@ -61,5 +62,8 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" exported="" />
+    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
+    <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
   </component>
 </module>

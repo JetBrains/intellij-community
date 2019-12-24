@@ -204,10 +204,16 @@ public class NullabilityProblemKind<T extends PsiElement> {
     if (parent instanceof PsiArrayInitializerExpression) {
       return getArrayInitializerProblem((PsiArrayInitializerExpression)parent, expression, context);
     }
-    if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement || parent instanceof PsiDoWhileStatement ||
-        parent instanceof PsiUnaryExpression || parent instanceof PsiConditionalExpression || parent instanceof PsiTypeCastExpression ||
-        (parent instanceof PsiForStatement && ((PsiForStatement)parent).getCondition() == context) ||
-        (parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertCondition() == context)) {
+    if (parent instanceof PsiTypeCastExpression) {
+      if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(context.getType())) {
+        // Only casts to primitives are here; casts to objects were already traversed by findTopExpression
+        return unboxingNullable.problem(context, expression);
+      }
+    }
+    else if (parent instanceof PsiIfStatement || parent instanceof PsiWhileStatement || parent instanceof PsiDoWhileStatement ||
+             parent instanceof PsiUnaryExpression || parent instanceof PsiConditionalExpression ||
+             (parent instanceof PsiForStatement && ((PsiForStatement)parent).getCondition() == context) ||
+             (parent instanceof PsiAssertStatement && ((PsiAssertStatement)parent).getAssertCondition() == context)) {
       return createUnboxingProblem(context, expression);
     }
     if (parent instanceof PsiSwitchBlock) {

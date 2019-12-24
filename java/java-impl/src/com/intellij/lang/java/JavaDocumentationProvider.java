@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -45,6 +45,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -59,7 +60,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 /**
  * @author Maxim.Mossienko
  */
-public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
+public class JavaDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance(JavaDocumentationProvider.class);
 
   private static final String LINE_SEPARATOR = "\n";
@@ -656,7 +657,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       if (aClass != null) {
         List<String> classUrls = findUrlForClass(aClass);
         if (classUrls != null) {
-          urls = ContainerUtil.newSmartList();
+          urls = new SmartList<>();
           final Set<String> signatures = getHtmlMethodSignatures(method, PsiUtil.getLanguageLevel(method));
           for (String signature : signatures) {
             for (String classUrl : classUrls) {
@@ -836,7 +837,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement) {
+  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
+                                                  int targetOffset) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(contextElement, PsiDocComment.class, false);
     if (docComment != null && JavaDocUtil.isInsidePackageInfo(docComment)) {
       PsiDirectory directory = file.getContainingDirectory();

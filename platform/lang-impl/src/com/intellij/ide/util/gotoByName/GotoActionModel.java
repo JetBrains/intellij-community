@@ -20,9 +20,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -460,12 +460,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       }
     }, myModality, __ -> indicator != null && indicator.isCanceled());
 
-    while (!semaphore.waitFor(10)) {
-      if (indicator != null && indicator.isCanceled()) {
-        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
-        throw new ProcessCanceledException();
-      }
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
   }
 
   public enum MatchMode {
@@ -696,6 +691,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
+    public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
     private final Function<? super OptionDescription, String> myGroupNamer;
     private final boolean myUseListFont;
 
@@ -830,8 +826,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
-        return StringUtil.first(name, 60, true); //fallback to previous behaviour
+        return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
+      
+      // we have a min size for SE, which is ~40 symbols, don't spend time for trimming, let's use a shortcut
+      if (name.length() < 40) return name;
+      
       int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
 
       if (freeSpace <= 0) {
@@ -879,7 +879,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       OnOffButton button = new OnOffButton();
       button.setSelected(selected);
       panel.add(button, BorderLayout.EAST);
-      panel.setBorder(JBUI.Borders.empty(0, 2));
+      panel.setBorder(TOGGLE_BUTTON_BORDER);
     }
 
     @NotNull

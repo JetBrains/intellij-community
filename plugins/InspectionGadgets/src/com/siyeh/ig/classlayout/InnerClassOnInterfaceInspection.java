@@ -55,13 +55,6 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.on.interface.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass parentInterface = (PsiClass)infos[0];
     final String interfaceName = parentInterface.getName();

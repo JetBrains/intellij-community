@@ -33,7 +33,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -259,7 +258,7 @@ public class FSRecords {
         }
 
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
-        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
+        myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
 
         myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
           @Override
@@ -277,11 +276,11 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashesUtil.HashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
+        myRecords = new ResizeableMappedFile(recordsFile.toPath(), 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
 
         boolean initial = myRecords.length() == 0;
@@ -1481,12 +1480,19 @@ public class FSRecords {
     return readAndHandleErrors(() -> getContentRecordId(fileId));
   }
 
+  static byte[] getContentHash(int fileId) {
+    if (!WE_HAVE_CONTENT_HASHES) return null;
+
+    return readAndHandleErrors(() -> {
+      int contentId = getContentRecordId(fileId);
+      return contentId <= 0 ? null : getContentHashesEnumerator().valueOf(contentId);
+    });
+  }
+
   @NotNull
   static DataOutputStream writeContent(int fileId, boolean readOnly) {
     return new ContentOutputStream(fileId, readOnly);
   }
-
-  private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
   static void writeContent(int fileId, ByteArraySequence bytes, boolean readOnly) {
     //noinspection IOResourceOpenedButNotSafelyClosed
@@ -1597,15 +1603,13 @@ public class FSRecords {
   private static int contents;
   private static int reuses;
 
+  private static final MessageDigest ourDigest = ContentHashesUtil.createHashDigest();
+
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    myDigest.reset();
-    myDigest.update(String.valueOf(length - offset).getBytes(Charset.defaultCharset()));
-    myDigest.update("\0".getBytes(Charset.defaultCharset()));
-    myDigest.update(bytes, offset, length);
-    byte[] digest = myDigest.digest();
+    byte[] digest = calculateContentHash(ourDigest, bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
@@ -1632,6 +1636,14 @@ public class FSRecords {
 
       return -page;
     }
+  }
+
+  public static byte[] calculateContentHash(MessageDigest digest, byte[] bytes, int offset, int length) {
+    digest.reset();
+    digest.update(String.valueOf(length).getBytes(ContentHashesUtil.HASHER_CHARSET));
+    digest.update("\0".getBytes(ContentHashesUtil.HASHER_CHARSET));
+    digest.update(bytes, offset, length);
+    return digest.digest();
   }
 
   private static class AttributeOutputStream extends DataOutputStream {

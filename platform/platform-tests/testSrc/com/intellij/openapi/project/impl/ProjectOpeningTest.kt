@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -27,7 +28,7 @@ class ProjectOpeningTest {
     @JvmStatic
     internal fun closeProject(project: Project?) {
       if (project != null && !project.isDisposed) {
-        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project)
       }
     }
 
@@ -52,9 +53,11 @@ class ProjectOpeningTest {
     val foo = tempDir.newPath()
     val project = manager.createProject(null, foo.toString())!!
     try {
-      runInEdtAndWait {
-        assertThat(manager.openProject(project)).isFalse()
-      }
+      ProgressManager.getInstance().run(object : Task.Modal(null, "", true) {
+        override fun run(indicator: ProgressIndicator) {
+          assertThat(manager.openProject(project)).isFalse()
+        }
+      })
       assertThat(project.isOpen).isFalse()
       // 1 on maskExtensions call, second call our call
       assertThat(activity.passed.get()).isTrue()
@@ -77,14 +80,14 @@ class ProjectOpeningTest {
         closeProject(project)
       }
       ApplicationManager.getApplication().messageBus.connect(disposableRule.disposable).subscribe(ProjectLifecycleListener.TOPIC,
-                                                                                                  object : ProjectLifecycleListener {
-                                                                                                    override fun projectComponentsInitialized(project: Project) {
-                                                                                                      val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
-                                                                                                      TestCase.assertNotNull(indicator)
-                                                                                                      indicator!!.cancel()
-                                                                                                      indicator.checkCanceled()
-                                                                                                    }
-                                                                                                  })
+        object : ProjectLifecycleListener {
+          override fun projectComponentsInitialized(project: Project) {
+            val indicator: ProgressIndicator? = ProgressManager.getInstance().progressIndicator
+            TestCase.assertNotNull(indicator)
+            indicator!!.cancel()
+            indicator.checkCanceled()
+          }
+        })
       runInEdtAndWait {
         project = manager.loadAndOpenProject(foo)!!
       }

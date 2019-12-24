@@ -5,6 +5,6 @@ import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.extensions.EditorConfigJsonFileOptionDescriptorProviderBase
 
 class EditorConfigReSharperOptionDescriptorProvider : EditorConfigJsonFileOptionDescriptorProviderBase() {
-  override val filePath = "/schemas/editorconfig/resharper.json"
+  override val filePath = "schemas/editorconfig/resharper.json"
   override fun requiresFullSupport() = EditorConfigRegistry.shouldSupportCSharp()
 }

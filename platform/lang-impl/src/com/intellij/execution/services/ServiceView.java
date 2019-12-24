@@ -59,6 +59,8 @@ abstract class ServiceView extends JPanel implements Disposable {
 
   abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
 
+  abstract Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass);
+
   abstract void onViewSelected();
 
   abstract void onViewUnselected();
@@ -95,11 +97,11 @@ abstract class ServiceView extends JPanel implements Disposable {
   abstract void jumpToServices();
 
   static ServiceView createView(@NotNull Project project, @NotNull ServiceViewModel viewModel, @NotNull ServiceViewState viewState) {
+    setViewModelState(viewModel, viewState);
     ServiceView serviceView = viewModel instanceof ServiceViewModel.SingeServiceModel ?
                               createSingleView(project, viewModel) :
                               createTreeView(project, viewModel, viewState);
     setDataProvider(serviceView);
-    setViewModelState(viewModel, viewState);
     return serviceView;
   }
 
@@ -140,7 +142,12 @@ abstract class ServiceView extends JPanel implements Disposable {
         ServiceViewContributor contributor = ServiceViewDragHelper.getTheOnlyRootContributor(selection);
         DataProvider delegate = contributor == null ? null : contributor.getViewDescriptor(serviceView.getProject()).getDataProvider();
         DeleteProvider deleteProvider = delegate == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(delegate);
-        return deleteProvider == null ? new ServiceViewDeleteProvider(serviceView) : deleteProvider;
+        if (deleteProvider == null) return new ServiceViewDeleteProvider(serviceView);
+
+        if (deleteProvider instanceof ServiceViewContributorDeleteProvider) {
+          ((ServiceViewContributorDeleteProvider)deleteProvider).setFallbackProvider(new ServiceViewDeleteProvider(serviceView));
+        }
+        return deleteProvider;
       }
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new ServiceViewCopyProvider(serviceView);

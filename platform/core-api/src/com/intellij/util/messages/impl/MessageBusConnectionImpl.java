@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Queue;
 
 final class MessageBusConnectionImpl implements MessageBusConnection {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
+  private static final Logger LOG = Logger.getInstance(MessageBusConnectionImpl.class);
 
   private final MessageBusImpl myBus;
   @SuppressWarnings("SSBasedInspection")
@@ -56,7 +57,7 @@ final class MessageBusConnectionImpl implements MessageBusConnection {
   }
 
   // avoid notifyOnSubscription and map modification for each handler
-  <L> void subscribe(@NotNull Topic<L> topic, @NotNull List<Object> handlers) {
+  <L> void subscribe(@NotNull Topic<L> topic, @NotNull Collection<Object> handlers) {
     boolean notifyBusAboutTopic = false;
     synchronized (myPendingMessages) {
       Object currentHandler = mySubscriptions.get(topic);

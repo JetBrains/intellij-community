@@ -4,7 +4,6 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +24,7 @@ public class CaptionPanel extends JPanel {
 
   public CaptionPanel() {
     setLayout(new BorderLayout());
+    setBackground(null);
   }
 
   @Override
@@ -32,8 +32,7 @@ public class CaptionPanel extends JPanel {
     super.paintComponent(g);
 
     Graphics2D g2d = (Graphics2D) g;
-
-    g2d.setPaint(JBUI.CurrentTheme.Popup.headerBackground(myActive));
+    g2d.setColor(isBackgroundSet() ? getBackground() : JBUI.CurrentTheme.Popup.headerBackground(myActive));
     g2d.fillRect(0, 0, getWidth(), getHeight());
   }
 
@@ -75,6 +74,6 @@ public class CaptionPanel extends JPanel {
   }
 
   protected boolean containsSettingsControls() {
-    return mySettingComponent != null;
+    return mySettingComponent != null || myButtonComponent != null;
   }
 }

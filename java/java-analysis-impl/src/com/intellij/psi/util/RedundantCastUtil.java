@@ -27,7 +27,7 @@ import java.util.*;
  * @author max
  */
 public class RedundantCastUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
+  private static final Logger LOG = Logger.getInstance(RedundantCastUtil.class);
 
   private RedundantCastUtil() { }
 
@@ -644,6 +644,13 @@ public class RedundantCastUtil {
         if (operand instanceof PsiFunctionalExpression && !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
           return;
         }
+      }
+
+      if (parent instanceof PsiExpressionStatement &&
+          operand instanceof PsiFunctionalExpression &&
+          parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
+          !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+        return;
       }
 
       if (arrayAccessAtTheLeftSideOfAssignment(parent, typeCast)) {

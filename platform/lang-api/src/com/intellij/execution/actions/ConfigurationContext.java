@@ -41,7 +41,7 @@ import java.util.List;
  * @see RunConfigurationProducer
  */
 public class ConfigurationContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
+  private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized = false;

@@ -58,12 +58,6 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
   }
@@ -159,31 +153,29 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
 
+    private void checkMember(@NotNull PsiMember member) {
+      if (!member.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return;
+      }
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass == null || 
+          !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (member instanceof PsiMethod && MethodUtils.hasSuper((PsiMethod)member)) {
+        return;
+      }
+      registerModifierError(PsiModifier.PROTECTED, member, PsiModifier.PROTECTED);
+    }
+
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      if (MethodUtils.hasSuper(method)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, method, PsiModifier.PROTECTED);
+      checkMember(method);
     }
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, field, PsiModifier.PROTECTED);
+      checkMember(field);
     }
   }
 }

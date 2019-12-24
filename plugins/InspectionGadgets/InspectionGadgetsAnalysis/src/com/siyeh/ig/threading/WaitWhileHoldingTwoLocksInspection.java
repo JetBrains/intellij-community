@@ -27,13 +27,6 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "wait.while.holding.two.locks.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.while.holding.two.locks.problem.descriptor");

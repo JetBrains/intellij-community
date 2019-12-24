@@ -580,9 +580,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                     "</build>");
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        MavenRootModelAdapter a = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+        MavenRootModelAdapter a = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
                                                             getModule("project"),
-                                                            new IdeModifiableModelsProviderImpl(myProject));
+                                                            new IdeModifiableModelsProviderImpl(myProject)));
         a.unregisterAll(getProjectPath() + "/target", true, true);
         a.getRootModel().commit();
       });

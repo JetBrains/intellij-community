@@ -56,24 +56,6 @@ abstract class UastReferenceProvider(open val supportedUElementTypes: List<Class
   open fun acceptsTarget(target: PsiElement): Boolean = true
 }
 
-/**
- * NOTE: Consider using [uastInjectionHostReferenceProvider] instead.
- * @see org.jetbrains.uast.sourceInjectionHost
- * @see UastLiteralReferenceProvider
- */
-@Deprecated("use uastInjectionHostReferenceProvider", ReplaceWith("uastInjectionHostReferenceProvider"))
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastLiteralReferenceProvider =
-  object : UastLiteralReferenceProvider() {
-
-    override fun getReferencesByULiteral(uLiteral: ULiteralExpression,
-                                         host: PsiLanguageInjectionHost,
-                                         context: ProcessingContext): Array<PsiReference> = provider(uLiteral, host)
-
-    override fun toString(): String = "uastLiteralReferenceProvider(${provider.javaClass})"
-
-  }
-
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
   object : UastInjectionHostReferenceProvider() {
 

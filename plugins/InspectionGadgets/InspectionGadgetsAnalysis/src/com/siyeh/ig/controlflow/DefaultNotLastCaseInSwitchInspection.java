@@ -31,12 +31,6 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("default.not.last.case.in.switch.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("default.not.last.case.in.switch.problem.descriptor", infos[1]);
   }

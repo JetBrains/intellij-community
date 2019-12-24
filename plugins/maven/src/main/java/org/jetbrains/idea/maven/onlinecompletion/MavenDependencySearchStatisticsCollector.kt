@@ -16,7 +16,6 @@ object MavenDependencySearchStatisticsCollector {
     FUCounterUsageLogger.getInstance().logEvent(GROUP_ID,
                                                 "packagesearch.error",
                                                 FeatureUsageData()
-                                                  .addOS()
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
                                                   .addData("timeout", parameters.millisToWait)
@@ -30,7 +29,6 @@ object MavenDependencySearchStatisticsCollector {
     FUCounterUsageLogger.getInstance().logEvent(GROUP_ID,
                                                 "packagesearch.success",
                                                 FeatureUsageData()
-                                                  .addOS()
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
                                                   .addData("timeout", parameters.millisToWait));

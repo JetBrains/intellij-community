@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class LazyParseableElement extends CompositeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
+  private static final Logger LOG = Logger.getInstance(LazyParseableElement.class);
   private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
 
   private static class ChameleonLock {

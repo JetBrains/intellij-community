@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.Nullability;
@@ -41,9 +41,9 @@ class CollectMigration extends BaseStreamApiMigration {
 
   static final Map<String, String> INTERMEDIATE_STEPS = EntryStream.of(
     CommonClassNames.JAVA_UTIL_ARRAY_LIST, "",
-    "java.util.LinkedList", "",
+    CommonClassNames.JAVA_UTIL_LINKED_LIST, "",
     CommonClassNames.JAVA_UTIL_HASH_SET, ".distinct()",
-    "java.util.LinkedHashSet", ".distinct()",
+    CommonClassNames.JAVA_UTIL_LINKED_HASH_SET, ".distinct()",
     "java.util.TreeSet", ".distinct().sorted()"
   ).toMap();
 
@@ -897,7 +897,7 @@ class CollectMigration extends BaseStreamApiMigration {
   static class UnmodifiableTerminal extends RecreateTerminal {
     private static final Map<String, String> TYPE_TO_UNMODIFIABLE_WRAPPER = EntryStream.of(
       CommonClassNames.JAVA_UTIL_ARRAY_LIST, "toUnmodifiableList",
-      "java.util.LinkedList", "toUnmodifiableList",
+      CommonClassNames.JAVA_UTIL_LINKED_LIST, "toUnmodifiableList",
       CommonClassNames.JAVA_UTIL_HASH_SET, "toUnmodifiableSet",
       CommonClassNames.JAVA_UTIL_HASH_MAP, "toUnmodifiableMap"
     ).toMap();

@@ -150,18 +150,13 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     final String jdkPath = System.getProperty(jdkPrefix + name);
     if (jdkPath == null) return null;
 
-    final SdkType[] sdkTypes = SdkType.getAllTypes();
-    for (SdkType sdkType : sdkTypes) {
-      if (Comparing.strEqual(type, sdkType.getName())) {
-        if (sdkType.isValidSdkHome(jdkPath)) {
-          ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
-          projectJdkImpl.setHomePath(jdkPath);
-          sdkType.setupSdkPaths(projectJdkImpl);
-          myCachedProjectJdks.put(uniqueName, projectJdkImpl);
-          return projectJdkImpl;
-        }
-        break;
-      }
+    final SdkType sdkType = SdkType.findByName(type);
+    if (sdkType != null && sdkType.isValidSdkHome(jdkPath)) {
+      ProjectJdkImpl projectJdkImpl = new ProjectJdkImpl(name, sdkType);
+      projectJdkImpl.setHomePath(jdkPath);
+      sdkType.setupSdkPaths(projectJdkImpl);
+      myCachedProjectJdks.put(uniqueName, projectJdkImpl);
+      return projectJdkImpl;
     }
     return null;
   }
@@ -187,9 +182,13 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   @TestOnly
   public void addTestJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    mySdks.add(jdk);
-    Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> mySdks.remove(jdk)));
+    WriteAction.runAndWait(()-> mySdks.add(jdk));
+    Disposer.register(parentDisposable, () -> removeTestJdk(jdk));
+  }
+
+  @TestOnly
+  public void removeTestJdk(@NotNull Sdk jdk) {
+    WriteAction.runAndWait(()-> mySdks.remove(jdk));
   }
 
   @Override

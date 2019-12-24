@@ -19,7 +19,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,12 +28,6 @@ public class HibernateResourceInspection extends ResourceInspection {
   @NotNull
   public String getID() {
     return "HibernateResourceOpenedButNotSafelyClosed";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("hibernate.resource.opened.not.closed.display.name");
   }
 
   @Override

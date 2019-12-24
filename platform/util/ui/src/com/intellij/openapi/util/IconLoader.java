@@ -41,7 +41,6 @@ import static com.intellij.ui.scale.ScaleType.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
-  private static final String LAF_PREFIX = "/com/intellij/ide/ui/laf/icons/";
   private static final String ICON_CACHE_URL_KEY = "ICON_CACHE_URL_KEY";
   // the key: Pair(ICON_CACHE_URL_KEY, url) or Pair(path, classLoader)
   private static final ConcurrentMap<Pair<String, Object>, CachedImageIcon> ourIconsCache =
@@ -151,9 +150,8 @@ public final class IconLoader {
   //}
 
   @NotNull
-  public static Icon getIcon(@NonNls @NotNull final String path) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
-
+  public static Icon getIcon(@NonNls @NotNull String path) {
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     assert callerClass != null : path;
     return getIcon(path, callerClass);
   }
@@ -213,8 +211,8 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findLafIcon(@NotNull String key, @NotNull Class aClass, boolean strict) {
-    return findIcon(LAF_PREFIX + key + ".png", aClass, true, strict);
+  public static Icon findLafIcon(@NotNull String key, @NotNull Class<?> aClass, boolean strict) {
+    return findIcon(key + ".png", aClass, true, strict);
   }
 
   /**
@@ -222,17 +220,17 @@ public final class IconLoader {
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
    */
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class aClass) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
     return findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT_LOCAL.get()), false);
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow) {
     return findIcon(path, aClass, computeNow, STRICT_LOCAL.get());
   }
 
   @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
+  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass, boolean computeNow, boolean strict) {
     return findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(strict), false);
   }
 

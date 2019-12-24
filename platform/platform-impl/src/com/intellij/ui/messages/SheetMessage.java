@@ -140,7 +140,7 @@ final class SheetMessage implements Disposable {
     Component focusCandidate = beforeShowFocusOwner.get();
 
     if (focusCandidate == null) {
-      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedFrame());
+      focusCandidate = getGlobalInstance().getLastFocusedFor(getGlobalInstance().getLastFocusedIdeWindow());
     }
 
     final Component finalFocusCandidate = focusCandidate;

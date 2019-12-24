@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process
 
+import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.execution.CommandLineWrapper
@@ -13,6 +13,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 class JdkUtilTest : BareTestFixtureTestCase() {
   companion object {
@@ -107,14 +108,14 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     filesToDelete = setOf(file)
 
     val args = listOf("1#1", "\"2'", "line\n-", "C:\\", "D:\\work", "E:\\work space", "unicode\u2026")
-    JdkUtil.writeArgumentsToParameterFile(file, args)
-    val actual = file.readText(Charsets.UTF_8)
+    CommandLineWrapperUtil.writeArgumentsFile(file, args, StandardCharsets.UTF_8)
+    val actual = file.readLines(Charsets.UTF_8)
 
-    assertThat(actual.split("\n")).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026", "")
+    assertThat(actual).containsExactly("1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space", "unicode\u2026")
   }
 
   private fun doTest(vararg expected: String) {
-    val cmd = JdkUtil.setupJVMCommandLine(parameters)
+    val cmd = parameters.toCommandLine()
     filesToDelete = cmd.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION)
 
     val actual = cmd.getCommandLineList("-")

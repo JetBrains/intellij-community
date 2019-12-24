@@ -25,13 +25,6 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unknown @GuardedBy field";
-  }
-
-  @Override
   @NotNull
   public String getShortName() {
     return "UnknownGuard";

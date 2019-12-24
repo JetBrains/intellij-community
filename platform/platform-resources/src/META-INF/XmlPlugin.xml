@@ -1,9 +1,11 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
+    </component>
+  </project-components>
   <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
@@ -17,31 +19,19 @@
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
     </extensionPoint>
 
-    <extensionPoint name="xml.startTagEndToken"
-                    interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
-    <extensionPoint name="xml.schemaProvider"
-                    interface="com.intellij.xml.XmlSchemaProvider"/>
-    <extensionPoint name="xml.xmlExtension"
-                    interface="com.intellij.xml.XmlExtension"/>
-    <extensionPoint name="xml.namespaceHelper"
-                    interface="com.intellij.xml.XmlNamespaceHelper"/>
-    <extensionPoint name="xml.tagNameProvider"
-                    interface="com.intellij.xml.XmlTagNameProvider"/>
-    <extensionPoint name="xml.fileNSInfoProvider"
-                    interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
-    <extensionPoint name="xml.attributeDescriptorsProvider"
-                    interface="com.intellij.xml.XmlAttributeDescriptorsProvider"/>
-    <extensionPoint name="xml.elementDescriptorProvider"
-                    interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider"/>
-    <extensionPoint name="xml.util.htmlDoctypeProvider"
-                    interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
+    <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
+    <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
+    <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
+    <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper"/>
+    <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
+    <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
+    <extensionPoint name="xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
+    <extensionPoint name="xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
 
     <extensionPoint name="xml.xmlSuppressionProvider"
-                    interface="com.intellij.codeInspection.XmlSuppressionProvider"/>
+                    interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
     <extensionPoint name="xml.nsColorProvider"
-                    interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider"/>
-
-    <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider" dynamic="true"/>
 
     <extensionPoint name="xmlStructureViewElementProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
@@ -49,39 +39,33 @@
     <extensionPoint name="xmlStructureViewBuilderProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider"/>
 
-    <extensionPoint name="webBrowserUrlProvider"
-                    interface="com.intellij.ide.browsers.WebBrowserUrlProvider"/>
-    <extensionPoint name="remoteFileUpdater"
-                    interface="com.intellij.ide.browsers.RemoteFileUpdater"/>
+    <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
 
-    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider"/>
-    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP"/>
+    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
+    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
 
-    <extensionPoint name="xml.idContributor"
-                    interface="com.intellij.xml.util.XmlIdContributor"/>
+    <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
+    <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
 
-    <extensionPoint name="xml.implicitNamespaceDescriptorProvider"
-                    interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider"/>
+    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator" dynamic="true"/>
+    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter" dynamic="true"/>
 
-    <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator"/>
-    <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter"/>
+    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
 
-    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
-
-    <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
-    <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider"/>
-    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"/>
+    <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider" dynamic="true"/>
+    <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider" dynamic="true"/>
+    <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
     <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider"/>
 
     <extensionPoint qualifiedName="org.jetbrains.javaScriptDebuggerStarter" interface="com.intellij.ide.browsers.JavaScriptDebuggerStarter"/>
 
     <extensionPoint name="html.scriptContentProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlScriptContentProvider"/>
     </extensionPoint>
 
     <extensionPoint name="html.inlineScriptTokenTypesProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
 
@@ -95,11 +79,15 @@
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
 
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension"/>
-    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider"/>
+    <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
     <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP"/>
 
-    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler"/>
+    <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
+
+    <!--dead code-->
+    <extensionPoint name="xml.util.htmlDoctypeProvider" interface="com.intellij.xml.util.HtmlDoctypeProvider"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -132,7 +120,7 @@
 
     <completion.contributor language="DTD" implementationClass="com.intellij.codeInsight.completion.DtdCompletionContributor" id="dtd" />
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
-    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor" id="xmlLocation"/>
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor" id="xmlLocation" order="before xmlNonFirst"/>
 
     <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="htmlText"/>
     <completion.confidence language="XHTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="xhtmlText"/>
@@ -160,10 +148,6 @@
                                  key="web.editor.configuration.title"
                                  bundle="messages.XmlBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
-
-    <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
-                             key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
-                             instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
@@ -293,7 +277,6 @@
     <lang.ast.factory language="XHTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
     <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
 
-    <codeStyleSettingsProvider implementation="com.intellij.application.options.XmlCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.HtmlCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettings"/>
 
@@ -302,7 +285,7 @@
     <lang.quoteHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
-    <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
+    <selectionUnquotingFilter implementation="com.intellij.codeInsight.editorActions.XmlUnquotingFilter"/>
 
     <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
@@ -325,15 +308,9 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler" id="xmlAuto"/>
 
-    <!--
-    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.XmlCopyPastePreProcessor"/>
-    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.HtmlCopyPastePreProcessor"/>
-    -->
-
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
-    <syntaxHighlighter key="GUI_DESIGNER_FORM" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.EnterBetweenXmlTagsHandler" id="xmlEnter"/>
 
@@ -555,7 +532,9 @@
     <lang.implementationTextSelectioner language="XML"
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
-    <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.XmlDefaultLiveTemplatesProvider"/>
+    <defaultLiveTemplates file="liveTemplates/html_xml.xml"/>
+    <defaultLiveTemplates file="liveTemplates/zen_html.xml"/>
+    <defaultLiveTemplates file="liveTemplates/zen_xsl.xml"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>

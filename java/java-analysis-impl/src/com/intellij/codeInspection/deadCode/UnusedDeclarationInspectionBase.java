@@ -115,12 +115,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
@@ -247,6 +241,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         if (isSerializable(subClass.getUastElement(), subClass, serializableClass)) return true;
       }
     }
+    return false;
+  }
+
+  @Override
+  public boolean isReadActionNeeded() {
     return false;
   }
 
@@ -574,10 +573,23 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         // Process class's static initializers
         if (method.isStatic() || method.isConstructor() || method.isEntry()) {
           if (method.isStatic()) {
-            ((RefElementImpl)method.getOwner()).setReachable(true);
+            RefElementImpl owner = (RefElementImpl)method.getOwner();
+            if (owner != null) {
+              owner.setReachable(true);
+            }
           }
           else {
-            addInstantiatedClass(method.getOwnerClass());
+            RefClass ownerClass = method.getOwnerClass();
+            if (ownerClass != null) {
+              addInstantiatedClass(ownerClass);
+            } else {
+              LOG.error("owner class is null for " + method.getPsiElement()
+                      + " is static ? " + method.isStatic()
+                      + "; is abstract ? " + method.isAbstract()
+                      + "; is main method ? " + method.isAppMain()
+                      + "; is constructor " + method.isConstructor()
+                      + "; containing file " + method.getPointer().getVirtualFile().getFileType());
+            }
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
@@ -619,7 +631,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void addInstantiatedClass(RefClass refClass) {
+    private void addInstantiatedClass(@NotNull RefClass refClass) {
       if (myInstantiatedClasses.add(refClass)) {
         ((RefClassImpl)refClass).setReachable(true);
         myInstantiatedClassesCount++;

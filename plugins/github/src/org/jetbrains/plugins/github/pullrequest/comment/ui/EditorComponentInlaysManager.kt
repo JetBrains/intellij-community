@@ -2,139 +2,58 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayModel
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
-import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
-import java.awt.*
+import java.awt.Dimension
+import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
+import kotlin.math.ceil
+import kotlin.math.max
 import kotlin.math.min
 
-class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable {
-  private val editorTextWidth: Int
-  private val verticalScrollbarFlipped: Boolean
+class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
-  private var wrappersWidth: Int = calcWrappersWidth()
-
-  private val managedInlays = mutableSetOf<Inlay<out ComponentWrapperPlaceholder>>()
+  private val managedInlays = mutableMapOf<ComponentWrapper, Disposable>()
+  private val editorWidthWatcher = EditorTextWidthWatcher()
 
   init {
-    val metrics = editor.getFontMetrics(Font.PLAIN)
-    val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
-    editorTextWidth = (spaceWidth * (editor.settings.getRightMargin(editor.project))).toInt()
-
-    val scrollbarFlip = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
-    verticalScrollbarFlipped = scrollbarFlip == JBScrollPane.Flip.HORIZONTAL || scrollbarFlip == JBScrollPane.Flip.BOTH
-
-    editor.foldingModel.addListener(object : FoldingListener {
-      override fun onFoldProcessingEnd() {
-        updateLocationForAllInlays()
-        updateWidthForAllInlays()
-      }
-    }, this)
-
-    val viewportResizeListener = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) = updateWidthForAllInlays()
-    }
-    editor.scrollPane.viewport.addComponentListener(viewportResizeListener)
+    editor.scrollPane.viewport.addComponentListener(editorWidthWatcher)
     Disposer.register(this, Disposable {
-      editor.scrollPane.viewport.removeComponentListener(viewportResizeListener)
+      editor.scrollPane.viewport.removeComponentListener(editorWidthWatcher)
     })
 
-    editor.inlayModel.addListener(object : InlayModel.SimpleAdapter() {
-      override fun onUpdated(inlay: Inlay<*>) = updateLocationForAllInlays()
-
-      override fun onAdded(inlay: Inlay<*>) {
-        val renderer = inlay.renderer
-        if (renderer is ComponentWrapperPlaceholder) updateWrapperWidth(renderer.wrapper)
-        super.onAdded(inlay)
-      }
-    }, this)
-
-    Disposer.register(editor.disposable, this)
-  }
-
-  private fun updateLocationForAllInlays() {
-    managedInlays.forEach { updateWrapperLocation(it, it.renderer.wrapper) }
-  }
-
-  private fun updateWidthForAllInlays() {
-    val newWidth = calcWrappersWidth()
-    if (wrappersWidth == newWidth) return
-
-    wrappersWidth = newWidth
-    managedInlays.forEach { updateWrapperWidth(it.renderer.wrapper) }
+    EditorUtil.disposeWithEditor(editor, this)
   }
 
   @CalledInAwt
-  fun insertAfter(lineIndex: Int, component: JComponent): Inlay<*>? {
+  fun insertAfter(lineIndex: Int, component: JComponent): Disposable? {
     if (Disposer.isDisposed(this)) return null
 
+    val wrappedComponent = ComponentWrapper(component)
     val offset = editor.document.getLineEndOffset(lineIndex)
-    return wrapAndInsert(offset, component)
+
+    return EditorEmbeddedComponentManager.getInstance()
+      .addComponent(editor, wrappedComponent,
+                    EditorEmbeddedComponentManager.Properties(EditorEmbeddedComponentManager.ResizePolicy.none(),
+                                                              true,
+                                                              false,
+                                                              0,
+                                                              offset))?.also {
+        managedInlays[wrappedComponent] = it
+        Disposer.register(it, Disposable { managedInlays.remove(wrappedComponent) })
+      }
   }
 
-  private fun wrapAndInsert(offset: Int, component: JComponent): Inlay<*> {
-    val wrapper = ComponentWrapper(component)
-    val inlay = editor.inlayModel.addBlockElement(offset, true, false, 1,
-                                                  ComponentWrapperPlaceholder(wrapper))!!
-
-    component.background = editor.backgroundColor
-    ApplicationManager.getApplication().messageBus.connect(inlay)
-      .subscribe(EditorColorsManager.TOPIC, EditorColorsListener { component.background = editor.backgroundColor })
-
-    wrapper.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) = inlay.updateSize()
-    })
-    wrapper.addMouseWheelListener(editor.contentComponent::dispatchEvent)
-
-    editor.contentComponent.add(wrapper)
-    managedInlays.add(inlay)
-    Disposer.register(inlay, Disposable {
-      editor.contentComponent.remove(wrapper)
-      managedInlays.remove(inlay)
-    })
-    return inlay
-  }
-
-  private fun updateWrapperLocation(inlay: Inlay<out ComponentWrapperPlaceholder>, wrapper: ComponentWrapper) {
-    val bounds = inlay.bounds
-    if (bounds == null) {
-      wrapper.isVisible = false
-    }
-    else {
-      wrapper.location = Point(if (verticalScrollbarFlipped) editor.scrollPane.verticalScrollBar.width else 0, bounds.location.y)
-      wrapper.isVisible = true
-    }
-  }
-
-  private fun calcWrappersWidth(): Int {
-    val visibleEditorTextWidth = editor.scrollPane.viewport.width - editor.scrollPane.verticalScrollBar.width
-    return min(visibleEditorTextWidth, editorTextWidth)
-  }
-
-  private fun updateWrapperWidth(wrapper: ComponentWrapper) {
-    if (!wrapper.isVisible || wrapper.width == wrappersWidth) return
-    wrapper.size = Dimension(wrappersWidth, wrapper.size.height)
-  }
-
-  fun findComponent(inlay: Inlay<*>): JComponent? = managedInlays.find { it == inlay }?.renderer?.wrapper
-
-  private class ComponentWrapper(val component: JComponent) : JBScrollPane() {
+  private inner class ComponentWrapper(private val component: JComponent) : JBScrollPane(component) {
     init {
       isOpaque = false
       viewport.isOpaque = false
@@ -144,46 +63,57 @@ class EditorComponentInlaysManager(private val editor: EditorImpl) : Disposable 
 
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
       verticalScrollBar.preferredSize = Dimension(0, 0)
+      setViewportView(component)
 
-      val panel = ScrollablePanel(BorderLayout()).apply {
-        isOpaque = false
-
-        add(component, BorderLayout.CENTER)
-        addComponentListener(object : ComponentAdapter() {
-          override fun componentResized(e: ComponentEvent) = refreshHeight()
-        })
-      }
-      setViewportView(panel)
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent) = dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
+      })
     }
 
-    private fun refreshHeight() {
-      if (height != viewport.view.height)
-        size = Dimension(width, viewport.view.height)
-    }
-
-    override fun paint(g: Graphics) {
-      // We need this fix with AlphaComposite.SrcOver to resolve problem of black background on transparent images such as icons.
-      val oldComposite = (g as Graphics2D).composite
-      g.composite = AlphaComposite.SrcOver
-      super.paint(g)
-      g.composite = oldComposite
+    override fun getPreferredSize(): Dimension {
+      return Dimension(editorWidthWatcher.editorTextWidth, component.preferredSize.height)
     }
   }
 
   override fun dispose() {
-    val iter = managedInlays.iterator()
-    while (iter.hasNext()) {
-      val inlay = iter.next()
-      iter.remove()
-      Disposer.dispose(inlay)
-    }
+    managedInlays.values.forEach(Disposer::dispose)
   }
 
-  private class ComponentWrapperPlaceholder(val wrapper: ComponentWrapper) : EditorCustomElementRenderer {
-    override fun calcWidthInPixels(inlay: Inlay<*>): Int = wrapper.width
-    override fun calcHeightInPixels(inlay: Inlay<*>): Int = wrapper.height
+  private inner class EditorTextWidthWatcher : ComponentAdapter() {
 
-    override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+    var editorTextWidth: Int = 0
+
+    private val maximumEditorTextWidth: Int
+    private val verticalScrollbarFlipped: Boolean
+
+    init {
+      val metrics = editor.getFontMetrics(Font.PLAIN)
+      val spaceWidth = FontLayoutService.getInstance().charWidth2D(metrics, ' '.toInt())
+      // -4 to create some space
+      maximumEditorTextWidth = ceil(spaceWidth * (editor.settings.getRightMargin(editor.project)) - 4).toInt()
+
+      val scrollbarFlip = editor.scrollPane.getClientProperty(JBScrollPane.Flip::class.java)
+      verticalScrollbarFlipped = scrollbarFlip == JBScrollPane.Flip.HORIZONTAL || scrollbarFlip == JBScrollPane.Flip.BOTH
+    }
+
+    override fun componentResized(e: ComponentEvent) = updateWidthForAllInlays()
+    override fun componentHidden(e: ComponentEvent) = updateWidthForAllInlays()
+    override fun componentShown(e: ComponentEvent) = updateWidthForAllInlays()
+
+    private fun updateWidthForAllInlays() {
+      val newWidth = calcWidth()
+      if (editorTextWidth == newWidth) return
+      editorTextWidth = newWidth
+
+      managedInlays.keys.forEach {
+        it.dispatchEvent(ComponentEvent(it, ComponentEvent.COMPONENT_RESIZED))
+        it.invalidate()
+      }
+    }
+
+    private fun calcWidth(): Int {
+      val visibleEditorTextWidth = editor.scrollPane.viewport.width - editor.scrollPane.verticalScrollBar.width - if (verticalScrollbarFlipped) 4 else 0
+      return min(max(visibleEditorTextWidth, 0), maximumEditorTextWidth)
     }
   }
 }

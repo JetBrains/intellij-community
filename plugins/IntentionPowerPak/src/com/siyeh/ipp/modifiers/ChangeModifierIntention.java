@@ -38,6 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -128,14 +129,20 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       return ALL_MODIFIERS;
     }
     if (member instanceof PsiMethod) {
-      if (containingClass == null || containingClass.isEnum() && ((PsiMethod)member).isConstructor()) return Collections.emptyList();
+      PsiMethod method = (PsiMethod)member;
+      if (containingClass == null || containingClass.isEnum() && method.isConstructor()) return Collections.emptyList();
+      if (JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null ||
+          JavaPsiRecordUtil.isCompactConstructor(method) ||
+          JavaPsiRecordUtil.isCanonicalConstructor(method)) {
+        return Collections.singletonList(AccessModifier.PUBLIC);
+      }
       if (containingClass.isInterface()) {
         if (PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
         return Collections.singletonList(AccessModifier.PUBLIC);
       }
-      AccessModifier minAccess = getMinAccess((PsiMethod)member);
+      AccessModifier minAccess = getMinAccess(method);
       if (minAccess != AccessModifier.PRIVATE) {
         return ContainerUtil.filter(ALL_MODIFIERS, mod -> mod.compareTo(minAccess) <= 0);
       }

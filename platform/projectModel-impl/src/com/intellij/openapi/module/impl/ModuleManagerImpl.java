@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -44,10 +45,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -61,7 +59,7 @@ import static com.intellij.openapi.module.impl.ExternalModuleListStorageKt.getFi
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
+public abstract class ModuleManagerImpl extends ModuleManagerEx implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
   public static final String ELEMENT_MODULES = "modules";
@@ -71,7 +69,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public static final String ATTRIBUTE_GROUP = "group";
   public static final String IML_EXTENSION = ".iml";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
+  private static final Logger LOG = Logger.getInstance(ModuleManagerImpl.class);
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   public static final String MODULE_GROUP_SEPARATOR = "/";
 
@@ -175,11 +173,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
   }
 
-  @TestOnly
-  public void loadStateFromModulePaths(@NotNull Set<ModulePath> modulePaths) {
-    loadState(modulePaths);
-  }
-
   private void loadState(@NotNull Set<ModulePath> modulePaths) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = modulePaths;
@@ -281,20 +274,17 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());
     ModuleGroupInterner groupInterner = new ModuleGroupInterner();
 
-    ExecutorService service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount());
+    boolean isParallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
+    ExecutorService service = isParallel ? AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
+                                         : ConcurrencyUtil.newSameThreadExecutorService();
     List<Pair<Future<Module>, ModulePath>> tasks = new ArrayList<>();
     Set<String> paths = new THashSet<>();
-    boolean parallel = Registry.is("parallel.modules.loading") && !ApplicationManager.getApplication().isDispatchThread();
     for (ModulePath modulePath : myModulePathsToLoad) {
       if (progressIndicator.isCanceled()) {
         break;
       }
       String path = modulePath.getPath();
       if (!paths.add(path)) continue;
-      if (!parallel) {
-        tasks.add(Pair.create(null, modulePath));
-        continue;
-      }
       tasks.add(Pair.create(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         return ProgressManager.getInstance().runProcess(() -> {
@@ -320,14 +310,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         break;
       }
       try {
-        Module module;
-        if (parallel) {
-          module = task.first.get();
-        }
-        else {
-          module = moduleModel.loadModuleInternal(task.second.getPath());
-          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
-        }
+        Module module = task.first.get();
         if (module == null) continue;
         if (isUnknownModuleType(module)) {
           modulesWithUnknownTypes.add(module);
@@ -339,9 +322,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           groupInterner.setModuleGroupPath(moduleModel, module, groupPathString.split(MODULE_GROUP_SEPARATOR));
         }
         myFailedModulePaths.remove(modulePath);
-      }
-      catch (IOException e) {
-        reportError(errors, task.second, e);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -455,7 +435,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerErrors(errors);
   }
 
-  public void removeFailedModulePath(@NotNull ModulePath modulePath) {
+  void removeFailedModulePath(@NotNull ModulePath modulePath) {
     myFailedModulePaths.remove(modulePath);
     incModificationCount();
   }
@@ -467,11 +447,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return new ModuleModelImpl(myModuleModel);
   }
 
-  private class ModuleSaveItem extends SaveItem {
+  private static class ModuleSaveItem extends SaveItem {
     private final Module myModule;
+    private final ModuleManager myModuleManager;
 
-    ModuleSaveItem(@NotNull Module module) {
+    ModuleSaveItem(@NotNull Module module, @NotNull ModuleManager moduleManager) {
       myModule = module;
+      myModuleManager = moduleManager;
     }
 
     @Override
@@ -482,7 +464,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
     @Override
     protected String getGroupPathString() {
-      String[] groupPath = getModuleGroupPath(myModule);
+      String[] groupPath = myModuleManager.getModuleGroupPath(myModule);
       return groupPath != null ? StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR) : null;
     }
 
@@ -494,19 +476,29 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   public void writeExternal(@NotNull Element element, @NotNull List<? extends Module> collection) {
-    List<SaveItem> sorted = new ArrayList<>(collection.size() + myFailedModulePaths.size() + myUnloadedModules.size());
+    writeExternal(element, collection, this);
+  }
+
+  @ApiStatus.Internal
+  public static void writeExternal(@NotNull Element element,
+                                   @NotNull List<? extends Module> collection,
+                                   ModuleManagerEx moduleManager) {
+    Collection<ModulePath> failedModulePaths = moduleManager.getFailedModulePaths();
+    Collection<UnloadedModuleDescription> unloadedModuleDescriptions = moduleManager.getUnloadedModuleDescriptions();
+
+    List<SaveItem> sorted = new ArrayList<>(collection.size() + failedModulePaths.size() + unloadedModuleDescriptions.size());
     for (Module module : collection) {
-      sorted.add(new ModuleSaveItem(module));
+      sorted.add(new ModuleSaveItem(module, moduleManager));
     }
-    for (ModulePath modulePath : myFailedModulePaths) {
+    for (ModulePath modulePath : failedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
     }
-    for (UnloadedModuleDescriptionImpl description : myUnloadedModules.values()) {
-      sorted.add(new ModulePathSaveItem(description.getModulePath()));
+    for (UnloadedModuleDescription description : unloadedModuleDescriptions) {
+      sorted.add(new ModulePathSaveItem(((UnloadedModuleDescriptionImpl)description).getModulePath()));
     }
 
     if (!sorted.isEmpty()) {
-      Collections.sort(sorted, Comparator.comparing(SaveItem::getModuleName));
+      sorted.sort(Comparator.comparing(SaveItem::getModuleName));
 
       Element modules = new Element(ELEMENT_MODULES);
       for (SaveItem saveItem : sorted) {
@@ -944,7 +936,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     private void disposeModel() {
       Module[] modules = getModules();
       myModulesCache = null;
-      myModules.clear(); // clear module list before disposing to avoid getModules() returning already disposed modules
+      // clear module list before disposing to avoid getModules() returning already disposed modules
+      myModules.clear();
       for (Module module : modules) {
         Disposer.dispose(module);
       }
@@ -1097,6 +1090,11 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return Collections.unmodifiableCollection(myUnloadedModules.values());
   }
 
+  @Override
+  public Collection<ModulePath> getFailedModulePaths() {
+    return Collections.unmodifiableSet(myFailedModulePaths);
+  }
+
   @Nullable
   @Override
   public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName) {
@@ -1129,7 +1127,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         Module module = findModuleByName(name);
         if (module != null) {
           LoadedModuleDescriptionImpl description = new LoadedModuleDescriptionImpl(module);
-          ModuleSaveItem saveItem = new ModuleSaveItem(module);
+          ModuleSaveItem saveItem = new ModuleSaveItem(module, this);
           ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
           List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));

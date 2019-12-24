@@ -13,6 +13,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,6 +208,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
+  @Contract(pure = true)
   public <T> List<T> filterByDumbAwareness(@NotNull Collection<? extends T> collection) {
     if (isDumb()) {
       final ArrayList<T> result = new ArrayList<>(collection.size());
@@ -246,6 +249,8 @@ public abstract class DumbService {
    * (which could start "dumb mode") some reference resolve is required (which again requires "smart mode").<p/>
    * <p>
    * Should be invoked on dispatch thread.
+   * It's the caller's responsibility to invoke this method only when the model is in internally consistent state,
+   * so that background threads with read actions don't see half-baked PSI/VFS/etc.
    */
   public abstract void completeJustSubmittedTasks();
 
@@ -279,8 +284,16 @@ public abstract class DumbService {
    */
   public abstract void showDumbModeNotification(@NotNull String message);
 
+  /**
+   * Show modal progress about indexing blocking those actions until it is cancelled or indexing stops.
+   *
+   * @return true if indexing stopped, and the dialog was not cancelled.
+   */
+  public abstract boolean showDumbModeDialog(@NotNull List<String> actionNames);
+
   public abstract Project getProject();
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean isDumbAware(Object o) {
     if (o instanceof PossiblyDumbAware) {
       return ((PossiblyDumbAware)o).isDumbAware();
@@ -396,4 +409,7 @@ public abstract class DumbService {
      */
     default void exitDumbMode() {}
   }
+
+  @ApiStatus.Internal
+  public abstract void unsafeRunWhenSmart(@NotNull Runnable runnable);
 }

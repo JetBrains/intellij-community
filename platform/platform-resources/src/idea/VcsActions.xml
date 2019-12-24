@@ -48,7 +48,7 @@
       <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Prev"
               icon="AllIcons.Actions.PreviousOccurence"/>
 
-      <add-to-group group-id="GoToMenu" anchor="last"/>
+      <add-to-group group-id="NavigateInFileGroup" anchor="last"/>
     </group>
     <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Current"/>
 
@@ -274,7 +274,7 @@
               icon="AllIcons.Actions.ListChanges" />
     </group>
 
-    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
+    <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.committed.BrowseCommittedChangesAction"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>

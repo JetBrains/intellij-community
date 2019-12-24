@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.list.ListPopupImpl");
+  private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
 
   private MyList myList;
 
@@ -108,7 +108,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.addMouseMotionListener(myMouseMotionListener);
     myList.addMouseListener(myMouseListener);
 
-    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
+    updateVisibleRowCount();
 
     boolean shouldShow = super.beforeShow();
     if (myAutoHandleBeforeShow) {
@@ -117,6 +117,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     return shouldShow;
+  }
+
+  protected void updateVisibleRowCount() {
+    myList.setVisibleRowCount(Math.min(myMaxRowCount, myListModel.getSize()));
   }
 
   @Override

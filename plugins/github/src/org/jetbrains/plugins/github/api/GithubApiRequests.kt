@@ -256,9 +256,15 @@ object GithubApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
+        fun create(repository: GHRepositoryCoordinates, issueId: Long, body: String) =
+          create(repository.serverPath, repository.repositoryPath.owner, repository.repositoryPath.repository, issueId.toString(), body)
+
+        @JvmStatic
         fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
-          Post.json<GithubIssueComment>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
-                                        GithubCreateIssueCommentRequest(body))
+          Post.json<GithubIssueCommentWithHtml>(
+            getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+            GithubCreateIssueCommentRequest(body),
+            GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
 
         @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =
@@ -331,21 +337,21 @@ object GithubApiRequests {
       @JvmStatic
       fun merge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                 commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
           .withOperationName("merge pull request ${number}")
 
       @JvmStatic
       fun squashMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       commitSubject: String, commitBody: String, headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
           .withOperationName("squash and merge pull request ${number}")
 
       @JvmStatic
       fun rebaseMerge(server: GithubServerPath, repoPath: GHRepositoryPath, number: Long,
                       headSha: String) =
-        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/merge"),
+        Put.json<Unit>(getUrl(server, Repos.urlSuffix, "/$repoPath", urlSuffix, "/$number", "/merge"),
                        GithubPullRequestMergeRebaseRequest(headSha))
           .withOperationName("rebase and merge pull request ${number}")
 
@@ -358,14 +364,16 @@ object GithubApiRequests {
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
-        fun add(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun add(server: GithubServerPath, username: String, repoName: String, number: Long,
+                reviewers: Collection<String>, teamReviewers: List<String>) =
           Post.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                          GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                          GithubReviewersCollectionRequest(reviewers, teamReviewers))
 
         @JvmStatic
-        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long, reviewers: Collection<String>) =
+        fun remove(server: GithubServerPath, username: String, repoName: String, number: Long,
+                   reviewers: Collection<String>, teamReviewers: List<String>) =
           Delete.json<Unit>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", PullRequests.urlSuffix, "/$number", urlSuffix),
-                            GithubReviewersCollectionRequest(reviewers, listOf<String>()))
+                            GithubReviewersCollectionRequest(reviewers, teamReviewers))
       }
 
       object Commits : Entity("/commits") {

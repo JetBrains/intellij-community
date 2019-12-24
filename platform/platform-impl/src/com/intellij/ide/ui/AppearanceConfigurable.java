@@ -4,7 +4,6 @@ package com.intellij.ide.ui;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
-import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.EditorFactory;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -66,7 +64,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myPresentationModeFontSize.setEditable(true);
 
     myComponent.myLafComboBox.setModel(LafManager.getInstance().getLafComboBoxModel());
-    myComponent.myLafComboBox.setRenderer(SimpleListCellRenderer.create("", UIManager.LookAndFeelInfo::getName));
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
@@ -118,12 +115,14 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
+    /*
     updateDarkWindowHeaderVisibility((UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem());
     myComponent.myLafComboBox.addItemListener(itemEvent -> {
       if (itemEvent.getStateChange() == ItemEvent.SELECTED) {
         updateDarkWindowHeaderVisibility((UIManager.LookAndFeelInfo)itemEvent.getItem());
       }
     });
+      */
 
     return myComponent.myPanel;
   }
@@ -237,8 +236,12 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getShowTreeIndentGuides() != myComponent.myShowTreeIndentGuides.isSelected();
     settings.setShowTreeIndentGuides(myComponent.myShowTreeIndentGuides.isSelected());
 
-    if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
-      UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
+    update |= settings.getCompactTreeIndents() != myComponent.myCompactTreeIndents.isSelected();
+    settings.setCompactTreeIndents(myComponent.myCompactTreeIndents.isSelected());
+
+    if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeelReference())) {
+      LafManager.LafReference lafReference = (LafManager.LafReference)myComponent.myLafComboBox.getSelectedItem();
+      UIManager.LookAndFeelInfo lafInfo = LafManager.getInstance().findLaf(lafReference);
       update = true;
       shouldUpdateUI = false;
       QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo, true);
@@ -343,10 +346,11 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
     myComponent.myShowTreeIndentGuides.setSelected(settings.getShowTreeIndentGuides());
+    myComponent.myCompactTreeIndents.setSelected(settings.getCompactTreeIndents());
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
-    myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
+    myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeelReference());
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
@@ -423,13 +427,14 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
     isModified |= myComponent.myShowTreeIndentGuides.isSelected() != settings.getShowTreeIndentGuides();
+    isModified |= myComponent.myCompactTreeIndents.isSelected() != settings.getCompactTreeIndents();
 
     isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
-    isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
+    isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeelReference());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
       isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;
@@ -468,7 +473,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JCheckBox myWindowShortcutsCheckBox;
     private JCheckBox myShowToolStripesCheckBox;
     private JCheckBox myShowMemoryIndicatorCheckBox;
-    private JComboBox<UIManager.LookAndFeelInfo> myLafComboBox;
+    private JComboBox<LafManager.LafReference> myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
 
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
@@ -481,6 +486,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     private JCheckBox myHideIconsInQuickNavigation;
     private JCheckBox myShowTreeIndentGuides;
+    private JCheckBox myCompactTreeIndents;
     private JCheckBox myCbDisplayIconsInMenu;
     private JCheckBox myDisableMnemonics;
     private JCheckBox myDisableMnemonicInControlsCheckBox;

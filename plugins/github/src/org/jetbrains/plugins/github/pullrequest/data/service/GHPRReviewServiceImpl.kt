@@ -27,7 +27,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequest, replyToCommentId, body))
-      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestCommentsEdited(pullRequest)
+      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
       comment
     }
   }
@@ -41,7 +41,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     return progressManager.submitIOTask(progressIndicator) {
       val comment = requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequest, commitSha, fileName, diffLine, body))
-      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestCommentsEdited(pullRequest)
+      messageBus.syncPublisher(GHPullRequestsDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequest)
       comment
     }
   }

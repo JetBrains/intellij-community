@@ -329,7 +329,7 @@ public class HotSwapUIImpl extends HotSwapUI {
         hotSwapSessions(Collections.singletonList(session), callback);
       }
       else if (callback != null) {
-        callback.onFailure(ContainerUtil.newSmartList(session));
+        callback.onFailure(new SmartList<>(session));
       }
     }
   }
@@ -403,7 +403,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     private boolean hasCompilationResults(@NotNull ProjectTaskManager.Result result) {
-      return result.contains((task, state) -> task instanceof ModuleBuildTask &&
+      return result.anyTaskMatches((task, state) -> task instanceof ModuleBuildTask &&
                                               !state.isFailed() && !state.isSkipped());
     }
   }

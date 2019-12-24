@@ -42,7 +42,7 @@ import java.util.*;
  * @author yole
  */
 public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineToAnonymousClassProcessor");
+  private static final Logger LOG = Logger.getInstance(InlineToAnonymousClassProcessor.class);
 
   private PsiClass myClass;
   private final PsiCall myCallToInline;

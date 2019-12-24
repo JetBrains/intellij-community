@@ -36,15 +36,18 @@ public interface StatusBar extends StatusBarInfo, Disposable {
 
     public static void set(@Nullable final String text, @Nullable final Project project, @Nullable final String requestor) {
       if (project != null) {
-        if (project.isDisposed()) return;
+        if (project.isDisposed()) {
+          return;
+        }
         if (!project.isInitialized()) {
-          StartupManager.getInstance(project).runWhenProjectIsInitialized(
-            () -> project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor));
+          StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+            project.getMessageBus().syncPublisher(TOPIC).setInfo(text, requestor);
+          });
           return;
         }
       }
 
-      final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+      MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
       bus.syncPublisher(TOPIC).setInfo(text, requestor);
     }
   }

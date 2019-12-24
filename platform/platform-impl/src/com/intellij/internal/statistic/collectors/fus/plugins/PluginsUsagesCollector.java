@@ -10,11 +10,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Set;
 
 final class PluginsUsagesCollector extends ApplicationUsagesCollector {
@@ -25,21 +23,26 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   }
 
   @Override
+  public int getVersion() {
+    return 2;
+  }
+
+  @Override
   @NotNull
   public Set<MetricEvent> getMetrics() {
-    final Set<MetricEvent> result = new THashSet<>();
-    for (String id : PluginManagerCore.disabledPlugins()) {
-      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(PluginId.findId(id));
-      final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
+    Set<MetricEvent> result = new THashSet<>();
+    for (PluginId id : PluginManagerCore.disabledPlugins()) {
+      PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
+      FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
       result.add(MetricEventFactoryKt.newMetric("disabled.plugin", data));
     }
 
-    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    final List<IdeaPluginDescriptor> nonBundledEnabledPlugins = ContainerUtil.filter(plugins, d -> d.isEnabled() && !d.isBundled());
-    for (IdeaPluginDescriptor descriptor : nonBundledEnabledPlugins) {
-      final PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor);
-      final FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
-      result.add(MetricEventFactoryKt.newMetric("enabled.not.bundled.plugin", data));
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getLoadedPlugins()) {
+      if (descriptor.isEnabled() && !descriptor.isBundled()) {
+        PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(descriptor);
+        FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
+        result.add(MetricEventFactoryKt.newMetric("enabled.not.bundled.plugin", data));
+      }
     }
     return result;
   }

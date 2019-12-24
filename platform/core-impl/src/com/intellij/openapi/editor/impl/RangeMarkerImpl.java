@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
+  private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
   @NotNull
   private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
@@ -74,13 +74,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     getDocument().registerRangeMarker(this, start, end, greedyToLeft, greedyToRight, layer);
   }
 
-  protected boolean unregisterInTree() {
-    if (!isValid()) return false;
+  protected void unregisterInTree() {
+    if (!isValid()) return;
     IntervalTreeImpl<?> tree = myNode.getTree();
     tree.checkMax(true);
-    boolean b = getDocument().removeRangeMarker(this);
+    DocumentEx document = getCachedDocument();
+    if (document == null) {
+      myNode = null;
+    }
+    else {
+      document.removeRangeMarker(this);
+    }
     tree.checkMax(true);
-    return b;
   }
 
   @Override
@@ -127,6 +132,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       LOG.error("document is null; isValid=" + isValid()+"; file="+file);
     }
     return document;
+  }
+
+  DocumentEx getCachedDocument() {
+    Object file = myDocumentOrFile;
+    return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getCachedDocument((VirtualFile)file) : (DocumentEx)file;
   }
 
   // fake method to simplify setGreedyToLeft/right methods. overridden in RangeHighlighter

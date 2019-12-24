@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitLocalBranch;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase.getAffectedFilePaths;
+import static com.intellij.vcsUtil.VcsFileUtilKt.isUnder;
 
 /**
  * <p>
@@ -81,6 +83,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   private final Project myProject;
   private final VirtualFile myRoot;
+  private final FilePath myRootPath;
   private final GitRepository myRepository;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
@@ -98,6 +101,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     myProject = repository.getProject();
     myRepository = repository;
     myRoot = repository.getRoot();
+    myRootPath = VcsUtil.getFilePath(myRoot);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myGit = Git.getInstance();
@@ -197,7 +201,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     synchronized (LOCK) {
       if (suspiciousFiles != null) {
         // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
-        myDefinitelyUntrackedFiles.removeAll(suspiciousFiles);
+        myDefinitelyUntrackedFiles.removeIf((definitelyUntrackedFile)-> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
         myDefinitelyUntrackedFiles.addAll(untrackedFiles);
       }
       else {

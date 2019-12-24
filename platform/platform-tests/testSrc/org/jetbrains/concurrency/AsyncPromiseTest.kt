@@ -2,22 +2,37 @@
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertConcurrentPromises
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.apache.log4j.Level
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.ClassRule
 import org.junit.Test
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.assertTrue
 import kotlin.test.fail
+
 
 @Suppress("UsePropertyAccessSyntax")
 class AsyncPromiseTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+  }
+
   @Test
   fun done() {
     doHandlerTest(false)
@@ -332,5 +347,49 @@ class AsyncPromiseTest {
         // ignore
       }
     promise.setError(error)
+  }
+
+  @Test
+  fun `test onProcessed is called even for canceled promise`() {
+    val called = AtomicBoolean();
+    val promise = AsyncPromise<String>()
+    promise.onProcessed {
+      called.set(true)
+    }
+    promise.cancel()
+    assertTrue(called.get())
+  }
+
+  @Test
+  fun testExceptionInsideComputationIsLogged() {
+    val loggedError = AtomicBoolean()
+    LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+      override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: org.apache.log4j.Logger) {
+        loggedError.set(true)
+      }
+    })
+
+    try {
+      val promise = ReadAction.nonBlocking {
+        throw UnsupportedOperationException()
+      }
+        .submit(AppExecutorUtil.getAppExecutorService())
+
+      promise.onProcessed { }
+
+      var cause: Throwable? = null
+      try {
+        promise.get(10, TimeUnit.SECONDS)
+      }
+      catch (e: Throwable) {
+        cause = ExceptionUtil.getRootCause(e)
+      }
+
+      assertThat(cause).isInstanceOf(UnsupportedOperationException::class.java)
+      assertThat(loggedError.get()).isTrue()
+    }
+    finally {
+      LoggedErrorProcessor.restoreDefaultProcessor()
+    }
   }
 }

@@ -167,6 +167,12 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     public ValidationInfo validateFields() {
       return myPanel.validateFields();
     }
+
+    @Nullable
+    @Override
+    public String getHelpId() {
+      return "reference.dialogs.PatchFileSettings";
+    }
   }
 
   private boolean checkIsFileValid(@NotNull File file) {

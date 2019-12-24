@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -83,24 +80,6 @@ public class KeymapUtil {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut.getClass().getCanonicalName());
     }
     return s;
-  }
-
-  /**
-   * @deprecated icons are not applicable for our user interface and will be removed
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
-    if (shortcut instanceof KeyboardShortcut) {
-      return AllIcons.General.KeyboardShortcut;
-    }
-    else if (shortcut instanceof MouseShortcut) {
-      return AllIcons.General.MouseShortcut;
-    }
-    else {
-      throw new IllegalArgumentException("unknown shortcut class: " + shortcut);
-    }
   }
 
   @NotNull
@@ -217,8 +196,7 @@ public class KeymapUtil {
 
   @NotNull
   public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
-    Application application = ApplicationManager.getApplication();
-    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
@@ -227,14 +205,19 @@ public class KeymapUtil {
 
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
-    KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
-    return shortcut == null? "" : getShortcutText(shortcut);
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        return getShortcutText(shortcut);
+      }
+    }
+    return "";
   }
 
   public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
-    for (KeyboardShortcut shortcut : ContainerUtil.findAll(getActiveKeymapShortcuts(actionId).getShortcuts(), KeyboardShortcut.class)) {
-      if (AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == shortcut.getFirstKeyStroke()) return true;
+    for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {
+        return true;
+      }
     }
     return false;
   }
@@ -388,7 +371,7 @@ public class KeymapUtil {
   public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
     if (ourTooltipKeysProperty == null) {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
-      ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
+      ourTooltipKeysProperty.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           updateTooltipRequestKey(value);
@@ -621,8 +604,11 @@ public class KeymapUtil {
    * and if so return string presentation for this shortcut
    * @param event called event
    * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
+   * @deprecated unused method that is not needed anymore
    */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
     if (event.getInputEvent() instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event.getInputEvent();

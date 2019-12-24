@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.vcs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,6 @@ import com.intellij.vcs.commit.CommitHandlersNotifier;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
-import icons.TasksIcons;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
@@ -549,10 +549,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     public boolean isModifiedDocumentTrackingRequired() {
       return false;
     }
-
-    @Override
-    public void doCleanup(List<VirtualFile> files) {
-    }
   }
 
   private class MyTask extends Task {
@@ -582,7 +578,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     @NotNull
     @Override
     public Icon getIcon() {
-      return TasksIcons.Unknown;
+      return AllIcons.FileTypes.Unknown;
     }
 
     @NotNull

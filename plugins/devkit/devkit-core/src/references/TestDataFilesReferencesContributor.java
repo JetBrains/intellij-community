@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class TestDataFilesReferencesContributor extends PsiReferenceContributor {
-  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -28,6 +27,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
         registrar,
         UastPatterns.injectionHostUExpression().inCall(UastPatterns.callExpression()),
         new UastInjectionHostReferenceProvider() {
+          private final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = TestDataFile.class.getCanonicalName();
 
           @NotNull
           @Override

@@ -51,8 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.File;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -263,7 +263,7 @@ public class CoreApplicationEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
-  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+  public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
   }
 

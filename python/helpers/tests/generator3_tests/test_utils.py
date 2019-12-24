@@ -4,7 +4,7 @@ from collections import defaultdict
 from unittest import TestCase
 
 from generator3_tests import GeneratorTestCase
-from pycharm_generator_utils.util_methods import copy, delete, mkdir, copy_skeletons, cached
+from generator3.util_methods import copy, delete, mkdir, copy_skeletons, cached
 
 
 class FileSystemUtilTest(GeneratorTestCase):

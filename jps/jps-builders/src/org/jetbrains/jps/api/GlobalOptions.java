@@ -19,6 +19,9 @@ package org.jetbrains.jps.api;
  * @author Eugene Zhuravlev
  */
 public interface GlobalOptions {
+  /**
+   * @deprecated The possibility to keep intermediate cache changes in-memory was dropped, so the option has no effect.
+   */
   @Deprecated
   String USE_MEMORY_TEMP_CACHE_OPTION = "use.memory.temp.cache";
 

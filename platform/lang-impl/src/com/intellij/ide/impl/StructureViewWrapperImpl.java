@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointAdapter;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -95,7 +96,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       LOG.error("StructureViewWrapperImpl must be not created for light project.");
     }
 
-    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
+    myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component)
+      .usePassThroughInUnitTestMode();
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     // to check on the next turn
@@ -158,13 +160,24 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     PsiStructureViewFactory.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<KeyedLazyInstance<PsiStructureViewFactory>>() {
       @Override
       public void extensionListChanged() {
-        StructureViewComponent.clearStructureViewState(myProject);
-        if (myStructureView != null) {
-          myStructureView.disableStoreState();
-        }
-        rebuild();
+        clearCaches();
       }
     }, this);
+    
+    StructureViewBuilder.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<KeyedFactoryEPBean>() {
+      @Override
+      public void extensionListChanged() {
+        clearCaches();
+      }
+    }, this);
+  }
+
+  private void clearCaches() {
+    StructureViewComponent.clearStructureViewState(myProject);
+    if (myStructureView != null) {
+      myStructureView.disableStoreState();
+    }
+    rebuild();
   }
 
   private void checkUpdate() {

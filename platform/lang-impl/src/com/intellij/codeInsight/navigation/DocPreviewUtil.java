@@ -159,8 +159,12 @@ public class DocPreviewUtil {
   private static void replace(@NotNull StringBuilder text,
                               @NotNull String replaceFrom,
                               @NotNull String replaceTo,
-                              @NotNull List<TextRange> readOnlyChanges)
-  {
+                              @NotNull List<TextRange> readOnlyChanges) {
+
+    if (replaceFrom.isEmpty()) {
+      return;
+    }
+
     for (int i = text.indexOf(replaceFrom); i >= 0; i = text.indexOf(replaceFrom, i + 1)) {
       int end = i + replaceFrom.length();
       if (intersects(readOnlyChanges, i, end)) {

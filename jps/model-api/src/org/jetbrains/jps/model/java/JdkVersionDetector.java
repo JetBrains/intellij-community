@@ -39,6 +39,7 @@ public abstract class JdkVersionDetector {
     }
   }
 
+  @NotNull
   public static String formatVersionString(@NotNull JavaVersion version) {
     return "java version \"" + version + '"';
   }

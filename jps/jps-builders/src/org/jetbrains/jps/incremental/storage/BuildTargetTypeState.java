@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class BuildTargetTypeState {
   private static final int VERSION = 1;
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetTypeState");
+  private static final Logger LOG = Logger.getInstance(BuildTargetTypeState.class);
   private final Map<BuildTarget<?>, Integer> myTargetIds;
   private final List<Pair<String, Integer>> myStaleTargetIds;
   private final ConcurrentMap<BuildTarget<?>, BuildTargetConfiguration> myConfigurations;

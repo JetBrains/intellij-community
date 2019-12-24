@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -149,7 +149,7 @@ public abstract class ProjectFileNodeUpdater {
    * Usually, it is needed to find an added file in a tree right after adding.
    */
   public void updateImmediately(@NotNull Runnable onDone) {
-    invoker.runOrInvokeLater(() -> onInvokerThread(true)).onProcessed(o -> EdtExecutorService.getInstance().execute(onDone));
+    invoker.invoke(() -> onInvokerThread(true)).onProcessed(o -> EdtExecutorService.getInstance().execute(onDone));
   }
 
   /**
@@ -215,7 +215,7 @@ public abstract class ProjectFileNodeUpdater {
     }
     else {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);
-      invoker.runOrInvokeLater(() -> updateStructure(fromRoot, files));
+      invoker.invoke(() -> updateStructure(fromRoot, files));
     }
   }
 

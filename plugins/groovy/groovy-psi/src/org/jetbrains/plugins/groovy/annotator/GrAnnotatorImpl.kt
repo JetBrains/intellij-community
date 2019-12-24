@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isFake
 
 class GrAnnotatorImpl : Annotator {
 
@@ -40,7 +41,7 @@ class GrAnnotatorImpl : Annotator {
       val parent = element.parent
       if (parent is GrMethod && element == parent.nameIdentifierGroovy) {
         val illegalCharacters = illegalJvmNameSymbols.findAll(parent.name).mapTo(HashSet()) { it.value }
-        if (illegalCharacters.isNotEmpty()) {
+        if (illegalCharacters.isNotEmpty() && !parent.isFake()) {
           val chars = illegalCharacters.joinToString { "'$it'" }
           holder.createWarningAnnotation(element, GroovyBundle.message("illegal.method.name", chars))
         }

@@ -47,4 +47,10 @@ public interface PyDataclassStub extends PyCustomClassStub {
    * its default value if it is not specified or could not be evaluated.
    */
   boolean frozenValue();
+
+  /**
+   * @return value of `kw_only` (attrs) parameter or
+   * its default value if it is not specified or could not be evaluated.
+   */
+  boolean kwOnly();
 }

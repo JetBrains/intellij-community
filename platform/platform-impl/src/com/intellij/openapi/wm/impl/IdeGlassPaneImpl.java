@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -90,7 +89,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private boolean dispatchMouseEvent(@NotNull MouseEvent me) {
     JRootPane eventRootPane = myRootPane;
 
-    Window eventWindow = UIUtil.getWindow(me.getComponent());
+    Window eventWindow = ComponentUtil.getWindow(me.getComponent());
 
     if (isContextMenu(eventWindow)) return false;
 
@@ -255,7 +254,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   private boolean preprocess(final MouseEvent e, final boolean motion, JRootPane eventRootPane) {
     try {
-      if (UIUtil.getWindow(this) != UIUtil.getWindow(e.getComponent())) return false;
+      if (ComponentUtil.getWindow(this) != ComponentUtil.getWindow(e.getComponent())) return false;
 
       final MouseEvent event = MouseEventAdapter.convert(e, eventRootPane);
       if (event.isAltDown() && SwingUtilities.isLeftMouseButton(event) && event.getID() == MouseEvent.MOUSE_PRESSED) {
@@ -442,7 +441,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     _addListener(listener, parent);
   }
 
-
   @Override
   public void addMouseMotionPreprocessor(@NotNull final MouseMotionListener listener, @NotNull final Disposable parent) {
     _addListener(listener, parent);
@@ -451,7 +449,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private void _addListener(@NotNull EventListener listener, @NotNull Disposable parent) {
     if (!myMouseListeners.contains(listener)) {
       Disposable listenerDisposable = myMouseListeners.add(listener, parent);
-      Disposer.register(listenerDisposable, () -> UIUtil.invokeLaterIfNeeded(() -> removeListener(listener)));
+      Disposer.register(listenerDisposable, () -> {
+        UIUtil.invokeLaterIfNeeded(() -> removeListener(listener));
+      });
       updateSortedList();
     }
     activateIfNeeded();

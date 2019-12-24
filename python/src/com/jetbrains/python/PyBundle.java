@@ -15,48 +15,19 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.CommonBundle;
-import com.intellij.reference.SoftReference;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.util.ResourceBundle;
+public class PyBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "com.jetbrains.python.PyBundle";
+  public static final PyBundle INSTANCE = new PyBundle();
 
-// A copy of Ruby's.
+  private PyBundle() { super(BUNDLE); }
 
-/**
- * TODO: Copy/paste  with Django and PyBDD bundles
- * Resource bundle access.
- */
-public class PyBundle {
-
+  @NotNull
   public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  @Nullable
-  public static String messageOfNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                        @NotNull Object... params) {
-    return CommonBundle.messageOfNull(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
-  @NonNls
-  private static final String BUNDLE = "com.jetbrains.python.PyBundle";
-
-  private PyBundle() {
-  }
-
-  // Cached loading
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
+    return INSTANCE.getMessage(key, params);
   }
 }

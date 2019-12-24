@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,8 @@ public class SMTRunnerRunDashboardCustomizer extends RunDashboardCustomizer {
     private void update() {
       AbstractTreeNode<?> node = SoftReference.dereference(myNodeReference);
       if (node != null) {
-        node.update();
+        //noinspection ConstantConditions
+        AppUIUtil.invokeOnEdt(node::update, node.getProject().getDisposed());
       }
     }
   }

@@ -1,5 +1,5 @@
 PsiJavaFile:InstanceOf1.java
-  PsiInstanceofExpression:a instanceof
+  PsiInstanceofExpression
     PsiReferenceExpression:a
       PsiReferenceParameterList
         <empty list>

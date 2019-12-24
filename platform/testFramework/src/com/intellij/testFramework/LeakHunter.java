@@ -113,20 +113,23 @@ public class LeakHunter {
     return () -> {
       ClassLoader classLoader = LeakHunter.class.getClassLoader();
       // inspect static fields of all loaded classes
-      Vector allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
+      Vector<?> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
 
       // Remove expired invocations, so they are not used as object roots.
       LaterInvocator.purgeExpiredItems();
 
       Map<Object, String> result = new IdentityHashMap<>();
-      if (ApplicationManager.getApplication() != null) {
-        result.put(ApplicationManager.getApplication(), "ApplicationManager.getApplication()");
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        result.put(application, "ApplicationManager.getApplication()");
       }
       result.put(Disposer.getTree(), "Disposer.getTree()");
       result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
       result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");
       result.put(ThreadTracker.getThreads().values(), "all live threads");
-      result.put(allLoadedClasses, "all loaded classes statics");
+      if (allLoadedClasses != null) {
+        result.put(allLoadedClasses, "all loaded classes statics");
+      }
       return result;
     };
   }

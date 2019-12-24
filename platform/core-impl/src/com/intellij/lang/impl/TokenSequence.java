@@ -23,7 +23,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 class TokenSequence {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.impl.TokenSequence");
+  private static final Logger LOG = Logger.getInstance(TokenSequence.class);
   
   final int[] lexStarts;
   final IElementType[] lexTypes;

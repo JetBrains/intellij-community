@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -22,6 +21,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ import java.util.Map;
   storages = @Storage(value = "codeStyles", stateSplitter = ProjectCodeStyleSettingsManager.StateSplitter.class)
 )
 public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
-  private static final Logger LOG = Logger.getInstance("#" + ProjectCodeStyleSettingsManager.class);
+  private static final Logger LOG = Logger.getInstance(ProjectCodeStyleSettingsManager.class);
 
   private static final String MAIN_PROJECT_CODE_STYLE_NAME = "Project";
   private static final String PROJECT_CODE_STYLE_CONFIG_FILE_NAME = "codeStyleConfig";
@@ -45,6 +46,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   public ProjectCodeStyleSettingsManager(Project project) {
     myProject = project;
     setMainProjectCodeStyle(null);
+    registerExtensionPointListeners(project);
   }
 
   @Override
@@ -74,11 +76,11 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   }
 
   private static void saveProjectAndNotify(@NotNull Project project) {
-    TransactionGuard.submitTransaction(project, () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       project.save();
       Notification notification = new CodeStyleMigrationNotification(project.getName());
       notification.notify(project);
-    });
+    }, project.getDisposed());
   }
 
   @Override
@@ -189,5 +191,10 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
     protected String getSubStateFileName(@NotNull Element element) {
       return element.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
     }
+  }
+
+  @Override
+  protected Collection<CodeStyleSettings> enumSettings() {
+    return Collections.unmodifiableCollection(mySettingsMap.values());
   }
 }

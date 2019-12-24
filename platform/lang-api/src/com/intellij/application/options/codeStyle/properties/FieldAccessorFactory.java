@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 class FieldAccessorFactory {
 
@@ -95,7 +96,9 @@ class FieldAccessorFactory {
   }
 
   private boolean mayHaveAccessor() {
-    return myField.getType().getCanonicalName() != null &&
+    final int modifiers = myField.getModifiers();
+    return !Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers) &&
+           myField.getType().getCanonicalName() != null &&
            myField.getAnnotation(Deprecated.class) == null;
   }
 

@@ -46,7 +46,7 @@ import java.util.List;
 
 public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
 
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
+  protected static final Logger LOG = Logger.getInstance(ProjectViewNode.class);
 
   private final ViewSettings mySettings;
   private boolean myValidating;

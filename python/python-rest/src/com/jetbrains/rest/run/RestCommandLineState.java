@@ -10,7 +10,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,7 +67,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
       processHandler.addProcessListener(new ProcessAdapter() {
                                             @Override
                                             public void processTerminated(@NotNull ProcessEvent event) {
-                                              TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), afterTask);
+                                              ApplicationManager.getApplication().invokeLater(afterTask);
                                             }});
     }
     return processHandler;

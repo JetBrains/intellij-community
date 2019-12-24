@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class ChangesViewContentEP implements PluginAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP");
+  private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME = new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 

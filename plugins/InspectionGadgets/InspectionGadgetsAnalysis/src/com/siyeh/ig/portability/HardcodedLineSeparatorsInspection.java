@@ -32,12 +32,6 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("hardcoded.line.separator.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "HardcodedLineSeparator";
   }

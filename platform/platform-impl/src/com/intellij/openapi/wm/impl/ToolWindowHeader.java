@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -15,11 +14,13 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.PanelUI;
@@ -33,10 +34,11 @@ import java.util.function.Supplier;
 /**
  * @author pegov
  */
-public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
+public abstract class ToolWindowHeader extends JPanel implements UISettingsListener, DataProvider {
   @NotNull private final Supplier<? extends ActionGroup> myGearProducer;
 
-  private ToolWindow myToolWindow;
+  @NotNull
+  private final ToolWindow myToolWindow;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
@@ -48,7 +50,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private ActionToolbar myToolbarWest;
   private final JPanel myWestPanel;
 
-  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Supplier<? extends ActionGroup> gearProducer) {
+  ToolWindowHeader(@NotNull ToolWindowImpl toolWindow, @NotNull Supplier<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
 
     AccessibleContextUtil.setName(this, "Tool Window Header");
@@ -63,9 +65,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
-    myToolbar = ActionManager.getInstance().createActionToolbar(
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction tabListAction = actionManager.getAction("TabList");
+    myToolbar = actionManager.createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
-      new DefaultActionGroup(myActionGroup, new ShowOptionsAction(), new HideAction()),
+      new DefaultActionGroup(tabListAction, myActionGroup, new ShowOptionsAction(), new HideAction()),
       true);
     myToolbar.setTargetComponent(this);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -115,8 +119,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        ToolWindowManagerImpl mgr = toolWindow.getToolWindowManager();
-        mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
+        ToolWindowManagerImpl manager = toolWindow.getToolWindowManager();
+        manager.setMaximized(myToolWindow, !manager.isMaximized(myToolWindow));
         return true;
       }
     }.installOn(myWestPanel);
@@ -129,6 +133,15 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         SwingUtilities.invokeLater(runnable);
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (MorePopupAware.KEY.is(dataId) && myToolWindow instanceof ToolWindowImpl) {
+      return ((ToolWindowImpl)myToolWindow).getContentUI().getData(dataId);
+    }
+    return null;
   }
 
   private void initWestToolBar(JPanel westPanel) {
@@ -148,14 +161,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     clearCaches();
-  }
-
-  @Override
-  public void dispose() {
-    removeAll();
-    myToolWindow = null;
   }
 
   void setTabActions(@NotNull AnAction[] actions) {
@@ -197,20 +204,20 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     Image image;
     if (isActive()) {
       if (myActiveImage == null || /*myActiveImage.getHeight() != r.height ||*/ type != myImageType) {
-        myActiveImage = drawToBuffer(g2d, true, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myActiveImage = drawToBuffer(g2d, true, r.height, type == ToolWindowType.FLOATING);
       }
 
       image = myActiveImage;
     }
     else {
       if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
-        myImage = drawToBuffer(g2d, false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
+        myImage = drawToBuffer(g2d, false, r.height, type == ToolWindowType.FLOATING);
       }
 
       image = myImage;
     }
 
-    myImageType = myToolWindow.getType();
+    myImageType = type;
 
     Rectangle clipBounds = clip.getBounds();
     for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x += 150) {
@@ -290,7 +297,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
   }
 
-  private class HideAction extends DumbAwareAction {
+  private final class HideAction extends DumbAwareAction {
     HideAction() {
       ActionUtil.copyFrom(this, InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID);
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
@@ -303,8 +310,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
-      event.getPresentation().setEnabled(myToolWindow != null && myToolWindow.isVisible());
+    public void update(@NotNull AnActionEvent event) {
+      event.getPresentation().setEnabled(myToolWindow.isVisible());
     }
   }
 }

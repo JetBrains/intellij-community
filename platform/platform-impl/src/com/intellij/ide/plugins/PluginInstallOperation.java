@@ -89,7 +89,7 @@ public class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    List<String> hosts = ContainerUtil.newSmartList();
+    List<String> hosts = new SmartList<>();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
     Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
@@ -140,7 +140,7 @@ public class PluginInstallOperation {
   }
 
 
-  private boolean prepareToInstall(PluginNode pluginNode, List<? extends PluginId> pluginIds) throws IOException {
+  private boolean prepareToInstall(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
     myDependant.add(pluginNode);
 
     // check for dependent plugins at first.
@@ -237,8 +237,8 @@ public class PluginInstallOperation {
 
     PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
-    if (downloader.prepareToInstall(myIndicator)) {
-      IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
+    IdeaPluginDescriptorImpl descriptor = downloader.prepareToInstallAndLoadDescriptor(myIndicator);
+    if (descriptor != null) {
       if (myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();

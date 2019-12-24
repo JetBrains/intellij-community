@@ -16,7 +16,7 @@ public class PublicConstructorInNonPublicClassInspectionTest extends LightJavaCo
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return JAVA_14;
   }
 
   private void doTest() {

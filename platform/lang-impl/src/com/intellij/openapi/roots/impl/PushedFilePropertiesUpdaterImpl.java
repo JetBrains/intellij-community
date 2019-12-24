@@ -5,6 +5,8 @@ import com.intellij.ProjectTopics;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -16,9 +18,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -38,11 +40,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
+  private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
 
   private final Project myProject;
 
-  private final NotNullLazyValue<List<FilePropertyPusher<?>>> myFilePushers = NotNullLazyValue.createValue(() -> {
+  private final ClearableLazyValue<List<FilePropertyPusher<?>>> myFilePushers = ClearableLazyValue.create(() -> {
     //noinspection CodeBlock2Expr
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
   });
@@ -55,11 +57,31 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace(new Throwable("Processing roots changed event (caused by file type change: " + event.isCausedByFileTypesChange() + ")"));
+        }
         for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
           pusher.afterRootsChanged(project);
         }
       }
     });
+    FilePropertyPusher.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FilePropertyPusher<?>>() {
+      @Override
+      public void extensionAdded(@NotNull FilePropertyPusher<?> pusher, @NotNull PluginDescriptor pluginDescriptor) {
+        queueFullUpdate();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FilePropertyPusher<?> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myFilePushers.drop();
+      }
+    }, project);
+  }
+
+  private void queueFullUpdate() {
+    myFilePushers.drop();
+    myTasks.clear();
+    queueTasks(Arrays.asList(this::initializeProperties, () -> doPushAll(FilePropertyPusher.EP_NAME.getExtensionList())));
   }
 
   @ApiStatus.Internal
@@ -184,6 +206,19 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         DumbService.getInstance(myProject).cancelTask(task);
       }
     });
+    FilePropertyPusher.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FilePropertyPusher<?>>() {
+      @Override
+      public void extensionAdded(@NotNull FilePropertyPusher<?> pusher, @NotNull PluginDescriptor pluginDescriptor) {
+        DumbService.getInstance(myProject).cancelTask(task);
+        queueFullUpdate();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FilePropertyPusher<?> pusher, @NotNull PluginDescriptor pluginDescriptor) {
+        DumbService.getInstance(myProject).cancelTask(task);
+        queueFullUpdate();
+      }
+    }, task);
     DumbService.getInstance(myProject).queueTask(task);
   }
 
@@ -314,13 +349,21 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     for (Future<?> result : results) {
       try {
         result.get();
-      } catch (Exception ex) {
+      }
+      catch (InterruptedException ex) {
+        throw new ProcessCanceledException(ex);
+      }
+      catch (Exception ex) {
         LOG.error(ex);
       }
     }
   }
 
   private void applyPushersToFile(final VirtualFile fileOrDir, @NotNull List<? extends FilePropertyPusher<?>> pushers, final Object[] moduleValues) {
+    if (fileOrDir.isDirectory()) {
+      fileOrDir.getChildren(); // outside read action to avoid freezes
+    }
+
     ApplicationManager.getApplication().runReadAction(() -> {
       ProgressManager.checkCanceled();
       if (!fileOrDir.isValid()) return;
@@ -380,12 +423,9 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private static void reloadPsi(final VirtualFile file, final Project project) {
     final FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
     if (fileManager.findCachedViewProvider(file) != null) {
-      Runnable runnable = () -> WriteAction.run(() -> fileManager.forceReload(file));
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runnable.run();
-      } else {
-        TransactionGuard.submitTransaction(project, runnable);
-      }
+      GuiUtils.invokeLaterIfNeeded(() -> WriteAction.run(() -> fileManager.forceReload(file)),
+                                   ModalityState.defaultModalityState(),
+                                   project.getDisposed());
     }
   }
 }

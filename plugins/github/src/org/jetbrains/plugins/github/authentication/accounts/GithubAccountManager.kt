@@ -20,10 +20,10 @@ import kotlin.properties.Delegates.observable
   Storage(value = "github.xml"),
   Storage(value = "github_settings.xml", deprecated = true)
 ])
-internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : PersistentStateComponent<Array<GithubAccount>> {
+internal class GithubAccountManager : PersistentStateComponent<Array<GithubAccount>> {
   var accounts: Set<GithubAccount> by observable(setOf()) { _, oldValue, newValue ->
     oldValue.filter { it !in newValue }.forEach(this::accountRemoved)
-    LOG.debug("Account list changed to: " + newValue.toString())
+    LOG.debug("Account list changed to: $newValue")
   }
 
   init {
@@ -49,7 +49,7 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
    * Add/update/remove Github OAuth token from application
    */
   fun updateAccountToken(account: GithubAccount, token: String?) {
-    passwordSafe.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
+    PasswordSafe.instance.set(createCredentialAttributes(account.id), token?.let { createCredentials(account.id, it) })
     LOG.debug((if (token == null) "Cleared" else "Updated") + " OAuth token for account: $account")
     ApplicationManager.getApplication()
       .messageBus
@@ -59,7 +59,7 @@ internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : Pe
   /**
    * Retrieve OAuth token for account from password safe
    */
-  fun getTokenForAccount(account: GithubAccount): String? = passwordSafe.get(createCredentialAttributes(account.id))?.getPasswordAsString()
+  fun getTokenForAccount(account: GithubAccount): String? = PasswordSafe.instance.get(createCredentialAttributes(account.id))?.getPasswordAsString()
 
   override fun getState() = accounts.toTypedArray()
 

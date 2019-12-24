@@ -18,30 +18,25 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
+    scrambleMainJar = false
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = ["intellij.platform.main"]
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
+    productLayout.buildAllCompatiblePlugins = false
     productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-      JavaPluginLayout.javaPlugin(false),
+      JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
-
 
     def commonCustomizer = productLayout.platformLayoutCustomizer
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       commonCustomizer.accept(layout)
       layout.customize {
-        for (String name : JAVA_IDE_API_MODULES) {
-          withModule(name)
-        }
-        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
-          withModule(name)
-        }
         withModule("intellij.platform.duplicates.analysis")
         withModule("intellij.platform.structuralSearch")
       }

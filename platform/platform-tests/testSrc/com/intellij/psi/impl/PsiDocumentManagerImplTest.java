@@ -6,7 +6,6 @@ import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -26,10 +25,6 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -43,14 +38,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
@@ -63,7 +57,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -75,13 +68,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
   private PsiDocumentManagerImpl getPsiDocumentManager() {
     return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    DocumentCommitThread.getInstance();
-    UIUtil.dispatchAllInvocationEvents();
   }
 
   @Override
@@ -241,7 +227,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       });
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
     }
   }
 
@@ -258,7 +244,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(getPsiDocumentManager().isCommitted(document));
       semaphore.up();
     });
-    waitAndPump(semaphore, TIMEOUT);
+    waitAndPump(semaphore);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(0, "class X {}"));
@@ -268,7 +254,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue(getPsiDocumentManager().isCommitted(document));
       semaphore.up();
     });
-    waitAndPump(semaphore, TIMEOUT);
+    waitAndPump(semaphore);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     final AtomicInteger count = new AtomicInteger();
@@ -337,8 +323,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
-  private static void waitAndPump(Semaphore semaphore, int timeoutMs) {
-    TestTimeOut t = TestTimeOut.setTimeout(timeoutMs, TimeUnit.MILLISECONDS);
+  private static void waitAndPump(Semaphore semaphore) {
+    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
     while (!t.timedOut()) {
       if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
@@ -386,22 +372,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
     }
     finally {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject, true);
+      ProjectManagerEx.getInstanceEx().forceCloseProject(alienProject);
     }
-  }
-
-  public void testCommitThreadGetSuspendedDuringWriteActions() {
-    final DocumentCommitThread commitThread = DocumentCommitThread.getInstance();
-    assertTrue(commitThread.isEnabled());
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      if (commitThread.isEnabled()) {
-        System.err.println("commitThread: " + commitThread + ";\n" + ThreadDumper.dumpThreadsToString());
-      }
-      assertFalse(commitThread.isEnabled());
-      WriteCommandAction.runWriteCommandAction(null, () -> assertFalse(commitThread.isEnabled()));
-      assertFalse(commitThread.isEnabled());
-    });
-    assertTrue(commitThread.isEnabled());
   }
 
   public void testFileChangesToText() throws IOException {
@@ -567,22 +539,22 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 
-  public void testBackgroundCommitInDialogInTransaction() throws IOException {
+  public void testDoNotAutoCommitIfModalDialogSuddenlyAppears() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
     PsiFile psiFile = findFile(vFile);
     Document document = getDocument(psiFile);
 
-    TransactionGuard.submitTransaction(myProject, () -> {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        document.insertString(0, "x");
-        LaterInvocator.enterModal(new Object());
-        assertFalse(getPsiDocumentManager().isCommitted(document));
-      });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "a"));
+    assertFalse(getPsiDocumentManager().isCommitted(document));
 
-      waitForCommits();
-      assertTrue(getPsiDocumentManager().isCommitted(document));
-    });
-    UIUtil.dispatchAllInvocationEvents();
+    LaterInvocator.enterModal(new Object());
+
+    waitForCommits();
+    assertFalse(getPsiDocumentManager().isCommitted(document));
+
+    LaterInvocator.leaveAllModals();
+    waitForCommits();
+    assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
@@ -815,31 +787,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertEquals(PlainTextLanguage.INSTANCE, file2.getLanguage());
   }
 
-  public void testAsyncCommitHappensInProgressStartedFromTransaction() {
-    Document document = createDocument();
-
-    Semaphore semaphore = new Semaphore(1);
-    TransactionGuard.submitTransaction(getTestRootDisposable(), () ->
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        document.insertString(0, "x");
-
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, "Title", false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            getPsiDocumentManager().commitAndRunReadAction(semaphore::up);
-          }
-        }, new ProgressWindow(false, myProject));
-      }));
-    int iteration = 0;
-    while (!semaphore.waitFor(10)) {
-      UIUtil.dispatchAllInvocationEvents();
-      if (++iteration > 3000) {
-        printThreadDump();
-        fail("Couldn't wait for commit");
-      }
-    }
-  }
-
   public void testNoLeaksAfterPCEInListener() {
     Document document = createDocument();
     document.addDocumentListener(new PrioritizedDocumentListener() {
@@ -886,44 +833,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     public Class getExpectedExceptionClass() {
       return FileTooBigException.class;
     }
-  }
-
-  public void testRestartingCommitWithDifferentTransactionIdShouldFinish() throws IOException {
-    VirtualFile vFile = getVirtualFile(createTempFile("a.java", ""));
-    PsiFile psiFile = findFile(vFile);
-    assertEquals(StdFileTypes.JAVA, psiFile.getFileType());
-    final Document document = getDocument(psiFile);
-    Random random = new Random();
-
-    for (int i=0; i<100;i++) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        @Language(value = "JAVA", prefix = "class c {", suffix = "}")
-        String body = "@NotNull\n" +
-                   "  private static String getTooLargeContent() {\n" +
-                   "    return StringUtil.repeat(\"a\", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);\n" +
-                   "  }\n" +
-                   "private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {\n" +
-                   "    @Override\n" +
-                   "    public Class getExpectedExceptionClass() {\n" +
-                   "      return FileTooBigException.class;\n" +
-                   "    }\n" +
-                   "  }";
-        document.setText("class c {" + StringUtil.repeat(body, 10000) + "}");
-      });
-
-      TimeoutUtil.sleep(random.nextInt(50));
-
-      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-        boolean[] calledPerformWhenAllCommitted = new boolean[1];
-        getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
-
-        // the old commit should be either canceled, or eventually end by itself
-        waitForCommits();
-        assertTrue(calledPerformWhenAllCommitted[0]);
-      });
-    }
-    ApplicationManager.getApplication().runWriteAction(() -> document.setText(""));
-    waitForCommits();
   }
 
   public void testDefaultProjectDocumentsAreAutoCommitted() throws IOException {

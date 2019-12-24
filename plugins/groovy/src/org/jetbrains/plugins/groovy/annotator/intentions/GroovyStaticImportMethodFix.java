@@ -50,7 +50,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GroovyStaticImportMethodFix extends Intention {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.GroovyStaticImportMethodFix");
+  private static final Logger LOG = Logger.getInstance(GroovyStaticImportMethodFix.class);
   private final SmartPsiElementPointer<GrMethodCall> myMethodCall;
   private List<PsiMethod> myCandidates = null;
 

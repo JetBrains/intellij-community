@@ -29,13 +29,6 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "import.from.same.package.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "import.from.same.package.problem.descriptor");

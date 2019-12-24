@@ -17,6 +17,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -274,6 +275,9 @@ public class JavadocHighlightUtil {
           PsiReference reference = value.getReference();
           if (reference != null) {
             String paramName = reference.getCanonicalText();
+            if(((PsiDocParamRef)value).isTypeParamRef()){
+              paramName = "<" + paramName + ">";
+            }
             documentedParamNames = set(documentedParamNames);
             if (documentedParamNames.contains(paramName)) {
               holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.duplicate.param", paramName), null);
@@ -313,7 +317,7 @@ public class JavadocHighlightUtil {
   static void checkForBadCharacters(@NotNull PsiDocComment docComment, @NotNull ProblemHolder holder) {
     docComment.accept(new PsiRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         ASTNode node = element.getNode();
         if (node != null && node.getElementType() == JavaDocTokenType.DOC_COMMENT_BAD_CHARACTER) {
@@ -462,7 +466,7 @@ public class JavadocHighlightUtil {
   }
 
   private static <T> List<T> list(List<T> list) {
-    return list != null ? list : ContainerUtil.newSmartList();
+    return list != null ? list : new SmartList<>();
   }
 
   private static boolean emptyTag(PsiDocTag tag) {

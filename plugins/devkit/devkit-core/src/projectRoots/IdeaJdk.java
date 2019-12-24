@@ -62,7 +62,7 @@ import java.util.zip.ZipFile;
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
+  private static final Logger LOG = Logger.getInstance(IdeaJdk.class);
   @NonNls private static final String LIB_DIR_NAME = "lib";
   @NonNls private static final String SRC_DIR_NAME = "src";
   @NonNls private static final String PLUGINS_DIR = "plugins";

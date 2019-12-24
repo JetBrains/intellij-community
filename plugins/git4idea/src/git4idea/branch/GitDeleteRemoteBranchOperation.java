@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.util.containers.MultiMap;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -41,49 +42,57 @@ import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.CANC
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELETE_WITH_TRACKING;
 
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
-  private final String myBranchName;
+  private final List<String> myBranchNames;
 
   GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
-                                        @NotNull GitBranchUiHandler handler, @NotNull List<? extends GitRepository> repositories,
-                                        @NotNull String name) {
+                                 @NotNull GitBranchUiHandler handler, @NotNull List<? extends GitRepository> repositories,
+                                 @NotNull List<String> names) {
     super(project, git, handler, repositories);
-    myBranchName = name;
+    myBranchNames = names;
   }
 
   @Override
   protected void execute() {
     Collection<GitRepository> repositories = getRepositories();
-    Collection<String> commonTrackingBranches = getCommonTrackingBranches(myBranchName, repositories);
+    Collection<String> allTrackingBranches = new ArrayList<>();
+    MultiMap<String, String> branchToCommonTrackingBranches = new MultiMap<>();
+    Ref<DeleteRemoteBranchDecision> decisionRef = Ref.create();
 
-    // don't propose to remove current branch even if it tracks the remote branch
-    for (GitRepository repository : repositories) {
-      String currentBranch = repository.getCurrentBranchName();
-      if (currentBranch != null) {
-        commonTrackingBranches.remove(currentBranch);
+    for (String branchName : myBranchNames) {
+      Collection<String> commonTrackingBranches = getCommonTrackingBranches(branchName, repositories);
+      // don't propose to remove current branch even if it tracks the remote branch
+      for (GitRepository repository : repositories) {
+        String currentBranch = repository.getCurrentBranchName();
+        if (currentBranch != null) {
+          commonTrackingBranches.remove(currentBranch);
+        }
       }
+      allTrackingBranches.addAll(commonTrackingBranches);
+      branchToCommonTrackingBranches.put(branchName, commonTrackingBranches);
     }
 
-    Ref<DeleteRemoteBranchDecision> decision = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> decision.set(
-      myUiHandler.confirmRemoteBranchDeletion(myBranchName, commonTrackingBranches, repositories)));
+    ApplicationManager.getApplication().invokeAndWait(() -> decisionRef.set(
+      myUiHandler.confirmRemoteBranchDeletion(myBranchNames, allTrackingBranches, repositories)));
+    DeleteRemoteBranchDecision decision = decisionRef.get();
+    if (decision == CANCEL) return;
 
-    if (decision.get() != CANCEL) {
-      boolean deletedSuccessfully = doDeleteRemote(myBranchName, repositories);
+    for (String branchName : myBranchNames) {
+      boolean deletedSuccessfully = doDeleteRemote(branchName, repositories);
       if (deletedSuccessfully) {
         Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
-        if (decision.get() == DELETE_WITH_TRACKING) {
-          for (String branch : commonTrackingBranches) {
+        if (decision == DELETE_WITH_TRACKING) {
+          for (String branch : branchToCommonTrackingBranches.get(branchName)) {
             getIndicator().setText("Deleting " + branch);
             new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
               @Override
-              protected void notifySuccess(@NotNull String message) {
+              protected void notifySuccess() {
                 // do nothing - will display a combo notification for all deleted branches below
                 successfullyDeletedLocalBranches.add(branch);
               }
             }.execute();
           }
         }
-        notifySuccessfulDeletion(myBranchName, successfullyDeletedLocalBranches);
+        notifySuccessfulDeletion(branchName, successfullyDeletedLocalBranches);
       }
     }
   }

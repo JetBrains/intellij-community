@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public final class ExtensionsAreaImpl implements ExtensionsArea {
   private static final Logger LOG = Logger.getInstance(ExtensionsAreaImpl.class);
   public static final String ATTRIBUTE_AREA = "area";
@@ -53,17 +53,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull List<Element> extensionPointElements,
-                                      @NotNull ComponentManager componentManager) {
+  @TestOnly
+  public void registerExtensionPoints(@NotNull PluginDescriptor pluginDescriptor, @NotNull List<? extends Element> extensionPointElements) {
     for (Element element : extensionPointElements) {
-      registerExtensionPoint(pluginDescriptor, element, componentManager);
+      registerExtensionPoint(pluginDescriptor, element);
     }
   }
 
-  private void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor,
-                                      @NotNull Element extensionPointElement,
-                                      @NotNull ComponentManager componentManager) {
+  private void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement) {
     String pointName = getExtensionPointName(extensionPointElement, pluginDescriptor);
 
     String beanClassName = extensionPointElement.getAttributeValue("beanClass");
@@ -77,19 +74,12 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     }
 
     boolean dynamic = Boolean.parseBoolean(extensionPointElement.getAttributeValue("dynamic"));
-
-    ExtensionPointImpl<Object> point;
-    if (interfaceClassName == null) {
-      point = new BeanExtensionPoint<>(pointName, beanClassName, componentManager, pluginDescriptor, dynamic);
-    }
-    else {
-      point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, componentManager, pluginDescriptor, dynamic);
-    }
-    registerExtensionPoint(point);
+    String className = interfaceClassName == null ? beanClassName : interfaceClassName;
+    doRegisterExtensionPoint(pointName, className, pluginDescriptor, interfaceClassName != null, dynamic);
   }
 
   @NotNull
-  public String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
+  private String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginDescriptor pluginDescriptor) {
     String pointName = extensionPointElement.getAttributeValue("qualifiedName");
     if (pointName == null) {
       final String name = extensionPointElement.getAttributeValue("name");
@@ -112,13 +102,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void registerExtension(@NotNull ExtensionPoint<?> extensionPoint, @NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement) {
     ((ExtensionPointImpl<?>)extensionPoint).createAndRegisterAdapter(extensionElement, pluginDescriptor, myComponentManager);
-  }
-
-  // don't want to expose clearCache directly
-  static void extensionsRegistered(@NotNull ExtensionPointImpl<?>[] points) {
-    for (ExtensionPointImpl<?> point : points) {
-      point.clearCache();
-    }
   }
 
   @NotNull
@@ -145,7 +128,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public void registerExtensionPoint(@NotNull BaseExtensionPointName extensionPoint,
+  public void registerExtensionPoint(@NotNull BaseExtensionPointName<?> extensionPoint,
                                      @NotNull String extensionPointBeanClass,
                                      @NotNull ExtensionPoint.Kind kind,
                                      @NotNull Disposable parentDisposable) {
@@ -154,29 +137,31 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     Disposer.register(parentDisposable, () -> unregisterExtensionPoint(extensionPointName));
   }
 
+  @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
-    PluginDescriptor pluginDescriptor = new UndefinedPluginDescriptor();
-    ExtensionPointImpl<Object> point;
-    if (kind == ExtensionPoint.Kind.INTERFACE) {
-      point = new InterfaceExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
-    }
-    else {
-      point = new BeanExtensionPoint<>(extensionPointName, extensionPointBeanClass, myComponentManager, pluginDescriptor, false);
-    }
-    registerExtensionPoint(point);
+    IdeaPluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, false);
   }
 
   @TestOnly
   public <T> ExtensionPointImpl<T> registerPoint(@NotNull String name,
                                                  @NotNull Class<T> extensionClass,
                                                  @NotNull PluginDescriptor pluginDescriptor) {
+    return doRegisterExtensionPoint(name, extensionClass.getName(), pluginDescriptor, extensionClass.isInterface() || (extensionClass.getModifiers() & Modifier.ABSTRACT) != 0,
+                                    false);
+  }
+
+  @NotNull
+  private <T> ExtensionPointImpl<T> doRegisterExtensionPoint(@NotNull String name, @NotNull String extensionClass,
+                                                             @NotNull PluginDescriptor pluginDescriptor, boolean isInterface, boolean dynamic) {
     ExtensionPointImpl<T> point;
-    if (extensionClass.isInterface() || (extensionClass.getModifiers() & Modifier.ABSTRACT) != 0) {
-      point = new InterfaceExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
+    if (isInterface) {
+      point = new InterfaceExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
     }
     else {
-      point = new BeanExtensionPoint<>(name, extensionClass.getName(), myComponentManager, pluginDescriptor, false);
+      point = new BeanExtensionPoint<>(name, extensionClass, pluginDescriptor, dynamic);
     }
+    point.setComponentManager(myComponentManager);
     registerExtensionPoint(point);
     return point;
   }
@@ -185,18 +170,10 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
    * To register extensions for {@link com.intellij.openapi.util.KeyedExtensionCollector} for test purposes, where extension instance can be KeyedLazyInstance and not a real bean class,
    * because often it is not possible to use one (for example, {@link com.intellij.lang.LanguageExtensionPoint}).
    */
-  @SuppressWarnings("UnusedReturnValue")
   @TestOnly
   public <T> ExtensionPointImpl<T> registerFakeBeanPoint(@NotNull String name, @NotNull PluginDescriptor pluginDescriptor) {
     // any object name can be used, because EP must not create any instance
-    ExtensionPointImpl<T> point = new BeanExtensionPoint<>(name, Object.class.getName(), myComponentManager, pluginDescriptor, false);
-    registerExtensionPoint(point);
-    return point;
-  }
-
-  @Nullable
-  private static PluginId id(@NotNull PluginDescriptor descriptor) {
-    return descriptor instanceof UndefinedPluginDescriptor ? null : descriptor.getPluginId();
+    return doRegisterExtensionPoint(name, Object.class.getName(), pluginDescriptor, false, false);
   }
 
   private void checkThatPointNotDuplicated(@NotNull String pointName, @NotNull PluginDescriptor pluginDescriptor) {
@@ -204,8 +181,8 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return;
     }
 
-    PluginId id1 = id(getExtensionPoint(pointName).getDescriptor());
-    PluginId id2 = id(pluginDescriptor);
+    PluginId id1 = getExtensionPoint(pointName).getDescriptor().getPluginId();
+    PluginId id2 = pluginDescriptor.getPluginId();
     String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, myEPTraces.get(pointName));
@@ -219,6 +196,27 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, point);
     if (DEBUG_REGISTRATION) {
       myEPTraces.put(name, new Throwable("Original registration for " + name));
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerExtensionPoints(@NotNull List<? extends ExtensionPointImpl<?>> points, boolean clonePoint) {
+    ComponentManager componentManager = myComponentManager;
+    Map<String, ExtensionPointImpl<?>> map = myExtensionPoints;
+    for (ExtensionPointImpl<?> point : points) {
+      if (clonePoint) {
+        point = point.cloneFor(componentManager);
+      }
+      else {
+        point.setComponentManager(componentManager);
+      }
+
+      ExtensionPointImpl<?> old = map.put(point.getName(), point);
+      if (old != null) {
+        map.put(point.getName(), old);
+        throw myComponentManager.createError("Duplicate registration for EP '" + point.getName() + "': first in " + old.getDescriptor() +
+                                             ", second in " + point.getDescriptor(), point.getDescriptor().getPluginId());
+      }
     }
   }
 
@@ -236,7 +234,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   @ApiStatus.Internal
   public boolean registerExtensions(@NotNull String pointName,
                                     @NotNull List<? extends Element> extensions,
-                                    @NotNull PluginDescriptor pluginDescriptor,
+                                    @NotNull IdeaPluginDescriptor pluginDescriptor,
                                     @NotNull ComponentManager componentManager,
                                     boolean notifyListeners)  {
     ExtensionPointImpl<?> point = myExtensionPoints.get(pointName);
@@ -244,9 +242,6 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
       return false;
     }
 
-    if (point.myComponentManager != componentManager) {
-      LOG.error("The same point on different levels (pointName=" + pointName +  ")");
-    }
     point.registerExtensions(extensions, pluginDescriptor, componentManager, notifyListeners);
     return true;
   }

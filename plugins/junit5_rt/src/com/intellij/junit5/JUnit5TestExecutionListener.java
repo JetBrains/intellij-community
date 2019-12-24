@@ -50,7 +50,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private String myRootName;
   private boolean mySuccessful = true;
   private String myIdSuffix = "";
-  private final Set<TestIdentifier> myActiveRoots = new HashSet<>();
+  private final Set<TestIdentifier> myActiveRoots = new LinkedHashSet<>();
   private boolean mySendTree;
 
   public JUnit5TestExecutionListener() {

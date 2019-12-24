@@ -61,13 +61,13 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author spleaner
  */
-public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
+public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner<RunnerSettings> {
   private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
 
-  public static ProgramRunner getInstance() {
+  public static ProgramRunner<?> getInstance() {
     return ProgramRunner.findRunnerById(DEFAULT_JAVA_RUNNER_ID);
   }
 
@@ -84,9 +84,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
            !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
-  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) throws ExecutionException {
+  // cannot be final - overridden in YourKit plugin
+  public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, boolean beforeExecution) {
     runCustomPatchers(javaParameters, DefaultRunExecutor.getRunExecutorInstance(), runProfile);
   }
 
@@ -137,9 +137,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       return null;
     }
 
-    onProcessStarted(env.getRunnerSettings(), executionResult);
-
-    final RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
+    RunContentBuilder contentBuilder = new RunContentBuilder(executionResult, env);
     if (shouldAddDefaultActions) {
       addDefaultActions(contentBuilder, executionResult, state instanceof JavaCommandLine);
     }
@@ -206,7 +204,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy);
   }
 
-  protected static class ControlBreakAction extends ProxyBasedAction {
+  protected static final class ControlBreakAction extends ProxyBasedAction {
     private final GlobalSearchScope mySearchScope;
 
     public ControlBreakAction(final ProcessHandler processHandler, GlobalSearchScope searchScope) {
@@ -231,7 +229,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         // try vm attach first
         VirtualMachine vm = null;
         try {
-          String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess()));
+          String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)myProcessHandler).getProcess()));
           if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
             vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
             InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
@@ -270,14 +268,15 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
   }
 
-  protected static class AttachDebuggerAction extends DumbAwareAction {
+  protected static final class AttachDebuggerAction extends DumbAwareAction {
     private final AtomicBoolean myEnabled = new AtomicBoolean();
     private final AtomicReference<XDebugSession> myAttachedSession = new AtomicReference<>();
-    private final BaseProcessHandler myProcessHandler;
+    private final BaseProcessHandler<?> myProcessHandler;
     private MessageBusConnection myConnection = null;
 
-    public AttachDebuggerAction(BaseProcessHandler processHandler) {
+    public AttachDebuggerAction(BaseProcessHandler<?> processHandler) {
       super(ExecutionBundle.message("run.configuration.attach.debugger.action.name"), null, AllIcons.Debugger.AttachToProcess);
+
       myProcessHandler = processHandler;
       myProcessHandler.addProcessListener(new ProcessAdapter() {
         @Override
@@ -348,12 +347,12 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {
       if (Registry.is("debugger.attach.to.process.action") && processHandler instanceof BaseProcessHandler) {
-        contentBuilder.addAction(new AttachDebuggerAction((BaseProcessHandler)processHandler));
+        contentBuilder.addAction(new AttachDebuggerAction((BaseProcessHandler<?>)processHandler));
       }
     }
   }
 
-  private static class WiseDumpThreadsListener {
+  private static final class WiseDumpThreadsListener {
     private final Project myProject;
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
@@ -375,9 +374,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         List<ThreadState> threadStates = null;
         final long start = System.currentTimeMillis();
         while ((System.currentTimeMillis() - start) < 1000) {
-          final String stdout = myListener.getOutput().getStdout();
+          String stdout = myListener.getOutput().getStdout();
           threadStates = ThreadDumpParser.parse(stdout);
-          if (threadStates == null || threadStates.isEmpty()) {
+          if (threadStates.isEmpty()) {
             TimeoutUtil.sleep(50);
             threadStates = null;
             continue;
@@ -385,7 +384,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           break;
         }
         myProcessHandler.removeProcessListener(myListener);
-        if (threadStates != null && ! threadStates.isEmpty()) {
+        if (threadStates != null && !threadStates.isEmpty()) {
           showThreadDump(myListener.getOutput().getStdout(), threadStates, myProject);
         }
       });
@@ -396,10 +395,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
     String title = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
     ApplicationManager.getApplication().invokeLater(
-            () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
+      () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }
 
-  protected static class SoftExitAction extends ProxyBasedAction {
+  protected static final class SoftExitAction extends ProxyBasedAction {
     public SoftExitAction(final ProcessHandler processHandler) {
       super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit, processHandler);
     }

@@ -191,7 +191,8 @@ public class ThreadTracker {
     }
   }
 
-  private static String dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
+  @NotNull
+  private static String dumpThreadsToString(@NotNull Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
     after.forEach((name, thread) -> {
       f.append("\"" + name + "\" (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n");
@@ -223,9 +224,9 @@ public class ThreadTracker {
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
   private static boolean isIdleApplicationPoolThread(@NotNull StackTraceElement[] stackTrace) {
     //noinspection UnnecessaryLocalVariable
-    boolean insideTPEGetTask = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("getTask")
-                           && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
+    boolean insideTPEGetTask = ContainerUtil.exists(stackTrace,
+       element -> element.getMethodName().equals("getTask")
+                  && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
 
     return insideTPEGetTask;
   }
@@ -235,9 +236,9 @@ public class ThreadTracker {
       return false;
     }
     //noinspection UnnecessaryLocalVariable
-    boolean insideAwaitWork = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("awaitWork")
-                           && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
+    boolean insideAwaitWork = ContainerUtil.exists(stackTrace,
+          element -> element.getMethodName().equals("awaitWork")
+                     && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
     return insideAwaitWork;
   }
 
@@ -273,9 +274,9 @@ public class ThreadTracker {
       return false;
     }
     //noinspection UnnecessaryLocalVariable
-    boolean insideCpuWorkerIdle = Arrays.stream(stackTrace)
-      .anyMatch(element -> element.getMethodName().equals("cpuWorkerIdle")
-                           && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
+    boolean insideCpuWorkerIdle = ContainerUtil.exists(stackTrace,
+          element -> element.getMethodName().equals("cpuWorkerIdle")
+                     && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker"));
     return insideCpuWorkerIdle;
   }
 

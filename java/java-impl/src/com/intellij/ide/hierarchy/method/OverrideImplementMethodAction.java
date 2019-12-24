@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 abstract class OverrideImplementMethodAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
+  private static final Logger LOG = Logger.getInstance(OverrideImplementMethodAction.class);
 
   @Override
   public final void actionPerformed(@NotNull final AnActionEvent event) {

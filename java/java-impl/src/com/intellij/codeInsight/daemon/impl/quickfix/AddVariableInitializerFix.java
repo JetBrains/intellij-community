@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
+  private static final Logger LOG = Logger.getInstance(AddReturnFix.class);
 
   public AddVariableInitializerFix(@NotNull PsiVariable variable) {
     super(variable);

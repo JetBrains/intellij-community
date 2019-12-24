@@ -34,7 +34,7 @@ import java.awt.*;
  * @author yole
  */
 public class GridInsertLocation extends GridDropLocation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GridInsertLocation");
+  private static final Logger LOG = Logger.getInstance(GridInsertLocation.class);
 
   public static final int INSERT_ARROW_SIZE = 3;
   public static final int INSERT_RECT_MIN_SIZE = 15;  // should be larger than the insets increase on Shift

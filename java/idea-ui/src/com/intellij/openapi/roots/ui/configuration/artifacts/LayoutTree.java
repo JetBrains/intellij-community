@@ -53,7 +53,7 @@ import java.util.function.Predicate;
 * @author nik
 */
 public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTree");
+  private static final Logger LOG = Logger.getInstance(LayoutTree.class);
   private final ArtifactEditorImpl myArtifactsEditor;
   private final StructureTreeModel<?> myTreeModel;
 

@@ -80,7 +80,7 @@ fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
+open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
   @Volatile private var isDisposed: Boolean = false
   val root = DefaultMutableTreeNode("Root")
   val treeModel = MyTreeModel(root)
@@ -136,13 +136,12 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
       if (showApplicableTypesOnly) {
         val applicableTypes = allTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
-        if (applicableTypes.size < (allTypes.size - 3)) {
+        if (applicableTypes.isNotEmpty() && applicableTypes.size < (allTypes.size - 3)) {
           return applicableTypes
         }
       }
       return allTypes
     }
-
   }
 
   // https://youtrack.jetbrains.com/issue/TW-61353
@@ -222,7 +221,16 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
           showFolderField(node, userObject)
         }
         else if (userObject is ConfigurationFactory) {
-          showTemplateConfigurable(userObject)
+          val parent = node.parent as DefaultMutableTreeNode
+          if (!parent.isRoot) {
+            showTemplateConfigurable(userObject)
+          } else {
+            if (userObject is ConfigurationType) {
+              drawPressAddButtonMessage(userObject as ConfigurationType)
+            } else {
+              drawPressAddButtonMessage(null)
+            }
+          }
         }
         else if (userObject === TEMPLATES_NODE_USER_OBJECT) {
           drawPressAddButtonMessage(null)
@@ -516,6 +524,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
         TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
         CommonDataKeys.PROJECT.name -> project
+        RunConfigurationCreator.KEY.name -> this
         else -> null
       }
     }
@@ -903,7 +912,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return configurationConfigurable
   }
 
-  fun createNewConfiguration(factory: ConfigurationFactory): SingleConfigurationConfigurable<RunConfiguration> {
+  override fun createNewConfiguration(factory: ConfigurationFactory): SingleConfigurationConfigurable<RunConfiguration> {
     var typeNode = getConfigurationTypeNode(factory.type)
     if (typeNode == null) {
       typeNode = DefaultMutableTreeNode(factory.type)

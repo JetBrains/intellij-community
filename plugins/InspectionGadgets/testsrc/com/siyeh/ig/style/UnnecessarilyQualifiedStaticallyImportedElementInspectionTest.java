@@ -40,6 +40,10 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest
   public void testOverriding() {
     doTest(getTestName(true));
   }
+  
+  public void testYield() {
+    doTest(getTestName(true));
+  }
 
   private void doTest(String testName) {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + testName,

@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
+  private static final Logger LOG = Logger.getInstance(VirtualMachineProxyImpl.class);
   private final DebugProcessImpl myDebugProcess;
   private final VirtualMachine myVirtualMachine;
   private int myTimeStamp = 0;
@@ -93,36 +93,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   @NotNull
   public VirtualMachine getVirtualMachine() {
     return myVirtualMachine;
-  }
-
-  static final class JNITypeParserReflect {
-    static final Method typeNameToSignatureMethod;
-
-    static {
-      Method method = null;
-      try {
-        method = ReflectionUtil.getDeclaredMethod(Class.forName("com.sun.tools.jdi.JNITypeParser"), "typeNameToSignature", String.class);
-      }
-      catch (ClassNotFoundException e) {
-        LOG.warn(e);
-      }
-      typeNameToSignatureMethod = method;
-      if (typeNameToSignatureMethod == null) {
-        LOG.warn("Unable to find JNITypeParser.typeNameToSignature method");
-      }
-    }
-
-    @Nullable
-    static String typeNameToSignature(@NotNull String name) {
-      if (typeNameToSignatureMethod != null) {
-        try {
-          return (String)typeNameToSignatureMethod.invoke(null, name);
-        }
-        catch (Exception ignored) {
-        }
-      }
-      return null;
-    }
   }
 
   public ClassesByNameProvider getClassesByNameProvider() {

@@ -12,6 +12,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.execution.filters.LineNumbersMapping;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -89,7 +90,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   public SourcePosition getSourcePosition(final Location location) {
     if (location == null) return null;
-    return DebuggerUtilsImpl.runInReadActionWithWriteActionPriorityWithRetries(() -> {
+    return ReadAction.nonBlocking(() -> {
       SourcePosition res = null;
       try {
         res = mySourcePositionCache.get(location);
@@ -107,7 +108,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
         }
         return res1;
       }, null, null, false);
-    });
+    }).executeSynchronously();
   }
 
   private static boolean checkCacheEntry(@Nullable SourcePosition position, @NotNull Location location) {

@@ -85,7 +85,7 @@ public class VcsRootScanner implements AsyncVfsEventsListener {
                                                   @NotNull Function<? super VirtualFile, ? extends Result> dirFound) {
     ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
-    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor(NO_FOLLOW_SYMLINKS, depthLimit) {
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
       @Override
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {

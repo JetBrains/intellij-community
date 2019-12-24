@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class AddFrameworkSupportInProjectStructureAction extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.framework.addSupport.impl.AddFrameworkSupportInProjectStructureAction");
+  private static final Logger LOG = Logger.getInstance(AddFrameworkSupportInProjectStructureAction.class);
   private final FrameworkTypeEx myFrameworkType;
   private final FrameworkSupportInModuleProvider myProvider;
   @NotNull private final ModuleStructureConfigurable myModuleStructureConfigurable;

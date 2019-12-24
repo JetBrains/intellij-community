@@ -142,8 +142,9 @@ public class RegistryValue {
     return isChangedFromDefault(asString());
   }
 
-  public boolean isContributedByThirdPartyPlugin() {
-    return myKeyDescriptor != null && myKeyDescriptor.isContributedByThirdPartyPlugin();
+  @Nullable
+  public String getPluginId() {
+    return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
   }
 
   boolean isChangedFromDefault(@NotNull String newValue) {

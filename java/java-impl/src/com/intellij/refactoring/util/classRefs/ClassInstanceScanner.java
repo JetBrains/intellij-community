@@ -26,7 +26,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
  * @author dsl
  */
 public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.classRefs.ClassInstanceScanner");
+  private static final Logger LOG = Logger.getInstance(ClassInstanceScanner.class);
   private final PsiClass myClass;
   private final ClassInstanceReferenceVisitor myVisitor;
 

@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -165,10 +166,14 @@ final class DomCreator {
   static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
     VirtualFile file = xmlFile.getVirtualFile();
     if (!(xmlFile.getFileType() instanceof DomSupportEnabled) || file != null && ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
+      IdempotenceChecker.logTrace("DOM unsupported");
       return null;
     }
 
     DomFileDescription<?> description = findFileDescription(xmlFile);
+    if (IdempotenceChecker.isLoggingEnabled()) {
+      IdempotenceChecker.logTrace("DOM file description: " + description);
+    }
     if (description == null) {
       return null;
     }
@@ -208,6 +213,9 @@ final class DomCreator {
     DomManagerImpl domManager = DomManagerImpl.getDomManager(project);
     if (!originalFile.equals(file)) {
       DomFileElementImpl<?> element = domManager.getFileElement(originalFile);
+      if (IdempotenceChecker.isLoggingEnabled()) {
+        IdempotenceChecker.logTrace("Copy DOM from original file: " + element);
+      }
       return element == null ? null : element.getFileDescription();
     }
 

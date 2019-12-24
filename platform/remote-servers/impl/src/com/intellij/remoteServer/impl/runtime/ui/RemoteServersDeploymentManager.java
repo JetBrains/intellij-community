@@ -18,6 +18,7 @@ import com.intellij.remoteServer.runtime.*;
 import com.intellij.remoteServer.runtime.ui.RemoteServersView;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,8 @@ public class RemoteServersDeploymentManager {
 
   private void initListeners() {
     myProject.getMessageBus().connect().subscribe(ServerConnectionListener.TOPIC, new ServerConnectionListener() {
+      private final Set<ServerConnection<?>> myConnectionsToExpand = new SmartHashSet<>();
+
       @Override
       public void onConnectionCreated(@NotNull ServerConnection<?> connection) {
         RemoteServersServiceViewContributor contributor = findContributor(connection.getServer());
@@ -68,7 +71,11 @@ public class RemoteServersDeploymentManager {
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
           updateServerContent(myServerToContent.get(server), connection);
           if (connection.getStatus() == ConnectionStatus.CONNECTED) {
+            myConnectionsToExpand.add(connection);
             pollDeployments(connection);
+          }
+          else {
+            myConnectionsToExpand.remove(connection);
           }
         }
       }
@@ -81,6 +88,10 @@ public class RemoteServersDeploymentManager {
           myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC)
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
           updateServerContent(myServerToContent.get(server), connection);
+          if (myConnectionsToExpand.remove(connection)) {
+            RemoteServerNode serverNode = new RemoteServerNode(myProject, connection.getServer(), contributor);
+            ServiceViewManager.getInstance(myProject).expand(serverNode, contributor.getClass());
+          }
         }
       }
     });
@@ -208,7 +219,7 @@ public class RemoteServersDeploymentManager {
 
       AbstractTreeNode<?> deploymentNode = findDeployment(contributor, connection, deploymentName);
       if (deploymentNode != null) {
-        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), false, false);
+        ServiceViewManager.getInstance(myProject).select(deploymentNode, contributor.getClass(), true, false);
       }
     }
 

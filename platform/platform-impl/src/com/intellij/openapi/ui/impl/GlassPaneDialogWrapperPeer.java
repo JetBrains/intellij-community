@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopService;
@@ -10,8 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -23,10 +22,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
@@ -44,31 +43,25 @@ import java.lang.ref.WeakReference;
 /**
  * @author spleaner
  */
-public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer");
+public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
+  private static final Logger LOG = Logger.getInstance(GlassPaneDialogWrapperPeer.class);
 
   private final DialogWrapper myWrapper;
-  private WindowManagerEx myWindowManager;
   private MyDialog myDialog;
 
-  public GlassPaneDialogWrapperPeer(Project project, DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
+  public GlassPaneDialogWrapperPeer(@Nullable Project project, DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
     myWrapper = wrapper;
 
-    myWindowManager = null;
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      myWindowManager = (WindowManagerEx)application.getComponent(WindowManager.class);
-    }
-
     Window window = null;
-    if (myWindowManager != null) {
+    if (LoadingState.APP_STARTED.isOccurred()) {
       if (project == null) {
         project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
 
-      window = myWindowManager.suggestParentWindow(project);
+      WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
+      window = windowManager.suggestParentWindow(project);
       if (window == null) {
-        Window focusedWindow = myWindowManager.getMostRecentFocusedWindow();
+        Window focusedWindow = windowManager.getMostRecentFocusedWindow();
         if (focusedWindow instanceof IdeFrameImpl) {
           window = focusedWindow;
         }
@@ -80,7 +73,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     createDialog(owner);
   }
 
-  public GlassPaneDialogWrapperPeer(DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
+  public GlassPaneDialogWrapperPeer(@NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
     this(null, wrapper);
   }
 
@@ -89,13 +82,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     if (!parent.isShowing() && parent != JOptionPane.getRootFrame()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
-    myWindowManager = null;
-    Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      myWindowManager = (WindowManagerEx)application.getComponent(WindowManager.class);
-    }
 
-    Window owner = UIUtil.getWindow(parent);
+    Window owner = ComponentUtil.getWindow(parent);
     if (!(owner instanceof Dialog) && !(owner instanceof Frame)) {
       owner = JOptionPane.getRootFrame();
     }
@@ -105,26 +93,24 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
   private void createDialog(final Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (!(active instanceof JDialog) && owner instanceof IdeFrame) {
-
-      Component glassPane;
-
-      // Not all successor of IdeFrame are frames
-      if (owner instanceof JFrame) {
-        glassPane = ((JFrame)owner).getGlassPane();
-      }
-      else if (owner instanceof JDialog) {
-        glassPane = ((JDialog)owner).getGlassPane();
-      }
-      else {
-        throw new IllegalStateException("Cannot find glass pane for " + owner.getClass().getName());
-      }
-
-      assert glassPane instanceof IdeGlassPaneEx : "GlassPane should be instance of IdeGlassPane!";
-      myDialog = new MyDialog((IdeGlassPaneEx) glassPane, myWrapper);
-    } else {
+    if (active instanceof JDialog || !(owner instanceof IdeFrame)) {
       throw new GlasspanePeerUnavailableException();
     }
+
+    Component glassPane;
+    // Not all successor of IdeFrame are frames
+    if (owner instanceof JFrame) {
+      glassPane = ((JFrame)owner).getGlassPane();
+    }
+    else if (owner instanceof JDialog) {
+      glassPane = ((JDialog)owner).getGlassPane();
+    }
+    else {
+      throw new IllegalStateException("Cannot find glass pane for " + owner.getClass().getName());
+    }
+
+    assert glassPane instanceof IdeGlassPaneEx : "GlassPane should be instance of IdeGlassPane!";
+    myDialog = new MyDialog((IdeGlassPaneEx)glassPane, myWrapper);
   }
 
   @Override
@@ -164,7 +150,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     if (myDialog != null) {
       Disposer.dispose(myDialog);
       myDialog = null;
-      myWindowManager = null;
     }
   }
 

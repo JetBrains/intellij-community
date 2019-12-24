@@ -13,14 +13,16 @@
 
           <el-form-item label="Product">
             <el-select v-model="chartSettings.selectedProduct" filterable>
-              <el-option
-                    v-for="productId in products"
-                    :key="productId"
-                    :label="productId"
-                    :value="productId">
-                  </el-option>
+              <el-option v-for="productId in products" :key="productId" :label="productId" :value="productId"/>
             </el-select>
           </el-form-item>
+
+          <el-form-item label="Project">
+            <el-select v-model="chartSettings.selectedProject" filterable>
+              <el-option v-for="project in projects" :key="project" :label="projectNameToTitle.get(project)" :value="project"/>
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="Machine">
             <el-cascader
                 v-model="chartSettings.selectedMachine"
@@ -40,11 +42,7 @@
       </el-col>
       <el-col :span="8">
         <div style="float: right">
-          <el-checkbox
-              size="small"
-              v-model="chartSettings.showScrollbarXPreview"
-              @change="isShowScrollbarXPreviewChanged"
-          >Show horizontal scrollbar preview</el-checkbox>
+          <el-checkbox size="small" v-model="chartSettings.showScrollbarXPreview">Show horizontal scrollbar preview</el-checkbox>
         </div>
       </el-col>
     </el-row>
@@ -54,12 +52,7 @@
     <el-form :inline="true" size="small">
       <el-form-item label="Operator">
         <el-select v-model="chartSettings.aggregationOperator" data-lpignore="true" filterable>
-          <el-option
-              v-for="name in aggregationOperators"
-              :key="name"
-              :label="name"
-              :value="name">
-          </el-option>
+          <el-option v-for='name in ["median", "min", "max", "quantile"]' :key="name" :label="name" :value="name"/>
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -69,32 +62,74 @@
       </el-form-item>
     </el-form>
 
-    <el-row>
+    <el-row :gutter="5">
       <!-- more space for duration events (because number of duration metrics more than instant) -->
       <el-col :span="16">
-        <div class="aggregatedChart" ref="clusteredDurationChartContainer"></div>
+        <el-card shadow="never" :body-style="{ padding: '0px' }">
+          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "appComponentCreation_d", "projectComponentCreation_d"]' :chartSettings="chartSettings"/>
+        </el-card>
       </el-col>
       <el-col :span="8">
-        <div class="aggregatedChart" ref="clusteredInstantChartContainer"></div>
+        <el-card shadow="never" :body-style="{ padding: '0px' }">
+          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+        </el-card>
       </el-col>
     </el-row>
 
-    <h3>Duration Events</h3>
     <el-tabs value="date" size="small">
-      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
-                   :key="item.order" :label="item.name" :name="item.order" lazy>
+      <el-tab-pane v-for='item in [
+          {name: "By Date", order: "date"},
+          {name: "By Build", order: "buildNumber"}
+          ]' :key="item.order" :label="item.name" :name="item.order" lazy>
         <keep-alive>
-          <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"/>
-        </keep-alive>
-      </el-tab-pane>
-    </el-tabs>
+          <div>
+            <el-form v-if="item.order === 'date'" :inline="true" size="small">
+              <el-form-item label="Granularity">
+                <el-select v-model="chartSettings.granularity" data-lpignore="true" filterable>
+                  <el-option v-for='name in ["as is", "2 hour", "day", "week", "month"]' :key="name" :label="name" :value="name"/>
+                </el-select>
+              </el-form-item>
+            </el-form>
 
-    <h3>Instant Events</h3>
-    <el-tabs value="date" size="small">
-      <el-tab-pane v-for="item in [{name: 'By Date', order: 'date'}, {name: 'By Build Number', order: 'buildNumber'}]"
-                   :key="item.order" :label="item.name" :name="item.order" lazy>
-        <keep-alive>
-          <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest"/>
+            <el-row :gutter="5">
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="5" style="margin-top: 5px;">
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="5" style="margin-top: 5px;">
+              <el-col :span="12">
+                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
+                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="lastMonth"/>
+                </el-card>
+              </el-col>
+            </el-row>
+          </div>
         </keep-alive>
       </el-tab-pane>
     </el-tabs>
@@ -104,6 +139,9 @@
         <ul>
           <li>
             <small>Events <code>bootstrap</code> and <code>splash</code> are not available for reports <= v5 (May 2019, Idea 2019.2).</small>
+          </li>
+          <li>
+            <small>Events <code>editorRestoring</code> and <code>projectDumbAware_d</code> are reliably reported since 23 November 2019.</small>
           </li>
         </ul>
       </el-col>
@@ -116,16 +154,6 @@
 <style>
 .aggregatedChart {
   width: 100%;
-  height: 340px;
-}
-
-table.chartTooltip td {
-  text-align: right;
-  font-family: monospace;
-}
-
-table.chartTooltip th {
-  text-align: left;
-  font-weight: normal;
+  height: 300px;
 }
 </style>

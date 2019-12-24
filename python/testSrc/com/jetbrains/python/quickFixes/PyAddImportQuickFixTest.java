@@ -155,7 +155,17 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testCombinedElementOrdering() {
-    doTestProposedImportsOrdering("path", "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path");
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path",
+                                                 "path from sys", "first.path", "first.second.path()", "os.path", "first._third.path")
+        )
+    );
   }
 
   // PY-20976
@@ -163,7 +173,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path", "os.path")
+      (__) -> doTestProposedImportsOrdering("path", "pkg.path", "sys.path")
     );
   }
 
@@ -172,7 +182,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "os.path", "_private.path")
+      (__) -> doTestProposedImportsOrdering("path", "first.second.path", "sys.path", "_private.path")
     );
   }
 
@@ -193,7 +203,16 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-20976
   public void testOrderingWithExistingImport() {
-    doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path");
+    runWithAdditionalFileInLibDir(
+      "os/__init__.py",
+      "",
+      (__) ->
+        runWithAdditionalFileInLibDir(
+          "os/path.py",
+          "",
+          (___) -> doTestProposedImportsOrdering("path", "path from sys", "src.path", "os.path")
+        )
+    );
   }
 
   private void doTestProposedImportsOrdering(@NotNull String text, @NotNull String... expected) {

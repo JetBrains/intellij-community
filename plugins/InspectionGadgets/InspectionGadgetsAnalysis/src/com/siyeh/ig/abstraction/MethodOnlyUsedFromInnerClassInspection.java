@@ -43,12 +43,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.only.used.from.inner.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiNamedElement element = (PsiNamedElement)infos[0];
     final String name = element.getName();

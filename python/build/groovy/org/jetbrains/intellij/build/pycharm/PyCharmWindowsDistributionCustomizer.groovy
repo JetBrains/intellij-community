@@ -32,4 +32,7 @@ class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer
       }
     }
   }
+
+  @Override
+  String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
 }

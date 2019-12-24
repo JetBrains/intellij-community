@@ -26,7 +26,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author peter
  */
-class CachingEnumerator<Data> implements DataEnumerator<Data> {
+public class CachingEnumerator<Data> implements DataEnumerator<Data> {
   private static final int STRIPE_POWER = 4;
   private static final int STRIPE_COUNT = 1 << STRIPE_POWER;
   private static final int STRIPE_MASK = STRIPE_COUNT - 1;
@@ -36,7 +36,7 @@ class CachingEnumerator<Data> implements DataEnumerator<Data> {
   private final DataEnumerator<Data> myBase;
   private final KeyDescriptor<Data> myDataDescriptor;
 
-  CachingEnumerator(@NotNull DataEnumerator<Data> base, @NotNull KeyDescriptor<Data> dataDescriptor) {
+  public CachingEnumerator(@NotNull DataEnumerator<Data> base, @NotNull KeyDescriptor<Data> dataDescriptor) {
     myBase = base;
     myDataDescriptor = dataDescriptor;
     int protectedSize = 8192;

@@ -92,17 +92,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
   @Override
   public ResolveResult fun(Define rncDefine) {
     final PsiElement element = rncDefine.getPsiElement();
-    return element != null ? new PsiElementResolveResult(element) : new ResolveResult() {
-      @Override
-      @Nullable
-      public PsiElement getElement() {
-        return null;
-      }
-      @Override
-      public boolean isValidResult() {
-        return false;
-      }
-    };
+    return element != null ? new PsiElementResolveResult(element) : EmptyResolveResult.INSTANCE;
   }
 
   @Nullable

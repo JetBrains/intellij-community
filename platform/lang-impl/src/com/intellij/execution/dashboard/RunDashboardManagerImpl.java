@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.google.common.collect.Sets;
@@ -15,6 +15,7 @@ import com.intellij.execution.services.ServiceEventListener;
 import com.intellij.execution.services.ServiceViewManager;
 import com.intellij.execution.services.ServiceViewManagerImpl;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.content.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -50,7 +52,7 @@ import java.util.stream.Collectors;
   name = "RunDashboard",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
+public final class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final ExtensionPointName<RunDashboardCustomizer> CUSTOMIZER_EP_NAME =
     ExtensionPointName.create("com.intellij.runDashboardCustomizer");
   private static final ExtensionPointName<RunDashboardDefaultTypesProvider> DEFAULT_TYPES_PROVIDER_EP_NAME =
@@ -221,19 +223,20 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myState.excludedTypes.removeAll(myTypes);
 
     syncConfigurations();
-    moveRemovedTypesContent(removed);
-    moveAddedTypesContent(added);
+    if (!removed.isEmpty()) {
+      moveRemovedContent(settings -> removed.contains(settings.getType().getId()));
+    }
+    if (!added.isEmpty()) {
+      moveAddedContent(settings -> added.contains(settings.getType().getId()));
+    }
     updateDashboard(true);
   }
 
-  private void moveRemovedTypesContent(Set<String> removedTypes) {
-    if (removedTypes.isEmpty()) return;
-
-    ExecutionManagerImpl executionManager = (ExecutionManagerImpl)ExecutionManager.getInstance(myProject);
-    RunContentManagerImpl runContentManager = (RunContentManagerImpl)executionManager.getContentManager();
+  private void moveRemovedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
+    RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
     for (RunDashboardService service : getRunConfigurations()) {
       Content content = service.getContent();
-      if (content == null || !removedTypes.contains(service.getSettings().getType().getId())) continue;
+      if (content == null || !condition.value(service.getSettings())) continue;
 
       RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
       if (descriptor == null) continue;
@@ -247,13 +250,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
   }
 
-  private void moveAddedTypesContent(Set<String> addedTypes) {
-    if (addedTypes.isEmpty()) return;
-
-    ExecutionManagerImpl executionManager = (ExecutionManagerImpl)ExecutionManager.getInstance(myProject);
-    RunContentManagerImpl runContentManager = (RunContentManagerImpl)executionManager.getContentManager();
-    List<RunContentDescriptor> descriptors =
-      executionManager.getRunningDescriptors(settings -> addedTypes.contains(settings.getType().getId()));
+  private void moveAddedContent(Condition<? super RunnerAndConfigurationSettings> condition) {
+    RunContentManagerImpl runContentManager = (RunContentManagerImpl)RunContentManager.getInstance(myProject);
+    List<RunContentDescriptor> descriptors = ((ExecutionManagerImpl)ExecutionManager.getInstance(myProject)).getRunningDescriptors(condition);
     for (RunContentDescriptor descriptor : descriptors) {
       Content content = descriptor.getAttachedContent();
       if (content == null) continue;
@@ -273,19 +272,25 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public void hideConfigurations(Collection<RunConfiguration> configurations) {
     myHiddenConfigurations.addAll(configurations);
     syncConfigurations();
+    if (!configurations.isEmpty()) {
+      moveRemovedContent(settings -> configurations.contains(settings.getConfiguration()));
+    }
     updateDashboard(true);
   }
 
   public void restoreConfigurations(Collection<RunConfiguration> configurations) {
     myHiddenConfigurations.removeAll(configurations);
     syncConfigurations();
+    if (!configurations.isEmpty()) {
+      moveAddedContent(settings -> configurations.contains(settings.getConfiguration()));
+    }
     updateDashboard(true);
   }
 
   @NotNull
   List<RunDashboardCustomizer> getCustomizers(@NotNull RunnerAndConfigurationSettings settings,
                                               @Nullable RunContentDescriptor descriptor) {
-    List<RunDashboardCustomizer> customizers = ContainerUtil.newSmartList();
+    List<RunDashboardCustomizer> customizers = new SmartList<>();
     for (RunDashboardCustomizer customizer : CUSTOMIZER_EP_NAME.getExtensions()) {
       if (customizer.isApplicable(settings, descriptor)) {
         customizers.add(customizer);
@@ -346,7 +351,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       for (RunnerAndConfigurationSettings settings : settingsList) {
         List<RunDashboardServiceImpl> syncedServices = getServices(settings);
         if (syncedServices == null) {
-          syncedServices = ContainerUtil.newSmartList(new RunDashboardServiceImpl(settings));
+          syncedServices = new SmartList<>(new RunDashboardServiceImpl(settings));
         }
         result.add(syncedServices);
       }
@@ -410,7 +415,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   private void doAddServiceContent(@NotNull RunnerAndConfigurationSettings settings, @NotNull Content content) {
     List<RunDashboardServiceImpl> settingsServices = getServices(settings);
     if (settingsServices == null) {
-      settingsServices = ContainerUtil.newSmartList(new RunDashboardServiceImpl(settings));
+      settingsServices = new SmartList<>(new RunDashboardServiceImpl(settings));
       myServices.add(settingsServices);
     }
 
@@ -550,7 +555,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     return null;
   }
 
-  private Set<String> getEnableByDefaultTypes() {
+  Set<String> getEnableByDefaultTypes() {
     Set<String> result = new THashSet<>();
     for (RunDashboardDefaultTypesProvider provider : DEFAULT_TYPES_PROVIDER_EP_NAME.getExtensionList()) {
       result.addAll(provider.getDefaultTypeIds(myProject));

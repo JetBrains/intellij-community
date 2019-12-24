@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.MessageDigest;
@@ -128,10 +129,49 @@ public class SafeFileOutputStreamTest {
     }
     assertThat(target).isFile().hasBinaryContent(TEST_DATA);
     try (SafeFileOutputStream out = openStream(target)) {
-      out.write(new byte[] {'b', 'y', 'e'});
+      out.write(new byte[]{'b', 'y', 'e'});
       out.abort();
     }
     assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(backup).doesNotExist();
+  }
+
+  @Test public void readOnlyFileBackup() throws IOException {
+    File target = tempDir.newFile("dir/test.txt");
+    if (SystemInfo.isWindows) {
+      Files.getFileAttributeView(target.toPath(), DosFileAttributeView.class).setReadOnly(true);
+    }
+    else {
+      Files.setPosixFilePermissions(target.toPath(), EnumSet.of(OWNER_READ));
+    }
+    checkWriteFailed(target);
+    if (SystemInfo.isWindows) {
+      Files.getFileAttributeView(target.toPath(), DosFileAttributeView.class).setReadOnly(false);
+    }
+    else {
+      Files.setPosixFilePermissions(target.toPath(), EnumSet.of(OWNER_READ, OWNER_WRITE));
+    }
+    checkWriteSucceed(target);
+  }
+
+  @Test public void preemptiveStreamNew() throws IOException {
+    File target = new File(tempDir.getRoot(), "new-file.txt");
+    try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
+      out.write(TEST_DATA[0]);
+      out.write(TEST_DATA, 1, TEST_DATA.length - 1);
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(target.getParentFile().list()).containsExactly(target.getName());
+  }
+
+  @Test public void preemptiveStreamExisting() throws IOException {
+    File target = tempDir.newFile("test.txt");
+    try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
+      out.write(TEST_DATA[0]);
+      out.write(TEST_DATA, 1, TEST_DATA.length - 1);
+    }
+    assertThat(target).isFile().hasBinaryContent(TEST_DATA);
+    assertThat(target.getParentFile().list()).containsExactly(target.getName());
   }
 
   private static void checkWriteSucceed(File target) throws IOException {

@@ -12,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.*;
 
@@ -58,7 +57,6 @@ public class CollectClassMembersUtil {
       PsiClass current = queue.remove();
       if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
-        if (TransformationUtilKt.isUnderTransformation(current)) return false;
         for (PsiClass superClass : getSupers(current, false)) {
           queue.offer(superClass);
         }

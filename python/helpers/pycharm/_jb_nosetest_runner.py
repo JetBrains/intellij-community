@@ -14,4 +14,4 @@ if __name__ == '__main__':
     if JB_DISABLE_BUFFERING and "-s" not in sys.argv:
         sys.argv += ["-s"]
     jb_doc_args("Nosetest", sys.argv)
-    nose.main(addplugins=[TeamcityReport()])
+    sys.exit(nose.main(addplugins=[TeamcityReport()]))

@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 public abstract class MvcFramework {
   protected static final ExtensionPointName<MvcFramework> EP_NAME = ExtensionPointName.create("org.intellij.groovy.mvc.framework");
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.mvc.MvcFramework");
+  private static final Logger LOG = Logger.getInstance(MvcFramework.class);
   public static final Key<Boolean> CREATE_APP_STRUCTURE = Key.create("CREATE_MVC_APP_STRUCTURE");
   public static final Key<Boolean> UPGRADE = Key.create("UPGRADE");
   @NonNls public static final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";

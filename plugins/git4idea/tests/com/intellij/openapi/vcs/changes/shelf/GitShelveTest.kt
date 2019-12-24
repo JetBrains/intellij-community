@@ -33,6 +33,7 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     super.setUp()
     shelveChangesManager = ShelveChangesManager.getInstance(project)
     saver = GitShelveChangesSaver(project, git, EmptyProgressIndicator(), "test")
+    git("config core.autocrlf false")
   }
 
   protected fun setBatchShelveOptimization(value: Boolean) {
@@ -55,7 +56,7 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(file.read()))
+    assertEquals("Current file content is incorrect", initialContent, file.read())
 
     val list = `assert single shelvelist`()
     assertChanges(list) {
@@ -83,8 +84,8 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     updateChangeListManager()
 
     changeListManager.assertNoChanges()
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(afile.read()))
-    assertEquals("Current file content is incorrect", initialContent, StringUtil.convertLineSeparators(bfile.read()))
+    assertEquals("Current file content is incorrect", initialContent, afile.read())
+    assertEquals("Current file content is incorrect", initialContent, bfile.read())
 
     val list = `assert single shelvelist`()
     assertChanges(list) {

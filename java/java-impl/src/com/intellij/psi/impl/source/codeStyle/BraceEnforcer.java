@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
+  private static final Logger LOG = Logger.getInstance(BraceEnforcer.class);
 
   private final PostFormatProcessorHelper myPostProcessor;
 

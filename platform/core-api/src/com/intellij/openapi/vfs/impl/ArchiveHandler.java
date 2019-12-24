@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -208,21 +209,47 @@ public abstract class ArchiveHandler {
   protected EntryInfo getOrCreate(@NotNull Map<String, EntryInfo> map, @NotNull String entryName) {
     EntryInfo entry = map.get(entryName);
     if (entry == null) {
-      Pair<String, String> path = splitPath(entryName);
+      Trinity<String, String, String> path = splitPathAndFix(entryName);
       EntryInfo parentEntry = getOrCreate(map, path.first);
       CharSequence shortName = ByteArrayCharSequence.convertToBytesIfPossible(path.second);
       entry = new EntryInfo(shortName, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, parentEntry);
-      map.put(entryName, entry);
+      map.put(path.third, entry);
     }
     return entry;
   }
 
+  /**
+   * @deprecated Use {@link #splitPathAndFix(String)} instead to correctly handle invalid entry names
+   */
   @NotNull
+  @Deprecated
   protected Pair<String, String> splitPath(@NotNull String entryName) {
     int p = entryName.lastIndexOf('/');
     String parentName = p > 0 ? entryName.substring(0, p) : "";
     String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
     return Pair.create(parentName, shortName);
+  }
+
+  /**
+   * @return parentName, shortName, fixedEntryName
+   */
+  @NotNull
+  protected Trinity<String, String, String> splitPathAndFix(@NotNull String entryName) {
+    int p = entryName.lastIndexOf('/');
+    // There are crazy jar files with backslash-containing entries inside (IDEA-228441)
+    // Under Windows we can't create files with backslash in the name
+    // and although in Unix we can, we prefer not to, to maintain consistency to avoid subtle bugs when the code which confuses file separators with slashes
+    p = Math.max(p, entryName.lastIndexOf('\\'));
+
+    String parentName = p > 0 ? entryName.substring(0, p) : "";
+    String shortName = p > 0 ? entryName.substring(p + 1) : entryName;
+    String fixedParent = parentName.replace('\\', '/');
+    //noinspection StringEquality
+    if (fixedParent != parentName) {
+      parentName = fixedParent;
+      entryName = parentName + '/' + shortName;
+    }
+    return Trinity.create(parentName, shortName, entryName);
   }
 
   @NotNull

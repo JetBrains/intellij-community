@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider;
 import com.intellij.xml.breadcrumbs.CrumbPresentation;
 import com.intellij.xml.breadcrumbs.DefaultCrumbsPresentation;
@@ -75,7 +76,7 @@ public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresen
       return baseColor == null
              ? XmlTagTreeHighlightingPass.toLineMarkerColor(0x92, myColor)
              : myColor != null
-               ? XmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1)
+               ? UIUtil.makeTransparent(myColor, baseColor, 0.1)
                : baseColor;
     }
   }

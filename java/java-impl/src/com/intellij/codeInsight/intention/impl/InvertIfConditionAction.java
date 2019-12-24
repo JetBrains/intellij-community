@@ -27,7 +27,7 @@ import java.util.Objects;
  * @author mike
  */
 public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
+  private static final Logger LOG = Logger.getInstance(InvertIfConditionAction.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {

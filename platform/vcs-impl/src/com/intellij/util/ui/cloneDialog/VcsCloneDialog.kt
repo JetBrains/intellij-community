@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogWrapper
@@ -87,7 +88,7 @@ class VcsCloneDialog private constructor(private val project: Project,
   private fun switchComponent(extension: VcsCloneDialogExtension) {
     val extensionId = extension.javaClass.name
     val mainComponent = extensionComponents.getOrPut(extensionId, {
-      val component = extension.createMainComponent(project)
+      val component = extension.createMainComponent(project, ModalityState.stateForComponent(window))
       mainPanel.add(component.getView(), extensionId)
       disposable.attachChild(component)
       component.addComponentStateListener(listener)

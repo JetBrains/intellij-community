@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,13 +37,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.ex.util.LexerEditorHighlighter");
+  private static final Logger LOG = Logger.getInstance(LexerEditorHighlighter.class);
   private static final int LEXER_INCREMENTALITY_THRESHOLD = 200;
   private static final Set<Class> ourNonIncrementalLexers = new HashSet<>();
   private HighlighterClient myEditor;
   private final Lexer myLexer;
   private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
-  private final SegmentArrayWithData mySegments;
+  private SegmentArrayWithData mySegments;
   private final SyntaxHighlighter myHighlighter;
   @NotNull
   private EditorColorsScheme myScheme;
@@ -63,11 +64,27 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return new SegmentArrayWithData(createStorage());
   }
 
+  /**
+   * Defines how to pack/unpack and store highlighting states.
+   * <p>
+   * By default a editor highlighter uses {@link ShortBasedStorage} implementation which
+   * serializes information about element type to be highlighted with elements' indices ({@link IElementType#getIndex()})
+   * and deserializes ids back to {@link IElementType} using element types registry {@link IElementType#find(short)}.
+   * <p>
+   * If you need to store more information during syntax highlighting or
+   * if your element types cannot be restored from {@link IElementType#getIndex()},
+   * you can implement you own storage and override this method.
+   * <p>
+   * As an example, see {@link org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlightingLexer},
+   * that lexes files with unregistered (without index) element types and its
+   * data storage ({@link org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateLexerDataStorage}
+   * serializes/deserializes them to/from strings. The storage is created in {@link org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider.TextMateLexerEditorHighlighter}
+   *
+   * @return data storage for highlighter states
+   */
   @NotNull
-  protected final DataStorage createStorage() {
-    return myLexer instanceof DataStorageFactory
-           ? ((DataStorageFactory)myLexer).createDataStorage()
-           : (myLexer instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage());
+  protected DataStorage createStorage() {
+    return myLexer instanceof RestartableLexer ? new IntBasedStorage() : new ShortBasedStorage();
   }
 
   public boolean isPlain() {
@@ -412,34 +429,38 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
   }
 
-  protected class TokenProcessor {
-    public void addToken(final int i, final int startOffset, final int endOffset, final int data, @NotNull IElementType tokenType) {
-      mySegments.setElementAt(i, startOffset, endOffset, data);
-    }
+  protected interface TokenProcessor {
+    void addToken(int tokenIndex, int startOffset, int endOffset, int data, @NotNull IElementType tokenType);
 
-    public void finish() {
-    }
+    default void finish() {}
   }
 
   private void doSetText(@NotNull CharSequence text) {
     if (Comparing.equal(myText, text)) return;
-    myText = ImmutableCharSequence.asImmutable(text);
+    text = ImmutableCharSequence.asImmutable(text);
 
-    final TokenProcessor processor = createTokenProcessor(0);
-    final int textLength = text.length();
+    SegmentArrayWithData tempSegments = createSegments();
+    TokenProcessor processor = createTokenProcessor(0, tempSegments, text);
+    int textLength = text.length();
+
     myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
-    mySegments.removeAll();
     int i = 0;
     while (true) {
       final IElementType tokenType = myLexer.getTokenType();
       if (tokenType == null) break;
 
       int state = myLexer.getState();
-      int data = mySegments.packData(tokenType, state, canRestart(state));
+      int data = tempSegments.packData(tokenType, state, canRestart(state));
       processor.addToken(i, myLexer.getTokenStart(), myLexer.getTokenEnd(), data, tokenType);
       i++;
+      if (i % 1024 == 0) {
+        ProgressManager.checkCanceled();
+      }
       myLexer.advance();
     }
+
+    myText = text;
+    mySegments = tempSegments;
     processor.finish();
 
     if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
@@ -452,8 +473,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @NotNull
-  protected TokenProcessor createTokenProcessor(final int startIndex) {
-    return new TokenProcessor();
+  protected TokenProcessor createTokenProcessor(int startIndex, SegmentArrayWithData segments, CharSequence myText) {
+    return (tokenIndex, startOffset, endOffset, data, tokenType) -> segments.setElementAt(tokenIndex, startOffset, endOffset, data);
   }
 
   @NotNull

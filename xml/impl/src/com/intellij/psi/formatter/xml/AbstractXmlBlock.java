@@ -378,7 +378,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public abstract boolean isTextElement();
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
+  private static final Logger LOG = Logger.getInstance(AbstractXmlBlock.class);
 
   protected void createJspTextNode(final List<? super Block> localResult, final ASTNode child, final Indent indent) {
   }

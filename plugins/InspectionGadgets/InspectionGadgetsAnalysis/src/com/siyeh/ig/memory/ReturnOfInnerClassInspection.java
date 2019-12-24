@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +36,6 @@ public class ReturnOfInnerClassInspection extends BaseInspection {
   @SuppressWarnings("PublicField") public boolean ignoreNonPublic = false;
 
   private enum ClassType { ANONYMOUS_CLASS, LOCAL_CLASS, INNER_CLASS }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("return.of.inner.class.display.name");
-  }
 
   @NotNull
   @Override

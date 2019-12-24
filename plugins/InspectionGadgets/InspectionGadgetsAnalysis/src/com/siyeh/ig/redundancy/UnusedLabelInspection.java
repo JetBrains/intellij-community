@@ -29,12 +29,6 @@ import org.jetbrains.annotations.NotNull;
 public class UnusedLabelInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unused.label.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.ProjectModel;
 
 import java.util.Collection;
 
@@ -10,5 +9,7 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  */
 public interface Build extends BuildModel {
-  Collection<ProjectModel> getProjects();
+  String getName();
+
+  Collection<Project> getProjects();
 }

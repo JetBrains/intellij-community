@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class JavaImportOptimizer implements ImportOptimizer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaImportOptimizer");
+  private static final Logger LOG = Logger.getInstance(JavaImportOptimizer.class);
 
   @Override
   @NotNull
@@ -106,6 +107,6 @@ public class JavaImportOptimizer implements ImportOptimizer {
 
   @Override
   public boolean supports(@NotNull PsiFile file) {
-    return file instanceof PsiJavaFile;
+    return file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file);
   }
 }

@@ -301,6 +301,7 @@
     <inspection_tool class="InvalidImplementedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidProvidedBy" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InvalidRequestParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="IteratorHasNextCallsIteratorNext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="JBoss" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="JSDeprecatedSymbols" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="JSDuplicatedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -1012,6 +1013,30 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="e" nameOfExprType="java\.util\.concurrent\.ExecutorService" expressionTypes="java.util.concurrent.ExecutorService" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="d" within="" contains="" />
+      </replaceConfiguration>
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests" text="if ($APP$.isUnitTestMode()) {&#10;  $DO$;&#10;} else {&#10;  $APP2$.$INV$($ARGS$);&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="APP" within="" contains="" />
+        <constraint name="APP2" within="" contains="" />
+        <constraint name="INV" regexp="(invoke.*)|(.*Later.*)" within="" contains="" />
+        <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
+        <constraint name="DO" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="remove test-only branch and use UIUtil.dispatchAllInvocationEvents in tests 2" text="if (!$APP$.isUnitTestMode()) {&#10;  $APP2$.$INV$($ARGS$);&#10;} else {&#10;  $DO$;&#10;}" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="APP" within="" contains="" />
+        <constraint name="APP2" within="" contains="" />
+        <constraint name="INV" regexp="(invoke.*)|(.*Later.*)" within="" contains="" />
+        <constraint name="ARGS" maxCount="2147483647" within="" contains="" />
+        <constraint name="DO" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Logger.getInstance(unknown class)" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def fqn = c.getValue().substring(1);&#10;if (fqn.indexOf('.') == -1) return false;&#10;def shortName = com.intellij.openapi.util.text.StringUtil.getShortName(fqn);&#10;if (!shortName.equals(com.intellij.openapi.util.text.StringUtil.capitalize(shortName))) return false;&#10;&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));&#10; cClass == null&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="c" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="can simplify Logger.getInstance" text="Logger.getInstance(&quot;#$c$&quot;)" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="Logger.getInstance($c$.class)">
+        <constraint name="__context__" script="&quot;import com.intellij.psi.*&#10;import com.intellij.psi.search.GlobalSearchScope&#10;import com.intellij.psi.util.PsiUtil&#10;&#10;def project = __context__.getProject();&#10;def cClass = JavaPsiFacade.getInstance(project).findClass(c.getValue().substring(1), GlobalSearchScope.allScope(project));&#10;def cVirtualFile = c==null?null:PsiUtil.getVirtualFile(cClass);&#10;&#10;cVirtualFile != null &amp;&amp;  &#10;__context__.getContainingFile().getResolveScope().contains(cVirtualFile)&#10;&quot;" target="true" within="" contains="" />
+        <constraint name="c" within="" contains="" />
       </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />

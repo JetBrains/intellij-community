@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class AnonymousToInnerHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler");
+  private static final Logger LOG = Logger.getInstance(AnonymousToInnerHandler.class);
 
   static final String REFACTORING_NAME = RefactoringBundle.message("anonymousToInner.refactoring.name");
 

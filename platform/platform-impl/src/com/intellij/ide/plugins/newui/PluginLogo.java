@@ -42,7 +42,7 @@ import java.util.zip.ZipFile;
  * @author Alexander Lobas
  */
 public final class PluginLogo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.newui.PluginLogo");
+  private static final Logger LOG = Logger.getInstance(PluginLogo.class);
 
   private static final String CACHE_DIR = "imageCache";
   private static final String PLUGIN_ICON = "pluginIcon.svg";

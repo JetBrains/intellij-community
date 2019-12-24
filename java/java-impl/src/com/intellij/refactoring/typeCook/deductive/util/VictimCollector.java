@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeCook.deductive.util;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -101,7 +102,7 @@ public class VictimCollector extends Visitor {
   @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
   }
 
-  @Override public void visitFile(PsiFile file) {
+  @Override public void visitFile(@NotNull PsiFile file) {
     if (file instanceof PsiJavaFile) {
       super.visitFile(file);
     }

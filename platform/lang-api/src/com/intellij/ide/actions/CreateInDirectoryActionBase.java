@@ -31,12 +31,6 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
-
-  @Override
-  public boolean startInTransaction() {
-    return true;
-  }
-
   @Override
   public boolean isDumbAware() {
     return false;

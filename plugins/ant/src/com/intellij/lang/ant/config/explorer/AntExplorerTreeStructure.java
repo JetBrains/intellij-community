@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 final class AntExplorerTreeStructure extends AbstractTreeStructure {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorerTreeStructure");
+  private static final Logger LOG = Logger.getInstance(AntExplorerTreeStructure.class);
   private final Project myProject;
   private final Object myRoot = new Object();
   private boolean myFilteredTargets = false;

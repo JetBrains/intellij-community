@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -111,9 +112,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
   private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
 
-  private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf7f7f7), new Color(0x46484a));
   private static final JBColor BORDER_COLOR = new JBColor(new Color(0xadadad), new Color(0x616366));
-  public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
+  public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
@@ -127,7 +127,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
 
-  public static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size";
+  private static final String QUICK_DOC_FONT_SIZE_OLD_PROPERTY = "quick.doc.font.size";
+  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size.v2";
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -562,7 +563,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static void prepareCSS(HTMLEditorKit editorKit) {
     boolean newLayout = Registry.is("editor.new.mouse.hover.popups");
-    Color borderColor = newLayout ? UIUtil.getTooltipSeparatorColor() : ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5);
+    Color documentationColor = EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(COLOR_KEY);
+    Color borderColor = newLayout ? UIUtil.getTooltipSeparatorColor() : ColorUtil.mix(documentationColor, BORDER_COLOR, 0.5);
     int leftPadding = newLayout ? 8 : 7;
     int definitionTopPadding = newLayout ? 4 : 3;
     int htmlBottomPadding = newLayout ? 8 : 5;
@@ -656,19 +658,34 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    String strValue = PropertiesComponent.getInstance().getValue(QUICK_DOC_FONT_SIZE_PROPERTY);
-    if (strValue != null) {
-      try {
-        return FontSize.valueOf(strValue);
-      }
-      catch (IllegalArgumentException iae) {
-        // ignore, fall back to default font.
-      }
+    FontSize fontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_PROPERTY);
+    if (fontSize != null) return fontSize;
+    FontSize oldFontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
+    if (oldFontSize != null) {
+      // migrate old-scale setting
+      PropertiesComponent.getInstance().unsetValue(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
+      FontSize newFontSize = oldFontSize == FontSize.X_LARGE ? FontSize.XX_LARGE
+                                                             : oldFontSize == FontSize.LARGE ? FontSize.X_LARGE
+                                                                                             : oldFontSize;
+      setQuickDocFontSize(newFontSize);
+      return newFontSize;
     }
     return FontSize.SMALL;
   }
 
-  public void setQuickDocFontSize(@NotNull FontSize fontSize) {
+  @Nullable
+  private static FontSize readFontSizeFromSettings(@NotNull String propertyName) {
+    String strValue = PropertiesComponent.getInstance().getValue(propertyName);
+    if (strValue != null) {
+      try {
+        return FontSize.valueOf(strValue);
+      }
+      catch (IllegalArgumentException ignored) {}
+    }
+    return null;
+  }
+
+  public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
     PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, fontSize.toString());
   }
 

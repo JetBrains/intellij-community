@@ -28,10 +28,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.*;
 
 import java.util.List;
 import java.util.Set;
@@ -48,9 +45,22 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     if (element instanceof ActionOrGroup) {
       checkActionOrGroup((ActionOrGroup)element, holder);
     }
+    else if (element instanceof OverrideText) {
+      checkOverrideText((OverrideText)element, holder);
+    }
     else if (element instanceof Extension) {
       checkExtension((Extension)element, holder);
     }
+  }
+
+  private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
+    if (checkCapitalization(holder, overrideText.getText(), Nls.Capitalization.Title)) return;
+
+    Action action = overrideText.getParentOfType(Action.class, true);
+    assert action != null;
+    final String resourceKey = "action." + action.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
+    checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
+                                resourceKey, true);
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
@@ -90,7 +100,16 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
     if (checkCapitalization(holder, genericDomValue, capitalization)) return;
 
-    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(actionOrGroup, IdeaPlugin.class, true);
+    checkPropertyCapitalization(holder, actionOrGroup, capitalization,
+                                "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
+                                actionOrGroupText.myRequired.apply(actionOrGroup));
+  }
+
+  private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
+                                                  DomElement domElement,
+                                                  Nls.Capitalization capitalization,
+                                                  String resourceKey, boolean required) {
+    final IdeaPlugin ideaPlugin = DomUtil.getParentOfType(domElement, IdeaPlugin.class, true);
     if (ideaPlugin == null) return;
 
     final XmlElement resourceBundleTag = ideaPlugin.getResourceBundle().getXmlElement();
@@ -103,15 +122,14 @@ public class PluginXmlCapitalizationInspection extends BasicDomElementsInspectio
     final PropertiesFileImpl bundleFile = ObjectUtils.tryCast(bundleReference.resolve(), PropertiesFileImpl.class);
     if (bundleFile == null) return;
 
-    final String resourceKey = "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix;
     final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(resourceKey), Property.class);
     if (property == null) {
-      if (actionOrGroupText.myRequired.apply(actionOrGroup)) {
-        holder.createProblem(actionOrGroup, "Missing resource bundle key '" + resourceKey + "'");
+      if (required) {
+        holder.createProblem(domElement, "Missing resource bundle key '" + resourceKey + "'");
       }
     }
     else {
-      highlightCapitalization(holder, actionOrGroup, property.getValue(), capitalization, property);
+      highlightCapitalization(holder, domElement, property.getValue(), capitalization, property);
     }
   }
 

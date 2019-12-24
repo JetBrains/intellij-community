@@ -34,7 +34,7 @@ public class FileContentHashIndexExtension extends FileBasedIndexExtension<Integ
   }
 
   private FileContentHashIndexExtension(@NotNull File enumeratorDir) throws IOException {
-    myEnumerator = new ContentHashesUtil.HashEnumerator(enumeratorDir);
+    myEnumerator = new ContentHashesUtil.HashEnumerator(enumeratorDir.toPath());
     myDirHash = enumeratorDir.getAbsolutePath().hashCode();
     ShutDownTracker.getInstance().registerShutdownTask(() -> closeEnumerator());
   }
@@ -60,7 +60,7 @@ public class FileContentHashIndexExtension extends FileBasedIndexExtension<Integ
   @Override
   public DataIndexer<Integer, Void, FileContent> getIndexer() {
     return fc -> {
-      byte[] hash = ((FileContentImpl)fc).getHash();
+      byte[] hash = ((FileContentImpl)fc).getHash(false);
       LOG.assertTrue(hash != null);
       try {
         int id;

@@ -22,7 +22,7 @@ import java.util.Set;
  * @author yole
  */
 public class FormMoveProvider extends MoveHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.projectView.FormMoveProvider");
+  private static final Logger LOG = Logger.getInstance(FormMoveProvider.class);
 
   @Override
   public boolean canMove(DataContext dataContext) {

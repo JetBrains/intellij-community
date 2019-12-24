@@ -70,13 +70,6 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
         return null;
       }
     }
-
-    for (PsiType constraint : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
-      final PsiType suggestion = getSingleMethodParameterType(constraint, index, expression);
-      if (suggestion != null) {
-        return suggestion;
-      }
-    }
     return null;
   }
 

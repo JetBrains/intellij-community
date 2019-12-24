@@ -4,8 +4,8 @@ package com.siyeh.ipp.switchbranches;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -84,8 +84,8 @@ public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAc
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
     PsiType type = expression.getType();
     if (dfr != null) {
-      LongRangeSet range = dfr.getExpressionFact(expression, DfaFactType.RANGE);
-      if (range != null && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
+      LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
+      if (type != null && PsiType.INT.isAssignableFrom(type) && !range.isCardinalityBigger(MAX_NUMBER_OF_BRANCHES)) {
         return range.stream().mapToObj(c -> Value.fromConstant(TypeConversionUtil.computeCastTo(c, type))).collect(Collectors.toList());
       }
       Set<Object> values = dfr.getExpressionValues(expression);

@@ -2,13 +2,9 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -69,7 +65,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
   };
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl");
+  private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
   @NonNls
   private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
@@ -110,20 +106,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     }
     catch (Exception e) {
       LOG.error(e);
-    }
-
-    ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (applicationInfo.isEssentialPlugin(plugin.getPluginId().getIdString())) {
-        continue;
-      }
-      final String pluginName = plugin.getName();
-      final Set<String> words = getProcessedWordsWithoutStemming(pluginName);
-      final String description = plugin.getDescription();
-      if (description != null) {
-        words.addAll(getProcessedWordsWithoutStemming(description));
-      }
-      addOptions(words, null, pluginName, PluginManagerConfigurable.ID, IdeBundle.message("title.plugins"));
     }
   }
 
@@ -332,11 +314,21 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (helpIds != null) {
       for (Iterator<Configurable> it = contentHits.iterator(); it.hasNext();) {
         Configurable configurable = it.next();
-        if (CodeStyleFacade.getInstance(project).isUnsuitableCodeStyleConfigurable(configurable)) {
-          it.remove();
-          continue;
+        boolean needToRemove = true;
+        if (configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId())) {
+          needToRemove = false;
         }
-        if (!(configurable instanceof SearchableConfigurable && helpIds.contains(((SearchableConfigurable)configurable).getId()))) {
+        if (configurable instanceof SearchableConfigurable.Merged) {
+          final List<Configurable> mergedConfigurables = ((SearchableConfigurable.Merged)configurable).getMergedConfigurables();
+          for (Configurable mergedConfigurable : mergedConfigurables) {
+            if (mergedConfigurable instanceof SearchableConfigurable &&
+                helpIds.contains(((SearchableConfigurable)mergedConfigurable).getId())) {
+              needToRemove = false;
+              break;
+            }
+          }
+        }
+        if (needToRemove) {
           it.remove();
         }
       }

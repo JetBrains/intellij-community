@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class TextEditorLocation implements FileEditorLocation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.TextEditorLocation");
+  private static final Logger LOG = Logger.getInstance(TextEditorLocation.class);
 
   private final TextEditor myEditor;
   private final LogicalPosition myPosition;

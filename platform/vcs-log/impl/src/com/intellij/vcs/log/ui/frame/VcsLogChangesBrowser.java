@@ -28,6 +28,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -45,6 +46,7 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.UIVcsUtilKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +105,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     Disposer.register(parent, this);
 
-    myToolbarWrapper = new Wrapper(getToolbar().getComponent());
+    JComponent toolbarComponent = getToolbar().getComponent();
+    myToolbarWrapper = new Wrapper(toolbarComponent);
+    UIVcsUtilKt.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
 
@@ -115,6 +119,14 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
   @Override
   protected JComponent createToolbarComponent() {
     return myToolbarWrapper;
+  }
+
+  @NotNull
+  @Override
+  protected JComponent createCenterPanel() {
+    JComponent centerPanel = super.createCenterPanel();
+    UIUtil.putClientProperty(centerPanel, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
+    return centerPanel;
   }
 
   @NotNull

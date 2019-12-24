@@ -85,13 +85,16 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
   }
 
+  private static final Condition<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+
   @NotNull
   public static Condition<SdkTypeId> notSimpleJavaSdkType() {
-    return sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+    return NOT_SIMPLE_JAVA_TYPE;
   }
 
   @NotNull
   public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
-    return sdkTypeId -> notSimpleJavaSdkType().value(sdkTypeId) && (condition == null || condition.value(sdkTypeId));
+    if (condition == null) return NOT_SIMPLE_JAVA_TYPE;
+    return sdkTypeId -> NOT_SIMPLE_JAVA_TYPE.value(sdkTypeId) && condition.value(sdkTypeId);
   }
 }

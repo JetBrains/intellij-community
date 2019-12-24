@@ -136,7 +136,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     }
 
     @Override
-    public void visitFile(final PsiFile file) {
+    public void visitFile(@NotNull final PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) {
         return;

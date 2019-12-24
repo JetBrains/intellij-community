@@ -3,11 +3,12 @@ package com.intellij.ide.startup;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class StartupManagerEx extends StartupManager {
-  public abstract boolean startupActivityPassed();
-
-  public static StartupManagerEx getInstanceEx(Project project) {
+  public static StartupManagerEx getInstanceEx(@NotNull Project project) {
     return (StartupManagerEx)getInstance(project);
   }
+
+  public abstract boolean startupActivityPassed();
 }

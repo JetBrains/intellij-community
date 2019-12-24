@@ -34,7 +34,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
+  private static final Logger LOG = Logger.getInstance(DomAnchorImpl.class);
 
   public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t) {
     return createAnchor(t, true);

@@ -40,12 +40,6 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return PropertiesBundle.message("unused.property.inspection.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "UnusedProperty";
   }
@@ -81,7 +75,7 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         if (!(element instanceof Property)) return;
         Property property = (Property)element;
 

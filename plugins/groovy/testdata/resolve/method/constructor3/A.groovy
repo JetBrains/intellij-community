@@ -1,1 +1,1 @@
-new java.lang.<ref>String()
+new java.lang.<caret>String()

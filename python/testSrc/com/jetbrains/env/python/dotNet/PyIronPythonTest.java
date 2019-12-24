@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.TestEnv;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import java.io.IOException;
  * @author Ilya.Kazakevich
  */
 @EnvTestTagsRequired(tags = "iron", skipOnOSes = {TestEnv.LINUX, TestEnv.MAC})
+@Staging
 public final class PyIronPythonTest extends PyEnvTestCase {
 
   /**

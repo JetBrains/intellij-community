@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ public class MockSmartPointerManager extends SmartPointerManager {
   @NotNull
   @Override
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
-    return null;
+    throw new IncorrectOperationException();
   }
 
   @NotNull
@@ -26,7 +27,6 @@ public class MockSmartPointerManager extends SmartPointerManager {
   @Override
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile) {
     return new SmartPsiElementPointer<E>() {
-      @Nullable
       @Override
       public E getElement() {
         return element;
@@ -64,12 +64,12 @@ public class MockSmartPointerManager extends SmartPointerManager {
   }
 
   @Override
-  public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+  public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer<?> pointer1, @NotNull SmartPsiElementPointer<?> pointer2) {
     return false;
   }
 
   @Override
-  public void removePointer(@NotNull SmartPsiElementPointer pointer) {
+  public void removePointer(@NotNull SmartPsiElementPointer<?> pointer) {
 
   }
 }

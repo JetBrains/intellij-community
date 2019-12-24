@@ -3,10 +3,10 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 
@@ -39,16 +39,10 @@ public class ActionUpdateEdtExecutor {
       }
     });
 
-    while (!semaphore.waitFor(10)) {
-      if (indicator != null && indicator.isCanceled()) {
-        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
-        throw new ProcessCanceledException();
-      }
-    }
+    ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
+
     // check cancellation one last time, to ensure the EDT action wasn't no-op due to cancellation
-    if (indicator != null && indicator.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
+    ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator);
     return result.get();
   }
 }

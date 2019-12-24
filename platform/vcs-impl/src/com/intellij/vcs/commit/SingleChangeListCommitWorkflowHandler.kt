@@ -76,7 +76,12 @@ class SingleChangeListCommitWorkflowHandler(
 
   override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) {
     super.beforeCommitChecksEnded(isDefaultCommit, result)
-    if (isDefaultCommit && result == CheckinHandler.ReturnResult.COMMIT) ui.deactivate()
+    if (result == CheckinHandler.ReturnResult.COMMIT) {
+      // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
+      workflow.commitState = workflow.commitState.copy(getCommitMessage())
+
+      if (isDefaultCommit) ui.deactivate()
+    }
   }
 
   override fun updateWorkflow() {

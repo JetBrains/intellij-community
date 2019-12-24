@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Eugene Zhuravlev
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
+  private static final Logger LOG = Logger.getInstance(SimpleProtobufClient.class);
 
   private enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING

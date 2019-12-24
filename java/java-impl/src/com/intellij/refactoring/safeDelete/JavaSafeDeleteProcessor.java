@@ -50,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor");
+  private static final Logger LOG = Logger.getInstance(JavaSafeDeleteProcessor.class);
 
   @Override
   public boolean handlesElement(final PsiElement element) {

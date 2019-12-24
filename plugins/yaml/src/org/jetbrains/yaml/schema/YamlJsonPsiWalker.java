@@ -8,11 +8,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -230,7 +233,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
     YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(element, YAMLAnchor.class);
     if (anchors == null || anchors.length == 0) return element.getTextRange();
     YAMLAnchor lastAnchor = anchors[anchors.length - 1];
-    PsiElement next = PsiTreeUtil.skipWhitespacesForward(lastAnchor);
+    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastAnchor);
     return next == null ? element.getTextRange() : next.getTextRange();
   }
 
@@ -254,7 +257,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (!(value instanceof YAMLValue)) return value;
         YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
         if (anchors == null || anchors.length == 0) return value;
-        PsiElement next = PsiTreeUtil.skipWhitespacesForward(anchors[anchors.length - 1]);
+        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(anchors[anchors.length - 1]);
         return next == null ? value : next;
       }
 
@@ -268,7 +271,7 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       private YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
         if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
           PsiElement prev = element.getPrevSibling();
-          prev = prev == null ? null : prev.getPrevSibling();
+          prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
           if (prev instanceof YAMLKeyValue && ((YAMLKeyValue)prev).getValue() == null) {
             return (YAMLKeyValue)prev;
           }
@@ -329,12 +332,27 @@ public class YamlJsonPsiWalker implements JsonLikePsiWalker {
       public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
         YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
         assert keyValue != null: "Should come here only for YAMLKeyValue with no value and a following indent";
+        PsiComment nextComment = ObjectUtils.tryCast(skipNonNewlineSpaces(keyValue), PsiComment.class);
+        if (nextComment != null) {
+          keyValue.addBefore(myGenerator.createSpace(), null);
+          keyValue.addBefore(nextComment.copy(), null);
+        }
         keyValue.addBefore(myGenerator.createEol(), null);
         keyValue.addBefore(myGenerator.createIndent(element.getTextLength()), null);
         PsiElement prev = element.getPrevSibling();
         if (prev != null) prev.delete();
         element.delete();
+        if (nextComment != null) nextComment.delete();
         return keyValue;
+      }
+
+      @Nullable
+      private PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
+        PsiElement sibling = keyValue.getNextSibling();
+        while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
+          sibling = sibling.getNextSibling();
+        }
+        return sibling;
       }
     };
   }

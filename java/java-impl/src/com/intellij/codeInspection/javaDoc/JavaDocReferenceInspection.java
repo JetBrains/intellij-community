@@ -161,12 +161,6 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.javadoc.ref.display.name");
-  }
-
-  @NotNull
-  @Override
   public String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.javadoc.issues");
   }
@@ -258,7 +252,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       }
 
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
           child.accept(this);
         }

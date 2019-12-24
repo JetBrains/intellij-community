@@ -242,9 +242,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       psiElement().inFile(psiFile(PyDocstringFile.class)));
 
   private static final ElementPattern<PsiElement> IN_FUNCTION_HEADER =
-    or(psiElement().inside(PyFunction.class).andNot(or(psiElement().inside(false, psiElement(PyStatementList.class), psiElement(PyFunction.class)),
-                                                       psiElement().inside(false, psiElement(PyParameterList.class), psiElement(PyFunction.class)))),
-       psiElement().inside(PyClass.class).andNot(psiElement().inside(false, psiElement(PyStatementList.class), psiElement(PyClass.class))));
+    psiElement().inside(PyFunction.class).andNot(or(psiElement().inside(false, psiElement(PyStatementList.class), psiElement(PyFunction.class)),
+                                                    psiElement().inside(false, psiElement(PyParameterList.class), psiElement(PyFunction.class))));
 
   public static final PsiElementPattern.Capture<PsiElement> AFTER_QUALIFIER =
     psiElement().afterLeaf(psiElement().withText(".").inside(PyReferenceExpression.class));

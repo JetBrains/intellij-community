@@ -33,5 +33,18 @@
 
     <group id="BundleGroupWithoutAnyKeys"/>
     <<warning descr="String 'group lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'group lower case text' is not properly capitalized. It should have title capitalization">group</warning></warning> id="BundleGroupWrongCasing"/>
+
+
+    <!-- override-text -->
+    <action id="OverrideAction" text="Override Action Text">
+      <override-text place="MainEditor" text="Main Editor Action Title"/>
+      <override-text place="MainEditorWrong" text="<warning descr="String 'lower case' is not properly capitalized. It should have title capitalization">lower case</warning>"/>
+    </action>
+
+    <action id="OverrideBundleAction" text="Override Bundle Action Text">
+      <override-text place="ViaBundle"/>
+      <<warning descr="String 'Action Text Override Via Bundle lower case' is not properly capitalized. It should have title capitalization">override-text</warning> place="ViaBundleWrongCase"/>
+      <<warning descr="Missing resource bundle key 'action.OverrideBundleAction.ViaBundleMissingKey.text'">override-text</warning> place="ViaBundleMissingKey"/>
+    </action>
   </actions>
 </idea-plugin>

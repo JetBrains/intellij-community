@@ -21,7 +21,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
+  private static final Logger LOG = Logger.getInstance(CachedValueImpl.class);
   private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 
@@ -247,7 +247,7 @@ public abstract class CachedValueBase<T> {
         Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         if (reuse) {
-          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass());
+          IdempotenceChecker.checkEquivalence(alreadyComputed, data, getValueProvider().getClass(), calcData);
         }
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {
@@ -259,4 +259,9 @@ public abstract class CachedValueBase<T> {
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" + getValueProvider() + "}";
+  }
 }

@@ -41,13 +41,13 @@ public final class DiscoveredTestDataHolder {
   public DiscoveredTestDataHolder(@NotNull Path basePath) {
     final Path versionFile = getVersionFile(basePath);
     PathKt.createDirectories(basePath);
-    final File discoveredTestsIndexFile = basePath.resolve("discoveredTests.index").toFile();
-    final File testFilesIndexFile = basePath.resolve("testFiles.index").toFile();
+    final Path discoveredTestsIndexFile = basePath.resolve("discoveredTests.index");
+    final Path testFilesIndexFile = basePath.resolve("testFiles.index");
 
-    final File classNameEnumeratorFile = basePath.resolve("className.enum").toFile();
-    final File methodNameEnumeratorFile = basePath.resolve("methodName.enum").toFile();
-    final File pathEnumeratorFile = basePath.resolve("path.enum").toFile();
-    final File testNameEnumeratorFile = basePath.resolve("testName.enum").toFile();
+    final Path classNameEnumeratorFile = basePath.resolve("className.enum");
+    final Path methodNameEnumeratorFile = basePath.resolve("methodName.enum");
+    final Path pathEnumeratorFile = basePath.resolve("path.enum");
+    final Path testNameEnumeratorFile = basePath.resolve("testName.enum");
 
     try {
       int version = readVersion(versionFile);

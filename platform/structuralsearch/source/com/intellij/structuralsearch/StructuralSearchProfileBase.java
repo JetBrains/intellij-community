@@ -49,7 +49,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
     element.accept(new PsiRecursiveElementVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (DuplocatorUtil.isIgnoredNode(element)) {
           return;
@@ -245,7 +245,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       doVisitElement(element);
 
       if (isStringLiteral(element)) {
@@ -370,7 +370,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       super.visitElement(element);
 
       final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);

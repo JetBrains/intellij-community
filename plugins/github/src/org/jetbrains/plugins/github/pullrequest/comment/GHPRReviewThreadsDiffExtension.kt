@@ -5,15 +5,13 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.util.base.ListenerDiffViewerBase
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.diff.tools.util.base.DiffViewerBase
 
 class GHPRReviewThreadsDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
-    val commentsProvider = context.getUserData(GHPRDiffReviewThreadsProvider.KEY) ?: return
-    val change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY) ?: return
-    if (viewer !is ListenerDiffViewerBase) return
+    val reviewSupport = request.getUserData(GHPRDiffReviewSupport.KEY) ?: return
+    if (viewer !is DiffViewerBase) return
 
-    commentsProvider.install(viewer, change)
+    reviewSupport.install(viewer)
   }
 }

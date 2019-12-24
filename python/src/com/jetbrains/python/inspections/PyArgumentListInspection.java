@@ -34,12 +34,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class PyArgumentListInspection extends PyInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.incorrect.call.arguments");
-  }
 
   @NotNull
   @Override
@@ -110,7 +104,7 @@ public class PyArgumentListInspection extends PyInspection {
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
     final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {

@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.io.File
 
-fun main(args: Array<String>) = generateIconsClasses()
+fun main() = generateIconsClasses()
 
 internal fun generateIconsClasses() {
   val homePath = PathManager.getHomePath()

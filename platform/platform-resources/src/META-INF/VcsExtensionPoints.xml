@@ -80,6 +80,9 @@
     <extensionPoint name="vcsChangesViewRefresher" interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher" area="IDEA_PROJECT"/>
     <extensionPoint name="vcsAnnotationGutterActionProvider" interface="com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider"/>
 
+    <extensionPoint name="vcsAnnotationGutterColumnProvider"
+                    interface="com.intellij.openapi.vcs.annotate.AnnotationGutterColumnProvider"/>
+
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
@@ -88,7 +91,7 @@
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider"/>
 
     <extensionPoint name="openapi.vcs.actions.AnnotateToggleAction.Provider"
-                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider"/>
+                    interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
     <extensionPoint name="ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>

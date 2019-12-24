@@ -4,8 +4,10 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -229,7 +231,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return name;
       }
     }
-    LOG.error(getClass() + ": group display name should be overridden or configured via XML " + getClass());
+    PluginException.logPluginError(LOG, getClass() + ": group display name should be overridden or configured via XML ", null, getClass());
     return "";
   }
 
@@ -272,7 +274,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
         return name;
       }
     }
-    LOG.error(getClass() + ": display name should be overridden or configured via XML " + getClass());
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      PluginException.logPluginError(LOG, getClass() + ": display name should be overridden or configured via XML ", null, getClass());
+    }
     return "";
   }
 

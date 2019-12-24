@@ -23,7 +23,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resources.ResourcesBuilder");
+  private static final Logger LOG = Logger.getInstance(ResourcesBuilder.class);
 
   public static final String BUILDER_NAME = "Resource Compiler";
 

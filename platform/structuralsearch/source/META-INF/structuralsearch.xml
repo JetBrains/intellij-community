@@ -22,17 +22,16 @@
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
+    <postStartupActivity implementation="com.intellij.structuralsearch.inspection.InspectionProvider"/>
   </extensions>
 
   <actions>
     <group id="StructuralSearchActions">
-      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction">
-        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
-      </action>
+      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="ReplaceInPath"/>
 
-      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction">
-        <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchPlugin.StructuralSearchAction"/>
-      </action>
+      <separator/>
+      <action id="StructuralSearchPlugin.StructuralSearchAction" class="com.intellij.structuralsearch.plugin.StructuralSearchAction"/>
+      <action id="StructuralSearchPlugin.StructuralReplaceAction" class="com.intellij.structuralsearch.plugin.StructuralReplaceAction"/>
     </group>
   </actions>
 </idea-plugin>

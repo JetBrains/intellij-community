@@ -42,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
+  private static final Logger LOG = Logger.getInstance(AddSingleMemberStaticImportAction.class);
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
   @Override

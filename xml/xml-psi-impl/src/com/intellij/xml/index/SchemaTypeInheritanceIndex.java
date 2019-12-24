@@ -46,7 +46,7 @@ import java.util.function.BiFunction;
  */
 public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static final ID<String, Set<SchemaTypeInfo>> NAME = ID.create("SchemaTypeInheritance");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.index.SchemaTypeInheritanceIndex");
+  private static final Logger LOG = Logger.getInstance(SchemaTypeInheritanceIndex.class);
 
   private static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project,
                                                                   final String ns,

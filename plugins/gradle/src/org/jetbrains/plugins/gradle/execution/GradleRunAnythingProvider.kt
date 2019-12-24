@@ -7,6 +7,7 @@ import com.intellij.ide.actions.runAnything.RunAnythingContext
 import com.intellij.ide.actions.runAnything.RunAnythingContext.*
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider
+import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -36,9 +37,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.Icon
-import kotlin.collections.LinkedHashMap
 
 
 class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
@@ -88,12 +88,12 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
     }
   }
 
-  override fun runAnything(dataContext: DataContext, commandLine: CommandLine): Boolean {
+  override fun run(dataContext: DataContext, commandLine: CommandLine): Boolean {
     val project = RunAnythingUtil.fetchProject(dataContext)
     val executionContext = dataContext.getData(EXECUTING_CONTEXT) ?: ProjectContext(project)
     val context = createContext(project, executionContext, dataContext)
-    val externalProjectPath = context.externalProjectPath ?: return false
-    GradleExecuteTaskAction.runGradle(project, context.executor, externalProjectPath, commandLine.command)
+    val workDirectory = context.externalProjectPath ?: executionContext.getPath() ?: return false
+    GradleExecuteTaskAction.runGradle(project, context.executor, workDirectory, commandLine.command)
     return true
   }
 
@@ -132,11 +132,11 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
       !commandLine.toComplete.contains(".") -> "*"
       else -> substringBeforeLast(commandLine.toComplete, ".") + "."
     }
-    val result = ArrayList<String>()
+    val result = ConcurrentLinkedQueue<String>()
     val model = GotoClassModel2(context.project)
     val parameters = FindSymbolParameters.simple(context.project, false)
     model.processNames({ result.add("$callChain$it") }, parameters)
-    return result.asSequence()
+    return result.toList().asSequence()
   }
 
   private fun getTaskOptions(context: Context, task: String): Sequence<TaskOption> {

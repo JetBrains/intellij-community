@@ -11,9 +11,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.SystemProperties
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
@@ -25,7 +25,7 @@ import org.jetbrains.io.json
 
 internal val LOG = logger<IntellijConfigurationJsonSchemaProviderFactory>()
 
-private val PROVIDER_KEY = Key.create<List<JsonSchemaFileProvider>>("IntellijConfigurationJsonSchemaProvider")
+private val PROVIDER_KEY = Key.create<SoftReference<List<JsonSchemaFileProvider>>>("IntellijConfigurationJsonSchemaProvider")
 
 internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
   private val schemeContent by lazy {
@@ -33,7 +33,7 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
   }
 
   override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
-    var result = PROVIDER_KEY.get(project)
+    var result = PROVIDER_KEY.get(project)?.get()
     if (result != null) {
       return result
     }
@@ -42,12 +42,17 @@ internal class IntellijConfigurationJsonSchemaProviderFactory : JsonSchemaProvid
     // LightVirtualFile cannot be cached per application, must be stored per project.
     // Yes, it is hack, but for now decided to not fix this issue on platform level.
     result = listOf(MyJsonSchemaFileProvider())
-    return (project as UserDataHolderBase).putUserDataIfAbsent(PROVIDER_KEY, result)
+    project.putUserData(PROVIDER_KEY, SoftReference<List<JsonSchemaFileProvider>>(result))
+    return result
   }
 
   inner class MyJsonSchemaFileProvider : JsonSchemaFileProvider, DumbAware {
     private val schemeFile = lazy {
-      LightVirtualFile("scheme.json", JsonFileType.INSTANCE, schemeContent, Charsets.UTF_8, 0)
+      //do not pass schemeContent directory directly because the initialization for the content is very slow (500ms)
+      //use the lazy initialized field schemeContent only on demand 
+      object: LightVirtualFile("ij-scheme.json", JsonFileType.INSTANCE, "", Charsets.UTF_8, 0) {
+        override fun getContent(): CharSequence = schemeContent
+      }
     }
 
     override fun getName() = "IntelliJ Configuration"

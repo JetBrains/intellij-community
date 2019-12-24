@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class EncapsulateFieldsHandler implements RefactoringActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler");
+  private static final Logger LOG = Logger.getInstance(EncapsulateFieldsHandler.class);
   public static final String REFACTORING_NAME = RefactoringBundle.message("encapsulate.fields.title");
 
   @Override

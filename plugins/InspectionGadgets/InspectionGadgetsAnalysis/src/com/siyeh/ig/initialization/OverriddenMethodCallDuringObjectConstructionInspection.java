@@ -29,12 +29,6 @@ public class OverriddenMethodCallDuringObjectConstructionInspection extends Base
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overridden.method.call.in.constructor.problem.descriptor");
   }

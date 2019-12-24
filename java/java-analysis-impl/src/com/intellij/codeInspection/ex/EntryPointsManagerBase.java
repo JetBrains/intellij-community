@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -91,7 +90,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         if (ADDITIONAL_ANNOS != null) {
           ADDITIONAL_ANNOS = null;
           UIUtil.invokeLaterIfNeeded(() -> {
-            if (!ApplicationManager.getApplication().isDisposed()) {
+            if (!project.isDisposed()) {
               ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
             }
           });
@@ -107,7 +106,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull Element element) {
     Element entryPointsElement = element.getChild("entry_points");
     if (entryPointsElement != null) {

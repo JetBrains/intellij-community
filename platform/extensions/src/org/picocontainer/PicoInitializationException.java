@@ -13,45 +13,37 @@ package org.picocontainer;
 /**
  * Subclass of {@link PicoException} that is thrown when there is a problem initializing the container or some other
  * part of the PicoContainer api, for example, when a cyclic dependency between components occurs.
- * 
+ *
  * @version $Revision$
  * @since 1.0
  */
 public class PicoInitializationException extends PicoException {
-    /**
-     * Construct a new exception with no cause and no detail message. Note modern JVMs may still track the exception
-     * that caused this one.
-     * @deprecated Use public constructors
-     */
-    protected PicoInitializationException() {
-    }
+  /**
+   * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
+   * exception that caused this one.
+   *
+   * @param message the message detailing the exception.
+   */
+  public PicoInitializationException(final String message) {
+    super(message);
+  }
 
-    /**
-     * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
-     * exception that caused this one.
-     *
-     * @param message the message detailing the exception.
-     */
-    public PicoInitializationException(final String message) {
-        super(message);
-    }
+  /**
+   * Construct a new exception with the specified cause and no detail message.
+   *
+   * @param cause the exception that caused this one.
+   */
+  public PicoInitializationException(final Throwable cause) {
+    super(cause);
+  }
 
-    /**
-     * Construct a new exception with the specified cause and no detail message.
-     * 
-     * @param cause the exception that caused this one.
-     */
-    public PicoInitializationException(final Throwable cause) {
-        super(cause);
-    }
-
-    /**
-     * Construct a new exception with the specified cause and the specified detail message.
-     *
-     * @param message the message detailing the exception.
-     * @param cause   the exception that caused this one.
-     */
-    public PicoInitializationException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
+  /**
+   * Construct a new exception with the specified cause and the specified detail message.
+   *
+   * @param message the message detailing the exception.
+   * @param cause   the exception that caused this one.
+   */
+  public PicoInitializationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

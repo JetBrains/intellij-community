@@ -32,7 +32,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testTsLintSchema() {
-    doPerformanceTest(8000, "tslint-schema");
+    doPerformanceTest(9000, "tslint-schema");
   }
 
   private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {

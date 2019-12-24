@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ public class EmmetConfigurableProvider extends ConfigurableProvider {
 
   @NotNull
   public static List<Configurable> getAvailableConfigurables() {
-    List<Configurable> configurables = ContainerUtil.newSmartList(new XmlEmmetConfigurable());
+    List<Configurable> configurables = new SmartList<>(new XmlEmmetConfigurable());
     for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
       ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
     }

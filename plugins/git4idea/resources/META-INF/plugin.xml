@@ -3,14 +3,13 @@
   <id>Git4Idea</id>
   <description>
       <![CDATA[
-      Allows working with <a href="http://git-scm.com/">Git version control system</a>.
-      The following features are available:
+      Provides integration with <a href="http://git-scm.com/">Git</a>.
         <ul>
-        <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
-        <li>Ability to browse, check out sources from and import into the available Git repositories, when Git is not enabled.</li>
-        <li>When Git is enabled, the Git node appears on the VCS menu, and on the context menu of the editor.</li>
+        <li>Check out your source code from a Git repository</li>
+        <li>Browse, commit, push, pull, merge, view log, review pull requests, and much more</li>
+        <li>Dedicated item in the VCS menu and in the context menu</li>
         </ul>
-         <p>Numerous plugins depend on the Git Integration plugin.</p>
+         <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
       ]]>
    </description>
   <category>VCS Integration</category>
@@ -25,7 +24,6 @@
   <depends optional="true" config-file="remote-servers-git-java.xml">com.intellij.java</depends>
 
   <actions>
-
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
@@ -106,7 +104,6 @@
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert" text="Abort Revert"/>
       <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
       <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
-      <action id="Git.Cleanup.Branches" class="git4idea.branch.GitCleanupBranchesAction" text="Cleanup Branches" internal="true"/>.
     </group>
 
     <group id="Git.Ongoing.Rebase.Actions" popup="false">
@@ -185,6 +182,11 @@
 
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction"
             text="Test Git Login Dialog" internal="true"/>
+
+    <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider"
+            text="Path From Repository Root">
+      <add-to-group group-id="CopyFileReference"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -236,6 +238,7 @@
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
+    <projectService serviceImplementation="git4idea.ignore.GitIgnoreInStoreDirGenerator"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
@@ -284,6 +287,7 @@
      <!--END Git exclude lang-->
 
     <postStartupActivity implementation="git4idea.conflicts.GitConflictsToolWindowManager$Starter"/>
+    <backgroundPostStartupActivity implementation="git4idea.ignore.GitIgnoreInStoreDirGeneratorActivity"/>
     <backgroundPostStartupActivity implementation="git4idea.config.GitSetupProjectConfig" />
 
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
@@ -292,10 +296,19 @@
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
                  description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
 
+    <registryKey key="git.interactive.rebase.new.dialog" defaultValue="true"
+                 description="Show new Interactive Rebase Dialog" restartRequired="false"/>
+
+    <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
+                 description="Use Log to collect Rebase Entries"/>
+
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <terminal.shellCommandHandler implementation="git4idea.log.GitLogTerminalCustomCommandHandler"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
+
+    <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
+                        predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
   </extensions>
 
   <extensionPoints>

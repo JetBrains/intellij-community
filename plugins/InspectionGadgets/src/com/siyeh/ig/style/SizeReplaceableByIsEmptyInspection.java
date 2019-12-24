@@ -41,12 +41,6 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("size.replaceable.by.isempty.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", infos[0]);
   }

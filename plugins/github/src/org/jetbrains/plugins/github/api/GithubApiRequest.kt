@@ -7,6 +7,8 @@ import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLQueryRequest
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLResponse
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLSyntaxError
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.io.IOException
@@ -132,6 +134,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
           return GithubApiContentHelper.toJson(request, true)
         }
 
+      protected fun throwException(errors: List<GHGQLSyntaxError>): Nothing {
+        if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
+          throw GithubAuthenticationException("Access token has not been granted the required scopes.")
+
+        throw GithubConfusingException(errors.toString())
+      }
+
       class Parsed<out T>(url: String,
                           requestFilePath: String,
                           variablesObject: Any,
@@ -140,8 +149,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
         override fun extractResult(response: GithubApiResponse): T {
           val result: GHGQLResponse<out T> = parseGQLResponse(response, clazz)
           val data = result.data
-          if (data != null) return data!!
-          else throw GithubConfusingException(result.errors.toString())
+          if (data != null) return data
+
+          val errors = result.errors
+          if (errors == null) error("Undefined request state - both result and errors are null")
+          else throwException(errors)
         }
       }
 
@@ -182,7 +194,8 @@ sealed class GithubApiRequest<out T>(val url: String) {
           if (!node.isNull) return GithubApiContentHelper.fromJson(node.toString(), clazz, true)
         }
         val errors = result.errors
-        if (errors != null) throw GithubConfusingException(errors.toString()) else return null
+        if (errors == null) return null
+        else throwException(errors)
       }
     }
   }

@@ -2,18 +2,16 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.ide.GeneratedSourceFileChangeTracker;
-import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -45,11 +43,13 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -64,10 +64,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -92,11 +89,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+
+import static com.intellij.testFramework.RunAll.runAll;
 
 /**
  * Base class for heavy tests.
@@ -109,9 +104,8 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static IdeaTestApplication ourApplication;
+  private static TestApplicationManager ourTestAppManager;
   private static boolean ourReportedLeakedProjects;
-  protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
 
@@ -132,7 +126,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   @Nullable
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-
 
   @NotNull
   public TempFiles getTempDir() {
@@ -167,9 +160,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void initApplication() throws Exception {
-    boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance();
-    ourApplication.setDataProvider(this);
+    boolean firstTime = ourTestAppManager == null;
+    ourTestAppManager = TestApplicationManager.getInstance();
+    ourTestAppManager.setDataProvider(this);
 
     if (firstTime) {
       cleanPersistedVFSContent();
@@ -179,9 +172,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand",
+    "Rider", "GoLand", "CLion",
     null,
-    "AppCode", "CLion", "SwiftTests", "CidrCommonTests",
+    "AppCode", "SwiftTests", "CidrCommonTests",
     "DataGrip",
     "Python", "PyCharmCore",
     "Ruby",
@@ -192,12 +185,14 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     if (ourPlatformPrefixInitialized) {
       return;
     }
+
     if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
       ourPlatformPrefixInitialized = true;
       return;
     }
+
     for (String candidate : PREFIX_CANDIDATES) {
-      String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
+      String markerPath = candidate == null ? "idea/ApplicationInfo.xml" : "META-INF/" + candidate + "Plugin.xml";
       URL resource = HeavyPlatformTestCase.class.getClassLoader().getResource(markerPath);
       if (resource != null) {
         if (candidate != null) {
@@ -267,17 +262,16 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void setUpProject() throws Exception {
-    myProjectManager = ProjectManagerEx.getInstanceEx();
-    assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
-
     myProject = doCreateProject(getProjectDirOrFile());
-    myProjectManager.openTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
-    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      setUpModule();
-      setUpJdk();
-    }));
+    WriteAction.run(() -> {
+      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+        setUpModule();
+        setUpJdk();
+      });
+    });
 
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
@@ -372,7 +366,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   protected void runStartupActivities() {
     StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
     startupManager.runStartupActivities();
-    startupManager.runPostStartupActivities();
+    startupManager.runPostStartupActivitiesRegisteredDynamically();
   }
 
   @NotNull
@@ -460,7 +454,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
-    if (ApplicationManager.getApplication() == null) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) {
       return;
     }
 
@@ -476,20 +471,24 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    assert projectManager != null : "The ProjectManager is not initialized yet";
-    if (projectManager.isDefaultProjectInitialized()) {
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceExIfCreated();
+    if (projectManager != null && projectManager.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
 
     NonBlockingReadActionImpl.cancelAllTasks();
 
-    ((FileBasedIndexImpl)FileBasedIndex.getInstance()).cleanupForNextTest();
+    FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
+    if (fileBasedIndex != null) {
+      ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
+    }
 
-    LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
-    if (localFileSystem != null) {
-      localFileSystem.cleanupForNextTest();
+    if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
+      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      if (localFileSystem != null) {
+        localFileSystem.cleanupForNextTest();
+      }
     }
   }
 
@@ -538,103 +537,99 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
-    if (project instanceof ProjectImpl) {
-      ((ProjectImpl)project).stopServicePreloading();
-    }
-
     if (project != null && !project.isDisposed()) {
-      // clear "show param info" delayed requests leaking project
-      AutoPopupController autoPopupController = project.getServiceIfCreated(AutoPopupController.class);
-      if (autoPopupController != null) {
-        autoPopupController.cancelAllRequests();
-      }
-      waitForProjectLeakingThreads(project, 10, TimeUnit.SECONDS);
+      TestApplicationManagerKt.waitForProjectLeakingThreads(project);
     }
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    new RunAll()
-      .append(() -> disposeRootDisposable())
-      .append(() -> {
-        if (project != null) {
-          LightPlatformTestCase.doTearDown(project, ourApplication);
+    runAll(
+      () -> disposeRootDisposable(),
+      () -> {
+        if (myProject != null) {
+          LightPlatformTestCase.doTearDown(myProject, ourTestAppManager);
+          myProject = null;
         }
-      })
-      .append(() -> disposeProject())
-      .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .append(() -> {
+      },
+      () -> {
+        if (myProject != null) {
+          closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
+          myProject = null;
+        }
+      },
+      () -> UIUtil.dispatchAllInvocationEvents(),
+      () -> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker.checkForSettingsDamage();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         StartMarkAction.checkCleared(project);
         InplaceRefactoring.checkCleared();
-      })
-      .append(() -> {
+      },
+      () -> {
         JarFileSystemImpl.cleanupForNextTest();
 
         getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
         LaterInvocator.dispatchPendingFlushes();
-      })
-      .append(() -> {
+      },
+      () -> {
         if (!myAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;
           }
         }
-      })
-      .append(() -> super.tearDown())
-      .append(() -> {
+      },
+      () -> super.tearDown(),
+      () -> {
         if (myEditorListenerTracker != null) {
           myEditorListenerTracker.checkListenersLeak();
         }
-      })
-      .append(() -> {
+      },
+      () -> {
         if (myThreadTracker != null) {
           myThreadTracker.checkLeak();
         }
-      })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(() -> myOldSdks.checkForJdkTableLeaks())
-      .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
-      .append(() -> {
-        myProjectManager = null;
-        myProject = null;
+      },
+      () -> LightPlatformTestCase.checkEditorsReleased(),
+      () -> myOldSdks.checkForJdkTableLeaks(),
+      () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
+      () -> {
         myModule = null;
         myFilesToDelete.clear();
         myEditorListenerTracker = null;
         myThreadTracker = null;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourTestCase = null;
-      })
-      .run();
+      }
+    );
   }
 
-  private void disposeProject() {
-    if (myProject != null) {
-      closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
-      myProject = null;
+  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
+    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
+    checkThatNoOpenProjects();
+  }
+
+  public static void checkThatNoOpenProjects() {
+    Project[] openProjects = ProjectUtil.getOpenProjects();
+    if (openProjects.length == 0) {
+      return;
     }
-  }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
-    RunAll runAll = new RunAll();
     ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    for (Project project : projectManager.closeTestProject(projectToClose)) {
-      runAll = runAll
-        .append(() -> {
-          throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project));
-        })
-        .append(() -> projectManager.forceCloseProject(project, true));
+    List<IllegalStateException> errors = new SmartList<>();
+    List<ThrowableRunnable<Throwable>> tasks = new SmartList<>();
+    for (Project project : openProjects) {
+      errors.add(new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)));
+      tasks.add(() -> projectManager.forceCloseProject(project));
     }
-    runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();
+    new RunAll(tasks).run(errors);
   }
 
   protected void resetAllFields() {
@@ -790,8 +785,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
-    final Exception[] e = new Exception[1];
+  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+    Ref<Exception> e = new Ref<>();
     Runnable runnable1 = () -> {
       try {
         if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
@@ -802,7 +797,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
         }
       }
       catch (Exception e1) {
-        e[0] = e1;
+        e.set(e1);
       }
     };
 
@@ -813,8 +808,8 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       runnable1.run();
     }
 
-    if (e[0] != null) {
-      throw e[0];
+    if (!e.isNull()) {
+      throw e.get();
     }
   }
 
@@ -1025,18 +1020,5 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
     FileUtil.ensureExists(moduleDir);
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
-  }
-
-  public static void waitForProjectLeakingThreads(@NotNull Project project, long timeout, @NotNull TimeUnit timeUnit) throws Exception {
-    if (project instanceof ProjectImpl) {
-      ((ProjectImpl)project).stopServicePreloading();
-    }
-
-    NonBlockingReadActionImpl.cancelAllTasks();
-    GeneratedSourceFileChangeTrackerImpl tracker =
-      (GeneratedSourceFileChangeTrackerImpl)project.getComponent(GeneratedSourceFileChangeTracker.class);
-    if (tracker != null) {
-      tracker.cancelAllAndWait(timeout, timeUnit);
-    }
   }
 }

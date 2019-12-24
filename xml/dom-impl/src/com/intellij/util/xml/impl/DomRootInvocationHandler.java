@@ -38,7 +38,7 @@ import java.util.List;
  * @author peter
  */
 public class DomRootInvocationHandler extends DomInvocationHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
+  private static final Logger LOG = Logger.getInstance(DomRootInvocationHandler.class);
   private final DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,

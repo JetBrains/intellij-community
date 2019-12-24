@@ -75,7 +75,7 @@ public class XmlSerializer {
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      getBeanBinding(bean).deserializeInto(bean, element);
+      getBeanBinding(bean.getClass()).deserializeInto(bean, element);
     }
     catch (SerializationException e) {
       throw e;
@@ -90,8 +90,8 @@ public class XmlSerializer {
    */
   @ApiStatus.Experimental
   @NotNull
-  public static BeanBinding getBeanBinding(@NotNull Object bean) {
-    return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(bean.getClass());
+  public static BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
+    return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
   }
 
   public static void serializeInto(final Object bean, final Element element) {
@@ -103,7 +103,7 @@ public class XmlSerializer {
       filter = TRUE_FILTER;
     }
     try {
-      getBeanBinding(bean).serializeInto(bean, element, filter);
+      getBeanBinding(bean.getClass()).serializeInto(bean, element, filter);
     }
     catch (SerializationException e) {
       throw e;

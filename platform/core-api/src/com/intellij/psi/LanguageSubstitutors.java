@@ -5,7 +5,6 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
 
   @NotNull
   public static LanguageSubstitutors getInstance() {
-    return ApplicationManager.getApplication().getService(LanguageSubstitutors.class, true);
+    return ApplicationManager.getApplication().getService(LanguageSubstitutors.class);
   }
 
   private LanguageSubstitutors() {
@@ -113,7 +112,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   private static void requestReparsing(@NotNull VirtualFile file, @NotNull Language prevLang, @NotNull Language substitutedLang) {
     ourReparsingRequests.put(file, new SubstitutionInfo(prevLang, substitutedLang));
     if (REQUESTS_DRAIN_NEEDED.compareAndSet(true, false)) {
-      TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         REQUESTS_DRAIN_NEEDED.set(true);
         List<Map.Entry<VirtualFile, SubstitutionInfo>> set = new ArrayList<>(ourReparsingRequests.entrySet());
         List<VirtualFile> files = new ArrayList<>(set.size());

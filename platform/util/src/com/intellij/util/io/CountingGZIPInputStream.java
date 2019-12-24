@@ -22,73 +22,11 @@ public final class CountingGZIPInputStream extends GZIPInputStream {
   }
 
   public long getCompressedBytesRead() {
-    return myInputStream.myBytesRead;
+    return myInputStream.getBytesRead();
   }
 
   @NotNull
   public static CountingGZIPInputStream create(@NotNull InputStream inputStream) throws IOException {
     return new CountingGZIPInputStream(new CountingInputStream(inputStream));
-  }
-
-  private static class CountingInputStream extends InputStream {
-    private final InputStream myInputStream;
-    private long myBytesRead = 0;
-
-    CountingInputStream(@NotNull InputStream inputStream) {
-      myInputStream = inputStream;
-    }
-
-    @Override
-    public int read() throws IOException {
-      int data = myInputStream.read();
-      myBytesRead++;
-      return data;
-    }
-
-    @Override
-    public int read(@NotNull byte[] b) throws IOException {
-      int bytesRead = myInputStream.read(b);
-      myBytesRead += bytesRead;
-      return bytesRead;
-    }
-
-    @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
-      int bytesRead = myInputStream.read(b, off, len);
-      myBytesRead += bytesRead;
-      return bytesRead;
-    }
-
-    @Override
-    public long skip(long n) throws IOException {
-      long bytesSkipped = myInputStream.skip(n);
-      myBytesRead += bytesSkipped;
-      return bytesSkipped;
-    }
-
-    @Override
-    public int available() throws IOException {
-      return myInputStream.available();
-    }
-
-    @Override
-    public void close() throws IOException {
-      myInputStream.close();
-    }
-
-    @Override
-    public synchronized void mark(int readlimit) {
-      myInputStream.mark(readlimit);
-    }
-
-    @Override
-    public synchronized void reset() throws IOException {
-      myInputStream.reset();
-    }
-
-    @Override
-    public boolean markSupported() {
-      return myInputStream.markSupported();
-    }
   }
 }

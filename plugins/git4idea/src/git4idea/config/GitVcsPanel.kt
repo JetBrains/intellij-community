@@ -3,6 +3,7 @@ package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -13,10 +14,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBLabel
@@ -35,6 +36,8 @@ import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
+import git4idea.update.getUpdateMethods
+import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
 import javax.swing.JLabel
 
@@ -60,6 +63,12 @@ internal class GitVcsPanel(private val project: Project,
   private fun createPathSelector() = VcsExecutablePathSelector("Git") { path ->
     val pathToGit = path ?: executableManager.detectedExecutable
     object : Task.Modal(project, GitBundle.getString("git.executable.version.progress.title"), true) {
+
+      val errorNotifier = InlineErrorNotifierFromSettings(
+        GitExecutableInlineComponent(pathSelector.errorComponent, null),
+        ModalityState.stateForComponent(pathSelector.mainPanel), disposable!!
+      )
+
       private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
@@ -68,20 +77,34 @@ internal class GitVcsPanel(private val project: Project,
       }
 
       override fun onThrowable(error: Throwable) {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, project)
+        val problemHandler = findGitExecutableProblemHandler(project)
+        problemHandler.showError(error, errorNotifier)
       }
 
       override fun onSuccess() {
         if (gitVersion.isSupported) {
-          Messages.showInfoMessage(pathSelector.mainPanel,
-                                   GitBundle.message("git.executable.version.is", gitVersion.presentation),
-                                   GitBundle.getString("git.executable.version.success.title"))
+          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
         }
         else {
-          GitExecutableProblemsNotifier.showUnsupportedVersionDialog(gitVersion, project)
+          showUnsupportedVersionError(project, gitVersion, errorNotifier)
         }
       }
     }.queue()
+  }
+
+  private class InlineErrorNotifierFromSettings(inlineComponent: InlineComponent,
+                                                modalityState: ModalityState,
+                                                disposable: Disposable) :
+    InlineErrorNotifier(inlineComponent, modalityState, disposable) {
+    @CalledInAny
+    override fun showError(text: String, description: String?, fixOption: ErrorNotifier.FixOption) {
+      if (fixOption is ErrorNotifier.FixOption.Configure) {
+        showError(text)
+      }
+      else {
+        super.showError(text, description, fixOption)
+      }
+    }
   }
 
   private fun getCurrentExecutablePath(): String? = pathSelector.currentPath?.takeIf { it.isNotBlank() }
@@ -213,7 +236,7 @@ internal class GitVcsPanel(private val project: Project,
       cell {
         label("Update method:")
         comboBox(
-          EnumComboBoxModel(UpdateMethod::class.java),
+          CollectionComboBoxModel(getUpdateMethods()),
           { projectSettings.updateMethod },
           { projectSettings.updateMethod = it!! },
           renderer = SimpleListCellRenderer.create<UpdateMethod>("", UpdateMethod::getName)
@@ -223,8 +246,8 @@ internal class GitVcsPanel(private val project: Project,
     row {
       cell {
         label("Clean working tree using:")
-        buttonGroup({ projectSettings.updateChangesPolicy() }, { projectSettings.setUpdateChangesPolicy(it) }) {
-          GitVcsSettings.UpdateChangesPolicy.values().forEach { saveSetting ->
+        buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
+          GitVcsSettings.SaveChangesPolicy.values().forEach { saveSetting ->
             radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
           }
         }

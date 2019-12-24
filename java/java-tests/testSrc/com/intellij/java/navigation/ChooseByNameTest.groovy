@@ -12,6 +12,7 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.idea.Bombed
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -527,6 +528,15 @@ class Intf {
     assert gotoFile('resolvecache') == [f1, f2]
   }
 
+  void "test search for long full name"() {
+    def veryLongNameFile = addEmptyFile("aaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbb/cccccccccccccccccc/" +
+                                        "ddddddddddddddddd/eeeeeeeeeeeeeeee/ffffffffffffffffff/" +
+                                        "ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java")
+
+    assert gotoFile("bbbbbbbbbbbbbbbb/cccccccccccccccccc/ddddddddddddddddd/eeeeeeeeeeeeeeee/" +
+                    "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java") == [veryLongNameFile]
+  }
+
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getContributorElements(createClassContributor(project, null, checkboxState), text)
   }
@@ -545,7 +555,7 @@ class Intf {
 
   static List<Object> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
     def res = new LinkedHashSet<Object>()
-    invokeAdnWait({ -> res.addAll(contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items) })
+    invokeAndWait({ -> res.addAll(contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).items) })
     return res.collect()
   }
 
@@ -600,10 +610,7 @@ class Intf {
     }
   }
 
-  private static void invokeAdnWait(Runnable runnable) {
-    def thread = new Thread(runnable)
-    thread.start()
-    thread.join()
+  private static void invokeAndWait(Runnable runnable) {
+    ApplicationManager.application.executeOnPooledThread(runnable).get()
   }
-
 }

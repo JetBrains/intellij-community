@@ -43,13 +43,6 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.code.block.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.block.statement.problem.descriptor");
   }

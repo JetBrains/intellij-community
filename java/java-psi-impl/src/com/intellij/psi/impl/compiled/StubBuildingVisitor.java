@@ -17,6 +17,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -98,7 +99,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
     short stubFlags = PsiClassStubImpl.packFlags(
-      isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
+      isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -157,7 +158,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     while (iterator.current() != CharacterIterator.DONE) {
       String name = SignatureParsing.parseTopLevelClassRefSignature(iterator, myMapping);
       if (name == null) throw new ClsFormatException();
-      if (result.interfaceNames == null) result.interfaceNames = ContainerUtil.newSmartList();
+      if (result.interfaceNames == null) result.interfaceNames = new SmartList<>();
       result.interfaceNames.add(name);
     }
     return result;
@@ -414,7 +415,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       result.argTypes = ContainerUtil.emptyList();
     }
     else {
-      result.argTypes = ContainerUtil.newSmartList();
+      result.argTypes = new SmartList<>();
       while (iterator.current() != ')' && iterator.current() != CharacterIterator.DONE) {
         result.argTypes.add(SignatureParsing.parseTypeString(iterator, myMapping));
       }
@@ -427,7 +428,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     result.throwTypes = null;
     while (iterator.current() == '^') {
       iterator.next();
-      if (result.throwTypes == null) result.throwTypes = ContainerUtil.newSmartList();
+      if (result.throwTypes == null) result.throwTypes = new SmartList<>();
       result.throwTypes.add(SignatureParsing.parseTypeString(iterator, myMapping));
     }
     if (exceptions != null && (result.throwTypes == null || exceptions.length > result.throwTypes.size())) {

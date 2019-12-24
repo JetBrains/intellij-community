@@ -34,6 +34,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -138,7 +139,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  public void setSdk(final Sdk newJDK) {
+  public void setSdk(@Nullable final Sdk newJDK) {
     final ModifiableRootModel model = getModel();
     if (newJDK != null) {
       model.setSdk(newJDK);

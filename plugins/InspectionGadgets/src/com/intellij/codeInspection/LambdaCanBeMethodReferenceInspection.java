@@ -38,13 +38,6 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Lambda can be replaced with method reference";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -215,7 +208,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         final boolean[] parameterUsed = new boolean[] {false};
         qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitElement(PsiElement element) {
+          public void visitElement(@NotNull PsiElement element) {
             if (parameterUsed[0]) return;
             super.visitElement(element);
           }

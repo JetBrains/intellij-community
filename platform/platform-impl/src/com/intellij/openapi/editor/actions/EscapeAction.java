@@ -58,7 +58,7 @@ public class EscapeAction extends EditorAction {
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (editor.isOneLineMode() && Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext))) return false;
       SelectionModel selectionModel = editor.getSelectionModel();
       CaretModel caretModel = editor.getCaretModel();

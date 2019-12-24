@@ -22,13 +22,6 @@ import org.jetbrains.annotations.NotNull;
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspection.extra.closing.tag");
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getShortName() {

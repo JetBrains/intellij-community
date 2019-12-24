@@ -3,6 +3,7 @@ package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.ide.util.gotoByName.ChooseByNameItem;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ public class SetupTask implements ChooseByNameItem {
   private String description;
   private final List<Option> options = new ArrayList<>();
 
-  SetupTask(String name) {
+  SetupTask(@NotNull String name) {
     this.name = name;
     description = name;
   }
@@ -29,6 +30,7 @@ public class SetupTask implements ChooseByNameItem {
     this.description = description;
   }
 
+  @NotNull
   @Override
   public String getName() {
     return name;

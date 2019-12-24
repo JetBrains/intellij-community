@@ -42,7 +42,10 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     try {
       // return default value to avoid unnecessary save
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
+      if (daemonCodeAnalyzer != null) {
+        daemonCodeAnalyzer.cleanupAfterTest();
+      }
     }
     catch (Throwable e) {
       addSuppressedException(e);

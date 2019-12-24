@@ -74,16 +74,16 @@ public class CollectionUtils {
     "java.util.Hashtable",
     "java.util.IdentityHashMap",
     "java.util.LinkedHashMap",
-    "java.util.LinkedHashSet",
-    "java.util.LinkedList",
+    CommonClassNames.JAVA_UTIL_LINKED_HASH_SET,
+    CommonClassNames.JAVA_UTIL_LINKED_LIST,
     CommonClassNames.JAVA_UTIL_LIST,
     CommonClassNames.JAVA_UTIL_MAP,
     "java.util.PriorityQueue",
-    "java.util.Queue",
+    CommonClassNames.JAVA_UTIL_QUEUE,
     CommonClassNames.JAVA_UTIL_SET,
     "java.util.SortedMap",
-    "java.util.SortedSet",
-    "java.util.Stack",
+    CommonClassNames.JAVA_UTIL_SORTED_SET,
+    CommonClassNames.JAVA_UTIL_STACK,
     "java.util.TreeMap",
     "java.util.TreeSet",
     "java.util.Vector",
@@ -144,9 +144,9 @@ public class CollectionUtils {
     s_interfaceForCollection.put("java.util.Hashtable", CommonClassNames.JAVA_UTIL_MAP);
     s_interfaceForCollection.put("java.util.IdentityHashMap", CommonClassNames.JAVA_UTIL_MAP);
     s_interfaceForCollection.put("java.util.LinkedHashMap", CommonClassNames.JAVA_UTIL_MAP);
-    s_interfaceForCollection.put("java.util.LinkedHashSet", CommonClassNames.JAVA_UTIL_SET);
-    s_interfaceForCollection.put("java.util.LinkedList", CommonClassNames.JAVA_UTIL_LIST);
-    s_interfaceForCollection.put("java.util.PriorityQueue", "java.util.Queue");
+    s_interfaceForCollection.put(CommonClassNames.JAVA_UTIL_LINKED_HASH_SET, CommonClassNames.JAVA_UTIL_SET);
+    s_interfaceForCollection.put(CommonClassNames.JAVA_UTIL_LINKED_LIST, CommonClassNames.JAVA_UTIL_LIST);
+    s_interfaceForCollection.put("java.util.PriorityQueue", CommonClassNames.JAVA_UTIL_QUEUE);
     s_interfaceForCollection.put("java.util.TreeMap", CommonClassNames.JAVA_UTIL_MAP);
     s_interfaceForCollection.put("java.util.TreeSet", CommonClassNames.JAVA_UTIL_SET);
     s_interfaceForCollection.put("java.util.Vector", CommonClassNames.JAVA_UTIL_LIST);

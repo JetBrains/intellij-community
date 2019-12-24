@@ -40,12 +40,6 @@ public class ConstructorCountInspection extends ClassMetricInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("too.many.constructors.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return CONSTRUCTOR_COUNT_LIMIT;
   }

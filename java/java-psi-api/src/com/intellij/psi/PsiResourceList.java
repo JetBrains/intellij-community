@@ -1,10 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import org.jetbrains.annotations.ApiStatus;
-
-import java.util.List;
-
 /**
  * Represents a resource list of try-with-resources statement (automatic resource management) introduced in JDK 7.
  *
@@ -12,9 +8,4 @@ import java.util.List;
  */
 public interface PsiResourceList extends PsiElement, Iterable<PsiResourceListElement> {
   int getResourceVariablesCount();
-
-  /** @deprecated use {@link #iterator()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  List<PsiResourceVariable> getResourceVariables();
 }

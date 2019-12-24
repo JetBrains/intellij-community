@@ -20,6 +20,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Used to provide appropriate psiElements from usages in Find Usages popup.
  * For instance, it's used in Find Usages popup to help ShowImplementationsAction show
@@ -28,19 +30,17 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public abstract class UsageToPsiElementProvider {
-  public static final ExtensionPointName<UsageToPsiElementProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageToPsiElementProvider");
+  private static final ExtensionPointName<UsageToPsiElementProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageToPsiElementProvider");
 
   @Nullable
   public abstract PsiElement getAppropriateParentFrom(PsiElement element);
 
   @Nullable
   public static PsiElement findAppropriateParentFrom(@NotNull PsiElement element) {
-    for (UsageToPsiElementProvider provider : EP_NAME.getExtensions()) {
-      final PsiElement parent = provider.getAppropriateParentFrom(element);
-      if (parent != null) {
-        return parent;
-      }
-    }
-    return null;
+    return EP_NAME.getExtensionList().stream()
+      .map(provider -> provider.getAppropriateParentFrom(element))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
   }
 }

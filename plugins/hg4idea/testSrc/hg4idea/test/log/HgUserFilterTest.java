@@ -74,6 +74,10 @@ public class HgUserFilterTest extends HgPlatformTest {
     myVcsLogUserFilterTest.testTurkishLocale();
   }
 
+  public void testNameAtSurnameEmails() throws Exception {
+    myVcsLogUserFilterTest.testNameAtSurnameEmails();
+  }
+
   public static HgLogProvider findLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
       ContainerUtil.filter(VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project),

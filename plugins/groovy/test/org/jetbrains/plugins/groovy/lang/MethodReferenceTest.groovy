@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -109,9 +109,9 @@ class D {
     expressionTypeTest 'int[][]::new(1, 2)', 'int[][]'
   }
 
-  void 'test constructors highlighting'() { highlightingTest() }
+  void 'test constructors highlighting'() { fileHighlightingTest() }
 
-  void 'test array constructors highlighting'() { highlightingTest() }
+  void 'test array constructors highlighting'() { fileHighlightingTest() }
 
   void 'test constructor search and rename'() {
     fixture.addFileToProject 'classes.groovy', 'class A { A(String p){} }'

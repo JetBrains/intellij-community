@@ -24,7 +24,7 @@ public interface VcsLogRevisionFilter extends VcsLogFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     return StringUtil.join(getHeads(), commit -> commit.getHash().toShortString(), ", ");
   }
 }

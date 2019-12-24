@@ -54,4 +54,10 @@ public interface UnnamedConfigurable {
    */
   default void disposeUIResources() {
   }
+
+  /**
+   * Called when 'Cancel' is pressed in the Settings dialog.
+   */
+  default void cancel() {
+  }
 }

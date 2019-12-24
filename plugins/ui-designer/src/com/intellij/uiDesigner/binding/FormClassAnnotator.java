@@ -34,7 +34,7 @@ import java.util.List;
  * @author yole
  */
 public class FormClassAnnotator implements Annotator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormClassAnnotator");
+  private static final Logger LOG = Logger.getInstance(FormClassAnnotator.class);
 
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {

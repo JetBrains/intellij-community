@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
@@ -36,6 +37,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -81,6 +83,7 @@ public final class IdeEventQueue extends EventQueue {
   private static TransactionGuardImpl ourTransactionGuard;
   private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
+  private static EventsWatcher ourEventsWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -109,7 +112,7 @@ public final class IdeEventQueue extends EventQueue {
   @NotNull
   private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
   @Nullable
-  private AWTEvent myCurrentSequencedEvent = null;
+  private AWTEvent myCurrentSequencedEvent;
   private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
@@ -366,14 +369,21 @@ public final class IdeEventQueue extends EventQueue {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
     PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
+    EventsWatcher eventsWatcher = obtainEventsWatcher();
     try {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventStarted(startedAt);
       }
+      if (eventsWatcher != null) {
+        eventsWatcher.edtEventStarted(e);
+      }
+
       fixNestedSequenceEvent(e);
       // Add code below if you need
 
-      if (e.getID() == WindowEvent.WINDOW_ACTIVATED || e.getID() == WindowEvent.WINDOW_DEICONIFIED || e.getID() == WindowEvent.WINDOW_OPENED) {
+      if (e.getID() == WindowEvent.WINDOW_ACTIVATED
+          || e.getID() == WindowEvent.WINDOW_DEICONIFIED
+          || e.getID() == WindowEvent.WINDOW_OPENED) {
         ActiveWindowsWatcher.addActiveWindow((Window)e.getSource());
       }
 
@@ -445,7 +455,9 @@ public final class IdeEventQueue extends EventQueue {
         if (e instanceof KeyEvent) {
           maybeReady();
         }
-        TransactionGuardImpl.logTimeMillis(startedAt, e);
+        if (eventsWatcher != null) {
+          eventsWatcher.logTimeMillis(e, startedAt);
+        }
       }
 
       if (isFocusEvent(e)) {
@@ -455,6 +467,9 @@ public final class IdeEventQueue extends EventQueue {
     finally {
       if (performanceWatcher != null) {
         performanceWatcher.edtEventFinished();
+      }
+      if (eventsWatcher != null) {
+        eventsWatcher.edtEventFinished(e, startedAt);
       }
     }
   }
@@ -553,12 +568,21 @@ public final class IdeEventQueue extends EventQueue {
   @Nullable
   private static PerformanceWatcher obtainPerformanceWatcher() {
     PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
+    if (watcher == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
         watcher = PerformanceWatcher.getInstance();
         ourPerformanceWatcher = watcher;
       }
+    }
+    return watcher;
+  }
+
+  @Nullable
+  private static EventsWatcher obtainEventsWatcher() {
+    EventsWatcher watcher = ourEventsWatcher;
+    if (watcher == null) {
+        ourEventsWatcher = watcher = EventsWatcher.getInstance();
     }
     return watcher;
   }
@@ -630,6 +654,9 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void processException(@NotNull Throwable t) {
+    if (isTestMode()) {
+      ExceptionUtil.rethrow(t);
+    }
     if (!myToolkitBugsProcessor.process(t)) {
       StartupAbortedException.processException(t);
     }
@@ -737,8 +764,7 @@ public final class IdeEventQueue extends EventQueue {
 
     // We must ignore typed events that are dispatched between KEY_PRESSED and KEY_RELEASED.
     // Key event dispatcher resets its state on KEY_RELEASED event
-    if (e.getID() == KeyEvent.KEY_TYPED &&
-        myKeyEventDispatcher.isPressedWasProcessed()) {
+    if (e.getID() == KeyEvent.KEY_TYPED && myKeyEventDispatcher.isPressedWasProcessed()) {
       assert e instanceof KeyEvent;
       ((KeyEvent)e).consume();
     }
@@ -871,9 +897,9 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static void processAppActivationEvent(WindowEvent we) {
-    ApplicationActivationStateManager.updateState(we);
-    storeLastFocusedComponent(we);
+  private static void processAppActivationEvent(@NotNull WindowEvent event) {
+    ApplicationActivationStateManager.updateState(event);
+    storeLastFocusedComponent(event);
   }
 
   private static void storeLastFocusedComponent(@NotNull WindowEvent we) {
@@ -893,7 +919,7 @@ public final class IdeEventQueue extends EventQueue {
       if (aFrame.equals(frame)) {
         IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
         if (focusManager instanceof FocusManagerImpl) {
-          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(frameHelper, focusOwnerInDeactivatedWindow);
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation(aFrame, focusOwnerInDeactivatedWindow);
         }
       }
     }
@@ -1440,7 +1466,11 @@ public final class IdeEventQueue extends EventQueue {
     if (!isActionPopupShown() && delayKeyEvents.compareAndSet(true, false)) {
       postDelayedKeyEvents();
     }
-    TransactionGuardImpl.logTimeMillis(startedAt, "IdeEventQueue#flushDelayedKeyEvents");
+
+    EventsWatcher watcher = obtainEventsWatcher();
+    if (watcher == null) return;
+
+    watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
   }
 
   private static boolean isActionPopupShown() {

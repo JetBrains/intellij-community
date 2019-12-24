@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
-  private String myDisplayName = PsiBundle.message("psi.search.scope.project.and.libraries");
+  private String myDisplayName;
 
   public ProjectAndLibrariesScope(@NotNull Project project) {
     super(project);
@@ -103,7 +103,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
   @Override
   @NotNull
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayName == null ? PsiBundle.message("psi.search.scope.project.and.libraries") : myDisplayName;
   }
 
   public void setDisplayName(@NotNull String displayName) {

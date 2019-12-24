@@ -29,6 +29,8 @@ public class XmlFoldingTest extends BasePlatformTestCase {
 
   public void testEntities() { doTest(); }
 
+  public void testHtmlInHtml() { doTest(); }
+
   public void testDataUri() { doTest(); }
 
   public void testCustomRegions() { doTest(); }

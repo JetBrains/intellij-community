@@ -61,7 +61,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
    */
   public static final Key<VisualPosition> ANCHOR_POPUP_POSITION = Key.create("popup.anchor.position");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
+  private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
   private final Map<Disposable, List<Balloon>> myStorage = ContainerUtil.createWeakMap();
 
@@ -677,7 +677,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  public static class ActionItem implements ShortcutProvider {
+  public static class ActionItem implements ShortcutProvider, AnActionHolder {
     private final AnAction myAction;
     private String myText;
     private final boolean myIsEnabled;
@@ -711,6 +711,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     @NotNull
+    @Override
     public AnAction getAction() {
       return myAction;
     }

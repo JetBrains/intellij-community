@@ -18,6 +18,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -27,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -135,6 +137,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
   }
 
+  @Override
+  boolean cancel(AWTEvent source) {
+    myConfigurable.cancel();
+    return super.cancel(source);
+  }
+
   void openLink(Configurable configurable) {
     ShowSettingsUtil.getInstance().editConfigurable(this, configurable);
   }
@@ -196,9 +204,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   private boolean isPopupOverEditor(Component component) {
-    Window editor = UIUtil.getWindow(this);
+    Window editor = ComponentUtil.getWindow(this);
     if (editor != null) {
-      Window popup = UIUtil.getWindow(component);
+      Window popup = ComponentUtil.getWindow(component);
       // light-weight popup is located on the layered pane of the same window
       if (popup == editor) {
         return true;
@@ -323,5 +331,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       }
     }
     return null;
+  }
+
+  @Nullable
+  Configurable getConfigurable() {
+    return myConfigurable;
+  }
+
+  void reload() {
+    myCardPanel.removeAll();
+    myConfigurable = null;
   }
 }

@@ -92,7 +92,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
       boolean asyncCall = method.getAnnotation(AsyncCall.class) != null;
 
       if (asyncCall) {
-        myTaskExecutor.submit(() -> {
+        myTaskExecutor.execute(() -> {
           try {
             taskCallable.call();
           }

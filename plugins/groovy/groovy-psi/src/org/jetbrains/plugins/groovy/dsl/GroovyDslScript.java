@@ -27,7 +27,7 @@ import java.util.List;
  * @author peter
  */
 public class GroovyDslScript {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslScript");
+  private static final Logger LOG = Logger.getInstance(GroovyDslScript.class);
   private final Project project;
   @Nullable private final VirtualFile file;
   private final GroovyDslExecutor executor;

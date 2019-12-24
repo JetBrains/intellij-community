@@ -32,12 +32,6 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseI
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overloaded.methods.with.same.number.parameters.problem.descriptor");
   }

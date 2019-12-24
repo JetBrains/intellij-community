@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PsiDiffContentFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.ex.PsiDiffContentFactory");
+  private static final Logger LOG = Logger.getInstance(PsiDiffContentFactory.class);
 
   private PsiDiffContentFactory() {
   }

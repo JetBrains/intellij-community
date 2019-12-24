@@ -19,7 +19,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.xml</depends>
-  
+
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
 
@@ -37,8 +37,7 @@
     <colorSettingsPage implementation="org.intellij.lang.xpath.XPathColorSettingsPage" />
 
     <configurationType implementation="org.intellij.lang.xpath.xslt.run.XsltRunConfigType" />
-    <programRunner implementation="org.intellij.lang.xpath.xslt.run.XsltRunner"/>
-    <configurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
+    <runConfigurationProducer implementation="org.intellij.lang.xpath.xslt.run.XsltConfigurationProducer" />
 
     <applicationService
         serviceInterface="org.intellij.plugins.xpathView.support.XPathSupport"
@@ -95,7 +94,7 @@
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
-    
+
     <usageGroupingRuleProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltStuffProvider" />
     <lang.refactoringSupport language="XPath" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XPathRefactoringSupportProvider" />
     <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
@@ -155,13 +154,16 @@
     <psi.referenceContributor language="XML" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XML"/>
     <psi.referenceContributor language="XPath" implementation="org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor$XPath"/>
     <standardResourceProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltResourceProvider"/>
-    <defaultLiveTemplatesProvider implementation="org.intellij.plugins.xpathView.XPathAppComponent" />
+    <defaultLiveTemplates file="liveTemplates/xsl.xml"/>
 
     <implicitUsageProvider implementation="org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider" />
 
     <renameInputValidator implementation="org.intellij.lang.xpath.xslt.impl.XsltRenameInputValidator"/>
     <lang.findUsagesProvider language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltFindUsagesProvider"/>
     <lang.refactoringSupport language="$XSLT" implementationClass="org.intellij.lang.xpath.xslt.psi.impl.XsltRefactoringSupportProvider"/>
+
+    <projectService serviceInterface="org.intellij.lang.xpath.xslt.associations.FileAssociationsManager"
+                    serviceImplementation="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="XPathView">
@@ -171,15 +173,6 @@
     <xpath.contextProviderExtension implementation="org.intellij.lang.xpath.xslt.context.Xslt2ContextProviderExtension" />
 
   </extensions>
-
-  <!-- Plugin's project components -->
-  <project-components>
-    <!-- XSLT integration -->
-    <component>
-      <interface-class>org.intellij.lang.xpath.xslt.associations.FileAssociationsManager</interface-class>
-      <implementation-class>org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsManagerImpl</implementation-class>
-    </component>
-  </project-components>
 
   <!-- Component's actions -->
   <actions>

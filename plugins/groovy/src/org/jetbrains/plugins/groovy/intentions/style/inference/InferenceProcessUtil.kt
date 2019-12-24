@@ -101,7 +101,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
         return factory.createType(resolvedClass, *mappedParameters.toTypedArray())
       }
       else {
-        return PsiWildcardType.createUnbounded(manager)
+        return classType
       }
     }
 
@@ -172,7 +172,7 @@ fun findOverridableMethod(method: GrMethod): PsiMethod? {
 
 private fun methodsAgree(pattern: PsiMethod,
                          tested: GrMethod): Boolean {
-  if (tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
+  if (pattern.name != tested.name || tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
     return false
   }
   val parameterList = pattern.parameters.zip(tested.parameters)
@@ -231,6 +231,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
   val substitutions = mutableListOf<PsiType>()
   val allowedTypeParameters = method.typeParameters.asList()
   val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val unboundedWildcard = PsiWildcardType.createUnbounded(method.manager)
 
   class ForeignTypeParameterEraser : PsiTypeMapper() {
     override fun visitClassType(classType: PsiClassType?): PsiType? {
@@ -240,7 +241,9 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
       }
       else {
-        return factory.createType(classType.resolve() ?: return null, *classType.parameters.map { it.accept(this) }.toTypedArray())
+        val resolvedClass = classType.resolve() ?: return null
+        val classParameters = classType.parameters.map { it?.accept(this) ?: unboundedWildcard }.toTypedArray()
+        return factory.createType(resolvedClass, *classParameters)
       }
     }
 
@@ -249,10 +252,11 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
     }
 
     override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
+      wildcardType ?: return null
+      val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
-        wildcardType == null -> null
-        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, wildcardType.bound!!.accept(this))
-        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, wildcardType.bound!!.accept(this))
+        wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)
+        wildcardType.isSuper -> PsiWildcardType.createSuper(method.manager, bound)
         else -> wildcardType
       }
     }

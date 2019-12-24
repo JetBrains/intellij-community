@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSshProcess;
 import com.intellij.terminal.JBTerminalWidget;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
@@ -62,15 +61,12 @@ public class TerminalUtil {
     if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
       int shellPid = OSProcessUtil.getProcessID(process);
       MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
-      UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), new Processor<String>() {
-        @Override
-        public boolean process(String s) {
-          StringTokenizer st = new StringTokenizer(s, " ");
-          int parentPid = Integer.parseInt(st.nextToken());
-          int pid = Integer.parseInt(st.nextToken());
-          pidToChildPidsMap.putValue(parentPid, pid);
-          return false;
-        }
+      UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), s -> {
+        StringTokenizer st = new StringTokenizer(s, " ");
+        int parentPid = Integer.parseInt(st.nextToken());
+        int pid = Integer.parseInt(st.nextToken());
+        pidToChildPidsMap.putValue(parentPid, pid);
+        return false;
       });
       return !pidToChildPidsMap.get(shellPid).isEmpty();
     }
@@ -88,8 +84,8 @@ public class TerminalUtil {
         throw new IllegalStateException(e);
       }
     }
-    throw new IllegalStateException("Cannot determine if there are running processes: " + SystemInfo.OS_NAME +
-                                    ", " + process.getClass().getName());
+    LOG.warn("Cannot determine if there are running processes: " + SystemInfo.OS_NAME + ", " + process.getClass().getName());
+    return false;
   }
 
   @Nullable

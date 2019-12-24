@@ -18,9 +18,12 @@ package com.intellij.codeInsight.guess.impl;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaInstanceofValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -51,7 +54,7 @@ public class GuessManagerImpl extends GuessManager {
     initMethodPatterns();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private void initMethodPatterns() {
     // Collection
     myMethodPatternMap.addPattern(new MethodPattern("add", 1, 0));
@@ -149,7 +152,7 @@ public class GuessManagerImpl extends GuessManager {
       scope = file;
     }
 
-    DataFlowRunner runner = new DataFlowRunner() {
+    DataFlowRunner runner = new DataFlowRunner(scope.getProject()) {
       @NotNull
       @Override
       protected DfaMemoryState createMemoryState() {
@@ -157,7 +160,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = type == null ? null : runner.getFactory().createDfaType(type).asConstraint();
+    TypeConstraint initial = type == null ? null : TypeConstraints.instanceOf(type);
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
@@ -491,7 +494,7 @@ public class GuessManagerImpl extends GuessManager {
 
     MultiMap<PsiExpression, PsiType> getResult() {
       if (myConstraint != null && myForPlace instanceof PsiExpression) {
-        PsiType type = myConstraint.getPsiType();
+        PsiType type = myConstraint.getPsiType(myForPlace.getProject());
         if (type instanceof PsiIntersectionType) {
           myResult.putValues((PsiExpression)myForPlace, Arrays.asList(((PsiIntersectionType)type).getConjuncts()));
         }
@@ -518,8 +521,8 @@ public class GuessManagerImpl extends GuessManager {
       }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
-      DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation, false));
+      DfaCondition relation = operand.cond(RelationType.IS, type);
+      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation));
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 
@@ -555,11 +558,14 @@ public class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitPush(ExpressionPushingInstruction<?> instruction,
+                                           DataFlowRunner runner,
+                                           DfaMemoryState memState,
+                                           DfaValue value) {
       if (myForPlace == instruction.getExpression()) {
         addToResult(((ExpressionTypeMemoryState)memState).getStates());
       }
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
+      DfaInstructionState[] states = super.visitPush(instruction, runner, memState, value);
       if (myForPlace == instruction.getExpression()) {
         addConstraints(states);
       }
@@ -569,17 +575,11 @@ public class GuessManagerImpl extends GuessManager {
     private void addConstraints(DfaInstructionState[] states) {
       for (DfaInstructionState state : states) {
         DfaMemoryState memoryState = state.getMemoryState();
-        if (myConstraint == TypeConstraint.empty()) return;
-        TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
-        if (constraint == null) {
-          constraint = myInitial;
-        }
+        if (myConstraint == TypeConstraints.TOP) return;
+        DfType type = memoryState.getDfType(memoryState.peek());
+        TypeConstraint constraint = type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() : myInitial;
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
-          if (myConstraint == null) {
-            myConstraint = TypeConstraint.empty();
-            return;
-          }
+          myConstraint = myConstraint == null ? constraint : myConstraint.join(constraint);
         }
       }
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -90,7 +91,7 @@ public class InstrumentationTracker {
   }
 
   private void noticeRedefineClass(ReferenceType type) {
-    if (!ourNoticeRedefineClassMethod.getDeclaringClass().isAssignableFrom(type.getClass())) {
+    if (!(type instanceof ReferenceTypeImpl) && !ourNoticeRedefineClassMethod.getDeclaringClass().isAssignableFrom(type.getClass())) {
       return;
     }
     List<Requestor> requestors = StreamEx.of(type.virtualMachine().eventRequestManager().breakpointRequests())
@@ -99,11 +100,16 @@ public class InstrumentationTracker {
       .toList();
     requestors.forEach(myDebugProcess.getRequestsManager()::deleteRequest);
 
-    try {
-      ourNoticeRedefineClassMethod.invoke(type);
+    if (type instanceof ReferenceTypeImpl) {
+      ((ReferenceTypeImpl)type).noticeRedefineClass();
     }
-    catch (IllegalAccessException | InvocationTargetException e) {
-      LOG.error(e);
+    else {
+      try {
+        ourNoticeRedefineClassMethod.invoke(type);
+      }
+      catch (IllegalAccessException | InvocationTargetException e) {
+        LOG.error(e);
+      }
     }
 
     StreamEx.of(requestors).select(Breakpoint.class).forEach(b -> b.createRequest(myDebugProcess));

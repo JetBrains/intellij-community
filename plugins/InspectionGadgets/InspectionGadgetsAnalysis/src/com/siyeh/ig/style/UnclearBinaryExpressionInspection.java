@@ -28,7 +28,6 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +38,6 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
   @Override
   public String getID() {
     return "UnclearExpression";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unclear.binary.expression.display.name");
   }
 
   @NotNull

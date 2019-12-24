@@ -35,7 +35,7 @@ import java.util.*;
  * author: lesya
  */
 public class TagsHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper");
+  private static final Logger LOG = Logger.getInstance(TagsHelper.class);
 
   private TagsHelper() {
   }

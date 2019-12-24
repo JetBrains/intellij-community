@@ -14,7 +14,6 @@ import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
@@ -45,7 +44,7 @@ public abstract class PlatformIdTableBuilding {
   private PlatformIdTableBuilding() {}
 
   @Nullable
-  public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType, final VirtualFile virtualFile) {
+  public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType) {
     final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
@@ -56,12 +55,12 @@ public abstract class PlatformIdTableBuilding {
       final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
       if (commentTokens != null) {
-        return new TokenSetTodoIndexer(commentTokens, virtualFile);
+        return new TokenSetTodoIndexer(commentTokens);
       }
     }
 
     if (fileType instanceof CustomSyntaxTableFileType) {
-      return new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS, virtualFile);
+      return new TokenSetTodoIndexer(ABSTRACT_FILE_COMMENT_TOKENS);
     }
 
     return null;
@@ -83,11 +82,9 @@ public abstract class PlatformIdTableBuilding {
 
   private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
     @NotNull private final TokenSet myCommentTokens;
-    private final VirtualFile myFile;
 
-    TokenSetTodoIndexer(@NotNull final TokenSet commentTokens, @NotNull final VirtualFile file) {
+    TokenSetTodoIndexer(@NotNull final TokenSet commentTokens) {
       myCommentTokens = commentTokens;
-      myFile = file;
     }
 
     @Override
@@ -103,7 +100,7 @@ public abstract class PlatformIdTableBuilding {
           highlighter = editorHighlighter;
         }
         else {
-          highlighter = HighlighterFactory.createHighlighter(inputData.getProject(), myFile);
+          highlighter = HighlighterFactory.createHighlighter(inputData.getProject(), inputData.getFile());
           highlighter.setText(chars);
         }
 

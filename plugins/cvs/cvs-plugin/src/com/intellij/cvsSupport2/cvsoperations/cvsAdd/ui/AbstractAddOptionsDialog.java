@@ -31,7 +31,7 @@ import java.util.Collection;
 public abstract class AbstractAddOptionsDialog extends OptionsDialog {
   protected final Options myOptions;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog");
+  private static final Logger LOG = Logger.getInstance(AbstractAddOptionsDialog.class);
 
   public static AbstractAddOptionsDialog createDialog(Project project,
                                                       Collection<AddedFileInfo> files,

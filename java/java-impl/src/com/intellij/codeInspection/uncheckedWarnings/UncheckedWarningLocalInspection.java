@@ -38,7 +38,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls private static final String ID = "unchecked";
-  private static final Logger LOG = Logger.getInstance("#" + UncheckedWarningLocalInspection.class);
+  private static final Logger LOG = Logger.getInstance(UncheckedWarningLocalInspection.class);
   public boolean IGNORE_UNCHECKED_ASSIGNMENT;
   public boolean IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION;
   public boolean IGNORE_UNCHECKED_CALL;
@@ -131,12 +131,6 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   @NotNull
   public String getGroupDisplayName() {
     return "";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
   }
 
   @Override

@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public class HgDeleteModifyPromptHandler implements HgPromptHandler {
 
-  private static final Logger LOG = Logger.getInstance("#org.zmlx.hg4idea.execution.HgDeleteModifyPromptHandler");
+  private static final Logger LOG = Logger.getInstance(HgDeleteModifyPromptHandler.class);
 
   private static final Pattern LOCAL_DELETE_REMOTE_MODIFIED_CONFLICT_MESSAGE_PATTERN = Pattern.compile(
     "remote\\schanged(.+)which\\slocal\\sdeleted\\s.+");

@@ -40,12 +40,6 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiAnonymousClass) {

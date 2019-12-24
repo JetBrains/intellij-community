@@ -15,7 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.ProjectInspectionProfileManager"
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
-                    preload="true" overrides="true"/>
+                    preload="notHeadless" overrides="true"/>
 
     <projectService serviceImplementation="com.intellij.configurationScript.ConfigurationFileManager"/>
 

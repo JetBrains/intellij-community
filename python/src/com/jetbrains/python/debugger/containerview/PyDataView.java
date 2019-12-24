@@ -172,8 +172,8 @@ public class PyDataView implements DumbAware {
     toolWindow.getContentManager().addContent(content);
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID);
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        ToolWindow window = toolWindowManager.getToolWindow(DATA_VIEWER_ID);
         if (window == null) {
           return;
         }

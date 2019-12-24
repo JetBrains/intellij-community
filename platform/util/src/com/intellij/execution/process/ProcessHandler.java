@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ProcessHandler extends UserDataHolderBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.ProcessHandler");
+  private static final Logger LOG = Logger.getInstance(ProcessHandler.class);
   /**
    * todo: replace with an overridable method [nik]
    *

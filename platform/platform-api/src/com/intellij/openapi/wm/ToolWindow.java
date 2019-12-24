@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +22,6 @@ import java.awt.event.InputEvent;
  * @see ToolWindowEP
  */
 public interface ToolWindow extends BusyObject {
-
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
   /**
@@ -109,6 +110,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window icon. Returns {@code null} if window has no icon.
    */
+  @Nullable
   Icon getIcon();
 
   /**
@@ -119,6 +121,7 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window title. Returns {@code null} if window has no title.
    */
+  @Nullable
   String getTitle();
 
   /**
@@ -162,15 +165,16 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return component which represents window content.
    */
+  @NotNull
   JComponent getComponent();
 
   ContentManager getContentManager();
 
+  void addContentManagerListener(@NotNull ContentManagerListener listener);
+
   void setDefaultState(@Nullable ToolWindowAnchor anchor, @Nullable ToolWindowType type, @Nullable Rectangle floatingBounds);
 
   void setToHideOnEmptyContent(boolean hideOnEmpty);
-
-  boolean isToHideOnEmptyContent();
 
   /**
    * @param show if {@code false} stripe button should be hidden.
@@ -181,7 +185,10 @@ public interface ToolWindow extends BusyObject {
 
   boolean isDisposed();
 
-  void showContentPopup(InputEvent inputEvent);
+  void showContentPopup(@NotNull InputEvent inputEvent);
+
+  @NotNull
+  Disposable getDisposable();
 
   default void setHelpId(@NonNls String helpId) {
   }
@@ -190,6 +197,11 @@ public interface ToolWindow extends BusyObject {
   default String getHelpId() {
     return null;
   }
+
+  /**
+   * Delete tool window.
+   */
+  void remove();
 
   class Border extends EmptyBorder {
     public Border() {

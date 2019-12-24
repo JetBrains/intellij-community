@@ -106,7 +106,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myPainter = new CompositeSoftWrapPainter(editor);
     myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
-    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
+    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper, this);
 
     myApplianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override

@@ -38,9 +38,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PsiScopesUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
+  private static final Logger LOG = Logger.getInstance(PsiScopesUtil.class);
 
   private PsiScopesUtil() {
   }
@@ -164,9 +165,7 @@ public class PsiScopesUtil {
         PsiType type = null;
         if (qualifier instanceof PsiExpression) {
           type = ((PsiExpression)qualifier).getType();
-          if (type != null) {
-            assert type.isValid() : type.getClass() + "; " + qualifier;
-          }
+          assert type == null || type.isValid() : type.getClass() + "; " + qualifier;
           processTypeDeclarations(type, ref, processor);
         }
 
@@ -447,7 +446,7 @@ public class PsiScopesUtil {
                                               final MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {
-    LOG.assertTrue(type.isValid());
+    PsiUtil.ensureValidType(type);
     if (type instanceof PsiClassType) {
       JavaResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
@@ -508,7 +507,7 @@ public class PsiScopesUtil {
       final PsiMethod dummyConstructor = factory.createConstructor();
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier != null) {
-        dummyConstructor.getNameIdentifier().replace(nameIdentifier);
+        Objects.requireNonNull(dummyConstructor.getNameIdentifier()).replace(nameIdentifier);
       }
       processor.forceAddResult(dummyConstructor);
     }

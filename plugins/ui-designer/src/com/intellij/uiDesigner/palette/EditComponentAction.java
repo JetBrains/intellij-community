@@ -17,7 +17,7 @@ import java.awt.*;
  * @author yole
  */
 public class EditComponentAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.palette.EditComponentAction");
+  private static final Logger LOG = Logger.getInstance(EditComponentAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

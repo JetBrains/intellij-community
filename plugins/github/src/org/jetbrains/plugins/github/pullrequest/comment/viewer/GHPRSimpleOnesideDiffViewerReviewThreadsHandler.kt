@@ -2,33 +2,43 @@
 package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewCommentsComponentFactory
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsController
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPREditorReviewThreadsModel
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewServiceAdapter
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffRangeMapping
-import org.jetbrains.plugins.github.pullrequest.data.model.GHPRDiffReviewThreadMapping
+import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
+import com.intellij.openapi.editor.impl.EditorImpl
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
+import org.jetbrains.plugins.github.pullrequest.comment.ui.*
+import org.jetbrains.plugins.github.pullrequest.data.GHPRChangedFileLinesMapper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
-class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(private val viewer: SimpleOnesideDiffViewer,
-                                                      reviewService: GHPRReviewServiceAdapter,
-                                                      componentFactory: GHPREditorReviewCommentsComponentFactory)
-  : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>() {
+class GHPRSimpleOnesideDiffViewerReviewThreadsHandler(commentableRangesModel: SingleValueModel<List<Range>?>,
+                                                      reviewThreadsModel: SingleValueModel<List<GHPullRequestReviewThread>?>,
+                                                      viewer: SimpleOnesideDiffViewer,
+                                                      private val linesMapper: GHPRChangedFileLinesMapper,
+                                                      componentsFactory: GHPRDiffEditorReviewComponentsFactory)
+  : GHPRDiffViewerBaseReviewThreadsHandler<SimpleOnesideDiffViewer>(commentableRangesModel, reviewThreadsModel, viewer) {
 
+  private val commentableRanges = SingleValueModel<List<LineRange>>(emptyList())
   private val editorThreads = GHPREditorReviewThreadsModel()
-  private val editorCommentableRanges = SingleValueModel<List<GHPRDiffRangeMapping>>(emptyList())
 
   override val viewerReady: Boolean = true
 
   init {
-    GHPREditorReviewThreadsController(editorThreads, editorCommentableRanges, reviewService, componentFactory, viewer.editor)
+    val inlaysManager = EditorComponentInlaysManager(viewer.editor as EditorImpl)
+
+    GHPREditorCommentableRangesController(commentableRanges, componentsFactory, inlaysManager) {
+      linesMapper.findDiffLine(viewer.side, it)
+    }
+    GHPREditorReviewThreadsController(editorThreads, componentsFactory, inlaysManager)
   }
 
-  override fun updateThreads(mappings: List<GHPRDiffReviewThreadMapping>) {
-    editorThreads.update(mappings.filter { it.side == viewer.side }.groupBy { it.fileLineIndex })
+  override fun markCommentableRanges(ranges: List<Range>?) {
+    commentableRanges.value = ranges?.let { GHPRCommentsUtil.getLineRanges(it, viewer.side) }.orEmpty()
   }
 
-  override fun updateCommentableRanges(ranges: List<GHPRDiffRangeMapping>) {
-    editorCommentableRanges.value = ranges.filter { it.side == viewer.side }
+  override fun showThreads(threads: List<GHPullRequestReviewThread>?) {
+    editorThreads.update(threads?.let { GHPRCommentsUtil.mapThreadsToLines(linesMapper, it) }
+                           ?.filterKeys { it.first == viewer.side }
+                           ?.mapKeys { it.key.second }.orEmpty())
   }
 }

@@ -49,7 +49,7 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
     return description;
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceProviderBean");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceProviderBean.class);
 
   public PsiReferenceProvider instantiate() {
     try {

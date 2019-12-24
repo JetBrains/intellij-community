@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public final class IdeStatusBarImpl extends JComponent implements Accessible, StatusBarEx, IdeEventQueue.EventDispatcher {
-  private static final int MIN_ICON_HEIGHT = 18 + 1 + 1;
+  private static final int MIN_ICON_HEIGHT = JBUI.scale(18 + 1 + 1);
   private final InfoAndProgressPanel myInfoAndProgressPanel;
   @NotNull
   private final IdeFrame myFrame;
@@ -133,7 +133,8 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return this;
   }
 
-  private IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
+  @ApiStatus.Internal
+  public IdeStatusBarImpl(@NotNull IdeFrame frame, boolean addToolWindowsWidget) {
     myFrame = frame;
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 6));
@@ -309,7 +310,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     else if (pos == Position.LEFT) {
       if (myLeftPanel == null) {
         myLeftPanel = new JPanel();
-        myLeftPanel.setBorder(JBUI.Borders.empty(1, 4, 0, 1));
+        myLeftPanel.setBorder(JBUI.Borders.empty(0, 4, 0, 1));
         myLeftPanel.setLayout(new BoxLayout(myLeftPanel, BoxLayout.X_AXIS));
         myLeftPanel.setOpaque(false);
         add(myLeftPanel, BorderLayout.WEST);
@@ -320,7 +321,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     else {
       if (myCenterPanel == null) {
         myCenterPanel = JBUI.Panels.simplePanel().andTransparent();
-        myCenterPanel.setBorder(JBUI.Borders.empty(1, 1, 0, 1));
+        myCenterPanel.setBorder(JBUI.Borders.empty(0, 1));
         add(myCenterPanel, BorderLayout.CENTER);
       }
 
@@ -467,7 +468,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     Disposer.register(this, widget);
   }
 
-  private static JComponent wrap(@NotNull final StatusBarWidget widget) {
+  public static JComponent wrap(@NotNull final StatusBarWidget widget) {
     if (widget instanceof CustomStatusBarWidget) {
       JComponent component = ((CustomStatusBarWidget)widget).getComponent();
       if (component.getBorder() == null) {
@@ -628,7 +629,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @FunctionalInterface
-  private interface StatusBarWrapper {
+  public interface StatusBarWrapper {
     void beforeUpdate();
   }
 

@@ -7,13 +7,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
-import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
+class GHLoadingPanel<T>(private val model: GHLoadingModel,
                         private val content: T,
                         parentDisposable: Disposable,
                         private val textBundle: EmptyTextBundle = EmptyTextBundle.Default)
@@ -24,7 +24,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
     ProgressStripe(content, parentDisposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
       isOpaque = false
     }
-  var resetHandler: ActionListener? = null
+  var errorHandler: GHLoadingErrorHandler? = null
 
   init {
     isOpaque = false
@@ -43,7 +43,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
     if (model.loading) {
       isFocusable = true
       content.emptyText.clear()
-      if (model.result != null) {
+      if (model.resultAvailable) {
         updateLoadingPanel.startLoading()
       }
       else {
@@ -54,7 +54,7 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
       stopLoading()
       updateLoadingPanel.stopLoading()
 
-      if (model.result != null) {
+      if (model.resultAvailable) {
         isFocusable = false
         resetKeyboardActions()
         content.emptyText.text = textBundle.empty
@@ -62,12 +62,13 @@ class GHLoadingPanel<T>(private val model: GHLoadingModel<*>,
       else {
         val error = model.error
         if (error != null) {
-          content.emptyText.clear()
+          val emptyText = content.emptyText
+          emptyText.clear()
             .appendText(textBundle.errorPrefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
             .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
 
-          resetHandler?.let {
-            content.emptyText.appendSecondaryText(" Retry", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
+          errorHandler?.getActionForError(error)?.let {
+            emptyText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
             registerKeyboardAction(it, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
           }
         }

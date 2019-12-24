@@ -28,7 +28,7 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlockStatement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBlockStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiBlockStatementImpl.class);
 
   public PsiBlockStatementImpl() {
     super(JavaElementType.BLOCK_STATEMENT);

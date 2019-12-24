@@ -45,7 +45,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     myPollTimeout = pollTimeout;
 
     mySearchScope = createSearchScope(environment.getProject(), environment.getRunProfile());
-    myNeedParametersSet = remoteConnection.isServerMode() && remoteConnection.isUseSockets() && "0".equals(remoteConnection.getApplicationPort());
+    myNeedParametersSet = remoteConnection.isServerMode() && remoteConnection.isUseSockets() && "0".equals(remoteConnection.getApplicationAddress());
   }
 
   private static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
@@ -75,7 +75,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
       DebuggerManagerImpl.createDebugParameters(((JavaCommandLine)state).getJavaParameters(),
                                                 true,
                                                 DebuggerSettings.SOCKET_TRANSPORT,
-                                                myRemoteConnection.getApplicationPort(),
+                                                myRemoteConnection.getApplicationAddress(),
                                                 false);
     }
     return state.execute(environment.getExecutor(), environment.getRunner());

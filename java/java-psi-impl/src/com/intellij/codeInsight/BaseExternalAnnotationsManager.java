@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
+  private static final Logger LOG = Logger.getInstance(BaseExternalAnnotationsManager.class);
   private static final Key<Boolean> EXTERNAL_ANNO_MARKER = Key.create("EXTERNAL_ANNO_MARKER");
   private static final List<PsiFile> NULL_LIST = Collections.emptyList();
 
@@ -201,7 +201,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     DataParsingSaxHandler handler = new DataParsingSaxHandler(file);
     try {
-      SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+      SAXParser saxParser = Holder.FACTORY.newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
     }
     catch (IOException | ParserConfigurationException | SAXException e) {
@@ -211,6 +211,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     MostlySingularMultiMap<String, AnnotationData> result = handler.getResult();
     myAnnotationFileToDataAndModStampCache.put(file, Pair.create(result, fileModificationStamp));
     return result;
+  }
+
+  private interface Holder {
+    SAXParserFactory FACTORY = SAXParserFactory.newInstance();
   }
 
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {

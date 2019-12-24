@@ -10,6 +10,6 @@ class Clazz {
   }
 }
 
-def z = new <ref>Clazz(foo : "bar")
+def z = new <caret>Clazz(foo : "bar")
 
 println z.foo

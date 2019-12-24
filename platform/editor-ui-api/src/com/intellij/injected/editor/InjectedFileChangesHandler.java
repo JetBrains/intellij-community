@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
  *
  * Could be implemented for better injected fragment editing in raw string literals or concatenated strings.
  */
-@ApiStatus.Experimental
 public interface InjectedFileChangesHandler extends Disposable {
 
   boolean isValid();

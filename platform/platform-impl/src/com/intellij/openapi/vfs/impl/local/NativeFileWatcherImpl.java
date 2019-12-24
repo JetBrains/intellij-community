@@ -218,7 +218,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private void setWatchRoots(List<String> recursive, List<String> flat, boolean restart) {
     if (myProcessHandler == null || myProcessHandler.isProcessTerminated()) return;
 
-    if (ApplicationManager.getApplication().isDisposeInProgress()) {
+    if (ApplicationManager.getApplication().isDisposed()) {
       recursive = flat = Collections.emptyList();
     }
 

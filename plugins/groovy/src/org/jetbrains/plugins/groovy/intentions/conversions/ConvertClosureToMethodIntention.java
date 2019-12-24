@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class ConvertClosureToMethodIntention extends Intention {
   private static final Logger LOG =
-    Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.conversions.ConvertClosureToMethodIntention");
+    Logger.getInstance(ConvertClosureToMethodIntention.class);
 
   @NotNull
   @Override

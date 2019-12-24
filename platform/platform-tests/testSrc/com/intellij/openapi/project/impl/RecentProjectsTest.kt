@@ -128,7 +128,7 @@ class RecentProjectsTest {
   }
 
   private fun checkGroups(groups: List<String>) {
-    val recentGroups = RecentProjectsManager.getInstance().getRecentProjectsActions(false, true).asSequence()
+    val recentGroups = RecentProjectListActionProvider.getInstance().getActions(false, true).asSequence()
       .filter { a -> a is ProjectGroupActionGroup }
       .map { a -> (a as ProjectGroupActionGroup).group.name }
       .toList()

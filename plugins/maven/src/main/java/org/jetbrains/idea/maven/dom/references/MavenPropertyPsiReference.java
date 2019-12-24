@@ -27,7 +27,6 @@ import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import gnu.trove.THashSet;
-import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -53,6 +52,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
@@ -385,22 +386,22 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
     final String prefix = prefixLength == 0 ? null : myText.substring(0, prefixLength);
 
     PsiDirectory baseDir = getBaseDir(mavenProject);
-    addVariant(result, "basedir", baseDir, prefix, MavenIcons.MavenLogo);
+    addVariant(result, "basedir", baseDir, prefix, RepositoryLibraryLogo);
     if (prefix == null) {
-      result.add(createLookupElement(baseDir, "project.baseUri", MavenIcons.MavenLogo));
-      result.add(createLookupElement(baseDir, "pom.baseUri", MavenIcons.MavenLogo));
-      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(MavenIcons.MavenLogo));
+      result.add(createLookupElement(baseDir, "project.baseUri", RepositoryLibraryLogo));
+      result.add(createLookupElement(baseDir, "pom.baseUri", RepositoryLibraryLogo));
+      result.add(LookupElementBuilder.create(TIMESTAMP_PROP).withIcon(RepositoryLibraryLogo));
     }
 
     processSchema(MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_URL, (property, descriptor) -> {
       if (property.startsWith("project.")) {
-        addVariant(result, property.substring("project.".length()), descriptor, prefix, MavenIcons.MavenLogo);
+        addVariant(result, property.substring("project.".length()), descriptor, prefix, RepositoryLibraryLogo);
       }
       return null;
     });
 
     processSchema(MavenSchemaProvider.MAVEN_SETTINGS_SCHEMA_URL, (property, descriptor) -> {
-      result.add(createLookupElement(descriptor, property, MavenIcons.MavenLogo));
+      result.add(createLookupElement(descriptor, property, RepositoryLibraryLogo));
       return null;
     });
 

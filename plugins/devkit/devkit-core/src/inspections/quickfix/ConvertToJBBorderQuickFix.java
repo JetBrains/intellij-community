@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +80,7 @@ public class ConvertToJBBorderQuickFix extends LocalQuickFixBase {
       final PsiElement newElement = newExpression.replace(expression);
       final PsiElement el = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
       final int offset = el.getTextOffset() + el.getText().length() - 2;
-      final Editor editor = PsiUtilBase.findEditor(el);
+      final Editor editor = PsiEditorUtil.findEditor(el);
       if (editor != null) {
         editor.getCaretModel().moveToOffset(offset);
       }

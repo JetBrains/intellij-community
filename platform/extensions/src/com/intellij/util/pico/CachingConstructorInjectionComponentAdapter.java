@@ -4,10 +4,7 @@ package com.intellij.util.pico;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.Parameter;
-import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
+import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 
 import java.lang.annotation.Annotation;
@@ -28,15 +25,15 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
-    super(componentKey, componentImplementation, parameters, allowNonPublicClasses, DefaultPicoContainer.DEFAULT_LIFECYCLE_STRATEGY);
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses) throws AssignabilityRegistrationException {
+    super(componentKey, componentImplementation, parameters, allowNonPublicClasses);
   }
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
     this(componentKey, componentImplementation, parameters, false);
   }
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
+  public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation) throws AssignabilityRegistrationException {
     this(componentKey, componentImplementation, null);
   }
 
@@ -44,8 +41,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   public Object getComponentInstance(@NotNull PicoContainer container) throws
                                                                        PicoInitializationException,
                                                                        PicoIntrospectionException,
-                                                                       AssignabilityRegistrationException,
-                                                                       NotConcreteRegistrationException {
+                                                                       AssignabilityRegistrationException {
     Object instance = myInstance;
     if (instance == null) {
       myInstance = instance = instantiateGuarded(container, getComponentImplementation());
@@ -115,10 +111,9 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   }
 
   @NotNull
-  @Override
-  protected Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
+  private Constructor<?> getGreediestSatisfiableConstructor(@NotNull PicoContainer container) throws
                                                                                     PicoIntrospectionException,
-                                                                                    AssignabilityRegistrationException, NotConcreteRegistrationException {
+                                                                                    AssignabilityRegistrationException {
     final Set<Constructor<?>> conflicts = new HashSet<>();
     final Set<List<Class<?>>> unsatisfiableDependencyTypes = new HashSet<>();
     List<Constructor<?>> sortedMatchingConstructors = getSortedMatchingConstructors();
@@ -167,7 +162,7 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
       }
     }
     if (!conflicts.isEmpty()) {
-      throw new TooManySatisfiableConstructorsException(getComponentImplementation(), conflicts);
+      throw new TooManySatisfiableConstructorsException(conflicts);
     }
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
       throw new UnsatisfiableDependenciesException(this, unsatisfiedDependencyType, unsatisfiableDependencyTypes, container);
@@ -210,5 +205,90 @@ public final class CachingConstructorInjectionComponentAdapter extends Instantia
   @NotNull
   private Constructor<?>[] getConstructors() {
     return AccessController.doPrivileged((PrivilegedAction<Constructor<?>[]>)() -> getComponentImplementation().getDeclaredConstructors());
+  }
+}
+
+abstract class InstantiatingComponentAdapter extends AbstractComponentAdapter {
+  /**
+   * The parameters to use for initialization.
+   */
+  protected transient Parameter[] parameters;
+  protected boolean allowNonPublicClasses;
+
+  /**
+   * The cycle guard for the verification.
+   */
+  protected static abstract class Guard extends ThreadLocalCyclicDependencyGuard {
+    protected PicoContainer guardedContainer;
+
+    protected void setArguments(PicoContainer container) {
+      this.guardedContainer = container;
+    }
+  }
+
+  /**
+   * Constructs a new ComponentAdapter for the given key and implementation.
+   *
+   * @param componentKey            the search key for this implementation
+   * @param componentImplementation the concrete implementation
+   * @param parameters              the parameters to use for the initialization
+   * @param allowNonPublicClasses   flag to allow instantiation of non-public classes
+   */
+  protected InstantiatingComponentAdapter(Object componentKey,
+                                          Class componentImplementation,
+                                          Parameter[] parameters,
+                                          boolean allowNonPublicClasses) {
+    super(componentKey, componentImplementation);
+    checkConcrete();
+    if (parameters != null) {
+      for (int i = 0; i < parameters.length; i++) {
+        if (parameters[i] == null) {
+          throw new NullPointerException("Parameter " + i + " is null");
+        }
+      }
+    }
+    this.parameters = parameters;
+    this.allowNonPublicClasses = allowNonPublicClasses;
+  }
+
+  private void checkConcrete() {
+    // Assert that the component class is concrete.
+    Class<?> componentImplementation = getComponentImplementation();
+    boolean isAbstract = (componentImplementation.getModifiers() & Modifier.ABSTRACT) == Modifier.ABSTRACT;
+    if (componentImplementation.isInterface() || isAbstract) {
+      throw new PicoRegistrationException("Bad Access: '" + componentImplementation.getName() + "' is not instantiable");
+    }
+  }
+
+  /**
+   * Create default parameters for the given types.
+   *
+   * @param parameters the parameter types
+   * @return the array with the default parameters.
+   */
+  protected Parameter[] createDefaultParameters(Class<?>[] parameters) {
+    Parameter[] componentParameters = new Parameter[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      componentParameters[i] = ComponentParameter.DEFAULT;
+    }
+    return componentParameters;
+  }
+
+  /**
+   * Instantiate an object with given parameters and respect the accessible flag.
+   *
+   * @param constructor the constructor to use
+   * @param parameters  the parameters for the constructor
+   * @return the new object.
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   * @throws InvocationTargetException
+   */
+  protected Object newInstance(Constructor<?> constructor, Object[] parameters)
+    throws InstantiationException, IllegalAccessException, InvocationTargetException {
+    if (allowNonPublicClasses) {
+      constructor.setAccessible(true);
+    }
+    return constructor.newInstance(parameters);
   }
 }

@@ -40,13 +40,6 @@ public class ListIndexOfReplaceableByContainsInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "list.indexof.replaceable.by.contains.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
     final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());

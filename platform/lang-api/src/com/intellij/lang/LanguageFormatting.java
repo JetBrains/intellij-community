@@ -25,7 +25,7 @@ public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder
 
   @Nullable
   public FormattingModelBuilder forContext(@NotNull Language language, @NotNull PsiElement context) {
-    for (LanguageFormattingRestriction each : LanguageFormattingRestriction.EXTENSION.getExtensionList()) {
+    for (LanguageFormattingRestriction each : LanguageFormattingRestriction.EP_NAME.getExtensionList()) {
       if (!each.isFormatterAllowed(context)) return null;
     }
     for (FormattingModelBuilder builder : allForLanguage(language)) {

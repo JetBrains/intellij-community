@@ -143,7 +143,7 @@ internal fun commitAndPush(repo: File, branch: String, message: String, user: St
     "commit", "-m", message,
     "--author=$user <$email>"
   )
-  push(repo, branch)
+  push(repo, branch, user, email)
   return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
@@ -158,17 +158,23 @@ internal fun deleteBranch(repo: File, branch: String) {
   }
 }
 
-private fun push(repo: File, spec: String) =
-  retry(doRetry = { beforePushRetry(it, repo, spec) }) {
+private fun push(repo: File, spec: String, user: String? = null, email: String? = null) =
+  retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
     execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
 
-private fun beforePushRetry(e: Throwable, repo: File, spec: String): Boolean {
+private fun beforePushRetry(e: Throwable, repo: File, spec: String, user: String?, email: String?): Boolean {
   if (!isGitServerUnavailable(e)) {
     val specParts = spec.split(':')
-    execute(repo, GIT, "pull", "--rebase=true", "origin", if (specParts.count() == 2) {
+    val identity = if (user != null && email != null) arrayOf(
+      "-c", "user.name=$user",
+      "-c", "user.email=$email"
+    )
+    else emptyArray()
+    execute(repo, GIT, *identity, "pull", "--rebase=true", "origin", if (specParts.count() == 2) {
       "${specParts[1]}:${specParts[0]}"
-    } else spec)
+    }
+    else spec, withTimer = true)
   }
   return true
 }

@@ -1,0 +1,2 @@
+private record ClassName{
+}

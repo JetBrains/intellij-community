@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author nik
  */
 public abstract class SocketConnectionBase<Request extends AbstractRequest, Response extends AbstractResponse> implements SocketConnection<Request, Response> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl");
+  private static final Logger LOG = Logger.getInstance(ServerSocketConnectionImpl.class);
   private final Object myLock = new Object();
   private int myPort = -1;
   private final AtomicReference<ConnectionState> myState = new AtomicReference<>(new ConnectionState(ConnectionStatus.NOT_CONNECTED));

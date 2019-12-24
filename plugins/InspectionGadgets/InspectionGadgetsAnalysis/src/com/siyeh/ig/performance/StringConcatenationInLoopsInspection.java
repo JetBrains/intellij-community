@@ -52,12 +52,6 @@ import java.util.regex.Pattern;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
 
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.in.loops.display.name");
-  }
-
   @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override

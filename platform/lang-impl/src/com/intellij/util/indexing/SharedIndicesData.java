@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import gnu.trove.TIntIntHashMap;
@@ -41,7 +42,7 @@ public class SharedIndicesData {
   public static final boolean DO_CHECKS =
     ourFileSharedIndicesEnabled && SystemProperties.getBooleanProperty("idea.shared.input.index.checked", false);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapReduceIndex");
+  private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
 
   static {
     if (ourFileSharedIndicesEnabled) {
@@ -79,7 +80,7 @@ public class SharedIndicesData {
     final IndexedStateCache myStateCache;
 
     IndexedStateMap(@NotNull File file) throws IOException {
-      super(file, EnumeratorIntegerDescriptor.INSTANCE,
+      super(file.toPath(), EnumeratorIntegerDescriptor.INSTANCE,
             new DataExternalizer<byte[]>() {
               @Override
               public void save(@NotNull DataOutput out, byte[] value) throws IOException {

@@ -160,7 +160,8 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>module</module>" +
                      "</modules>");
-    waitForReadingCompletion();
+
+    importProject();
 
     assertEmptyKeymap();
     assignShortcut(m, goal, "alt shift X");
@@ -188,7 +189,8 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
 
     WriteCommandAction.writeCommandAction(myProject).run(() -> p1.delete(this));
 
-    waitForReadingCompletion();
+    configConfirmationForYesAnswer();
+    importProjects(p1, p2);
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);
@@ -213,6 +215,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
     assertKeymapContains(p2, goal);
 
     myProjectsManager.setIgnoredState(Collections.singletonList(myProjectsManager.findProject(p1)), true);
+
 
     assertKeymapDoesNotContain(p1, goal);
     assertKeymapContains(p2, goal);

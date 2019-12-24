@@ -39,13 +39,6 @@ public class MethodOverridesStaticMethodInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.overrides.static.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.overrides.static.problem.descriptor");

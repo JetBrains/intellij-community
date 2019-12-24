@@ -140,7 +140,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return type;
       }
       if (!context.maySwitchToAST(this)) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
 
         final List<PyType> types = StreamEx
           .of(multiResolveAssignedValue(resolveContext))

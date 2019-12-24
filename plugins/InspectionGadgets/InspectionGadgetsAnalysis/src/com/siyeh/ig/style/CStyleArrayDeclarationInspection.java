@@ -36,13 +36,6 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "c.style.array.declaration.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Object info = infos[0];
     if (info instanceof PsiMethod) {
@@ -88,11 +81,11 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
       if (elementType.equals(declaredType)) {
         return;
       }
-      if (InspectionProjectProfileManager.isInformationLevel(getShortName(), variable)) {
-        registerError(variable, variable);
+      if (isVisibleHighlight(variable)) {
+        registerVariableError(variable, variable);
       }
       else {
-        registerVariableError(variable, variable);
+        registerError(variable, variable);
       }
     }
 
@@ -118,7 +111,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
         PsiJavaToken last = null;
         while (!(child instanceof PsiCodeBlock)) {
           if (child instanceof PsiJavaToken) {
-            PsiJavaToken token = (PsiJavaToken)child;
+            final PsiJavaToken token = (PsiJavaToken)child;
             final IElementType tokenType = token.getTokenType();
             if (JavaTokenType.LBRACKET.equals(tokenType) || JavaTokenType.RBRACKET.equals(tokenType)) {
               if (first == null) first = token;

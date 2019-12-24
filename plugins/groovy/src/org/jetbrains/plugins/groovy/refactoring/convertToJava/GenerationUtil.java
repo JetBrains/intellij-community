@@ -51,7 +51,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil
  * @author Maxim.Medvedev
  */
 public class GenerationUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
+  private static final Logger LOG = Logger.getInstance(GenerationUtil.class);
 
   private GenerationUtil() {
   }

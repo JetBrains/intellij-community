@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class SshSettings implements JDOMExternalizable, Cloneable {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.ssh.ui.SshSettings");
+  private static final Logger LOG = Logger.getInstance(SshSettings.class);
 
   public boolean USE_PPK = false;
   public String PATH_TO_PPK = "";

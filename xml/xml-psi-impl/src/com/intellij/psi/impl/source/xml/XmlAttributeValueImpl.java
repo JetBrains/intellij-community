@@ -47,7 +47,7 @@ import javax.swing.*;
  * @author Mike
  */
 public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttributeValue, PsiLanguageInjectionHost, RegExpLanguageHost, PsiMetaOwner, PsiMetaData {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeValueImpl");
+  private static final Logger LOG = Logger.getInstance(XmlAttributeValueImpl.class);
 
   public XmlAttributeValueImpl() {
     super(XmlElementType.XML_ATTRIBUTE_VALUE);

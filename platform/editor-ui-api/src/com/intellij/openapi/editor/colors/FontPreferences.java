@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +13,8 @@ import java.util.List;
 
 public class FontPreferences {
   public final static @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
-  public final static int DEFAULT_FONT_SIZE = SystemInfo.isWindows ? 13 : FontSize.SMALL.getSize();
+  public static final String JETBRAINS_MONO = "JetBrains Mono";
+  public final static int DEFAULT_FONT_SIZE = SystemInfo.isWindows || JETBRAINS_MONO.equalsIgnoreCase(DEFAULT_FONT_NAME) ? 13 : 12;
 
   public final static float DEFAULT_LINE_SPACING = 1.2f;
   public final static String FALLBACK_FONT_FAMILY         = "Monospaced";
@@ -79,6 +79,9 @@ public class FontPreferences {
   }
 
   public static String getDefaultFontName() {
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isJavaVersionAtLeast(11)) {
+      return JETBRAINS_MONO;
+    }
     if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {

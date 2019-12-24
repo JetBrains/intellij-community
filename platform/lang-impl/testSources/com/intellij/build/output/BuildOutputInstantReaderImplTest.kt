@@ -38,6 +38,73 @@ class BuildOutputInstantReaderImplTest {
       createParser("[warning]", WARNING)))
   }
 
+
+  @Test
+  fun `test reading lot of lines to merge`() {
+    val predicate: (String) -> Boolean = { it.startsWith("[warning]") }
+    val parser = BuildOutputParser { line, reader, c ->
+      var next: String? = line
+      var count = 0;
+      while (next != null) {
+        if (predicate(next)) {
+          count++
+          next = reader.readLine()
+        }
+        else {
+          if (count != 0) {
+            c.accept(MessageEventImpl(Object(), WARNING, "test", "lines of warns:" + count, null))
+            reader.pushBack()
+            return@BuildOutputParser true
+          }
+          else {
+            return@BuildOutputParser false
+          }
+
+        }
+      }
+      return@BuildOutputParser false
+
+    }
+
+    val buildId = Object()
+
+    val messages = mutableListOf<String>()
+
+    val outputReader = BuildOutputInstantReaderImpl(buildId, buildId,
+                                                    BuildProgressListener { _, event -> messages += event.message },
+                                                    listOf(parser, createParser("[error]", ERROR)), pushBackBufferSize)
+
+    val inputData = buildString {
+      appendln("[warning] this is a warning\n".repeat(80))
+      appendln("[error] error1\n")
+    }
+
+    outputReader.append(inputData).closeAndGetFuture().get()
+
+    Assert.assertEquals("""
+        lines of warns:80
+        error1
+      """.trimIndent(), messages.joinToString("\n").trimEnd())
+  }
+
+  @Test
+  fun `test reading with too greedy parser`() {
+    val greedyParser = BuildOutputParser { _, reader, _ ->
+      var count = 0
+      while (count <= pushBackBufferSize && reader.readLine() != null) {
+        count++
+      }
+      reader.pushBack(count)
+      return@BuildOutputParser false
+    }
+
+    doTest(mutableListOf(
+      createParser("[info]", INFO),
+      greedyParser,
+      createParser("[error]", ERROR),
+      createParser("[warning]", WARNING)), false)
+  }
+
   @Test
   fun `test bad parser pushed back too many lines`() {
     val badParser = BuildOutputParser { _, reader, _ ->
@@ -87,7 +154,7 @@ class BuildOutputInstantReaderImplTest {
   }
 
   companion object {
-    private fun doTest(parsers: MutableList<BuildOutputParser>) {
+    private fun doTest(parsers: MutableList<BuildOutputParser>, assertUnparsedLines: Boolean = true) {
       val messages = mutableListOf<String>()
 
       val unparsedLines = mutableListOf<String>()
@@ -98,7 +165,10 @@ class BuildOutputInstantReaderImplTest {
       parsers.add(parser)
       val buildId = Object()
       val outputReader = BuildOutputInstantReaderImpl(buildId, buildId,
-                                                      BuildProgressListener { _, event -> messages += event.message },
+                                                      BuildProgressListener {
+                                                        _,
+                                                        event -> messages += event.message
+                                                      },
                                                       parsers, pushBackBufferSize)
       val trashOut = (0 until pushBackBufferSize).map { "trash" }
       val infoLines = """
@@ -126,7 +196,9 @@ class BuildOutputInstantReaderImplTest {
       }
       outputReader.append(inputData).closeAndGetFuture().get()
 
-      Assert.assertEquals(trashOut + trashOut, unparsedLines)
+      if (assertUnparsedLines) {
+        Assert.assertEquals(trashOut + trashOut, unparsedLines)
+      }
       Assert.assertEquals("""
         error1
         info1
@@ -134,7 +206,7 @@ class BuildOutputInstantReaderImplTest {
         info3
         warn1
         warn2
-      """.trimIndent(), messages.joinToString("\n"))
+      """.trimIndent().replace("\r?\n".toRegex(), "\n"), messages.joinToString("\n").trimEnd().replace("\r?\n".toRegex(), "\n"))
     }
 
     private const val pushBackBufferSize = 50

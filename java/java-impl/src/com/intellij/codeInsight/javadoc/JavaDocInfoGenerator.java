@@ -53,7 +53,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaDocInfoGenerator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoGenerator");
+  private static final Logger LOG = Logger.getInstance(JavaDocInfoGenerator.class);
 
   private interface InheritDocProvider<T> {
     Pair<T, InheritDocProvider<T>> getInheritDoc();
@@ -1365,7 +1365,7 @@ public class JavaDocInfoGenerator {
   protected void collectElementText(StringBuilder buffer, PsiElement element) {
     element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         super.visitElement(element);
         if (element instanceof PsiWhiteSpace ||
             element instanceof PsiJavaToken ||

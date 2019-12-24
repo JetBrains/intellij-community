@@ -33,12 +33,6 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends BaseIn
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("conditional.expression.with.identical.branches.problem.descriptor");
   }

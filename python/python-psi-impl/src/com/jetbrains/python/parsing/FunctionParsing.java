@@ -273,7 +273,7 @@ public class FunctionParsing extends Parsing {
     }
   }
 
-  private void parseParameterSubList() {
+  protected void parseParameterSubList() {
     assertCurrentToken(PyTokenTypes.LPAR);
     final PsiBuilder.Marker tuple = myBuilder.mark();
     myBuilder.advanceLexer();

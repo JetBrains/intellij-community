@@ -27,13 +27,6 @@ public class ConstantDeclaredInAbstractClassInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "constant.declared.in.abstract.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "constant.declared.in.abstract.class.problem.descriptor");

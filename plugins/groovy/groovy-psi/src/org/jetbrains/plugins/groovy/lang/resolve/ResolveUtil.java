@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -189,9 +187,6 @@ public class ResolveUtil {
 
     if (scope instanceof GrFunctionalExpression) {
       ResolveState _state = state.put(ClassHint.RESOLVE_CONTEXT, scope);
-
-      PsiClass superClass = getLiteralSuperClass((GrFunctionalExpression)scope);
-      if (superClass != null && !processClassDeclarations(superClass, processor, _state, null, place)) return false;
 
       if (!processNonCodeMembers(GrClosureType.create((GrFunctionalExpression)scope, false), processor, place, _state)) return false;
     }
@@ -437,10 +432,6 @@ public class ResolveUtil {
 
     while (run != null) {
       ProgressManager.checkCanceled();
-      if (run instanceof GrFunctionalExpression) {
-        PsiClass superClass = getLiteralSuperClass((GrFunctionalExpression)run);
-        if (superClass != null && !GdkMethodUtil.processCategoryMethods(run, processor, state, superClass)) return false;
-      }
 
       if (run instanceof GrStatementOwner) {
         if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)run, processor, state, lastParent, place)) return false;
@@ -451,18 +442,6 @@ public class ResolveUtil {
     }
 
     return true;
-  }
-
-  @Nullable
-  private static PsiClass getLiteralSuperClass(GrFunctionalExpression closure) {
-    PsiClassType type;
-    if (closure.getParent() instanceof GrNamedArgument && closure.getParent().getParent() instanceof GrListOrMap) {
-      type = LiteralConstructorReference.getTargetConversionType((GrListOrMap)closure.getParent().getParent());
-    }
-    else {
-      type = LiteralConstructorReference.getTargetConversionType(closure);
-    }
-    return type != null ? type.resolve() : null;
   }
 
   public static PsiElement[] mapToElements(GroovyResolveResult[] candidates) {
@@ -763,32 +742,6 @@ public class ResolveUtil {
 
     final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
-  }
-
-  @Nullable
-  public static PsiType extractReturnTypeFromCandidate(GroovyResolveResult candidate, GrExpression expression, @Nullable PsiType[] args) {
-    final PsiElement element = candidate.getElement();
-    if (element instanceof PsiMethod && !candidate.isInvokedOnProperty()) {
-      return TypesUtil.substituteAndNormalizeType(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element),
-                                                  candidate.getSubstitutor(), candidate.getSpreadState(), expression);
-    }
-
-    final PsiType type;
-    if (element instanceof GrField) {
-      type = ((GrField)element).getTypeGroovy();
-    }
-    else if (element instanceof PsiMethod) {
-      type = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element);
-    }
-    else {
-      return null;
-    }
-    if (type instanceof GrClosureType) {
-      final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
-      PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
-      return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
-    }
-    return null;
   }
 
   public static boolean isEnumConstant(PsiReference ref, String name, String qName) {

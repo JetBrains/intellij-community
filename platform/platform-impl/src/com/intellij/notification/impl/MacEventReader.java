@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 
-class MacEventReader {
+final class MacEventReader {
   private static final int MAX_MESSAGE_LENGTH = 100;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.MacEventReader");
+  private static final Logger LOG = Logger.getInstance(MacEventReader.class);
   private static final Notifications ourNotificationAdapter = new Notifications() {
     @Override
     public void notify(@NotNull Notification notification) {
@@ -30,10 +30,11 @@ class MacEventReader {
     }
   }
 
-  private static void process(Notification notification) {
+  private static void process(@NotNull Notification notification) {
     if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud()) {
       return;
     }
+
     String message = notification.getTitle();
     if (message.isEmpty()) {
       message = notification.getContent();
@@ -51,7 +52,7 @@ class MacEventReader {
     }
 
     if (!message.isEmpty()) {
-      final String copy = message;
+      String copy = message;
       ExecutorHolder.ourService.execute(() -> {
         try {
           Runtime.getRuntime().exec("say " + copy).waitFor();
@@ -63,15 +64,14 @@ class MacEventReader {
     }
   }
 
-  private static class ExecutorHolder  {
-    private static final Executor ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
-  }
-
-  public static class ProjectTracker {
-    public ProjectTracker(@NotNull final Project project) {
+  static final class MacProjectTracker {
+    MacProjectTracker(@NotNull Project project) {
       project.getMessageBus().connect().subscribe(Notifications.TOPIC, ourNotificationAdapter);
     }
   }
 }
 
+final class ExecutorHolder {
+  static final Executor ourService = ConcurrencyUtil.newSingleThreadExecutor("Mac event reader");
+}
 

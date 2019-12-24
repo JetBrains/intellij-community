@@ -34,6 +34,12 @@ class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
   }
 
   @Test
+  fun `test validate invalid facet`() {
+    val validator = FacetTypeUsageCollector.FacetTypeUtilValidator()
+    doValidateEventId(validator, "invalid", FeatureUsageData())
+  }
+
+  @Test
   fun `test validate module facet by id`() {
     val disposable = Disposer.newDisposable()
     try {

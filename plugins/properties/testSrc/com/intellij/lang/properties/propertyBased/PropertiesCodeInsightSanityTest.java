@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.propertyBased;
 
 import com.intellij.lang.properties.PropertiesFileType;
@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 
 @SkipSlowTestLocally
 public class PropertiesCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
-
   public void testIncrementalHighlighterUpdate() {
     PropertyChecker.checkScenarios(actionsOnPropertiesFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
   }
@@ -26,7 +25,7 @@ public class PropertiesCodeInsightSanityTest extends LightJavaCodeInsightFixture
   }
 
   public void testRandomActivity() {
-    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    MadTestingUtil.enableAllInspections(getProject());
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy() {
                                       @Override

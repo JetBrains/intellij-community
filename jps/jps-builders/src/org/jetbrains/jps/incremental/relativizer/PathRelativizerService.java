@@ -3,7 +3,7 @@ package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -50,10 +50,11 @@ public class PathRelativizerService {
   private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers = ContainerUtil.newSmartList(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
-                                                new JavaSdkPathRelativizer(javaSdks),
-                                                new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
-                                                new MavenPathRelativizer());
+    myRelativizers = new SmartList<>(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER),
+                                     new JavaSdkPathRelativizer(javaSdks),
+                                     new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER),
+                                     new MavenPathRelativizer(),
+                                     new GradlePathRelativizer());
     myUnhandledPaths = new LinkedHashSet<>();
   }
 
@@ -70,7 +71,9 @@ public class PathRelativizerService {
       relativePath = relativizer.toRelativePath(systemIndependentPath);
       if (relativePath != null) return relativePath;
     }
-    myUnhandledPaths.add(path);
+    if (LOG.isDebugEnabled()) {
+      myUnhandledPaths.add(path);
+    }
     return systemIndependentPath;
   }
 

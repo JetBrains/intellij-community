@@ -53,10 +53,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
+  protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
   private volatile String myProgressText = "";
   private volatile float myFraction;
-  private final boolean myCreateExitAction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -99,7 +98,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public NewErrorTreeViewPanel(Project project, String helpId, boolean createExitAction, boolean createToolbar, @Nullable Runnable rerunAction) {
     myProject = project;
     myHelpId = helpId;
-    myCreateExitAction = createExitAction;
     myConfiguration = ErrorTreeViewConfiguration.getInstance(project);
     setLayout(new BorderLayout());
 
@@ -280,7 +278,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     ));
   }
 
-  private void updateAddedElement(ErrorTreeElement element) {
+  protected void updateAddedElement(@NotNull ErrorTreeElement element) {
     Promise<?> promise;
     final Object parent = myErrorViewStructure.getParentElement(element);
     if (parent == null) {
@@ -299,8 +297,12 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     if (element.getKind() == ErrorTreeElementKind.ERROR) {
       // expand automatically only errors
-      promise.onSuccess(p -> myStructureModel.makeVisible(element, myTree, pp->{}));
+      promise.onSuccess(p -> makeVisible(element));
     }
+  }
+
+  protected void makeVisible(@NotNull ErrorTreeElement element) {
+    myStructureModel.makeVisible(element, myTree, pp->{});
   }
 
   @Override
@@ -446,20 +448,17 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   public void setProgress(final String s, float fraction) {
-    initProgressPanel();
     myProgressText = s;
     myFraction = fraction;
     updateProgress();
   }
 
-  public void setProgressText(final String s) {
-    initProgressPanel();
+  public void setProgressText(String s) {
     myProgressText = s;
     updateProgress();
   }
 
-  public void setFraction(final float fraction) {
-    initProgressPanel();
+  public void setFraction(float fraction) {
     myFraction = fraction;
     updateProgress();
   }
@@ -476,10 +475,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (myIsDisposed) {
       return;
     }
+
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(() -> {
-      final float fraction = myFraction;
-      final String text = myProgressText;
+      initProgressPanel();
+
+      float fraction = myFraction;
+      String text = myProgressText;
       if (fraction > 0.0f) {
         myProgressLabel.setText((int)(fraction * 100 + 0.5) + "%  " + text);
       }
@@ -487,9 +489,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         myProgressLabel.setText(text);
       }
     }, 50, ModalityState.NON_MODAL);
-
   }
-
 
   private void initProgressPanel() {
     if (myProgressPanel == null) {
@@ -506,7 +506,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   public void collapseAll() {
     TreeUtil.collapseAll(myTree, 2);
   }
-
 
   public void expandAll() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();

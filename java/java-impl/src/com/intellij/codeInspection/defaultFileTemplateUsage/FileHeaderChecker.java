@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class FileHeaderChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
+  private static final Logger LOG = Logger.getInstance(FileHeaderChecker.class);
 
   static ProblemDescriptor checkFileHeader(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean onTheFly) {
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<>();

@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.wizard.AbstractWizard");
+  private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
 
   protected int myCurrentStep;
   protected final ArrayList<T> mySteps;
@@ -282,9 +282,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myContentPanel, BorderLayout.CENTER);
+    JPanel panel = new JPanel(new BorderLayout());
     panel.add(myIcon, BorderLayout.WEST);
+    panel.add(myContentPanel, BorderLayout.CENTER);
     return panel;
   }
 
@@ -324,7 +324,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
 
-  protected String addStepComponent(final Component component) {
+  protected String addStepComponent(@NotNull Component component) {
+    if (component instanceof JPanel) {
+      ((JPanel)component).putClientProperty(DIALOG_CONTENT_PANEL_PROPERTY, true);
+    }
+
     String id = myComponentToIdMap.get(component);
     if (id == null) {
       id = Integer.toString(myComponentToIdMap.size());

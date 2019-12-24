@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.buildout;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.buildout.config.lexer._BuildoutCfgFlexLexer;
 import junit.framework.TestCase;
@@ -25,7 +26,7 @@ import java.io.IOException;
  * @author traff
  */
 public class BuildoutCfgLexerTest extends TestCase {
-
+  private static final Logger LOG = Logger.getInstance(BuildoutCfgLexerTest.class);
   public void testSimple() throws IOException {
     doTest("[buildout]\n" +
            "develop = .\n" +
@@ -96,7 +97,7 @@ public class BuildoutCfgLexerTest extends TestCase {
     if (type != null) {
       do {
         String tokenText = "[" + lexer.yytext() + ", " + type + "]";
-        System.out.println(tokenText);
+        LOG.debug(tokenText);
         type = lexer.advance();
       }
       while (type != null);

@@ -3,12 +3,14 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,4 +128,19 @@ public abstract class CompletionService {
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
+
+  @ApiStatus.Internal
+  public static boolean isStartMatch(LookupElement element, WeighingContext context) {
+    return getItemMatcher(element, context).isStartMatch(element);
+  }
+
+  @ApiStatus.Internal
+  public static PrefixMatcher getItemMatcher(LookupElement element, WeighingContext context) {
+    PrefixMatcher itemMatcher = context.itemMatcher(element);
+    String pattern = context.itemPattern(element);
+    if (!pattern.equals(itemMatcher.getPrefix())) {
+      return itemMatcher.cloneWithPrefix(pattern);
+    }
+    return itemMatcher;
+  }
 }

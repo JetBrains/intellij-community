@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Set;
 
 public class LanguageMismatch extends LocalInspectionTool {
@@ -99,7 +99,7 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
               else if (var instanceof PsiExpressionList) {
                 final PsiExpressionList list = (PsiExpressionList)var;
-                if (Arrays.asList(list.getExpressions()).indexOf(expression) == -1) {
+                if (!ArrayUtil.contains(expression, list.getExpressions())) {
                   return;
                 }
               }

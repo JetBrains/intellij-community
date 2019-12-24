@@ -573,7 +573,7 @@ public final class ImportUtils {
     }
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (referenceFound) return;
       super.visitElement(element);
     }

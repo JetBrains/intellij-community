@@ -16,7 +16,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +30,6 @@ import java.nio.charset.CodingErrorAction;
  * @author Bas Leijdekkers
  */
 public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.unicode.escape.display.name");
-  }
 
   @NotNull
   @Override
@@ -99,7 +92,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
         return;

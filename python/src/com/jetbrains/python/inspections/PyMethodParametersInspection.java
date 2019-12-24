@@ -65,13 +65,6 @@ public class PyMethodParametersInspection extends PyInspection {
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.problematic.first.parameter");
-  }
-
-  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WEAK_WARNING;

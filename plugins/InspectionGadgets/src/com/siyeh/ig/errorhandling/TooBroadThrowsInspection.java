@@ -54,12 +54,6 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overly.broad.throws.clause.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final List<SmartTypePointer> typesMasked = (List<SmartTypePointer>)infos[0];
     final PsiType type = typesMasked.get(0).getType();

@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -14,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,7 +58,7 @@ public class VfsTestUtil {
 
   @NotNull
   public static VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
-    return createFileOrDir(root, relativePath, ArrayUtilRt.EMPTY_BYTE_ARRAY, true);
+    return createFileOrDir(root, relativePath, ArrayUtil.EMPTY_BYTE_ARRAY, true);
   }
 
   @NotNull
@@ -73,7 +74,7 @@ public class VfsTestUtil {
           parent = child;
         }
 
-        parent.getChildren();//need this to ensure that fileCreated event is fired
+        parent.getChildren();  // need this to ensure that fileCreated event is fired
 
         String name = PathUtil.getFileName(relativePath);
         VirtualFile file;
@@ -81,13 +82,17 @@ public class VfsTestUtil {
           file = parent.createChildDirectory(VfsTestUtil.class, name);
         }
         else {
+          FileDocumentManager manager = FileDocumentManager.getInstance();
           file = parent.findChild(name);
           if (file == null) {
             file = parent.createChildData(VfsTestUtil.class, name);
           }
+          else {
+            Document document = manager.getCachedDocument(file);
+            if (document != null) manager.saveDocument(document);  // save changes to prevent possible conflicts
+          }
           file.setBinaryContent(data);
-          // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
-          FileDocumentManager.getInstance().reloadFiles(file);
+          manager.reloadFiles(file);  // update the document now, otherwise MemoryDiskConflictResolver will do it later at unexpected moment of time
         }
         return file;
       });

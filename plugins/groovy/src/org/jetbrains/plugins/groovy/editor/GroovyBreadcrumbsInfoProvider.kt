@@ -5,11 +5,11 @@ import com.intellij.lang.Language
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.RefactoringDescriptionLocation.WITH_PARENT
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
 import org.jetbrains.plugins.groovy.GroovyLanguage
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
-import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
@@ -17,13 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
-class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
-
-  private companion object {
-    val ourLanguages: Array<Language> = arrayOf(GroovyLanguage)
-  }
-
-  override fun getLanguages(): Array<Language> = ourLanguages
+class GroovyBreadcrumbsInfoProvider : BreadcrumbsProvider {
+  override fun getLanguages(): Array<Language> = arrayOf(GroovyLanguage)
 
   override fun acceptElement(e: PsiElement): Boolean = when (e) {
     is GrVariableDeclaration -> e.variables.singleOrNull() is GrField

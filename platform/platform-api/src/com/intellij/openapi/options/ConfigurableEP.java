@@ -1,10 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +32,7 @@ import java.util.ResourceBundle;
  */
 @Tag("configurable")
 public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.options.ConfigurableEP");
+  private static final Logger LOG = Logger.getInstance(ConfigurableEP.class);
 
   /**
    * This attribute specifies the setting name visible to users.
@@ -83,14 +82,14 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     String pathToBundle = findPathToBundle();
     if (pathToBundle == null) return null; // a path to bundle is not specified or cannot be found
     ClassLoader loader = myPluginDescriptor == null ? null : myPluginDescriptor.getPluginClassLoader();
-    return AbstractBundle.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
+    return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, loader != null ? loader : getClass().getClassLoader());
   }
 
   @Nullable
   private String findPathToBundle() {
-    if (bundle == null && myPluginDescriptor instanceof IdeaPluginDescriptor) {
-      IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)myPluginDescriptor;
-      return descriptor.getResourceBundleBaseName(); // can be unspecified
+    if (bundle == null && myPluginDescriptor != null) {
+      // can be unspecified
+      return myPluginDescriptor.getResourceBundleBaseName();
     }
     return bundle;
   }

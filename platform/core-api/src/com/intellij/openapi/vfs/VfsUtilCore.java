@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -32,7 +33,7 @@ import java.util.Set;
  * Various utility methods for working with {@link VirtualFile}.
  */
 public class VfsUtilCore {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtilCore");
+  private static final Logger LOG = Logger.getInstance(VfsUtilCore.class);
 
   private static final String MAILTO = "mailto";
 
@@ -240,6 +241,7 @@ public class VfsUtilCore {
   @NotNull
   public static VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String newName) throws IOException {
     VirtualFile newChild = toDir.createChildData(requestor, newName);
+    newChild.setBOM(file.getBOM());
     newChild.setBinaryContent(file.contentsToByteArray(), -1, -1, requestor);
     return newChild;
   }
@@ -284,6 +286,7 @@ public class VfsUtilCore {
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
                                                                                                            VirtualFileVisitor.VisitorException {
+    ProgressManager.checkCanceled();
     boolean pushed = false;
     try {
       final boolean allowVisitFile = visitor.allowVisitFile(file);

@@ -60,7 +60,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
+  private static final Logger LOG = Logger.getInstance(ExtractMethodHandler.class);
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.method.title");
 

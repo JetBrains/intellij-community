@@ -20,10 +20,6 @@
               icon="AllIcons.General.Settings">
       </action>
 
-      <action id="ExternalSystem.ToggleAutoImport"
-              class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
-      </action>
-
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
       </action>
@@ -104,7 +100,6 @@
       <reference ref="ExternalSystem.OpenConfig"/>
       <separator/>
       <reference id="ExternalSystem.RefreshProject"/>
-      <reference id="ExternalSystem.ToggleAutoImport"/>
       <separator/>
       <reference id="ExternalSystem.DetachProject"/>
       <reference id="ExternalSystem.IgnoreProject"/>
@@ -183,6 +178,20 @@
       <reference ref="ExternalSystemView.TaskActivationGroup"/>
       <separator/>
       <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
+    </group>
+
+    <group id="ProjectRefreshActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshActionGroup">
+      <action id="ProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction">
+        <keyboard-shortcut first-keystroke="control shift O" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control shift O" keymap="Eclipse" remove="true"/>
+        <keyboard-shortcut first-keystroke="control shift O" keymap="NetBeans 6.5" remove="true"/>
+        <keyboard-shortcut first-keystroke="control shift O" keymap="Visual Studio" remove="true"/>
+        <keyboard-shortcut first-keystroke="meta shift O" keymap="Mac OS X" replace-all="true"/>
+        <keyboard-shortcut first-keystroke="meta shift O" keymap="Eclipse (Mac OS X)" replace-all="true" remove="true"/>
+        <keyboard-shortcut first-keystroke="meta shift O" keymap="Xcode" replace-all="true" remove="true"/>
+        <keyboard-shortcut first-keystroke="meta shift I" keymap="Mac OS X 10.5+" replace-all="true"/>
+      </action>
+      <action id="HideProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction"/>
     </group>
 
 

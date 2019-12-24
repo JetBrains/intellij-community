@@ -33,7 +33,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
+  private static final Logger LOG = Logger.getInstance(NonClasspathClassFinder.class);
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
   protected final Project myProject;
   private volatile PackageDirectoryCache myCache;
@@ -44,7 +44,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     myProject = project;
     myManager = PsiManager.getInstance(myProject);
     myFileExtensions = ArrayUtil.append(fileExtensions, "class");
-    final MessageBusConnection connection = project.getMessageBus().connect(project);
+    final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {

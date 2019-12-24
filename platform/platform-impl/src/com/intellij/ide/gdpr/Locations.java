@@ -15,7 +15,7 @@ import java.io.File;
  * Date: 06-Dec-17
  */
 public class Locations {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.Locations");
+  private static final Logger LOG = Logger.getInstance(Locations.class);
   private static final File ourDataDir;
 
   static {

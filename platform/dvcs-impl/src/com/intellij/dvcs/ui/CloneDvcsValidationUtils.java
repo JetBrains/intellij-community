@@ -13,6 +13,8 @@ import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.util.regex.Pattern;
 
+import static kotlin.text.StringsKt.removePrefix;
+
 public class CloneDvcsValidationUtils {
   /**
    * The pattern for SSH URL-s in form [user@]host:path
@@ -94,6 +96,8 @@ public class CloneDvcsValidationUtils {
       return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), component);
     }
 
+    repository = sanitizeCloneUrl(repository);
+
     // Is it a proper URL?
     try {
       if (new URI(repository).isAbsolute()) {
@@ -125,5 +129,10 @@ public class CloneDvcsValidationUtils {
     }
 
     return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), component);
+  }
+
+  @NotNull
+  static String sanitizeCloneUrl(@NotNull String urlText) {
+    return removePrefix(removePrefix(urlText.trim(), "git clone"), "hg clone").trim();
   }
 }

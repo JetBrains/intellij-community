@@ -56,13 +56,6 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "object.allocation.in.loop.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     Kind kind = (Kind)infos[0];
     return kind.toString();

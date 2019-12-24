@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class PsiTryStatementImpl extends CompositePsiElement implements PsiTryStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTryStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiTryStatementImpl.class);
 
   private volatile PsiParameter[] myCachedCatchParameters;
 

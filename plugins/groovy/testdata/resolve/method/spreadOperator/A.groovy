@@ -1,2 +1,2 @@
 def m = ["aaa"]
-def e =  m*.toLowerCase()*.<ref>toUpperCase()
+def e =  m*.toLowerCase()*.<caret>toUpperCase()

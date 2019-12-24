@@ -21,7 +21,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.stream.Stream;
 
-class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
+public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
   VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,

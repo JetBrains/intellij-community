@@ -24,6 +24,7 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -83,8 +84,7 @@ import java.util.*;
  * @author mike
  */
 public class CreateFromUsageUtils {
-  private static final Logger LOG = Logger.getInstance(
-    "#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
   private static final int MAX_RAW_GUESSED_MEMBERS_COUNT = 2 * MAX_GUESSED_MEMBERS_COUNT;
 
@@ -362,6 +362,9 @@ public class CreateFromUsageUtils {
       if (targetDirectory == null) return null;
     }
     else {
+      if (!FileModificationService.getInstance().prepareFileForWrite(sourceFile)) {
+        return null;
+      }
       targetDirectory = null;
     }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
@@ -1067,6 +1070,12 @@ public class CreateFromUsageUtils {
       }
 
       return set.toArray(LookupElement.EMPTY_ARRAY);
+    }
+
+    @NotNull
+    @Override
+    public LookupFocusDegree getLookupFocusDegree() {
+      return LookupFocusDegree.UNFOCUSED;
     }
   }
 }

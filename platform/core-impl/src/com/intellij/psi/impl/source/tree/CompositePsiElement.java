@@ -39,7 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CompositePsiElement extends CompositeElement implements PsiElement, NavigationItem {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositePsiElement");
+  private static final Logger LOG = Logger.getInstance(CompositePsiElement.class);
 
   protected static int ourHC;
 

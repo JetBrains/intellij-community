@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInspection.redundantCast.RedundantCastInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
@@ -17,6 +18,10 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
   fun testEnhancedSwitchUnreachable() = doTest()
   fun testSwitchExpressionHasResult() = doTest()
   fun testYieldStatements() = doTest()
+  fun testRedundantCastInSwitchBranch() {
+    myFixture.enableInspections(RedundantCastInspection())
+    doTest()
+  }
 
   private fun doTest() {
     myFixture.configureByFile("${getTestName(false)}.java")

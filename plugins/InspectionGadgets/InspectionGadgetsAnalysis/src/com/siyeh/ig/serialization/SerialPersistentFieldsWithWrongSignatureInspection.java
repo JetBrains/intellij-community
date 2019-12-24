@@ -31,13 +31,6 @@ public class SerialPersistentFieldsWithWrongSignatureInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serialpersistentfields.with.wrong.signature.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "serialpersistentfields.with.wrong.signature.problem.descriptor");

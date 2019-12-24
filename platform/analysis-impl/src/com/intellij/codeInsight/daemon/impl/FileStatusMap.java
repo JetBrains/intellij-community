@@ -24,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
+  private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING =
     "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
@@ -155,11 +155,9 @@ public final class FileStatusMap implements Disposable {
   }
 
   private void assertAllowModifications() {
-    try {
-      assert myAllowDirt : CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING;
-    }
-    finally {
+    if (!myAllowDirt) {
       myAllowDirt = true; //give next test a chance
+      throw new AssertionError(CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING);
     }
   }
 
@@ -181,9 +179,10 @@ public final class FileStatusMap implements Disposable {
    */
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
+
     synchronized(myDocumentToStatusMap){
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return file == null ? null : file.getTextRange();
@@ -245,10 +244,10 @@ public final class FileStatusMap implements Disposable {
   }
 
   boolean allDirtyScopesAreNull(@NotNull Document document) {
-    synchronized (myDocumentToStatusMap) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
 
+    synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();
     }
@@ -337,8 +336,11 @@ public final class FileStatusMap implements Disposable {
   }
   public static void log(@NonNls @NotNull Object... info) {
     if (LOG.isDebugEnabled()) {
-      String s = StringUtil.repeatSymbol(' ', getThreadNum() * 4) + Arrays.asList(info) + "\n";
-      LOG.debug(s);
+      StringJoiner joiner = new StringJoiner(", ", StringUtil.repeatSymbol(' ', getThreadNum() * 4) + "[", "]\n");
+      for (Object o : info) {
+        joiner.add(String.valueOf(o));
+      }
+      LOG.debug(joiner.toString());
     }
   }
 }

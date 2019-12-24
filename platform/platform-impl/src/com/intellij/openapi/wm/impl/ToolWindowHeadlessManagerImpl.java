@@ -28,11 +28,10 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+public final class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
 
@@ -46,85 +45,20 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
+  public void notifyByBalloon(@NotNull String toolWindowId, @NotNull MessageType type, @NotNull String htmlBody) {
   }
 
-  private ToolWindow doRegisterToolWindow(final String id, @Nullable Disposable parentDisposable) {
-    MockToolWindow tw = new MockToolWindow(myProject);
-    myToolWindows.put(id, tw);
-    if (parentDisposable != null)  {
-      Disposer.register(parentDisposable, () -> unregisterToolWindow(id));
-    }
-    return tw;
+  @NotNull
+  public ToolWindow doRegisterToolWindow(@NotNull String id) {
+    MockToolWindow toolWindow = new MockToolWindow(myProject);
+    myToolWindows.put(id, toolWindow);
+    return toolWindow;
   }
 
   @NotNull
   @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode,
-                                       boolean canCloseContents) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       @NotNull JComponent component,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id,
-                                       final boolean canCloseContent,
-                                       @NotNull final ToolWindowAnchor anchor,
-                                       final boolean secondary) {
-    return doRegisterToolWindow(id, null);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                       @NotNull final Disposable parentDisposable, final boolean dumbAware) {
-    return doRegisterToolWindow(id, parentDisposable);
-  }
-
-  @NotNull
-  @Override
-  public ToolWindow registerToolWindow(@NotNull String id,
-                                       boolean canCloseContent,
-                                       @NotNull ToolWindowAnchor anchor,
-                                       @NotNull Disposable parentDisposable,
-                                       boolean canWorkInDumbMode,
-                                       boolean secondary) {
-    return doRegisterToolWindow(id, parentDisposable);
+  public ToolWindow registerToolWindow(@NotNull RegisterToolWindowTask task) {
+    return doRegisterToolWindow(task.getId());
   }
 
   @Override
@@ -179,7 +113,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public Balloon getToolWindowBalloon(String id) {
+  public Balloon getToolWindowBalloon(@NotNull String id) {
     return null;
   }
 
@@ -189,7 +123,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public void setMaximized(@NotNull ToolWindow wnd, boolean maximized) {
+  public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
   }
 
   @Override
@@ -255,6 +189,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     public MockToolWindow(@NotNull Project project) {
       Disposer.register(project, myContentManager);
+    }
+
+    @NotNull
+    @Override
+    public Disposable getDisposable() {
+      return myContentManager;
+    }
+
+    @Override
+    public void remove() {
     }
 
     @Override
@@ -332,11 +276,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public boolean isToHideOnEmptyContent() {
-      return false;
-    }
-
-    @Override
     public ToolWindowType getType() {
       return ToolWindowType.SLIDING;
     }
@@ -345,6 +284,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setType(@NotNull ToolWindowType type, @Nullable Runnable runnable) {
     }
 
+    @Nullable
     @Override
     public Icon getIcon() {
       return null;
@@ -400,6 +340,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void installWatcher(ContentManager contentManager) {
     }
 
+    @NotNull
     @Override
     public JComponent getComponent() {
       return new JLabel();
@@ -408,6 +349,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public ContentManager getContentManager() {
       return myContentManager;
+    }
+
+    @Override
+    public void addContentManagerListener(@NotNull ContentManagerListener listener) {
     }
 
     @Override
@@ -425,11 +370,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void showContentPopup(InputEvent inputEvent) {
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
+    public void showContentPopup(@NotNull InputEvent inputEvent) {
     }
 
     @Override
@@ -460,15 +401,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void setTabActions(AnAction... actions) {
-    }
-
-    @Override
-    public void setUseLastFocusedOnActivation(boolean focus) {
-    }
-
-    @Override
-    public boolean isUseLastFocusedOnActivation() {
-      return false;
     }
   }
 

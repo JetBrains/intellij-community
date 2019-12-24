@@ -67,4 +67,27 @@ public class WidenPlusInLoop {
       System.out.println(i);
     }
   }
+
+  // IDEA-229598
+  private static int[] test(int countSections) {
+    int[] sections = new int[countSections];
+
+    if (countSections == 1) {
+      sections[0] = 0;
+    } else if (countSections > 1) {
+      if (countSections % 2 == 0) {
+        int internalId = -1 * (countSections - 1);
+
+        for (int i = 0; i < countSections; i++) {
+          if (internalId == 1) {
+            internalId++;
+          }
+          sections[i] = Math.abs(internalId);
+          internalId += 2;
+        }
+      }
+    }
+
+    return sections;
+  }
 }

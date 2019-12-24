@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveRedundantPolyadicOperandFix;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,12 +40,6 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class PointlessNullCheckInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("pointless.nullcheck.display.name");
-  }
 
   @NotNull
   @Override

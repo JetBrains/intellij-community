@@ -94,7 +94,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   private final PersistentHashMap<String, Long> myRecentFilesTimestampsMap;
 
-  private RecentlyChangedFilesState myRecentlyChangedFiles = new RecentlyChangedFilesState();
+  private final List<String> myRecentlyChangedFiles = new ArrayList<>();
 
   public IdeDocumentHistoryImpl(@NotNull Project project) {
     myProject = project;
@@ -171,13 +171,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     File file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat").toFile();
     PersistentHashMap<String, Long> map;
     try {
-      map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+      map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
     }
     catch (IOException e) {
       LOG.info("Cannot create PersistentHashMap in "+file, e);
       PersistentHashMap.deleteFilesStartingWith(file);
       try {
-        map = new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
+        map = new PersistentHashMap<>(file.toPath(), EnumeratorStringDescriptor.INSTANCE, EnumeratorLongDescriptor.INSTANCE);
       }
       catch (IOException e1) {
         LOG.error("Cannot create PersistentHashMap in " + file + " even after deleting old files", e1);
@@ -230,30 +230,23 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
     @SuppressWarnings("WeakerAccess") public List<String> CHANGED_PATHS = new ArrayList<>();
-
-    public void register(VirtualFile file) {
-      final String path = file.getPath();
-      CHANGED_PATHS.remove(path);
-      CHANGED_PATHS.add(path);
-      trimToSize();
-    }
-
-    private void trimToSize() {
-      final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
-      while (CHANGED_PATHS.size() > limit) {
-        CHANGED_PATHS.remove(0);
-      }
-    }
   }
 
   @Override
   public RecentlyChangedFilesState getState() {
-    return myRecentlyChangedFiles;
+    synchronized (myRecentlyChangedFiles) {
+      RecentlyChangedFilesState state = new RecentlyChangedFilesState();
+      state.CHANGED_PATHS.addAll(myRecentlyChangedFiles);
+      return state;
+    }
   }
 
   @Override
   public void loadState(@NotNull RecentlyChangedFilesState state) {
-    myRecentlyChangedFiles = state;
+    synchronized (myRecentlyChangedFiles) {
+      myRecentlyChangedFiles.clear();
+      myRecentlyChangedFiles.addAll(state.CHANGED_PATHS);
+    }
   }
 
   public final void onSelectionChanged() {
@@ -350,7 +343,15 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       return;
     }
 
-    myRecentlyChangedFiles.register(placeInfo.getFile());
+    int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
+    synchronized (myRecentlyChangedFiles) {
+      String path = placeInfo.getFile().getPath();
+      myRecentlyChangedFiles.remove(path);
+      myRecentlyChangedFiles.add(path);
+      while (myRecentlyChangedFiles.size() > limit) {
+        myRecentlyChangedFiles.remove(0);
+      }
+    }
 
     putLastOrMerge(placeInfo, CHANGE_QUEUE_LIMIT, true);
     myCurrentIndex = myChangePlaces.size();
@@ -360,8 +361,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   public VirtualFile[] getChangedFiles() {
     List<VirtualFile> files = new ArrayList<>();
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final List<String> paths = myRecentlyChangedFiles.CHANGED_PATHS;
+    List<String> paths;
+    synchronized (myRecentlyChangedFiles) {
+      paths = new ArrayList<>(myRecentlyChangedFiles);
+    }
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (String path : paths) {
       final VirtualFile file = lfs.findFileByPath(path);
       if (file != null) {
@@ -378,7 +382,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   boolean isRecentlyChanged(@NotNull VirtualFile file) {
-    return myRecentlyChangedFiles.CHANGED_PATHS.contains(file.getPath());
+    synchronized (myRecentlyChangedFiles) {
+      return myRecentlyChangedFiles.contains(file.getPath());
+    }
   }
 
   @Override
@@ -548,7 +554,11 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public void gotoPlaceInfo(@NotNull PlaceInfo info) {
-    final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
+    gotoPlaceInfo(info, ToolWindowManager.getInstance(myProject).isEditorComponentActive());
+  }
+
+  @Override
+  public void gotoPlaceInfo(@NotNull PlaceInfo info, boolean wasActive) {
     EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = getFileEditorManager();
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()

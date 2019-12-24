@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,10 +119,8 @@ public class IfConditionalModel extends ConditionalModel {
       if (operand != null) {
         return operand;
       }
-      elseRhsText = "-(" + elseRhs.getText() + ")";
-    } else {
-      elseRhsText = "-" + elseRhs.getText();
     }
+    elseRhsText = "-" + ParenthesesUtils.getText(elseRhs, ParenthesesUtils.ADDITIVE_PRECEDENCE);
     return factory.createExpressionFromText(elseRhsText, elseRhs);
   }
 

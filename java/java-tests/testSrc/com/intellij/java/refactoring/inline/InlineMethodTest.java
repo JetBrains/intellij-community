@@ -542,6 +542,18 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testEnumStaticMethod() {
     doTest();
   }
+  
+  public void testTypeParameterMethodRefArgument() {
+    doTest();
+  }
+  
+  public void testIgnoreReturnValue() {
+    doTest();
+  }
+  
+  public void testSingleReturnComplexQualifier() {
+    doTestAssertBadReturn();
+  }
 
   @Override
   protected Sdk getProjectJDK() {

@@ -33,7 +33,6 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -709,7 +708,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @NotNull
     @Override
     protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
-      return new ArrayList<>(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
+      return new ArrayList<>(filter.getValuesAsText());
     }
   }
 

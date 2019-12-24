@@ -39,7 +39,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.call.CallHierarchyBrowser");
+  private static final Logger LOG = Logger.getInstance(CallHierarchyBrowser.class);
 
   public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMember method) {
     super(project, method);
@@ -49,7 +49,7 @@ public class CallHierarchyBrowser extends CallHierarchyBrowserBase {
    * @deprecated use CallHierarchyBrowser#CallHierarchyBrowser(Project, PsiMember)
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public CallHierarchyBrowser(@NotNull Project project, @NotNull PsiMethod method) {
     super(project, method);
   }

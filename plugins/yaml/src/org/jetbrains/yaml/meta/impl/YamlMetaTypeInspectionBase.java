@@ -35,7 +35,7 @@ public abstract class YamlMetaTypeInspectionBase extends LocalInspectionTool {
 
   protected static abstract class SimpleYamlPsiVisitor extends PsiElementVisitor {
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       ProgressIndicatorProvider.checkCanceled();
 
       if (element instanceof YAMLKeyValue) {

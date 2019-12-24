@@ -36,7 +36,6 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ import java.util.List;
 
 public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
   public static final Key<HtmlUnknownElementInspection> TAG_KEY = Key.create(TAG_SHORT_NAME);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection");
+  private static final Logger LOG = Logger.getInstance(HtmlUnknownTagInspectionBase.class);
 
   public HtmlUnknownTagInspectionBase(@NotNull String defaultValues) {
     super(defaultValues);
@@ -58,13 +57,6 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
 
   private static boolean isAbstractDescriptor(XmlElementDescriptor descriptor) {
     return descriptor == null || descriptor instanceof AnyXmlElementDescriptor;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.tag");
   }
 
   @Override

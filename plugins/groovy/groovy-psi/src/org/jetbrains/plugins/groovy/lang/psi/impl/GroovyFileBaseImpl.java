@@ -200,10 +200,10 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     assert isValid();
     Instruction[] result = SoftReference.dereference(myControlFlow);
     if (result == null) {
-      result = new ControlFlowBuilder(getProject()).buildControlFlow(this);
+      result = new ControlFlowBuilder().buildControlFlow(this);
       myControlFlow = new SoftReference<>(result);
     }
-    return ControlFlowBuilder.assertValidPsi(result);
+    return result;
   }
 
   @Override

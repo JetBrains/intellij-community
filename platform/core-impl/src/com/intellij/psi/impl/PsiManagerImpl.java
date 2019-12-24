@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class PsiManagerImpl extends PsiManagerEx {
+public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(PsiManagerImpl.class);
 
   private final Project myProject;
@@ -45,8 +45,6 @@ public final class PsiManagerImpl extends PsiManagerEx {
   private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myTreeChangeEventIsFiring;
-
-  private boolean myIsDisposed;
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
 
@@ -66,13 +64,16 @@ public final class PsiManagerImpl extends PsiManagerEx {
     myFileManager = new FileManagerImpl(this, myFileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)myModificationTracker);
+  }
 
-    Disposer.register(project, () -> myIsDisposed = true);
+  @Override
+  public void dispose() {
+    myFileManager.dispose();
   }
 
   @Override
   public boolean isDisposed() {
-    return myIsDisposed;
+    return myProject.isDisposed();
   }
 
   @Override
@@ -461,8 +462,8 @@ public final class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void finishBatchFilesProcessingMode() {
-    myBatchFilesProcessingModeCount.decrementAndGet();
-    LOG.assertTrue(myBatchFilesProcessingModeCount.get() >= 0);
+    int after = myBatchFilesProcessingModeCount.decrementAndGet();
+    LOG.assertTrue(after >= 0);
   }
 
   @Override

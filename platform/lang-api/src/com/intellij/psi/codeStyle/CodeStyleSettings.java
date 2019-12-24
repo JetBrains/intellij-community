@@ -1084,18 +1084,21 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
-    boolean exist = false;
-    for (final FileType existing : myAdditionalIndentOptions.keySet()) {
-      if (Comparing.strEqual(existing.getDefaultExtension(), fileType.getDefaultExtension())) {
-        exist = true;
-        break;
-      }
-    }
-
-    if (!exist) {
+  void registerAdditionalIndentOptions(FileType fileType, IndentOptions options) {
+    FileType registered = findRegisteredFileType(fileType);
+    if (registered == null || registered instanceof TempFileType) {
       myAdditionalIndentOptions.put(fileType, options);
     }
+  }
+
+  @Nullable
+  private FileType findRegisteredFileType(@NotNull FileType provided) {
+    for (final FileType existing : myAdditionalIndentOptions.keySet()) {
+      if (Comparing.strEqual(existing.getDefaultExtension(), provided.getDefaultExtension())) {
+        return existing;
+      }
+    }
+    return null;
   }
 
   private void loadAdditionalIndentOptions() {
@@ -1106,6 +1109,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
           registerAdditionalIndentOptions(provider.getFileType(), getFileTypeIndentOptions(provider));
         }
       }
+    }
+  }
+
+  void unregisterAdditionalIndentOptions(@NotNull FileType fileType) {
+    FileType registered = findRegisteredFileType(fileType);
+    if (registered != null && !(registered instanceof TempFileType)) {
+      FileType tempFileType = new TempFileType(fileType.getDefaultExtension());
+      IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
+      myAdditionalIndentOptions.remove(fileType);
+      myAdditionalIndentOptions.put(tempFileType, indentOptions);
     }
   }
 
@@ -1400,4 +1413,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return myModificationTracker;
   }
 
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+    myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
+  }
 }

@@ -1,14 +1,286 @@
 <root>
+  <item name='java.lang.reflect.AnnotatedElement T getAnnotation(java.lang.Class&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement T getAnnotation(java.lang.Class&lt;T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement boolean isAnnotationPresent(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.AnnotatedElement boolean isAnnotationPresent(java.lang.Class&lt;? extends java.lang.annotation.Annotation&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.lang.reflect.Constructor T newInstance(java.lang.Object...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor boolean isSynthetic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor boolean isVarArgs()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.Class&lt;?&gt;[] getExceptionTypes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.Class&lt;?&gt;[] getParameterTypes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.Class&lt;T&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.String toGenericString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.annotation.Annotation[] getDeclaredAnnotations()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.annotation.Annotation[][] getParameterAnnotations()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.reflect.AnnotatedType getAnnotatedReceiverType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.reflect.AnnotatedType getAnnotatedReturnType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.lang.reflect.Constructor java.lang.reflect.TypeVariable&lt;java.lang.reflect.Constructor&lt;T&gt;&gt;[] getTypeParameters()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.reflect.Type[] getGenericExceptionTypes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Constructor java.lang.reflect.Type[] getGenericParameterTypes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Executable java.lang.Class&lt;?&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field T[] getAnnotationsByType(java.lang.Class&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field boolean getBoolean(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field byte getByte(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field char getChar(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field double getDouble(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field float getFloat(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field int getInt(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.Class&lt;?&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.Class&lt;?&gt; getType()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.Object get(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.String toGenericString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.annotation.Annotation[] getDeclaredAnnotations()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.reflect.AnnotatedType getAnnotatedType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field java.lang.reflect.Type getGenericType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Field long getLong(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Field short getShort(java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.reflect.Member int getModifiers()'>
     <annotation name='org.intellij.lang.annotations.MagicConstant'>
       <val name="flagsFromClass" val="java.lang.reflect.Modifier.class"/>
     </annotation>
   </item>
-  <item
-      name='java.lang.reflect.Proxy java.lang.Object newProxyInstance(java.lang.ClassLoader, java.lang.Class&lt;?&gt;[], java.lang.reflect.InvocationHandler)'>
+  <item name='java.lang.reflect.Method boolean isDefault()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method boolean isSynthetic()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method boolean isVarArgs()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.Class&lt;?&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.Class&lt;?&gt; getReturnType()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.Class&lt;?&gt;[] getExceptionTypes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.Class&lt;?&gt;[] getParameterTypes()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.Object getDefaultValue()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.String toGenericString()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.annotation.Annotation[] getDeclaredAnnotations()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.annotation.Annotation[][] getParameterAnnotations()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.reflect.AnnotatedType getAnnotatedReturnType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.reflect.Type getGenericReturnType()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.reflect.TypeVariable&lt;java.lang.reflect.Method&gt;[] getTypeParameters()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.reflect.Type[] getGenericExceptionTypes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Method java.lang.reflect.Type[] getGenericParameterTypes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.reflect.Proxy java.lang.Object newProxyInstance(java.lang.ClassLoader, java.lang.Class&lt;?&gt;[], java.lang.reflect.InvocationHandler)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>

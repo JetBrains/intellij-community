@@ -82,9 +82,7 @@ class WinExeInstallerBuilder {
     }
 
     ant.copy(todir: "$box/nsiconf") {
-      fileset(dir: "$communityHome/build/conf/nsis") {
-        exclude(name: "version*")
-      }
+      fileset(dir: "$communityHome/build/conf/nsis")
     }
 
     generateInstallationConfigFileForSilentMode()
@@ -206,14 +204,14 @@ class WinExeInstallerBuilder {
 """
 
     def versionString = buildContext.applicationInfo.isEAP ? "\${VER_BUILD}" : "\${MUI_VERSION_MAJOR}.\${MUI_VERSION_MINOR}"
+    def installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(buildContext.applicationInfo, buildContext.buildNumber)
     new File(box, "nsiconf/version.nsi").text = """
 !define MUI_VERSION_MAJOR "${buildContext.applicationInfo.majorVersion}"
 !define MUI_VERSION_MINOR "${buildContext.applicationInfo.minorVersion}"
 
 !define VER_BUILD ${buildContext.buildNumber}
-
+!define INSTALL_DIR_AND_SHORTCUT_NAME "${installDirAndShortcutName}"
 !define PRODUCT_WITH_VER "\${MUI_PRODUCT} $versionString"
-!define PRODUCT_FULL_NAME_WITH_VER "\${PRODUCT_FULL_NAME} $versionString"
 !define PRODUCT_PATHS_SELECTOR "${buildContext.systemSelector}"
 !define PRODUCT_SETTINGS_DIR ".\${PRODUCT_PATHS_SELECTOR}"
 """

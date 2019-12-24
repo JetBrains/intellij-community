@@ -8,14 +8,14 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.jetbrains.changeReminder.predict.PredictionData
 import com.jetbrains.changeReminder.predict.PredictionService
 
-class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
-                                private val predictionService: PredictionService
-) : ChangesBrowserNode<Collection<VirtualFile>>(files) {
+internal class ChangeReminderBrowserNode(private val predictionData: PredictionData,
+                                         private val predictionService: PredictionService
+) : ChangesBrowserNode<PredictionData>(predictionData) {
   companion object {
     private const val NODE_TITLE = "People who change the files in the active changelist also change"
     private const val LOADING_ATTRIBUTE = "Git Log is loading..."
@@ -40,7 +40,7 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
     renderer.icon = AllIcons.Nodes.Related
     appendCount(renderer)
     val project = predictionService.project
-    if (predictionService.isReady) {
+    if (predictionService.isReadyToDisplay) {
       if (predictionService.inProgress) {
         renderer.appendCustomState(CALCULATING_ATTRIBUTE)
       }
@@ -50,8 +50,8 @@ class ChangeReminderBrowserNode(private val files: Collection<VirtualFile>,
     }
     val changeListManager = ChangeListManager.getInstance(project)
     val defaultChangeList = changeListManager.defaultChangeList
-    if (files.isNotEmpty()) {
-      renderer.toolTipText = getPredictionToolTipText(files.size, defaultChangeList)
+    if (predictionData.predictionToDisplay.isNotEmpty()) {
+      renderer.toolTipText = getPredictionToolTipText(predictionData.predictionToDisplay.size, defaultChangeList)
     }
     else {
       renderer.toolTipText = getHelpToolTipText()

@@ -58,21 +58,27 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
+    boolean problematicInterfaceStaticMethod = false;
     if (isAccepted(method) && !(isInterfaceStaticMethodAccessibleThroughInheritance(method) && ImportsUtil.hasStaticImportOn(myPlace, method, true))) {
-      if (!staticProblem && myAccessClass != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!staticProblem && method.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && 
             containingClass.isInterface() &&
             !(myAccessClass instanceof PsiTypeParameter) &&
             !containingClass.getManager().areElementsEquivalent(myAccessClass, containingClass)) {
-          staticProblem = true;
+          if (myAccessClass != null) {
+            staticProblem = true;
+          }
+          else {
+            problematicInterfaceStaticMethod = true;
+          }
         }
       }
       add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, false));
       if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
         add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
       }
-      myHasAccessibleStaticCorrectCandidate |= isAccessible;// && !staticProblem;
+      myHasAccessibleStaticCorrectCandidate |= isAccessible && !problematicInterfaceStaticMethod;// && !staticProblem;
     }
   }
 

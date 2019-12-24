@@ -221,7 +221,7 @@ public class GithubRebaseAction extends AbstractAuthenticatingGithubUrlGroupingA
     private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator, String onto) {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         List<VirtualFile> rootsToSave = Collections.singletonList(myRepository.getRoot());
-        GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).updateChangesPolicy();
+        GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();
         GitPreservingProcess process = new GitPreservingProcess(myProject, myGit, rootsToSave, "Rebasing", onto,
                                                                 saveMethod, indicator,
                                                                 () -> doRebaseCurrentBranch(indicator, onto));

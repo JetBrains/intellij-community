@@ -32,6 +32,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
+  private static final Logger LOG = Logger.getInstance(PsiDirectoryImpl.class);
 
   private final PsiManagerImpl myManager;
   private final VirtualFile myFile;
@@ -446,25 +447,19 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
-    if (element instanceof PsiDirectory) {
-      String name = ((PsiDirectory)element).getName();
-      checkName(name, getSubdirectories(), "dir.already.exists.error");
-    }
-    else if (element instanceof PsiFile) {
-      String name = ((PsiFile)element).getName();
-      checkName(name, getFiles(), "file.already.exists.error");
+    if (element instanceof PsiDirectory || element instanceof PsiFile) {
+      String name = ((PsiFileSystemItem)element).getName();
+      boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
+      VirtualFile existing = ContainerUtil.find(getVirtualFile().getChildren(),
+                                                item -> Comparing.strEqual(item.getName(), name, caseSensitive));
+      if (existing != null) {
+        throw new IncorrectOperationException(
+          VfsBundle.message(existing.isDirectory() ? "dir.already.exists.error" : "file.already.exists.error",
+                            existing.getPresentableUrl()));
+      }
     }
     else {
       throw new IncorrectOperationException(element.getClass().getName());
-    }
-  }
-
-  private void checkName(String name, PsiFileSystemItem[] items, String key) {
-    boolean caseSensitive = getVirtualFile().getFileSystem().isCaseSensitive();
-    for (PsiFileSystemItem item : items) {
-      if (Comparing.strEqual(item.getName(), name, caseSensitive)) {
-        throw new IncorrectOperationException(VfsBundle.message(key, item.getVirtualFile().getPresentableUrl()));
-      }
     }
   }
 

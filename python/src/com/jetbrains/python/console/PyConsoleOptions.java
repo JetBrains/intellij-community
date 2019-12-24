@@ -90,7 +90,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   public static class State {
     public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
 
-    public boolean myShowDebugConsoleByDefault = false;
+    public boolean myShowDebugConsoleByDefault = true;
     public boolean myShowVariablesByDefault = true;
     public boolean myIpythonEnabled = true;
     public boolean myUseExistingConsole = false;

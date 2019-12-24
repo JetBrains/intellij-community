@@ -107,12 +107,6 @@ public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspec
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return DISPLAY_NAME;
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;

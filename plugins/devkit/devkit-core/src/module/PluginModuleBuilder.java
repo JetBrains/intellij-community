@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -108,9 +107,8 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
     final BorderLayoutPanel panel = JBUI.Panels.simplePanel(0, 4);
     final HyperlinkLabel linkLabel = new HyperlinkLabel();
-    linkLabel.setIcon(AllIcons.General.BalloonWarning);
-    linkLabel.setHtmlText("We recommend using Gradle when creating new plugin projects. " +
-                          "See <a>Getting Started</a> in SDK Docs.");
+    linkLabel.setHtmlText("This project type is recommended for simple plugins, such as a custom UI theme. " +
+                          "For more complex plugins, a Gradle-based project is <a>recommended</a>.");
     linkLabel.setHyperlinkTarget("http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started.html");
     panel.addToCenter(linkLabel);
 

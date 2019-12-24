@@ -615,6 +615,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  @Nullable
+  public byte[] getContentHashIfStored(@NotNull VirtualFile file) {
+    return FSRecords.getContentHash(getFileId(file));
+  }
+
   // returns last recorded length or -1 if must reload from delegate
   private static long getLengthIfUpToDate(@NotNull VirtualFile file) {
     int fileId = getFileId(file);
@@ -1364,7 +1369,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), childData.first, isEmptyDirectory);
       if (isEmptyDirectory) {
-        // when creating empty directory we need to make sure every file crested inside will fire "file created" event
+        // when creating empty directory we need to make sure every file created inside will fire "file created" event
         // in order to virtual file pointer manager get those events to update its pointers properly
         // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
         setChildrenCached(childId);
@@ -1557,5 +1562,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public boolean mayHaveChildren(int id) {
     return FSRecords.mayHaveChildren(id);
+  }
+
+  @TestOnly
+  ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
+    return myIdToDirCache;
   }
 }

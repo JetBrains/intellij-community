@@ -24,12 +24,13 @@ import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public class UnrollLoopAction extends PsiElementBaseIntentionAction {
-  private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
-                                                            staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
-  private static final CallMatcher SINGLETON_CONSTRUCTOR =
-    anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
-          staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
-
+  private static class Holder {
+    private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
+                                                              staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
+    private static final CallMatcher SINGLETON_CONSTRUCTOR =
+      anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
+            staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
+  }
   /**
    * Do not show the intention if approximate size of generated code exceeds given value to prevent
    * accidental code blow up or out-of-memory error
@@ -93,10 +94,10 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       }
       if (expression instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-        if (SINGLETON_CONSTRUCTOR.test(call)) {
+        if (Holder.SINGLETON_CONSTRUCTOR.test(call)) {
           return Arrays.asList(call.getArgumentList().getExpressions());
         }
-        if (LIST_CONSTRUCTOR.test(call)) {
+        if (Holder.LIST_CONSTRUCTOR.test(call)) {
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if (args.length > 1 || MethodCallUtils.isVarArgCall(call)) {
             return Arrays.asList(args);

@@ -7,6 +7,8 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.messages.MessageBusOwner
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -48,4 +50,14 @@ fun <T : Any> ComponentManager.registerExtension(name: BaseExtensionPointName<*>
 @TestOnly
 fun ComponentManager.getServiceImplementationClassNames(prefix: String): List<String> {
   return (this as PlatformComponentManagerImpl).getServiceImplementationClassNames(prefix)
+}
+
+fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
+  return object : MessageBusOwner {
+    override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
+
+    override fun isDisposed() = false
+
+    override fun toString() = owner
+  }
 }

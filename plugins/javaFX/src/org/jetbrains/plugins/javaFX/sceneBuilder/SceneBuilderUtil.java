@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,8 +18,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class SceneBuilderUtil {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.javaFX.sceneBuilder.SceneBuilderUtil");
-  private static final URLClassLoader ourLoader = createClassLoader();
+  private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
+
+  static final String SCENE_BUILDER_VERSION = "11.0.2";
+  static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
+
+  private static URLClassLoader ourLoader = createClassLoader();
 
   private static boolean isJava8() {
     return JavaVersion.current().feature == 8;
@@ -36,6 +41,10 @@ class SceneBuilderUtil {
     return new URLClassLoader(getLibUrls(), SceneBuilderUtil.class.getClassLoader());
   }
 
+  public static void updateLoader() {
+    ourLoader = createClassLoader();
+  }
+
   private static URL[] getLibUrls() {
     try {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
@@ -50,11 +59,7 @@ class SceneBuilderUtil {
         }
       }
       else {
-        if (isDevMode) {
-          throw new IllegalStateException(
-            "Development mode is not supported for Scene Builder in JDK 11, please use full distribution or JDK 8");
-        }
-        sceneBuilder = getJarPath("rt/java11/scenebuilderkit-11.0.2.jar", javaFxJar);
+        sceneBuilder = getSceneBuilder11Path();
       }
       final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "rt/sceneBuilderBridge.jar", javaFxJar);
       return new URL[]{sceneBuilder.toUri().toURL(), sceneBuilderImpl.toUri().toURL()};
@@ -63,6 +68,10 @@ class SceneBuilderUtil {
       LOG.warn(e);
     }
     return new URL[]{};
+  }
+
+  static Path getSceneBuilder11Path() {
+    return Paths.get(PathManager.getConfigPath(), "plugins", "javaFX", "rt", SCENE_BUILDER_VERSION).resolve(SCENE_BUILDER_KIT_FULL_NAME);
   }
 
   private static Path getJarPath(@NotNull String relativePath, @NotNull Path javafxRuntimePath) {

@@ -1,23 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
+import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
+import com.intellij.application.options.codeStyle.properties.IntegerAccessor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
@@ -27,6 +30,27 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Rustam Vishnyakov
  */
 public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
+  @NotNull
+  @Override
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
+                                                  @NotNull CodeStyleSettings modelSettings) {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, "Groovy") {
+      @Override
+      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+        return new GroovyCodeStyleMainPanel(getCurrentSettings(), settings) {};
+      }
+
+      @Override
+      public String getHelpTopic() {
+        return "reference.settingsdialog.codestyle.groovy";
+      }
+    };
+  }
+
+  @Override
+  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+    return new GroovyCodeStyleSettings(settings);
+  }
 
   @NotNull
   @Override
@@ -148,6 +172,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "IMPORT_ANNOTATION_WRAP", "Import annotations", null,
                                 CodeStyleSettingsCustomizable.OptionAnchor.AFTER, "VARIABLE_ANNOTATION_WRAP",
                                 CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+
+      consumer.renameStandardOption("KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE", "Simple lambdas/closures in one line");
+
       return;
     }
     if (settingsType == SPACING_SETTINGS) {
@@ -384,5 +411,24 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     public String toString() {
       return description;
     }
+  }
+
+  @Nullable
+  @Override
+  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject,
+                                            @NotNull Field field) {
+    if (codeStyleObject instanceof GroovyCodeStyleSettings) {
+      if (field.getName().endsWith("_ORDER_WEIGHT")) {
+        // Ignore all ORDER_WEIGHT_FIELDS for now
+        // TODO: Needs a way to translate several fields to a set of values (single property)
+        return new IntegerAccessor(codeStyleObject, field) {
+          @Override
+          public boolean isIgnorable() {
+            return true;
+          }
+        };
+      }
+    }
+    return super.getAccessor(codeStyleObject, field);
   }
 }

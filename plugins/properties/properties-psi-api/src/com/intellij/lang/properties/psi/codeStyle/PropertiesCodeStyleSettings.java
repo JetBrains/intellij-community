@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.psi.codeStyle;
 
+import com.intellij.configurationStore.Property;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -40,6 +41,8 @@ public class PropertiesCodeStyleSettings extends CustomCodeStyleSettings {
 
   public boolean SPACES_AROUND_KEY_VALUE_DELIMITER;
   public boolean KEEP_BLANK_LINES;
+
+  @Property(externalName = "key_value_delimiter")
   public int KEY_VALUE_DELIMITER_CODE;
 
   public char getDelimiter() {

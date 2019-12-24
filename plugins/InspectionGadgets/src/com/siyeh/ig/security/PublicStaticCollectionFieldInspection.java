@@ -63,12 +63,6 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("public.static.collection.field.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("public.static.collection.field.problem.descriptor");
   }

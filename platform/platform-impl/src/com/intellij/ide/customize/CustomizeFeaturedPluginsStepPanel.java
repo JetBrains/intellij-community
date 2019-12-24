@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -37,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
+public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
   private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "CustomizeFeaturedPluginsStepPanel Pool", 4);
@@ -99,7 +100,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       List<IdeaPluginDescriptor> dependentDescriptors = new ArrayList<>(dependentPluginIds.size());
       boolean failedToFindDependencies = false;
       for (PluginId id : dependentPluginIds) {
-        if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id.getIdString()) != null) {
+        if (PluginManagerCore.isModuleDependency(id) || myPluginGroups.findPlugin(id) != null) {
           continue;
         }
         IdeaPluginDescriptor dependentDescriptor = pluginsFromRepository.get(id.getIdString());
@@ -184,6 +185,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       installButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
+          CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.FeaturedPluginInstalled, descriptor);
           wrapperLayout.show(buttonWrapper, "progress");
           ourService.execute(new Runnable() {
             @Override

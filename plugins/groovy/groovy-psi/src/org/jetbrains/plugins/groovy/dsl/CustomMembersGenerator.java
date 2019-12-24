@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  * @author peter
  */
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator");
+  private static final Logger LOG = Logger.getInstance(CustomMembersGenerator.class);
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final String THROWS = "throws";
   private FList<Map> myDeclarations = FList.emptyList();

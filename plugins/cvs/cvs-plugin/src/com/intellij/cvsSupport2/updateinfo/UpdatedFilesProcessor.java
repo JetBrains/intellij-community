@@ -33,7 +33,7 @@ import org.netbeans.lib.cvsclient.admin.Entry;
 import java.io.File;
 
 public class UpdatedFilesProcessor  extends CvsMessagesAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor");
+  private static final Logger LOG = Logger.getInstance(UpdatedFilesProcessor.class);
 
   private final UpdatedFiles myUpdatedFiles;
 

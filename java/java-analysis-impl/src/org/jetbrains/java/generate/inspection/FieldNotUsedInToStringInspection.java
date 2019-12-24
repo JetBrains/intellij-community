@@ -37,12 +37,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return "Field not used in 'toString()' method";
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "FieldNotUsedInToString";
   }

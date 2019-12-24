@@ -57,7 +57,7 @@ import java.util.Collections;
  * @author nik
  */
 public class AppEngineUploader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.actions.AppEngineUploader");
+  private static final Logger LOG = Logger.getInstance(AppEngineUploader.class);
   private final Project myProject;
   private final Artifact myArtifact;
   private final AppEngineFacet myAppEngineFacet;

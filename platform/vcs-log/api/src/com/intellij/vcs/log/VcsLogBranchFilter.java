@@ -36,7 +36,7 @@ public interface VcsLogBranchFilter extends VcsLogFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     return StringUtil.join(getTextPresentation(), ", ");
   }
 }

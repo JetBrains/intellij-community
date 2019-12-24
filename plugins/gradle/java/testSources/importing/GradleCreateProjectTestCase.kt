@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.testFramework.PlatformTestUtil
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ModuleInfo
 import org.jetbrains.plugins.gradle.org.jetbrains.plugins.gradle.util.ProjectInfoBuilder.ProjectInfo
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.runners.Parameterized
 import java.io.File
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 
 abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
@@ -68,7 +69,6 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
     val settings = getSettings(this, GradleConstants.SYSTEM_ID) as GradleSettings
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath)!!
     assertEquals(projectSettings.externalProjectPath, externalProjectPath)
-    assertEquals(projectSettings.isUseAutoImport, false)
     assertEquals(projectSettings.isUseQualifiedModuleNames, true)
     assertEquals(settings.storeProjectFilesExternally, true)
   }
@@ -108,7 +108,7 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
         moduleInfo.groupId?.let { step.groupId = it }
         step.artifactId = moduleInfo.artifactId
         moduleInfo.version?.let { step.version = it }
-        step.entityName = moduleInfo.root.name
+        step.entityName = moduleInfo.simpleName
         step.location = moduleInfo.root.path
       }
     }
@@ -149,22 +149,19 @@ abstract class GradleCreateProjectTestCase : GradleImportingTestCase() {
       if (isLast) break
       doNextAction()
       if (currentStep === currentStepObject) {
-        throw RuntimeException("$currentStep is not validated")
+        throw RuntimeException("$currentStepObject is not validated")
       }
     }
-    doFinishAction()
+    if (!doFinishAction()) {
+      throw RuntimeException("$currentStepObject is not validated")
+    }
   }
 
   private fun waitForImportCompletion(project: Project) {
-    val latch = CountDownLatch(1)
+    val promise = AsyncPromise<Any>()
     val connection = project.messageBus.connect()
-    connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { latch.countDown() })
-    while (latch.count == 1L) {
-      invokeAndWaitIfNeeded {
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-      }
-      Thread.yield()
-    }
+    connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener { promise.setResult(null) })
+    invokeAndWaitIfNeeded { PlatformTestUtil.waitForPromise(promise, TimeUnit.MINUTES.toMillis(1)) }
   }
 
   fun assertSettingsFileContent(projectInfo: ProjectInfo) {

@@ -38,6 +38,12 @@ public class LightParameterWrapper extends LightElement implements PsiParameter,
     return myPrototype;
   }
 
+  @NotNull
+  @Override
+  public String getName() {
+    return myPrototype.getName();
+  }
+
   @Override
   @NotNull
   public PsiType getType() {

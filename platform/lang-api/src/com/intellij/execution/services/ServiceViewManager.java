@@ -15,4 +15,7 @@ public interface ServiceViewManager {
 
   @NotNull
   Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus);
+
+  @NotNull
+  Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass);
 }

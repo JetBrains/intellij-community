@@ -56,7 +56,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.10";
+  private static final String FALLBACK_VERSION = "0.4.15";
   protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static class Lazy {
@@ -131,7 +131,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   public JComponent createComponent() {
     // checking new gradle version on creating component
     String latestVersion = PropertiesComponent.getInstance().getValue(LATEST_GRADLE_VERSION_KEY);
-    long timeCheck = PropertiesComponent.getInstance().getOrInitLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
+    long timeCheck = PropertiesComponent.getInstance().getLong(LATEST_UPDATING_TIME_KEY, System.currentTimeMillis());
     if (latestVersion == null || TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timeCheck) >= 1) {
       ModalityState modalityState = ModalityState.defaultModalityState();
       Lazy.EXECUTOR.execute(() -> {

@@ -77,6 +77,7 @@ public class SearchUtil {
           processComponent(searchableConfigurable, configurableOptions, configurable.createComponent());
           final Configurable unwrapped = unwrapConfigurable(configurable);
           if (unwrapped instanceof CompositeConfigurable) {
+            unwrapped.disposeUIResources();
             //noinspection unchecked
             final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
             for (final UnnamedConfigurable child : children) {

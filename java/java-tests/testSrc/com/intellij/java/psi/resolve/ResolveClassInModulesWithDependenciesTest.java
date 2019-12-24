@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.easymock.IArgumentMatcher;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Set;
 
@@ -75,11 +76,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
     assertNotNull(file);
     createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
-    DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
-      @Override
-      public void process(PsiElement place, PsiElement dependency) {
-      }
-    });
+    DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> { });
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
@@ -118,7 +115,9 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
   private static PsiElementFinder createMockFinder() {
     Set<String> ignoredMethods = ContainerUtil.newHashSet("getClassesFilter", "processPackageDirectories", "getClasses");
-    Method[] methods = ContainerUtil.findAllAsArray(PsiElementFinder.class.getDeclaredMethods(), m -> !ignoredMethods.contains(m.getName()));
+    Method[] methods = ContainerUtil.findAllAsArray(
+      PsiElementFinder.class.getDeclaredMethods(),
+      m -> !ignoredMethods.contains(m.getName()) && !Modifier.isPrivate(m.getModifiers()) && !Modifier.isStatic(m.getModifiers()));
     PsiElementFinder mock = createMockBuilder(PsiElementFinder.class).addMockedMethods(methods).createMock();
     expect(mock.findClasses(anyObject(), anyObject())).andReturn(PsiClass.EMPTY_ARRAY).anyTimes();
     expect(mock.findPackage(eq("foo"))).andReturn(null);

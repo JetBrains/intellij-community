@@ -4,14 +4,12 @@ package com.intellij.codeInsight.intention.impl.config;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -54,6 +52,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
       @Override
       public void extensionAdded(@NotNull IntentionActionBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         registerMetaDataForEP(extension);
+        OptionsTopHitProvider.invalidateCachedOptions(IntentionsOptionsTopHitProvider.class);
       }
 
       @Override
@@ -62,6 +61,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
         if (categories == null) return;
         String familyName = extension.getInstance().getFamilyName();
         unregisterMetaData(categories, familyName);
+        OptionsTopHitProvider.invalidateCachedOptions(IntentionsOptionsTopHitProvider.class);
       }
     }, true, this);
   }
@@ -70,13 +70,13 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
   public void dispose() {
   }
 
-  private void registerMetaDataForEP(IntentionActionBean extension) {
+  private void registerMetaDataForEP(@NotNull IntentionActionBean extension) {
     String[] categories = extension.getCategories();
     if (categories == null) {
       return;
     }
 
-    IntentionActionWrapper instance = new IntentionActionWrapper(extension, categories);
+    IntentionActionWrapper instance = new IntentionActionWrapper(extension);
     String descriptionDirectoryName = extension.getDescriptionDirectoryName();
     if (descriptionDirectoryName == null) {
       descriptionDirectoryName = instance.getDescriptionDirectoryName();
@@ -180,7 +180,7 @@ public final class IntentionManagerSettings implements PersistentStateComponent<
     }
 
     ourExecutor.execute(() -> {
-      if (app.isDisposedOrDisposeInProgress()) {
+      if (app.isDisposed()) {
         return;
       }
 

@@ -51,14 +51,6 @@ public class NestedCopiesBuilder implements StatusReceiver {
   }
 
   @Override
-  public void processIgnored(final VirtualFile vFile) {
-  }
-
-  @Override
-  public void processUnversioned(final VirtualFile vFile) {
-  }
-
-  @Override
   public void processCopyRoot(@NotNull VirtualFile file,
                               @Nullable Url url,
                               @NotNull WorkingCopyFormat format,

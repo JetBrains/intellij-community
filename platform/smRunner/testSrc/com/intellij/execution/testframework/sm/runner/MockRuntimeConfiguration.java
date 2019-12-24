@@ -80,7 +80,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
 
     @Override
     public ConfigurationFactory[] getConfigurationFactories() {
-      return new ConfigurationFactory[0];
+      return ConfigurationFactory.EMPTY_ARRAY;
     }
   }
 }

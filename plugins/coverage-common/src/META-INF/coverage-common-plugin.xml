@@ -33,9 +33,8 @@
       <separator/>
     </group>
     <group id="CoveragePlatformMenu" popup="false">
-      <separator/>
       <reference ref="CoverageMenu"/>
-      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="RunTestGroup" anchor="last"/>
     </group>
   </actions>
 </idea-plugin>

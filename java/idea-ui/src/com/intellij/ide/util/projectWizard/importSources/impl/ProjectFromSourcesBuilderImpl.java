@@ -48,7 +48,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectFromSourcesBuilderImpl.class);
   private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<>();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messager;
 
 
@@ -9,7 +9,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.paint.LinePainter2D;
 
 import javax.swing.*;
 import java.awt.*;
@@ -367,7 +367,7 @@ public class CalloutComponent {
           break;
       }
 
-      UIUtil.drawLine(g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
+      LinePainter2D.paint((Graphics2D)g2, (int)line.getX1(), (int)line.getY1(), (int)line.getX2(), (int)line.getY2());
 
       final Shape arrow = LineEndDecorator.getArrowShape(line, line.getP2());
       g2.fill(arrow);

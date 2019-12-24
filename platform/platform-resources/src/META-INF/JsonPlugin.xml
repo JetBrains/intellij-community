@@ -108,7 +108,7 @@
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
     <lang.lineWrapStrategy language="JSON" implementationClass="com.intellij.json.formatter.JsonLineWrapPositionStrategy"/>
-    <gotoDeclarationHandler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
+    <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
@@ -128,8 +128,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
-                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
-    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
+                    interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor" interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor"/>

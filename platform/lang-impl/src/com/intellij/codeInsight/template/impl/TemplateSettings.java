@@ -1,17 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
+import com.intellij.codeInsight.template.Macro;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointAdapter;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -272,6 +275,22 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     });
 
     doLoadTemplates(mySchemeManager.loadSchemes());
+
+    Macro.EP_NAME.addExtensionPointListener(new ExtensionPointAdapter<Macro>() {
+      @Override
+      public void extensionListChanged() {
+        for (TemplateImpl template : myTemplates.values()) {
+          template.dropParsedData();
+        }
+        for (TemplateImpl template : myDefaultTemplates.values()) {
+          template.dropParsedData();
+        }
+      }
+    }, ApplicationManager.getApplication());
+
+    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener((a,b) -> {
+      mySchemeManager.reload();
+    }, ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -466,20 +485,17 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
   private void loadDefaultLiveTemplates() {
     try {
+      myPredefinedTemplates.clear();
       for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
-        for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-          readDefTemplate(provider, defTemplate, true);
-        }
-        try {
-          String[] hidden = provider.getHiddenLiveTemplateFiles();
-          if (hidden != null) {
-            for (String s : hidden) {
-              readDefTemplate(provider, s, false);
-            }
-          }
-        }
-        catch (AbstractMethodError ignore) {
-        }
+        loadDefaultLiveTemplatesFromProvider(provider);
+      }
+
+      for (DefaultLiveTemplateEP ep : DefaultLiveTemplateEP.EP_NAME.getExtensionList()) {
+        String file = ep.getFile();
+        if (file == null) continue;
+        ClassLoader pluginClassLoader = ep.getPluginDescriptor().getPluginClassLoader();
+        readDefTemplate(pluginClassLoader, file, !ep.getHidden(), pluginClassLoader,
+                        PluginInfoDetectorKt.getPluginInfoByDescriptor(ep.getPluginDescriptor()));
       }
     }
     catch (ProcessCanceledException e) {
@@ -490,13 +506,32 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
-    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
+  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException, IOException {
+    for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
+      readDefTemplate(provider, defTemplate, true, provider.getClass().getClassLoader(),
+                      PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+    }
+    try {
+      String[] hidden = provider.getHiddenLiveTemplateFiles();
+      if (hidden != null) {
+        for (String s : hidden) {
+          readDefTemplate(provider, s, false, provider.getClass().getClassLoader(),
+                          PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+        }
+      }
+    }
+    catch (AbstractMethodError ignore) {
+    }
+  }
+
+  private void readDefTemplate(@NotNull Object requestor,
+                               @NotNull String defTemplate,
+                               boolean registerTemplate, ClassLoader loader, PluginInfo info) throws JDOMException, InvalidDataException, IOException {
+    InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(requestor, defTemplate);
     if (inputStream != null) {
       Element element = JDOMUtil.load(inputStream);
-      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), provider.getClass().getClassLoader());
+      TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
       if (defGroup != null) {
-        PluginInfo info = PluginInfoDetectorKt.getPluginInfo(provider.getClass());
         for (TemplateImpl template : defGroup.getElements()) {
           String key = template.getKey();
           String groupName = template.getGroupName();
@@ -610,7 +645,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     String key = element.getAttributeValue(KEY);
     String id = element.getAttributeValue(ID);
     if (resourceBundle != null && key != null) {
-      ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundle, classLoader);
+      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundle, classLoader);
       description = bundle.getString(key);
     }
     else {

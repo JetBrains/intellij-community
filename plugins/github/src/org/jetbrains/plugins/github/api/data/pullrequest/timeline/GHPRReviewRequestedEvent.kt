@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 
 import org.jetbrains.plugins.github.api.data.GHActor
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import java.util.*
 
 class GHPRReviewRequestedEvent(override val actor: GHActor?,
                                override val createdAt: Date,
-                               val requestedReviewer: GHPullRequestReviewer)
+                               val requestedReviewer: GHPullRequestRequestedReviewer)
   : GHPRTimelineEvent.Simple

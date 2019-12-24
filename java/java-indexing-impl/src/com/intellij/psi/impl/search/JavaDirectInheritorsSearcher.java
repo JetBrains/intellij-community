@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,13 +41,20 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
+    if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
+      return true;
+    }
+
     PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
+
+    SearchScope scope = parameters.getScope();
 
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
       SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
-      return AllClassesSearch.search(useScope, project).allowParallelProcessing().forEach(psiClass -> {
+      SearchScope actualScope = useScope.intersectWith(scope);
+      return AllClassesSearch.search(actualScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (shortCircuitCandidate(psiClass)) return true;
         return consumer.process(psiClass);
@@ -59,7 +67,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return true;
     }
 
-    SearchScope scope = parameters.getScope();
     VirtualFile baseClassJarFile = null;
     // iterate by same-FQN groups. For each group process only same-jar subclasses, or all of them if they are all outside the jarFile.
     int groupStart = 0;
@@ -258,7 +265,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           PsiEnumConstantInitializer initializingClass =
             ReadAction.compute(((PsiEnumConstant)field)::getInitializingClass);
           if (initializingClass != null) {
-            result.add(initializingClass); // it surely is an inheritor
+            synchronized (result) {
+              result.add(initializingClass); // it surely is an inheritor
+            }
           }
         }
       }
@@ -268,7 +277,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       info.getHierarchyChildren().filter(element -> element instanceof PsiClass).forEach(aClass -> result.add((PsiClass)aClass));
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+    synchronized (result) {
+      return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
+    }
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {

@@ -307,7 +307,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
   private void registerChangeListManager(@NotNull ChangeListManager manager) {
-    ServiceContainerUtil.registerComponentInstance(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
+    ServiceContainerUtil.replaceService(getProject(), ChangeListManager.class, manager, getTestRootDisposable());
   }
 
   private void registerCodeStyleManager(@NotNull CodeStyleManager manager) {

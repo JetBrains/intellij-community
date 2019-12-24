@@ -46,7 +46,7 @@ import java.util.Set;
  * @author nik
  */
 public class LayoutElementBuildersRegistry {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry");
+  private static final Logger LOG = Logger.getInstance(LayoutElementBuildersRegistry.class);
 
   private static class InstanceHolder {
 

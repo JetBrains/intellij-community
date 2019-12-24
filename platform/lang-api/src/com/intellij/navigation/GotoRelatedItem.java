@@ -20,7 +20,7 @@ import java.util.List;
 public class GotoRelatedItem {
   private final String myGroup;
   private final int myMnemonic;
-  private final SmartPsiElementPointer<PsiElement> myElementPointer;
+  @Nullable private final SmartPsiElementPointer<PsiElement> myElementPointer;
   public static final String DEFAULT_GROUP_NAME = "";
 
   protected GotoRelatedItem(@Nullable PsiElement element, String group, final int mnemonic) {
@@ -38,7 +38,7 @@ public class GotoRelatedItem {
   }
 
   public void navigate() {
-    PsiElement element = myElementPointer.getElement();
+    PsiElement element = getElement();
     if (element != null) {
       PsiNavigateUtil.navigate(element);
     }
@@ -61,7 +61,7 @@ public class GotoRelatedItem {
 
   @Nullable
   public PsiElement getElement() {
-    return myElementPointer.getElement();
+    return myElementPointer == null ? null : myElementPointer.getElement();
   }
 
   public int getMnemonic() {

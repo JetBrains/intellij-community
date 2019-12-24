@@ -22,6 +22,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -1485,5 +1486,20 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     oldmarker[0] = null;
     gcDocument();
     checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(vf, marker, persistentMarker);
+  }
+
+  public void testRangeMarkerMustNotCreatePotentiallyExpensiveDocumentOnDispose_NoCommand() {
+    // need to be physical file
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    RangeMarkerImpl m = (RangeMarkerImpl)LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1);
+    assertNull(m.getCachedDocument());
+
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC, (document, psiFile, project) -> {
+      if (vf.equals(FileDocumentManager.getInstance().getFile(document))) {
+        fail("document created");
+      }
+    });
+
+    m.dispose();
   }
 }

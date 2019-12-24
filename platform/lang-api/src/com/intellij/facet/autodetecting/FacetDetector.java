@@ -20,6 +20,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.FacetModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import java.util.Collection;
  * @author nik
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
 public abstract class FacetDetector<T, C extends FacetConfiguration> {
   private final String myId;
 

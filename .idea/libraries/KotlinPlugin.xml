@@ -21,6 +21,7 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-allopen-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-util-klib-metadata.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
@@ -45,6 +46,7 @@
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-noarg-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlinx-serialization-compiler-plugin.jar!/" />
       <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/android-extensions-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/build/dependencies/build/kotlin/Kotlin/lib/kotlin-util-klib-metadata.jar!/" />
     </excluded>
   </library>
 </component>

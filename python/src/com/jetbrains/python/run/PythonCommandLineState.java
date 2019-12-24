@@ -63,7 +63,7 @@ import java.util.*;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
+  private static final Logger LOG = Logger.getInstance(PythonCommandLineState.class);
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
@@ -128,7 +128,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     return execute(executor, (CommandLinePatcher[])null);
   }
 

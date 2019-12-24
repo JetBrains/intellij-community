@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -434,7 +434,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
         collapse();
-        Window window = UIUtil.getWindow(getComponent());
+        Window window = ComponentUtil.getWindow(getComponent());
         if (window != null) {
           window.dispatchEvent(
             new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));

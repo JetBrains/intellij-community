@@ -144,7 +144,6 @@ public interface IdeActions {
   @NonNls String ACTION_COMPILE = "Compile";
   @NonNls String ACTION_COMPILE_PROJECT = "CompileProject";
   @NonNls String ACTION_MAKE_MODULE = "MakeModule";
-  @NonNls String ACTION_GENERATE_ANT_BUILD = "GenerateAntBuild";
   @NonNls String ACTION_INSPECT_CODE = "InspectCode";
 
   @NonNls String ACTION_FIND_USAGES = "FindUsages";
@@ -342,4 +341,9 @@ public interface IdeActions {
   @NonNls String ACTION_BRACE_OR_QUOTE_OUT = "BraceOrQuoteOut";
 
   @NonNls String GROUP_TOUCHBAR = "TouchBar";
+
+  @NonNls String BREADCRUMBS_OPTIONS_GROUP = "EditorBreadcrumbsSettings";
+  @NonNls String BREADCRUMBS_SHOW_ABOVE = "EditorBreadcrumbsShowAbove";
+  @NonNls String BREADCRUMBS_SHOW_BELOW = "EditorBreadcrumbsShowBelow";
+  @NonNls String BREADCRUMBS_HIDE_BOTH = "EditorBreadcrumbsHideBoth";
 }

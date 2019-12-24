@@ -39,12 +39,6 @@ import java.util.Locale;
  *
  */
 public class PyMethodMayBeStaticInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.method.may.be.static");
-  }
 
   @NotNull
   @Override

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ManifestFilesInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.artifacts.ManifestFilesInfo");
+  private static final Logger LOG = Logger.getInstance(ManifestFilesInfo.class);
   private final Map<VirtualFile, ManifestFileConfiguration> myManifestFiles = new HashMap<>();
   private final Map<VirtualFile, ManifestFileConfiguration> myOriginalManifestFiles = new HashMap<>();
 

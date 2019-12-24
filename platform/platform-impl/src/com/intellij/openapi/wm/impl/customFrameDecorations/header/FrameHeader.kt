@@ -84,7 +84,7 @@ open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
         updateCustomDecorationHitTestSpots()
     }
 
-    override fun addMenuItems(menu: JMenu) {
+    override fun addMenuItems(menu: JPopupMenu) {
         menu.add(myRestoreAction)
         menu.add(myIconifyAction)
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH)) {

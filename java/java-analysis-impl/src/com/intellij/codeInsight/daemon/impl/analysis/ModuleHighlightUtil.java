@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForFile;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
-public class ModuleHighlightUtil {
+class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorMessages.message("module.no.package");
@@ -62,7 +63,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     if (!PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorMessages.message("module.file.wrong.name");
@@ -74,7 +74,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     Module module = findModuleForFile(file);
     if (module != null) {
@@ -95,7 +94,7 @@ public class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkDuplicateStatements(@NotNull PsiJavaModule module) {
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    List<HighlightInfo> results = new SmartList<>();
     checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", results);
     checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", results);
     checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", results);
@@ -123,7 +122,7 @@ public class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file) {
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    List<HighlightInfo> results = new SmartList<>();
 
     Module host = findModuleForFile(file);
     if (host != null) {
@@ -136,7 +135,8 @@ public class ModuleHighlightUtil {
           if (ref != null) {
             PsiElement target = ref.resolve();
             if (target instanceof PsiClass && findModuleForFile(target.getContainingFile()) == host) {
-              String className = qName(ref), packageName = StringUtil.getPackageName(className);
+              String className = qName(ref);
+              String packageName = StringUtil.getPackageName(className);
               if (!exports.contains(packageName) && !uses.contains(className)) {
                 String message = JavaErrorMessages.message("module.service.unused");
                 HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create();
@@ -157,7 +157,6 @@ public class ModuleHighlightUtil {
     return ref != null ? ref.getQualifiedName() : null;
   }
 
-  @Nullable
   static HighlightInfo checkFileLocation(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
@@ -173,7 +172,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkModuleReference(@NotNull PsiRequiresStatement statement) {
     PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
     if (refElement != null) {
@@ -215,7 +213,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkHostModuleStrength(@NotNull PsiPackageAccessibilityStatement statement) {
     PsiElement parent;
     if (statement.getRole() == Role.OPENS &&
@@ -231,7 +228,6 @@ public class ModuleHighlightUtil {
     return null;
   }
 
-  @Nullable
   static HighlightInfo checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement, @NotNull PsiFile file) {
     PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
     if (refElement != null) {
@@ -275,7 +271,7 @@ public class ModuleHighlightUtil {
 
   @NotNull
   static List<HighlightInfo> checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement) {
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    List<HighlightInfo> results = new SmartList<>();
 
     Set<String> targets = new THashSet<>();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
@@ -297,7 +293,6 @@ public class ModuleHighlightUtil {
     return results;
   }
 
-  @Nullable
   static HighlightInfo checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
     if (refElement != null) {
       PsiElement target = refElement.resolve();
@@ -319,7 +314,7 @@ public class ModuleHighlightUtil {
     PsiReferenceList implRefList = statement.getImplementationList();
     if (implRefList == null) return Collections.emptyList();
 
-    List<HighlightInfo> results = ContainerUtil.newSmartList();
+    List<HighlightInfo> results = new SmartList<>();
     PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
     PsiElement intTarget = intRef != null ? intRef.resolve() : null;
 
@@ -379,7 +374,6 @@ public class ModuleHighlightUtil {
     return results;
   }
 
-  @Nullable
   static HighlightInfo checkClashingReads(@NotNull PsiJavaModule module) {
     Trinity<String, PsiJavaModule, PsiJavaModule> conflict = JavaModuleGraphUtil.findConflict(module);
     if (conflict != null) {

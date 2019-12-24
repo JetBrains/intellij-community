@@ -44,11 +44,8 @@ public class SemVerTest {
 
   @Test
   public void comparing() {
-    assertThat(parse("11.123.0")).isEqualTo(parse("11.123.0"));
-    assertThat(parse("11.123.0")).isEqualByComparingTo(parse("11.123.0"));
-
-    assertThat(parse("11.123.0-a.b.c-1")).isEqualTo(parse("11.123.0-a.b.c-1"));
-    assertThat(parse("11.123.0-a.b.c-1")).isEqualByComparingTo(parse("11.123.0-a.b.c-1"));
+    assertEqual(parse("11.123.0"), parse("11.123.0"));
+    assertEqual(parse("11.123.0-a.b.c-1"), parse("11.123.0-a.b.c-1"));
 
     assertPrecedence("0.10.0", "1.0.0");
     assertPrecedence("1.0.0", "2.10.0");
@@ -95,6 +92,16 @@ public class SemVerTest {
     Assert.assertFalse(parse("4.12.5-a").isGreaterOrEqualThan(4, 12, 6));
     Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 13, 0));
     Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(5, 1, 0));
+
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(parse("4.12.4")));
+    Assert.assertTrue(parse("5.12.5").isGreaterOrEqualThan(parse("4.12.5")));
+  }
+
+  private static void assertEqual(@NotNull SemVer v1, @NotNull SemVer v2) {
+    assertThat(v1).isEqualTo(v2);
+    assertThat(v1).isEqualByComparingTo(v2);
+    Assert.assertTrue(v2.isGreaterOrEqualThan(v1));
+    Assert.assertTrue(v1.isGreaterOrEqualThan(v2));
   }
 
   private static void assertPrecedence(String lesserVersion, String higherVersion) {
@@ -104,6 +111,7 @@ public class SemVerTest {
     assertThat(v2).isGreaterThan(v1);
     assertThat(v1).isNotEqualByComparingTo(v2);
     assertThat(v1).isNotEqualTo(v2);
+    Assert.assertTrue(v2.isGreaterOrEqualThan(v1));
   }
 
   private static void assertParsed(@NotNull String version,

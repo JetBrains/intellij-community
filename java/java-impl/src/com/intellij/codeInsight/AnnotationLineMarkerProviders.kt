@@ -5,4 +5,6 @@ class ExternalAnnotationLineMarkerProvider : NonCodeAnnotationsLineMarkerProvide
 
 class InferredNullabilityAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider("Inferred nullability annotations", LineMarkerType.InferredNullability)
 
-class InferredContractAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider("Inferred contract annotations", LineMarkerType.InferredContract)
+class InferredContractAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider("Inferred contract annotations", LineMarkerType.InferredContract) {
+  override fun isEnabledByDefault() = false
+}

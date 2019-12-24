@@ -27,7 +27,7 @@ import java.util.*;
  * for vcses where it is reasonable to ask revision of each item separately
  */
 public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsNumbersCache");
+  public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
 
   // every hour (time unit to check for server commits)
   // default, actual in settings

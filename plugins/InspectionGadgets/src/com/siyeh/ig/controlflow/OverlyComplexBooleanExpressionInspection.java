@@ -58,12 +58,6 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overly.complex.boolean.expression.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     final Integer termCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message("overly.complex.boolean.expression.problem.descriptor", termCount);

@@ -5,6 +5,9 @@ class Test3 {
   }
 
   static <T> void bar(I<T> i, List<T> l){
+
+  }
+  static void bar2(){
     bar((<caret>T x) -> {}, null);
   }
 }

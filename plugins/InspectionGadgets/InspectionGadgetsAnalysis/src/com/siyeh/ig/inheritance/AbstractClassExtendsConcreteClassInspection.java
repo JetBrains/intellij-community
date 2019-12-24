@@ -28,13 +28,6 @@ public class AbstractClassExtendsConcreteClassInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "abstract.class.extends.concrete.class.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "abstract.class.extends.concrete.class.problem.descriptor");

@@ -43,6 +43,10 @@ public class ServiceMessageBuilder {
     return MapSerializerUtil.escapeStr(text, MapSerializerUtil.STD_ESCAPER);
   }
 
+  public static ServiceMessageBuilder testsStarted() {
+    return new ServiceMessageBuilder("enteredTheMatrix");
+  }
+
   public static ServiceMessageBuilder testSuiteStarted(@NotNull String name) {
     return new ServiceMessageBuilder(ServiceMessageTypes.TEST_SUITE_STARTED).addAttribute("name", name);
   }

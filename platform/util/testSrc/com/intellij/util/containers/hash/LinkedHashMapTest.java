@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers.hash;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 public class LinkedHashMapTest {
-
+  private static final Logger LOG = Logger.getInstance(LinkedHashMapTest.class);
   @Test
   public void testPutGet() {
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
@@ -254,7 +255,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
@@ -277,7 +278,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("100 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("100 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
 
   }
 
@@ -310,7 +311,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("100 000 000 lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
@@ -333,7 +334,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("100 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("100 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
 
   }
 
@@ -368,7 +369,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("20 000 000 LRU lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("20 000 000 LRU lookups in java.util.LinkedHashMap took " + (System.currentTimeMillis() - started));
 
 
     final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>();
@@ -391,7 +392,7 @@ public class LinkedHashMapTest {
 
     }
 
-    System.out.println("20 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
+    LOG.debug("20 000 000 lookups in LinkedHashMap took " + (System.currentTimeMillis() - started));
 
   }
 

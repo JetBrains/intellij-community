@@ -28,7 +28,7 @@ private fun generateMappings() {
   }.toSortedMap().values.flatMap {
     if (it.size > 1) {
       System.err.println("Duplicates were generated $it\nRenaming")
-      it.subList(1, it.size).mapIndexed { i, duplicate ->
+      it.subList(1, it.size).sorted().mapIndexed { i, duplicate ->
         Mapping(duplicate.product, "${duplicate.set}${i + 1}", duplicate.path)
       } + it.first()
     }
@@ -65,7 +65,7 @@ private fun generateMappings() {
   }
 }
 
-private class Mapping(val product: String, val set: String, val path: String) {
+private class Mapping(val product: String, val set: String, val path: String): Comparable<Mapping> {
   override fun toString(): String {
     val productName = when (product) {
       "kotlin", "mps" -> product
@@ -80,6 +80,8 @@ private class Mapping(val product: String, val set: String, val path: String) {
       |}
     """.trimMargin()
   }
+
+  override fun compareTo(other: Mapping): Int = path.compareTo(other.path)
 }
 
 private fun loadIdeaGeneratedIcons(context: Context): Collection<Mapping> {

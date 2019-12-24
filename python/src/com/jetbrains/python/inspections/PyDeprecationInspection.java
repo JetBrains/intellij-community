@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import com.jetbrains.python.pyi.PyiUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyDeprecationInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Deprecated function, class or module";
-  }
 
   @NotNull
   @Override

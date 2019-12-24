@@ -185,7 +185,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   @Override
-  public void uiSettingsChanged(UISettings uiSettings) {
+  public void uiSettingsChanged(@NotNull UISettings uiSettings) {
     updateIcon();
   }
 

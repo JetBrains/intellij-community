@@ -4,7 +4,7 @@ package com.intellij.vcs.log.graph.collapsing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -55,7 +55,7 @@ public class EdgeStorageWrapper {
 
   @NotNull
   public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
-    List<GraphEdge> result = ContainerUtil.newSmartList();
+    List<GraphEdge> result = new SmartList<>();
     for (Pair<Integer, GraphEdgeType> retrievedEdge : myEdgeStorage.getEdges(myGetNodeIdByIndex.fun(nodeIndex))) {
       GraphEdge edge = decompressEdge(nodeIndex, retrievedEdge.first, retrievedEdge.second);
       if (matchedEdge(nodeIndex, edge, filter)) result.add(edge);

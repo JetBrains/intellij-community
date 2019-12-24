@@ -8,19 +8,11 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnitDatapointInspection extends BaseInspection {
   public static final String DATAPOINT_FQN = "org.junit.experimental.theories.DataPoint";
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit.datapoint.display.name");
-  }
 
   @NotNull
   @Override

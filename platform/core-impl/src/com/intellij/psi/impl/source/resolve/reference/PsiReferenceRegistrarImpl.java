@@ -12,6 +12,7 @@ import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Dmitry Avdeev
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl");
+  private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
   private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
@@ -36,7 +37,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
   PsiReferenceRegistrarImpl() {
     myBindingCache = ConcurrentFactoryMap.createMap(key-> {
-        List<ProviderBinding> result = ContainerUtil.newSmartList();
+      List<ProviderBinding> result = new SmartList<>();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
             result.add(myBindingsMap.get(bindingClass));
@@ -152,7 +153,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
-    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = ContainerUtil.newSmartList();
+    List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = new SmartList<>();
     for (ProviderBinding binding : bindings) {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }

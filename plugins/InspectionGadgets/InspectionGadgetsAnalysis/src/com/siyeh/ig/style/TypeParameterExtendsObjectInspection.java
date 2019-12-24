@@ -30,13 +30,6 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "type.parameter.extends.object.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "TypeParameterExplicitlyExtendsObject";
   }

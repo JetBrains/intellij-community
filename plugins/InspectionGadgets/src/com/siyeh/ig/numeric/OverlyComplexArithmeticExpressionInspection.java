@@ -65,13 +65,6 @@ public class OverlyComplexArithmeticExpressionInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.arithmetic.expression.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "overly.complex.arithmetic.expression.problem.descriptor");

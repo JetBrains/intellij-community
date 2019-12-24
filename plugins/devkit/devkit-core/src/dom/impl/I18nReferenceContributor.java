@@ -35,10 +35,12 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   private static final String INTENTION_ACTION_TAG = "intentionAction";
   private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
 
-  private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
-  private static final String INSPECTION_EP = InspectionEP.class.getName();
+  private static class Holder {
+    private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
+    private static final String INSPECTION_EP = InspectionEP.class.getName();
 
-  private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
+    private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
+  }
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -49,11 +51,11 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
-                                                                  CONFIGURABLE_EP, INSPECTION_EP),
+                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
-                                                                  TYPE_NAME_EP),
+                                                                  Holder.TYPE_NAME_EP),
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
@@ -78,11 +80,11 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(resourceBundleTagPattern, bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle"}, "groupBundle",
-                                                                  CONFIGURABLE_EP, INSPECTION_EP),
+                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
-                                                                  TYPE_NAME_EP),
+                                                                  Holder.TYPE_NAME_EP),
                                         bundleReferenceProvider);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =

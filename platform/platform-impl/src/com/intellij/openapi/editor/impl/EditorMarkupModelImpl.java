@@ -571,7 +571,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     @Override
-    public void uiSettingsChanged(UISettings uiSettings) {
+    public void uiSettingsChanged(@NotNull UISettings uiSettings) {
       if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }
@@ -899,7 +899,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
-      if (myEditorPreviewHint == null) return;
+      if (myEditorPreviewHint == null) {
+        // process wheel event by the parent scroll pane if no code lens
+        MouseEventAdapter.redispatch(e, e.getComponent().getParent());
+        return;
+      }
       int units = e.getUnitsToScroll();
       if (units == 0) return;
       // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.

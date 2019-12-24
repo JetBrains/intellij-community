@@ -191,7 +191,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
 
 
   @Override
-  public void visitWhiteSpace(final PsiWhiteSpace space) {
+  public void visitWhiteSpace(@NotNull final PsiWhiteSpace space) {
     super.visitWhiteSpace(space);
     // -aSHORT_OPT_ARGUMENT, but -a NEW_POSITION_ARGUMENT, so whitespace makes sense
     if (myCurrentOptionAndArgsLeft != null && myCurrentOptionAndArgsLeft.second == 0) {

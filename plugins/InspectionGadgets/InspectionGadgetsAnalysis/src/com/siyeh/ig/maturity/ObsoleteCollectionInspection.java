@@ -47,13 +47,6 @@ public class ObsoleteCollectionInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "use.obsolete.collection.type.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.obsolete.collection.type.problem.descriptor");

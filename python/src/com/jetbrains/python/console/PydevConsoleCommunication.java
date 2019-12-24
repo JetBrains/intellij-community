@@ -2,6 +2,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -290,16 +291,27 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   @Override
   @NotNull
   public List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
-    if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
-      return myDebugCommunication.getCompletions(text, actTok);
-    }
-
-    if (waitingForInput) {
+    if (waitingForInput || isExecuting()) {
       return Collections.emptyList();
     }
-    List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
-
-    return fromServer.stream().map(option -> toPydevCompletionVariant(option)).collect(Collectors.toList());
+    return ApplicationUtil.runWithCheckCanceled(
+      () ->
+      {
+        try {
+          if (myDebugCommunication != null && myDebugCommunication.isSuspended()) {
+            return myDebugCommunication.getCompletions(text, actTok);
+          }
+          else {
+            List<CompletionOption> fromServer = getPythonConsoleBackendClient().getCompletions(text, actTok);
+            return ContainerUtil.map(fromServer, option -> toPydevCompletionVariant(option));
+          }
+        }
+        catch (PythonUnhandledException e) {
+          LOG.warn("Completion error in Python Console: " + e.traceback);
+          return Collections.emptyList();
+        }
+      },
+      ProgressManager.getInstance().getProgressIndicator());
   }
 
   @NotNull

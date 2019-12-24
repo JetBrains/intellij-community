@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class DtdParsing extends XmlParsing implements XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.xml.XmlParser");
+  private static final Logger LOG = Logger.getInstance(XmlParser.class);
 
   private final IElementType myRootType;
   public static final XmlEntityDecl.EntityContextType TYPE_FOR_MARKUP_DECL = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;

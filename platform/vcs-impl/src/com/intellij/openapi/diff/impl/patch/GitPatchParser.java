@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +101,10 @@ public class GitPatchParser {
   }
 
   private static void applyPatchInfo(@NotNull FilePatch patch, @NotNull GitPatchParser.PatchInfo patchInfo) {
-    patch.setBeforeName(patchInfo.myBeforeName);
-    patch.setAfterName(patchInfo.myAfterName);
+    if (patch instanceof TextFilePatch) ((TextFilePatch)patch).setFileStatus(patchInfo.myFileStatus);
+
+    if (patch.getBeforeName() == null && !patch.isNewFile()) patch.setBeforeName(patchInfo.myBeforeName);
+    if (patch.getAfterName() == null && !patch.isDeletedFile()) patch.setAfterName(patchInfo.myAfterName);
     //remember sha-1 as version ids or set null if no info
     patch.setBeforeVersionId(patchInfo.myBeforeIndex);
     patch.setAfterVersionId(patchInfo.myAfterIndex);
@@ -128,8 +117,14 @@ public class GitPatchParser {
   private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
     Matcher m = ourGitHeaderLinePattern.matcher(start);
     return m.matches()
-           ? Couple.of(stripPatchNameIfNeeded(m.group(1), true, true), stripPatchNameIfNeeded(m.group(2), true, false))
+           ? Couple.of(getFileNameFromGitHeaderLine(m.group(1), true),
+                       getFileNameFromGitHeaderLine(m.group(2), false))
            : null;
+  }
+
+  @Nullable
+  private static String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
+    return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), true, before);
   }
 
   @NotNull

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class InheritanceImplUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
+  private static final Logger LOG = Logger.getInstance(InheritanceImplUtil.class);
 
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass || baseClass.getManager().areElementsEquivalent(baseClass, candidateClass)) return false;

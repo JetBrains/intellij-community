@@ -53,7 +53,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  * @author nik
  */
 public class BuildRunner {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildRunner");
+  private static final Logger LOG = Logger.getInstance(BuildRunner.class);
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   public static final boolean PARALLEL_BUILD_AUTOMAKE_ENABLED = PARALLEL_BUILD_ENABLED && Boolean.parseBoolean(System.getProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = true;

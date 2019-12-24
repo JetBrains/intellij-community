@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.recorder.compile
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
@@ -29,20 +15,19 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
+private val LOG by lazy { Logger.getInstance("#${LocalCompiler::class.qualifiedName}") }
+private val TEST_CLASS_NAME = "CurrentTest"
+
 /**
  * @author Sergey Karashevich
  */
-class LocalCompiler {
-
-  private val LOG by lazy { Logger.getInstance("#${LocalCompiler::class.qualifiedName}") }
-
+internal class LocalCompiler {
   private var codeHash: Int? = null
-
-  private val TEST_CLASS_NAME = "CurrentTest"
 
   private val helloKtText = "fun main(args: Array<String>) { \n println(\"Hello, World!\") \n }"
   private val kotlinCompilerJarUrl = "http://central.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/1.0.6/kotlin-compiler-1.0.6.jar"
@@ -90,9 +75,9 @@ class LocalCompiler {
     catch (cfe: ClassNotFoundException) {
       classLoadersArray = arrayOf(ApplicationManager::class.java.classLoader, this.javaClass.classLoader)
     }
-    val myPluginClassLoader = PluginClassLoader(listOf(testUrl), classLoadersArray, PluginId.getId("SubGuiScriptRecorder"), null, null)
-    val currentTest = myPluginClassLoader.loadClass(TEST_CLASS_NAME) ?: throw Exception(
-      "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
+    val pluginClassLoader = PluginClassLoader(listOf(testUrl), classLoadersArray, PluginId.getId("SubGuiScriptRecorder"), null, null, null as Path?)
+    val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)
+                      ?: throw Exception("Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
     val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     GuiRecorderManager.state = GuiRecorderManager.States.RUNNING

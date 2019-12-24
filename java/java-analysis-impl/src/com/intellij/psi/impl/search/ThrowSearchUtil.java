@@ -33,7 +33,7 @@ import java.util.Set;
  * Author: msk
  */
 public class ThrowSearchUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.ThrowSearchUtil");
+  private static final Logger LOG = Logger.getInstance(ThrowSearchUtil.class);
 
   private ThrowSearchUtil() {
   }

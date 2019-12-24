@@ -13,7 +13,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,13 +23,6 @@ public class JUnitRuleInspection extends BaseInspection {
   public static final String CLASS_RULE_FQN = "org.junit.ClassRule";
   public boolean REPORT_RULE_PROBLEMS = true;
   public boolean REPORT_CLASS_RULE_PROBLEMS = true;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit.rule.display.name");
-  }
 
   @Nullable
   @Override

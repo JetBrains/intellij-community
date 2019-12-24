@@ -17,7 +17,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -47,7 +46,7 @@ import java.util.List;
 * @author peter
 */
 public class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<LookupElement>> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
+  private static final Logger LOG = Logger.getInstance(ConstructorInsertHandler.class);
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
   private final boolean mySmart;
@@ -168,7 +167,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
         public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (!brokenOff) {
             context.getEditor().getCaretModel().moveToOffset(context.getOffset(insideBraces));
-            TransactionGuard.getInstance().submitTransactionAndWait(createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()));
+            createOverrideRunnable(context.getEditor(), context.getFile(), context.getProject()).run();
           }
         }
       });

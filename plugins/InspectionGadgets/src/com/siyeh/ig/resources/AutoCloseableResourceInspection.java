@@ -95,13 +95,6 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     return panel;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("auto.closeable.resource.display.name");
-  }
-
   @NotNull
   @Override
   public String getID() {

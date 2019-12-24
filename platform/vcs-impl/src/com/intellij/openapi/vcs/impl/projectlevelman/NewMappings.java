@@ -76,7 +76,8 @@ public class NewMappings implements Disposable {
     myFileWatchRequestsManager = new FileWatchRequestsManager(myProject, this);
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
+      .usePassThroughInUnitTestMode();
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
       if (!myProject.isDisposed()) {
@@ -154,7 +155,7 @@ public class NewMappings implements Disposable {
 
     MyVcsActivator activator = null;
     synchronized (myUpdateLock) {
-      boolean mappingsChanged = !Comparing.equal(myMappings, newMappings);
+      boolean mappingsChanged = !myMappings.equals(newMappings);
       if (!mappingsChanged) return; // mappings are up-to-date
 
       myMappings = newMappings;
@@ -179,22 +180,26 @@ public class NewMappings implements Disposable {
     List<VcsDirectoryMapping> mappings = myMappings;
     Mappings newMappedRoots = collectMappedRoots(mappings);
 
+    boolean mappedRootsChanged;
     synchronized (myUpdateLock) {
-      boolean mappedRootsChanged = !Comparing.equal(myMappedRoots, newMappedRoots);
-      if (!mappedRootsChanged || myMappings != mappings) {
+      if (myMappings != mappings) {
         Disposer.dispose(newMappedRoots.filePointerDisposable);
         return;
       }
 
       Disposer.dispose(myFilePointerDisposable);
-      myMappedRoots = newMappedRoots.mappedRoots;
-      myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
       myFilePointerDisposable = newMappedRoots.filePointerDisposable;
 
-      dumpMappedRootsToLog();
+      mappedRootsChanged = !myMappedRoots.equals(newMappedRoots.mappedRoots);
+      if (mappedRootsChanged) {
+        myMappedRoots = newMappedRoots.mappedRoots;
+        myMappedRootsMapping = new FilePathMapping(newMappedRoots.mappedRoots);
+
+        dumpMappedRootsToLog();
+      }
     }
 
-    if (fireMappingsChangedEvent) mappingsChanged();
+    if (fireMappingsChangedEvent && mappedRootsChanged) mappingsChanged();
   }
 
   @NotNull
@@ -565,6 +570,21 @@ public class NewMappings implements Disposable {
       this.vcs = vcs;
       this.mapping = mapping;
       this.root = root;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MappedRoot other = (MappedRoot)o;
+      return Objects.equals(vcs, other.vcs) &&
+             mapping.equals(other.mapping) &&
+             root.equals(other.root);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(vcs, mapping, root);
     }
   }
 

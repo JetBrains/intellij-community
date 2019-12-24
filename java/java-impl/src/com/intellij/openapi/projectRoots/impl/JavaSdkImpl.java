@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * @author Eugene Zhuravlev
  */
 public final class JavaSdkImpl extends JavaSdk {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");
+  private static final Logger LOG = Logger.getInstance(JavaSdkImpl.class);
 
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
 
@@ -155,9 +155,9 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String getToolsPath(@NotNull Sdk sdk) {
-    final String versionString = sdk.getVersionString();
-    final boolean isJdk1_x = versionString != null && (versionString.contains("1.0") || versionString.contains("1.1"));
-    return getConvertedHomePath(sdk) + "lib" + File.separator + (isJdk1_x? "classes.zip" : "tools.jar");
+    JavaVersion version = getJavaVersion(sdk);
+    return version == null || version.feature > 9 ? null :
+           getConvertedHomePath(sdk) + "lib" + File.separator + (version.feature < 2 ? "classes.zip" : "tools.jar");
   }
 
   @Override

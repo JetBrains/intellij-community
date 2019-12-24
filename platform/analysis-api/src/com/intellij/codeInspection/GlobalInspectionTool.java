@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
@@ -133,6 +134,16 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * reference graph (refEntities) and uses some other APIs for its processing.
    */
   public boolean isGraphNeeded() {
+    return true;
+  }
+
+  /**
+   * True by default to ensure third party plugins are not broken
+   * 
+   * @return true if inspection should be started ({@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}) in ReadAction,
+   *         false if ReadAction is taken by inspection itself
+   */
+  public boolean isReadActionNeeded() {
     return true;
   }
 

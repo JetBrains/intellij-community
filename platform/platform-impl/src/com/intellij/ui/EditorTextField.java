@@ -2,7 +2,9 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.PluggableLafInfo;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
@@ -468,22 +470,8 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     final EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
 
-    final EditorSettings settings = editor.getSettings();
-    settings.setAdditionalLinesCount(0);
-    settings.setAdditionalColumnsCount(1);
-    settings.setRightMarginShown(false);
-    settings.setRightMargin(-1);
-    settings.setFoldingOutlineShown(false);
-    settings.setLineNumbersShown(false);
-    settings.setLineMarkerAreaShown(false);
-    settings.setIndentGuidesShown(false);
-    settings.setVirtualSpace(false);
-    settings.setWheelFontChangeEnabled(false);
-    settings.setAdditionalPageAtBottom(false);
-    editor.setHorizontalScrollbarVisible(false);
-    editor.setVerticalScrollbarVisible(false);
+    setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
-    settings.setLineCursorWidth(1);
 
     if (myProject != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -541,6 +529,24 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     return editor;
   }
 
+  public static void setupTextFieldEditor(@NotNull EditorEx editor) {
+    EditorSettings settings = editor.getSettings();
+    settings.setAdditionalLinesCount(0);
+    settings.setAdditionalColumnsCount(1);
+    settings.setRightMarginShown(false);
+    settings.setRightMargin(-1);
+    settings.setFoldingOutlineShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setVirtualSpace(false);
+    settings.setWheelFontChangeEnabled(false);
+    settings.setAdditionalPageAtBottom(false);
+    editor.setHorizontalScrollbarVisible(false);
+    editor.setVerticalScrollbarVisible(false);
+    settings.setLineCursorWidth(1);
+  }
+
   protected void updateBorder(@NotNull final EditorEx editor) {
     if (editor.isOneLineMode()
         && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
@@ -554,14 +560,14 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
-      } else if (UIUtil.isUnderWin10LookAndFeel()) {
-        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
-      } else {
+      LafManager lafManager = LafManager.getInstance();
+      UIManager.LookAndFeelInfo lafInfo = lafManager.getCurrentLookAndFeel();
+      if (lafInfo instanceof PluggableLafInfo) {
+        editor.setBorder(((PluggableLafInfo)lafInfo).createEditorTextFieldBorder(this, editor));
+      }
+      else {
         editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
       }
-
     }
     else {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
@@ -682,7 +688,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      if (UIUtil.isUnderDefaultMacTheme() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUIScale.scale(16));
       }
 

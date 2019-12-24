@@ -4,16 +4,14 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
-class ComboContentLayout extends ContentLayout {
-
+final class ComboContentLayout extends ContentLayout {
   ContentComboLabel myComboLabel;
 
   ComboContentLayout(ToolWindowContentUi ui) {
@@ -93,7 +91,8 @@ class ComboContentLayout extends ContentLayout {
   }
 
   boolean isToDrawCombo() {
-    return myUi.myManager.getContentCount() > 1;
+    ContentManager manager = myUi.contentManager;
+    return manager != null && manager.getContentCount() > 1;
   }
 
   @Override
@@ -109,16 +108,6 @@ class ComboContentLayout extends ContentLayout {
     final int width = myComboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
     listPopup.show(new RelativePoint(myComboLabel, new Point(0, myComboLabel.getHeight())));
-  }
-
-  @Override
-  public RelativeRectangle getRectangleFor(Content content) {
-    return null;
-  }
-
-  @Override
-  public Component getComponentFor(Content content) {
-    return null;
   }
 
   @Override

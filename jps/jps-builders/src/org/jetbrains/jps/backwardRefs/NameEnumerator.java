@@ -24,7 +24,7 @@ import java.io.IOException;
 
 public class NameEnumerator extends PersistentStringEnumerator {
   public NameEnumerator(@NotNull File file) throws IOException {
-    super(file);
+    super(file.toPath());
   }
 
   @NotNull

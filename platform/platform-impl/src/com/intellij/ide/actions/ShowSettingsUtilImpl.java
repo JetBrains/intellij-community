@@ -32,7 +32,7 @@ import java.util.function.Predicate;
  * @author max
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
+  private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
@@ -241,7 +241,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {
+      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
           advancedInitialization.run();

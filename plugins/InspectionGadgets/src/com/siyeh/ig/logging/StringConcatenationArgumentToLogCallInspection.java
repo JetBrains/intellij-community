@@ -19,7 +19,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,13 +69,6 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
       .addLabeledComponent(InspectionGadgetsBundle.message("warn.on.label"), comboBox)
       .addVerticalGap(-1)
       .getPanel();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.display.name");
   }
 
   @NotNull
@@ -188,7 +180,10 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             newMethodCall.append(text, 1, text.length() - 1);
           }
           else if (operand instanceof PsiLiteralExpression && PsiType.CHAR.equals(operand.getType()) && inStringLiteral) {
-            newMethodCall.append(text, 1, text.length() - 1);
+            final Object value = ((PsiLiteralExpression)operand).getValue();
+            if (value instanceof Character) {
+              newMethodCall.append(StringUtil.escapeStringCharacters(value.toString()));
+            }
           }
           else {
             if (inStringLiteral) {

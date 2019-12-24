@@ -22,7 +22,7 @@ import java.util.List;
 
 @State(name = "CvsApplicationLevelConfiguration", storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED))
 public class CvsApplicationLevelConfiguration implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration");
+  private static final Logger LOG = Logger.getInstance(CvsApplicationLevelConfiguration.class);
 
   public List<CvsRootConfiguration> CONFIGURATIONS = new ArrayList<>();
 

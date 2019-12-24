@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -45,7 +46,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     super(referenceExpression);
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix");
+  private static final Logger LOG = Logger.getInstance(CreateLocalFromUsageFix.class);
 
   @Override
   public String getText(String varName) {
@@ -71,21 +72,25 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     String varName = myReferenceExpression.getReferenceName();
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
 
-    final Project project = myReferenceExpression.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-    final PsiFile targetFile = targetClass.getContainingFile();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
     if (LambdaUtil.notInferredType(type)) {
-      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), targetClass.getResolveScope());
+      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), file.getResolveScope());
     }
 
     PsiExpression initializer = null;
@@ -127,7 +132,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      JavaCodeStyleSettings.getInstance(targetFile).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
@@ -141,7 +146,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    final Editor newEditor = positionCursor(project, targetFile, var);
+    final Editor newEditor = positionCursor(project, file, var);
     if (newEditor == null) return;
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -151,7 +156,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
-        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);
+        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiLocalVariable.class, false);
         if (localVariable != null) {
           TypeSelectorManagerImpl.typeSelected(localVariable.getType(), defaultType.getType());
 

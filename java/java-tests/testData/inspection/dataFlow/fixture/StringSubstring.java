@@ -81,4 +81,11 @@ class StringSubstring {
     if (<warning descr="Condition 's2.equals(\"\")' is always 'true'">s2.equals("")</warning>) {}
     String s3 = s2.substring(0);
   }
+
+  void testDiff(String s1, String s2, int pos) {
+    if (<warning descr="Condition 's1.substring(pos, pos+4).equals(\"xyz\")' is always 'false'">s1.substring(pos, pos+4).equals("xyz")</warning>) {}
+    if (s1.substring(pos, pos+4).equals(s2)) {
+      if (<warning descr="Condition 's2.length() != 4' is always 'false'">s2.length() != 4</warning>) {}
+    }
+  }
 }

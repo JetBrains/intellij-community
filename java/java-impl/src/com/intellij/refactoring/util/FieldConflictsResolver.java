@@ -31,7 +31,7 @@ import java.util.List;
  *  @author dsl
  */
 public class FieldConflictsResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");
+  private static final Logger LOG = Logger.getInstance(FieldConflictsResolver.class);
   private final PsiElement myScope;
   private final PsiField myField;
   private final List<PsiReferenceExpression> myReferenceExpressions;

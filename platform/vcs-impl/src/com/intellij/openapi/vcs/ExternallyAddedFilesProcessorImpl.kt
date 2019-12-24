@@ -44,8 +44,6 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
 
   private val unprocessedFiles = mutableSetOf<VirtualFile>()
 
-  private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
@@ -53,7 +51,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
   fun install() {
     runReadAction {
       if (!project.isDisposed) {
-        changeListManager.addChangeListListener(this, parentDisposable)
+        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
         AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
       }
     }
@@ -145,7 +143,7 @@ class ExternallyAddedFilesProcessorImpl(project: Project,
     && VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY
 
   override fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile> =
-    changeListManager.unversionedFiles
+    ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
       .asSequence()
       .filterNot(vcsIgnoreManager::isPotentiallyIgnoredFile)
       .filter { isUnder(files, it) }

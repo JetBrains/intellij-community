@@ -20,7 +20,7 @@ final class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
 
   @NotNull
   @Override
-  public Promise<T> onSuccess(@NotNull Consumer<? super T> handler) {
+  public DonePromise<T> onSuccess(@NotNull Consumer<? super T> handler) {
     if (value.error != null) {
       return this;
     }
@@ -47,7 +47,7 @@ final class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
 
   @NotNull
   @Override
-  public Promise<T> onProcessed(@NotNull Consumer<? super T> handler) {
+  public DonePromise<T> onProcessed(@NotNull Consumer<? super T> handler) {
     if (value.error == null) {
       onSuccess(handler);
     }
@@ -59,7 +59,7 @@ final class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
 
   @NotNull
   @Override
-  public Promise<T> onError(@NotNull Consumer<? super Throwable> handler) {
+  public DonePromise<T> onError(@NotNull Consumer<? super Throwable> handler) {
     if (value.error != null && !InternalPromiseUtil.isHandlerObsolete(handler)) {
       handler.accept(value.error);
     }

@@ -59,10 +59,24 @@ public class LiteralSelectioner extends BasicSelectioner {
     PsiLiteralExpressionImpl literalExpression = tryCast(e, PsiLiteralExpressionImpl.class);
     if (literalExpression == null) literalExpression = tryCast(e.getParent(), PsiLiteralExpressionImpl.class);
     if (literalExpression != null && literalExpression.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      int start = StringUtil.indexOf(editorText, '\n', range.getStartOffset()) + 1;
-      int end = range.getEndOffset() - 3;
-      if (start < end) result.add(new TextRange(start, end));
-      start += literalExpression.getTextBlockIndent();
+      int contentStart = StringUtil.indexOf(editorText, '\n', range.getStartOffset());
+      if (contentStart == -1) return result;
+      contentStart += 1;
+      int indent = literalExpression.getTextBlockIndent();
+      if (indent == -1) return result;
+      for (int i = 0; i < indent; i++) {
+        if (editorText.charAt(contentStart + i) == '\n') return result;
+      }
+      int start = contentStart + indent;
+      int end = range.getEndOffset() - 4;
+      for (; end >= start; end--) {
+        char c = editorText.charAt(end);
+        if (c == '\n') break;
+        if (!Character.isWhitespace(c)) {
+          end += 1;
+          break;
+        }
+      }
       if (start < end) result.add(new TextRange(start, end));
     }
     else {

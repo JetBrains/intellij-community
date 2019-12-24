@@ -31,10 +31,12 @@ import java.util.List;
  */
 public class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
-  private static final NotificationGroup TEST_STICKY_GROUP =
-    new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON, true);
-  private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
-    NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW, true);
+  private static class Holder {
+    private static final NotificationGroup TEST_STICKY_GROUP =
+      new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON, true);
+    private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
+      NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW, true);
+  }
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
   @Override
@@ -202,9 +204,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       if (myNotification == null) {
         Icon icon = StringUtil.isEmpty(myIcon) ? null : IconLoader.findIcon(myIcon);
 
-        String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
+        String displayId = mySticky ? Holder.TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         if (myToolwindow) {
-          displayId = TEST_TOOLWINDOW_GROUP.getDisplayId();
+          displayId = Holder.TEST_TOOLWINDOW_GROUP.getDisplayId();
         }
 
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");

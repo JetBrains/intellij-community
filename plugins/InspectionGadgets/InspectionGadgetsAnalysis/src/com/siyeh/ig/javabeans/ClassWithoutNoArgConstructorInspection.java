@@ -35,13 +35,6 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
   public boolean m_ignoreClassesWithNoConstructors = true;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.without.no.arg.constructor.display.name");
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
       InspectionGadgetsBundle.message(

@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class OldReferenceResolver {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");
+  private static final Logger LOG = Logger.getInstance(OldReferenceResolver.class);
 
   private final PsiCall myContext;
   private final PsiExpression myExpr;

@@ -14,10 +14,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**
- * a ConcurrentMap which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
- * THREAD SAFE.
+ * ConcurrentMap which computes the value associated with the key (via {@link #create(Object)} method) on first {@link #get(Object)} access.
+ * This map is THREAD SAFE.
  * It's guaranteed that two {@link #get(Object)} method calls with the same key will return the same value (i.e. the created value stored atomically).
- * For not thread-safe (but possible faster and more memory-efficient) alternative please use {@link FactoryMap}
+ * For the not thread-safe (but possibly faster and more memory-efficient) alternative please use {@link FactoryMap} instead.
  */
 public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   private final ConcurrentMap<K, V> myMap = createMap();
@@ -165,6 +165,11 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
     return nullize(myMap.replace(notNull(key), notNull(value)));
+  }
+
+  @Override
+  public String toString() {
+    return myMap.toString();
   }
 
   @NotNull

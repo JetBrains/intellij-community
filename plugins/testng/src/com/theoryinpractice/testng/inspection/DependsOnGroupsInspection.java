@@ -40,12 +40,6 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return "Groups problem";
-  }
-
-  @NotNull
-  @Override
   public String getShortName() {
     return SHORT_NAME;
   }

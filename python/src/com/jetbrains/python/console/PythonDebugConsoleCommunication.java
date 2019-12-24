@@ -23,13 +23,18 @@ import java.util.List;
  * @author traff
  */
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
-  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.console.pydev.PythonDebugConsoleCommunication");
+  private static final Logger LOG = Logger.getInstance(PythonDebugConsoleCommunication.class);
   private final PyDebugProcess myDebugProcess;
   private boolean myNeedsMore = false;
+  private boolean firstExecution = true;
+  @NotNull private final PythonConsoleView myConsoleView;
 
-  public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess) {
+  public PythonDebugConsoleCommunication(@NotNull Project project,
+                                         @NotNull PyDebugProcess debugProcess,
+                                         @NotNull PythonConsoleView consoleView) {
     super(project);
     myDebugProcess = debugProcess;
+    myConsoleView = consoleView;
   }
 
   @NotNull
@@ -58,7 +63,11 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return false;
   }
 
-  protected void exec(final ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
+  protected void exec(ConsoleCodeFragment command, final PyDebugCallback<Pair<String, Boolean>> callback) {
+    if (firstExecution) {
+      firstExecution = false;
+      myConsoleView.addConsoleFolding(true, false);
+    }
     myDebugProcess.consoleExec(command.getText(), new PyDebugCallback<String>() {
       @Override
       public void ok(String value) {

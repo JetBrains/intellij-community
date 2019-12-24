@@ -25,7 +25,7 @@ import java.util.ArrayList;
  */
 public final class GlassLayer extends JComponent implements DataProvider, PopupOwner {
   private final GuiEditor myEditor;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.designSurface.GlassLayer");
+  private static final Logger LOG = Logger.getInstance(GlassLayer.class);
   private Point myLastMousePosition;
 
   public GlassLayer(final GuiEditor editor){

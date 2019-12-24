@@ -183,6 +183,24 @@ public abstract class VcsLogUserFilterTest {
     assertFilteredCorrectly(builder);
   }
 
+  /*
+  Test for IDEA-225553
+   */
+  public void testNameAtSurnameEmails() throws Exception {
+    VcsUser petrov = myObjectsFactory.createUser("Ivan Petrov", "ivan@petrov.com");
+    VcsUser sidorov = myObjectsFactory.createUser("Ivan Sidorov", "ivan@sidorov.com");
+    List<VcsUser> users = Arrays.asList(petrov, sidorov);
+
+    MultiMap<VcsUser, String> commits = generateHistory(users);
+    List<VcsCommitMetadata> metadata = generateMetadata(commits);
+    VcsLogUserFilter filter =
+      VcsLogFilterObject.fromUserNames(singleton("me"), singletonMap(myProject.getBaseDir(), petrov), new HashSet<>(users));
+
+    StringBuilder builder = new StringBuilder();
+    checkFilter(filter, "me", commits.get(petrov), metadata, builder);
+    assertFilteredCorrectly(builder);
+  }
+
   private void checkFilterForUser(@NotNull VcsUser user,
                                   @NotNull Set<? extends VcsUser> allUsers,
                                   @NotNull Collection<String> expectedHashes,

@@ -5,4 +5,4 @@ class Foo {
 }
 
 
-Foo.class.fo<ref>o()
+Foo.class.fo<caret>o()

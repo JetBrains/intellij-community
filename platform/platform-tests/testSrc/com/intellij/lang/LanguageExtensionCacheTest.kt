@@ -33,7 +33,7 @@ class LanguageExtensionCacheTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
     area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)), ApplicationManager.getApplication ())
+    area.registerExtensionPoints(descriptor, Collections.singletonList(JDOMUtil.load(myExtensionPointXML)))
     Disposer.register(testRootDisposable, Disposable {
       area.unregisterExtensionPoint(myExtensionPointName)
     })

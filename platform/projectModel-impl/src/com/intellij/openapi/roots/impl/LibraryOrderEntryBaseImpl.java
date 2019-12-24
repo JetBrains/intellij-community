@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  *  @author dsl
  */
 abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements LibraryOrSdkOrderEntry {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
+  private static final Logger LOG = Logger.getInstance(LibraryOrderEntryBaseImpl.class);
   final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
   @Nullable private RootProvider myCurrentlySubscribedRootProvider;

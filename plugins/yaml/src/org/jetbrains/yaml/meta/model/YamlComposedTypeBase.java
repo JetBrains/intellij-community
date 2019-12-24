@@ -119,7 +119,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
                                          @NotNull Field.Relation relation,
                                          @NotNull ForcedCompletionPath.Iteration iteration) {
 
-    if (relation == Field.Relation.SCALAR_VALUE || !listScalarSubTypes().isEmpty()) {
+    if (relation == Field.Relation.SCALAR_VALUE ||
+        (relation == Field.Relation.OBJECT_CONTENTS && !listScalarSubTypes().isEmpty())) {
       markup.append(": ");
     }
     else {

@@ -67,7 +67,7 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       @Override
-      public void visitElement(PsiElement psiElement) {
+      public void visitElement(@NotNull PsiElement psiElement) {
         if (psiElement != element) {
           PsiElement parent = psiElement.getParent();
           // do not process any anonymous class children except its getArgumentList()
@@ -378,7 +378,7 @@ public class ExceptionUtil {
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitElement(PsiElement element) {
+      public void visitElement(@NotNull PsiElement element) {
         addExceptions(array, getOwnUnhandledExceptions(element));
         super.visitElement(element);
       }
@@ -920,5 +920,15 @@ public class ExceptionUtil {
         Collections.swap(exceptions, i,i+1);
       }
     }
+  }
+
+  /**
+   * @param method method
+   * @return true if given method can declare thrown exceptions, according to the specification; false otherwise
+   */
+  public static boolean canDeclareThrownExceptions(@NotNull PsiMethod method) {
+    return JavaPsiRecordUtil.getRecordComponentForAccessor(method) == null &&
+           !JavaPsiRecordUtil.isCompactConstructor(method) &&
+           !JavaPsiRecordUtil.isCanonicalConstructor(method);
   }
 }

@@ -16,19 +16,10 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspectionBase;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 public class ConstantTestNGAssertArgumentInspection extends ConstantAssertArgumentInspectionBase {
   @Override
   protected boolean checkTestNG() {
     return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Constant TestNG assert argument";
   }
 }

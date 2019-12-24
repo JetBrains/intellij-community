@@ -238,4 +238,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       }
     }
   }
+
+  @Override
+  protected boolean useModulePath() {
+    return getConfiguration().isUseModulePath();
+  }
 }

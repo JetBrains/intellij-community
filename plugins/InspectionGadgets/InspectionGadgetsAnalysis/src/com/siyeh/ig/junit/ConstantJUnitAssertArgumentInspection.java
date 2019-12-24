@@ -15,19 +15,9 @@
  */
 package com.siyeh.ig.junit;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.testFrameworks.ConstantAssertArgumentInspectionBase;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 
 public class ConstantJUnitAssertArgumentInspection extends ConstantAssertArgumentInspectionBase {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("constant.junit.assert.argument.display.name");
-  }
 
   @Override
   protected boolean checkTestNG() {

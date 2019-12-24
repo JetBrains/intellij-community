@@ -11,6 +11,9 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
+import org.jetbrains.plugins.github.util.getName
+import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
@@ -33,7 +36,10 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
 
   protected val infoPanel = HtmlInfoPanel()
 
-  protected open val loadingText = "Loading..."
+  protected open val loadingText
+    get() = "Loading..."
+
+  var errorHandler: GHLoadingErrorHandler? = null
 
   init {
     addToCenter(createCenterPanel(simplePanel(scrollPane).addToTop(infoPanel).apply {
@@ -79,8 +85,10 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   private fun displayErrorStatus(emptyText: StatusText, error: Throwable) {
     emptyText.appendText(getErrorPrefix(!listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { listLoader.reset() }
+
+    errorHandler?.getActionForError(error)?.let {
+      emptyText.appendSecondaryText(" ${it.getName()}", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, it)
+    }
   }
 
   protected open fun displayEmptyStatus(emptyText: StatusText) {
@@ -93,9 +101,22 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   protected open fun updateInfoPanel() {
     val error = listLoader.error
     if (error != null && listLoader.hasLoadedItems) {
-      infoPanel.setInfo("<html><body>${getErrorPrefix(!listLoader.hasLoadedItems)}<br/>" +
-                        "${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>",
-                        HtmlInfoPanel.Severity.ERROR) { listLoader.reset() }
+      val errorPrefix = getErrorPrefix(!listLoader.hasLoadedItems)
+      val errorText = getLoadingErrorText(error, "<br/>")
+      val action = errorHandler?.getActionForError(error)
+      if (action != null) {
+        //language=HTML
+        infoPanel.setInfo("""<html><body>$errorPrefix<br/>$errorText<a href=''>&nbsp;${action.getName()}</a></body></html>""",
+                          HtmlInfoPanel.Severity.ERROR) {
+          action.actionPerformed(ActionEvent(infoPanel, ActionEvent.ACTION_PERFORMED, it.eventType.toString()))
+        }
+
+      }
+      else {
+        //language=HTML
+        infoPanel.setInfo("""<html><body>$errorPrefix<br/>$errorText</body></html>""",
+                          HtmlInfoPanel.Severity.ERROR)
+      }
     }
     else infoPanel.setInfo(null)
   }

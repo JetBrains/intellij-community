@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -17,10 +18,14 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,6 +47,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Functions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +58,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static junit.framework.Assert.assertTrue;
 
@@ -260,5 +267,18 @@ public class CodeInsightTestUtil {
       }
     }
     return data;
+  }
+
+  @NotNull
+  public static <In, Out> List<Annotation> runExternalAnnotator(@NotNull ExternalAnnotator<In, Out> annotator,
+                                                                @NotNull PsiFile psiFile,
+                                                                In in,
+                                                                @NotNull Consumer<? super Out> resultChecker) {
+    Out result = annotator.doAnnotate(in);
+    resultChecker.accept(result);
+    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile));
+    ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
+
+    return ContainerUtil.immutableList(annotationHolder);
   }
 }

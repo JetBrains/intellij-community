@@ -97,12 +97,6 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("unnecessary.module.dependency.display.name");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "UnnecessaryModuleDependencyInspection";

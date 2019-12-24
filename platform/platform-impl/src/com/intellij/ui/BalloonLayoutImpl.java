@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.notification.EventLog;
@@ -272,7 +272,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
     }
 
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
-    JComponent layeredPane = pane != null ? pane.getMyLayeredPane() : null;
+    JComponent layeredPane = pane != null ? pane.getLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());

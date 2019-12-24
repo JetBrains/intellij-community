@@ -10,8 +10,8 @@ import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -77,7 +77,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
+public final class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
   @NonNls
@@ -103,7 +103,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     super(IdeaPlugin.class);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public JComponent createOptionsPanel() {
     ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, ""));
@@ -471,10 +471,6 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
 
-    if (DomUtil.hasXml(extensionPoint.getDynamic())) {
-      highlightExperimental(extensionPoint.getDynamic(), holder);
-    }
-
     if (DomUtil.hasXml(extensionPoint.getQualifiedName())) {
       IdeaPlugin ideaPlugin = DomUtil.getParentOfType(extensionPoint, IdeaPlugin.class, true);
       assert ideaPlugin != null;
@@ -687,7 +683,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          if (DomUtil.hasXml(vendor) && PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
+          vendor.getValue();
+          if (DomUtil.hasXml(vendor) && PluginManager.isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);
@@ -711,7 +708,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       GenericAttributeValue serviceImplementation = getAttribute(extension, "serviceImplementation");
       if (serviceInterface != null && serviceImplementation != null &&
           StringUtil.equals(serviceInterface.getStringValue(), serviceImplementation.getStringValue())) {
-        final GenericAttributeValue testServiceImplementation = getAttribute(extension, "testServiceImplementation");
+        GenericAttributeValue<?> testServiceImplementation = getAttribute(extension, "testServiceImplementation");
         if (testServiceImplementation != null &&
             !DomUtil.hasXml(testServiceImplementation)) {
           highlightRedundant(serviceInterface,

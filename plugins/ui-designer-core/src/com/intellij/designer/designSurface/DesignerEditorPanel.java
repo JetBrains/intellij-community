@@ -68,7 +68,7 @@ import java.util.Map;
  */
 public abstract class DesignerEditorPanel extends JPanel
   implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
+  private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
   protected static final Integer LAYER_DECORATION = JLayeredPane.POPUP_LAYER;
@@ -89,7 +89,7 @@ public abstract class DesignerEditorPanel extends JPanel
   protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
-  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
+  private final ThreeComponentsSplitter myContentSplitter;
   private final JPanel myPanel = new JPanel(myLayout);
   private JComponent myDesignerCard;
 
@@ -142,6 +142,7 @@ public abstract class DesignerEditorPanel extends JPanel
     initUI();
 
     myToolProvider.loadDefaultTool();
+    myContentSplitter = new ThreeComponentsSplitter(myEditor);
   }
 
   private void initUI() {
@@ -755,7 +756,6 @@ public abstract class DesignerEditorPanel extends JPanel
     Disposer.dispose(myProgressIcon);
     getDesignerWindowManager().dispose(this);
     getPaletteWindowManager().dispose(this);
-    Disposer.dispose(myContentSplitter);
   }
 
   protected AbstractToolWindowManager getDesignerWindowManager() {

@@ -21,10 +21,12 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
                                              private var implementationClass: Class<*>?) : ComponentAdapter {
   private var initializing = false
 
-  protected val pluginId: PluginId
+  val pluginId: PluginId
     get() = pluginDescriptor.pluginId
 
   protected abstract val implementationClassName: String
+
+  protected abstract fun isImplementationEqualsToInterface(): Boolean
 
   @Synchronized
   fun isImplementationClassResolved() = implementationClass != null
@@ -48,26 +50,28 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     return result
   }
 
+  fun getInitializedInstance() = initializedInstance
+
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
   final override fun getComponentInstance(container: PicoContainer): Any? {
     //LOG.error("Use getInstance() instead")
-    return getInstance(componentManager)
+    return getInstance(componentManager, null)
   }
 
-  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: PlatformComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
     val instance = initializedInstance as T?
     if (instance != null || !createIfNeeded) {
       return instance
     }
-    return getInstanceUncached(componentManager, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
+    return getInstanceUncached(componentManager, keyClass, indicator ?: ProgressIndicatorProvider.getGlobalProgressIndicator())
   }
 
-  private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?): T? {
+  private fun <T : Any> getInstanceUncached(componentManager: PlatformComponentManagerImpl, keyClass: Class<T>?, indicator: ProgressIndicator?): T? {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    checkContainerIsActive(componentManager, indicator)
+    checkContainerIsActive(componentManager)
 
     val activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
@@ -95,10 +99,16 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
 
         val startTime = StartUpMeasurer.getCurrentTime()
         @Suppress("UNCHECKED_CAST")
-        val implementationClass = getImplementationClass() as Class<T>
+        val implementationClass = when {
+          keyClass != null && isImplementationEqualsToInterface() -> {
+            implementationClass = keyClass
+            keyClass
+          }
+          else -> getImplementationClass() as Class<T>
+        }
 
         // check after loading class once again
-        checkContainerIsActive(componentManager, indicator)
+        checkContainerIsActive(componentManager)
 
         instance = doCreateInstance(componentManager, implementationClass, indicator)
         activityCategory?.let { category ->
@@ -117,17 +127,11 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Plat
     }
   }
 
-  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl, indicator: ProgressIndicator?) {
+  private fun checkContainerIsActive(componentManager: PlatformComponentManagerImpl) {
     checkCanceledIfNotInClassInit()
 
-    if (componentManager.isContainerDisposedOrDisposeInProgress()) {
-      val error = PluginException("Cannot create ${toString()} because container is already disposed (container=${componentManager})", pluginId)
-      if (indicator == null) {
-        throw error
-      }
-      else {
-        throw ProcessCanceledException(error)
-      }
+    if (componentManager.isDisposed) {
+      throw ProcessCanceledException(RuntimeException("Cannot create ${toString()} because container is already disposed (container=${componentManager})"))
     }
   }
 

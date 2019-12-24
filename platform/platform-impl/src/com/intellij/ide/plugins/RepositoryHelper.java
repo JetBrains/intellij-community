@@ -39,10 +39,13 @@ import static java.util.Collections.singletonMap;
 /**
  * @author stathik
  */
-public class RepositoryHelper {
+public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   @SuppressWarnings("SpellCheckingInspection") private static final String TAG_EXT = ".etag";
+
+  private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
+  private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
   /**
    * Returns a list of configured plugin hosts.
@@ -62,12 +65,12 @@ public class RepositoryHelper {
   @NotNull
   public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
-    Set<String> addedPluginIds = new HashSet<>();
+    Set<PluginId> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
       try {
         List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
         for (IdeaPluginDescriptor plugin : plugins) {
-          if (addedPluginIds.add(plugin.getPluginId().getIdString())) {
+          if (addedPluginIds.add(plugin.getPluginId())) {
             result.add(plugin);
           }
         }
@@ -229,6 +232,10 @@ public class RepositoryHelper {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
     if (build == null) build = PluginManagerCore.getBuildNumber();
 
+    boolean isCommunityIDE = !ideContainsUltimateModule();
+    boolean isVendorNotJetBrains = !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    boolean isPaidPluginsRequireMarketplacePlugin = isCommunityIDE || isVendorNotJetBrains;
+
     for (PluginNode node : list) {
       PluginId pluginId = node.getPluginId();
 
@@ -236,8 +243,9 @@ public class RepositoryHelper {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
+
       if (PluginManagerCore.isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
-        LOG.debug("Incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
+        LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
@@ -253,8 +261,20 @@ public class RepositoryHelper {
       if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
         result.put(pluginId, node);
       }
+
+      //if plugin is paid (has `productCode`) and IDE is not JetBrains "ultimate" then MARKETPLACE_PLUGIN_ID is required
+      if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
+        node.addDepends(MARKETPLACE_PLUGIN_ID);
+      }
     }
 
     return new ArrayList<>(result.values());
   }
+
+  private static boolean ideContainsUltimateModule() {
+    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID));
+    IdeaPluginDescriptorImpl corePluginImpl = (corePlugin instanceof IdeaPluginDescriptorImpl) ? (IdeaPluginDescriptorImpl)corePlugin : null;
+    return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
+  }
+
 }

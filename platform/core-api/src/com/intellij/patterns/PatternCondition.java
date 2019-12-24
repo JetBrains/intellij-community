@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author peter
 */
 public abstract class PatternCondition<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.patterns.PatternCondition");
+  private static final Logger LOG = Logger.getInstance(PatternCondition.class);
   @NonNls private static final String PARAMETER_FIELD_PREFIX = "val$";
   private final String myDebugMethodName;
 

@@ -34,12 +34,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexey.Ivanov
  */
 public class PyTupleItemAssignmentInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.tuple.item.assignment");
-  }
 
   @NotNull
   @Override

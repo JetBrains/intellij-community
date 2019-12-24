@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
@@ -10,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 
@@ -19,21 +20,29 @@ internal class ModuleVcsDetector(private val project: Project) {
     (ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl)
   }
 
-  init {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      with(StartupManager.getInstance(project)) {
-        registerStartupActivity {
-          if (vcsManager.needAutodetectMappings()) {
-            autoDetectVcsMappings(true)
-          }
-        }
-        registerPostStartupActivity {
-          val listener = MyModulesListener()
-          project.messageBus.connect().apply {
-            subscribe(ProjectTopics.MODULES, listener)
-            subscribe(ProjectTopics.PROJECT_ROOTS, listener)
-          }
-        }
+  internal class MyStartUpActivity : StartupActivity {
+    override fun runActivity(project: Project) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+      }
+
+      val vcsDetector = project.service<ModuleVcsDetector>()
+      if (vcsDetector.vcsManager.needAutodetectMappings()) {
+        vcsDetector.autoDetectVcsMappings(true)
+      }
+    }
+  }
+
+  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
+    override fun runActivity(project: Project) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+      }
+
+      val listener = project.service<ModuleVcsDetector>().MyModulesListener()
+      project.messageBus.connect().apply {
+        subscribe(ProjectTopics.MODULES, listener)
+        subscribe(ProjectTopics.PROJECT_ROOTS, listener)
       }
     }
   }

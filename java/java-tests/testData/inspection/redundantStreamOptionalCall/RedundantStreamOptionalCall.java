@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.*;
 
 public class RedundantStreamOptionalCall {
@@ -71,5 +72,17 @@ public class RedundantStreamOptionalCall {
     Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: subsequent 'max' call doesn't depend on the sort order">sorted(String.CASE_INSENSITIVE_ORDER)</warning>.max(String.CASE_INSENSITIVE_ORDER.reversed());
     Stream.of("foo", "bar", "baz").<warning descr="Redundant 'sorted' call: subsequent 'min' call doesn't depend on the sort order">sorted(String.CASE_INSENSITIVE_ORDER)</warning>.min(String.CASE_INSENSITIVE_ORDER);
     Stream.of("foo", "bar", "baz").sorted(String.CASE_INSENSITIVE_ORDER).min(Comparator.naturalOrder());
+  }
+
+  public static Stream<SomeClazz> fun1(Stream<Stream<SomeClazz>> objectStreams) {
+    return objectStreams.<Stream<SomeClazz>>map(Stream::distinct).flatMap(Function.identity());
+  }
+  public static Stream<SomeClazz> fun2(Stream<Stream<SomeClazz>> objectStreams) {
+    return objectStreams.map(Stream::distinct).<warning descr="Redundant 'flatMap' call: previous 'map' call can replace the 'flatMap' step">flatMap(Function.identity())</warning>;
+  }
+  public static Stream<SomeClazz> fun3(Stream<Stream<SomeClazz>> objectStreams) {
+    return objectStreams.<warning descr="Redundant 'map' call">map(Function.identity())</warning>.flatMap(Function.identity());
+  }
+  private static class SomeClazz {
   }
 }

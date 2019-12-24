@@ -552,7 +552,7 @@ UninstPage custom un.ConfirmDeleteSettings
 
 OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
-InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 !define MUI_BRANDINGTEXT " "
 BrandingText " "
 
@@ -1012,9 +1012,9 @@ continue_enum_versions_hklm:
 end_enum_versions_hklm:
   StrCmp $INSTDIR "" 0 skip_default_instdir
   ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
 
 skip_default_instdir:
@@ -1231,16 +1231,16 @@ shortcuts:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
   StrCmp $R2 1 "" exe_64
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
 shortcut_for_exe_64:
   StrCmp $R2 1 "" add_to_path
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
+  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
@@ -1310,10 +1310,10 @@ skip_ipr:
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
                  "$productLauncher" "" "" "" SW_SHOWNORMAL
 
-  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
@@ -1341,7 +1341,7 @@ skip_ipr:
 ; write uninstaller & add it to add/remove programs in control panel
   WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
-            "DisplayName" "${PRODUCT_FULL_NAME_WITH_VER}"
+            "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "UninstallString" "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
@@ -1443,7 +1443,7 @@ uac_elevation_aborted:
   ${LogText} ""
   ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
   ${LogText} ""
-  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
@@ -1453,9 +1453,9 @@ uac_admin:
   IfSilent uac_all_users set_install_dir_admin_mode
 set_install_dir_admin_mode:
   ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
 uac_all_users:
   SetShellVarContext all
@@ -1847,7 +1847,7 @@ Section "Uninstall"
   StrCmp $3 "" delete_caches shortcuts
 
 shortcuts:
-  StrCpy $7 "$SMPROGRAMS\$3\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  StrCpy $7 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   Call un.validateStartMenuLinkToLauncher
   StrCmp $8 "" 0 remove_link
   DetailPrint "StartMenu: $7 is not point to valid launcher."
@@ -1931,13 +1931,13 @@ no_jre32:
 
 ; remove desktop shortcuts
 desktop_shortcut_launcher32:
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" 0 desktop_shortcut_launcher64
-    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 desktop_shortcut_launcher64
+    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
 desktop_shortcut_launcher64:
-  IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" 0 registry
-    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
-    Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
+  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" 0 registry
+    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
+    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
 
 registry:
   StrCpy $0 "SHCTX"

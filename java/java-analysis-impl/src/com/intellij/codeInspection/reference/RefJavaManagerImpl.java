@@ -351,7 +351,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new UastVisitorAdapter(new MyJavaElementVisitor(), true) {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           super.visitElement(element);
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);

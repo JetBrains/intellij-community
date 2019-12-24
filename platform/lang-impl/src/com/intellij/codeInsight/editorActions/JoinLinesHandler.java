@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ import java.util.List;
 import static com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN;
 
 public class JoinLinesHandler extends EditorActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JoinLinesHandler");
+  private static final Logger LOG = Logger.getInstance(JoinLinesHandler.class);
   private final EditorActionHandler myOriginalHandler;
 
   public JoinLinesHandler(EditorActionHandler originalHandler) {
@@ -361,6 +362,7 @@ public class JoinLinesHandler extends EditorActionHandler {
     }
   }
 
+  @Contract(pure = true)
   private static int checkOffset(int offset, JoinLinesHandlerDelegate delegate, DocumentEx doc) {
     if (offset == CANNOT_JOIN) return offset;
     if (offset < 0) {

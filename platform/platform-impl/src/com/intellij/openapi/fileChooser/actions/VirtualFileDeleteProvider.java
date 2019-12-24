@@ -25,7 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public final class VirtualFileDeleteProvider implements DeleteProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider");
+  private static final Logger LOG = Logger.getInstance(VirtualFileDeleteProvider.class);
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {

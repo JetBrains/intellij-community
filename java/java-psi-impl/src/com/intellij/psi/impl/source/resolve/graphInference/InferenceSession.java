@@ -157,6 +157,7 @@ public class InferenceSession {
 
         if (args[i] != null && isPertinentToApplicability(args[i], method)) {
           PsiType parameterType = getParameterType(parameters, i, mySiteSubstitutor, varargs);
+          LOG.assertTrue(parameterType != null);
           if (!ignoreLambdaConstraintTree(args[i])) {
             addConstraint(new ExpressionCompatibilityConstraint(args[i], substituteWithInferenceVariables(parameterType)));
           }
@@ -276,7 +277,7 @@ public class InferenceSession {
   }
 
   private static PsiType getParameterType(PsiParameter[] parameters, int i, @Nullable PsiSubstitutor substitutor, boolean varargs) {
-    if (substitutor == null) return null;
+    if (substitutor == null || !varargs && i >= parameters.length) return null;
     return substitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, varargs));
   }
 
@@ -290,7 +291,7 @@ public class InferenceSession {
                                            @NotNull PsiExpression[] args,
                                            @NotNull MethodCandidateInfo properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
-    return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor);
+    return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor, false);
   }
 
   @NotNull
@@ -298,15 +299,21 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               @Nullable MethodCandidateInfo currentMethod) {
-    return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY);
+    return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY, false);
   }
 
   @NotNull
-  private PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
-                                                 @Nullable PsiExpression[] args,
-                                                 @Nullable PsiElement parent,
-                                                 @Nullable MethodCandidateInfo currentMethod,
-                                                 @NotNull PsiSubstitutor initialSubstitutor) {
+  PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
+                                         @Nullable PsiExpression[] args,
+                                         @Nullable PsiElement parent,
+                                         @Nullable MethodCandidateInfo currentMethod,
+                                         @NotNull PsiSubstitutor initialSubstitutor,
+                                         boolean prohibitCaching) {
+    if (!prohibitCaching) {
+      prohibitCaching = MethodCandidateInfo.isOverloadCheck() ||
+                        !(parent instanceof PsiMethodCallExpression &&
+                          ((PsiMethodCallExpression)parent).getMethodExpression().multiResolve(false).length == 1);
+    }
     return ThreadLocalTypes.performWithTypes(types -> {
       myTempTypes = types;
       try {
@@ -324,7 +331,7 @@ public class InferenceSession {
         }
         myTempTypes = null;
       }
-    });
+    }, prohibitCaching);
   }
 
   private void doInfer(@Nullable PsiParameter[] parameters,
@@ -391,9 +398,10 @@ public class InferenceSession {
       if (arg != null) {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
+        if (parameterType == null) continue;
         if (!isPertinentToApplicability(arg, parentMethod)) {
           ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
-          if (arg instanceof PsiLambdaExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+          if (arg instanceof PsiFunctionalExpression && ignoreLambdaConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
             ignoredConstraints.add(compatibilityConstraint);
             continue;
           }
@@ -440,7 +448,7 @@ public class InferenceSession {
   
   public static boolean ignoreLambdaConstraintTree(PsiExpression arg) {
     for (PsiElement expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-      if (PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class) == arg) {
+      if (PsiTreeUtil.getParentOfType(expr, PsiFunctionalExpression.class, false) == arg) {
         return true;
       }
     }
@@ -587,7 +595,7 @@ public class InferenceSession {
 
   public InferenceVariable[] initBounds(PsiElement context,
                                         final PsiSubstitutor siteSubstitutor,
-                                        PsiTypeParameter... typeParameters) {
+                                        @NotNull PsiTypeParameter... typeParameters) {
     List<InferenceVariable> result = new ArrayList<>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();
@@ -1659,7 +1667,7 @@ public class InferenceSession {
 
     final int paramsLength = !varargs ? parameters1.length : Math.max(parameters1.length, parameters2.length) - 1;
     for (int i = 0; i < paramsLength; i++) {
-      PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, false);
+      PsiType sType = getParameterType(parameters1, i, siteSubstitutor1, varargs);
       PsiType tType = session.substituteWithInferenceVariables(getParameterType(parameters2, i, siteSubstitutor1, varargs));
       if (PsiUtil.isRawSubstitutor(m2, siteSubstitutor1)) {
         tType = TypeConversionUtil.erasure(tType);

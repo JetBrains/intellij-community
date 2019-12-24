@@ -165,12 +165,17 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final <T> JBIterator<T> map(@NotNull Function<? super E, ? extends T> function) {
-    return addOp(true, new TransformOp<E, T>(function));
+    return addOp(true, new MapOp<E, T>(function));
   }
 
   @NotNull
   public final JBIterator<E> filter(@NotNull Condition<? super E> condition) {
     return addOp(true, new FilterOp<E>(condition));
+  }
+
+  @NotNull
+  public final <T> JBIterator<T> filterMap(@NotNull Function<? super E, ? extends T> function) {
+    return addOp(true, new FilterMapOp<E, T>(function));
   }
 
   @NotNull
@@ -284,8 +289,8 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class TransformOp<E, T> extends Op<Function<? super E, ? extends T>> {
-    TransformOp(Function<? super E, ? extends T> function) {
+  private static class MapOp<E, T> extends Op<Function<? super E, ? extends T>> {
+    MapOp(Function<? super E, ? extends T> function) {
       super(function);
     }
 
@@ -303,6 +308,18 @@ public abstract class JBIterator<E> implements Iterator<E> {
     @Override
     Object apply(Object o) {
       return impl.value((E)o) ? o : skip();
+    }
+  }
+
+  private class FilterMapOp<E, T> extends Op<Function<? super E, ? extends T>> {
+    FilterMapOp(Function<? super E, ? extends T> function) {
+      super(function);
+    }
+
+    @Override
+    Object apply(Object o) {
+      Object e = impl.fun((E)o);
+      return e != null ? e : skip();
     }
   }
 

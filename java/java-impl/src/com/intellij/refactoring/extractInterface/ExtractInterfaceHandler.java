@@ -20,8 +20,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -44,7 +43,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractInterfaceHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractInterface.ExtractInterfaceHandler");
+  private static final Logger LOG = Logger.getInstance(ExtractInterfaceHandler.class);
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
 
@@ -96,31 +95,24 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      myInterfaceName = dialog.getExtractedSuperName();
-      mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
-      myTargetDir = dialog.getTargetDirectory();
-      myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
-      try {
-        doRefactoring();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }), REFACTORING_NAME, null);
-  }
 
-  private void doRefactoring() throws IncorrectOperationException {
-    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
-    final PsiClass anInterface;
-    try {
-      anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
-    }
-    finally {
-      a.finish();
-    }
-
-    ExtractClassUtil.suggestToTurnRefsToSuper(myProject, anInterface, myClass);
+    PsiClass anInterface = WriteCommandAction
+      .writeCommandAction(project)
+      .withName(REFACTORING_NAME)
+      .compute(() -> {
+        myInterfaceName = dialog.getExtractedSuperName();
+        mySelectedMembers = dialog.getSelectedMemberInfos().toArray(new MemberInfo[0]);
+        myTargetDir = dialog.getTargetDirectory();
+        myJavaDocPolicy = new DocCommentPolicy(dialog.getDocCommentPolicy());
+        LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
+        try {
+          return extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);
+        }
+        finally {
+          a.finish();
+        }
+      });
+    ExtractClassUtil.askAndTurnRefsToSuper(myClass, anInterface);
   }
 
   static PsiClass extractInterface(PsiDirectory targetDir,

@@ -58,7 +58,6 @@
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
     <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
-    <antBuildGen implementation="org.jetbrains.plugins.javaFX.packaging.ant.JavaFxChunkBuildExtension"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxImplicitUsageProvider"/>
@@ -71,7 +70,7 @@
     <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
     <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
-    <projectSdkSetupValidator implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator" order="after javaSdk"/>
+    <editorNotificationProvider implementation="org.jetbrains.plugins.javaFX.JavaFxProjectSdkSetupValidator"/>
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
     <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.javaFX.execution.JavaFxRunConfigurationExtension"/>

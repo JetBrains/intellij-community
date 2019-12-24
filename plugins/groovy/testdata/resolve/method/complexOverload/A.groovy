@@ -1,3 +1,3 @@
 def foo(PrintStream stream) {
-    stream.<ref>println ""
+    stream.<caret>println ""
 }

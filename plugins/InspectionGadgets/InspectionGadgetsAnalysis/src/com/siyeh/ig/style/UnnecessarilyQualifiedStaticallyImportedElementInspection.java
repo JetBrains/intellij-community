@@ -19,28 +19,17 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ImportUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends BaseInspection implements CleanupLocalInspectionTool{
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessarily.qualified.statically.imported.element.display.name");
-  }
 
   @NotNull
   @Override
@@ -84,6 +73,10 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
+      if (PsiKeyword.YIELD.equals(reference.getReferenceName()) && reference.getParent() instanceof PsiMethodCallExpression) {
+        // Qualifier might be required since Java 14, so don't warn
+        return;
+      }
       if (ImportUtils.isAlreadyStaticallyImported(reference)) {
         registerError(Objects.requireNonNull(reference.getQualifier()), ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference.resolve());
       }

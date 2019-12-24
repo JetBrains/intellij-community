@@ -282,7 +282,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       getFile().accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           assertTrue(element.toString(), element.isValid());
           super.visitElement(element);
         }

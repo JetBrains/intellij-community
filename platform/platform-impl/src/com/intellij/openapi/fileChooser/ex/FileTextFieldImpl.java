@@ -47,7 +47,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETIO
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.ex.FileTextFieldImpl");
+  private static final Logger LOG = Logger.getInstance(FileTextFieldImpl.class);
 
 
   private final JTextField myPathTextField;

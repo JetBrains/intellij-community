@@ -42,13 +42,6 @@ public class InfiniteLoopStatementInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "infinite.loop.statement.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.ObjectLongHashMap
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.outputStream
@@ -27,17 +29,18 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlin.Comparator
 
-class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformanceService {
+class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   private var startUpFinishedCounter = AtomicInteger()
 
   private var pluginCostMap: Map<String, ObjectLongHashMap<String>>? = null
 
   private var lastReport: ByteBuffer? = null
+  private var lastMetrics: ObjectIntHashMap<String>? = null
 
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "14"
+    internal const val VERSION = "15"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -53,39 +56,89 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
     }
   }
 
+  override fun getMetrics() = lastMetrics
+
   override fun getPluginCostMap() = pluginCostMap!!
 
   override fun getLastReport() = lastReport
 
   override fun runActivity(project: Project) {
-    reportIfAnotherAlreadySet(project)
+    if (ActivityImpl.listener != null) {
+      return
+    }
+
+    val projectName = project.name
+    ActivityImpl.listener = ActivityListener(projectName)
+  }
+
+  inner class ActivityListener(private val projectName: String) : Consumer<ActivityImpl> {
+    @Volatile
+    private var projectOpenedActivitiesPassed = false
+
+    // not all activities are performed always, so, we wait only activities that were started
+    @Volatile
+    private var editorRestoringTillPaint = true
+
+    override fun accept(activity: ActivityImpl) {
+      if (activity.category != null && activity.category != ActivityCategory.APP_INIT) {
+        return
+      }
+
+      if (activity.end == 0L) {
+        if (activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
+          editorRestoringTillPaint = false
+        }
+      }
+      else {
+        when (activity.name) {
+          Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
+            projectOpenedActivitiesPassed = true
+            if (editorRestoringTillPaint) {
+              completed()
+            }
+          }
+          Activities.EDITOR_RESTORING_TILL_PAINT -> {
+            editorRestoringTillPaint = true
+            if (projectOpenedActivitiesPassed) {
+              completed()
+            }
+          }
+        }
+      }
+    }
+
+    private fun completed() {
+      ActivityImpl.listener = null
+      reportIfAnotherAlreadySet(projectName)
+    }
   }
 
   override fun lastOptionTopHitProviderFinishedForProject(project: Project) {
-    reportIfAnotherAlreadySet(project)
+    reportIfAnotherAlreadySet(project.name)
   }
 
-  private fun reportIfAnotherAlreadySet(project: Project) {
-    val end = StartUpMeasurer.getCurrentTime()
+  private fun reportIfAnotherAlreadySet(projectName: String) {
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
-      val projectName = project.name
+      StartUpMeasurer.stopPluginCostMeasurement()
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
-        logStats(end, projectName)
+        logStats(projectName)
       }
     }
   }
 
   @Synchronized
-  private fun logStats(end: Long, projectName: String) {
+  private fun logStats(projectName: String) {
     val items = mutableListOf<ActivityImpl>()
     val instantEvents = mutableListOf<ActivityImpl>()
     val activities = THashMap<String, MutableList<ActivityImpl>>()
     val services = mutableListOf<ActivityImpl>()
 
     val threadNameManager = ThreadNameManager()
+
+    var end = -1L
 
     StartUpMeasurer.processAndClear(SystemProperties.getBooleanProperty("idea.collect.perf.after.first.project", false), Consumer { item ->
       // process it now to ensure that thread will have first name (because report writer can process events in any order)
@@ -98,6 +151,9 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
         val category = item.category
         if (category == null) {
           items.add(item)
+          if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
+            end = item.end
+          }
         }
         else if (category == ActivityCategory.APP_COMPONENT ||
                  category == ActivityCategory.PROJECT_COMPONENT ||
@@ -118,6 +174,11 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
       return
     }
 
+    if (end == -1L) {
+      LOG.warn("Cannot find activity `${Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES}` to compute end of start-up")
+      return
+    }
+
     sortItems(items)
 
     val pluginCostMap = computePluginCostMap()
@@ -134,6 +195,7 @@ class StartUpPerformanceReporter : StartupActivity.DumbAware, StartUpPerformance
 
     val currentReport = w.toByteBuffer()
     lastReport = currentReport
+    lastMetrics = w.publicStatMetrics
 
     if (SystemProperties.getBooleanProperty("idea.log.perf.stats", ApplicationManager.getApplication().isInternal || ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
       w.writeToLog(LOG)

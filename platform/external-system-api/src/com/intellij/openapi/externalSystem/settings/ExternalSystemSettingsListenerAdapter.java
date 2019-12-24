@@ -38,10 +38,6 @@ public abstract class ExternalSystemSettingsListenerAdapter<S extends ExternalPr
   }
 
   @Override
-  public void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {
-  }
-
-  @Override
   public void onBulkChangeStart() {
   }
 

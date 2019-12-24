@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +46,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       return;
     }
 
-    final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(typeDefinition, tupleConstructor, immutable, canonical);
+    final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical);
     final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
 
     context.addMethod(fieldsConstructor);
@@ -63,10 +63,11 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   }
 
   @NotNull
-  private static GrLightMethodBuilder generateFieldConstructor(@NotNull GrTypeDefinition typeDefinition,
+  private static GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
                                                                @Nullable PsiAnnotation tupleConstructor,
                                                                boolean immutable,
                                                                boolean canonical) {
+    final GrTypeDefinition typeDefinition = context.getCodeClass();
     final GrLightMethodBuilder fieldsConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
     fieldsConstructor.setConstructor(true);
     fieldsConstructor.setNavigationElement(typeDefinition);
@@ -87,7 +88,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
-        addParametersForSuper(typeDefinition, fieldsConstructor, superFields, superProperties, new HashSet<>(), excludes);
+        PsiClass superClass = context.getHierarchyView().getSuperClass();
+        addParametersForSuper(superClass, fieldsConstructor, superFields, superProperties, new HashSet<>(), excludes);
       }
     }
 
@@ -108,15 +110,18 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     return fieldsConstructor;
   }
 
-  private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
+  private static void addParametersForSuper(@Nullable PsiClass typeDefinition,
                                             GrLightMethodBuilder fieldsConstructor,
                                             boolean superFields,
                                             boolean superProperties, Set<? super PsiClass> visited, Set<String> excludes) {
-    PsiClass parent = typeDefinition.getSuperClass();
-    if (parent != null && visited.add(parent) && !GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(parent.getQualifiedName())) {
-      addParametersForSuper(parent, fieldsConstructor, superFields, superProperties, visited, excludes);
-      addParameters(parent, fieldsConstructor, superProperties, superFields, true, excludes);
+    if (typeDefinition == null) {
+      return;
     }
+    if (!visited.add(typeDefinition) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(typeDefinition.getQualifiedName())) {
+      return;
+    }
+    addParametersForSuper(typeDefinition.getSuperClass(), fieldsConstructor, superFields, superProperties, visited, excludes);
+    addParameters(typeDefinition, fieldsConstructor, superProperties, superFields, true, excludes);
   }
 
   private static void addParameters(@NotNull PsiClass psiClass,

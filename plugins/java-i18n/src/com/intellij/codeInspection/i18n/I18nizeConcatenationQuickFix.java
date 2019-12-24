@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeConcatenationQuickFix");
+  private static final Logger LOG = Logger.getInstance(I18nizeConcatenationQuickFix.class);
   @NonNls private static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   @Override

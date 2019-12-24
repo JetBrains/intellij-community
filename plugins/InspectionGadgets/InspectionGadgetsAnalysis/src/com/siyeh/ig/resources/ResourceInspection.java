@@ -453,7 +453,7 @@ public abstract class ResourceInspection extends BaseInspection {
     public void visitClass(PsiClass aClass) {}
 
     @Override
-    public void visitElement(PsiElement element) {
+    public void visitElement(@NotNull PsiElement element) {
       if (escaped) {
         return;
       }

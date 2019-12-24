@@ -42,12 +42,6 @@ public class JUnitAssertsWithoutMessagesInspection extends AssertsWithoutMessage
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("asserts.without.messages.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getID() {
     return "MessageMissingOnJUnitAssertion";
   }

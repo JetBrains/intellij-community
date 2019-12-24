@@ -39,7 +39,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
   @Nullable
   @Override
-  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     Key<Boolean> userDataKey = ShBeforeRunTaskProvider.getRunBeforeUserDataKey(myRunConfiguration);
     Boolean userDataValue = myProject.getUserData(userDataKey);
     boolean isRunBeforeConfig = userDataValue != null && userDataValue.booleanValue();

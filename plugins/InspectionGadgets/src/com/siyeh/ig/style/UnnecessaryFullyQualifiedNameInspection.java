@@ -59,12 +59,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final boolean inSameFile = ((Boolean)infos[0]).booleanValue();
     if (inSameFile) {

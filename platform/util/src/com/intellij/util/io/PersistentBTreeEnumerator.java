@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 // Assigns / store unique integral id for Data instances.
 // Btree stores mapping between integer hash code into integer that interpreted in following way:
@@ -54,18 +55,18 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
   private static final int KEY_SHIFT = 1;
 
-  public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
+  public PersistentBTreeEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
     this(file, dataDescriptor, initialSize, null);
   }
 
-  public PersistentBTreeEnumerator(@NotNull File file,
+  public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
     this(file, dataDescriptor, initialSize, lockContext, 0);
   }
 
-  public PersistentBTreeEnumerator(@NotNull File file,
+  public PersistentBTreeEnumerator(@NotNull Path file,
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext,
@@ -120,8 +121,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @NotNull
-  private static File indexFile(@NotNull File file) {
-    return new File(file.getPath() + "_i");
+  private static Path indexFile(@NotNull Path file) {
+    return file.resolveSibling(file.getFileName() + "_i");
   }
 
   private static boolean wantKeyMapping() {

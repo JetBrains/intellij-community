@@ -192,13 +192,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.unused.schema");
-  }
-
   @NotNull
   @Override
   public String getShortName() {

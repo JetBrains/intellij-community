@@ -10,21 +10,15 @@
 
 package org.picocontainer.defaults;
 
+import org.jetbrains.annotations.NotNull;
 import org.picocontainer.PicoRegistrationException;
 
 /**
  * @author Aslak Hellesoy
  * @version $Revision: 1.6 $
  */
-public class NotConcreteRegistrationException extends PicoRegistrationException {
-    private final Class componentImplementation;
-
-    public NotConcreteRegistrationException(Class componentImplementation) {
-        super("Bad Access: '" + componentImplementation.getName() + "' is not instantiable");
-        this.componentImplementation = componentImplementation;
-    }
-
-    public Class getComponentImplementation() {
-        return componentImplementation;
-    }
+public final class NotConcreteRegistrationException extends PicoRegistrationException {
+  public NotConcreteRegistrationException(@NotNull Class<?> componentImplementation) {
+    super("Bad Access: '" + componentImplementation.getName() + "' is not instantiable");
+  }
 }

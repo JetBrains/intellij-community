@@ -31,7 +31,7 @@ import javax.swing.*;
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
-  protected final EventLogGroup myEventLogGroup = new EventLogGroup("JavaFindUsages", 1);
+  protected static final String EVENT_LOG_GROUP = "java.find.usages";
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
                                  @NotNull Project project,

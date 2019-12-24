@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +39,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashMap;
@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final ExtensionPointName<ScopeOptimizer> USE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.useScopeOptimizer");
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
+  private static final Logger LOG = Logger.getInstance(PsiSearchHelperImpl.class);
   private final PsiManagerEx myManager;
   private final DumbService myDumbService;
 
@@ -164,7 +164,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
-  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+  boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
                                               @NotNull String text,
                                               short searchContext,
                                               @NotNull EnumSet<Options> options,
@@ -227,7 +227,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
+  static Processor<PsiElement> localProcessor(@NotNull StringSearcher searcher, @NotNull BulkOccurrenceProcessor processor) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
@@ -363,7 +363,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
           // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
           processorCanceled = !ContainerUtil.process(files, localProcessor);
-          if (processorCanceled) stopped.set(true);
+          if (processorCanceled) {
+            stopped.set(true);
+          }
           processedFiles.addAll(files);
         }
         else if (app.isWriteActionPending()) {
@@ -375,26 +377,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             ProgressManager.checkCanceled();
             // optimisation: avoid unnecessary processing if it's doomed to fail because some other task has failed already,
             // and bail out of fork/join task as soon as possible
-            if (!someTaskFailed.get()) {
-              try {
-                // wrap in unconditional impatient reader to bail early at write action start,
-                // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
-                app.executeByImpatientReader(() -> {
-                  if (!localProcessor.process(vfile)) {
-                    stopped.set(true);
-                  }
-                  else {
-                    processedFiles.add(vfile);
-                  }
-                });
-              }
-              catch (ProcessCanceledException e) {
-                someTaskFailed.set(true);
-                throw e;
-              }
-            }
-            else {
+            if (someTaskFailed.get()) {
               return false;
+            }
+            try {
+              // wrap in unconditional impatient reader to bail early at write action start,
+              // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
+              app.executeByImpatientReader(() -> {
+                if (localProcessor.process(vfile)) {
+                  processedFiles.add(vfile);
+                }
+                else {
+                  stopped.set(true);
+                }
+              });
+            }
+            catch (ProcessCanceledException e) {
+              someTaskFailed.set(true);
+              throw e;
             }
             return !stopped.get();
           };
@@ -423,7 +423,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       // run read action in our thread instead to wait for a write action to complete and resume parallel processing
       DumbService.getInstance(project).runReadActionInSmartMode(EmptyRunnable.getInstance());
       Set<VirtualFile> t = new THashSet<>(files);
-      t.removeAll(processedFiles);
+      synchronized (processedFiles) {
+        t.removeAll(processedFiles);
+      }
       files = new ArrayList<>(t);
     }
     return true;
@@ -1052,15 +1054,22 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static boolean processFilesContainingAllKeys(@NotNull Project project,
                                                        @NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<? super Integer> checker,
-                                                       @NotNull final Collection<? extends IdIndexEntry> keys,
+                                                       @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<? super VirtualFile> processor) {
-    final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return DumbService.getInstance(project).runReadActionInSmartMode(
-      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor));
+    Computable<Boolean> query =
+      () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+
+    Boolean[] result = {null};
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+      ReadAction.nonBlocking(() -> {
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+      }).executeSynchronously();
+    }
+    return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+  static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
     if (words.isEmpty()) {
       String trimmed = name.trim();

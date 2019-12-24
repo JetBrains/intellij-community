@@ -24,6 +24,7 @@ import com.intellij.util.containers.ClassMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl;
 import com.intellij.util.xml.highlighting.DomElementsErrorPanel;
 import org.jetbrains.annotations.NotNull;
@@ -104,7 +105,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
         isProcessingChange = true;
         try {
           for (final DomElement element : elements) {
-            DomElementAnnotationsManagerImpl.outdateProblemHolder(element);
+            ((DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(element.getManager().getProject())).outdateProblemHolder(element);
           }
           CommittableUtil.updateHighlighting(panel);
         }

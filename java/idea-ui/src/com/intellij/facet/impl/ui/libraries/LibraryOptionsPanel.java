@@ -57,7 +57,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class LibraryOptionsPanel implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel");
+  private static final Logger LOG = Logger.getInstance(LibraryOptionsPanel.class);
 
   private JBLabel myMessageLabel;
   private JPanel myPanel;

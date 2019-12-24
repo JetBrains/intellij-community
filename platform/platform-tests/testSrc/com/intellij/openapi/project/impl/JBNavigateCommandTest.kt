@@ -58,32 +58,38 @@ class JBNavigateCommandTest {
   @Test
   fun pathWithLineColumn() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java:1:5"))
-      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
-      val currentLogicalPosition = getCurrentLogicalPosition(project)
-      assertThat(currentLogicalPosition.line).isEqualTo(1)
-      assertThat(currentLogicalPosition.column).isEqualTo(5)
+      runInEdtAndWait {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java:1:5"))
+        assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+        val currentLogicalPosition = getCurrentLogicalPosition(project)
+        assertThat(currentLogicalPosition.line).isEqualTo(1)
+        assertThat(currentLogicalPosition.column).isEqualTo(5)
+      }
     }
   }
 
   @Test
   fun pathWithLine() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java:2"))
-      assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
-      val currentLogicalPosition = getCurrentLogicalPosition(project)
-      assertThat(currentLogicalPosition.line).isEqualTo(2)
+      runInEdtAndWait {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java:2"))
+        assertThat(getCurrentElement(project).containingFile.name).isEqualTo("A.java")
+        val currentLogicalPosition = getCurrentLogicalPosition(project)
+        assertThat(currentLogicalPosition.line).isEqualTo(2)
+      }
     }
   }
 
   @Test
   fun path1() = runBlocking {
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      navigate(project.name, mapOf("path" to "A.java"))
-      assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+      runInEdtAndWait {
+        configure(project)
+        navigate(project.name, mapOf("path" to "A.java"))
+        assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+      }
     }
   }
 
@@ -91,8 +97,10 @@ class JBNavigateCommandTest {
   fun pathOpenProject() = runBlocking {
     var projectName: String? = null
     createOrLoadProject(tempDir, useDefaultProjectSettings = false) { project ->
-      configure(project)
-      projectName = project.name
+      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        configure(project)
+        projectName = project.name
+      }
     }
 
     withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
@@ -129,29 +137,29 @@ class JBNavigateCommandTest {
     }
   }
 
-  private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
-
-  private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
-    return FileEditorManager.getInstance(project).allEditors.map {
-      val textEditor = it as TextEditor
-      val offset = textEditor.editor.caretModel.offset
-      val file = it.file
-      val psiFile = PsiManager.getInstance(project).findFile(file!!)
-
-      PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
-    }
-  }
-
-  private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
-    return FileEditorManager.getInstance(project).allEditors.map {
-      (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
-    }.first()
-  }
-
   private fun navigate(projectName: String, parameters: Map<String, String>) {
     val navigateCommand = JBProtocolCommand.findCommand("navigate")
     val map = hashMapOf("project" to projectName)
     map.putAll(parameters)
     navigateCommand?.perform("reference", map)
+  }
+}
+
+private fun getCurrentLogicalPosition(project: Project): LogicalPosition {
+  return FileEditorManager.getInstance(project).allEditors.map {
+    (it as TextEditor).editor.offsetToLogicalPosition(it.editor.caretModel.offset)
+  }.first()
+}
+
+private fun getCurrentElement(project: Project) = getCurrentElements(project).first()
+
+private fun getCurrentElements(project: Project): List<NavigatablePsiElement> {
+  return FileEditorManager.getInstance(project).allEditors.map {
+    val textEditor = it as TextEditor
+    val offset = textEditor.editor.caretModel.offset
+    val file = it.file
+    val psiFile = PsiManager.getInstance(project).findFile(file!!)
+
+    PsiTreeUtil.findElementOfClassAtOffset(psiFile!!, offset, NavigatablePsiElement::class.java, false)!!
   }
 }

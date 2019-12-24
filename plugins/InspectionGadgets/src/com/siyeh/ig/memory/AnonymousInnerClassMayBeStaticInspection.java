@@ -36,13 +36,6 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.may.be.named.static.inner.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");

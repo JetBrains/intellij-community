@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class DebuggerUtils {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerUtils");
+  private static final Logger LOG = Logger.getInstance(DebuggerUtils.class);
   private static final Key<Method> TO_STRING_METHOD_KEY = new Key<>("CachedToStringMethod");
   public static final Set<String> ourPrimitiveTypeNames = ContainerUtil.set(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"

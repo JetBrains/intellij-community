@@ -20,7 +20,7 @@ import java.util.Map;
  * @author peter
  */
 public class AdvancedProxy {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AdvancedProxy");
+  private static final Logger LOG = Logger.getInstance(AdvancedProxy.class);
   public static Method FINALIZE_METHOD;
   public static Method EQUALS_METHOD;
   public static Method HASHCODE_METHOD;

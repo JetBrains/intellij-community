@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.AnnotationSession;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -35,18 +32,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author max
+ * Use {@link AnnotationHolder} instead. The members of this class can suddenly change or disappear.
  */
+@ApiStatus.Internal
 public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl");
+  private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
   private final boolean myBatchMode;
 
+  /**
+   * Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   */
+  @ApiStatus.Internal
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
     this(session, false);
   }
 
+  /**
+   * Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   */
+  @ApiStatus.Internal
   public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
     myBatchMode = batchMode;
@@ -168,5 +174,31 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   // 1. state that all Annotations in this holder are final (no further Annotation.setXXX() or .registerFix() are following) and
   // 2. queue them all for converting to RangeHighlighters in EDT
   @ApiStatus.Internal
-  void queueToUpdateIncrementally() {}
+  void queueToUpdateIncrementally() {
+  }
+
+  @NotNull
+  @Override
+  public AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
+    return new B(this, severity, message, myCurrentElement);
+  }
+  @NotNull
+  @Override
+  public AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+    return new B(this, severity, null, myCurrentElement);
+  }
+
+  PsiElement myCurrentElement;
+  @ApiStatus.Internal
+  public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
+    myCurrentElement = element;
+    annotator.annotate(element, this);
+    myCurrentElement = null;
+  }
+  @ApiStatus.Internal
+  public <R> void applyExternalAnnotatorWithContext(@NotNull PsiFile file, @NotNull ExternalAnnotator<?,R> annotator, R result) {
+    myCurrentElement = file;
+    annotator.apply(file, result, this);
+    myCurrentElement = null;
+  }
 }

@@ -1,5 +1,4 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.application.options.OptionsApplicabilityFilter;
@@ -23,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -105,7 +103,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
 })
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
+  private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   private final CopyPasteDelegator myCopyPasteDelegator;
@@ -664,9 +662,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       private boolean toolWindowVisible;
 
       @Override
-      public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-        if (window == null || toolWindowVisible == window.isVisible()) return;
+      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+        ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+        if (window == null || toolWindowVisible == window.isVisible()) {
+          return;
+        }
+
         myCurrentSelectionObsolete = ThreeState.NO;
         if (window.isVisible() && !toolWindowVisible) {
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
@@ -1044,7 +1045,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     pane.addToolbarActions(myActionGroup);
 
-    List<AnAction> titleActions = ContainerUtil.newSmartList();
+    List<AnAction> titleActions = new SmartList<>();
     createTitleActions(titleActions);
     if (!titleActions.isEmpty()) {
       ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
@@ -1077,7 +1078,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }, getComponent());
     collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     titleActions.add(collapseAllAction);
   }
 
@@ -1303,7 +1303,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> DeleteHandler.deletePsiElement(elements, myProject));
+        DeleteHandler.deletePsiElement(elements, myProject);
       }
       finally {
         a.finish();
@@ -1805,7 +1805,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
    * @deprecated use {@link ProjectView#isFoldersAlwaysOnTop(String)} instead
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {
     return myFoldersAlwaysOnTop.isSelected() && myFoldersAlwaysOnTop.isEnabled();
   }
@@ -2143,8 +2142,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     String selectInShortcut = KeymapUtil.getFirstKeyboardShortcutText("SelectIn");
     if (!selectInShortcut.isEmpty()) {
-      SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
-      int index = ContainerUtil.indexOf(Arrays.asList(targets), (target) -> target instanceof ProjectViewSelectInGroupTarget);
+      List<SelectInTarget> targets = SelectInManager.getInstance(myProject).getTargetList();
+      int index = ContainerUtil.indexOf(targets, (target) -> target instanceof ProjectViewSelectInGroupTarget);
       if (index >= 0) {
         return " (" + selectInShortcut + ", " + (index + 1) + ")";
       }
@@ -2174,16 +2173,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       pane = myId2Pane.get(myCurrentViewId);
     }
     return pane != null ? pane.getReady(requestor) : ActionCallback.DONE;
-  }
-
-  @NotNull
-  public ToggleAction getAutoScrollToSourceAction() {
-    return Action.AUTOSCROLL_TO_SOURCE;
-  }
-
-  @NotNull
-  public ToggleAction getAutoScrollFromSourceAction() {
-    return Action.AUTOSCROLL_FROM_SOURCE;
   }
 
   private void updatePanes(boolean withComparator) {

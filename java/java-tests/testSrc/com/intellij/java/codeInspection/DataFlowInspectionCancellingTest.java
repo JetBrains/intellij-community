@@ -44,7 +44,7 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
     PsiMethod method = file.getClasses()[0].getMethods()[0];
     PsiCodeBlock body = method.getBody();
     assertNotNull(body);
-    DataFlowRunner runner = new DataFlowRunner(false, body) {};
+    DataFlowRunner runner = new DataFlowRunner(getProject(), body) {};
 
     Predicate<StackTraceElement> stackTraceElementCondition =
       ste -> ste.getClassName().equals(ControlFlowAnalyzer.class.getName()) && ste.getMethodName().equals("processTryWithResources");

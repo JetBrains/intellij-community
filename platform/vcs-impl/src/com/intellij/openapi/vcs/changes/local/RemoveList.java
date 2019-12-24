@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.local;
 import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.EventDispatcher;
 
 public class RemoveList implements ChangeListCommand {
   private final String myName;
@@ -25,11 +24,10 @@ public class RemoveList implements ChangeListCommand {
   }
 
   @Override
-  public void doNotify(final EventDispatcher<? extends ChangeListListener> dispatcher) {
+  public void doNotify(final ChangeListListener listener) {
     if (myListCopy != null && myRemoved ) {
-      ChangeListListener multicaster = dispatcher.getMulticaster();
-      multicaster.changesMoved(myListCopy.getChanges(), myListCopy, myDefaultListCopy);
-      multicaster.changeListRemoved(myListCopy);
+      listener.changesMoved(myListCopy.getChanges(), myListCopy, myDefaultListCopy);
+      listener.changeListRemoved(myListCopy);
     }
   }
 }

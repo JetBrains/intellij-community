@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ import java.util.*;
 import java.util.function.Function;
 
 final class IdeaFreezeReporter implements IdePerformanceListener {
-  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 10 : 25; // seconds
+  private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 15 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
   public static final String MESSAGE_FILE_NAME = ".message";
@@ -39,7 +40,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
   IdeaFreezeReporter() {
     Application app = ApplicationManager.getApplication();
-    if (!DEBUG && (!app.isEAP() || PluginManagerCore.isRunningFromSources())) {
+    if (!DEBUG && PluginManagerCore.isRunningFromSources() || (!app.isEAP() && !app.isInternal())) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 
@@ -312,6 +313,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
       }
+      double averageLoad = dumpTask.getOsAverageLoad();
+      if (averageLoad > 0) {
+        message += ", load average: " + String.format("%.2f", averageLoad);
+      }
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
       }
@@ -333,7 +338,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final class CallTreeNode {
     private final StackTraceElement myStackTraceElement;
     private final CallTreeNode myParent;
-    private final List<CallTreeNode> myChildren = ContainerUtil.newSmartList();
+    private final List<CallTreeNode> myChildren = new SmartList<>();
     private final int myDepth;
     private long myTime;
     private final ThreadInfo myThreadInfo;

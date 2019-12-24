@@ -23,12 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomManager;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiCachedValueImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -74,7 +68,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return file.getUserData(AUTO_GENERATED) != null;
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
+  private static final Logger LOG = Logger.getInstance(XmlDocumentImpl.class);
   private static final AtomicFieldUpdater<XmlDocumentImpl, XmlProlog>
     MY_PROLOG_UPDATER = AtomicFieldUpdater.forFieldOfType(XmlDocumentImpl.class, XmlProlog.class);
   private static final AtomicFieldUpdater<XmlDocumentImpl, XmlTag>
@@ -420,84 +414,4 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return MetaRegistry.getMeta(this);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void dumpStatistics(){
-    System.out.println("Statistics:");
-    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<>();
-
-    final PsiElementVisitor psiRecursiveElementVisitor = new XmlRecursiveElementVisitor(){
-      @NonNls private static final String TOKENS_KEY = "Tokens";
-      @NonNls private static final String ELEMENTS_KEY = "Elements";
-
-      @Override public void visitXmlToken(XmlToken token) {
-        inc(TOKENS_KEY);
-      }
-
-      @Override public void visitElement(PsiElement element) {
-        inc(ELEMENTS_KEY);
-        super.visitElement(element);
-      }
-
-      private void inc(final String key) {
-        map.put(key, map.get(key) + 1);
-      }
-    };
-
-    accept(psiRecursiveElementVisitor);
-
-    final Object[] keys = map.keys();
-    for (final Object key : keys) {
-      System.out.println(key + ": " + map.get(key));
-    }
-  }
-
-  @Override
-  public TreeElement addInternal(final TreeElement first, final ASTNode last, final ASTNode anchor, final Boolean before) {
-    final PomModel model = PomManager.getModel(getProject());
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final TreeElement[] holder = new TreeElement[1];
-    try{
-      model.runTransaction(new PomTransactionBase(this, aspect) {
-        @Override
-        public PomModelEvent runInner() {
-          holder[0] = XmlDocumentImpl.super.addInternal(first, last, anchor, before);
-          return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
-        }
-      });
-    }
-    catch(IncorrectOperationException ignored){}
-    return holder[0];
-  }
-
-  @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
-    final PomModel model = PomManager.getModel(getProject());
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    try{
-      model.runTransaction(new PomTransactionBase(this, aspect) {
-        @Override
-        public PomModelEvent runInner() {
-          XmlDocumentImpl.super.deleteChildInternal(child);
-          return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
-        }
-      });
-    }
-    catch(IncorrectOperationException ignored){}
-  }
-
-  @Override
-  public void replaceChildInternal(@NotNull final ASTNode child, @NotNull final TreeElement newElement) {
-    final PomModel model = PomManager.getModel(getProject());
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    try{
-      model.runTransaction(new PomTransactionBase(this, aspect) {
-        @Override
-        public PomModelEvent runInner() {
-          XmlDocumentImpl.super.replaceChildInternal(child, newElement);
-          return XmlDocumentChangedImpl.createXmlDocumentChanged(model, XmlDocumentImpl.this);
-        }
-      });
-    }
-    catch(IncorrectOperationException ignored){}
-  }
 }

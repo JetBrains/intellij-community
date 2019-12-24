@@ -36,7 +36,7 @@ import org.xml.sax.SAXParseException;
 import java.util.concurrent.Future;
 
 public class StdErrorReporter extends ErrorReporter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.validate.StdErrorReporter");
+  private static final Logger LOG = Logger.getInstance(StdErrorReporter.class);
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
 
   private final NewErrorTreeViewPanel myErrorsView;

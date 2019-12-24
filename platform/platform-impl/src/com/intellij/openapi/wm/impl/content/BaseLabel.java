@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -60,7 +62,9 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    return TabsUtil.getLabelFont();
+    UISettings uiSettings = UISettings.getInstance();
+    return JBUI.CurrentTheme.ToolWindow.headerFont().deriveFont(
+      uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
   }
 
   public void setActiveFg(final Color fg) {
@@ -138,6 +142,7 @@ public class BaseLabel extends JLabel {
     }
   }
 
+  @Nullable
   public Content getContent() {
     return null;
   }

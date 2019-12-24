@@ -34,12 +34,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PyComparisonWithNoneInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.comparison.with.none");
-  }
 
   @NotNull
   @Override

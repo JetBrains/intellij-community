@@ -217,7 +217,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<>();
     final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<>();
     for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
-      final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
+      final ModuleRootModel rootModel = moduleEditor.getRootModel();
       final ContentEntry[] contents = rootModel.getContentEntries();
       final String moduleName = moduleEditor.getName();
       Set<VirtualFile> sourceRoots = new HashSet<>();
@@ -405,6 +405,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         (ThrowableComputable<Module, Exception>)() -> builder.createModule(myModuleModel));
     }
     catch (Exception e) {
+      LOG.error(ProjectBundle.message("module.add.error.message", e.getMessage()), e);
       Messages.showErrorDialog(ProjectBundle.message("module.add.error.message", e.getMessage()),
                                ProjectBundle.message("module.add.error.title"));
       return null;
@@ -430,7 +431,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
       if (wizard == null) return null;
       if (wizard.getStepCount() == 0) {
-        ProjectBuilder builder = wizard.getProjectBuilder();
+        ProjectBuilder builder = getProjectBuilder(wizard);
         Disposer.dispose(wizard.getDisposable());
         return builder;
       }
@@ -444,6 +445,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return wizard.getBuilder(myProject);
   }
 
+  private ProjectBuilder getProjectBuilder(@NotNull AbstractProjectWizard wizard) {
+    ProjectBuilder builder = wizard.getProjectBuilder();
+    if (!builder.validate(myProject, myProject)) return null;
+    return builder;
+  }
 
   private boolean doRemoveModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
     if (selectedEditors.isEmpty()) return true;

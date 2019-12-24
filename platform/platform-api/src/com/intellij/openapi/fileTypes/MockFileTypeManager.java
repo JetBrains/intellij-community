@@ -104,11 +104,6 @@ public class MockFileTypeManager extends FileTypeManager {
     return MockLanguageFileType.INSTANCE;
   }
 
-  @Override
-  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
-    return false;
-  }
-
   @Nullable
   @Override
   public FileType findFileTypeByName(@NotNull String fileTypeName) {

@@ -13,7 +13,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Predicate;
 import com.intellij.util.io.MappingFailedException;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -30,6 +29,7 @@ import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -63,12 +63,13 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class IncProjectBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
+  private static final Logger LOG = Logger.getInstance(IncProjectBuilder.class);
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
@@ -163,6 +164,7 @@ public class IncProjectBuilder {
 
 
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
+    checkRebuildRequired(scope);
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
       JavacMain.clearCompilerZipFileCache();
@@ -170,20 +172,31 @@ public class IncProjectBuilder {
       myProjectDescriptor.getProjectStamps().getStampStorage().force();
     });
 
-    startTempDirectoryCleanupTask();
+    final CleanupTempDirectoryExtension cleaner = CleanupTempDirectoryExtension.getInstance();
+    final Future<Void> cleanupTask = cleaner != null && cleaner.getCleanupTask() != null? cleaner.getCleanupTask() : startTempDirectoryCleanupTask(myProjectDescriptor);
+    if (cleanupTask != null) {
+      myAsyncTasks.add(cleanupTask);
+    }
 
     CompileContextImpl context = null;
+    BuildTargetSourcesState sourcesState = null;
     try {
       context = createContext(scope);
+      sourcesState = new BuildTargetSourcesState(context);
+      // Clear source state report if force clean or rebuild
+      if (forceCleanCaches || context.isProjectRebuild()) sourcesState.clearSourcesState();
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
       myProjectDescriptor.dataManager.reportUnhandledRelativizerPaths();
+      sourcesState.reportSourcesState();
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
     }
     catch (StopBuildException e) {
       reportRebuiltModules(context);
       reportUnprocessedChanges(context);
+      // If build was canceled for some reasons e.g compilation error we should report built modules
+      if (sourcesState != null) sourcesState.reportSourcesState();
       // some builder decided to stop the build
       // report optional progress message if any
       final String msg = e.getMessage();
@@ -236,10 +249,67 @@ public class IncProjectBuilder {
     }
   }
 
+  private void checkRebuildRequired(final CompileScope scope) throws RebuildRequestedException {
+    if (myIsTestMode) {
+      // do not use the heuristic in tests in order to properly test all cases
+      return;
+    }
+    final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
+    final long timeThreshold = targetsState.getLastSuccessfulRebuildDuration() * 95 / 100; // 95% of last registered clean rebuild time
+    if (timeThreshold <= 0) {
+      return; // no stats available
+    }
+    // check that this is a whole-project incremental build
+    // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules
+    for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
+      if (!scope.isBuildIncrementally(type) || !scope.isAllTargetsOfTypeAffected(type)) {
+        return;
+      }
+    }
+    // compute estimated times for dirty targets
+    long estimatedWorkTime = 0L;
+
+    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    };
+    final BuildTargetIndex targetIndex = myProjectDescriptor.getBuildTargetIndex();
+    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
+      if (!targetIndex.isDummy(target)) {
+        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
+        if (avgTimeToBuild > 0) {
+          // 1. in general case this time should include dependency analysis and cache update times
+          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
+          if (targetsState.getTargetConfiguration(target).isTargetDirty(myProjectDescriptor) && isAffected.test(target)) {
+            estimatedWorkTime += avgTimeToBuild;
+          }
+        }
+      }
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
+    }
+
+    if (estimatedWorkTime >= timeThreshold) {
+      final String message = "Too many modules require recompilation, forcing full project rebuild";
+      LOG.info(message);
+      LOG.info("Estimated build duration (linear): " + StringUtil.formatDuration(estimatedWorkTime));
+      LOG.info("Last successful rebuild duration (linear): " + StringUtil.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
+      LOG.info("Rebuild heuristic time threshold: " + StringUtil.formatDuration(timeThreshold));
+      myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
+      throw new RebuildRequestedException(null);
+    }
+  }
+
   private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
-    myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO,
-                                                           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
-                                                           e.getMessage()));
+    myMessageDispatcher.processMessage(new CompilerMessage(
+      "", BuildMessage.Kind.INFO, "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
+    );
     throw new RebuildRequestedException(cause);
   }
 
@@ -385,6 +455,9 @@ public class IncProjectBuilder {
     finally {
       if (buildProgress != null) {
         buildProgress.updateExpectedAverageTime();
+        if (context.isProjectRebuild() && !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
+          myProjectDescriptor.getTargetsState().setLastSuccessfulRebuildDuration(buildProgress.getAbsoluteBuildTime());
+        }
       }
       for (TargetBuilder builder : myBuilderRegistry.getTargetBuilders()) {
         builder.buildFinished(context);
@@ -409,19 +482,23 @@ public class IncProjectBuilder {
       .forEach(context::processMessage);
   }
 
-  private void startTempDirectoryCleanupTask() {
+  @Nullable
+  static Future<Void> startTempDirectoryCleanupTask(final ProjectDescriptor pd) {
     final String tempPath = System.getProperty("java.io.tmpdir", null);
     if (StringUtil.isEmptyOrSpaces(tempPath)) {
-      return;
+      return null;
     }
     final File tempDir = new File(tempPath);
-    final File dataRoot = myProjectDescriptor.dataManager.getDataPaths().getDataStorageRoot();
+    final File dataRoot = pd.dataManager.getDataPaths().getDataStorageRoot();
     if (!FileUtil.isAncestor(dataRoot, tempDir, true)) {
       // cleanup only 'local' temp
-      return;
+      return null;
     }
     final File[] files = tempDir.listFiles();
-    if (files != null && files.length != 0) {
+    if (files == null) {
+      tempDir.mkdirs(); // ensure the directory exists
+    }
+    else if (files.length > 0) {
       final RunnableFuture<Void> task = new FutureTask<>(() -> {
         for (File tempFile : files) {
           FileUtil.delete(tempFile);
@@ -431,8 +508,9 @@ public class IncProjectBuilder {
       thread.setPriority(Thread.MIN_PRIORITY);
       thread.setDaemon(true);
       thread.start();
-      myAsyncTasks.add(task);
+      return task;
     }
+    return null;
   }
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
@@ -624,7 +702,7 @@ public class IncProjectBuilder {
       int item = 0;
       for (T elem : collection) {
         item++;
-        if (p.apply(elem)) {
+        if (p.test(elem)) {
           count++;
           if (item > count) {
             return PARTIAL;
@@ -687,7 +765,9 @@ public class IncProjectBuilder {
       if (applicability == Applicability.NONE) {
         continue;
       }
-      boolean okToDelete = applicability == Applicability.ALL;
+      // It makes no sense to delete already empty root, but instead it makes sense to cleanup the target, because there may exist
+      // a directory that has been previously the output root for the target
+      boolean okToDelete = applicability == Applicability.ALL && !isEmpty(outputRoot);
       if (okToDelete && !moduleIndex.isExcluded(outputRoot)) {
         // if output root itself is directly or indirectly excluded,
         // there cannot be any manageable sources under it, even if the output root is located under some source root
@@ -704,7 +784,13 @@ public class IncProjectBuilder {
             }
           }
         }
+        if (!okToDelete) {
+          context.processMessage(new CompilerMessage(
+            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+          );
+        }
       }
+
       if (okToDelete) {
         // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
         final File[] children = outputRoot.listFiles();
@@ -723,12 +809,6 @@ public class IncProjectBuilder {
         registerTargetsWithClearedOutput(context, rootTargets);
       }
       else {
-        if (applicability == Applicability.ALL) {
-          // only warn if unable to delete because of roots intersection
-          context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
-          );
-        }
         context.processMessage(new ProgressMessage("Cleaning output directories..."));
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
@@ -752,6 +832,11 @@ public class IncProjectBuilder {
       }
     }
     LOG.info("Cleaned output directories in " + (System.currentTimeMillis() - cleanStart) + " ms");
+  }
+
+  private static boolean isEmpty(File outputRoot) {
+    final String[] files = outputRoot.list();
+    return files == null || files.length == 0;
   }
 
   private static void clearOutputFilesUninterruptibly(CompileContext context, BuildTarget<?> target) {

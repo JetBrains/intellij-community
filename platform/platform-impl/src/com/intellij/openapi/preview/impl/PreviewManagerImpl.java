@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+
 @State(name = "PreviewManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class PreviewManagerImpl implements PreviewManager, PersistentStateComponent<PreviewManagerState> {
   private static final Key<PreviewInfo> INFO_KEY = Key.create("preview_info");
@@ -54,7 +55,6 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private final JPanel myEmptyStatePanel;
 
   private final ArrayList<PreviewInfo> myHistory = new ArrayList<>();
-
 
   private final TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
     int result = Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
@@ -96,7 +96,6 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
   @Override
   public void loadState(@NotNull PreviewManagerState state) {
-    if (state == null) return;
     for (Map.Entry<String, Boolean> entry : state.myArtifactFilesMap.entrySet()) {
       if (!entry.getValue()) {
         for (Iterator<PreviewProviderId> iterator = myActiveProviderIds.iterator(); iterator.hasNext(); ) {
@@ -214,7 +213,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       myContentManager.removeContent(content, false);
       info.release();
       if (myContentManager.getContents().length == 0) {
-        toggleToolWindow(false, null);
+        toggleToolWindow(false);
       }
       checkEmptyState();
     }
@@ -233,7 +232,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   private <V, C> C preview(@NotNull final PreviewInfo<V, C> info, boolean requestFocus) {
-    toggleToolWindow(true, null);
+    toggleToolWindow(true);
     Content content = getContent(info);
     Content selectedContent = myContentManager.getSelectedContent();
     if (selectedContent != content) {
@@ -271,7 +270,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   public <V, C> void close(@NotNull PreviewProviderId<V, C> id, V data) {
     for (Content content : myContentManager.getContents()) {
       PreviewInfo info = content.getUserData(INFO_KEY);
-      if (info != null && info.getId() == id && info.getProvider().contentsAreEqual(info.getData(),data)) {
+      if (info != null && info.getId() == id && info.getProvider().contentsAreEqual(info.getData(), data)) {
         close(info);
         break;
       }
@@ -285,17 +284,18 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     myLockedProviderIds.add(id);
     try {
       provider.showInStandardPlace(data);
-    } finally {
+    }
+    finally {
       myLockedProviderIds.remove(id);
     }
     close(id, data);
   }
 
-  private void toggleToolWindow(boolean activate, Runnable runnable) {
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW);
+  private void toggleToolWindow(boolean activate) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PREVIEW);
     if (toolWindow != null && activate != toolWindow.isActive()) {
       if (activate) {
-        toolWindow.activate(runnable, true);
+        toolWindow.activate(null, true);
       }
       else {
         if (!myAlarm.isEmpty()) {
@@ -306,7 +306,6 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   private class MoveToStandardViewAction extends AnAction {
-
     MoveToStandardViewAction() {
       super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveTo2);
     }
@@ -318,7 +317,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       PreviewInfo previewInfo = selectedContent.getUserData(INFO_KEY);
       if (previewInfo != null) {
         moveToStandardPlaceImpl(previewInfo.getId(), previewInfo.getData());
-        toggleToolWindow(false, null);
+        toggleToolWindow(false);
       }
     }
   }
@@ -373,7 +372,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
         .withFont(JBUI.Fonts.label(isDarkBackground ? 24f : 20f))
         .withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(255)));
 
-      painter.appendLine("No files are open");//.underlined(new JBColor(Gray._150, Gray._180));
+      painter.appendLine("No files are open");
       painter.draw(g, (width, height) -> {
         Dimension s = this.getSize();
         return Couple.of((s.width - width) / 2, (s.height - height) / 2);

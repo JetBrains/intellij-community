@@ -17,8 +17,8 @@ package com.intellij.xml.impl.dtd;
 
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.openapi.util.SimpleFieldCache;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -141,8 +141,8 @@ public abstract class BaseXmlElementDescriptorImpl implements XmlElementDescript
   };
 
   @Override
-  public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag){
-    return myElementDescriptorsMapCache.get(null, this, element).get(element.getName());
+  public XmlElementDescriptor getElementDescriptor(XmlTag element, XmlTag contextTag) {
+    return myElementDescriptorsMapCache.get(null, this, contextTag).get(element.getName());
   }
 
   public final XmlElementDescriptor getElementDescriptor(String name, XmlTag context){

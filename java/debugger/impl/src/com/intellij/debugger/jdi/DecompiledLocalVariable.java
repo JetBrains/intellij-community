@@ -2,6 +2,7 @@
 package com.intellij.debugger.jdi;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.jdi.SlotLocalVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +11,7 @@ import java.util.Collection;
 /**
  * @author Eugene Zhuravlev
  */
-public class DecompiledLocalVariable{
+public class DecompiledLocalVariable implements SlotLocalVariable {
   public static final String PARAM_PREFIX = "param_";
   public static final String SLOT_PREFIX = "slot_";
   private final int mySlot;
@@ -25,12 +26,14 @@ public class DecompiledLocalVariable{
     myMatchedNames = names;
   }
 
-  public int getSlot() {
+  @Override
+  public int slot() {
     return mySlot;
   }
 
+  @Override
   @Nullable
-  public String getSignature() {
+  public String signature() {
     return mySignature;
   }
 

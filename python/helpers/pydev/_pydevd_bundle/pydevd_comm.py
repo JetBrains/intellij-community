@@ -734,7 +734,7 @@ class NetCommandFactory:
 
                 # Note: variables are all gotten 'on-demand'.
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(method_name)))
-                append('file="%s" line="%s">' % (quote(make_valid_xml_value(my_file), '/>_= \t'), lineno))
+                append('file="%s" line="%s">' % (make_valid_xml_value(my_file), lineno))
                 append("</frame>")
                 curr_frame = curr_frame.f_back
         except:
@@ -1764,7 +1764,7 @@ def pydevd_find_thread_by_id(thread_id):
 
         # This can happen when a request comes for a thread which was previously removed.
         pydevd_log(1, "Could not find thread %s\n" % thread_id)
-        pydevd_log(1, "Available: %s\n" % [get_thread_id(t) for t in threads] % thread_id)
+        pydevd_log(1, "Available: %s\n" % [get_thread_id(t) for t in threads])
     except:
         traceback.print_exc()
 

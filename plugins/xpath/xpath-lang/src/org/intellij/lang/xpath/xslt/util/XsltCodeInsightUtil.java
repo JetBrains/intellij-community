@@ -171,7 +171,7 @@ public class XsltCodeInsightUtil {
       // collect all other possible unresolved references with the same name in the current template
       usageBlock.accept(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element instanceof XPathVariableReference) {
             visitXPathVariableReference(((XPathVariableReference)element));
           }

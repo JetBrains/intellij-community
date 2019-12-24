@@ -31,7 +31,7 @@ import java.util.List;
 
 public class MavenImportingConfigurable implements SearchableConfigurable {
   private final MavenImportingSettings myImportingSettings;
-  private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false, false);
+  private final MavenImportingSettingsForm mySettingsForm;
   private final List<UnnamedConfigurable> myAdditionalConfigurables;
 
   private final Project myProject;
@@ -44,6 +44,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
     for (final AdditionalMavenImportingSettings additionalSettings : AdditionalMavenImportingSettings.EP_NAME.getExtensions()) {
       myAdditionalConfigurables.add(additionalSettings.createConfigurable(project));
     }
+    mySettingsForm = new MavenImportingSettingsForm(myProject.isDefault());
   }
 
   @Override
@@ -113,7 +114,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.importing");
+    return MavenProjectBundle.message("maven.tab.importing");
   }
 
   @Override

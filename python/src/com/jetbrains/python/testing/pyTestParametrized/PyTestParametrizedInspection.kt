@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.PyFunction
@@ -21,7 +20,7 @@ class PyTestParametrizedInspection : PyInspection() {
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = object : PyInspectionVisitor(holder, session) {
-    override fun visitElement(element: PsiElement?) {
+    override fun visitElement(element: PsiElement) {
       if (element is PyFunction) {
         val requiredParameters = element
           .getParametersOfParametrized(myTypeEvalContext)
@@ -44,7 +43,4 @@ class PyTestParametrizedInspection : PyInspection() {
     }
   }
 
-  override fun getDisplayName(): String {
-    return PyBundle.message("INSP.NAME.pytest-parametrized")
-  }
 }

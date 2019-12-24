@@ -132,7 +132,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
         private boolean inScope;
 
         @Override
-        public void visitElement(PsiElement element) {
+        public void visitElement(@NotNull PsiElement element) {
           if (element == start) {
             inScope = true;
           }

@@ -27,7 +27,10 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -43,7 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
- import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -55,6 +58,7 @@ import java.util.List;
 
 import static com.intellij.formatting.Indent.*;
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.flattenQualifiedReference;
+import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
@@ -81,7 +85,7 @@ public class GroovyBlockGenerator {
   private final AlignmentProvider myAlignmentProvider;
   private final GroovyWrappingProcessor myWrappingProcessor;
 
-  private final FormattingContext myContext;
+  private FormattingContext myContext;
 
   public GroovyBlockGenerator(GroovyBlock block) {
     myBlock = block;
@@ -123,8 +127,8 @@ public class GroovyBlockGenerator {
     if (GroovyTokenSets.STRING_LITERALS.contains(elementType) && myBlock.getTextRange().equals(myNode.getTextRange())) {
       String text = myNode.getText();
       if (text.length() > 6) {
-        if (text.substring(0, 3).equals("'''") && text.substring(text.length() - 3).equals("'''") ||
-            text.substring(0, 3).equals("\"\"\"") & text.substring(text.length() - 3).equals("\"\"\"")) {
+        if (text.startsWith("'''") && text.endsWith("'''") ||
+            text.startsWith("\"\"\"") && text.endsWith("\"\"\"")) {
           return generateForMultiLineString();
         }
       }
@@ -135,8 +139,8 @@ public class GroovyBlockGenerator {
         elementType == GroovyElementTypes.REGEX ||
         elementType == GroovyTokenTypes.mREGEX_LITERAL ||
         elementType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
-      final FormattingContext context =
-        myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
+      boolean isPlainGString = myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString();
+      final FormattingContext context = isPlainGString ? myContext.createContext(true) : myContext;
 
       final ArrayList<Block> subBlocks = new ArrayList<>();
       ASTNode[] children = getGroovyChildren(myNode);
@@ -250,7 +254,9 @@ public class GroovyBlockGenerator {
       {
         Indent indent = getNormalIndent();
         ASTNode parameterListNode = closableBlock.getParameterList().getNode();
-        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), myContext);
+        boolean forbidWrapping = shouldHandleAsSimpleClosure(closableBlock, settings);
+        FormattingContext closureContext = myContext.createContext(forbidWrapping);
+        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), closureContext);
         blocks.add(bodyBlock);
       }
 
@@ -261,6 +267,17 @@ public class GroovyBlockGenerator {
       }
 
       return blocks;
+    }
+
+    if (blockPsi instanceof GrClosableBlock) {
+      FormattingContext oldContext = myContext;
+      try {
+        boolean forbidWrapping = shouldHandleAsSimpleClosure((GrClosableBlock)blockPsi, settings);
+        myContext = myContext.createContext(forbidWrapping);
+        return generateCodeSubBlocks(visibleChildren(myNode));
+      } finally {
+        myContext = oldContext;
+      }
     }
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile) {

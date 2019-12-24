@@ -3,16 +3,15 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
+
+import java.io.File;
 
 public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
@@ -24,9 +23,18 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   @NotNull
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
-      String jdkHome = SystemProperties.getJavaHome();
+      File javaHome = new File(SystemProperties.getJavaHome());
+
+      if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
+        // handle situation like javaHome="<somewhere>/jdk1.8.0_212/jre" (see IDEA-226353)
+        File javaHomeParent = javaHome.getParentFile();
+        if (javaHomeParent != null && JdkUtil.checkForJre(javaHomeParent) && JdkUtil.checkForJdk(javaHomeParent)) {
+          javaHome = javaHomeParent;
+        }
+      }
+
       String versionName = JdkVersionDetector.formatVersionString(JavaVersion.current());
-      myInternalJdk = JavaSdk.getInstance().createJdk(versionName, jdkHome);
+      myInternalJdk = JavaSdk.getInstance().createJdk(versionName, javaHome.getAbsolutePath(), !JdkUtil.checkForJdk(javaHome));
     }
     return myInternalJdk;
   }

@@ -34,13 +34,6 @@ public class MultipleTopLevelClassesInFileInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "multiple.top.level.classes.in.file.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "multiple.top.level.classes.in.file.problem.descriptor");

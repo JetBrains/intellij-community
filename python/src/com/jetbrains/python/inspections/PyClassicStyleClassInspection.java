@@ -31,12 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexey.Ivanov
  */
 public class PyClassicStyleClassInspection extends PyInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.classic.class.usage");
-  }
 
   @Override
   public boolean isEnabledByDefault() {

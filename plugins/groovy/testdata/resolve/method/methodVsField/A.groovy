@@ -11,7 +11,7 @@ class Bar extends Foo {
     def f = new Bar()
 
     
-    println f.ba<ref>r(3)
+    println f.ba<caret>r(3)
   }
 
 }

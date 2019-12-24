@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import icons.JavaDebuggerStreamsIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,14 +70,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final QualifierExpression qualifierExpression = chain.getQualifierExpression();
     final MyPlaceholder firstTab = new MyPlaceholder();
     myTabsPane.insertTab(TraceUtil.formatQualifierExpression(qualifierExpression.getText(), 30),
-                         JavaDebuggerStreamsIcons.Tab, firstTab, qualifierExpression.getText(), 0);
+                         AllIcons.Debugger.Console, firstTab, qualifierExpression.getText(), 0);
     myTabContents.add(firstTab);
 
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
       final String callName = call.getName().replace(" ", "");
-      myTabsPane.insertTab(callName, JavaDebuggerStreamsIcons.Tab, tab, TraceUtil.formatWithArguments(call), i + 1);
+      myTabsPane.insertTab(callName, AllIcons.Debugger.Console, tab, TraceUtil.formatWithArguments(call), i + 1);
       myTabContents.add(tab);
     }
 

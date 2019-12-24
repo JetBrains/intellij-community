@@ -69,7 +69,7 @@ import java.util.regex.Pattern;
  * @author cdr
  */
 public class UsagePreviewPanel extends UsageContextPanelBase implements DataProvider {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsagePreviewPanel");
+  private static final Logger LOG = Logger.getInstance(UsagePreviewPanel.class);
   private Editor myEditor;
   private final boolean myIsEditor;
   private int myLineHeight;
@@ -352,9 +352,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     }
     PsiFile psiFile = null;
     for (UsageInfo info : infos) {
-      PsiElement element = info.getElement();
-      if (element == null) continue;
-      PsiFile file = element.getContainingFile();
+      PsiFile file = info.getFile();
       if (psiFile == null) {
         psiFile = file;
       } else {

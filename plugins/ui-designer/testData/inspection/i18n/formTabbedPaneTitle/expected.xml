@@ -3,7 +3,7 @@
   <problem>
     <file>Test.form</file>
     <line>1</line>
-    <description>Hard coded string literal</description>
+    <description>Hardcoded string literal</description>
   </problem>
 </problems>
 

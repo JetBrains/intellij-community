@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,9 +74,19 @@ public final class ProcessListUtil {
   @Nullable
   private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
                                                       @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser) {
+    return parseCommandOutput(command, parser, null);
+  }
+
+  @Nullable
+  private static List<ProcessInfo> parseCommandOutput(@NotNull List<String> command,
+                                                      @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
+                                                      @Nullable Charset charset) {
     String output;
     try {
-      ProcessOutput processOutput = ExecUtil.execAndGetOutput(new GeneralCommandLine(command));
+      GeneralCommandLine commandLine = new GeneralCommandLine(command);
+      if (charset != null)
+        commandLine.withCharset(charset);
+      ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine);
       int exitCode = processOutput.getExitCode();
       if (exitCode != 0) {
         LOG.error("Cannot get process list, command '" + StringUtil.join(command, " ") +"' exited with code " + exitCode + ", stdout:\n"
@@ -263,7 +276,64 @@ public final class ProcessListUtil {
     if (exeFile == null) {
       return null;
     }
-    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput);
+    return parseCommandOutput(Collections.singletonList(exeFile.getAbsolutePath()), ProcessListUtil::parseWinProcessListHelperOutput, StandardCharsets.UTF_8);
+  }
+
+  private static void logErrorTestSafe(String message) {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isUnitTestMode()) {
+      LOG.warn(message);
+    } else {
+      LOG.error(message);
+    }
+  }
+
+  @Nullable
+  private static String unescapeString(@Nullable String str) {
+    if (str == null) return null;
+    StringBuilder builder = new StringBuilder();
+    for (int index = 0; index < str.length(); index++) {
+      if (str.charAt(index) == '\\') {
+        if (index == str.length() - 1) {
+          logErrorTestSafe("Invalid escaped string: backslash at the last position");
+          LOG.debug(str);
+          return null;
+        }
+        switch (str.charAt(index + 1)) {
+          case '\\': {
+            builder.append('\\');
+            break;
+          }
+          case 'n': {
+            builder.append('\n');
+            break;
+          }
+          case 'r': {
+            builder.append('\r');
+            break;
+          }
+          default: {
+            logErrorTestSafe("Invalid character after an escape symbol: " + str.charAt(index + 1));
+            LOG.debug(str);
+            return null;
+          }
+        }
+        index++;
+        continue;
+      }
+      builder.append(str.charAt(index));
+    }
+    return builder.toString();
+  }
+
+  @Nullable
+  private static String removePrefix(String str, String prefix) {
+    if (str.startsWith(prefix)) {
+      return str.substring(prefix.length());
+    }
+    logErrorTestSafe("Can't remove prefix \"" + prefix + "\"");
+    LOG.debug(str);
+    return null;
   }
 
   @Nullable
@@ -271,25 +341,36 @@ public final class ProcessListUtil {
     String[] lines = StringUtil.splitByLines(output, false);
     List<ProcessInfo> result = new ArrayList<>();
     if (lines.length % 3 != 0) {
-      LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
+      logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": output line count is not a multiple of 3");
       LOG.debug(output);
       return null;
     }
     int processCount = lines.length / 3;
     for (int i = 0; i < processCount; i++) {
       int offset = i * 3;
-      int id = StringUtil.parseInt(lines[offset], -1);
+      String idString = removePrefix(lines[offset], "pid:");
+      int id = StringUtil.parseInt(idString, -1);
       if (id == -1) {
-        LOG.info("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
+        logErrorTestSafe("Broken output of " + WIN_PROCESS_LIST_HELPER_FILENAME + ": process ID is not a number: " + lines[offset]);
         LOG.debug(output);
         return null;
       }
       if (id == 0) continue;
 
-      String name = lines[offset + 1];
-      if (StringUtil.isEmpty(name)) continue;
+      String name = unescapeString(removePrefix(lines[offset + 1], "name:"));
+      if (name == null) {
+        logErrorTestSafe("Failed to read a process name: " + lines[offset + 1]);
+        LOG.debug(output);
+        return null;
+      }
+      if (name.isEmpty()) continue;
 
-      String commandLine = lines[offset + 2];
+      String commandLine = unescapeString(removePrefix(lines[offset + 2], "cmd:"));
+      if (commandLine == null) {
+        logErrorTestSafe("Failed to read a process command line: " + lines[offset + 2]);
+        LOG.debug(output);
+        return null;
+      }
       String args;
       if (commandLine.isEmpty()) {
         commandLine = name;

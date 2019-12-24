@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class CreateFileObjects {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.common.CreateFileObjects");
+  private static final Logger LOG = Logger.getInstance(CreateFileObjects.class);
 
   private final File[] myFiles;
   private final String myRootPath;

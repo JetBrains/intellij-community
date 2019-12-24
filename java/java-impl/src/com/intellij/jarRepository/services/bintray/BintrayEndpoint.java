@@ -202,7 +202,7 @@ public class BintrayEndpoint {
         if (useThreadPool) {
           ExecutorService executorService = Executors.newFixedThreadPool(threadsCount);
           for (int i = 0; i < threadsCount; i++) {
-            executorService.submit(task);
+            executorService.execute(task);
           }
           try {
             cdl.await();

@@ -9,7 +9,10 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -19,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.EditorBasedWidget");
+  private static final Logger LOG = Logger.getInstance(EditorBasedWidget.class);
   public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
 
   @NotNull
@@ -34,7 +37,7 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
   }
 
   @Nullable
-  protected final Editor getEditor() {
+  protected Editor getEditor() {
     final Project project = getProject();
     if (project.isDisposed()) return null;
 
@@ -78,18 +81,19 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     return true;
   }
 
-  boolean isOurEditor(Editor editor) {
+  public boolean isOurEditor(Editor editor) {
     return editor != null &&
            editor.getComponent().isShowing() &&
            !Boolean.TRUE.equals(editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY)) &&
            WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
   }
 
+  @Nullable
   Component getFocusedComponent() {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-      IdeFrame frame = focusManager.getLastFocusedFrame();
+      Window frame = focusManager.getLastFocusedIdeWindow();
       if (frame != null) {
         focusOwner = focusManager.getLastFocusedFor(frame);
       }

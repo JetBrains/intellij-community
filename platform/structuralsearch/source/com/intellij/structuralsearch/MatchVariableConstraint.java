@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -49,9 +48,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NonNls private static final String REFERENCE_CONDITION = "reference";
   @NonNls private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
-  @NonNls private static final String EXPRESSION_TYPES = "expressionTypes";
   @NonNls private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
-  @NonNls private static final String EXPECTED_TYPES = "exceptedTypes";
   @NonNls private static final String REGEXP = "regexp";
   @NonNls private static final String EXPRTYPE_WITHIN_HIERARCHY = "exprTypeWithinHierarchy";
   @NonNls private static final String FORMALTYPE_WITHIN_HIERARCHY = "formalTypeWithinHierarchy";
@@ -248,18 +245,26 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NotNull
   public String getNameOfExprType() {
-    return Registry.is("ssr.use.regexp.to.specify.type") ? nameOfExprType : expressionTypes;
+    return nameOfExprType;
+  }
+
+  @NotNull
+  public String getExpressionTypes() {
+    return expressionTypes;
   }
 
   public void setNameOfExprType(@NotNull String nameOfExprType) {
-    if (Registry.is("ssr.use.regexp.to.specify.type")) {
-      this.nameOfExprType = nameOfExprType;
-      this.expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
-    }
-    else {
-      this.nameOfExprType = convertTypeStringToRegExp(nameOfExprType);
-      this.expressionTypes = nameOfExprType;
-    }
+    this.nameOfExprType = nameOfExprType;
+    this.expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
+  }
+
+  public void setExpressionTypes(@NotNull String expressionTypes) {
+    this.expressionTypes = expressionTypes;
+    this.nameOfExprType = convertTypeStringToRegExp(expressionTypes);
+  }
+
+  public boolean isRegexExprType() {
+    return StringUtil.isEmpty(expressionTypes) && !StringUtil.isEmpty(nameOfExprType);
   }
 
   public boolean isInvertExprType() {
@@ -288,18 +293,26 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NotNull
   public String getNameOfFormalArgType() {
-    return Registry.is("ssr.use.regexp.to.specify.type") ? nameOfFormalArgType : expectedTypes;
+    return nameOfFormalArgType;
+  }
+
+  @NotNull
+  public String getExpectedTypes() {
+    return expectedTypes;
   }
 
   public void setNameOfFormalArgType(@NotNull String nameOfFormalArgType) {
-    if (Registry.is("ssr.use.regexp.to.specify.type")) {
-      this.nameOfFormalArgType = nameOfFormalArgType;
-      this.expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
-    }
-    else {
-      this.nameOfFormalArgType = convertTypeStringToRegExp(nameOfFormalArgType);
-      this.expectedTypes = nameOfFormalArgType;
-    }
+    this.nameOfFormalArgType = nameOfFormalArgType;
+    this.expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
+  }
+
+  public void setExpectedTypes(@NotNull String expectedTypes) {
+    this.expectedTypes = expectedTypes;
+    this.nameOfFormalArgType = convertTypeStringToRegExp(expectedTypes);
+  }
+
+  public boolean isRegexFormalType() {
+    return StringUtil.isEmpty(expectedTypes) && !StringUtil.isEmpty(nameOfFormalArgType);
   }
 
   public boolean isInvertFormalType() {
@@ -390,21 +403,14 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     invertRegExp = getBooleanValue(element, NEGATE_NAME_CONDITION, false);
     wholeWordsOnly = getBooleanValue(element, WHOLE_WORDS_ONLY, false);
 
-    expressionTypes = StringUtil.notNullize(element.getAttributeValue(EXPRESSION_TYPES));
-
     nameOfExprType = StringUtil.notNullize(element.getAttributeValue(NAME_OF_EXPRTYPE));
-    if (expressionTypes.isEmpty() && !nameOfExprType.isEmpty()) {
-      expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
-    }
+    expressionTypes = convertRegExpTypeToTypeString(nameOfExprType);
 
     exprTypeWithinHierarchy = getBooleanValue(element, EXPRTYPE_WITHIN_HIERARCHY, false);
     invertExprType = getBooleanValue(element, NEGATE_EXPRTYPE_CONDITION, false);
-    expectedTypes = StringUtil.notNullize(element.getAttributeValue(EXPECTED_TYPES));
 
     nameOfFormalArgType = StringUtil.notNullize(element.getAttributeValue(NAME_OF_FORMALTYPE));
-    if (expectedTypes.isEmpty() && !nameOfFormalArgType.isEmpty()) {
-      expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
-    }
+    expectedTypes = convertRegExpTypeToTypeString(nameOfFormalArgType);
 
     formalArgTypeWithinHierarchy = getBooleanValue(element, FORMALTYPE_WITHIN_HIERARCHY, false);
     invertFormalType = getBooleanValue(element, NEGATE_FORMALTYPE_CONDITION, false);
@@ -453,14 +459,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
     if (!regExp.isEmpty()) element.setAttribute(REGEXP, regExp);
     if (!nameOfExprType.isEmpty()) element.setAttribute(NAME_OF_EXPRTYPE, nameOfExprType);
-    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expressionTypes.isEmpty() && !expressionTypes.equals(nameOfExprType)) {
-      element.setAttribute(EXPRESSION_TYPES, expressionTypes);
-    }
     if (!referenceConstraint.isEmpty()) element.setAttribute(REFERENCE_CONDITION, referenceConstraint);
     if (!nameOfFormalArgType.isEmpty()) element.setAttribute(NAME_OF_FORMALTYPE, nameOfFormalArgType);
-    if (!Registry.is("ssr.use.regexp.to.specify.type") && !expectedTypes.isEmpty() && !expectedTypes.equals(nameOfFormalArgType)) {
-      element.setAttribute(EXPECTED_TYPES, expectedTypes);
-    }
 
     if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY, TRUE);
     if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY, TRUE);

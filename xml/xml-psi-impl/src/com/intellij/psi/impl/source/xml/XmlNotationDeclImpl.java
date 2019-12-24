@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDecl, XmlElementType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlElementDeclImpl");
+  private static final Logger LOG = Logger.getInstance(XmlElementDeclImpl.class);
 
   public XmlNotationDeclImpl() {
     super(XML_NOTATION_DECL);

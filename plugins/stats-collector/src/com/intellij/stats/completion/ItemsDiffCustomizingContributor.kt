@@ -7,18 +7,23 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.settings.CompletionMLRankingSettings
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.stats.storage.factors.LookupStorage
 import com.intellij.ui.JBColor
 import java.awt.Color
+import java.util.concurrent.atomic.AtomicInteger
 
 class ItemsDiffCustomizingContributor : CompletionContributor() {
   companion object {
-    val DIFF_KEY = Key.create<Int>("ItemsDiffCustomizerContributor.DIFF_KEY")
+    val DIFF_KEY = Key.create<AtomicInteger>("ItemsDiffCustomizerContributor.DIFF_KEY")
   }
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    if (Registry.`is`("completion.stats.show.ml.ranking.diff")) {
+    if (shouldShowDiff(parameters)) {
       result.runRemainingContributors(parameters) {
         result.passResult(it.withLookupElement(MovedLookupElement(it.lookupElement)))
       }
@@ -28,6 +33,14 @@ class ItemsDiffCustomizingContributor : CompletionContributor() {
     }
   }
 
+  private fun shouldShowDiff(parameters: CompletionParameters): Boolean {
+    val mlRankingSettings = CompletionMLRankingSettings.getInstance()
+    if (!mlRankingSettings.isShowDiffEnabled) return false
+    if (!mlRankingSettings.isRankingEnabled) return false
+    val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return false
+    return LookupStorage.get(lookup)?.model != null
+  }
+
   private class MovedLookupElement(delegate: LookupElement) : LookupElementDecorator<LookupElement>(delegate) {
     private companion object {
       val ML_RANK_DIFF_GREEN_COLOR = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
@@ -35,8 +48,8 @@ class ItemsDiffCustomizingContributor : CompletionContributor() {
 
     override fun renderElement(presentation: LookupElementPresentation) {
       super.renderElement(presentation)
-      val diff = getUserData(DIFF_KEY)
-      if (diff == null || !presentation.isReal) return
+      val diff = getUserData(DIFF_KEY)?.get()
+      if (diff == null || diff == 0 || !presentation.isReal) return
       val text = if (diff < 0) " ↑${-diff} " else " ↓$diff "
       val color: Color = if (diff < 0) ML_RANK_DIFF_GREEN_COLOR else JBColor.RED
 

@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -46,16 +45,7 @@ import java.util.stream.Stream;
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   protected enum LineMarkerType { External, InferredNullability, InferredContract }
 
-  private final Function<PsiElement, String> myTooltipProvider = nameIdentifier -> {
-    PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
-
-    return XmlStringUtil.wrapInHtml(NonCodeAnnotationGenerator.getNonCodeHeader(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values()) +
-                                    " available. Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
-  };
-
-  private static LineMarkerType getAnnotationLineMarkerType(PsiModifierListOwner owner) {
-    Collection<? extends AnnotationDocGenerator> nonCodeAnnotations =
-      NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+  private static LineMarkerType getAnnotationLineMarkerType(Collection<? extends AnnotationDocGenerator> nonCodeAnnotations) {
     if (ContainerUtil.find(nonCodeAnnotations, (anno) -> !anno.isInferred()) != null) {
       return LineMarkerType.External;
     }
@@ -95,18 +85,16 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
 
-    if (!hasAnnotationsToShow(owner)) {
+    Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
+    if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
       return null;
     }
 
-    return new LineMarkerInfo<>(element, element.getTextRange(),
-                                AllIcons.Gutter.ExtAnnotation,
-                                myTooltipProvider, MyIconGutterHandler.INSTANCE,
+    String tooltip = XmlStringUtil.wrapInHtml(
+      NonCodeAnnotationGenerator.getNonCodeHeader(nonCodeAnnotations) + " available. Full signature:<p>\n" +
+      JavaDocInfoGenerator.generateSignature(owner));
+    return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
-  }
-
-  protected boolean hasAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
-    return getAnnotationLineMarkerType(owner) == myLineMarkerType;
   }
 
   @Nullable

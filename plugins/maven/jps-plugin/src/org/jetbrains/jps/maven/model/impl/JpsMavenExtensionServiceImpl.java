@@ -42,7 +42,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.maven.model.impl.JpsMavenExtensionServiceImpl");
+  private static final Logger LOG = Logger.getInstance(JpsMavenExtensionServiceImpl.class);
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("maven production on test");
   private final Map<File, MavenProjectConfiguration> myLoadedConfigs =
     new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);

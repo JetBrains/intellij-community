@@ -51,7 +51,7 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class CodeBlockGenerator extends Generator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.CodeBlockGenerator");
+  private static final Logger LOG = Logger.getInstance(CodeBlockGenerator.class);
 
   private static final boolean IN_TEST = ApplicationManager.getApplication().isUnitTestMode();
 

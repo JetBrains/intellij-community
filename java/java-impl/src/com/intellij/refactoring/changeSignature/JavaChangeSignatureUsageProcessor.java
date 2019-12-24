@@ -67,7 +67,7 @@ import java.util.*;
  * @author Maxim.Medvedev
  */
 public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsageProcessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor");
+  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageProcessor.class);
 
   private static boolean isJavaUsage(UsageInfo info) {
     final PsiElement element = info.getElement();

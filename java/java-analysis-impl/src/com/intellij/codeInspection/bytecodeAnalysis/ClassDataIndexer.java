@@ -24,7 +24,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
@@ -55,7 +54,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 12; // change when inference algorithm changes
+  private static final int VERSION = 13; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
@@ -69,11 +68,10 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       return map;
     }
     try {
-      MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       ClassReader reader = new ClassReader(file.contentsToByteArray(false));
       Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
       allEquations = solvePartially(reader.getClassName(), allEquations);
-      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(md), hash(equations, md), MERGER));
+      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(), hash(equations), MERGER));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -125,33 +123,33 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       .toMap();
   }
 
-  private static Equations hash(Equations equations, MessageDigest md) {
-    return new Equations(ContainerUtil.map(equations.results, drp -> hash(drp, md)), equations.stable);
+  private static Equations hash(Equations equations) {
+    return new Equations(ContainerUtil.map(equations.results, ClassDataIndexer::hash), equations.stable);
   }
 
-  private static DirectionResultPair hash(DirectionResultPair drp, MessageDigest md) {
-    return new DirectionResultPair(drp.directionKey, hash(drp.result, md));
+  private static DirectionResultPair hash(DirectionResultPair drp) {
+    return new DirectionResultPair(drp.directionKey, hash(drp.result));
   }
 
-  private static Result hash(Result result, MessageDigest md) {
+  private static Result hash(Result result) {
     if (result instanceof Effects) {
       Effects effects = (Effects)result;
-      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(effect -> hash(effect, md)).toSet());
+      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(ClassDataIndexer::hash).toSet());
     }
     else if (result instanceof Pending) {
-      return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
+      return new Pending(ContainerUtil.map(((Pending)result).delta, ClassDataIndexer::hash));
     }
     return result;
   }
 
-  private static Component hash(Component component, MessageDigest md) {
-    return new Component(component.value, StreamEx.of(component.ids).map(key -> key.hashed(md)).toArray(EKey[]::new));
+  private static Component hash(Component component) {
+    return new Component(component.value, StreamEx.of(component.ids).map(EKey::hashed).toArray(EKey[]::new));
   }
 
-  private static EffectQuantum hash(EffectQuantum effect, MessageDigest md) {
+  private static EffectQuantum hash(EffectQuantum effect) {
     if (effect instanceof EffectQuantum.CallQuantum) {
       EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
-      return new EffectQuantum.CallQuantum(call.key.hashed(md), call.data, call.isStatic);
+      return new EffectQuantum.CallQuantum(call.key.hashed(), call.data, call.isStatic);
     }
     return effect;
   }

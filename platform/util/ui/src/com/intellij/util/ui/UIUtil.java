@@ -17,6 +17,7 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -73,8 +74,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
 /**
@@ -89,23 +88,21 @@ public final class UIUtil {
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
-
-  public static final boolean SUPPRESS_FOCUS_STEALING = Registry.is("suppress.focus.stealing.active.window.checks", false);
-  public static final boolean DISABLE_AUTO_REQUEST_FOCUS = Registry.is("suppress.focus.stealing.disable.auto.request.focus", false);
+  public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
 
   @NotNull
   // cannot be static because logging maybe not configured yet
   private static Logger getLogger() {
-    return Logger.getInstance("#com.intellij.util.ui.UIUtil");
+    return Logger.getInstance(UIUtil.class);
   }
 
   public static void decorateWindowHeader(JRootPane pane) {
-    if (pane != null && SystemInfo.isMac) {
+    if (pane != null && SystemInfo.isMacOSMojave) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
     }
   }
 
-  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, Consumer<Runnable> onDispose) {
+  public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<Runnable> onDispose) {
     if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
@@ -131,7 +128,7 @@ public final class UIUtil {
           graphics.setColor(color);
           int controlButtonsWidth = 70;
           String windowTitle = getWindowTitle(window);
-          double widthToFit = (controlButtonsWidth*2 + GraphicsUtil.stringWidth(windowTitle, g.getFont())) - c.getWidth();
+          double widthToFit = controlButtonsWidth * 2 + GraphicsUtil.stringWidth(windowTitle, g.getFont()) - c.getWidth();
           if (widthToFit <= 0) {
             drawCenteredString(graphics, headerRectangle, windowTitle);
           } else {
@@ -162,7 +159,7 @@ public final class UIUtil {
     };
     PropertyChangeListener propertyChangeListener = e -> rootPane.repaint();
     window.addPropertyChangeListener("title", propertyChangeListener);
-    onDispose.consume(() -> {
+    onDispose.accept(() -> {
       window.removeWindowListener(windowAdapter);
       window.removePropertyChangeListener("title", propertyChangeListener);
     });
@@ -632,15 +629,15 @@ public final class UIUtil {
     if (x == x1) {
       int minY = Math.min(y, y1);
       int maxY = Math.max(y, y1);
-      drawLine(graphics, x, minY + 1, x1, maxY - 1);
+      LinePainter2D.paint((Graphics2D)graphics, x, minY + 1, x1, maxY - 1);
     }
     else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      drawLine(graphics, minX + 1, y, maxX - 1, y1);
+      LinePainter2D.paint((Graphics2D)graphics, minX + 1, y, maxX - 1, y1);
     }
     else {
-      drawLine(graphics, x, y, x1, y1);
+      LinePainter2D.paint((Graphics2D)graphics, x, y, x1, y1);
     }
   }
 
@@ -662,7 +659,7 @@ public final class UIUtil {
     final int centerY = bounds.height / 2;
     final Font font = g.getFont();
     final FontRenderContext frc = g.getFontRenderContext();
-    final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
+    final Rectangle stringBounds = font.getStringBounds(string.isEmpty() ? " " : string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
   }
@@ -780,7 +777,7 @@ public final class UIUtil {
       currentAtom.append(ch);
 
       if (ch == separator) {
-        currentLine.append(currentAtom.toString());
+        currentLine.append(currentAtom);
         currentAtom.setLength(0);
       }
 
@@ -1268,6 +1265,7 @@ public final class UIUtil {
    * @deprecated Alloy Look-n-Feel is deprecated and not supported anymore
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1276,7 +1274,7 @@ public final class UIUtil {
    * @deprecated Native OS Look-n-Feel is not supported anymore
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
@@ -1286,7 +1284,6 @@ public final class UIUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
@@ -1295,7 +1292,6 @@ public final class UIUtil {
   /**
    * @deprecated Aqua Look-n-Feel is not supported anymore
    */
-  @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAquaLookAndFeel() {
@@ -1325,34 +1321,37 @@ public final class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui", true) && !isCustomTheme();
-  }
-
-  public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui", true) && !isCustomTheme();
-  }
-
-  private static boolean isCustomTheme() {
     LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof UserDataHolder) {
-      Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
-      return value != null && value.booleanValue();
+    if (SystemInfo.isMac && lookAndFeel instanceof UserDataHolder) {
+      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+
+      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "macOS Light");
     }
     return false;
   }
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  public static boolean isUnderWin10LookAndFeel() {
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (SystemInfo.isWindows && lookAndFeel instanceof UserDataHolder) {
+      UserDataHolder dh = (UserDataHolder)lookAndFeel;
+
+      return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
+             StringUtil.equals(dh.getUserData(PLUGGABLE_LAF_KEY), "Windows 10 Light");
+    }
+    return false;
+  }
+
   public static boolean isUnderDarcula() {
     return StartupUiUtil.isUnderDarcula();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderIntelliJLaF() {
-    return UIManager.getLookAndFeel().getName().contains("IntelliJ");
+    return UIManager.getLookAndFeel().getName().contains("IntelliJ") || isUnderDefaultMacTheme() || isUnderWin10LookAndFeel();
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
@@ -1372,8 +1371,8 @@ public final class UIUtil {
    * @deprecated GTK Look-n-Feel is not supported anymore
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static String getGtkThemeName() {
     final LookAndFeel laf = UIManager.getLookAndFeel();
     if (laf != null && "GTKLookAndFeel".equals(laf.getClass().getSimpleName())) {
@@ -1550,19 +1549,19 @@ public final class UIUtil {
   public static void drawDottedRectangle(@NotNull Graphics g, int x, int y, int x1, int y1) {
     int i1;
     for (i1 = x; i1 <= x1; i1 += 2) {
-      drawLine(g, i1, y, i1, y);
+      LinePainter2D.paint((Graphics2D)g, i1, y, i1, y);
     }
 
     for (i1 = y + (i1 != x1 + 1 ? 2 : 1); i1 <= y1; i1 += 2) {
-      drawLine(g, x1, i1, x1, i1);
+      LinePainter2D.paint((Graphics2D)g, x1, i1, x1, i1);
     }
 
     for (i1 = x1 - (i1 != y1 + 1 ? 2 : 1); i1 >= x; i1 -= 2) {
-      drawLine(g, i1, y1, i1, y1);
+      LinePainter2D.paint((Graphics2D)g, i1, y1, i1, y1);
     }
 
     for (i1 = y1 - (i1 != x - 1 ? 2 : 1); i1 >= y; i1 -= 2) {
-      drawLine(g, x, i1, x, i1);
+      LinePainter2D.paint((Graphics2D)g, x, i1, x, i1);
     }
   }
 
@@ -1624,15 +1623,15 @@ public final class UIUtil {
 
     final boolean drawRound = endXf - startXf > 4;
     if (drawRound) {
-      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
-      drawLine(g ,endX, 4, endX, height - 4);
+      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
+      LinePainter2D.paint(g, endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
-      drawLine(g ,endX, 4, endX, height - 4);
+      LinePainter2D.paint(g, startX - 1, 4, startX - 1, height - 4);
+      LinePainter2D.paint(g, endX, 4, endX, height - 4);
 
-      drawLine(g ,startX, 3, endX - 1, 3);
-      drawLine(g ,startX, height - 3, endX - 1, height - 3);
+      LinePainter2D.paint(g, startX, 3, endX - 1, 3);
+      LinePainter2D.paint(g, startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
@@ -1651,8 +1650,8 @@ public final class UIUtil {
     if (opaque && bgColor != null) {
       g.setColor(bgColor);
 
-      drawLine(g, startX, lineY, endX, lineY);
-      drawLine(g, startX, lineY + 1, endX, lineY + 1);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY + 1, endX, lineY + 1);
     }
 
     // Draw dotted line:
@@ -1668,8 +1667,8 @@ public final class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      drawLine(g ,dotXi, lineY, dotXi + 1, lineY);
-      drawLine(g ,dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      LinePainter2D.paint(g, dotXi, lineY, dotXi + 1, lineY);
+      LinePainter2D.paint(g, dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1700,8 +1699,8 @@ public final class UIUtil {
       g.fillRect(x, 0, width, height);
 
       g.setColor(JBUI.CurrentTheme.ToolWindow.headerBorderBackground());
-      if (drawTopLine) drawLine(g ,x, 0, width, 0);
-      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
+      if (drawTopLine) LinePainter2D.paint((Graphics2D)g, x, 0, width, 0);
+      if (drawBottomLine) LinePainter2D.paint((Graphics2D)g, x, height - 1, width, height - 1);
 
     }
     finally {
@@ -1719,10 +1718,10 @@ public final class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        drawLine(g ,dot, xOrY, dot, xOrY);
+        LinePainter2D.paint(g, dot, xOrY, dot, xOrY);
       }
       else {
-        drawLine(g ,xOrY, dot, xOrY, dot);
+        LinePainter2D.paint(g, xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -1740,9 +1739,9 @@ public final class UIUtil {
     if (opaque && bgColor != null) {
       g.setColor(bgColor);
 
-      drawLine(g, startX, lineY, endX, lineY);
-      drawLine(g, startX, lineY + 1, endX, lineY + 1);
-      drawLine(g, startX, lineY + 2, endX, lineY + 2);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY + 1, endX, lineY + 1);
+      LinePainter2D.paint(g, startX, lineY + 2, endX, lineY + 2);
     }
 
     AppleBoldDottedPainter painter = AppleBoldDottedPainter.forColor(ObjectUtils.notNull(fgColor, oldColor));
@@ -1885,7 +1884,7 @@ public final class UIUtil {
         ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
       }
       catch (Exception e) {
-        getLogger().error(e);
+        ExceptionUtil.rethrow(e);
       }
 
       if (i % 10000 == 0) {
@@ -1910,12 +1909,7 @@ public final class UIUtil {
 
   public static void addAwtListener(@NotNull final AWTEventListener listener, long mask, @NotNull Disposable parent) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, new Disposable() {
-      @Override
-      public void dispose() {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
-      }
-    });
+    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -1929,7 +1923,7 @@ public final class UIUtil {
   public static void drawVDottedLine(@NotNull Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
-      drawLine(g, lineX, startY, lineX, endY);
+      LinePainter2D.paint(g, lineX, startY, lineX, endY);
     }
 
     g.setColor(fgColor);
@@ -1941,7 +1935,7 @@ public final class UIUtil {
   public static void drawHDottedLine(@NotNull Graphics2D g, int startX, int endX, int lineY, @Nullable final Color bgColor, final Color fgColor) {
     if (bgColor != null) {
       g.setColor(bgColor);
-      drawLine(g, startX, lineY, endX, lineY);
+      LinePainter2D.paint(g, startX, lineY, endX, lineY);
     }
 
     g.setColor(fgColor);
@@ -2157,6 +2151,11 @@ public final class UIUtil {
     }
   }
 
+  //Whitelist for component types that provide obvious 'focused' view
+  public static boolean canDisplayFocusedState(@NotNull Component component) {
+    return component instanceof JTextComponent || component instanceof AbstractButton || component instanceof JComboBox;
+  }
+
   //todo maybe should do for all kind of listeners via the AWTEventMulticaster class
 
   public static void dispose(final Component c) {
@@ -2313,7 +2312,7 @@ public final class UIUtil {
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && StringUtil.toLowerCase(((String)toRender)).startsWith("<html>")) {
+    if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {
       //noinspection unchecked
       return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
     }
@@ -2452,9 +2451,8 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable runnable) throws Throwable {
+  public static void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable<?> runnable) throws Throwable {
     if (EdtInvocationManager.getInstance().isEventDispatchThread()) {
       runnable.run();
     }
@@ -2495,23 +2493,8 @@ public final class UIUtil {
     }
   }
 
-  public static void addKeyboardShortcut(@NotNull final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
-    target.registerKeyboardAction(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (button.isEnabled()) {
-            button.doClick();
-          }
-        }
-      },
-      keyStroke,
-      JComponent.WHEN_FOCUSED
-    );
-  }
-
   @Nullable
-  public static ComboPopup getComboBoxPopup(@NotNull JComboBox comboBox) {
+  public static ComboPopup getComboBoxPopup(@NotNull JComboBox<?> comboBox) {
     final ComboBoxUI ui = comboBox.getUI();
     if (ui instanceof BasicComboBoxUI) {
       return ReflectionUtil.getField(BasicComboBoxUI.class, ui, ComboPopup.class, "popup");
@@ -2597,8 +2580,8 @@ public final class UIUtil {
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {
-      child =  child instanceof JPopupMenu  ? ((JPopupMenu)child).getInvoker()
-                                            : child.getParent();
+      child = child instanceof JPopupMenu ? ((JPopupMenu)child).getInvoker()
+                                          : child.getParent();
     }
     return child == parent;
   }
@@ -2620,7 +2603,7 @@ public final class UIUtil {
 
   @NotNull
   public static JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
-    return strict ? JBIterable.generate(c, COMPONENT_PARENT).skip(1) : JBIterable.generate(c, COMPONENT_PARENT);
+    return strict ? JBIterable.generate(c, c1 -> c1.getParent()).skip(1) : JBIterable.generate(c, c1 -> c1.getParent());
   }
 
   @NotNull
@@ -2659,15 +2642,8 @@ public final class UIUtil {
     return result;
   });
 
-  private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
-    @Override
-    public Component fun(Component c) {
-      return c.getParent();
-    }
-  };
 
-
-  public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
+  public static void scrollListToVisibleIfNeeded(@NotNull final JList<?> list) {
     SwingUtilities.invokeLater(() -> {
       final int selectedIndex = list.getSelectedIndex();
       if (selectedIndex >= 0) {
@@ -2715,7 +2691,7 @@ public final class UIUtil {
   }
 
   public static class TextPainter {
-    private final List<Pair<String, LineInfo>> myLines = new ArrayList<>();
+    private final List<String> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
@@ -2723,7 +2699,7 @@ public final class UIUtil {
     private Color myColor;
 
     public TextPainter() {
-      myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ StartupUiUtil.isUnderDarcula();
+      myDrawShadow = StartupUiUtil.isUnderDarcula();
       myShadowColor = StartupUiUtil.isUnderDarcula() ? Gray._0.withAlpha(100) : Gray._220;
       myLineSpacing = 1.0f;
     }
@@ -2756,41 +2732,7 @@ public final class UIUtil {
     @NotNull
     public TextPainter appendLine(String text) {
       if (text == null || text.isEmpty()) return this;
-      myLines.add(Pair.create(text, new LineInfo()));
-      return this;
-    }
-
-    @NotNull
-    public TextPainter underlined(@Nullable Color color) {
-      if (!myLines.isEmpty()) {
-        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
-        info.underlined = true;
-        info.underlineColor = color;
-      }
-
-      return this;
-    }
-
-    @NotNull
-    public TextPainter underlined() {
-      return underlined(null);
-    }
-
-    @NotNull
-    public TextPainter smaller() {
-      if (!myLines.isEmpty()) {
-        myLines.get(myLines.size() - 1).getSecond().smaller = true;
-      }
-
-      return this;
-    }
-
-    @NotNull
-    public TextPainter center() {
-      if (!myLines.isEmpty()) {
-        myLines.get(myLines.size() - 1).getSecond().center = true;
-      }
-
+      myLines.add(text);
       return this;
     }
 
@@ -2798,7 +2740,6 @@ public final class UIUtil {
      * _position(block width, block height) => (x, y) of the block
      */
     public void draw(@NotNull final Graphics g, @NotNull PairFunction<? super Integer, ? super Integer, ? extends Couple<Integer>> _position) {
-      GraphicsUtil.setupAntialiasing(g, true, true);
       Font oldFont = null;
       if (myFont != null) {
         oldFont = g.getFont();
@@ -2812,22 +2753,10 @@ public final class UIUtil {
       try {
         final int[] maxWidth = {0};
         final int[] height = {0};
-        ContainerUtil.process(myLines, pair -> {
-          final LineInfo info = pair.getSecond();
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
+        ContainerUtil.process(myLines, text -> {
           FontMetrics fm = g.getFontMetrics();
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "")), maxWidth[0]);
+          maxWidth[0] = Math.max(fm.stringWidth(text.replace("<shortcut>", "").replace("</shortcut>", "")), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
           return true;
         });
 
@@ -2835,28 +2764,16 @@ public final class UIUtil {
         assert position != null;
 
         final int[] yOffset = {position.getSecond()};
-        ContainerUtil.process(myLines, pair -> {
-          final LineInfo info = pair.getSecond();
-          String text = pair.first;
+        ContainerUtil.process(myLines, text -> {
           String shortcut = "";
-          if (pair.first.contains("<shortcut>")) {
+          if (text.contains("<shortcut>")) {
             shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
             text = text.substring(0, text.indexOf("<shortcut>"));
           }
 
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
+          int x = position.getFirst() + 10;
 
-          final int x = position.getFirst() + 10;
-
-          final FontMetrics fm = g.getFontMetrics();
-          int xOffset = x;
-          if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
-          }
+          FontMetrics fm = g.getFontMetrics();
 
           if (myDrawShadow) {
             int xOff = StartupUiUtil.isUnderDarcula() ? 1 : 0;
@@ -2865,44 +2782,19 @@ public final class UIUtil {
 
             int yOff = 1;
 
-            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+            g.drawString(text, x + xOff, yOffset[0] + yOff);
             g.setColor(oldColor1);
           }
 
-          g.drawString(text, xOffset, yOffset[0]);
+          g.drawString(text, x, yOffset[0]);
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
             g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
-            g.drawString(shortcut, xOffset + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
+            g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor1);
           }
 
-          if (info.underlined) {
-            Color c = null;
-            if (info.underlineColor != null) {
-              c = g.getColor();
-              g.setColor(info.underlineColor);
-            }
-
-            drawLine(g ,x - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-            if (c != null) {
-              g.setColor(c);
-            }
-
-            if (myDrawShadow) {
-              c = g.getColor();
-              g.setColor(myShadowColor);
-              drawLine(g ,x - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                         yOffset[0] + fm.getDescent() + 1);
-              g.setColor(c);
-            }
-          }
-
           yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
 
           return true;
         });
@@ -2911,13 +2803,6 @@ public final class UIUtil {
         if (oldFont != null) g.setFont(oldFont);
         if (oldColor != null) g.setColor(oldColor);
       }
-    }
-
-    private static class LineInfo {
-      private boolean underlined;
-      private Color underlineColor;
-      private boolean smaller;
-      private boolean center;
     }
   }
 
@@ -3821,12 +3706,9 @@ public final class UIUtil {
           runnable.run();
         }
       };
-      HierarchyListener hierarchyListener = new HierarchyListener() {
-        @Override
-        public void hierarchyChanged(HierarchyEvent e) {
-          if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !component.isShowing()) {
-            Disposer.dispose(disposable);
-          }
+      HierarchyListener hierarchyListener = e -> {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && !component.isShowing()) {
+          Disposer.dispose(disposable);
         }
       };
       component.addFocusListener(focusListener);
@@ -3872,21 +3754,32 @@ public final class UIUtil {
   @TestOnly
   public static void pump() {
     assert !SwingUtilities.isEventDispatchThread();
-    final BlockingQueue<Object> queue = new LinkedBlockingQueue<>();
+    Semaphore lock = new Semaphore(1);
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
-      //noinspection CollectionAddedToSelf
-      queue.offer(queue);
+      lock.up();
     });
-    try {
-      queue.take();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    lock.waitFor();
   }
 
   public static boolean isJreHiDPI() {
     return StartupUiUtil.isJreHiDPI();
+  }
+
+  public static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {
+    int r = makeTransparent(transparency, color.getRed(), backgroundColor.getRed());
+    int g = makeTransparent(transparency, color.getGreen(), backgroundColor.getGreen());
+    int b = makeTransparent(transparency, color.getBlue(), backgroundColor.getBlue());
+
+    //noinspection UseJBColor
+    return new Color(r, g, b);
+  }
+
+  private static int makeTransparent(double transparency, int channel, int backgroundChannel) {
+    final int result = (int)(backgroundChannel * (1 - transparency) + channel * transparency);
+    if (result < 0) {
+      return 0;
+    }
+    return Math.min(result, 255);
   }
 }

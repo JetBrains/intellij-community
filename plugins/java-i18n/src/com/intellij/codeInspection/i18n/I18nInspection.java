@@ -127,12 +127,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return CodeInsightBundle.message("inspection.i18n.display.name");
-  }
-
-  @Override
-  @NotNull
   public String getShortName() {
     return "HardCodedStringLiteral";
   }
@@ -501,13 +495,16 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
         List<LocalQuickFix> fixes = new ArrayList<>();
-        if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(expression) != null) {
-          fixes.add(new I18nizeConcatenationQuickFix());
-        }
-        fixes.add(new I18nizeQuickFix());
 
-        if (!isNotConstantFieldInitializer(expression)) {
-          fixes.add(createIntroduceConstantFix());
+        if (myOnTheFly) {
+          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(expression) != null) {
+            fixes.add(new I18nizeConcatenationQuickFix());
+          }
+          fixes.add(new I18nizeQuickFix());
+
+          if (!isNotConstantFieldInitializer(expression)) {
+            fixes.add(createIntroduceConstantFix());
+          }
         }
 
         final Project project = expression.getManager().getProject();

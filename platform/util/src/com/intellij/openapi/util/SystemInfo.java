@@ -17,7 +17,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
-@SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
+@SuppressWarnings("unused")
 public class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
@@ -60,6 +60,7 @@ public class SystemInfo extends SystemInfoRt {
     }
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
     return new File("/dev/.cros_milestone").exists();
   }
@@ -200,13 +201,13 @@ public class SystemInfo extends SystemInfoRt {
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
   //</editor-fold>
 }

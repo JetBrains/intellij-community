@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class XmlFormattingModel extends PsiBasedFormattingModel {
   private static final Logger LOG =
-      Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
+      Logger.getInstance(XmlFormattingModel.class);
 
   public XmlFormattingModel(final PsiFile file,
                                                      final Block rootBlock,

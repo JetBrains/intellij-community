@@ -14,6 +14,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +29,6 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Possible heap pollution from parameterized vararg type";
-  }
-
   @Override
   public boolean isEnabledByDefault() {
     return true;
@@ -45,6 +40,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     return "SafeVarargsDetector";
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @NotNull
   @Override
   public String getID() {
@@ -54,24 +50,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new HeapPollutionVisitor() {
-      @Override
-      protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
-        final LocalQuickFix quickFix;
-        if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
-          quickFix = new AnnotateAsSafeVarargsQuickFix();
-        }
-        else {
-          final PsiClass containingClass = method.getContainingClass();
-          LOG.assertTrue(containingClass != null);
-          boolean canBeFinal = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                               !containingClass.isInterface() &&
-                               OverridingMethodsSearch.search(method).findFirst() == null;
-          quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
-        }
-        holder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
-      }
-    };
+    return new HeapPollutionVisitor(holder);
   }
 
   private static class AnnotateAsSafeVarargsQuickFix implements LocalQuickFix {
@@ -90,7 +69,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiIdentifier) {
-        final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
+        final PsiModifierListOwner psiMethod = (PsiModifierListOwner)psiElement.getParent();
         if (psiMethod != null) {
           new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
         }
@@ -127,7 +106,13 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     }
   }
 
-  public abstract static class HeapPollutionVisitor extends JavaElementVisitor {
+  public static class HeapPollutionVisitor extends JavaElementVisitor {
+    private final ProblemsHolder myHolder;
+
+    public HeapPollutionVisitor(ProblemsHolder holder) {
+      myHolder = holder;
+    }
+
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
@@ -139,6 +124,33 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       final PsiParameter psiParameter = parameters[parameters.length - 1];
       if (!psiParameter.isVarArgs()) return;
 
+      checkForHeapPollution(method, psiParameter);
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      super.visitClass(aClass);
+      if (!aClass.isRecord()) return;
+      if (AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;
+      PsiRecordHeader header = aClass.getRecordHeader();
+      if (header == null) return;
+      PsiRecordComponent lastComponent = ArrayUtil.getLastElement(header.getRecordComponents());
+      if (lastComponent == null || !lastComponent.isVarArgs()) return;
+      final PsiType type = lastComponent.getType();
+      LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + lastComponent);
+
+      final PsiType componentType = ((PsiEllipsisType)type).getComponentType();
+      if (JavaGenericsUtil.isReifiableType(componentType)) {
+        return;
+      }
+      final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)aClass).getNameIdentifier();
+      if (nameIdentifier != null) {
+        final LocalQuickFix quickFix = new AnnotateAsSafeVarargsQuickFix();
+        myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+      }
+    }
+
+    private void checkForHeapPollution(PsiMethod method, PsiVariable psiParameter) {
       final PsiType type = psiParameter.getType();
       LOG.assertTrue(type instanceof PsiEllipsisType, "type: " + type.getCanonicalText() + "; param: " + psiParameter);
 
@@ -161,6 +173,20 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       }
     }
 
-    protected abstract void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier);
+    protected void registerProblem(PsiMethod method, PsiIdentifier nameIdentifier) {
+      final LocalQuickFix quickFix;
+      if (GenericsHighlightUtil.isSafeVarargsNoOverridingCondition(method, PsiUtil.getLanguageLevel(method))) {
+        quickFix = new AnnotateAsSafeVarargsQuickFix();
+      }
+      else {
+        final PsiClass containingClass = method.getContainingClass();
+        LOG.assertTrue(containingClass != null);
+        boolean canBeFinal = !method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                             !containingClass.isInterface() &&
+                             OverridingMethodsSearch.search(method).findFirst() == null;
+        quickFix = canBeFinal ? new MakeFinalAndAnnotateQuickFix() : null;
+      }
+      myHolder.registerProblem(nameIdentifier, "Possible heap pollution from parameterized vararg type #loc", quickFix);
+    }
   }
 }

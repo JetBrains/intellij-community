@@ -30,7 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStatement, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiIfStatementImpl");
+  private static final Logger LOG = Logger.getInstance(PsiIfStatementImpl.class);
 
   public PsiIfStatementImpl() {
     super(IF_STATEMENT);

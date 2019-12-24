@@ -81,12 +81,6 @@ public class LogStatementGuardedByLogConditionInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("log.statement.guarded.by.log.condition.problem.descriptor");
   }

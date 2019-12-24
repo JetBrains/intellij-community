@@ -441,17 +441,25 @@ public class ExpectedHighlightingData {
   private String getActualLineMarkerFileText(@NotNull Collection<? extends LineMarkerInfo> markerInfos) {
     StringBuilder result = new StringBuilder();
     int index = 0;
-    List<LineMarkerInfo> lineMarkerInfos = new ArrayList<>(markerInfos);
-    lineMarkerInfos.sort(comparingInt(o -> o.startOffset));
+    List<Pair<LineMarkerInfo, Integer>> lineMarkerInfos = new ArrayList<>(markerInfos.size() * 2);
+    for (LineMarkerInfo info : markerInfos) lineMarkerInfos.add(Pair.create(info, info.startOffset));
+    for (LineMarkerInfo info : markerInfos) lineMarkerInfos.add(Pair.create(info, info.endOffset));
+    Collections.reverse(lineMarkerInfos.subList(markerInfos.size(), lineMarkerInfos.size()));
+    lineMarkerInfos.sort(comparingInt(o -> o.second));
     String documentText = myDocument.getText();
-    for (LineMarkerInfo expectedLineMarker : lineMarkerInfos) {
-      result.append(documentText, index, expectedLineMarker.startOffset)
-        .append("<lineMarker descr=\"")
-        .append(expectedLineMarker.getLineMarkerTooltip())
-        .append("\">")
-        .append(documentText, expectedLineMarker.startOffset, expectedLineMarker.endOffset)
-        .append("</lineMarker>");
-      index = expectedLineMarker.endOffset;
+    for (Pair<LineMarkerInfo, Integer> info : lineMarkerInfos) {
+      LineMarkerInfo expectedLineMarker = info.first;
+      result.append(documentText, index, info.second);
+      if (info.second == expectedLineMarker.startOffset) {
+        result
+          .append("<lineMarker descr=\"")
+          .append(expectedLineMarker.getLineMarkerTooltip())
+          .append("\">");
+      }
+      else {
+        result.append("</lineMarker>");
+      }
+      index = info.second;
     }
     result.append(documentText, index, myDocument.getTextLength());
     return result.toString();
@@ -623,7 +631,7 @@ public class ExpectedHighlightingData {
   }
 
   /**
-   * @deprecated This is temporary wrapper to provide time to fix failing tests
+   * @deprecated Consider to rework your architecture and fix double registration of same highlighting information
    */
   @Deprecated
   public static void expectedDuplicatedHighlighting(@NotNull Runnable check) {

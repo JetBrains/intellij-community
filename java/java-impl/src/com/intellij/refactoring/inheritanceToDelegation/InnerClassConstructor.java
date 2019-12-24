@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author dsl
  */
 public class InnerClassConstructor extends InnerClassMethod {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InnerClassConstructor");
+  private static final Logger LOG = Logger.getInstance(InnerClassConstructor.class);
   public InnerClassConstructor(PsiMethod method) {
     super(method);
     LOG.assertTrue(method.isConstructor());

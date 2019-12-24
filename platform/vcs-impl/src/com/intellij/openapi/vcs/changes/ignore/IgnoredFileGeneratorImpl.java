@@ -124,7 +124,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     catch (IOException e) {
       LOG.warn("Cannot write to file " + ignoreFile.getPath());
     }
-    IgnoredFileRootStore.getInstance(myProject).addRoot(ignoreFile.getParent());
+    markIgnoreFileRootAsGenerated(myProject, ignoreFile.getParent());
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(ignoreFile));
     if (openFile) {
       openFile(ignoreFile);
@@ -195,7 +195,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     return new File(vcsRootFile.getPath(), ignoreFileName);
   }
 
-  private static boolean needGenerateInternalIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+  public static boolean needGenerateInternalIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
     boolean wasGeneratedPreviously = IgnoredFileRootStore.getInstance(project).containsRoot(ignoreFileRoot.getPath());
     if (wasGeneratedPreviously) {
       LOG.debug("Ignore file generated previously for root " + ignoreFileRoot.getPath());
@@ -203,6 +203,10 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
     }
 
     return true;
+  }
+
+  public static void markIgnoreFileRootAsGenerated(@NotNull Project project, @NotNull String ignoreFileRoot){
+    IgnoredFileRootStore.getInstance(project).addRoot(ignoreFileRoot);
   }
 
   private static boolean needGenerateIgnoreFile(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {

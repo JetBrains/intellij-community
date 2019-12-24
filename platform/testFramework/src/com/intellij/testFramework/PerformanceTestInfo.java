@@ -138,7 +138,7 @@ public class PerformanceTestInfo {
       }
 
       // try again
-      String s = "  " + attempts + " attempts remain";
+      String s = "  " + attempts + " " + StringUtil.pluralize("attempt", attempts)+" remain";
       TeamCityLogger.warning(s, null);
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
         System.out.println(s);

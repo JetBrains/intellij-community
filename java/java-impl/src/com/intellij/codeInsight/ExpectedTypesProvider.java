@@ -45,7 +45,7 @@ import java.util.*;
 public class ExpectedTypesProvider {
   private static final ExpectedTypeInfo VOID_EXPECTED = createInfoImpl(PsiType.VOID, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.VOID, TailType.SEMICOLON);
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypesProvider");
+  private static final Logger LOG = Logger.getInstance(ExpectedTypesProvider.class);
 
   public static ExpectedTypesProvider getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ExpectedTypesProvider.class);

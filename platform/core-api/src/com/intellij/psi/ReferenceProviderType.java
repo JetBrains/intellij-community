@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class ReferenceProviderType {
   @NonNls public static final String EP_NAME = "com.intellij.referenceProviderType";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ReferenceProviderType");
+  private static final Logger LOG = Logger.getInstance(ReferenceProviderType.class);
   private static final KeyedExtensionCollector<PsiReferenceProvider,ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
     @NotNull

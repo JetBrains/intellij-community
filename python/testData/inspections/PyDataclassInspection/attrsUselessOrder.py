@@ -5,7 +5,7 @@ import attr
 class A1:
     a: int = 1
 
-    def <warning descr="'__le__' is ignored if the class already defines 'cmp' parameter">__le__</warning>(self, other):
+    def <warning descr="'__le__' is ignored if the class already defines 'cmp/order' parameter">__le__</warning>(self, other):
         return "le1"
 
 print(A1(1) <= A1(2))
@@ -27,7 +27,7 @@ print(Derived1(1) <= Derived1(2))
 class A2:
     a: int = 1
 
-    def <warning descr="'__lt__' is ignored if the class already defines 'cmp' parameter">__lt__</warning>(self, other):
+    def <warning descr="'__lt__' is ignored if the class already defines 'cmp/order' parameter">__lt__</warning>(self, other):
         return "lt1"
 
 print(A2(1) < A2(2))
@@ -49,7 +49,7 @@ print(Derived2(1) < Derived2(2))
 class A3:
     a: int = 1
 
-    def <warning descr="'__gt__' is ignored if the class already defines 'cmp' parameter">__gt__</warning>(self, other):
+    def <warning descr="'__gt__' is ignored if the class already defines 'cmp/order' parameter">__gt__</warning>(self, other):
         return "gt1"
 
 print(A3(1) > A3(2))
@@ -71,7 +71,7 @@ print(Derived3(1) > Derived3(2))
 class A4:
     a: int = 1
 
-    def <warning descr="'__ge__' is ignored if the class already defines 'cmp' parameter">__ge__</warning>(self, other):
+    def <warning descr="'__ge__' is ignored if the class already defines 'cmp/order' parameter">__ge__</warning>(self, other):
         return "ge1"
 
 print(A4(1) >= A4(2))
@@ -87,3 +87,33 @@ class Derived4(Base4):
     d: int = 1
 
 print(Derived4(1) >= Derived4(2))
+
+
+@attr.dataclass(eq=True)
+class A5:
+    a: int = 1
+
+    def <warning descr="'__le__' is ignored if the class already defines 'cmp/order' parameter">__le__</warning>(self, other):
+        return "le5"
+
+print(A5(1) <= A5(2))
+
+
+@attr.dataclass(eq=True, order=None)
+class A6:
+    a: int = 1
+
+    def <warning descr="'__le__' is ignored if the class already defines 'cmp/order' parameter">__le__</warning>(self, other):
+        return "le6"
+
+print(A6(1) <= A6(2))
+
+
+@attr.dataclass(eq=True, order=False)
+class A7:
+    a: int = 1
+
+    def __le__(self, other):
+        return "le7"
+
+print(A7(1) <= A7(2))

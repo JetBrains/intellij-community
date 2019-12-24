@@ -38,7 +38,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extends FrameworkSupportProviderBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.facet.ui.FacetBasedFrameworkSupportProvider");
+  private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkSupportProvider.class);
   @NonNls private static final String FACET_SUPPORT_PREFIX = "facet:";
   private final FacetType<F, ?> myFacetType;
 

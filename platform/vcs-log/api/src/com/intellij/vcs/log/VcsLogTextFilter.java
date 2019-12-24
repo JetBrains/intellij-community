@@ -51,7 +51,7 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
 
   @NotNull
   @Override
-  default String getPresentation() {
+  default String getDisplayText() {
     return "'" + getText() + "'";
   }
 }

@@ -49,12 +49,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Mike
  */
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix");
+  private static final Logger LOG = Logger.getInstance(CreateFromUsageBaseFix.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -74,32 +75,18 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isAvailableImpl(int offset);
 
-  protected abstract void invokeImpl(PsiClass targetClass);
-
   protected abstract boolean isValidElement(PsiElement result);
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<PsiClass> createInClass) {
     PsiElement element = getElement();
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("CreateFromUsage: element =" + element);
-    }
-
-    if (element == null) {
-      return;
-    }
-
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
 
     if (targetClasses.isEmpty()) return;
 
     if (targetClasses.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      doInvoke(project, targetClasses.get(0));
+      doInvoke(targetClasses.get(0), createInClass);
     } else {
-      chooseTargetClass(targetClasses, editor);
+      chooseTargetClass(targetClasses, editor, createInClass);
     }
   }
 
@@ -107,19 +94,19 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
-  private void doInvoke(Project project, final PsiClass targetClass) {
+  private static void doInvoke(final PsiClass targetClass, Consumer<PsiClass> invokeImpl) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
+    IdeDocumentHistory.getInstance(targetClass.getProject()).includeCurrentPlaceAsChangePlace();
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl.accept(targetClass));
   }
 
   @Nullable
   protected abstract PsiElement getElement();
 
-  private void chooseTargetClass(List<PsiClass> classes, final Editor editor) {
+  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<PsiClass> invokeImpl) {
     final PsiClass firstClass = classes.get(0);
     final Project project = firstClass.getProject();
 
@@ -132,7 +119,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       .setRenderer(renderer)
       .setItemChosenCallback((aClass) -> {
         AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-        CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
+        CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(aClass, invokeImpl), getText(), null);
       })
       .setTitle(QuickFixBundle.message("target.class.chooser.title"));
 

@@ -36,7 +36,7 @@ import java.util.*;
  * @author max
  */
 public class DefUseUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defUse.DefUseUtil");
+  private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
   private DefUseUtil() { }
 

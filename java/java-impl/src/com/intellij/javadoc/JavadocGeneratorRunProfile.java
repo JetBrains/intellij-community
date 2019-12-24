@@ -309,7 +309,7 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
     }
 
     @Override
-    public void visitFile(PsiFile file) {
+    public void visitFile(@NotNull PsiFile file) {
       if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
         VirtualFile vFile = file.getVirtualFile();
         if (vFile != null && vFile.isInLocalFileSystem()) {

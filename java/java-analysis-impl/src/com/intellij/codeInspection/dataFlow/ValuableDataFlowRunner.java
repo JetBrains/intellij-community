@@ -16,18 +16,26 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Gregory.Shrago
  */
 class ValuableDataFlowRunner extends DataFlowRunner {
+  ValuableDataFlowRunner(Project project) {
+    super(project);
+  }
+
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
@@ -73,47 +81,44 @@ class ValuableDataFlowRunner extends DataFlowRunner {
 
     private ValuableDfaVariableState(DfaValue value,
                                      @NotNull FList<PsiExpression> concatenation,
-                                     @NotNull DfaFactMap factMap) {
-      super(factMap);
+                                     @NotNull DfType dfType) {
+      super(dfType);
       myValue = value;
       myConcatenation = concatenation;
     }
 
     @NotNull
     @Override
-    protected DfaVariableState createCopy(@NotNull DfaFactMap factMap) {
-      return new ValuableDfaVariableState(myValue, myConcatenation, factMap);
+    protected DfaVariableState createCopy(@NotNull DfType dfType) {
+      return dfType.equals(myDfType) ? this : new ValuableDfaVariableState(myValue, myConcatenation, dfType);
     }
 
     @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(value, myConcatenation, myFactMap);
+      return new ValuableDfaVariableState(value, myConcatenation, myDfType);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
-      return new ValuableDfaVariableState(myValue, concatenation, myFactMap);
+      return new ValuableDfaVariableState(myValue, concatenation, myDfType);
     }
 
     @Override
-    public DfaValue getValue() {
-      return myValue;
+    public boolean isSuperStateOf(DfaVariableState other) {
+      return other instanceof ValuableDfaVariableState && myConcatenation.equals(((ValuableDfaVariableState)other).myConcatenation) && 
+             Objects.equals(myValue, ((ValuableDfaVariableState)other).myValue) && super.isSuperStateOf(other);
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof ValuableDfaVariableState)) return false;
-      if (!super.equals(o)) return false;
+      if (!(o instanceof ValuableDfaVariableState) || !super.equals(o)) return false;
 
       ValuableDfaVariableState state = (ValuableDfaVariableState)o;
 
-      if (!myConcatenation.equals(state.myConcatenation)) return false;
-      if (myValue != null ? !myValue.equals(state.myValue) : state.myValue != null) return false;
-
-      return true;
+      return myConcatenation.equals(state.myConcatenation) && Objects.equals(myValue, state.myValue);
     }
 
     @Override

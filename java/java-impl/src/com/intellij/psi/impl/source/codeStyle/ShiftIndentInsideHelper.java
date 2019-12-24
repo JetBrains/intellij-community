@@ -38,7 +38,7 @@ import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class ShiftIndentInsideHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.Helper");
+  private static final Logger LOG = Logger.getInstance(ShiftIndentInsideHelper.class);
 
   private final CommonCodeStyleSettings mySettings;
   private final PsiFile myFile;

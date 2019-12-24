@@ -60,7 +60,8 @@
 
     <projectService serviceImplementation="com.intellij.stats.personalization.impl.ProjectUserFactorStorage"/>
 
-<!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.KotlinMLRankingProvider"/>-->
+    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackKotlinMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackScalaMLRankingProvider"/>
 <!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.PythonMLRankingProvider"/>-->
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
@@ -68,14 +69,13 @@
     <completion.contributor language="any" id="ml_diff" order="first"
                             implementationClass="com.intellij.stats.completion.ItemsDiffCustomizingContributor"/>
 
+    <statistics.counterUsagesCollector groupId="completion" version="2"/>
+
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
 
     <registryKey key="completion.stats.exit.experiment" defaultValue="false"
                  description="Do not perform A/B experiment for code completion on this installation"/>
-
-    <registryKey key="completion.stats.show.ml.ranking.diff" defaultValue="false"
-                 description="Show how element position changed after ml ranking performed, if ml completion ranking is enabled"/>
 
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage in EAP builds"/>
@@ -86,5 +86,8 @@
     <preloadingActivity implementation="com.intellij.stats.sender.SenderPreloadingActivity"/>
 
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
+
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ngram.NGramFeatureProvider"/>
+
   </extensions>
 </idea-plugin>

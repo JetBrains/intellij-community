@@ -10,7 +10,17 @@ import java.util.List;
 /**
  * A listener for VFS events, invoked inside write-action.
  * To register this listener, use e.g. {@code project.getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, listener)}
- *
+ * or define the listener in plugin.xml as an application (the prefered way):
+ * <pre>
+ *     	&#60;applicationListeners>
+ *     	  &#60;listener class="org.jetbrains...MyListener"
+ *               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+ *   	&#60;/applicationListeners>
+ *<pre/>
+ * 
+ * Please note that the VFS events are project-agnostic so all listeners will be notified about events from all open projects. 
+ * For filtering the events use {@link com.intellij.openapi.roots.ProjectRootManager#getFileIndex} with {@link com.intellij.openapi.roots.FileIndex#isInContent}.
+ * 
  * For a non-blocking alternative please see {@link com.intellij.openapi.vfs.AsyncFileListener}.
  */
 public interface BulkFileListener {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -17,16 +18,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -127,8 +126,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    File directory = convertToIOFile(file);
-    String[] names = directory.list(DirectoryAccessChecker.getFileFilter(directory));
+    String[] names = myChildrenGetter.accessDiskWithCheckCanceled(convertToIOFile(file));
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
@@ -424,7 +422,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @NotNull
   public OutputStream getOutputStream(@NotNull VirtualFile file, Object requestor, long modStamp, long timeStamp) throws IOException {
     File ioFile = convertToIOFileAndCheck(file);
-    OutputStream stream = SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
+    OutputStream stream = !SafeWriteRequestor.shouldUseSafeWrite(requestor) ? new FileOutputStream(ioFile) :
+                          Registry.is("ide.io.preemptive.safe.write") ? new PreemptiveSafeFileOutputStream(ioFile.toPath()) :
+                          new SafeFileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
       @Override
       public void close() throws IOException {
@@ -720,8 +720,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
+    return myAttrGetter.accessDiskWithCheckCanceled(FileUtil.toSystemDependentName(path));
   }
+
+  private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
+  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
 
   @Override
   public void refresh(boolean asynchronous) {

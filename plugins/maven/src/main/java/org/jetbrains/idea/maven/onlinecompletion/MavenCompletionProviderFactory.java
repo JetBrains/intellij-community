@@ -36,7 +36,7 @@ public class MavenCompletionProviderFactory implements DependencyCompletionProvi
 
   private static void addRemoteIndices(Project project, List<DependencyCompletionProvider> result) {
     List<MavenIndex> privateIndices =
-      MavenIndicesManager.getInstance().ensureIndicesExist(project, collectRemoteRepositoriesIdsAndUrls(project));
+      MavenIndicesManager.getInstance().ensureIndicesExist(collectRemoteRepositoriesIdsAndUrls(project));
 
     for (MavenIndex index : privateIndices) {
       result.add(new IndexBasedCompletionProvider(index));

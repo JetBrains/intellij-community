@@ -30,7 +30,7 @@ internal fun vcsRoots(project: File): List<File> {
       .map {
         val file = File(it)
         if (file.exists()) file else File(project, it)
-      }.toList().also { roots ->
+      }.filter(File::exists).toList().also { roots ->
         log("Found ${roots.size} repo roots in $project:")
         roots.forEach { log(it.absolutePath) }
       }

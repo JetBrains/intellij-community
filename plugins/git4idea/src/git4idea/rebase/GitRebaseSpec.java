@@ -143,7 +143,7 @@ public class GitRebaseSpec {
   @NotNull
   private static GitChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = Git.getInstance();
-    GitVcsSettings.UpdateChangesPolicy saveMethod = GitVcsSettings.getInstance(project).updateChangesPolicy();
+    GitVcsSettings.SaveChangesPolicy saveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     return GitChangesSaver.getSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"), saveMethod);
   }
 

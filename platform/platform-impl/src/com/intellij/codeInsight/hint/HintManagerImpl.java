@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
@@ -132,11 +129,10 @@ public class HintManagerImpl extends HintManager {
       }
     };
 
-    myEditorDocumentListener = new DocumentListener() {
+    myEditorDocumentListener = new BulkAwareDocumentListener.NonTrivial() {
       @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
+      public void documentChanged(@NotNull Document document) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
-        if (event.getOldLength() == 0 && event.getNewLength() == 0) return;
         HintInfo[] infos = getHintsStackArray();
         for (HintInfo info : infos) {
           if (BitUtil.isSet(info.flags, HIDE_BY_TEXT_CHANGE)) {

@@ -98,11 +98,14 @@ class UISettingsState : BaseState() {
   var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT")
   var editorTabPlacement: Int by property(SwingConstants.TOP)
+  @get:OptionTag("SHOW_FILE_ICONS_IN_TABS")
+  var showFileIconInTabs by property(true)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS")
   var hideKnownExtensionInTabs by property(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION")
   var showIconInQuickNavigation by property(true)
   var showTreeIndentGuides by property(false)
+  var compactTreeIndents by property(false)
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
@@ -172,6 +175,22 @@ class UISettingsState : BaseState() {
   var smoothScrolling by property(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW")
   var navigateToPreview by property(false)
+
+  var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
+  var animatedScrollingDuration by property(
+    when {
+      SystemInfo.isWindows -> 200
+      SystemInfo.isMac -> 50
+      else -> 150
+    }
+  )
+  var animatedScrollingCurvePoints by property(
+    when {
+      SystemInfo.isWindows -> 1684366536
+      SystemInfo.isMac -> 845374563
+      else -> 729434056
+    }
+  )
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
   var sortLookupElementsLexicographically by property(false)

@@ -39,23 +39,18 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   private static final String INDENT_LABEL = ApplicationBundle.message("editbox.indent.indent");
   private static final String TAB_SIZE_LABEL = ApplicationBundle.message("editbox.indent.tab.size");
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JTextField myIndentField;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JCheckBox myCbUseTab;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JTextField myTabSizeField;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JLabel myTabSizeLabel;
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   @Deprecated
   protected JLabel myIndentLabel;
 

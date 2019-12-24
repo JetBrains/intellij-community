@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,7 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValues;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<Boolean> ANNOTATIONS_BEING_ATTACHED = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
 
   private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
@@ -73,13 +73,6 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   @Override
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Magic Constant";
   }
 
   @NotNull
@@ -180,9 +173,11 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   // returns fix to apply if our own JB "jdkAnnotations" are not attached to the current jdk
-  public static Runnable getAttachAnnotationsJarFix(Project project) {
-    final Boolean found = project.getUserData(ANNOTATIONS_BEING_ATTACHED);
-    if (found != null) return null;
+  public static Runnable getAttachAnnotationsJarFix(@NotNull Project project) {
+    Boolean found = project.getUserData(ANNOTATIONS_BEING_ATTACHED);
+    if (found != null) {
+      return null;
+    }
 
     PsiClass awtInputEvent = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (awtInputEvent == null) return null;
@@ -197,16 +192,16 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
     project.putUserData(ANNOTATIONS_BEING_ATTACHED, Boolean.TRUE);
-    TransactionGuard.submitTransaction(project, () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       SdkModificator modificator = sdk.getSdkModificator();
       boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
       // daemon will restart automatically
       modificator.commitChanges();
-      // avoid endless loop on JDK misconfigration
+      // avoid endless loop on JDK misconfiguration
       if (success) {
         project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
       }
-    });
+    }, project.getDisposed());
   }
 
   private static void checkExpression(@NotNull PsiExpression expression,
@@ -408,7 +403,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       if (MagicConstantUtils.same(expression, minusOne, manager)) return true;
       if (expression instanceof PsiPolyadicExpression) {
         IElementType tokenType = ((PsiPolyadicExpression)expression).getOperationTokenType();
-        if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.XOR.equals(tokenType) || 
+        if (JavaTokenType.OR.equals(tokenType) || JavaTokenType.XOR.equals(tokenType) ||
             JavaTokenType.AND.equals(tokenType) || JavaTokenType.PLUS.equals(tokenType)) {
           for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
             if (!isAllowed(operand, scope, allowedValues, manager, visited)) return false;

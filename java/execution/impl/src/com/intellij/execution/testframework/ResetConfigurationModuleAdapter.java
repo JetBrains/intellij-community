@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
-  private static final Logger LOG = Logger.getInstance("#" + ResetConfigurationModuleAdapter.class);
+  private static final Logger LOG = Logger.getInstance(ResetConfigurationModuleAdapter.class);
   private final Project myProject;
   private final boolean myIsDebug;
   private final ToolWindowManager myToolWindowManager;

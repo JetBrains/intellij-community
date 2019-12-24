@@ -43,7 +43,7 @@ import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection");
+  private static final Logger LOG = Logger.getInstance(HtmlUnknownAttributeInspectionBase.class);
 
   public HtmlUnknownAttributeInspectionBase() {
     this("");
@@ -51,13 +51,6 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
 
   public HtmlUnknownAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.unknown.attribute");
   }
 
   @Override

@@ -28,7 +28,9 @@ class CompletionTrackerInitializer : ApplicationInitializedListener {
 
     busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectOpened(project: Project) {
-        LookupManager.getInstance(project).addPropertyChangeListener(CompletionFactorsInitializer(), project)
+        val lookupManager = LookupManager.getInstance(project)
+        lookupManager.addPropertyChangeListener(CompletionQualityTracker(), project)
+        lookupManager.addPropertyChangeListener(CompletionFactorsInitializer(), project)
       }
     })
   }

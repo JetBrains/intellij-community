@@ -1,0 +1,18 @@
+public class TryCatch {
+    public static fun foo(str: java.lang.String) : int {
+        var sum: int = 0
+        for (part : str.split(" ")) {
+            var b: int = 0
+            try {
+                sum = sum + Integer.parseInt(part)
+                b = 1
+            }
+            catch (e) {
+                b = 1
+            }
+            
+            var c: int = b
+        }
+        return sum
+    }
+}

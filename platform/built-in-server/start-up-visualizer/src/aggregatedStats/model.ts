@@ -4,9 +4,7 @@ export type Metrics = { [key: string]: number; }
 export interface InfoResponse {
   readonly productNames: Array<string>
   readonly productToMachine: { [key: string]: Array<MachineGroup>; }
-
-  readonly durationMetricNames: Array<string>
-  readonly instantMetricNames: Array<string>
+  readonly productToProjects: { [key: string]: Array<string>; }
 }
 
 export interface MachineGroup {
@@ -19,6 +17,67 @@ export interface Machine {
 }
 
 export interface GroupedMetricResponse {
-  readonly groupNames: Array<string>
+  groupNames: Array<string>
   readonly data: Array<{ [key: string]: Array<string | number>; }>
+}
+
+export interface DataQuery {
+  fields?: Array<string | DataQueryDimension>
+
+  filters?: Array<DataQueryFilter>
+  order?: Array<string>
+
+  // used only for grouped query
+  aggregator?: string
+  // cube.js term (group by)
+  dimensions?: Array<DataQueryDimension>
+
+  // used only for grouped query
+  timeDimensionFormat?: string
+}
+
+export interface DataQueryFilter {
+  field: string
+  value?: number | string | Array<string>
+  sql?: string
+  operator?: ">"
+}
+
+export interface DataQueryDimension {
+  name: string
+  sql?: string
+}
+
+export interface MetricDescriptor {
+  readonly key: string
+  readonly name: string
+  readonly hiddenByDefault: boolean
+}
+
+export interface DataRequest {
+  product: string
+  project: string
+  machine: Array<string>
+  infoResponse: InfoResponse
+}
+
+const rison: { encode: (o: any) => string } = require("rison-node")
+
+export function encodeQuery(query: DataQuery): string {
+  return rison.encode(query)
+}
+
+export function expandMachineAsFilterValue(request: DataRequest): string | Array<string> {
+  if (request.machine.length > 1) {
+    return request.machine
+  }
+
+  const groupName = request.machine[0]
+  const infoResponse = request.infoResponse
+  for (const machineGroup of infoResponse.productToMachine[request.product]) {
+    if (machineGroup.name === groupName) {
+      return machineGroup.children.map(it => it.name)
+    }
+  }
+  return groupName
 }

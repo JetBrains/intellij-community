@@ -62,13 +62,7 @@ public class ImplicitTypeConversion extends XPathInspection {
         }
     }
 
-    @Override
-    @NotNull
-    public String getDisplayName() {
-        return "Implicit Type Conversion";
-    }
-
-    @Override
+  @Override
     @NotNull
     @NonNls
     public String getShortName() {

@@ -33,7 +33,7 @@ internal fun checkModifierIsNotAllowed(modifierList: GrModifierList,
 
 internal fun checkModifierIsNotAllowed(modifierList: GrModifierList,
                                        @GrModifierConstant modifier: String,
-                                       message: String?,
+                                       message: String,
                                        holder: AnnotationHolder) {
   val modifierElement = modifierList.getModifier(modifier) ?: return
   val annotation = holder.createErrorAnnotation(modifierElement, message)

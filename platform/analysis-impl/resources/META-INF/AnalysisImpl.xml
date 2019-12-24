@@ -1,0 +1,29 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="severitiesProvider"
+                    interface="com.intellij.codeInsight.daemon.impl.SeveritiesProvider"/>
+    <extensionPoint name="completionData"
+                    beanClass="com.intellij.codeInsight.completion.CompletionDataEP">
+      <with attribute="className" implements="com.intellij.codeInsight.completion.CompletionData"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.codeInspection.ex.InspectionToolRegistrar"/>
+    <projectService serviceImplementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager" preload="notHeadless"/>
+    <projectService serviceInterface="com.intellij.packageDependencies.DependencyValidationManager"
+                    serviceImplementation="com.intellij.packageDependencies.DependencyValidationManagerImpl"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.LegacyCompletionContributor" id="legacy"
+                            order="last"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.SerializationManager"
+                        serviceImplementation="com.intellij.psi.stubs.SerializationManagerImpl" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
+                        serviceImplementation="com.intellij.codeInsight.completion.BaseCompletionService"/>
+
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
+             order="after priority"/>
+    <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
+             order="last"/>
+  </extensions>
+</idea-plugin>

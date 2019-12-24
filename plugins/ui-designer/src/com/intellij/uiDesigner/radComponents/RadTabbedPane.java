@@ -49,7 +49,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadTabbedPane");
+  private static final Logger LOG = Logger.getInstance(RadTabbedPane.class);
   /**
    * value: HashMap<String, LwTabbedPane.Constraints>
    */

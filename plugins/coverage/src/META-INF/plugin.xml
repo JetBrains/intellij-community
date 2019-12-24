@@ -1,5 +1,6 @@
 <idea-plugin>
-  <name>Coverage</name>
+  <name>Code Coverage for Java</name>
+  <id>Coverage</id>
   <depends optional="true" config-file="testng-integration.xml">TestNG-J</depends>
   <depends optional="true" config-file="junit-integration.xml">JUnit</depends>
   <depends>com.intellij.modules.coverage</depends>
@@ -7,15 +8,15 @@
 
   <description>
       <![CDATA[
-     Supports gathering coverage information and presenting it right in
-     the editor and in the Project view.
-        The following features are available:
-        <ul>
-        <li>Coverage tab in the run/debug configurations.</li>
-        <li>Run with coverage command.</li>
-        <li>Ability to generate standalone HTML reports for external use.</li>
-        </ul>
-      ]]>
+Collects code coverage information for Java.
+<ul><li>Adds the Coverage tab to run/debug configurations</li>
+<li>Generates standalone HTML reports for external use</li>
+<li>Supports two modes of analysis: sampling and tracing</li></ul>
+<p>
+To run your code with coverage, open the <b>Run</b> menu and click <b>Run with Coverage</b>.
+Results are displayed in the <b>Coverage</b> tool window, in the <b>Project</b> tool window, and in the editor.
+<p>
+To configure, open <b>Settings/Preferences | Build, Execution, Deployment | Coverage</b>.]]>
    </description>
   <vendor>JetBrains</vendor>
 

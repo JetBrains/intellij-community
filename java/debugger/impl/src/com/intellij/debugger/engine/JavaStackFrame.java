@@ -205,7 +205,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   // copied from DebuggerTree
-  private void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
+  protected void buildVariablesThreadAction(DebuggerContextImpl debuggerContext, XValueChildrenList children, XCompositeNode node) {
     try {
       final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
       if (evaluationContext == null) {
@@ -456,7 +456,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
 
     @Override
-    public void visitElement(final PsiElement element) {
+    public void visitElement(@NotNull final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }

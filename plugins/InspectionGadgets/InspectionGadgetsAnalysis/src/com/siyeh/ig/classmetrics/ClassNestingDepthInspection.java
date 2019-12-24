@@ -34,13 +34,6 @@ public class ClassNestingDepthInspection
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "inner.class.too.deeply.nested.display.name");
-  }
-
-  @Override
   protected int getDefaultLimit() {
     return CLASS_NESTING_LIMIT;
   }

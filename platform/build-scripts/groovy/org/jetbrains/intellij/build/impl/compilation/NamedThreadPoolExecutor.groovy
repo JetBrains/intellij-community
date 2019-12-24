@@ -55,14 +55,16 @@ class NamedThreadPoolExecutor extends ThreadPoolExecutor {
   }
 
   boolean reportErrors(BuildMessages messages) {
-    if (!errors.isEmpty()) {
-      messages.warning("Several (${errors.size()}) errors occured:")
+    def size = errors.size()
+    if (size != 0) {
+      def prefix = size == 1 ? "Error occurred" : "$size errors occurred"
+      messages.warning(prefix + ":")
       errors.each { Throwable t ->
         def writer = new StringWriter()
         new PrintWriter(writer).withCloseable { t?.printStackTrace(it) }
-        messages.warning("${t.message}\n$writer" )
+        messages.warning("${t.message}\n$writer")
       }
-      messages.error("Several (${errors.size()}) errors occured, see above")
+      messages.error(prefix + ", see details above")
       return true
     }
     return false
@@ -77,9 +79,10 @@ class NamedThreadPoolExecutor extends ThreadPoolExecutor {
           iterator.remove()
         }
       }
-      if (futures.isEmpty()) break
-      messages.info("${futures.size()} tasks left...")
-      if (futures.size() < 100) {
+      def size = futures.size()
+      if (size == 0) break
+      messages.info("$size task${size != 1 ? 's' : ''} left...")
+      if (size < 100) {
         futures.last().get()
       }
       else {

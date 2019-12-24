@@ -46,13 +46,6 @@ public class ClassCouplingInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.coupled.class.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     final Integer totalDependencies = (Integer)infos[0];
     return InspectionGadgetsBundle.message(

@@ -318,21 +318,31 @@ public class ContainerUtil extends ContainerUtilRt {
     return Collections.unmodifiableMap(original);
   }
 
+  /**
+   * @deprecated Use {@link SmartList()}
+   */
   @NotNull
-  @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList() {
     return new SmartList<>();
   }
 
+  /**
+   * @deprecated Use {@link SmartList(T)}
+   */
   @NotNull
-  @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList(T element) {
     return new SmartList<>(element);
   }
 
+  /**
+    * @deprecated Use {@link SmartList(T)}
+    */
   @SafeVarargs
   @NotNull
   @Contract(pure=true)
+  @Deprecated
   public static <T> List<T> newSmartList(@NotNull T... elements) {
     return new SmartList<>(elements);
   }
@@ -640,7 +650,7 @@ public class ContainerUtil extends ContainerUtilRt {
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      //noinspection unchecked
+      //noinspection unchecked,rawtypes
       return new KeyOrderedMultiMap(result);
     }
     return result;
@@ -1178,14 +1188,21 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> findAll(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
-    return findAll(Arrays.asList(collection), instanceOf);
+  public static <T, V> List<V> findAll(@NotNull T[] array, @NotNull Class<V> instanceOf) {
+    List<V> result = new SmartList<>();
+    for (final T t : array) {
+      if (instanceOf.isInstance(t)) {
+        //noinspection unchecked
+        result.add((V)t);
+      }
+    }
+    return result;
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T, V> V[] findAllAsArray(@NotNull T[] collection, @NotNull Class<V> instanceOf) {
-    List<V> list = findAll(Arrays.asList(collection), instanceOf);
+    List<V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
@@ -1466,7 +1483,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T, U extends T> U findInstance(@NotNull T[] array, @NotNull Class<? extends U> aClass) {
-    return findInstance(Arrays.asList(array), aClass);
+    //noinspection unchecked
+    return (U)find(array, FilteringIterator.instanceOf(aClass));
   }
 
   @NotNull
@@ -2098,7 +2116,18 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> mapNotNull(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapping) {
-    return mapNotNull(Arrays.asList(array), mapping);
+    if (array.length == 0) {
+      return emptyList();
+    }
+
+    List<V> result = new ArrayList<>(array.length);
+    for (T t : array) {
+      final V o = mapping.fun(t);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.isEmpty() ? emptyList() : result;
   }
 
   /**
@@ -2278,7 +2307,10 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean and(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
-    return and(Arrays.asList(iterable), condition);
+    for (final T t : iterable) {
+      if (!condition.value(t)) return false;
+    }
+    return true;
   }
 
   @Contract(pure=true)
@@ -2836,7 +2868,12 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2List(Arrays.asList(array), mapper);
+    if (array.length == 0) return emptyList();
+    List<V> list = new ArrayList<>(array.length);
+    for (final T t : array) {
+      list.add(mapper.fun(t));
+    }
+    return list;
   }
 
   @NotNull
@@ -2863,8 +2900,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2Set(Arrays.asList(collection), mapper);
+  public static <T, V> Set<V> map2Set(@NotNull T[] array, @NotNull Function<? super T, ? extends V> mapper) {
+    if (array.length == 0) return Collections.emptySet();
+    Set<V> set = new HashSet<>(array.length);
+    for (final T t : array) {
+      set.add(mapper.fun(t));
+    }
+    return set;
   }
 
   @NotNull

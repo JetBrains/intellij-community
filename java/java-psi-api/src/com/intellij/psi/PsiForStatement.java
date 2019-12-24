@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java basic {@code for} statement.
  */
-public interface PsiForStatement extends PsiLoopStatement{
+public interface PsiForStatement extends PsiConditionalLoopStatement{
   /**
    * Returns the initialization part of the statement.
    *
@@ -14,14 +14,6 @@ public interface PsiForStatement extends PsiLoopStatement{
    */
   @Nullable
   PsiStatement getInitialization();
-
-  /**
-   * Returns the condition part of the statement.
-   *
-   * @return the condition part, or {@code null} if no condition has been specified.
-   */
-  @Nullable
-  PsiExpression getCondition();
 
   /**
    * Returns the update part of the statement.

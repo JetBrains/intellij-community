@@ -36,6 +36,7 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           }
         }
         row { checkBox(useSmallFont).enableIfTabsVisible() }
+        row { checkBox(showFileIcon).enableIfTabsVisible() }
         row { checkBox(showFileExtension).enableIfTabsVisible() }
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
@@ -59,15 +60,13 @@ class EditorTabsConfigurable : BoundConfigurable("Editor Tabs", "reference.setti
           }
         }
         row {
-          label(message("label.when.number.of.opened.editors.exceeds.tab.limit"))
-          buttonGroup {
+          buttonGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
             row { radioButton(message("radio.close.non.modified.files.first"), ui::closeNonModifiedFilesFirst) }
             row { radioButton(message("radio.close.less.frequently.used.files")) }.largeGapAfter()
           }
         }
         row {
-          label(message("label.when.closing.active.editor"))
-          buttonGroup {
+          buttonGroup(message("label.when.closing.active.editor")) {
             row { radioButton(message("radio.activate.left.neighbouring.tab")) }
             row { radioButton(message("radio.activate.right.neighbouring.tab"), ui::activeRightEditorOnClose) }
             row { radioButton(message("radio.activate.most.recently.opened.tab"), ui::activeMruEditorOnClose) }.largeGapAfter()

@@ -29,7 +29,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.JarUtil");
+  private static final Logger LOG = Logger.getInstance(JarUtil.class);
 
   /**
    * Returns true if the given .jar file exists and contains the given class.

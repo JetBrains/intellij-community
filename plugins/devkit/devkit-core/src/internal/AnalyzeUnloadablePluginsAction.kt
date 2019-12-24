@@ -4,11 +4,15 @@ package org.jetbrains.idea.devkit.internal
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
@@ -16,14 +20,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
-import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import javax.swing.JScrollPane
-import javax.swing.JTextArea
 
 /**
  * @author yole
@@ -31,6 +33,9 @@ import javax.swing.JTextArea
 class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
+
+    val view = e.getData(LangDataKeys.IDE_VIEW)
+    val dir = view?.orChooseDirectory
 
     val result = mutableListOf<PluginUnloadabilityStatus>()
     val extensionPointOwners = ExtensionPointOwners()
@@ -40,8 +45,12 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
           val pi = ProgressManager.getInstance().progressIndicator
           pi.isIndeterminate = false
 
-          val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML,
-                                                            GlobalSearchScopesCore.projectProductionScope(project))
+          val searchScope = when (dir) {
+            null -> GlobalSearchScopesCore.projectProductionScope(project)
+            else -> GlobalSearchScopesCore.directoryScope(dir, true)
+          }
+          val pluginXmlFiles = FilenameIndex.getFilesByName(project, PluginManagerCore.PLUGIN_XML, searchScope)
+
           for ((processed, pluginXmlFile) in pluginXmlFiles.withIndex()) {
             pi.checkCanceled()
             pi.fraction = (processed.toDouble() / pluginXmlFiles.size)
@@ -58,7 +67,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             pi.text = status.pluginId
           }
         }
-      }, "Analyzing Plugins", true, e.project)
+      }, "Analyzing Plugins (${dir?.name ?: "Project"})", true, e.project)
 
     if (show) showReport(project, result, extensionPointOwners)
     extensionPointOwners.dispose()
@@ -94,10 +103,10 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       val closePlugins = result.filter {
         it.componentCount == 0 &&
         it.nonDynamicEPs.isEmpty() &&
-        it.unspecifiedDynamicEPs.isNotEmpty()
+        it.unspecifiedDynamicEPs.any { !it.startsWith("cidr") && !it.startsWith("appcode") }
       }
       if (closePlugins.isNotEmpty()) {
-        appendln("Plugins closest to being unloadable (40 out of ${closePlugins.size}):")
+        appendln("Plugins closest to being unloadable (${closePlugins.size.coerceAtMost(40)} out of ${closePlugins.size}):")
         for (status in closePlugins.sortedBy { it.unspecifiedDynamicEPs.size }.take(40)) {
           appendln("${status.pluginId} - ${status.unspecifiedDynamicEPs.joinToString()}")
         }
@@ -114,26 +123,31 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
       appendln("EP usage statistics (${epUsagesMap.size} non-dynamic EPs remaining):")
       val epUsagesList = epUsagesMap.toList().sortedByDescending { it.second }
       for (pair in epUsagesList) {
-        appendln("${pair.second}: ${pair.first} (${extensionPointOwners.getOwner(pair.first)})")
-      }
-
-      appendln()
-      appendln("EPs grouped by owner:")
-      for (owner in extensionPointOwners.getSortedOwners()) {
-        val owned = extensionPointOwners.getOwnedEPs(owner)
-        appendln("$owner: ${owned.size}")
-        for (ep in owned) {
-          appendln(ep)
+        append("${pair.second}: ${pair.first}")
+        if (Registry.`is`("analyze.unloadable.discover.owners")) {
+          append(" (${extensionPointOwners.getOwner(pair.first)})")
         }
         appendln()
       }
+
+      if (Registry.`is`("analyze.unloadable.discover.owners")) {
+        appendln()
+        appendln("EPs grouped by owner:")
+        for (owner in extensionPointOwners.getSortedOwners()) {
+          val owned = extensionPointOwners.getOwnedEPs(owner)
+          appendln("$owner: ${owned.size}")
+          for (ep in owned) {
+            appendln(ep)
+          }
+          appendln()
+        }
+      }
     }
 
-    dialog("Plugin Analysis Report", project = project, panel = panel {
-      row {
-        JScrollPane(JTextArea(report, 20, 80))()
-      }
-    }).show()
+    val fileName = String.format("AnalyzeUnloadablePlugins-Report-%s.txt", DateFormatUtil.formatDateTime(System.currentTimeMillis()))
+    val file = LightVirtualFile(fileName, report)
+    val descriptor = OpenFileDescriptor(project, file)
+    FileEditorManager.getInstance(project).openEditor(descriptor, true)
   }
 
   private fun analyzeUnloadable(ideaPlugin: IdeaPlugin, extensionPointOwners: ExtensionPointOwners): PluginUnloadabilityStatus {
@@ -165,7 +179,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Cannot resolve EP ${extension.xmlElementName}")
         continue
       }
-      extensionPointOwners.discoverOwner(ep)
+      if (Registry.`is`("analyze.unloadable.discover.owners")) {
+        extensionPointOwners.discoverOwner(ep)
+      }
 
       when (ep.dynamic.value) {
         false -> nonDynamicEPs.add(ep.effectiveQualifiedName)

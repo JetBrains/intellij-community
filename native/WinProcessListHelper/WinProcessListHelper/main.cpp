@@ -4,11 +4,35 @@
 using namespace std;
 #include <comdef.h>
 #include <Wbemidl.h>
+#include <string>
+#include <io.h>
+#include <fcntl.h>
 
 #pragma comment(lib, "wbemuuid.lib")
 
+void stringReplaceAll(wstring& str, const wstring& oldStr, const wstring& newStr)
+{
+    int pos = 0;
+    while ((pos = str.find(oldStr, pos)) != string::npos)
+    {
+        str.replace(pos, oldStr.length(), newStr);
+        pos += newStr.length();
+    }
+}
+
+wstring escapeLineBreaks(const wstring& str)
+{
+    wstring result = str;
+    stringReplaceAll(result, L"\\", L"\\\\");
+    stringReplaceAll(result, L"\n", L"\\n");
+    stringReplaceAll(result, L"\r", L"\\r");
+    return result;
+}
+
 int main(int argc, char **argv)
 {
+    _setmode(_fileno(stdout), _O_U8TEXT);
+
     HRESULT hres;
 
     // Step 1: --------------------------------------------------
@@ -161,21 +185,22 @@ int main(int argc, char **argv)
             break;
         }
 
-        VARIANT vtId;
-        pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
-        wprintf_s(L"%d\n", vtId.intVal);
-        VARIANT vtName;
-        pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
-        if (vtName.bstrVal != nullptr)
-            wprintf_s(L"%ls\n", vtName.bstrVal);
+        VARIANT vtId = { 0 };
+        hr = pclsObj->Get(L"ProcessId", 0, &vtId, nullptr, nullptr);
+        INT pid = SUCCEEDED(hr) ? vtId.intVal : 0;
+        wcout << "pid:" << pid << "\n";
+        VARIANT vtName = { 0 };
+        hr = pclsObj->Get(L"Name", 0, &vtName, nullptr, nullptr);
+        if (SUCCEEDED(hr) && vtName.bstrVal != nullptr)
+            wcout << L"name:" << escapeLineBreaks(vtName.bstrVal) << L"\n";
         else
-            wprintf_s(L"\n");
-        VARIANT vtCmd;
-        pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
-        if (vtCmd.bstrVal != nullptr)
-            wprintf_s(L"%ls\n", vtCmd.bstrVal);
+            wcout << L"name:\n";
+        VARIANT vtCmd = { 0 };
+        hr = pclsObj->Get(L"CommandLine", 0, &vtCmd, nullptr, nullptr);
+        if (SUCCEEDED(hr) && vtCmd.bstrVal != nullptr)
+            wcout << L"cmd:" << escapeLineBreaks(vtCmd.bstrVal) << L"\n";
         else
-            wprintf_s(L"\n");
+            wcout << L"cmd:\n";
         VariantClear(&vtId);
         VariantClear(&vtName);
         VariantClear(&vtCmd);

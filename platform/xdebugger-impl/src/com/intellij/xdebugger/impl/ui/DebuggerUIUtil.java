@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -114,7 +114,7 @@ public class DebuggerUIUtil {
       popup.addListener(new JBPopupAdapter() {
         @Override
         public void beforeShown(@NotNull LightweightWindowEvent event) {
-          Window window = popup.isDisposed()  ? null : UIUtil.getWindow(popup.getContent());
+          Window window = popup.isDisposed()  ? null : ComponentUtil.getWindow(popup.getContent());
           if (window != null) {
             Point expected = point.getScreenPoint();
             Rectangle screen = ScreenUtil.getScreenRectangle(expected);

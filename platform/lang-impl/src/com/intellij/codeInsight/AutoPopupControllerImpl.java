@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -37,15 +36,17 @@ import java.util.concurrent.locks.LockSupport;
 
 public class AutoPopupControllerImpl extends AutoPopupController {
   private final Project myProject;
-  private final Alarm myAlarm = new Alarm(this);
+  private final Alarm myAlarm;
 
-  public AutoPopupControllerImpl(Project project) {
+  public AutoPopupControllerImpl(@NotNull Project project) {
     myProject = project;
+
+    myAlarm = new Alarm(myProject);
     setupListeners();
   }
 
   private void setupListeners() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
         cancelAllRequests();
@@ -57,7 +58,7 @@ public class AutoPopupControllerImpl extends AutoPopupController {
       }
     });
 
-    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
+    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, myProject);
   }
 
   @Override
@@ -136,7 +137,8 @@ public class AutoPopupControllerImpl extends AutoPopupController {
           try {
             PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             if (file1 != null) {
-              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false, true);
+              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false,
+                                              true, CodeInsightBundle.message("auto.popup.progress.title"), e -> { });
             }
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
@@ -149,26 +151,14 @@ public class AutoPopupControllerImpl extends AutoPopupController {
   }
 
   @Override
-  public void dispose() {
-  }
-
-  @Override
   @TestOnly
   public void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
     while (System.currentTimeMillis() < deadline) {
+      UIUtil.dispatchAllInvocationEvents();
       if (myAlarm.isEmpty()) return;
       LockSupport.parkNanos(10_000_000);
-      UIUtil.dispatchAllInvocationEvents();
     }
     throw new TimeoutException();
-  }
-
-  /**
-   * @deprecated can be emulated with {@link AppUIExecutor}
-   */
-  @Deprecated
-  public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
-    AppUIExecutor.onUiThread().later().withDocumentsCommitted(project).inTransaction(project).execute(runnable);
   }
 }

@@ -18,12 +18,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public class StringEqualsCharSequenceInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("string.equals.char.sequence.display.name");
-  }
 
   @NotNull
   @Override

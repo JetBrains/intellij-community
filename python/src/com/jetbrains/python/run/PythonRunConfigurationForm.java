@@ -31,9 +31,9 @@ import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
 import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
-import com.jetbrains.extenstions.ContextAnchor;
-import com.jetbrains.extenstions.ModuleBasedContextAnchor;
-import com.jetbrains.extenstions.ProjectSdkContextAnchor;
+import com.jetbrains.extensions.ContextAnchor;
+import com.jetbrains.extensions.ModuleBasedContextAnchor;
+import com.jetbrains.extensions.ProjectSdkContextAnchor;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 

@@ -26,7 +26,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
-import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
@@ -955,43 +954,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
           final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
           final String path = component.getPath();
-          final ModuleBuilder builder = new ModuleBuilder() {
-            @Override
-            public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) {
-              if (rootModel.isSdkInherited()) {
-                modifiableRootModel.inheritSdk();
-              }
-              else {
-                modifiableRootModel.setSdk(rootModel.getSdk());
-              }
-
-              modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
-
-              modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(
-                LanguageLevelModuleExtensionImpl.getInstance(rootModel.getModule()).getLanguageLevel());
-
-              for (OrderEntry entry : rootModel.getOrderEntries()) {
-                if (entry instanceof JdkOrderEntry) continue;
-                if (entry instanceof ModuleSourceOrderEntry) continue;
-                if (entry instanceof ClonableOrderEntry) {
-                  modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry((RootModelImpl)modifiableRootModel,
-                                                                                           (ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject),
-                                                                                           VirtualFilePointerManager.getInstance()));
-                }
-              }
-
-              VirtualFile content = LocalFileSystem.getInstance().findFileByPath(component.getPath());
-              if (content == null) {
-                content = LocalFileSystem.getInstance().refreshAndFindFileByPath(component.getPath());
-              }
-              modifiableRootModel.addContentEntry(content);
-            }
-
-            @Override
-            public ModuleType getModuleType() {
-              return ModuleType.get(rootModel.getModule());
-            }
-          };
+          final ModuleBuilder builder = new CopiedModuleBuilder(rootModel, path, myProject);
           builder.setName(component.getNameValue());
           builder.setModuleFilePath(path + "/" + builder.getName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
           final Module module = myContext.myModulesConfigurator.addModule(builder);
@@ -1018,6 +981,55 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         final NamedConfigurable<?> selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
+    }
+  }
+
+  static class CopiedModuleBuilder extends ModuleBuilder {
+
+    @NotNull ModifiableRootModel myRootModel;
+    @NotNull String myComponentPath;
+    @NotNull Project myProject;
+
+    CopiedModuleBuilder(@NotNull ModifiableRootModel rootModel, @NotNull String componentPath, @NotNull Project project) {
+      this.myRootModel = rootModel;
+      this.myComponentPath = componentPath;
+      this.myProject = project;
+    }
+
+    @Override
+    public void setupRootModel(@NotNull final ModifiableRootModel modifiableRootModel) {
+      if (myRootModel.isSdkInherited()) {
+        modifiableRootModel.inheritSdk();
+      }
+      else {
+        modifiableRootModel.setSdk(myRootModel.getSdk());
+      }
+
+      modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
+
+      modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(
+        LanguageLevelModuleExtensionImpl.getInstance(myRootModel.getModule()).getLanguageLevel());
+
+      for (OrderEntry entry : myRootModel.getOrderEntries()) {
+        if (entry instanceof JdkOrderEntry) continue;
+        if (entry instanceof ModuleSourceOrderEntry) continue;
+        if (entry instanceof ClonableOrderEntry) {
+          modifiableRootModel.addOrderEntry(((ClonableOrderEntry)entry).cloneEntry(modifiableRootModel,
+                                                                                   (ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject),
+                                                                                   VirtualFilePointerManager.getInstance()));
+        }
+      }
+
+      VirtualFile content = LocalFileSystem.getInstance().findFileByPath(myComponentPath);
+      if (content == null) {
+        content = LocalFileSystem.getInstance().refreshAndFindFileByPath(myComponentPath);
+      }
+      modifiableRootModel.addContentEntry(content);
+    }
+
+    @Override
+    public ModuleType<?> getModuleType() {
+      return ModuleType.get(myRootModel.getModule());
     }
   }
 

@@ -3,4 +3,7 @@ fragment pullRequestReviewerInfo on RequestedReviewer {
   ... on User {
     ...userInfo
   }
+  ... on Team {
+    ...teamInfo
+  }
 }

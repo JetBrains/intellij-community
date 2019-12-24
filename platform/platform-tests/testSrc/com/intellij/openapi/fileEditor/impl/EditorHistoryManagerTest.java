@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectServiceContainerCustomizer;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -71,17 +72,18 @@ public class EditorHistoryManagerTest extends HeavyPlatformTestCase {
     }), getTestRootDisposable(), false);
   }
 
-  private void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) {
+  private static void openProjectPerformTaskCloseProject(Path projectDir, Consumer<Project> task) {
+    ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     Project project = Files.exists(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
-                      ? myProjectManager.loadProject(projectDir)
-                      : myProjectManager.createProject(null, projectDir.toString());
+                      ? projectManager.loadProject(projectDir)
+                      : projectManager.createProject(null, projectDir.toString());
     try {
-      assertThat(myProjectManager.openProject(project)).isTrue();
+      assertThat(projectManager.openProject(project)).isTrue();
       task.accept(project);
       ProjectKt.getStateStore(project).saveComponent(EditorHistoryManager.getInstance(project));
     }
     finally {
-      myProjectManager.forceCloseProject(project, true);
+      projectManager.forceCloseProject(project);
     }
     UIUtil.dispatchAllInvocationEvents();
   }

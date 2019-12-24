@@ -830,12 +830,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return null;
       }
 
-      @Nullable
-      @Override
-      public Collection<? extends FileType> getDetectedFileTypes() {
-        return Collections.singleton(ArchiveFileType.INSTANCE);
-      }
-
       @Override
       public int getDesiredContentPrefixLength() {
         return "#!archive".length();
@@ -878,7 +872,40 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       assertTrue("DEFAULT_IGNORED must be sorted, but got: '"+prev+"' >= '"+string+"'", prev.compareTo(string) < 0);
     }
   }
+  
+  public void testReplacePlainTextLikeFileTypesWithDetectedFileType() throws IOException {
+    String extension = "replaceable";
+    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
 
+    String hashBangSuffix = "detectedFileType";
+    FileType detectedFileType = createTestFileType();
+    HashBangFileTypeDetector detector = new HashBangFileTypeDetector(detectedFileType, hashBangSuffix);
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
+    
+    VirtualFile file = createTempFile(extension, null, "#!/" + hashBangSuffix + "\n", CharsetToolkit.UTF8_CHARSET);
+    assertEquals(detectedFileType, file.getFileType());
+  }
+
+  public void testDoNotReplaceEmptyPlainTextLikeFileTypesWithDetectedFileType() throws IOException {
+    String extension = "replaceable";
+    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
+    
+    VirtualFile file = createTempFile(extension, null, "", CharsetToolkit.UTF8_CHARSET);
+    assertEquals(replaceableFileType, file.getFileType());
+  }
+
+  public void testReplaceBinaryPlainTextLikeFileTypesWithUnknownFileType() throws IOException {
+    String extension = "replaceable";
+    FileType replaceableFileType = createFileTypeReplaceableByContentDetection();
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(replaceableFileType, "*." + extension));
+    
+    File file = new File(createTempDirectory(), "name." + extension);
+    FileUtil.writeToFile(file, new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'});
+    assertEquals(UnknownFileType.INSTANCE, getVirtualFile(file).getFileType());
+  }
+  
   @NotNull
   private static FileType createTestFileType() {
     return new FileType() {
@@ -922,5 +949,52 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return null;
       }
     };
+  }
+
+  @NotNull
+  private static FileType createFileTypeReplaceableByContentDetection() {
+    return new MyReplaceableByContentDetectionFileType();
+  }
+
+  private static class MyReplaceableByContentDetectionFileType implements FileType, PlainTextLikeFileType {
+    @NotNull
+    @Override
+    public String getName() {
+      return "PlainTextLike files";
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String getDefaultExtension() {
+      return "fromPlugin";
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Override
+    public boolean isBinary() {
+      return false;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return true;
+    }
+
+    @Nullable
+    @Override
+    public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+      return null;
+    }
   }
 }

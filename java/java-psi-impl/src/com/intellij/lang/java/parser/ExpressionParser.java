@@ -180,6 +180,19 @@ public class ExpressionParser {
   }
 
   @Nullable
+  private PsiBuilder.Marker parsePattern(final PsiBuilder builder) {
+    PsiBuilder.Marker pattern = builder.mark();
+    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+    if (type == null) {
+      pattern.drop();
+      return null;
+    }
+    expect(builder, JavaTokenType.IDENTIFIER);
+    pattern.done(JavaElementType.TYPE_TEST_PATTERN);
+    return pattern;
+  }
+
+  @Nullable
   private PsiBuilder.Marker parseBinary(final PsiBuilder builder, final ExprType type, final TokenSet ops) {
     PsiBuilder.Marker result = parseExpression(builder, type);
     if (result == null) return null;
@@ -219,14 +232,14 @@ public class ExpressionParser {
     IElementType tokenType;
     while ((tokenType = getGtTokenType(builder)) != null) {
       final IElementType toCreate;
-      final ExprType toParse;
+      final boolean patternExpected; // Otherwise ExprType.SHIFT is expected
       if (RELATIONAL_OPS.contains(tokenType)) {
         toCreate = JavaElementType.BINARY_EXPRESSION;
-        toParse = ExprType.SHIFT;
+        patternExpected = false;
       }
       else if (tokenType == JavaTokenType.INSTANCEOF_KEYWORD) {
         toCreate = JavaElementType.INSTANCE_OF_EXPRESSION;
-        toParse = ExprType.TYPE;
+        patternExpected = true;
       }
       else {
         break;
@@ -235,9 +248,9 @@ public class ExpressionParser {
       final PsiBuilder.Marker expression = left.precede();
       advanceGtToken(builder, tokenType);
 
-      final PsiBuilder.Marker right = parseExpression(builder, toParse);
+      final PsiBuilder.Marker right = patternExpected ? parsePattern(builder) : parseExpression(builder, ExprType.SHIFT);
       if (right == null) {
-        error(builder, JavaErrorMessages.message(toParse == ExprType.TYPE ? "expected.type" : "expected.expression"));
+        error(builder, JavaErrorMessages.message(patternExpected ? "expected.type" : "expected.expression"));
         expression.done(toCreate);
         return expression;
       }

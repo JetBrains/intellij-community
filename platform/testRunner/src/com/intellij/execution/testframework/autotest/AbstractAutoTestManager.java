@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.autotest;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -126,7 +125,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   }
 
   private boolean hasEnabledAutoTests() {
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    RunContentManager contentManager = RunContentManager.getInstance(myProject);
     for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
       if (isAutoTestEnabledForDescriptor(descriptor)) {
         return true;
@@ -149,7 +148,7 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
   }
 
   protected void restartAllAutoTests(int modificationStamp) {
-    RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
+    RunContentManager contentManager = RunContentManager.getInstance(myProject);
     boolean active = false;
     for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
       if (isAutoTestEnabledForDescriptor(descriptor)) {

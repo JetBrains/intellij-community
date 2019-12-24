@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.Contract;
+
 /**
  * This interface allows to mark a distinct object as dumb-aware.
  *
@@ -22,6 +24,7 @@ package com.intellij.openapi.project;
  * @see DumbAware
  */
 public interface PossiblyDumbAware {
+  @Contract(pure = true)
   default boolean isDumbAware() {
     //noinspection SSBasedInspection
     return this instanceof DumbAware;

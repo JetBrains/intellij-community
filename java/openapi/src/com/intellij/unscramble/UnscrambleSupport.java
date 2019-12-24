@@ -17,6 +17,7 @@ package com.intellij.unscramble;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public interface UnscrambleSupport<T extends JComponent> {
   }
 
   @NotNull
+  @Contract(pure = true)
   String getPresentableName();
 
   @Nullable

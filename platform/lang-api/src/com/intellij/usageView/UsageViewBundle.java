@@ -16,33 +16,21 @@
 
 package com.intellij.usageView;
 
-import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
-
-/**
- * @author yole
- */
-public class UsageViewBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
-  }
-
-  private static Reference<ResourceBundle> ourBundle;
+public class UsageViewBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.UsageView";
 
-  private UsageViewBundle() {
-  }
+  private static final UsageViewBundle INSTANCE = new UsageViewBundle();
 
-  @SuppressWarnings({"AutoBoxing"})
-  public static String getUsagesString(int usagesCount, int filesCount) {
-    return " (" + message("occurence.info.usage", usagesCount, filesCount) + ")";
+  private UsageViewBundle() { super(BUNDLE); }
+
+  @NotNull
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
   @SuppressWarnings({"AutoBoxing"})
@@ -53,14 +41,5 @@ public class UsageViewBundle {
   @SuppressWarnings({"AutoBoxing"})
   public static String getReferencesString(int usagesCount, int filesCount) {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
-  }
-
-  public static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<>(bundle);
-    }
-    return bundle;
   }
 }

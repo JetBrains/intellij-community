@@ -41,7 +41,7 @@ public final class ClipboardSynchronizer implements Disposable {
   private final ClipboardHandler myClipboardHandler;
 
   public static ClipboardSynchronizer getInstance() {
-    return ApplicationManager.getApplication().getComponent(ClipboardSynchronizer.class);
+    return ApplicationManager.getApplication().getService(ClipboardSynchronizer.class);
   }
 
   public ClipboardSynchronizer() {

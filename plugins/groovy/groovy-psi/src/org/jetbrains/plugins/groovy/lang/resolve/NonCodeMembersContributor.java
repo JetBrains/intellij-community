@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
-import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,7 +146,6 @@ public abstract class NonCodeMembersContributor {
     ensureInit();
 
     final PsiClass aClass = PsiTypesUtil.getPsiClass(qualifierType);
-    if (TransformationUtilKt.isUnderTransformation(aClass)) return true;
 
     final Iterable<? extends PsiScopeProcessor> unwrappedOriginals = MultiProcessor.allProcessors(processor);
     for (PsiScopeProcessor each : unwrappedOriginals) {

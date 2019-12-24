@@ -31,8 +31,11 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentSet;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ *
+ * @deprecated prefer {@link com.intellij.ui.tree.ui.DefaultTreeUI}
+ */
+@Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
   public static final String TREE_TABLE_TREE_KEY = "TreeTableTree";
 

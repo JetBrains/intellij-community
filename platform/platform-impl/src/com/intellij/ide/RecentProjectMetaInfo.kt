@@ -29,7 +29,7 @@ class RecentProjectMetaInfo : BaseState() {
   var projectWorkspaceId by string()
 
   @get:Property(surroundWithTag = false)
-  var frame by property<FrameInfo>()
+  var frame: FrameInfo? by property()
 }
 
 class RecentProjectManagerState : BaseState() {

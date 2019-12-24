@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -60,7 +61,9 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
 
-    InspectionProfileImpl profile = new InspectionProfileImpl("test", new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList())), (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
+    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(getTools().collect(Collectors.toList()));
+    Disposer.register(getTestRootDisposable(), toolSupplier);
+    InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
     getTools().forEach(t -> profile.enableTool(t.getShortName(), getProject()));
 
     context.setExternalProfile(profile);

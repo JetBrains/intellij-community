@@ -1,9 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
-import com.intellij.AbstractBundle;
 import com.intellij.CommonBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,13 +41,13 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<I
   @Nullable
   public String[] getCategories() {
     if (categoryKey != null) {
-      final String baseName = bundleName != null ? bundleName : ((IdeaPluginDescriptor)getPluginDescriptor()).getResourceBundleBaseName();
+      final String baseName = bundleName != null ? bundleName : getPluginDescriptor().getResourceBundleBaseName();
       if (baseName == null) {
         LOG.error("No resource bundle specified for " + getPluginDescriptor());
         return null;
       }
 
-      final ResourceBundle bundle = AbstractBundle.getResourceBundle(baseName, getLoaderForClass());
+      final ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(baseName, getLoaderForClass());
 
       final String[] keys = categoryKey.split("/");
       if (keys.length > 1) {

@@ -62,3 +62,38 @@ class MissortedModifiers {
 @interface MethodOrTypeAnnotation {
   // empty
 }
+class TestTarget {
+  @TestAnnotation1 private final String foo;
+  @TestAnnotation2 private final String bar;
+  @TestAnnotation3 private final String baz;
+
+  public TestTarget(String foo, String bar, String baz) {
+    this.foo = foo;
+    this.bar = bar;
+    this.baz = baz;
+  }
+
+  public String getFoo() {
+    return foo;
+  }
+
+  public String getBar() {
+    return bar;
+  }
+
+  public String getBaz() {
+    return baz;
+  }
+
+  @Target(ElementType.FIELD)
+  public @interface TestAnnotation1 {
+  }
+
+  @Target({ElementType.FIELD, ElementType.TYPE_USE})
+  public @interface TestAnnotation2 {
+  }
+
+  @Target({ElementType.TYPE_USE, ElementType.FIELD})
+  public @interface TestAnnotation3 {
+  }
+}

@@ -9,13 +9,12 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.Nullable;
 
-public class PrimitiveConversionInstruction extends Instruction implements ExpressionPushingInstruction {
+public class PrimitiveConversionInstruction extends ExpressionPushingInstruction<PsiExpression> {
   @Nullable private final PsiPrimitiveType myTargetType;
-  @Nullable private final PsiExpression myExpression;
 
   public PrimitiveConversionInstruction(@Nullable PsiPrimitiveType targetType, @Nullable PsiExpression expression) {
+    super(expression);
     myTargetType = targetType;
-    myExpression = expression;
   }
 
   @Override
@@ -26,12 +25,6 @@ public class PrimitiveConversionInstruction extends Instruction implements Expre
   @Nullable
   public PsiPrimitiveType getTargetType() {
     return myTargetType;
-  }
-
-  @Override
-  @Nullable
-  public PsiExpression getExpression() {
-    return myExpression;
   }
 
   @Override

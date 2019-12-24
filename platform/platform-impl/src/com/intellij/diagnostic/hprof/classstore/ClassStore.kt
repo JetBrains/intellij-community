@@ -26,29 +26,59 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
   private val stringToClassDefinition = HashMap<String, ClassDefinition>()
   private val classDefinitionToShortPrettyName = HashSet<ClassDefinition>()
 
-  private val softReferenceClass: ClassDefinition
-  private val weakReferenceClass: ClassDefinition
+  val softReferenceClass: ClassDefinition
+  val weakReferenceClass: ClassDefinition
+
   val classClass: ClassDefinition
 
   private val primitiveArrayToClassDefinition = HashMap<Type, ClassDefinition>()
 
   init {
+    fun getClashedNameWithIndex(classDefinition: ClassDefinition,
+                                index: Int): String {
+      if (classDefinition.name.endsWith(';'))
+        return "${classDefinition.name.removeSuffix(";")}!$index;"
+      else
+        return "${classDefinition.name}!$index"
+    }
+
+    val clashedClassNames = mutableSetOf<String>()
     classes.forEachValue { classDefinition ->
-      if (stringToClassDefinition.containsKey(classDefinition.name)) {
-        var i = 1
+      val className = classDefinition.name
+      var clashed = false
+      if (clashedClassNames.contains(className)) {
+        clashed = true
+      }
+      else {
+        val clashedClass = stringToClassDefinition.remove(className)
+        // If there is more than one class with this name, rename first class too.
+        if (clashedClass != null) {
+          clashed = true
+          val newDefinition = clashedClass.copyWithName(getClashedNameWithIndex(clashedClass, 1))
+          stringToClassDefinition[newDefinition.name] = newDefinition
+          classes.put(clashedClass.id, newDefinition)
+          clashedClassNames.add(className)
+        }
+      }
+      if (clashed) {
+        var i = 2
         var newName: String
         do {
+          newName = getClashedNameWithIndex(classDefinition, i)
           i++
-          newName = classDefinition.name + "($i)"
         }
         while (stringToClassDefinition.containsKey(newName))
-        stringToClassDefinition[newName] = classDefinition.copyWithName(newName)
+
+        val newClassDefinition = classDefinition.copyWithName(newName)
+        stringToClassDefinition[newName] = newClassDefinition
+        classes.put(classDefinition.id, newClassDefinition)
       }
       else {
         stringToClassDefinition[classDefinition.name] = classDefinition
       }
       true
     }
+    clashedClassNames.forEach { assert(!stringToClassDefinition.contains(it)) }
 
     // Every heap dump should have definitions of Soft/WeakReference and java.lang.Class
     softReferenceClass = stringToClassDefinition["java.lang.ref.SoftReference"]!!
@@ -80,20 +110,9 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
       }
       true
     }
-    shortNameToClassDefinition.forEach { _, classDef ->
+    shortNameToClassDefinition.forEach { (_, classDef) ->
       if (classDef == null) return@forEach
       classDefinitionToShortPrettyName.add(classDef)
-    }
-  }
-
-  companion object {
-    fun create(parser: HProfEventBasedParser): ClassStore {
-      val pass1 = CreateClassStoreVisitor()
-      parser.accept(pass1, "getClassDefinitions-pass1: create class objects")
-      val pass2 = CollectStringValuesVisitor(pass1.getStringIDToStringMap())
-      parser.accept(pass2, "getClassDefinitions-pass2: get strings")
-      pass1.updateNames()
-      return pass1.getClassStore()
     }
   }
 
@@ -107,6 +126,10 @@ class ClassStore(private val classes: TLongObjectHashMap<ClassDefinition>) {
 
   operator fun get(name: String): ClassDefinition {
     return stringToClassDefinition[name]!!
+  }
+
+  fun getClassIfExists(name: String): ClassDefinition? {
+    return stringToClassDefinition[name]
   }
 
   fun containsClass(name: String) = stringToClassDefinition.containsKey(name)

@@ -15,14 +15,17 @@ import kotlin.collections.ArrayList
 
 private const val CHANGELIST_DATA: String = "changelist_data"
 
-val LocalChangeList.author: VcsUser? get() = (data as? ChangeListData)?.author
-val LocalChangeList.authorDate: Date? get() = (data as? ChangeListData)?.date
+val LocalChangeList.changeListData: ChangeListData? get() = (data as? ChangeListData)?.nullize()
+val LocalChangeList.author: VcsUser? get() = changeListData?.author
+val LocalChangeList.authorDate: Date? get() = changeListData?.date
 
 data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null, val date: Date? = null) {
 
   private constructor(state: State) : this(VcsUserImpl(state.name ?: "", state.email ?: ""), state.date)
 
   private var myState: State = State(author?.name, author?.email, date)
+
+  fun nullize(): ChangeListData? = if (author == null && date == null) null else this
 
   fun getPresentation(): String {
     val lines = ArrayList<String>()
@@ -37,6 +40,9 @@ data class ChangeListData @JvmOverloads constructor(val author: VcsUser? = null,
                                         @Attribute("date") var date: Date? = null)
 
   companion object {
+    fun of(author: VcsUser?, date: Date?): ChangeListData? =
+      if (author == null && date == null) null else ChangeListData(author, date)
+
     @JvmStatic
     fun writeExternal(listData: ChangeListData): Element = XmlSerializer.serialize(listData.myState)
 

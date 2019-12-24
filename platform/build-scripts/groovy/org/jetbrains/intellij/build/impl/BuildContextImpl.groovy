@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -66,7 +67,10 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
-    if (productProperties.productCode != null && applicationInfo.productCode == null) {
+    if (productProperties.customProductCode != null) {
+      applicationInfo.productCode = productProperties.customProductCode
+    }
+    else if (productProperties.productCode != null && applicationInfo.productCode == null) {
       applicationInfo.productCode = productProperties.productCode
     }
     else if (productProperties.productCode == null && applicationInfo.productCode != null) {
@@ -85,7 +89,8 @@ class BuildContextImpl extends BuildContext {
     new File(paths.communityHome, "build.txt").text.trim()
   }
 
-  private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome, ProductProperties productProperties) {
+  private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
+                                                                                              ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
       def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
       def applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
@@ -94,7 +99,7 @@ class BuildContextImpl extends BuildContext {
   }
 
   static File findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    JpsModule module = project.modules.find {it.name == productProperties.applicationInfoModule }
+    JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
     if (module == null) {
       messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
     }
@@ -194,14 +199,15 @@ class BuildContextImpl extends BuildContext {
   File findFileInModuleSources(String moduleName, String relativePath) {
     getSourceRootsWithPrefixes(findRequiredModule(moduleName)).collect {
       new File(it.first, StringUtil.trimStart(relativePath, it.second))
-    }.find {it.exists()}
+    }.find { it.exists() }
   }
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyInArgumentCheck"])
   @CompileDynamic
   private static List<Pair<File, String>> getSourceRootsWithPrefixes(JpsModule module) {
     module.sourceRoots.findAll { it.rootType in JavaModuleSourceRootTypes.PRODUCTION }.collect {
-      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") : it.properties.relativeOutputPath
+      String prefix = it.properties instanceof JavaSourceRootProperties ? it.properties.packagePrefix.replace(".", "/") :
+                      it.properties.relativeOutputPath
       if (!prefix.endsWith("/")) prefix += "/"
       Pair.create(it.file, StringUtil.trimStart(prefix, "/"))
     }
@@ -212,7 +218,7 @@ class BuildContextImpl extends BuildContext {
     if (proprietaryBuildTools.signTool != null) {
       messages.progress("Signing $path")
       proprietaryBuildTools.signTool.signExeFile(path, this)
-      messages.info("Signing done")
+      messages.info("Signed $path")
     }
     else {
       messages.warning("Sign tool isn't defined, $path won't be signed")
@@ -243,7 +249,8 @@ class BuildContextImpl extends BuildContext {
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
-    def compilationContextCopy = compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
+    def compilationContextCopy = compilationContext.
+      createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
     def child = new BuildContextImpl(compilationContextCopy, productProperties,
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools)
@@ -260,9 +267,11 @@ class BuildContextImpl extends BuildContext {
 
     def options = new BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
-    def compilationContextCopy = compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
+    def compilationContextCopy =
+      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
-                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools)
+                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                    proprietaryBuildTools)
     copy.paths.artifacts = paths.artifacts
     copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.compilationContext.prepareForBuild()

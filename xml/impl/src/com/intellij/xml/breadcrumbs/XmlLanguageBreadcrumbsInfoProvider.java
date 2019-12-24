@@ -23,11 +23,12 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
+public class XmlLanguageBreadcrumbsInfoProvider implements BreadcrumbsProvider {
   @Override
   public boolean acceptElement(@NotNull final PsiElement e) {
     return e instanceof XmlTag && e.isValid();

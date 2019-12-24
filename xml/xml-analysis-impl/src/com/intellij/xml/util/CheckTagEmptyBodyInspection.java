@@ -83,12 +83,6 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("xml.inspections.check.tag.empty.body");
-  }
-
-  @Override
-  @NotNull
   @NonNls
   public String getShortName() {
     return "CheckTagEmptyBody";

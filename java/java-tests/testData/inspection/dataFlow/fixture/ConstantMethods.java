@@ -22,4 +22,18 @@ class Test {
       System.out.println("Impossible");
     }
   }
+
+  void test4() {
+    boolean b1 = <warning descr="Result of 'Boolean.valueOf(false).booleanValue()' is always 'false'">Boolean.valueOf(false).booleanValue()</warning>;
+    boolean b2 = <warning descr="Result of 'Boolean.FALSE.booleanValue()' is always 'false'">Boolean.FALSE.booleanValue()</warning>;
+    boolean b3 = <warning descr="Result of 'Boolean.parseBoolean(\"false\")' is always 'false'">Boolean.parseBoolean("false")</warning>;
+    boolean b4 = <warning descr="Result of 'Boolean.valueOf(false).toString().startsWith(\"t\")' is always 'false'">Boolean.valueOf(false).toString().startsWith("t")</warning>;
+  }
+  
+  void test5(double x) {
+    if (x == 5 || x == 7) {
+      Double y = x;
+      System.out.println(<warning descr="Condition 'y.toString().length() == 3' is always 'true'">y.toString().length() == 3</warning>);
+    }
+  }
 }

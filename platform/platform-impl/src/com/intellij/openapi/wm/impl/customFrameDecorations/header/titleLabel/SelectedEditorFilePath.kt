@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -17,32 +16,27 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import sun.swing.SwingUtilities2
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.min
 
-
 open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = null ) {
-  companion object{
-    private val PROJECT_PATH_REGISTRY = Registry.get("ide.borderless.title.project.path")
-    private val CLASSPATH_REGISTRY = Registry.get("ide.borderless.title.classpath")
-    private val PRODUCT_REGISTRY = Registry.get("ide.borderless.title.product")
-    private val VERSION_REGISTRY = Registry.get("ide.borderless.title.version")
-  }
-
-  private val LOGGER = logger<SelectedEditorFilePath>()
-
   private val projectTitle = ProjectTitlePane()
   private val classTitle = ClippingTitle()
   private val productTitle = DefaultPartTitle(" - ")
@@ -54,14 +48,14 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
   private val updater = Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication())
   private val UPDATER_TIMEOUT = 70
 
-  private val registryListener = object : RegistryValueListener.Adapter() {
+  private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
       updateTitlePaths()
       update()
     }
   }
 
-  protected val label = object : JComponent() {
+  protected val label = object : JLabel() {
     override fun getMinimumSize(): Dimension {
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
@@ -69,7 +63,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
     override fun getPreferredSize(): Dimension {
       val fm = getFontMetrics(font)
       val w = SwingUtilities2.stringWidth(this, fm, titleString) + JBUI.scale(5)
-      return Dimension(min(parent.width, w), fm.height)
+      return Dimension(min(parent.width, w), super.getPreferredSize().height)
     }
 
     override fun paintComponent(g: Graphics) {
@@ -98,16 +92,20 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       return Dimension(projectTitle.shortWidth, super.getMinimumSize().height)
     }
 
+    override fun setForeground(fg: Color?) {
+      super.setForeground(fg)
+      label.foreground = fg
+    }
   }.apply {
     isOpaque = false
     add(label)
   }
 
   private fun updateTitlePaths() {
-    projectTitle.active = PROJECT_PATH_REGISTRY.asBoolean() || multipleSameNamed
-    classTitle.active = CLASSPATH_REGISTRY.asBoolean() || classPathNeeded
-    productTitle.active = PRODUCT_REGISTRY.asBoolean()
-    productVersion.active = VERSION_REGISTRY.asBoolean()
+    projectTitle.active = Registry.get("ide.borderless.title.project.path").asBoolean() || multipleSameNamed
+    classTitle.active = Registry.get("ide.borderless.title.classpath").asBoolean() || classPathNeeded
+    productTitle.active = Registry.get("ide.borderless.title.product").asBoolean()
+    productVersion.active = Registry.get("ide.borderless.title.version").asBoolean()
   }
 
   open fun getView(): JComponent {
@@ -155,10 +153,10 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       Disposer.register(it, disp)
       disposable = disp
 
-      PROJECT_PATH_REGISTRY.addListener(registryListener, disp)
-      CLASSPATH_REGISTRY.addListener(registryListener, disp)
-      PRODUCT_REGISTRY.addListener(registryListener, disp)
-      VERSION_REGISTRY.addListener(registryListener, disp)
+      Registry.get("ide.borderless.title.project.path").addListener(registryListener, disp)
+      Registry.get("ide.borderless.title.classpath").addListener(registryListener, disp)
+      Registry.get("ide.borderless.title.product").addListener(registryListener, disp)
+      Registry.get("ide.borderless.title.version").addListener(registryListener, disp)
 
       updateTitlePaths()
 
@@ -173,6 +171,12 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
 
         override fun selectionChanged(event: FileEditorManagerEvent) {
           updatePath()
+        }
+      })
+
+      it.messageBus.connect(disp).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun after(events: MutableList<out VFileEvent>) {
+            updatePath()
         }
       })
     }
@@ -339,6 +343,7 @@ open class SelectedEditorFilePath(private val onBoundsChanged: (() -> Unit)? = n
       }
     }
 
+    label.text = titleString
     label.toolTipText = if(!isClipped) null else components.joinToString(separator = "", transform = {it.toolTipPart})
 
     label.revalidate()

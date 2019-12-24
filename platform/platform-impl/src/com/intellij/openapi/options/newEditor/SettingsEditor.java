@@ -7,9 +7,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
@@ -258,6 +257,37 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       myTreeView.select(myFilter.myContext.getCurrentConfigurable())
         .onSuccess(o -> requestFocusToEditor());
     });
+
+    for (ConfigurableGroup group : groups) {
+      if (group instanceof MutableConfigurableGroup) {
+        MutableConfigurableGroup mutable = (MutableConfigurableGroup)group;
+        Disposer.register(this, mutable);
+        mutable.addListener(createReloadListener(groups));
+      }
+    }
+  }
+
+  @NotNull
+  private MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {
+    return new MutableConfigurableGroup.Listener() {
+      @Override
+      public void handleUpdate() {
+        Configurable selected = myEditor.getConfigurable();
+        String id = selected instanceof SearchableConfigurable ? ((SearchableConfigurable)selected).getId() : null;
+        myEditor.reload();
+        myFilter.reload();
+        myControllers.clear();
+        myLastController = null;
+        
+        Configurable candidate =
+          id != null ? new ConfigurableVisitor.ByID(id).find(groups.toArray(new ConfigurableGroup[0])) : null;
+        myEditor.init(candidate, false);
+        myTreeView.reloadWithSelection(candidate);
+        mySettings.reload();
+        invalidate();
+        repaint();
+      }
+    };
   }
 
   private void requestFocusToEditor() {
@@ -328,12 +358,15 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   }
 
   @Override
-  boolean cancel() {
-    if (myFilter.myContext.isHoldingFilter()) {
+  boolean cancel(AWTEvent source) {
+    if (source instanceof KeyEvent && myFilter.myContext.isHoldingFilter()) {
       mySearch.setText("");
       return false;
     }
-    return super.cancel();
+    for (Configurable configurable : myFilter.myContext.getModified()) {
+      configurable.cancel();
+    }
+    return super.cancel(source);
   }
 
   @Override

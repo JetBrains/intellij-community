@@ -40,7 +40,7 @@ import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,6 +112,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         }
         actions.add(defaultAction);
 
+        String originalText = text;
         for (final AttachSourcesProvider.AttachSourcesAction action : actions) {
           panel.createActionLabel(GuiUtils.getTextWithoutMnemonicEscaping(action.getName()), () -> {
             List<LibraryOrderEntry> entries = findLibraryEntriesForFile(file, project);
@@ -122,7 +123,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
             panel.setText(action.getBusyText());
 
-            action.perform(entries);
+            action.perform(entries).doWhenProcessed(() -> panel.setText(originalText));
           });
         }
       }
@@ -169,7 +170,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     for (OrderEntry entry : index.getOrderEntriesForFile(file)) {
       if (entry instanceof LibraryOrderEntry) {
-        if (entries == null) entries = ContainerUtil.newSmartList();
+        if (entries == null) entries = new SmartList<>();
         entries.add((LibraryOrderEntry)entry);
       }
     }

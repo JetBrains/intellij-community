@@ -5,9 +5,9 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +82,7 @@ public class SvnUtil {
           ? Paths.get(notNull(EnvironmentUtil.getValue("ALLUSERSPROFILE")), "Application Data", "Subversion")
           : Paths.get("/etc/subversion"));
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnUtil");
+  private static final Logger LOG = Logger.getInstance(SvnUtil.class);
 
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
@@ -161,9 +161,7 @@ public class SvnUtil {
   }
 
   private static void checkCanceled(@Nullable ProgressIndicator progress) {
-    if (progress != null && progress.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
+    ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
   }
 
   @NotNull

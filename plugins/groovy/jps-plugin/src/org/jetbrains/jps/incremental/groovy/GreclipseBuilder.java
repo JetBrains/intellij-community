@@ -44,7 +44,7 @@ import java.util.*;
  * @author peter
  */
 public class GreclipseBuilder extends ModuleLevelBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GreclipseBuilder");
+  private static final Logger LOG = Logger.getInstance(GreclipseBuilder.class);
   private static final Key<Boolean> COMPILER_VERSION_INFO = Key.create("_greclipse_compiler_info_");
   public static final String ID = "Groovy-Eclipse";
   private static final Object ourGlobalEnvironmentLock = new String("GreclipseBuilder lock");

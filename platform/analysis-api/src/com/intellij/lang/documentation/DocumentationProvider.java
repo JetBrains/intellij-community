@@ -3,9 +3,11 @@ package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,5 +119,27 @@ public interface DocumentationProvider {
   @Nullable
   default PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
+  }
+
+  /**
+   * Override this method if standard platform's choice for target PSI element to show documentation for (element either declared or
+   * referenced at target offset) isn't suitable for your language. For example, it could be a keyword where there's no
+   * {@link com.intellij.psi.PsiReference}, but for which users might benefit from context help.
+   *
+   * @param targetOffset equals to caret offset for 'Quick Documentation' action, and to offset under mouse cursor for documentation shown
+   *                     on mouse hover
+   * @param contextElement the leaf PSI element in {@code file} at target offset
+   * @return target PSI element to show documentation for, or {@code null} if it should be determined by standard platform's logic (default
+   * behaviour)
+   */
+  @Nullable
+  default PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
+                                                   @NotNull final PsiFile file,
+                                                   @Nullable PsiElement contextElement,
+                                                   int targetOffset) {
+    //noinspection deprecation
+    return (this instanceof DocumentationProviderEx)
+           ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
+           : null;
   }
 }

@@ -458,13 +458,6 @@ public class ForCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "for.can.be.foreach.display.name");
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

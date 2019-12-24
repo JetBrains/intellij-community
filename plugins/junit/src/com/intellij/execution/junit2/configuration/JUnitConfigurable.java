@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
@@ -87,6 +88,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   // Fields
   private JPanel myWholePanel;
   private LabeledComponent<ModuleDescriptionsComboBox> myModule;
+  private LabeledComponent<JCheckBox> myUseModulePath;
   private CommonJavaParametersPanel myCommonJavaParameters;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
@@ -247,6 +249,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     setAnchor(mySearchForTestsLabel);
     myJrePathEditor.setAnchor(myModule.getLabel());
+    myUseModulePath.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
     myShortenClasspathModeCombo.setAnchor(myModule.getLabel());
 
@@ -262,6 +265,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
+
+    myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
+    myUseModulePath.getComponent().setSelected(true);
+    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
   }
 
   private void reloadTestKindModel() {
@@ -277,11 +284,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
                                                    : GlobalSearchScope.allScope(myProject);
 
-    if (JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+    if (myProject.isDefault() ||
+        JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
       aModel.addElement(JUnitConfigurationModel.CATEGORY);
     }
 
-    if (JUnitUtil.isJUnit5(searchScope, myProject) ||
+    if (myProject.isDefault() ||
+        JUnitUtil.isJUnit5(searchScope, myProject) ||
         TestObject.hasJUnit5EnginesAPI(searchScope, JavaPsiFacade.getInstance(myProject))) {
       aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
       aModel.addElement(JUnitConfigurationModel.TAGS);
@@ -334,6 +343,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
     configuration.setShortenCommandLine(myShortenClasspathModeCombo.getComponent().getSelectedItem());
+
+    configuration.setUseModulePath(myUseModulePath.isVisible() && myUseModulePath.getComponent().isSelected());
   }
 
   protected String[] setArrayFromText(LabeledComponent<RawCommandLineEditor> field) {
@@ -374,6 +385,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
+    myUseModulePath.getComponent().setSelected(configuration.isUseModulePath());
   }
 
   private void changePanel () {

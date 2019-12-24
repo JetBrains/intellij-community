@@ -1,0 +1,8 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
+    <extensionPoint name="orderEnumerationHandlerFactory" interface="com.intellij.openapi.roots.OrderEnumerationHandler$Factory"/>
+    <extensionPoint name="filePropertyPusher" interface="com.intellij.openapi.roots.impl.FilePropertyPusher" dynamic="true"/>
+    <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+  </extensionPoints>
+</idea-plugin>

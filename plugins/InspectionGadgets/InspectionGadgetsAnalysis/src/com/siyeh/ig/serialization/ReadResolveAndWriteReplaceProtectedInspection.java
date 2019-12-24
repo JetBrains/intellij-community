@@ -31,13 +31,6 @@ public class ReadResolveAndWriteReplaceProtectedInspection
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "readresolve.writereplace.protected.display.name");
-  }
-
-  @Override
-  @NotNull
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "readresolve.writereplace.protected.problem.descriptor");

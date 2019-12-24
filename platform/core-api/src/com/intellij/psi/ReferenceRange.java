@@ -5,7 +5,9 @@
  */
 package com.intellij.psi;
 
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,6 +20,12 @@ public class ReferenceRange {
 
   @NotNull
   public static List<TextRange> getRanges(@NotNull PsiReference ref) {
+    return getRanges((PsiSymbolReference)ref);
+  }
+
+  @Experimental
+  @NotNull
+  public static List<TextRange> getRanges(@NotNull PsiSymbolReference ref) {
     if (ref instanceof MultiRangeReference) {
       return ((MultiRangeReference)ref).getRanges();
     }
@@ -26,6 +34,12 @@ public class ReferenceRange {
 
   @NotNull
   public static List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
+    return getAbsoluteRanges((PsiSymbolReference)ref);
+  }
+
+  @Experimental
+  @NotNull
+  public static List<TextRange> getAbsoluteRanges(@NotNull PsiSymbolReference ref) {
     final PsiElement elt = ref.getElement();
     final List<TextRange> relativeRanges = getRanges(ref);
     final List<TextRange> answer = new ArrayList<>(relativeRanges.size());
@@ -46,6 +60,11 @@ public class ReferenceRange {
   }
 
   public static boolean containsOffsetInElement(@NotNull PsiReference ref, int offset) {
+    return containsOffsetInElement((PsiSymbolReference)ref, offset);
+  }
+
+  @Experimental
+  public static boolean containsOffsetInElement(@NotNull PsiSymbolReference ref, int offset) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.containsOffset(offset)) return true;
@@ -56,7 +75,8 @@ public class ReferenceRange {
     return ref.getRangeInElement().containsOffset(offset);
   }
 
-  public static boolean containsRangeInElement(@NotNull PsiReference ref, @NotNull TextRange rangeInElement) {
+  @Experimental
+  public static boolean containsRangeInElement(@NotNull PsiSymbolReference ref, @NotNull TextRange rangeInElement) {
     if (ref instanceof MultiRangeReference) {
       for (TextRange range : ((MultiRangeReference)ref).getRanges()) {
         if (range.contains(rangeInElement)) return true;

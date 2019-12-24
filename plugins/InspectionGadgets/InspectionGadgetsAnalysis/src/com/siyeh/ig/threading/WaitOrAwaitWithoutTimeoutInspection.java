@@ -25,13 +25,6 @@ public class WaitOrAwaitWithoutTimeoutInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "wait.or.await.without.timeout.display.name");
-  }
-
-  @Override
-  @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "wait.or.await.without.timeout.problem.descriptor");

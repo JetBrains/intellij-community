@@ -2,8 +2,6 @@
 
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.SettingsProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
@@ -13,6 +11,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -23,18 +22,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder.ID;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class FavoritesTreeStructure extends ProjectTreeStructure {
-
+public final class FavoritesTreeStructure extends ProjectTreeStructure {
   private static final Logger LOGGER = Logger.getInstance(FavoritesTreeStructure.class);
-  private TreeStructureProvider myNonProjectProvider = null;
+  private final TreeStructureProvider myNonProjectProvider;
   public FavoritesTreeStructure(@NotNull Project project) {
-    super(project, FavoritesProjectViewPane.ID);
+    super(project, ID);
     myNonProjectProvider = new MyProvider(project);
   }
 
@@ -89,32 +88,15 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
         result.add(abstractTreeNode);
       }
-      //myFavoritesRoots = result;
-      //if (result.isEmpty()) {
-      //  result.add(getEmptyScreen());
-      //}
       return ArrayUtil.toObjectArray(result);
+    }
+    catch (ProcessCanceledException ignored) {
     }
     catch (Exception e) {
       LOGGER.error(e);
     }
 
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
-  }
-
-  private AbstractTreeNode<String> getEmptyScreen() {
-    return new AbstractTreeNode<String>(myProject, IdeBundle.message("favorites.empty.screen")) {
-      @Override
-      @NotNull
-      public Collection<AbstractTreeNode> getChildren() {
-        return Collections.emptyList();
-      }
-
-      @Override
-      public void update(@NotNull final PresentationData presentation) {
-        presentation.setPresentableText(getValue());
-      }
-    };
   }
 
   @Override

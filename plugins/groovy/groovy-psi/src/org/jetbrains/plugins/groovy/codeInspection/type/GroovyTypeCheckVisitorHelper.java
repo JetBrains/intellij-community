@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
-import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -40,17 +39,9 @@ import java.util.List;
 
 public class GroovyTypeCheckVisitorHelper {
 
-  @Nullable
-  @Contract("null -> null")
-  protected static GrListOrMap getTupleInitializer(@Nullable GrExpression initializer) {
-    if (initializer instanceof GrListOrMap &&
-        initializer.getReference() instanceof LiteralConstructorReference &&
-        ((LiteralConstructorReference)initializer.getReference()).getConstructedClassType() != null) {
-      return (GrListOrMap)initializer;
-    }
-    else {
-      return null;
-    }
+  @Contract("null -> false")
+  protected static boolean hasTupleInitializer(@Nullable GrExpression initializer) {
+    return initializer instanceof GrListOrMap && ((GrListOrMap)initializer).getConstructorReference() != null;
   }
 
   @NotNull

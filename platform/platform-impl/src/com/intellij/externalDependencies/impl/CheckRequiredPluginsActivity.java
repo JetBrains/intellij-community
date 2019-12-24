@@ -4,10 +4,13 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -26,18 +29,26 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
+final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
+  CheckRequiredPluginsActivity() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw ExtensionNotApplicableException.INSTANCE;
+    }
+  }
+
   @Override
-  public void runActivity(@NotNull final Project project) {
-    //will trigger 'loadState' and run check if required plugins are specified
+  public void runActivity(@NotNull Project project) {
+    // will trigger 'loadState' and run check if required plugins are specified
     ExternalDependenciesManager.getInstance(project);
   }
 
-  public static void runCheck(@NotNull final Project project) {
-    List<DependencyOnPlugin> dependencies = ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin.class);
-    if (dependencies.isEmpty()) return;
+  public static void runCheck(@NotNull Project project, @NotNull ExternalDependenciesManager dependencyManager) {
+    List<DependencyOnPlugin> dependencies = dependencyManager.getDependencies(DependencyOnPlugin.class);
+    if (dependencies.isEmpty()) {
+      return;
+    }
 
     final List<String> errorMessages = new ArrayList<>();
     final List<IdeaPluginDescriptor> disabled = new ArrayList<>();
@@ -61,7 +72,7 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
       String pluginVersion = plugin.getVersion();
       BuildNumber currentIdeVersion = ApplicationInfo.getInstance().getBuild();
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
-        String pluginFromString = PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString()) ? "" : "plugin '" + plugin.getName() + "' from ";
+        String pluginFromString = PluginManagerCore.CORE_ID == plugin.getPluginId() ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
           errorMessages.add("Project '" + project.getName() + "' requires " + pluginFromString +
                             "'" + minVersion + "' or newer build of the IDE, but the current build is '" + pluginVersion + "'.");
@@ -100,20 +111,16 @@ public class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
                                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
-                                    for (IdeaPluginDescriptor descriptor : disabled) {
-                                      PluginManagerCore.enablePlugin(descriptor.getPluginId().getIdString());
-                                    }
+                                    PluginManager.getInstance().enablePlugins(disabled, true);
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {
-                                    Set<String> pluginIds = new HashSet<>();
+                                    Set<PluginId> pluginIds = new HashSet<>();
                                     for (IdeaPluginDescriptor descriptor : disabled) {
-                                      pluginIds.add(descriptor.getPluginId().getIdString());
+                                      pluginIds.add(descriptor.getPluginId());
                                     }
-                                    for (PluginId pluginId : notInstalled) {
-                                      pluginIds.add(pluginId.getIdString());
-                                    }
-                                    PluginsAdvertiser.installAndEnablePlugins(pluginIds, () -> notification.expire());
+                                    pluginIds.addAll(notInstalled);
+                                    PluginsAdvertiser.installAndEnable(pluginIds, () -> notification.expire());
                                   }
                                 }
                               }

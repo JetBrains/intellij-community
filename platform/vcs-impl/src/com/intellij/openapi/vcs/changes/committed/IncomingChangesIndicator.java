@@ -32,7 +32,7 @@ import static com.intellij.util.ObjectUtils.notNull;
  * @author yole
  */
 public class IncomingChangesIndicator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicator");
+  private static final Logger LOG = Logger.getInstance(IncomingChangesIndicator.class);
 
   private final Project myProject;
   private final CommittedChangesCache myCache;
@@ -42,9 +42,9 @@ public class IncomingChangesIndicator {
     myProject = project;
     myCache = cache;
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
+    connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesListener() {
       @Override
-      public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
+      public void incomingChangesUpdated(@Nullable List<CommittedChangeList> receivedChanges) {
         ApplicationManager.getApplication().invokeLater(() -> refreshIndicator());
       }
     });

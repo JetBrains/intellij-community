@@ -38,6 +38,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.xmlb.annotations.XCollection
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
@@ -80,6 +81,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    String annotationsJar = PathUtil.getJarPathForClass(ApiStatus.class)
+    moduleBuilder.addLibrary("annotations", annotationsJar)
     String pathForClass = PathUtil.getJarPathForClass(XCollection.class)
     moduleBuilder.addLibrary("util", pathForClass)
     String platformApiJar = PathUtil.getJarPathForClass(JBList.class)
@@ -156,7 +159,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
-                       "public class MyServiceDescriptor { @Attribute public String serviceImplementation; }")
+                       "public class MyServiceDescriptor { " +
+                       "  @Attribute public String serviceImplementation; " +
+                       "  @Attribute public java.util.concurrent.TimeUnit timeUnit; " +
+                       "  @Attribute public java.lang.Integer integerNullable; " +
+                       "  @Attribute public int intProperty; " +
+                       "}")
 
     configureByFile()
     myFixture.copyFileToProject("ExtensionsHighlighting-included.xml")
@@ -350,6 +358,26 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testExtensionBeanWithDefaultValuesInAnnotations() {
     doHighlightingTest("extensionWithDefaultValuesInAnnotations.xml", "ExtBeanWithDefaultValuesInAnnotations.java")
+  }
+
+  void testExtensionDefinesWithAttributeViaAnnotation() {
+    doHighlightingTest("extensionDefinesWithAttributeViaAnnotation.xml", "ExtensionDefinesWithAttributeViaAnnotation.java")
+  }
+
+  void testExtensionDefinesWithAttributeViaAnnotationCompletion() {
+    myFixture.copyFileToProject("ExtensionDefinesWithAttributeViaAnnotation.java")
+    myFixture.testCompletionVariants("extensionDefinesWithAttributeViaAnnotation-completion.xml",
+                                     "customAttributeName", "myAttributeWithoutAnnotation")
+  }
+
+  void testExtensionDefinesWithTagViaAnnotation() {
+    doHighlightingTest("extensionDefinesWithTagViaAnnotation.xml", "ExtensionDefinesWithTagViaAnnotation.java")
+  }
+
+  void testExtensionDefinesWithTagViaAnnotationCompletion() {
+    myFixture.copyFileToProject("ExtensionDefinesWithTagViaAnnotation.java")
+    myFixture.testCompletionVariants("extensionDefinesWithTagViaAnnotation-completion.xml",
+                                     "myTag", "myTagWithoutAnnotation")
   }
 
   void testLanguageAttributeHighlighting() {

@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RepositoryUtils {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.library.RepositoryUtils");
+  private static final Logger LOG = Logger.getInstance(RepositoryUtils.class);
 
   public static boolean libraryHasSources(@Nullable Library library) {
     return library != null && library.getUrls(OrderRootType.SOURCES).length > 0;
@@ -75,7 +75,7 @@ public class RepositoryUtils {
       final Integer count = counts.get(root);
       counts.put(root, count != null ? count + 1 : 1);
     }
-    return Collections.max(counts.entrySet(), Comparator.comparing(Map.Entry::getValue)).getKey();
+    return Collections.max(counts.entrySet(), Map.Entry.comparingByValue()).getKey();
   }
 
   public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,

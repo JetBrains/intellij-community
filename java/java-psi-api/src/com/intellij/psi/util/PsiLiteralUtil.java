@@ -170,7 +170,7 @@ public class PsiLiteralUtil {
    * <li>All escaped quotes are unescaped.</li>
    * <li>Every third quote is escaped. If escapeStartQuote / escapeEndQuote is set then start / end quote is also escaped.</li>
    * <li>All spaces before \n are converted to \040 escape sequence.
-   * This is required since spaces in the end of the line are trimmed by default (see JEP 355).
+   * This is required since spaces in the end of the line are trimmed by default (see JEP 368).
    * If escapeSpacesInTheEnd is set, then all spaces before the end of the line are converted even if new line in the end is missing. </li>
    * <li> All new line escape sequences are interpreted. </li>
    * <li>Rest of the content is processed as is.</li>
@@ -371,5 +371,32 @@ public class PsiLiteralUtil {
     catch (NumberFormatException ignored) {
     }
     return -1;
+  }
+
+  /**
+   * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
+   * See JEP 368 for more details.
+   *
+   * @param lines text block content
+   */
+  public static int getTextBlockIndent(@NotNull String[] lines) {
+    return getTextBlockIndent(lines, false, false);
+  }
+
+  /**
+   * @see #getTextBlockIndent(String[])
+   */
+  public static int getTextBlockIndent(@NotNull String[] lines, boolean preserveContent, boolean ignoreLastLine) {
+    int prefix = Integer.MAX_VALUE;
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      int indent = 0;
+      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
+      if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
+        if (!preserveContent) lines[i] = "";
+      }
+      else if (indent < prefix) prefix = indent;
+    }
+    return prefix;
   }
 }

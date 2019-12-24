@@ -13,7 +13,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.Wrapper
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.authentication.util.GithubTokenCreator
+import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -26,7 +26,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
                        isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
                        val project: Project?,
                        isDialogMode: Boolean = true) : Wrapper() {
-  private var clientName: String = GithubTokenCreator.DEFAULT_CLIENT_NAME
+  private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
   private var tokenAcquisitionError: ValidationInfo? = null
 
