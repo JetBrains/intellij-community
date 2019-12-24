@@ -372,7 +372,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public final Dimension computePreferredSize(final boolean mainTextOnly) {
     synchronized (myFragments) {
       // Calculate width
-      int width = myIpad.left;
+      float width = myIpad.left;
 
       if (myIcon != null) {
         width += myIcon.getIconWidth() + myIconTextGap;
@@ -394,7 +394,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       int height = computePreferredHeight();
 
-      return new Dimension(width, height);
+      return new Dimension((int)Math.ceil(width), height);
     }
   }
 
