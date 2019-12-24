@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -759,13 +760,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.name");
+      return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.replace.map.with.flat.map.description");
+      return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.description");
     }
 
     @Nullable
@@ -828,13 +829,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.name");
+      return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.name");
     }
 
     @NotNull
     @Override
     public String getDescription(@NotNull Context context) {
-      return CommonQuickFixBundle.message("fix.eliminate.folded.if.present.description");
+      return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.description");
     }
 
     @Nullable
