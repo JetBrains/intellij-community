@@ -18,6 +18,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.sh.ShSupport;
 import com.intellij.sh.psi.ShFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +27,11 @@ import java.io.File;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
-  private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
-  private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
-  private static final String SCRIPT_WORKING_DIRECTORY = "SCRIPT_WORKING_DIRECTORY";
-  private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
-  private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
+  @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
+  @NonNls private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
+  @NonNls private static final String SCRIPT_WORKING_DIRECTORY = "SCRIPT_WORKING_DIRECTORY";
+  @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
+  @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
 
   private String myScriptPath = "";
   private String myScriptOptions = "";

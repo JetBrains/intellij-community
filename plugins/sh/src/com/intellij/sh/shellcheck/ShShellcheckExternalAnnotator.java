@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,8 +121,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
 
       long code = result.code;
       String message = result.message;
-      String scCode = "SC" + code;
-      String html =
+      @NonNls String scCode = "SC" + code;
+      @NonNls String html =
           "<html>" +
               "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
               "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +

@@ -103,9 +103,9 @@ public class ShDocumentationProvider implements DocumentationProvider {
   private static String wrapIntoHtml(@Nullable String s) {
     if (s == null) return null;
 
-    StringBuffer sb = new StringBuffer("<html><body><pre>");
+    @NonNls StringBuffer sb = new StringBuffer("<html><body><pre>");
     try {
-      Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXmlEntities(s));
+      @NonNls Matcher m = URLUtil.URL_PATTERN.matcher(StringUtil.escapeXmlEntities(s));
       while (m.find()) {
         if (m.groupCount() > 0) {
           String url = m.group(0);

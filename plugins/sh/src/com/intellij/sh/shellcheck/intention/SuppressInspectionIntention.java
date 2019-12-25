@@ -28,7 +28,7 @@ public class SuppressInspectionIntention implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Suppress " + myMessage;
+    return ShBundle.message("suppress.0", myMessage);
   }
 
   @NotNull

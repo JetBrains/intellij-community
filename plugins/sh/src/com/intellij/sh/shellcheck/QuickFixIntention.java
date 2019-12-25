@@ -6,15 +6,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.stream.Stream;
 
 public class QuickFixIntention implements IntentionAction {
-  private static final String FEATURE_ACTION_ID = "QuickFixUsed";
+  @NonNls private static final String FEATURE_ACTION_ID = "QuickFixUsed";
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
   private final String message;
@@ -28,7 +30,7 @@ public class QuickFixIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Shell script";
+    return ShBundle.message("shell.script");
   }
 
   @Override

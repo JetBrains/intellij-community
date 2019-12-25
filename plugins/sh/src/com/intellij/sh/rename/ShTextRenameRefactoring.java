@@ -20,16 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 class ShTextRenameRefactoring {
-  private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
-  private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  @NonNls private static final String FEATURE_ACTION_ID = "RenamingActionUsed";
+  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
   private final Project myProject;
@@ -78,7 +80,7 @@ class ShTextRenameRefactoring {
       }
     }
     createCaretRangeMarker();
-    WriteCommandAction.writeCommandAction(myProject).withName("Rename " + myOccurrenceText).run(() -> startTemplate(builder));
+    WriteCommandAction.writeCommandAction(myProject).withName(ShBundle.message("rename.occurence", myOccurrenceText)).run(() -> startTemplate(builder));
     ShFeatureUsagesCollector.logFeatureUsage(FEATURE_ACTION_ID);
   }
 

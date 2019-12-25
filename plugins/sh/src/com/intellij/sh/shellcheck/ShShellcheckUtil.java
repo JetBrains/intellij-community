@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
@@ -83,7 +84,7 @@ class ShShellcheckUtil {
     DownloadableFileDescription description = service.createFileDescription(url, downloadName);
     FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
 
-    Task.Backgroundable task = new Task.Backgroundable(project, "Download Shellcheck") {
+    Task.Backgroundable task = new Task.Backgroundable(project, ShBundle.message("download.shellcheck")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
