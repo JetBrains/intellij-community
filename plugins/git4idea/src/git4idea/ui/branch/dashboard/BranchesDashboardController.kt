@@ -69,12 +69,12 @@ internal class BranchesDashboardController(private val project: Project,
     with(project.service<GitBranchManager>()) {
       for (localBranch in localBranches) {
         val isFavorite = localBranch.repositories.any { isFavorite(GitBranchType.LOCAL, it, localBranch.branchName) }
-        changed = changed or isFavorite
+        changed = changed or (localBranch.isFavorite != isFavorite)
         localBranch.apply { this.isFavorite = isFavorite }
       }
       for (remoteBranch in remoteBranches) {
         val isFavorite = remoteBranch.repositories.any { isFavorite(GitBranchType.REMOTE, it, remoteBranch.branchName) }
-        changed = changed or isFavorite
+        changed = changed or (remoteBranch.isFavorite != isFavorite)
         remoteBranch.apply { this.isFavorite = isFavorite }
       }
     }
