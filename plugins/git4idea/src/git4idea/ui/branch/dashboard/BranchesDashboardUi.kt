@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText.DEFAULT_EMPTY_TEXT
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
@@ -55,7 +56,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
 
   private val tree = FilteringBranchesTree(project, BranchesTreeComponent(project), uiController)
   private val branchViewSplitter = BranchViewSplitter()
-  private val branchesTreePanel = simplePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
+  private val branchesTreePanel = BranchesTreePanel().withBorder(createBorder(JBColor.border(), SideBorder.LEFT))
   private val branchesScrollPane = ScrollPaneFactory.createScrollPane(tree.component, true)
   private val branchesProgressStripe = ProgressStripe(branchesScrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val branchesTreeWithLogPanel = simplePanel(branchesTreePanel)
@@ -148,7 +149,7 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
     group.add(collapseAllAction)
 
     val toolbar = ActionManager.getInstance().createActionToolbar("Git.Cleanup.Branches", group, false)
-    toolbar.setTargetComponent(tree.component)
+    toolbar.setTargetComponent(branchesTreePanel)
 
     branchesTreeWithLogPanel.addToLeft(toolbar.component)
     branchesSearchFieldPanel.withBackground(UIUtil.getListBackground()).withBorder(createBorder(JBColor.border(), SideBorder.BOTTOM))
@@ -178,6 +179,15 @@ internal class BranchesDashboardUi(val project: Project) : Disposable {
         IdeFocusManager.getInstance(project).requestFocus(tree.component, true)
       }
     }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Find"), branchesTreePanel)
+  }
+
+  inner class BranchesTreePanel : BorderLayoutPanel(), DataProvider {
+    override fun getData(dataId: String): Any? {
+      if (GIT_BRANCHES.`is`(dataId)) {
+        return tree.getSelectedBranches()
+      }
+      return null
+    }
   }
 
   fun getMainComponent(): JComponent {

@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
@@ -29,7 +28,7 @@ import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 import javax.swing.tree.TreePath
 
-internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataProvider {
+internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   var doubleClickHandler: (BranchTreeNode) -> Unit = {}
   var searchField: SearchTextField? = null
@@ -107,13 +106,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree(), DataPro
     if (!GraphicsEnvironment.isHeadless()) {
       transferHandler = BRANCH_TREE_TRANSFER_HANDLER
     }
-  }
-
-  override fun getData(dataId: String): Any? {
-    if (GIT_BRANCHES.`is`(dataId)) {
-      return getSelectedBranches()
-    }
-    return null
   }
 
   fun getSelectedBranches(): Set<BranchInfo> {
