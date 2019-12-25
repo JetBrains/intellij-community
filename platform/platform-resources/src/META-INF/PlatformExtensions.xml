@@ -334,7 +334,11 @@
     <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
 
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
-    <applicationService serviceImplementation="com.intellij.diagnostic.EventsWatcher" preload="notHeadless"/>
+
+    <applicationService serviceInterface="com.intellij.diagnostic.EventsWatcher"
+                        serviceImplementation="com.intellij.diagnostic.EventsWatcherImpl" preload="notHeadless"/>
+    <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
+                factoryClass="com.intellij.diagnostic.ui.EventsWatcherToolWindowFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginUtil"
                         serviceImplementation="com.intellij.ide.plugins.PluginUtilImpl"/>

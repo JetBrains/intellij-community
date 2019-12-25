@@ -4,10 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -39,46 +36,21 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Experimental
-public final class EventsWatcher implements Disposable {
+public final class EventsWatcherImpl implements LoggableEventsWatcher, Disposable {
 
   private static final int PUBLISHER_INITIAL_DELAY = 100;
   private static final int PUBLISHER_PERIOD = 1000;
 
   @NotNull
-  private static final Logger LOG = Logger.getInstance(EventsWatcher.class);
+  private static final Logger LOG = Logger.getInstance(EventsWatcherImpl.class);
   @NotNull
   private static final Pattern DESCRIPTION_BY_EVENT = Pattern.compile(
     "(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)\\[(?<description>\\w+(,runnable=(?<runnable>[^,]+))?[^]]*)].*"
   );
 
   @NotNull
-  private static final NotNullLazyValue<Boolean> ourIsEnabled =
-    NotNullLazyValue.createValue(() -> Boolean.getBoolean("idea.event.queue.dispatch.listen"));
-  @NotNull
   private static final NotNullLazyValue<Field> ourRunnableField =
     NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
-
-  public static boolean isEnabled() {
-    return ourIsEnabled.getValue();
-  }
-
-  @Nullable
-  public static EventsWatcher getInstance() {
-    if (!isEnabled()) {
-      return null;
-    }
-
-    Application application = ApplicationManager.getApplication();
-    if (application == null || application.isDisposed()) {
-      return null;
-    }
-
-    if (!application.isDispatchThread()) {
-      throw new AssertionError("Do not measure background task running time");
-    }
-
-    return ServiceManager.getService(EventsWatcher.class);
-  }
 
   @NotNull
   private final ConcurrentMap<String, RunnablesListener.WrapperDescription> myWrappers = new ConcurrentHashMap<>();
@@ -113,17 +85,19 @@ public final class EventsWatcher implements Disposable {
   @Nullable
   private MatchResult myCurrentResult = null;
 
-  public EventsWatcher(@NotNull MessageBus messageBus) {
+  public EventsWatcherImpl(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
     myMessageBus.connect(this)
       .subscribe(RunnablesListener.TOPIC, myWriter);
   }
 
+  @Override
   public void logTimeMillis(@NotNull String processId, long startedAt) {
     new InvocationLogger(processId, startedAt)
       .log(() -> null);
   }
 
+  @Override
   public void logTimeMillis(@NotNull AWTEvent event, long startedAt) {
     if ("LaterInvocator.FlushQueue".equals(findGroupByName("runnable"))) return;
 
@@ -133,6 +107,7 @@ public final class EventsWatcher implements Disposable {
                  null);
   }
 
+  @Override
   public void runnableStarted(@NotNull Runnable runnable) {
     Object current = runnable;
 
@@ -155,8 +130,8 @@ public final class EventsWatcher implements Disposable {
     myCurrentInstance = current != null ? current : runnable;
   }
 
-  public void runnableFinished(@NotNull Runnable runnable,
-                               long startedAt) {
+  @Override
+  public void runnableFinished(@NotNull Runnable runnable, long startedAt) {
     String fqn = Objects.requireNonNull(myCurrentInstance).getClass().getName();
     myCurrentInstance = null;
 
@@ -171,6 +146,7 @@ public final class EventsWatcher implements Disposable {
       .log(() -> runnable);
   }
 
+  @Override
   public void edtEventStarted(@NotNull AWTEvent event) {
     Matcher matcher = DESCRIPTION_BY_EVENT.matcher(event.toString());
     myCurrentResult = matcher.find() ?
@@ -178,8 +154,8 @@ public final class EventsWatcher implements Disposable {
                       null;
   }
 
-  public void edtEventFinished(@NotNull AWTEvent event,
-                               long startedAt) {
+  @Override
+  public void edtEventFinished(@NotNull AWTEvent event, long startedAt) {
     String representation = findGroupByName("description");
     myCurrentResult = null;
 
@@ -272,6 +248,7 @@ public final class EventsWatcher implements Disposable {
     private final RunnablesListener.InvocationDescription myDescription;
 
     private InvocationLogger(@NotNull RunnablesListener.InvocationDescription description) {
+      LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
       myDescription = description;
     }
 

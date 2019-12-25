@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Objects;
 
+@ApiStatus.Experimental
 public interface RunnablesListener {
 
   Topic<RunnablesListener> TOPIC = Topic.create(

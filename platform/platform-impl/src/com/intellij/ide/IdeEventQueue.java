@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.LoggableEventsWatcher;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
@@ -455,8 +456,8 @@ public final class IdeEventQueue extends EventQueue {
         if (e instanceof KeyEvent) {
           maybeReady();
         }
-        if (eventsWatcher != null) {
-          eventsWatcher.logTimeMillis(e, startedAt);
+        if (eventsWatcher instanceof LoggableEventsWatcher) {
+          ((LoggableEventsWatcher)eventsWatcher).logTimeMillis(e, startedAt);
         }
       }
 
@@ -1468,9 +1469,9 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     EventsWatcher watcher = obtainEventsWatcher();
-    if (watcher == null) return;
-
-    watcher.logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    if (watcher instanceof LoggableEventsWatcher) {
+      ((LoggableEventsWatcher)watcher).logTimeMillis("IdeEventQueue#flushDelayedKeyEvents", startedAt);
+    }
   }
 
   private static boolean isActionPopupShown() {

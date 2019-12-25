@@ -3,6 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventsWatcher;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.LoggableEventsWatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -1005,9 +1006,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private static void logTimeMillis(long startedAt, @NotNull AnAction action) {
     EventsWatcher watcher = EventsWatcher.getInstance();
-    if (watcher == null) return;
-
-    watcher.logTimeMillis(action.toString(), startedAt);
+    if (watcher instanceof LoggableEventsWatcher) {
+      ((LoggableEventsWatcher)watcher).logTimeMillis(action.toString(), startedAt);
+    }
   }
 
   public static boolean removeAltGraph(InputEvent e) {
