@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +53,11 @@ public abstract class Language extends UserDataHolderBase {
     }
   };
 
-  protected Language(@NotNull String ID) {
+  protected Language(@NonNls @NotNull String ID) {
     this(ID, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  protected Language(@NotNull String ID, @NotNull String... mimeTypes) {
+  protected Language(@NonNls @NotNull String ID, @NonNls @NotNull String... mimeTypes) {
     this(null, ID, mimeTypes);
   }
 

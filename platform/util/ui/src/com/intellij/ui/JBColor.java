@@ -5,6 +5,7 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ public class JBColor extends Color {
   }
 
   @NotNull
-  public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
+  public static JBColor namedColor(@NonNls @NotNull final String propertyName, @NotNull final Color defaultColor) {
     return new JBColor(() -> {
       Color color = notNull(UIManager.getColor(propertyName), () ->
                             notNull(findPatternMatch(propertyName), defaultColor));

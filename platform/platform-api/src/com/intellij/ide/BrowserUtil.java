@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class BrowserUtil {
     getBrowserLauncher().browse(uri);
   }
 
-  public static void browse(@NotNull String url) {
+  public static void browse(@NonNls @NotNull String url) {
     browse(url, null);
   }
 

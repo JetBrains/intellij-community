@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -43,7 +44,7 @@ public class IElementType {
   private static short size; // guarded by lock
   @NotNull
   private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @SuppressWarnings("RedundantStringConstructorCall")
+  @NonNls @SuppressWarnings("RedundantStringConstructorCall")
   private static final Object lock = new String("registry lock");
 
   static {

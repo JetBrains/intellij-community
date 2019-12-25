@@ -7,6 +7,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public abstract class Logger {
 
   public abstract boolean isDebugEnabled();
 
-  public abstract void debug(String message);
+  public abstract void debug(@NonNls String message);
 
   public abstract void debug(@Nullable Throwable t);
 
@@ -127,11 +128,11 @@ public abstract class Logger {
     info(t.getMessage(), t);
   }
 
-  public abstract void info(String message);
+  public abstract void info(@NonNls String message);
 
-  public abstract void info(String message, @Nullable Throwable t);
+  public abstract void info(@NonNls String message, @Nullable Throwable t);
 
-  public void warn(String message) {
+  public void warn(@NonNls String message) {
     warn(message, null);
   }
 
@@ -139,9 +140,9 @@ public abstract class Logger {
     warn(t.getMessage(), t);
   }
 
-  public abstract void warn(String message, @Nullable Throwable t);
+  public abstract void warn(@NonNls String message, @Nullable Throwable t);
 
-  public void error(String message) {
+  public void error(@NonNls String message) {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
   public void error(Object message) {
@@ -158,11 +159,11 @@ public abstract class Logger {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
   }
 
-  public void error(String message, @NotNull String... details) {
+  public void error(@NonNls String message, @NotNull String... details) {
     error(message, new Throwable(message), details);
   }
 
-  public void error(String message, @Nullable Throwable t) {
+  public void error(@NonNls String message, @Nullable Throwable t) {
     error(message, t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 

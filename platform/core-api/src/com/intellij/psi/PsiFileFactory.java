@@ -53,7 +53,7 @@ public abstract class PsiFileFactory {
     return createFileFromText("foo.bar", language, text);
   }
 
-  public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,
+  public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull CharSequence text,
                                              boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull CharSequence text,

@@ -15,6 +15,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -401,7 +402,7 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @Nullable
-  public static ResourceBundle getBundle(@NotNull String resource,
+  public static ResourceBundle getBundle(@NonNls @NotNull String resource,
                                          @Nullable Iterable<? extends Configurable> configurables,
                                          @Nullable ResourceBundle alternative) {
     ResourceBundle bundle = OptionsBundle.INSTANCE.getResourceBundle();
@@ -425,7 +426,7 @@ public class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static String getString(ResourceBundle bundle, String resource) {
+  private static String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
       // mimic CommonBundle.message(..) behavior
@@ -436,7 +437,7 @@ public class ConfigurableExtensionPointUtil {
     }
   }
 
-  private static int getInt(ResourceBundle bundle, String resource) {
+  private static int getInt(ResourceBundle bundle, @NonNls String resource) {
     try {
       String value = getString(bundle, resource);
       return value == null ? 0 : Integer.parseInt(value);

@@ -5,6 +5,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Konstantin Bulenkov
  * @see KeyWithDefaultValue
  */
+@NonNls
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createConcurrentIntObjectWeakValueMap();
