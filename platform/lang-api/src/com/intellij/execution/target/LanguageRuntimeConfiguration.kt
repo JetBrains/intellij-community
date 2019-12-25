@@ -5,11 +5,10 @@ import com.intellij.execution.target.ContributedConfigurationBase.Companion.getT
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 
 /**
- * Base class for configuration instances contributed by the ["com.intellij.ir.languageRuntime"][EXTENSION_NAME] extension point.
- * <p/>
+ * Base class for configuration instances contributed by the ["com.intellij.executionTargetLanguageRuntimeType"][EXTENSION_NAME] extension point.
+ *
  * Since different language configurations do not share any common bits, this is effectively a marker.
  */
-abstract class LanguageRuntimeConfiguration(typeId: String)
-  : ContributedConfigurationBase(typeId, LanguageRuntimeType.EXTENSION_NAME)
+abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigurationBase(typeId, EXTENSION_NAME)
 
 fun <C : LanguageRuntimeConfiguration, T : LanguageRuntimeType<C>> C.getRuntimeType(): T = this.getTypeImpl()

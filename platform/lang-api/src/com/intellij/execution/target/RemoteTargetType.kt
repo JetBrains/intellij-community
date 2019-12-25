@@ -8,8 +8,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 /**
- * Contributed type for ["com.intellij.ir.targetType"][EXTENSION_NAME] extension point
- * <p/>
+ * Contributed type for ["com.intellij.executionTargetType"][EXTENSION_NAME] extension point
+ *
  * Contributed instances of this class define .
  */
 //TODO: suggest "predefined" configurations (e.g one per every configured SFTP connection)
@@ -31,7 +31,7 @@ abstract class RemoteTargetType<C : TargetEnvironmentConfiguration>(id: String) 
   abstract fun createRunner(project: Project, config: C): TargetEnvironmentFactory
 
   companion object {
-    @JvmStatic
-    val EXTENSION_NAME = ExtensionPointName.create<RemoteTargetType<*>>("com.intellij.ir.targetType")
+    @JvmField
+    val EXTENSION_NAME = ExtensionPointName.create<RemoteTargetType<*>>("com.intellij.executionTargetType")
   }
 }

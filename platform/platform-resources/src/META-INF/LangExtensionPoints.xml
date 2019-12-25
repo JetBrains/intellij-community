@@ -275,6 +275,11 @@
     <extensionPoint name="executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
 
+    <extensionPoint name="executionTargetType"
+                    interface="com.intellij.execution.target.RemoteTargetType" dynamic="true"/>
+    <extensionPoint name="executionTargetLanguageRuntimeType"
+                    interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
+
     <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
     <extensionPoint name="consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
     <extensionPoint name="consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor" dynamic="true"/>

@@ -10,13 +10,13 @@ import javax.swing.Icon
 /**
  * Base class for all contributed types, responsible for management and persistence of the
  * heterogeneous set of [configurations][ContributedConfigurationBase].
- * <p/>
+ *
  * Abstract subclasses of this class corresponds to extension points, and define some specific protocol
  * and common configuration options for all instances and common serialization format.
  * Concrete subclasses of this class corresponds to extensions of this extension point, which conform to protocol but extends the set
  * of the configuration options.
- * <p/>
- * E.g, an abstract [RemoteTargetType] corresponds to "com.intellij.ir.targetType" extension point, and defines the protocol by
+ *
+ * E.g, an abstract [RemoteTargetType] corresponds to "com.intellij.executionTargetType" extension point, and defines the protocol by
  * [RemoteTargetType.createRunner] and the common configuration options by [TargetEnvironmentConfiguration].
  * Concrete subclass of [RemoteTargetType] would represent a plugin extension, e.g, for Docker-based targets.
  */

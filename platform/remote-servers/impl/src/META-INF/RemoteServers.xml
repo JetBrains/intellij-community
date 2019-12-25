@@ -9,17 +9,9 @@
                     interface="com.intellij.remoteServer.util.CloudDeploymentRuntimeProvider"/>
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"/>
-    <extensionPoint name="ir.targetType"
-                    interface="com.intellij.execution.target.RemoteTargetType" dynamic="true"/>
-    <extensionPoint name="ir.languageRuntime"
-                    interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <experimentalFeature id="runtime.environments" percentOfUsers="0">
-      <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
-    </experimentalFeature>
-
     <applicationService serviceInterface="com.intellij.remoteServer.configuration.RemoteServersManager"
                         serviceImplementation="com.intellij.remoteServer.impl.configuration.RemoteServersManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.ServerConnectionManager"
@@ -45,11 +37,6 @@
 
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
-
-    <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
-    <ir.languageRuntime implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType" />
-    <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
-                        serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
   </extensions>
 
   <actions>

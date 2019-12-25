@@ -667,6 +667,10 @@
     <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
+    <executionTargetLanguageRuntimeType implementation="com.intellij.execution.target.java.JavaLanguageRuntimeType" />
+    <applicationService serviceInterface="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory"
+                        serviceImplementation="com.intellij.execution.target.java.JavaLanguageRuntimeUIFactoryImpl"/>
+
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
     <externalSystem.modifiableModelsProvider implementation="com.intellij.openapi.externalSystem.service.project.PackagingModifiableModelProvider"/>

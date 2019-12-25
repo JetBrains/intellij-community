@@ -262,7 +262,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Nullable
   @Override
   public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
-    return LanguageRuntimeType.Companion.getEXTENSION_NAME().findExtension(JavaLanguageRuntimeType.class);
+    return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
   }
 
   @Nullable

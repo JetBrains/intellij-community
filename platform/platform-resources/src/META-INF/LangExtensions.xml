@@ -644,6 +644,11 @@
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
+    <experimentalFeature id="runtime.environments" percentOfUsers="0">
+      <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
+    </experimentalFeature>
+    <applicationService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
+
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService"/>

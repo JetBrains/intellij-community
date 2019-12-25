@@ -5,8 +5,8 @@ import com.intellij.execution.target.ContributedConfigurationBase.Companion.getT
 import com.intellij.openapi.project.Project
 
 /**
- * Base class for configuration instances contributed by the ["com.intellij.ir.targetType"][RemoteTargetType.EXTENSION_NAME] extension point.
- * <p/>
+ * Base class for configuration instances contributed by the ["com.intellij.executionTargetType"][RemoteTargetType.EXTENSION_NAME] extension point.
+ *
  * To be useful, target configuration should normally include at least one language runtime configuration, either introspected
  * or explicitly edited by the user.
  */

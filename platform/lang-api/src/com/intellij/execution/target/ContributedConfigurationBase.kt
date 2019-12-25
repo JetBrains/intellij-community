@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  * Base class for all instance configurations contributed for given [extensionPoint] by some specific [extension][ContributedTypeBase].
  * This way the heterogeneous configurations for given [extensionPoint] may be managed in the common UI while individually requiring
  * the different persistence.
- * <p/>
+ *
  * E.g, all docker accounts requires different set of configuration options and persistense comparing to EC2 accounts, but still may
  * be managed by user together in the same "remote accounts" UI.
  */
