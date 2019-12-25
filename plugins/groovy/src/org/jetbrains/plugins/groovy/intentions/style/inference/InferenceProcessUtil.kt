@@ -204,14 +204,16 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int
   val text = method.containingFile.text
   val enclosingClasses = getContainingClassesMutable(method.containingClass)
   val list = mutableListOf<TextRange>()
+  val fields = mutableListOf<String>()
   for (i in enclosingClasses.indices) {
     val enclosingClass = enclosingClasses[i]
+    fields.add(enclosingClass.fields.joinToString("\n") { (it.typeElement?.text ?: "def") +" " +  it.text })
     val range = enclosingClass.textRange
     val lBraceOffset = enclosingClass.lBrace?.textOffset
     val trueLBraceOffset = lBraceOffset ?: range.startOffset
     list.add(TextRange(range.startOffset, trueLBraceOffset))
   }
-  val header = list.joinToString("") { it.substring(text) + " { " }
+  val header = list.zip(fields).joinToString("") { (classDef, fields) -> classDef.substring(text) + " {\n $fields \n " }
   val footer = (0 until (enclosingClasses.size)).joinToString("") { " } " }
   return header + method.text + footer to (header.length + 1)
 }
