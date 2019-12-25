@@ -15,13 +15,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-public class QuickFixIntention implements IntentionAction {
+public class ShQuickFixIntention implements IntentionAction {
   @NonNls private static final String FEATURE_ACTION_ID = "QuickFixUsed";
   private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
   private final String message;
 
-  public QuickFixIntention(String message, ShShellcheckExternalAnnotator.Fix fix, long timestamp) {
+  public ShQuickFixIntention(String message, ShShellcheckExternalAnnotator.Fix fix, long timestamp) {
     this.timestamp = timestamp;
     this.message = message;
     this.fix = fix;

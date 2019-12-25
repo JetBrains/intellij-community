@@ -132,7 +132,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       String formattedMessage = format(message);
       Fix fix = result.fix;
       if (fix != null && !ArrayUtil.isEmpty(fix.replacements)) {
-        annotation.registerFix(new QuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
+        annotation.registerFix(new ShQuickFixIntention(formattedMessage, fix, shellcheckResponse.timestamp));
       }
       String quotedMessage = quote(formattedMessage);
       annotation.registerFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset));

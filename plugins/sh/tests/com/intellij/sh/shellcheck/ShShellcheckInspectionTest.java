@@ -46,7 +46,7 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
   }
 
   public void testQuickFix() {
-    doTest(QuickFixIntention.class);
+    doTest(ShQuickFixIntention.class);
   }
 
   public void testDisableInspection() {
