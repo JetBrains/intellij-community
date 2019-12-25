@@ -132,8 +132,12 @@ internal sealed class EntityPropertyKind {
             }
           }
           getterIndex >= getters.size -> {
-            val id = value as T?
-            id?.let { collector(it) }
+            // A workaround of type erasure, otherwise we should use inline function with reified type parameter
+            // For this method it's ok. It uses for getting soft and hard links here (PersistentId or Long)
+            try {
+              val id = value as? T
+              id?.let { collector(it) }
+            } catch(e: ClassCastException) { }
           }
           else -> {
             val nextValue = getters[getterIndex](value)
@@ -159,7 +163,7 @@ internal sealed class EntityPropertyKind {
           // TODO Write a test on entities removal referenced from list
           value is kotlin.collections.List<*> -> for (item in value) {
             if (item != null) {
-              callStackMap[item] = Pair(getters[getterIndex - 1], value)
+              callStackMap[item] = getters[getterIndex - 1] to value
               collect(getters, getterIndex, item)
             }
           }
@@ -175,7 +179,7 @@ internal sealed class EntityPropertyKind {
           else -> {
             val nextValue = getters[getterIndex](value)
             if (nextValue != null) {
-              callStackMap[nextValue] = Pair(getters[getterIndex], value)
+              callStackMap[nextValue] = getters[getterIndex] to value
               collect(getters, getterIndex + 1, nextValue)
             }
           }
@@ -203,9 +207,9 @@ internal sealed class EntityPropertyKind {
               if (clonedObjectsList.isNullOrEmpty()) newList += it!! else newList += clonedObjectsList.first()
             }
             handledLists += objectInstance
-            Pair(newList, callStackMap[objectInstance])
+            newList to callStackMap[objectInstance]
           }
-          else Pair(clonedObj, entity.value)
+          else clonedObj to entity.value
 
           val method = ownerMetadata!!.first
           val originInstance = ownerMetadata.second
