@@ -402,7 +402,7 @@ public class StringToConstraintsTransformer {
         constraint.setFormalArgTypeWithinHierarchy(true);
       }
       argument = unescape(argument);
-      constraint.setExpressionTypes(argument);
+      constraint.setExpectedTypes(argument);
       constraint.setInvertFormalType(invert);
     }
     else if (option.equalsIgnoreCase(SCRIPT)) {
