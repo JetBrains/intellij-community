@@ -79,6 +79,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
       registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
+      if (HighlightUtil.Feature.RECORDS.isAvailable(ref)) {
+        registrar.register(new CreateRecordFromNewFix((PsiNewExpression)parent));
+        if (((PsiNewExpression)parent).getQualifier() == null) {
+          registrar.register(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
+        }
+      }
     }
     else {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));

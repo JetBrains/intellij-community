@@ -38,7 +38,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", CreateClassKind.CLASS.getDescription(), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", getKind().getDescription(), varName);
   }
 
   @Override
@@ -69,7 +69,9 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
-    PsiClass created = elementFactory.createClass(refName);
+    PsiClass created = getKind().create(elementFactory, refName);
+    created = (PsiClass)targetClass.add(created);
+
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
     if (PsiTreeUtil.isAncestor(targetClass, newExpression, true)) {
@@ -80,12 +82,11 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
       }
     }
 
-    if (!targetClass.isInterface() && 
+    if (!created.hasModifierProperty(PsiModifier.STATIC) &&
         newExpression.getQualifier() == null &&
         (!PsiTreeUtil.isAncestor(targetClass, newExpression, true) || PsiUtil.getEnclosingStaticElement(newExpression, targetClass) != null || isInThisOrSuperCall(newExpression))) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
-    created = (PsiClass)targetClass.add(created);
 
     setupGenericParameters(created, ref);
     setupClassFromNewExpression(created, newExpression);

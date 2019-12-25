@@ -26,7 +26,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -147,7 +146,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
 
       for (CreateClassKind kind : CreateClassKind.values()) {
-        myKindCombo.addItem(CommonRefactoringUtil.capitalize(kind.getDescription()), getKindIcon(kind), kind.name());
+        myKindCombo.addItem(CommonRefactoringUtil.capitalize(kind.getDescription()), kind.getKindIcon(), kind.name());
       }
 
       init();
@@ -206,17 +205,6 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
 
     public CreateClassKind getKind() {
       return CreateClassKind.valueOf(myKindCombo.getSelectedName());
-    }
-
-    private Icon getKindIcon(@NotNull CreateClassKind kind) {
-      switch (kind) {
-        case CLASS: return PlatformIcons.CLASS_ICON;
-        case INTERFACE: return PlatformIcons.INTERFACE_ICON;
-        case ENUM: return PlatformIcons.ENUM_ICON;
-        case RECORD: return PlatformIcons.RECORD_ICON;
-        case ANNOTATION: return PlatformIcons.ANNOTATION_TYPE_ICON;
-      }
-      return null;
     }
   }
 }

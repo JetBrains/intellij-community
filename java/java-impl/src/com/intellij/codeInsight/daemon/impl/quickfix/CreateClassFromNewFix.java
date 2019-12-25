@@ -57,14 +57,18 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-    PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
+    PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
     WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+  }
+
+  @NotNull
+  CreateClassKind getKind() {
+    return CreateClassKind.CLASS;
   }
 
   protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
     PsiClass aClass = psiClass;
     if (aClass == null) return;
 
@@ -77,13 +81,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiExpressionList argList = newExpression.getArgumentList();
     final Project project = aClass.getProject();
     if (argList != null && !argList.isEmpty()) {
-      PsiMethod constructor = elementFactory.createConstructor();
-      constructor = (PsiMethod)aClass.add(constructor);
-
-      TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
-      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
-
-      setupSuperCall(aClass, constructor, templateBuilder);
+      TemplateBuilderImpl templateBuilder = createConstructorTemplate(aClass, newExpression, argList);
 
       getReferenceElement(newExpression).bindToElement(aClass);
       aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
@@ -100,6 +98,19 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     else {
       positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
     }
+  }
+
+  @NotNull
+  TemplateBuilderImpl createConstructorTemplate(PsiClass aClass, PsiNewExpression newExpression, PsiExpressionList argList) {
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
+    PsiMethod constructor = elementFactory.createConstructor();
+    constructor = (PsiMethod)aClass.add(constructor);
+
+    TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
+    CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, argList, getTargetSubstitutor(newExpression));
+
+    setupSuperCall(aClass, constructor, templateBuilder);
+    return templateBuilder;
   }
 
   @Nullable
@@ -234,7 +245,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   protected String getText(final String varName) {
-    return QuickFixBundle.message("create.class.from.new.text", varName);
+    return QuickFixBundle.message("create.class.from.usage.text", getKind().getDescription(), varName);
   }
 
   protected static PsiJavaCodeReferenceElement getReferenceElement(PsiNewExpression expression) {

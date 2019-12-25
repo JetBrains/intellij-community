@@ -284,13 +284,7 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
-        argType = PsiType.getJavaLangObject(psiManager, resolveScope);
-      } else if (argType instanceof PsiDisjunctionType) {
-        argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
-      } else if (argType instanceof PsiWildcardType) {
-        argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
-      }
+      argType = normalizeType(argType, psiManager, resolveScope);
       PsiParameter parameter = parameterList.getParameter(i);
       if (parameter == null) {
         PsiParameter param = factory.createParameter(names[0], argType);
@@ -308,6 +302,83 @@ public class CreateFromUsageUtils {
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
     }
+  }
+
+  static void setupRecordComponents(@Nullable PsiRecordHeader header, @NotNull TemplateBuilder builder,
+                                    @NotNull PsiExpressionList argumentList, @NotNull PsiSubstitutor substitutor)
+    throws IncorrectOperationException {
+    if (header == null) return;
+    PsiExpression[] args = argumentList.getExpressions();
+    final PsiManager psiManager = header.getManager();
+    final Project project = psiManager.getProject();
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    GlobalSearchScope resolveScope = header.getResolveScope();
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
+
+    final PsiClass containingClass = header.getContainingClass();
+    if (containingClass == null) return;
+    class ComponentData {
+      final PsiType myType;
+      final String[] myNames;
+
+      ComponentData(PsiType type, String[] names) {
+        myType = type;
+        myNames = names;
+      }
+
+      @Override
+      public String toString() {
+        return myType.getCanonicalText() + " " + myNames[0];
+      }
+    }
+    List<ComponentData> components = new ArrayList<>();
+    //255 is the maximum number of record components
+    for (int i = 0; i < Math.min(args.length, 255); i++) {
+      PsiExpression exp = args[i];
+
+      PsiType argType = RefactoringUtil.getTypeByExpression(exp);
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
+        VariableKind.PARAMETER, null, exp, argType);
+      @NonNls String[] names = suggestedInfo.names;
+
+      if (names.length == 0) {
+        names = new String[]{"c" + i};
+      }
+
+      argType = normalizeType(argType, psiManager, resolveScope);
+      components.add(new ComponentData(argType, names));
+    }
+    PsiRecordHeader newHeader = factory.createRecordHeaderFromText(StringUtil.join(components, ", "), containingClass);
+    PsiRecordHeader replacedHeader = (PsiRecordHeader)header.replace(newHeader);
+    PsiRecordComponent[] recordComponents = replacedHeader.getRecordComponents();
+    assert recordComponents.length == components.size();
+    for (int i = 0; i < recordComponents.length; i++) {
+      PsiRecordComponent component = recordComponents[i];
+      ComponentData data = components.get(i);
+
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(data.myType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, data.myType, TailType.NONE);
+
+      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
+      guesser.setupTypeElement(Objects.requireNonNull(component.getTypeElement()), new ExpectedTypeInfo[]{info}, context, containingClass);
+
+      Expression expression = new ParameterNameExpression(data.myNames);
+      builder.replaceElement(Objects.requireNonNull(component.getNameIdentifier()), expression);
+    }
+  }
+
+  @NotNull
+  private static PsiType normalizeType(PsiType argType, PsiManager psiManager, GlobalSearchScope resolveScope) {
+    if (argType instanceof PsiDisjunctionType) {
+      argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
+    }
+    else if (argType instanceof PsiWildcardType) {
+      argType = ((PsiWildcardType)argType).getBound();
+    }
+    if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
+      argType = PsiType.getJavaLangObject(psiManager, resolveScope);
+    }
+    return argType;
   }
 
   @Nullable
@@ -419,25 +490,7 @@ public class CreateFromUsageUtils {
           PsiClass targetClass;
           if (directory != null) {
             try {
-              if (classKind == CreateClassKind.INTERFACE) {
-                targetClass = JavaDirectoryService.getInstance().createInterface(directory, name);
-              }
-              else if (classKind == CreateClassKind.CLASS) {
-                targetClass = JavaDirectoryService.getInstance().createClass(directory, name);
-              }
-              else if (classKind == CreateClassKind.ENUM) {
-                targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
-              }
-              else if (classKind == CreateClassKind.RECORD) {
-                targetClass = JavaDirectoryService.getInstance().createRecord(directory, name);
-              }
-              else if (classKind == CreateClassKind.ANNOTATION) {
-                targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
-              }
-              else {
-                LOG.error("Unknown kind of a class to create");
-                return null;
-              }
+              targetClass = classKind.createInDirectory(directory, name);
             }
             catch (final IncorrectOperationException e) {
               scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
@@ -448,26 +501,7 @@ public class CreateFromUsageUtils {
             }
           }
           else { //tests
-            PsiClass aClass;
-            if (classKind == CreateClassKind.INTERFACE) {
-              aClass = factory.createInterface(name);
-            }
-            else if (classKind == CreateClassKind.CLASS) {
-              aClass = factory.createClass(name);
-            }
-            else if (classKind == CreateClassKind.ENUM) {
-              aClass = factory.createEnum(name);
-            }
-            else if (classKind == CreateClassKind.RECORD) {
-              aClass = factory.createRecord(name);
-            }
-            else if (classKind == CreateClassKind.ANNOTATION) {
-              aClass = factory.createAnnotationType(name);
-            }
-            else {
-              LOG.error("Unknown kind of a class to create");
-              return null;
-            }
+            PsiClass aClass = classKind.create(factory, name);
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
@@ -1002,6 +1036,9 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
+  /**
+   * Could be used for record component name as well
+   */
   public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
@@ -1031,25 +1068,8 @@ public class CreateFromUsageUtils {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       assert file != null;
       PsiElement elementAt = file.findElementAt(offset);
-      PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
-      if (parameterList == null) {
-        if (elementAt == null) return LookupElement.EMPTY_ARRAY;
-        final PsiElement parent = elementAt.getParent();
-        if (parent instanceof PsiMethod) {
-          parameterList = ((PsiMethod)parent).getParameterList();
-        }
-        else {
-          return LookupElement.EMPTY_ARRAY;
-        }
-      }
-
-      PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
-
-      Set<String> parameterNames = new HashSet<>();
-      for (PsiParameter psiParameter : parameterList.getParameters()) {
-        if (psiParameter == parameter) continue;
-        parameterNames.add(psiParameter.getName());
-      }
+      Set<String> parameterNames = getPeerNames(elementAt);
+      if (parameterNames == null) return LookupElement.EMPTY_ARRAY;
 
       Set<LookupElement> set = new LinkedHashSet<>();
 
@@ -1077,6 +1097,34 @@ public class CreateFromUsageUtils {
       }
 
       return set.toArray(LookupElement.EMPTY_ARRAY);
+    }
+
+    @Nullable
+    protected Set<String> getPeerNames(PsiElement elementAt) {
+      PsiElement parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class, PsiRecordHeader.class);
+      if (parameterList == null) {
+        if (elementAt == null) return null;
+        final PsiElement parent = elementAt.getParent();
+        if (!(parent instanceof PsiMethod)) return null;
+        parameterList = ((PsiMethod)parent).getParameterList();
+      }
+      PsiVariable[] allVariables;
+      if (parameterList instanceof PsiParameterList) {
+        allVariables = ((PsiParameterList)parameterList).getParameters();
+      }
+      else if (parameterList instanceof PsiRecordHeader) {
+        allVariables = ((PsiRecordHeader)parameterList).getRecordComponents();
+      } else {
+        return null;
+      }
+
+      PsiVariable parameter = PsiTreeUtil.getParentOfType(elementAt, PsiVariable.class);
+      Set<String> parameterNames = new HashSet<>();
+      for (PsiVariable psiParameter : allVariables) {
+        if (psiParameter == parameter) continue;
+        parameterNames.add(psiParameter.getName());
+      }
+      return parameterNames;
     }
 
     @NotNull
