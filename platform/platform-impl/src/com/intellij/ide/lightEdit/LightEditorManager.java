@@ -20,6 +20,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,12 @@ public class LightEditorManager implements Disposable {
 
   @Override
   public void dispose() {
+    //noinspection TestOnlyProblems
+    releaseEditors();
+  }
+
+  @TestOnly
+  public void releaseEditors() {
     myEditors.stream()
       .filter(editorInfo -> !editorInfo.getEditor().isDisposed())
       .forEach(editorInfo -> EditorFactory.getInstance().releaseEditor(editorInfo.getEditor()));

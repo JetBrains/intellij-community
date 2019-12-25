@@ -160,9 +160,6 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
   @Nullable
   @ApiStatus.Internal
   public static Project createTempProjectAndOpenFile(@NotNull Path file, @NotNull OpenProjectTask options) {
-    if (LightEditUtil.openFile(file)) {
-      return LightEditUtil.getProject();
-    }
     String dummyProjectName = file.getFileName().toString();
     Path baseDir;
     try {
@@ -197,6 +194,10 @@ public final class PlatformProjectOpenProcessor extends ProjectOpenProcessor imp
     LOG.info("Opening " + file);
     Path baseDir = file;
     if (!Files.isDirectory(baseDir)) {
+      if (LightEditUtil.openFile(file)) {
+        return LightEditUtil.getProject();
+      }
+
       baseDir = file.getParent();
       while (baseDir != null && !Files.exists(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER))) {
         baseDir = baseDir.getParent();
