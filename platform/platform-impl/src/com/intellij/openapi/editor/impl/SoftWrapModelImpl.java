@@ -106,7 +106,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myPainter = new CompositeSoftWrapPainter(editor);
     myEditorTextRepresentationHelper = new DefaultEditorTextRepresentationHelper(editor);
     myDataMapper = new CachingSoftWrapDataMapper(editor, myStorage);
-    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper, this);
+    myApplianceManager = new SoftWrapApplianceManager(myStorage, editor, myPainter, myDataMapper);
 
     myApplianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
@@ -515,7 +515,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void release() {
-    myApplianceManager.release();
     myStorage.removeAll();
     myDeferredFoldRegions.clear();
   }
@@ -539,10 +538,6 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
     myApplianceManager.setSoftWrapPainter(painter);
-  }
-
-  public static EditorTextRepresentationHelper getEditorTextRepresentationHelper(@NotNull Editor editor) {
-    return ((SoftWrapModelEx)editor.getSoftWrapModel()).getEditorTextRepresentationHelper();
   }
 
   @Override

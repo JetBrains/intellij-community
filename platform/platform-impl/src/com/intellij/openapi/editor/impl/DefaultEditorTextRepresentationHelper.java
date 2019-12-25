@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -27,7 +28,11 @@ import java.awt.font.FontRenderContext;
  * font settings are changed in editor.
  *
  * @author Denis Zhdanov
+ * @deprecated To be removed in version 2021.1
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated
 public class DefaultEditorTextRepresentationHelper implements EditorTextRepresentationHelper {
 
   /**

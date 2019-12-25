@@ -16,7 +16,14 @@
 package com.intellij.openapi.editor.impl;
 
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated To be removed in version 2021.1
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@Deprecated
 public interface EditorTextRepresentationHelper {
   int charWidth(int c, @JdkConstants.FontStyle int fontType);
 }
