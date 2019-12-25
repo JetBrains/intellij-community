@@ -578,4 +578,12 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse().pressAt(0, 10).dragTo(1, 10).release();
     checkResultByText("line1<selection>\nline2</selection>");
   }
+
+  public void testSizeUpdateAfterMovingFragmentWithFolding() {
+    initText("line\nline\nline\nline\nlong line");
+    getEditor().getSettings().setAdditionalColumnsCount(0);
+    addCollapsedFoldRegion(19, 25, "...");
+    runWriteCommand(() -> ((EditorEx)getEditor()).getDocument().moveText(19, 25, 0));
+    assertEquals(80, getEditor().getContentComponent().getPreferredSize().width);
+  }
 }

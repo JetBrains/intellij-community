@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
+class EditorSizeManager implements PrioritizedInternalDocumentListener, Disposable, FoldingListener, InlayModel.Listener, Dumpable {
   private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
 
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
@@ -118,6 +118,12 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       doInvalidateRange(lineEndOffset, lineEndOffset);
     }
     assertValidState();
+  }
+
+  @Override
+  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
+    if (myDocument.isInBulkUpdate()) return;
+    doInvalidateRange(Math.min(start, base), Math.max(end, base + end - start));
   }
 
   @Override
