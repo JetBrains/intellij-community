@@ -149,7 +149,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     createTopLevelClass(psiClass);
   }
 
-  private boolean shouldCreateInnerClass(PsiClass psiClass) {
+  private static boolean shouldCreateInnerClass(PsiClass psiClass) {
     return psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null;
   }
 
