@@ -124,6 +124,12 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
 
   @NotNull
   @Override
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     throw new UnsupportedOperationException();
   }

@@ -127,6 +127,17 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
 
   @Override
   @NotNull
+  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+    String templateName = JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME;
+    PsiClass someClass = createClassFromTemplate(dir, name, templateName);
+    if (!someClass.isRecord()) {
+      throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, dir.getProject()));
+    }
+    return someClass;
+  }
+
+  @Override
+  @NotNull
   public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);

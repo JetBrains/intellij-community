@@ -25,6 +25,7 @@ public interface PlatformIcons {
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
   Icon ENUM_ICON = AllIcons.Nodes.Enum;
+  Icon RECORD_ICON = AllIcons.Nodes.Record;
   Icon INTERFACE_ICON = AllIcons.Nodes.Interface;
   Icon METHOD_ICON = AllIcons.Nodes.Method;
   Icon FUNCTION_ICON = AllIcons.Nodes.Function;

@@ -3,8 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
@@ -67,6 +67,9 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       registrar.register(new CreateTypeParameterFromUsageFix(ref));
+    }
+    if (HighlightUtil.Feature.RECORDS.isAvailable(ref)) {
+      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.RECORD));
     }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);

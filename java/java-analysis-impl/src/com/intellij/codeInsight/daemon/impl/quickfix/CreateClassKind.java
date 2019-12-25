@@ -24,7 +24,8 @@ public enum CreateClassKind implements ClassKind {
   CLASS     (QuickFixBundle.message("create.class")),
   INTERFACE (QuickFixBundle.message("create.interface")),
   ENUM      (QuickFixBundle.message("create.enum")),
-  ANNOTATION("annotation");
+  ANNOTATION(QuickFixBundle.message("create.annotation")),
+  RECORD    (QuickFixBundle.message("create.record"));
 
   private final String myDescription;
 

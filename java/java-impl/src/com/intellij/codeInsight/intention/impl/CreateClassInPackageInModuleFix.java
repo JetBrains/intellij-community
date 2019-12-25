@@ -213,6 +213,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
         case CLASS: return PlatformIcons.CLASS_ICON;
         case INTERFACE: return PlatformIcons.INTERFACE_ICON;
         case ENUM: return PlatformIcons.ENUM_ICON;
+        case RECORD: return PlatformIcons.RECORD_ICON;
         case ANNOTATION: return PlatformIcons.ANNOTATION_TYPE_ICON;
       }
       return null;

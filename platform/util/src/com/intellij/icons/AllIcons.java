@@ -1573,6 +1573,7 @@ public class AllIcons {
     /** 16x16 */ public static final Icon PropertyWrite = load("/nodes/propertyWrite.svg");
     /** 16x16 */ public static final Icon PropertyWriteStatic = load("/nodes/propertyWriteStatic.svg");
     /** 16x16 */ public static final Icon Read_access = load("/nodes/read-access.svg");
+    /** 16x16 */ public static final Icon Record = load("/nodes/record.svg");
     /** 16x16 */ public static final Icon Related = load("/nodes/related.svg");
     /** 16x16 */ public static final Icon ResourceBundle = load("/nodes/resourceBundle.svg");
     /** 16x16 */ public static final Icon RunnableMark = load("/nodes/runnableMark.svg");

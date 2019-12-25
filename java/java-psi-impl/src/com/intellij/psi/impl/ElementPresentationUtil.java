@@ -57,14 +57,15 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;
-  public static final int CLASS_KIND_CLASS         = 30;
+  public static final int CLASS_KIND_CLASS          = 30;
   private static final int CLASS_KIND_ANONYMOUS     = 40;
   private static final int CLASS_KIND_ENUM          = 50;
   private static final int CLASS_KIND_ASPECT        = 60;
-  public static final int CLASS_KIND_JSP           = 70;
-  public static final int CLASS_KIND_EXCEPTION = 80;
-  private static final int CLASS_KIND_JUNIT_TEST = 90;
-  private static final int CLASS_KIND_RUNNABLE = 100;
+  public static final int CLASS_KIND_JSP            = 70;
+  public static final int CLASS_KIND_EXCEPTION      = 80;
+  private static final int CLASS_KIND_JUNIT_TEST    = 90;
+  private static final int CLASS_KIND_RUNNABLE      = 100;
+  private static final int CLASS_KIND_RECORD        = 110;
 
   private static final int FLAGS_ABSTRACT = 0x100;
   private static final int FLAGS_STATIC = 0x200;
@@ -79,6 +80,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
 
     if (aClass.isAnnotationType()) return CLASS_KIND_ANNOTATION;
     if (aClass.isEnum()) return CLASS_KIND_ENUM;
+    if (aClass.isRecord()) return CLASS_KIND_RECORD;
     if (aClass.isInterface()) return CLASS_KIND_INTERFACE;
     if (aClass instanceof PsiAnonymousClass) return CLASS_KIND_ANONYMOUS;
 
@@ -108,6 +110,9 @@ public final class ElementPresentationUtil implements PlatformIcons {
     }
     if (aClass.isEnum()) {
       return CLASS_KIND_ENUM;
+    }
+    if (aClass.isRecord()) {
+      return CLASS_KIND_RECORD;
     }
     if (aClass.isInterface()) {
       return CLASS_KIND_INTERFACE;
@@ -153,6 +158,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
     BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST | FLAGS_ABSTRACT, ABSTRACT_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_RECORD, RECORD_ICON);
     BASE_ICON.put(CLASS_KIND_RUNNABLE, CLASS_ICON);
   }
 
@@ -178,6 +184,7 @@ public final class ElementPresentationUtil implements PlatformIcons {
       case CLASS_KIND_ANNOTATION: noun = CodeInsightBundle.message("node.annotation.tooltip"); break;
       case CLASS_KIND_ANONYMOUS: noun = CodeInsightBundle.message("node.anonymous.class.tooltip"); break;
       case CLASS_KIND_ENUM: noun = CodeInsightBundle.message("node.enum.tooltip"); break;
+      case CLASS_KIND_RECORD: noun = CodeInsightBundle.message("node.record.tooltip"); break;
       case CLASS_KIND_EXCEPTION: noun = CodeInsightBundle.message("node.exception.tooltip"); break;
       case CLASS_KIND_INTERFACE: noun = CodeInsightBundle.message("node.interface.tooltip"); break;
       case CLASS_KIND_JUNIT_TEST: noun = CodeInsightBundle.message("node.junit.test.tooltip"); break;

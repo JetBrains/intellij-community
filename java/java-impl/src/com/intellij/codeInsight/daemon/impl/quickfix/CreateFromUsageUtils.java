@@ -171,38 +171,36 @@ public class CreateFromUsageUtils {
       throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
     }
 
-    if (methodText != null) {
-      PsiMethod m;
-      try {
-        m = factory.createMethodFromText(methodText, aClass);
-      }
-      catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(
-          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                   QuickFixBundle.message("new.method.body.template.error.title")));
-        return;
-      }
-
-      PsiElement newBody = m.getBody();
-      LOG.assertTrue(newBody != null);
-
-      PsiElement oldBody = method.getBody();
-      if (oldBody == null) {
-        PsiElement last = method.getLastChild();
-        if (last instanceof PsiErrorElement &&
-            JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
-          oldBody = last;
-        }
-      }
-      if (oldBody != null) {
-        oldBody.replace(newBody);
-      }
-      else {
-        method.add(newBody);
-      }
-
-      csManager.reformat(method);
+    PsiMethod m;
+    try {
+      m = factory.createMethodFromText(methodText, aClass);
     }
+    catch (IncorrectOperationException e) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                 QuickFixBundle.message("new.method.body.template.error.title")));
+      return;
+    }
+
+    PsiElement newBody = m.getBody();
+    LOG.assertTrue(newBody != null);
+
+    PsiElement oldBody = method.getBody();
+    if (oldBody == null) {
+      PsiElement last = method.getLastChild();
+      if (last instanceof PsiErrorElement &&
+          JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+        oldBody = last;
+      }
+    }
+    if (oldBody != null) {
+      oldBody.replace(newBody);
+    }
+    else {
+      method.add(newBody);
+    }
+
+    csManager.reformat(method);
   }
 
   public static void setupEditor(@NotNull PsiMethod method, @NotNull Editor newEditor) {
@@ -399,6 +397,7 @@ public class CreateFromUsageUtils {
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
                       elementFactory.createEnum(name);
     CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
@@ -429,6 +428,9 @@ public class CreateFromUsageUtils {
               else if (classKind == CreateClassKind.ENUM) {
                 targetClass = JavaDirectoryService.getInstance().createEnum(directory, name);
               }
+              else if (classKind == CreateClassKind.RECORD) {
+                targetClass = JavaDirectoryService.getInstance().createRecord(directory, name);
+              }
               else if (classKind == CreateClassKind.ANNOTATION) {
                 targetClass = JavaDirectoryService.getInstance().createAnnotationType(directory, name);
               }
@@ -456,6 +458,9 @@ public class CreateFromUsageUtils {
             else if (classKind == CreateClassKind.ENUM) {
               aClass = factory.createEnum(name);
             }
+            else if (classKind == CreateClassKind.RECORD) {
+              aClass = factory.createRecord(name);
+            }
             else if (classKind == CreateClassKind.ANNOTATION) {
               aClass = factory.createAnnotationType(name);
             }
@@ -466,7 +471,9 @@ public class CreateFromUsageUtils {
             targetClass = (PsiClass)sourceFile.add(aClass);
           }
 
-          if (superClassName != null && (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM))) {
+          if (superClassName != null && 
+              (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
+              (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
             setupSuperClassReference(targetClass, superClassName);
           }
           if (contextElement instanceof PsiJavaCodeReferenceElement) {
@@ -711,7 +718,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -763,7 +770,7 @@ public class CreateFromUsageUtils {
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<>();
       for (ExpectedTypeInfo[] aTypesList : typesList) {
-        ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
+        ContainerUtil.addAll(union, aTypesList);
       }
       expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
@@ -883,8 +890,8 @@ public class CreateFromUsageUtils {
     return Comparing.compare(name1, name2);
   }
 
-  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurences) {
-    for (PsiExpression expression : expressionOccurences) {
+  public static boolean isAccessedForWriting(final PsiExpression[] expressionOccurrences) {
+    for (PsiExpression expression : expressionOccurrences) {
       if(expression.isValid() && PsiUtil.isAccessedForWriting(expression)) return true;
     }
 
