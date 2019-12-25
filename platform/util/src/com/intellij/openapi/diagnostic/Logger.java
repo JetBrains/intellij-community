@@ -95,9 +95,9 @@ public abstract class Logger {
 
   public abstract void debug(@Nullable Throwable t);
 
-  public abstract void debug(String message, @Nullable Throwable t);
+  public abstract void debug(@NonNls String message, @Nullable Throwable t);
 
-  public void debug(@NotNull String message, @NotNull Object... details) {
+  public void debug(@NonNls @NotNull String message, @NotNull Object... details) {
     if (isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
       sb.append(message);
