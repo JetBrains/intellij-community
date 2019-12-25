@@ -18,6 +18,7 @@ import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
@@ -76,6 +77,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         myUserSizeChanged = true;
       }
       createTitlePanelToolbar(myKey);
+      mySpeedSearch.setAlwaysShown(true);
     }
     myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
@@ -225,6 +227,12 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected void afterShow() {
+    if (myKey != null) {
+      setHeaderComponent(mySpeedSearchPatternField);
+      mySpeedSearchPatternField.getTextEditor().setFocusable(true);
+      IdeFocusManager.getInstance(myProject)
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySpeedSearchPatternField, true));
+    }
     super.afterShow();
     myShown = true;
     Dimension size = getSize();

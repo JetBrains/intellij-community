@@ -40,6 +40,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+  protected boolean myAlwaysShown;
 
   public SpeedSearch() {
     this(false);
@@ -215,5 +216,9 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   @Override
   public void keyReleased(KeyEvent e) {
     processKeyEvent(e);
+  }
+
+  public void setAlwaysShown(boolean alwaysShown) {
+    myAlwaysShown = alwaysShown;
   }
 }
