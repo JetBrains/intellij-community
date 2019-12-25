@@ -93,8 +93,6 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
         8()
       }
     }
-
-    repo.update()
     assertExceptionDuringEntriesGeneration(commit0, CantRebaseUsingLogException.Reason.MERGE) {
       "We shouldn't generate entries if merge commit between HEAD and Rebase Base. Generated entries: $it"
     }
