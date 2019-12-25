@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.MessageBusUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
@@ -44,6 +43,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
+import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
 /**
  * @author yole
@@ -419,12 +421,12 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   }
 
   private void fireChangesLoaded(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> changes) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesLoaded(location, changes));
   }
 
   private void fireIncomingReloaded() {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
-                                                      listener -> listener.incomingChangesUpdated(Collections.emptyList()));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
+                                       listener -> listener.incomingChangesUpdated(Collections.emptyList()));
   }
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
@@ -561,7 +563,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
 
     myCachedIncomingChangeLists = result;
     debug("Incoming changes loaded");
-    fireIncomingChangesUpdated(new ArrayList<>(result));
+    fireIncomingChangesUpdated(result);
     return result;
   }
 
@@ -644,7 +646,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
       myCachesHolder.clearAllCaches();
       myCachedIncomingChangeLists = null;
       if (continuation != null) continuation.run();
-      MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
+      invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.changesCleared());
     });
   }
 
@@ -693,7 +695,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private void pendingUpdateProcessed(@Nullable Consumer<? super List<CommittedChangeList>> incomingChangesConsumer) {
     myPendingUpdateCount--;
     if (myPendingUpdateCount == 0) {
-      fireIncomingChangesUpdated(new ArrayList<>(myNewIncomingChanges));
+      fireIncomingChangesUpdated(myNewIncomingChanges);
       if (incomingChangesConsumer != null) {
         incomingChangesConsumer.consume(new ArrayList<>(myNewIncomingChanges));
       }
@@ -739,13 +741,14 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
     });
   }
 
-  private void fireIncomingChangesUpdated(final List<? extends CommittedChangeList> lists) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC,
-                                                      listener -> listener.incomingChangesUpdated(new ArrayList<>(lists)));
+  private void fireIncomingChangesUpdated(@NotNull Collection<? extends CommittedChangeList> incomingChanges) {
+    List<CommittedChangeList> incomingChangesCopy = unmodifiableOrEmptyList(new ArrayList<>(incomingChanges));
+
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.incomingChangesUpdated(incomingChangesCopy));
   }
 
   private void notifyRefreshError(final VcsException e) {
-    MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.refreshErrorStatusChanged(e));
+    invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, listener -> listener.refreshErrorStatusChanged(e));
   }
 
 
@@ -840,10 +843,7 @@ public class CommittedChangesCache extends SimplePersistentStateComponent<Commit
   private void notifyReloadIncomingChanges() {
     myCachedIncomingChangeLists = null;
 
-    Runnable runnable = () -> {
-      List<CommittedChangeList> lists = loadIncomingChanges(true);
-      fireIncomingChangesUpdated(lists);
-    };
+    Runnable runnable = () -> loadIncomingChanges(true);
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       myTaskQueue.run(runnable);
