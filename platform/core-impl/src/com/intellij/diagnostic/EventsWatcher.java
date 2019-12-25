@@ -53,14 +53,18 @@ public final class EventsWatcher implements Disposable {
 
   @NotNull
   private static final NotNullLazyValue<Boolean> ourIsEnabled =
-    NotNullLazyValue.createValue(() -> Registry.is("ide.event.queue.dispatch.log.enabled", false));
+    NotNullLazyValue.createValue(() -> Boolean.getBoolean("idea.event.queue.dispatch.listen"));
   @NotNull
   private static final NotNullLazyValue<Field> ourRunnableField =
     NotNullLazyValue.createValue(() -> Objects.requireNonNull(findTargetField(InvocationEvent.class)));
 
+  public static boolean isEnabled() {
+    return ourIsEnabled.getValue();
+  }
+
   @Nullable
   public static EventsWatcher getInstance() {
-    if (!ourIsEnabled.getValue()) {
+    if (!isEnabled()) {
       return null;
     }
 
