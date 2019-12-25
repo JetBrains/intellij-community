@@ -94,7 +94,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public String getTypeName() {
-    return myValueDescriptor.getDeclaredType();
+    return myValueDescriptor.getType() == null ? null : myValueDescriptor.getType().name();
   }
 
   @Override
