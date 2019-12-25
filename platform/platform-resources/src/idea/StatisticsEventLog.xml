@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <group id="FeatureUsage.Internal" popup="true" compact="true" text="Feature Usages Statistics">
+    <group id="FeatureUsage.Internal" popup="true" internal="true" compact="true" text="Feature Usages Statistics">
       <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction"
               text="Send Feature Usage Event Log"
               description="Sends event log files to qa server"/>
