@@ -26,7 +26,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Shfmt formatter"/>
+              <text resource-bundle="messages/ShBundle" key="shfmt.formatter"/>
             </properties>
           </component>
         </children>
@@ -102,7 +102,7 @@
                           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text value="Indent:"/>
+                          <text resource-bundle="messages/ApplicationBundle" key="editbox.indent.indent"/>
                         </properties>
                       </component>
                       <component id="4aed0" class="com.intellij.ui.components.fields.IntegerField" binding="myIndentField" custom-create="true">
@@ -124,7 +124,7 @@
                           <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text value="Indent"/>
+                          <text resource-bundle="messages/ShBundle" key="label.indent"/>
                         </properties>
                       </component>
                       <component id="2991d" class="javax.swing.JLabel">
@@ -132,7 +132,7 @@
                           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
-                          <text value="Tab size:"/>
+                          <text resource-bundle="messages/ApplicationBundle" key="editbox.indent.tab.size"/>
                         </properties>
                       </component>
                       <component id="22c29" class="com.intellij.ui.components.fields.IntegerField" binding="myTabField" custom-create="true">
@@ -178,7 +178,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Path:"/>
+                  <text resource-bundle="messages/ShBundle" key="label.path"/>
                 </properties>
               </component>
               <component id="a2a39" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myShfmtPathSelector">

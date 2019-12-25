@@ -35,9 +35,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 public class ShCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final String BROWSE_FORMATTER_TITLE = "Choose Path to the Shfmt Formatter:";
-  private static final String LINK_TITLE = "Download shfmt formatter";
-
   private JPanel myPanel;
   private JPanel myRightPanel;
   private JPanel myWarningPanel;
@@ -63,7 +60,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myRightPanel);
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShfmtPathSelector.addBrowseFolderListener(BROWSE_FORMATTER_TITLE, "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShfmtPathSelector.addBrowseFolderListener(ShBundle.message("choose.path.to.the.shfmt.formatter"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
     myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
@@ -86,7 +83,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private void createUIComponents() {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
-    myShfmtDownloadLink = new ActionLink(LINK_TITLE, new AnAction() {
+    myShfmtDownloadLink = new ActionLink(ShBundle.message("download.shfmt.formatter"), new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
         CodeStyleSettings settings = getSettings();
