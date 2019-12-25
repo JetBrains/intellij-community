@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
@@ -194,34 +193,36 @@ fun PsiClassType.erasure(): PsiClassType {
   }
 }
 
-private fun getContainingClassesMutable(element: PsiClass?): MutableList<PsiClass> {
-  element ?: return mutableListOf()
-  val enclosingClass = element.containingClass ?: return mutableListOf(element)
-  return getContainingClassesMutable(enclosingClass).apply { add(element) }
+private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
+  fun getContainingClassesMutable(startClass: PsiClass?): MutableList<PsiClass> {
+    startClass ?: return mutableListOf()
+    val enclosingClass = startClass.containingClass ?: return mutableListOf(startClass)
+    return getContainingClassesMutable(enclosingClass).apply { add(startClass) }
+  }
+  return getContainingClassesMutable(startClass)
 }
 
 private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
   val text = method.containingFile.text
-  val enclosingClasses = getContainingClassesMutable(method.containingClass)
-  val list = mutableListOf<TextRange>()
-  val fields = mutableListOf<String>()
-  for (i in enclosingClasses.indices) {
-    val enclosingClass = enclosingClasses[i]
-    fields.add(enclosingClass.fields.joinToString("\n") { (it.typeElement?.text ?: "def") +" " +  it.text })
-    val range = enclosingClass.textRange
-    val lBraceOffset = enclosingClass.lBrace?.textOffset
-    val trueLBraceOffset = lBraceOffset ?: range.startOffset
-    list.add(TextRange(range.startOffset, trueLBraceOffset))
+  val containingClasses = getContainingClasses(method.containingClass)
+  val classRepresentations = mutableListOf<String>()
+  val fieldRepresentations = mutableListOf<String>()
+  for (containingClass in containingClasses) {
+    fieldRepresentations.add(containingClass.fields.joinToString("\n") { (it.typeElement?.text ?: "def") + " " + it.text })
+    val startOffset = containingClass.textRange.startOffset
+    val lBraceOffset = containingClass.lBrace?.textOffset ?: startOffset
+    classRepresentations.add(text.substring(startOffset until lBraceOffset))
   }
-  val header = list.zip(fields).joinToString("") { (classDef, fields) -> classDef.substring(text) + " {\n $fields \n " }
-  val footer = (0 until (enclosingClasses.size)).joinToString("") { " } " }
-  return header + method.text + footer to (header.length + 1)
+  val header = classRepresentations.zip(fieldRepresentations)
+    .joinToString("") { (classDef, fields) -> "$classDef {\n $fields \n " }
+  val footer = " } ".repeat(containingClasses.size)
+  return header + method.text + footer to (header.length)
 }
 
 fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val (env, offset) = buildVirtualEnvironmentForMethod(method)
+  val (fileText, offset) = buildVirtualEnvironmentForMethod(method)
   val factory = GroovyPsiElementFactory.getInstance(method.project)
-  val newFile = factory.createGroovyFile(env, false, method)
+  val newFile = factory.createGroovyFile(fileText, false, method)
   val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
   if (newMethod.hasTypeParameters()) {
     if (typeParameterList != null) {
@@ -307,7 +308,7 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
-  method.typeParameters.asList() + (getContainingClassesMutable(method.containingClass).flatMap { it.typeParameters.asList() })
+  method.typeParameters.asList() + (getContainingClasses(method.containingClass).flatMap { it.typeParameters.asList() })
 
 fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)
