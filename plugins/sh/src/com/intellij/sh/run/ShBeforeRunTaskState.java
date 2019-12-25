@@ -9,6 +9,7 @@ import kotlin.properties.ReadWriteProperty;
 import kotlin.reflect.KProperty;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShBeforeRunTaskState extends BaseState {
 
   private static final KProperty[] delegatedProperties = new KProperty[]{

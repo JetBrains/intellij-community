@@ -24,6 +24,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import static com.intellij.sh.ShStringUtil.quote;
 import static com.intellij.sh.ShStringUtil.unquote;
 
 public class ShFilePathCompletionContributor extends CompletionContributor implements DumbAware {
-  private static final String FEATURE_ACTION_ID = "FilePathCompletionUsed";
+  @NonNls private static final String FEATURE_ACTION_ID = "FilePathCompletionUsed";
 
   private static final InsertHandler<LookupElement> FILE_INSERT_HANDLER = (context, item) -> {
     File file = (File) item.getObject();

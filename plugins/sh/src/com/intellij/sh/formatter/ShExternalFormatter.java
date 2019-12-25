@@ -26,13 +26,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShSupport;
 import com.intellij.sh.codeStyle.ShCodeStyleSettings;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ import java.util.List;
 // todo: rewrite with the future API, see IDEA-203568
 public class ShExternalFormatter implements ExternalFormatProcessor {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
-  private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
+  @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
   @Override
   public boolean activeForFile(@NotNull PsiFile file) {
@@ -79,17 +80,20 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
       Notification notification =
-        new Notification("Shell Script", "", "Would you like to install a shell script formatter?", NotificationType.INFORMATION);
+        new Notification(ShBundle.message("shell.script.title"), "", ShBundle.message("would.you.like.to.install.a.shell.script.formatter"),
+                         NotificationType.INFORMATION);
       notification.addAction(
-        NotificationAction.createSimple("Install", () -> {
+        NotificationAction.createSimple(ShBundle.message("install.formatter"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project, settings, () -> Notifications.Bus
-            .notify(new Notification("Shell Script", "", "Shell script formatter was successfully installed",
+            .notify(new Notification(ShBundle.message("shell.script.title"), "",
+                                     ShBundle.message("shell.script.formatter.was.successfully.installed"),
                                      NotificationType.INFORMATION)), () -> Notifications.Bus
-            .notify(new Notification("Shell Script", "", "Can't download sh shfmt formatter. Please install it manually",
-                                     NotificationType.ERROR)));
+            .notify(
+              new Notification(ShBundle.message("shell.script.title"), "", ShBundle.message("can.t.download.sh.shfmt"),
+                               NotificationType.ERROR)));
         }));
-      notification.addAction(NotificationAction.createSimple("No, thanks", () -> {
+      notification.addAction(NotificationAction.createSimple(ShBundle.message("no.thanks"), () -> {
         notification.expire();
         ShSettings.setShfmtPath(ShSettings.I_DO_MIND);
       }));
@@ -108,6 +112,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     long before = document.getModificationStamp();
     documentManager.saveDocument(document);
 
+    @NonNls
     List<String> params = new SmartList<>();
     params.add("-ln=" + ShShebangParserUtil.getInterpreter((ShFile)psiFile, KNOWN_SHELLS, "bash"));
     if (!settings.useTabCharacter(file.getFileType())) {
@@ -156,7 +161,7 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
                   FileDocumentManager.getInstance().saveDocument(document);
                 });
                 file.putUserData(UndoConstants.FORCE_RECORD_UNDO, null);
-              }, "Reformat Code with " + getId(), null, document);
+              }, ShBundle.message("reformat.code.with", getId()), null, document);
             });
           }
           else {

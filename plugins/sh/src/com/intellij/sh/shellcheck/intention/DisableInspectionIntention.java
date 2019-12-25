@@ -10,15 +10,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.shellcheck.ShShellcheckInspection;
 import com.intellij.sh.statistics.ShFeatureUsagesCollector;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class DisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
-  private static final String FEATURE_ACTION_ID = "DisableInspectionUsed";
+  @NonNls private static final String FEATURE_ACTION_ID = "DisableInspectionUsed";
   private final String myInspectionCode;
   private final String myMessage;
 
@@ -30,13 +32,13 @@ public class DisableInspectionIntention implements IntentionAction, LowPriorityA
   @NotNull
   @Override
   public String getText() {
-    return "Disable inspection " + myMessage;
+    return ShBundle.message("disable.inspection.0", myMessage);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Shell script";
+    return ShBundle.message("shell.script");
   }
 
   @Override

@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
@@ -26,6 +27,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.labels.ActionLink;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,11 +74,11 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     myWarningLabel.setIcon(AllIcons.General.Warning);
     myErrorLabel.setForeground(JBColor.RED);
 
-    myBinaryOpsStartLine.setText("Binary ops like & and | may start a line");
-    mySwitchCasesIndented.setText("Switch cases will be indented");
-    myRedirectFollowedBySpace.setText("Redirect operators will be followed by a space");
-    myKeepColumnAlignmentPadding.setText("Keep column alignment padding");
-    myMinifyProgram.setText("Minify program to reduce its size");
+    myBinaryOpsStartLine.setText(ShBundle.message("binary.ops.like.and.may.start.a.line"));
+    mySwitchCasesIndented.setText(ShBundle.message("switch.cases.will.be.indented"));
+    myRedirectFollowedBySpace.setText(ShBundle.message("redirect.operators.will.be.followed.by.a.space"));
+    myKeepColumnAlignmentPadding.setText(ShBundle.message("keep.column.alignment.padding"));
+    myMinifyProgram.setText(ShBundle.message("minify.program.to.reduce.its.size"));
 
     addPanelToWatch(myPanel);
   }
@@ -189,21 +191,21 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
     return !browseButton.getText().equals(value);
   }
 
-  private static final String GENERAL_CODE_SAMPLE = "#!/usr/bin/env sh\n" +
-      "\n" +
-      "function foo() {\n" +
-      "  if [ -x $file ]; then\n" +
-      "    myArray=(item1 item2 item3)\n" +
-      "  elif [ $file1 -nt $file2 ]; then\n" +
-      "    unset myArray\n" +
-      "  else\n" +
-      "    echo \"Usage: $0 file ...\"\n" +
-      "  fi\n" +
-      "}\n" +
-      "\n" +
-      "for (( i = 0; i < 5; i++ )); do\n" +
-      "  read -p r\n" +
-      "  print -n $r\n" +
-      "  wait $!\n" +
-      "done\n";
+  @NonNls private static final String GENERAL_CODE_SAMPLE = "#!/usr/bin/env sh\n" +
+                                                            "\n" +
+                                                            "function foo() {\n" +
+                                                            "  if [ -x $file ]; then\n" +
+                                                            "    myArray=(item1 item2 item3)\n" +
+                                                            "  elif [ $file1 -nt $file2 ]; then\n" +
+                                                            "    unset myArray\n" +
+                                                            "  else\n" +
+                                                            "    echo \"Usage: $0 file ...\"\n" +
+                                                            "  fi\n" +
+                                                            "}\n" +
+                                                            "\n" +
+                                                            "for (( i = 0; i < 5; i++ )); do\n" +
+                                                            "  read -p r\n" +
+                                                            "  print -n $r\n" +
+                                                            "  wait $!\n" +
+                                                            "done\n";
 }

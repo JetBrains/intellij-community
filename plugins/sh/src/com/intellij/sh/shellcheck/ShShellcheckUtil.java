@@ -21,6 +21,7 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 class ShShellcheckUtil {
-  private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
+  @NonNls private static final Logger LOG = Logger.getInstance(ShShellcheckUtil.class);
   private static final String FEATURE_ACTION_ID = "ExternalAnnotatorDownloaded";
   private static final String WINDOWS_EXTENSION = ".exe";
   static final String SHELLCHECK = "shellcheck";
