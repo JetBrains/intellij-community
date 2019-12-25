@@ -78,9 +78,16 @@ public class OSProcessHandler extends BaseOSProcessHandler {
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
+    this(process, commandLine, charset, null);
+  }
+
+  /**
+   * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
+   */
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
     super(process, commandLine, charset);
     setHasPty(isPtyProcess(process));
-    myFilesToDelete = null;
+    myFilesToDelete = filesToDelete;
     myHasErrorStream = true;
     myModality = getDefaultModality();
   }

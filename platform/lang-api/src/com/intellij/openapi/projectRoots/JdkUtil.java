@@ -332,6 +332,8 @@ public class JdkUtil {
       promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::promise));
 
       File argFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
+      commandLine.addFileToDeleteOnTermination(argFile);
+
       Promises.collectResults(promises).onSuccess(__ -> {
         List<String> fileArgs = new ArrayList<>();
         if (dynamicVMOptions) {
@@ -370,9 +372,6 @@ public class JdkUtil {
       TargetValue<String> argFileParameter = request.createUpload(argFile.getAbsolutePath());
       commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
       addCommandLineContentOnResolve(commandLineContent, argFileParameter);
-
-      //todo[remoteServers]: support deleting files on termination
-      //OSProcessHandler.deleteFileOnTermination(commandLine, argFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -400,9 +399,11 @@ public class JdkUtil {
           }
           else {
             appendVmParameter(commandLine, request, param);
-            }
-          }if (!toWrite.isEmpty()) {
+          }
+        }
+        if (!toWrite.isEmpty()) {
           vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
+          commandLine.addFileToDeleteOnTermination(vmParamsFile);
           CommandLineWrapperUtil.writeWrapperFile(vmParamsFile, toWrite, lineSeparator, cs);
         }
       }
@@ -415,10 +416,13 @@ public class JdkUtil {
       File appParamsFile = null;
       if (dynamicParameters) {
         appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
+        commandLine.addFileToDeleteOnTermination(appParamsFile);
         CommandLineWrapperUtil.writeWrapperFile(appParamsFile, javaParameters.getProgramParametersList().getList(), lineSeparator, cs);
       }
       
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
+      commandLine.addFileToDeleteOnTermination(classpathFile);
+
       Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::promise)).onSuccess(__ -> {
         List<String> pathList = new ArrayList<>();
@@ -467,17 +471,12 @@ public class JdkUtil {
       TargetValue<String> classPathParameter = request.createUpload(classpathFile.getAbsolutePath());
       commandLine.addParameter(classPathParameter);
       addCommandLineContentOnResolve(commandLineContent, classPathParameter);
-      
-      //todo[remoteServers]: support deleting files on termination
-      //OSProcessHandler.deleteFileOnTermination(commandLine, classpathFile);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
         TargetValue<String> vmParamsParameter = request.createUpload(vmParamsFile.getAbsolutePath());
         commandLine.addParameter(vmParamsParameter);
         addCommandLineContentOnResolve(commandLineContent, vmParamsParameter);
-        //todo[remoteServers]: support deleting files on termination
-        //OSProcessHandler.deleteFileOnTermination(commandLine, vmParamsFile);
       }
 
       if (appParamsFile != null) {
@@ -485,8 +484,6 @@ public class JdkUtil {
         TargetValue<String> appParamsParameter = request.createUpload(appParamsFile.getAbsolutePath());
         commandLine.addParameter(appParamsParameter);
         addCommandLineContentOnResolve(commandLineContent, appParamsParameter);
-        //todo[remoteServers]: support deleting files on termination
-        //OSProcessHandler.deleteFileOnTermination(commandLine, appParamsFile);
       }
     }
     catch (IOException e) {
@@ -548,6 +545,8 @@ public class JdkUtil {
       commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
       
       File classpathJarFile = FileUtil.createTempFile(CommandLineWrapperUtil.CLASSPATH_JAR_FILE_NAME_PREFIX + Math.abs(new Random().nextInt()), ".jar", true);
+      commandLine.addFileToDeleteOnTermination(classpathJarFile);
+
       String jarFilePath = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
       if (dynamicVMOptions || dynamicParameters) {
@@ -580,8 +579,6 @@ public class JdkUtil {
         }
       });
 
-      //todo[remoteServers]: support deleting files on termination
-      //OSProcessHandler.deleteFileOnTermination(commandLine, classpathJarFile);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);

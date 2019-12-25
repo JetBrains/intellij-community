@@ -11,11 +11,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Command line that can be executed on any {@link TargetEnvironment}.
@@ -31,6 +29,7 @@ public class TargetedCommandLine extends UserDataHolderBase {
 
   private final List<TargetValue<String>> myParameters = new ArrayList<>();
   private final Map<String, TargetValue<String>> myEnvironment = new HashMap<>();
+  private final Set<File> myFilesToDeleteOnTermination = new HashSet<>();
 
   /**
    * {@link GeneralCommandLine#getPreparedCommandLine()}
@@ -82,6 +81,10 @@ public class TargetedCommandLine extends UserDataHolderBase {
     myEnvironment.put(name, TargetValue.fixed(value));
   }
 
+  public void addFileToDeleteOnTermination(@NotNull File file) {
+    myFilesToDeleteOnTermination.add(file);
+  }
+
   public void setInputFile(@NotNull TargetValue<String> inputFilePath) {
     myInputFilePath = inputFilePath;
   }
@@ -111,6 +114,11 @@ public class TargetedCommandLine extends UserDataHolderBase {
   @NotNull
   public Charset getCharset() {
     return myCharset;
+  }
+
+  @NotNull
+  public Set<File> getFilesToDeleteOnTermination() {
+    return myFilesToDeleteOnTermination;
   }
 
   @NotNull

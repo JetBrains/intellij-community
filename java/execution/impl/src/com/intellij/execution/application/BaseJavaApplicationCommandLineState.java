@@ -128,7 +128,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     //todo[remoteServers]: invent the new method for building presentation string
     String commandRepresentation = StringUtil.join(targetedCommandLine.prepareCommandLine(remoteEnvironment), " ");
 
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation, targetedCommandLine.getCharset());
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation,
+                                                                        targetedCommandLine.getCharset(),
+                                                                        targetedCommandLine.getFilesToDeleteOnTermination());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
