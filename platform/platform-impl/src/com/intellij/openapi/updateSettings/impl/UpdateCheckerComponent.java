@@ -116,7 +116,7 @@ public final class UpdateCheckerComponent implements Runnable {
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
           notification.expire();
         }
-      });
+      }).notify(project);
     properties.setValue(UPDATE_WHATS_NEW_MESSAGE, null);
   }
 
