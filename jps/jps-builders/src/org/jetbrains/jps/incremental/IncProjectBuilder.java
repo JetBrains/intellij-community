@@ -543,7 +543,7 @@ public class IncProjectBuilder {
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     ProjectBuildException ex = null;
     try {
-      final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(projectDescriptor.getProject());
+      final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(projectDescriptor.getProject());
       final boolean shouldClear = configuration.isClearOutputDirectoryOnRebuild();
       if (shouldClear) {
         clearOutputs(context);

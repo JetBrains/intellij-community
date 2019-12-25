@@ -172,7 +172,7 @@ public class Java9Test extends IncrementalTestCase {
   public void testExplodedAutoModuleWithManifest() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
-    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).addResourcePattern("*.MF");
+    JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.MF");
 
     assertEquals(2, modules.size());
     assertTrue(modules.containsKey("A"));

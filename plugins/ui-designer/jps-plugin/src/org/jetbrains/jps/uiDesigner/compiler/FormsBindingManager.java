@@ -115,7 +115,7 @@ public class FormsBindingManager extends FormsBuilder {
     });
 
     if (config.isInstrumentClasses()) {
-      final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+      final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
       final JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
 
       // force compilation of bound source file if the form is dirty

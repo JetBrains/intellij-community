@@ -203,7 +203,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
   static boolean useGreclipse(CompileContext context) {
     JpsProject project = context.getProjectDescriptor().getProject();
-    return ID.equals(JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).getJavaCompilerId());
+    return ID.equals(JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getJavaCompilerId());
   }
 
   private boolean performCompilation(List<String> args, StringWriter out, StringWriter err, Map<String, List<String>> outputs, CompileContext context, ModuleChunk chunk) {

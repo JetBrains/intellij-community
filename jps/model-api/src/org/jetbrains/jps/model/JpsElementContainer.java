@@ -17,6 +17,8 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * @author nik
  */
@@ -35,6 +37,9 @@ public interface JpsElementContainer {
   @NotNull
   <T extends JpsElement, P, K extends JpsElementChildRole<T> &JpsElementParameterizedCreator<T, P>>
   T setChild(@NotNull K role, @NotNull P param);
+
+  <T extends JpsElement, P, K extends JpsElementChildRole<T> &JpsElementParameterizedCreator<T, P>>
+  T getOrSetChild(@NotNull K role, @NotNull Supplier<P> param);
 
   <T extends JpsElement>
   T setChild(JpsElementChildRole<T> role, T child);

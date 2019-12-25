@@ -34,7 +34,7 @@ import java.io.File;
 public class AnnotationsExcludedJavaSourceRootProvider extends ExcludedJavaSourceRootProvider{
   @Override
   public boolean isExcludedFromCompilation(@NotNull JpsModule module, @NotNull JpsModuleSourceRoot root) {
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
     final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(module);
     if (!profile.isEnabled()) {
       return false;
