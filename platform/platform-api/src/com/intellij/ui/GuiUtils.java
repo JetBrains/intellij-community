@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -15,13 +14,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,12 +32,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
 
 public final class GuiUtils {
-  private static final Logger LOG = Logger.getInstance(GuiUtils.class);
-
-  private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
+  private static final Insets paddingInsideDialog = JBUI.insets(5);
 
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = ch -> ch != '&' && ch != UIUtil.MNEMONIC;
 
@@ -53,15 +48,17 @@ public final class GuiUtils {
 
   private static JPanel constructFieldWithBrowseButton(final JComponent aComponent, final ActionListener aActionListener, int delta) {
     JPanel result = new JPanel(new GridBagLayout());
-    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,0));
+    result.add(aComponent, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
     FixedSizeButton browseButton = new FixedSizeButton(aComponent.getPreferredSize().height - delta);//ignore border in case of browse button
     TextFieldWithBrowseButton.MyDoClickAction.addTo(browseButton, aComponent);
-    result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0));
+    result.add(browseButton, new GridBagConstraints(1, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+                                                    JBUI.emptyInsets(), 0, 0));
     browseButton.addActionListener(aActionListener);
 
     return result;
   }
 
+  @Deprecated
   public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
     return constructFieldWithBrowseButton(field, new ActionListener() {
       @Override
@@ -76,41 +73,11 @@ public final class GuiUtils {
     });
   }
 
-  public static JPanel constructFileURLBrowserField(final TextFieldWithHistory field, final String objectName) {
-    return constructFieldWithBrowseButton(field, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor =
-          FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
-        if (file != null) {
-          try {
-            field.setText(VfsUtilCore.virtualToIoFile(file).toURI().toURL().toString());
-          }
-          catch (MalformedURLException e1) {
-            field.setText("");
-          }
-        }
-      }
-    });
-  }
-
-  public static JComponent constructLabeledComponent(String aLabelText, JComponent aComponent, @JdkConstants.BoxLayoutAxis int aAxis) {
-    JPanel result = new JPanel();
-    BoxLayout boxLayout = new BoxLayout(result, aAxis);
-    result.setLayout(boxLayout);
-
-    result.add(new JLabel(aLabelText));
-    result.add(aComponent);
-
-    return result;
-  }
-
+  @Deprecated
   public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
     return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
   }
-
 
   private static JPanel wrapWithBorder(JComponent aPanel, Border aBorder) {
     JPanel wrapper = new JPanel(new BorderLayout());
@@ -119,30 +86,18 @@ public final class GuiUtils {
     return wrapper;
   }
 
-
+  @Deprecated
   public static BorderLayout createBorderLayout() {
     return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
+  @Deprecated
   public static GridLayout createGridLayout(int aRows, int aColumns) {
     return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
   }
 
   public static Component createVerticalStrut() {
     return Box.createRigidArea(new Dimension(0, paddingInsideDialog.top));
-  }
-
-  public static Component createHorisontalStrut() {
-    return Box.createRigidArea(new Dimension(paddingInsideDialog.left, 0));
-  }
-
-  private static JPanel makePaddedPanel(JComponent aComponent, Insets aInsets) {
-    return wrapWithBorder(aComponent, BorderFactory.createEmptyBorder(
-      aInsets.top,
-      aInsets.left,
-      aInsets.bottom,
-      aInsets.right
-    ));
   }
 
   private static JPanel makePaddedPanel(JComponent aComponent,
@@ -244,12 +199,6 @@ public final class GuiUtils {
     }
   }
 
-  public static void iterateChildren(Consumer<? super Component> consumer, Component... components) {
-    for (final Component component : components) {
-      iterateChildren(component, consumer);
-    }
-  }
-
   public static void enableChildren(final boolean enabled, Component... components) {
     for (final Component component : components) {
       enableChildren(component, enabled);
@@ -278,7 +227,6 @@ public final class GuiUtils {
     }
     else if (component instanceof JLabel) {
       Color color = UIUtil.getInactiveTextColor();
-      if (color == null) color = component.getForeground();
       @NonNls String changeColorString = "<font color=#" + colorToHex(color) +">";
       final JLabel label = (JLabel)component;
       @NonNls String text = label.getText();
