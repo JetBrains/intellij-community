@@ -221,7 +221,6 @@ public class StackFrameItem {
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
                                                                         XDebuggerFramesList.ItemWithSeparatorAbove {
-    private static final String ASYNC_STACKTRACE_MESSAGE = DebuggerBundle.message("frame.panel.async.stacktrace");
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
@@ -301,7 +300,7 @@ public class StackFrameItem {
 
     @Override
     public String getCaptionAboveOf() {
-      return ASYNC_STACKTRACE_MESSAGE;
+      return getASYNC_STACKTRACE_MESSAGE();
     }
 
     @Override
@@ -319,6 +318,10 @@ public class StackFrameItem {
         return mySourcePosition.getFile().getName() + ":" + (mySourcePosition.getLine() + 1);
       }
       return "<position unknown>";
+    }
+
+    private static String getASYNC_STACKTRACE_MESSAGE() {
+      return DebuggerBundle.message("frame.panel.async.stacktrace");
     }
   }
 }

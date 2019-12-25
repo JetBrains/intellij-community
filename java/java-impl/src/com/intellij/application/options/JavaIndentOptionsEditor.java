@@ -31,8 +31,6 @@ import static com.intellij.psi.codeStyle.CodeStyleConstraints.MIN_INDENT_SIZE;
  * @author yole
  */
 public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
-  private static final String LABEL_INDENT_LABEL = ApplicationBundle.message("editbox.indent.label.indent");
-
   private IntegerField myLabelIndent;
   private JLabel myLabelIndentLabel;
 
@@ -44,9 +42,9 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
   protected void addComponents() {
     super.addComponents();
 
-    myLabelIndent = new IntegerField(LABEL_INDENT_LABEL, MIN_INDENT_SIZE, MAX_INDENT_SIZE);
+    myLabelIndent = new IntegerField(getLABEL_INDENT_LABEL(), MIN_INDENT_SIZE, MAX_INDENT_SIZE);
     myLabelIndent.setColumns(4);
-    add(myLabelIndentLabel = new JLabel(LABEL_INDENT_LABEL), myLabelIndent);
+    add(myLabelIndentLabel = new JLabel(getLABEL_INDENT_LABEL()), myLabelIndent);
 
     myLabelIndentAbsolute = new JCheckBox(ApplicationBundle.message("checkbox.indent.absolute.label.indent"));
     add(myLabelIndentAbsolute, true);
@@ -98,5 +96,9 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndent.setEnabled(enabled);
     myLabelIndentLabel.setEnabled(enabled);
     myLabelIndentAbsolute.setEnabled(enabled);
+  }
+
+  private static String getLABEL_INDENT_LABEL() {
+    return ApplicationBundle.message("editbox.indent.label.indent");
   }
 }

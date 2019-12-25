@@ -44,7 +44,6 @@ class IntroduceFieldDialog extends DialogWrapper {
 
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
 
   IntroduceFieldDialog(Project project,
                               PsiClass parentClass,
@@ -68,7 +67,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     myTypeSelectorManager = typeSelectorManager;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     init();
 
     myCentralPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
@@ -271,5 +270,9 @@ class IntroduceFieldDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.field.title");
   }
 }

@@ -38,8 +38,9 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
   private static class Holder {
-    @NonNls private static final String NO_NAME_TEST = SMTestsRunnerBundle.message(
-      "sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
+    private static String getNO_NAME_TEST() {
+      return SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
+    }
   }
   @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
   @NonNls static final String DEFAULT_TESTS_CATEGORY = "Tests";
@@ -202,7 +203,7 @@ public class TestsPresentationUtil {
     final String name = testProxy.getName();
 
     if (name == null) {
-      return Holder.NO_NAME_TEST;
+      return Holder.getNO_NAME_TEST();
     }
 
     String presentationCandidate = name;
@@ -241,7 +242,7 @@ public class TestsPresentationUtil {
     presentationCandidate = presentationCandidate.replaceAll("\\s+", " ");
 
     if (StringUtil.isEmpty(presentationCandidate)) {
-      return Holder.NO_NAME_TEST;
+      return Holder.getNO_NAME_TEST();
     }
 
     return presentationCandidate;
@@ -254,7 +255,7 @@ public class TestsPresentationUtil {
       name = name.trim();
     }
     if (name == null || name.isEmpty()) {
-      name = Holder.NO_NAME_TEST;
+      name = Holder.getNO_NAME_TEST();
     }
     return name;
   }

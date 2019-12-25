@@ -37,7 +37,6 @@ class PyExtractSuperclassViewSwingImpl
   extends MembersBasedViewSwingImpl<PyExtractSuperclassPresenter, PyExtractSuperclassInitializationInfo>
   implements PyExtractSuperclassView {
 
-  private static final String FILE_OR_DIRECTORY = RefactoringBundle.message("extract.superclass.elements.header");
   @NotNull
   private final JTextArea myExtractedSuperNameField = new JTextArea();
   @NotNull
@@ -80,11 +79,11 @@ class PyExtractSuperclassViewSwingImpl
     myFileChooserDescriptor.withTreeRootVisible(true);
     myTargetDirField = new TextFieldWithBrowseButton();
     myTargetDirField
-      .addBrowseFolderListener(FILE_OR_DIRECTORY, null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+      .addBrowseFolderListener(getFILE_OR_DIRECTORY(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     panel = new JPanel(new BorderLayout());
     final JLabel dirLabel = new JLabel();
-    dirLabel.setText(FILE_OR_DIRECTORY); //u18n
+    dirLabel.setText(getFILE_OR_DIRECTORY()); //u18n
 
     panel.add(dirLabel, BorderLayout.NORTH);
     panel.add(myTargetDirField, BorderLayout.CENTER);
@@ -126,5 +125,9 @@ class PyExtractSuperclassViewSwingImpl
   @Override
   protected String getHelpId() {
     return "refactoring.extract.superclass.dialog";
+  }
+
+  private static String getFILE_OR_DIRECTORY() {
+    return RefactoringBundle.message("extract.superclass.elements.header");
   }
 }

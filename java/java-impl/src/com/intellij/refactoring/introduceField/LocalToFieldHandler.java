@@ -55,7 +55,6 @@ import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandl
 public abstract class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance(LocalToFieldHandler.class);
 
-  private static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
   private final Project myProject;
   private final boolean myIsConstant;
 
@@ -75,8 +74,8 @@ public abstract class LocalToFieldHandler {
         classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
-        String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.LOCAL_TO_FIELD);
+        String message = RefactoringBundle.message("error.not.supported.for.jsp", getREFACTORING_NAME());
+        CommonRefactoringUtil.showErrorHint(myProject, editor, message, getREFACTORING_NAME(), HelpID.LOCAL_TO_FIELD);
         return false;
       }
       if (parent instanceof PsiModifierListOwner &&((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
@@ -132,7 +131,8 @@ public abstract class LocalToFieldHandler {
     final boolean rebindNeeded1 = rebindNeeded;
     final Runnable runnable =
       new IntroduceFieldRunnable(rebindNeeded1, local, aaClass, settings, isStatic, occurences);
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable), REFACTORING_NAME, null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(runnable),
+                                                  getREFACTORING_NAME(), null);
     return false;
   }
 
@@ -398,5 +398,9 @@ public abstract class LocalToFieldHandler {
       }
       parent.addBefore(comment, element);
     }
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("convert.local.to.field.title");
   }
 }

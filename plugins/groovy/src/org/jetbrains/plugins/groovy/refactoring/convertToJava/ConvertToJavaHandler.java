@@ -21,8 +21,6 @@ import java.util.Set;
  * @author Maxim.Medvedev
  */
 public class ConvertToJavaHandler implements RefactoringActionHandler {
-  private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("convert.to.java.refactoring.name");
-
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     invokeInner(project, new PsiElement[]{file}, editor);
@@ -50,12 +48,17 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
       }
       else {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"), REFACTORING_NAME, null);
+          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"),
+                                              getREFACTORING_NAME(), null);
           return;
         }
       }
     }
 
     new ConvertToJavaProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
+  }
+
+  private static String getREFACTORING_NAME() {
+    return GroovyRefactoringBundle.message("convert.to.java.refactoring.name");
   }
 }

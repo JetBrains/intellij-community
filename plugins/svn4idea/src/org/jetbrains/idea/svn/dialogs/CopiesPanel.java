@@ -531,10 +531,9 @@ public class CopiesPanel {
 
     private static final String FIX_ACTION = "FIX";
     private static final String TITLE = "";
-    private static final String DESCRIPTION = SvnBundle.message("subversion.roots.detection.errors.found.description");
 
     private ErrorsFoundNotification(@NotNull final Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, DESCRIPTION, NotificationType.ERROR, createListener(project));
+      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, getDESCRIPTION(), NotificationType.ERROR, createListener(project));
     }
 
     private static NotificationListener.Adapter createListener(@NotNull final Project project) {
@@ -546,6 +545,10 @@ public class CopiesPanel {
           }
         }
       };
+    }
+
+    private static String getDESCRIPTION() {
+      return SvnBundle.message("subversion.roots.detection.errors.found.description");
     }
   }
 }

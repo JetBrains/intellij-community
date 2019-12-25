@@ -30,9 +30,6 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyMarkedCallee>> {
 
-  @NotNull
-  private static final String NO_PARAMS_MSG = CodeInsightBundle.message("parameter.info.no.parameters");
-
   @Override
   public boolean couldShowInLookup() {
     return true;
@@ -180,7 +177,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       EnumSet[] flags = new EnumSet[hintFlags.size()];
       for (int i = 0; i < flags.length; i++) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
-        hints = new String[]{NO_PARAMS_MSG};
+        hints = new String[]{getNO_PARAMS_MSG()};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 
@@ -193,7 +190,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         for (String s : hints) signatureBuilder.append(s);
       }
       else {
-        signatureBuilder.append(XmlStringUtil.escapeString(NO_PARAMS_MSG));
+        signatureBuilder.append(XmlStringUtil.escapeString(getNO_PARAMS_MSG()));
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()
@@ -389,5 +386,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       }
     );
     return hintsList;
+  }
+
+  private static String getNO_PARAMS_MSG() {
+    return CodeInsightBundle.message("parameter.info.no.parameters");
   }
 }

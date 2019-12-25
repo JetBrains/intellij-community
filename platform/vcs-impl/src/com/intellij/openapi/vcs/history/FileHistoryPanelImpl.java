@@ -73,7 +73,6 @@ import static java.util.Comparator.reverseOrder;
  * author: lesya
  */
 public class FileHistoryPanelImpl extends JPanel implements DataProvider, Disposable, EditorColorsListener, CopyProvider {
-  private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
   private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
 
@@ -793,7 +792,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     private final IssueLinkRenderer myIssueLinkRenderer;
 
     public MessageColumnInfo(Project project) {
-      super(COMMIT_MESSAGE_TITLE);
+      super(getCOMMIT_MESSAGE_TITLE());
       myRenderer = new BaseHistoryCellRenderer() {
         @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -985,5 +984,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_DETAILS = state;
       setupDetails();
     }
+  }
+
+  private static String getCOMMIT_MESSAGE_TITLE() {
+    return VcsBundle.message("label.selected.revision.commit.message");
   }
 }

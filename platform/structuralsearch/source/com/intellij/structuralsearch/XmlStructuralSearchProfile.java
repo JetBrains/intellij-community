@@ -243,19 +243,21 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static class XmlPredefinedConfigurations {
-    private static final String HTML_XML = SSRBundle.message("xml_html.category");
-
     static Configuration[] createPredefinedTemplates() {
       return new Configuration[]{
-        createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
-        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( <ul> or <ol> )]<li />", HTML_XML, StdFileTypes.HTML)
+        createSearchTemplateInfo("xml tag", "<'a/>", getHTML_XML(), StdFileTypes.XML),
+        createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", getHTML_XML(), StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", getHTML_XML(), StdFileTypes.HTML),
+        createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", getHTML_XML(), StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", getHTML_XML(), StdFileTypes.HTML),
+        createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", getHTML_XML(), StdFileTypes.HTML),
+        createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", getHTML_XML(), StdFileTypes.HTML),
+        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( <ul> or <ol> )]<li />", getHTML_XML(), StdFileTypes.HTML)
       };
+    }
+
+    private static String getHTML_XML() {
+      return SSRBundle.message("xml_html.category");
     }
   }
 }

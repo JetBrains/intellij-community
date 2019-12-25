@@ -21,14 +21,13 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
 
   private JList myEnclosingMethodsList;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox(RefactoringBundle.message("use.interface.superclass.in.instanceof"));
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
 
   EnclosingMethodSelectionDialog(Project project, List<PsiMethod> enclosingMethods) {
     super(project, true);
 
     myEnclosingMethods = enclosingMethods;
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     init();
   }
 
@@ -100,4 +99,7 @@ public class EnclosingMethodSelectionDialog extends DialogWrapper {
     return null;
   }
 
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.parameter.title");
+  }
 }

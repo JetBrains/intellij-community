@@ -43,7 +43,6 @@ import java.util.ArrayList;
  */
 public class MigrationProcessor extends BaseRefactoringProcessor {
   private final MigrationMap myMigrationMap;
-  private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
   private PsiMigration myPsiMigration;
   private final GlobalSearchScope mySearchScope;
   private ArrayList<SmartPsiElementPointer<PsiElement>> myRefsToShorten;
@@ -129,7 +128,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), REFACTORING_NAME);
+      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), getREFACTORING_NAME());
       return false;
     }
     setPreviewUsages(true);
@@ -181,7 +180,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   @NotNull
   protected String getCommandName() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   static class MigrationUsageInfo extends UsageInfo {
@@ -191,5 +190,9 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
       super(info.getElement(), info.getRangeInElement().getStartOffset(), info.getRangeInElement().getEndOffset());
       this.mapEntry = mapEntry;
     }
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("migration.title");
   }
 }

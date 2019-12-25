@@ -45,8 +45,6 @@ import java.util.List;
 public class JavadocEditor extends ModuleElementsEditor {
   private JTable myTable;
 
-  private static final String NAME = ProjectBundle.message("module.javadoc.title");
-
   public JavadocEditor(ModuleConfigurationState state) {
     super(state);
   }
@@ -58,7 +56,7 @@ public class JavadocEditor extends ModuleElementsEditor {
 
   @Override
   public String getDisplayName() {
-    return NAME;
+    return getNAME();
   }
 
   @Override
@@ -208,5 +206,9 @@ public class JavadocEditor extends ModuleElementsEditor {
     public void addTableItem(TableItem item) {
       addRow(new Object[]{item});
     }
+  }
+
+  private static String getNAME() {
+    return ProjectBundle.message("module.javadoc.title");
   }
 }

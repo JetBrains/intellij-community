@@ -41,7 +41,6 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   private JCheckBox myCbVarType;
   private TypeSelector myTypeSelector;
   private NameSuggestionsManager myNameSuggestionsManager;
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
   private ItemListener myReplaceAllListener;
   private ItemListener myFinalListener;
@@ -60,7 +59,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myValidator = validator;
     myFile = expression.getContainingFile();
 
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     init();
   }
 
@@ -305,5 +304,9 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   @Override
   protected String getHelpId() {
     return HelpID.INTRODUCE_VARIABLE;
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.variable.title");
   }
 }

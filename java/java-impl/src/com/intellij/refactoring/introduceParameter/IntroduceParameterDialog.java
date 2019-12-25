@@ -47,7 +47,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private final NameSuggestionsGenerator myNameSuggestionsGenerator;
   private final TypeSelectorManager myTypeSelectorManager;
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.parameter.title");
   private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
   private final IntroduceParameterSettingsPanel myPanel;
@@ -83,7 +82,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myMethodToSearchFor = methodToSearchFor;
     myNameSuggestionsGenerator = generator;
     myTypeSelectorManager = typeSelectorManager;
-    setTitle(REFACTORING_NAME);
+    setTitle(getREFACTORING_NAME());
     init();
     myPanel.updateTypeSelector();
   }
@@ -323,5 +322,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     public void setGenerateDelegate(boolean delegate) {
       myCbGenerateDelegate.setSelected(delegate);
     }
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("introduce.parameter.title");
   }
 }

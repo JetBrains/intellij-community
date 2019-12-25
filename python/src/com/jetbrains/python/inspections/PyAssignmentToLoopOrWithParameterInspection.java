@@ -30,9 +30,6 @@ import java.util.List;
  * @author link
  */
 public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
-
-  private static final String NAME = PyBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.name");
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,

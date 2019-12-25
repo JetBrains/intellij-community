@@ -50,8 +50,6 @@ import java.util.ArrayList;
 public class TempWithQueryHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(TempWithQueryHandler.class);
 
-  private static final String REFACTORING_NAME = RefactoringBundle.message("replace.temp.with.query.title");
-
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil
@@ -62,7 +60,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!(element instanceof PsiLocalVariable)) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -76,7 +74,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     final PsiExpression initializer = local.getInitializer();
     if (initializer == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.has.no.initializer", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -85,7 +83,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
 
     if (refs.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.never.used", localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -102,30 +100,30 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
         PsiReference[] refsForWriting = array.toArray(PsiReference.EMPTY_ARRAY);
         highlightManager.addOccurrenceHighlights(editor, refsForWriting, attributes, true, null);
         String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
         WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return;
       }
     }
 
     final ExtractMethodProcessor processor = new ExtractMethodProcessor(
-            project, editor,
-            new PsiElement[]{initializer}, local.getType(),
-            REFACTORING_NAME, localName, HelpID.REPLACE_TEMP_WITH_QUERY
+      project, editor,
+      new PsiElement[]{initializer}, local.getType(),
+      getREFACTORING_NAME(), localName, HelpID.REPLACE_TEMP_WITH_QUERY
     );
 
     try {
       if (!processor.prepare()) return;
     }
     catch (PrepareFailedException e) {
-      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+      CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
       ExtractMethodHandler.highlightPrepareError(e, file, editor, project);
       return;
     }
     final PsiClass targetClass = processor.getTargetClass();
     if (targetClass != null && targetClass.isInterface()) {
       String message = RefactoringBundle.message("cannot.replace.temp.with.query.in.interface");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.REPLACE_TEMP_WITH_QUERY);
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getREFACTORING_NAME(), HelpID.REPLACE_TEMP_WITH_QUERY);
       return;
     }
 
@@ -160,7 +158,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
             DuplicatesImpl.processDuplicates(processor, project, editor);
           });
         },
-        REFACTORING_NAME,
+        getREFACTORING_NAME(),
         null
       );
     }
@@ -180,5 +178,9 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
         }
       }
     }
+  }
+
+  private static String getREFACTORING_NAME() {
+    return RefactoringBundle.message("replace.temp.with.query.title");
   }
 }

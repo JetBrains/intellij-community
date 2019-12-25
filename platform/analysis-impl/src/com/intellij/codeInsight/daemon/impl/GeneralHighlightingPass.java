@@ -54,7 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
-  private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
   private static final Random RESTART_DAEMON_RANDOM = new Random();
@@ -78,7 +77,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @NotNull ProperTextRange priorityRange,
                                  @Nullable Editor editor,
                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
-    super(project, document, PRESENTABLE_NAME, file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
+    super(project, document, getPRESENTABLE_NAME(), file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
 
@@ -598,5 +597,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   public String toString() {
     return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
+  }
+
+  private static String getPRESENTABLE_NAME() {
+    return DaemonBundle.message("pass.syntax");
   }
 }
