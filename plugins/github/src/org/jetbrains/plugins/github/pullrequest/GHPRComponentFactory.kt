@@ -73,12 +73,14 @@ internal class GHPRComponentFactory(private val project: Project) {
   fun createComponent(remoteUrl: GitRemoteUrlCoordinates, account: GithubAccount, requestExecutor: GithubApiRequestExecutor,
                       parentDisposable: Disposable): JComponent {
 
+    val contextDisposable = Disposer.newDisposable()
     val contextValue = object : LazyCancellableBackgroundProcessValue<GHPullRequestsDataContext>(progressManager) {
       override fun compute(indicator: ProgressIndicator) =
         dataContextRepository.getContext(indicator, account, requestExecutor, remoteUrl).also {
-          Disposer.register(parentDisposable, it)
+          Disposer.register(contextDisposable, it)
         }
     }
+    Disposer.register(parentDisposable, contextDisposable)
     Disposer.register(parentDisposable, Disposable { contextValue.drop() })
 
     val uiDisposable = Disposer.newDisposable()
