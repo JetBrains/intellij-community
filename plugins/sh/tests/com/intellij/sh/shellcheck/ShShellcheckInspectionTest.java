@@ -9,7 +9,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
+import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
     configFile();
     ShShellcheckInspection inspectionBefore = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());
     assertEmpty(inspectionBefore.getDisabledInspections());
-    applyIntentions(DisableInspectionIntention.class);
+    applyIntentions(ShDisableInspectionIntention.class);
     checkResult();
 
     ShShellcheckInspection inspectionAfter = ShShellcheckInspection.findShShellcheckInspection(myFixture.getFile());

@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.sh.settings.ShSettings;
-import com.intellij.sh.shellcheck.intention.DisableInspectionIntention;
+import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -135,7 +135,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       }
       String quotedMessage = quote(formattedMessage);
       annotation.registerFix(new SuppressInspectionIntention(quotedMessage, scCode, startOffset));
-      annotation.registerFix(new DisableInspectionIntention(quotedMessage, scCode));
+      annotation.registerFix(new ShDisableInspectionIntention(quotedMessage, scCode));
     }
   }
 

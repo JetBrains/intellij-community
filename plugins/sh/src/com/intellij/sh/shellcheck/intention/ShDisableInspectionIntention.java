@@ -19,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class DisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
+public class ShDisableInspectionIntention implements IntentionAction, LowPriorityAction, Iconable {
   @NonNls private static final String FEATURE_ACTION_ID = "DisableInspectionUsed";
   private final String myInspectionCode;
   private final String myMessage;
 
-  public DisableInspectionIntention(String message, String inspectionCode) {
+  public ShDisableInspectionIntention(String message, String inspectionCode) {
     myInspectionCode = inspectionCode;
     myMessage = message;
   }

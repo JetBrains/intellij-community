@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
-public class CodeStyleShPanel extends CodeStyleAbstractPanel {
+public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String BROWSE_FORMATTER_TITLE = "Choose Path to the Shfmt Formatter:";
   private static final String LINK_TITLE = "Download shfmt formatter";
 
@@ -58,7 +58,7 @@ public class CodeStyleShPanel extends CodeStyleAbstractPanel {
   private ActionLink myShfmtDownloadLink;
   private TextFieldWithBrowseButton myShfmtPathSelector;
 
-  CodeStyleShPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  ShCodeStylePanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(ShLanguage.INSTANCE, currentSettings, settings);
     installPreviewPanel(myRightPanel);
 
