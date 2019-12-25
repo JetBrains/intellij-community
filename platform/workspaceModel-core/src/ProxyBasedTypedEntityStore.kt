@@ -213,6 +213,7 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
     if (handleReferrers) {
       addReferences(entityData)
     }
+    // TODO Handle the case then dependency added before lib creation
     addPersistentIdReferrers(entityData)
   }
 
@@ -335,7 +336,6 @@ internal class TypedEntityStorageBuilderImpl(override val entitiesByType: Mutabl
       // Referrers are updated in proxy method invocation
       replaceEntity(refOldData.id, refNewData, newInstance, oldIdHash, handleReferrers = false)
       updateChangeLog { it.add(ChangeEntry.ReplaceEntity(refOldData.id, refNewData)) }
-
     }
   }
 

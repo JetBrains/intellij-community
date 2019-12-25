@@ -98,15 +98,15 @@ internal class EntityMetaData(val unmodifiableEntityType: Class<out TypedEntity>
         }
         is EntityPropertyKind.PersistentId -> if (value == oldEntity) newEntity else value
         is EntityPropertyKind.SealedKotlinDataClassHierarchy -> kind.subclassesProperties.entries
-            .filter { subclassProperties -> subclassProperties.key.isInstance(value) }
-            .map { subclassProperties -> subclassProperties.value.replaceAll(value, oldEntity, newEntity) }
-            .first()
+          .filter { subclassProperties -> subclassProperties.key.isInstance(value) }
+          .map { subclassProperties -> subclassProperties.value.replaceAll(value, oldEntity, newEntity) }
+          .first()
         is EntityPropertyKind.Class -> kind.replaceAll(value, oldEntity, newEntity)
         else -> value
       }
 
       // If object changed we should replace it in original map
-      if (value != newValue) newValuesMap[name] = newEntity
+      if (value != newValue) newValuesMap[name] = newValue
     }
 
     newValuesMap.forEach { (propertyName, propertyValue) -> values.replace(propertyName, propertyValue) }
@@ -220,7 +220,8 @@ internal sealed class EntityPropertyKind {
         }
       }
 
-      return originToCloned[instance]
+      // For root instance there should be only one record in list (List only for the case there temporary root is collection)
+      return originToCloned[instance]?.first() ?: instance
     }
 
     private fun Any.copyWithPropertyReplace(propertyName : String, propertyValue: Any): Any {
