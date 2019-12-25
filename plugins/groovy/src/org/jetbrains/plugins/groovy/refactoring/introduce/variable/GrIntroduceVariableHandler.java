@@ -47,7 +47,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
   public static final String DUMMY_NAME = "________________xxx_________________";
-  protected static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private RangeMarker myPosition = null;
 
   @NotNull
@@ -60,11 +59,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
     if (scope == null) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME()));
     }
     if (!GroovyRefactoringUtil.isAppropriateContainerForIntroduceVariable(scope)) {
       throw new GrRefactoringError(
-        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME));
+        GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getREFACTORING_NAME()));
     }
     return new GrControlFlowOwner[]{scope};
   }
@@ -246,7 +245,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @NotNull
   @Override
   protected String getRefactoringName() {
-    return REFACTORING_NAME;
+    return getREFACTORING_NAME();
   }
 
   @NotNull
@@ -260,5 +259,9 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   protected GroovyIntroduceVariableDialog getDialog(@NotNull GrIntroduceContext context) {
     final GroovyVariableValidator validator = new GroovyVariableValidator(context);
     return new GroovyIntroduceVariableDialog(context, validator);
+  }
+
+  protected static String getREFACTORING_NAME() {
+    return GroovyRefactoringBundle.message("introduce.variable.title");
   }
 }

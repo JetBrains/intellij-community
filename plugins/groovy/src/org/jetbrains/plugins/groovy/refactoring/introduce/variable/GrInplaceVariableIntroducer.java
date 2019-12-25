@@ -71,7 +71,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Override
   protected String getActionName() {
-    return GrIntroduceVariableHandler.REFACTORING_NAME;
+    return GrIntroduceVariableHandler.getREFACTORING_NAME();
   }
 
   @NotNull

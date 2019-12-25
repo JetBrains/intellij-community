@@ -71,7 +71,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
       super.readExternal(parentNode);
     }
     catch (InvalidDataException e) {
-      if(!READ_NO_CLASS_NAME.equals(e.getMessage())) throw e;
+      if(!getREAD_NO_CLASS_NAME().equals(e.getMessage())) throw e;
     }
   }
 
