@@ -3,7 +3,6 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.actions.TargetActionStub;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.Keymap;
@@ -27,15 +26,14 @@ public class AntShortcutStartupActivity implements StartupActivity {
       }
     }
 
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-        final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
-        for (String oldId : oldIds) {
-          actionManager.unregisterAction(oldId);
-        }
-      }
-    });
+    Disposer.register(project, () -> unregisterAction(project));
+  }
+
+  private static void unregisterAction(@NotNull Project project) {
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
+    for (String oldId : oldIds) {
+      actionManager.unregisterAction(oldId);
+    }
   }
 }
