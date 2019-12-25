@@ -218,7 +218,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    super.doCancelAction();
+    close(CANCEL_EXIT_CODE);
 
     if (myPluginModel.toBackground()) {
       return;
