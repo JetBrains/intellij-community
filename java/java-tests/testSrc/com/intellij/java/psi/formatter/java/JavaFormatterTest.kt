@@ -3877,4 +3877,100 @@ public enum LevelCode {
       """.trimIndent()
     )
   }
+
+  fun testRecordHeaderLparenOnNewLine() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = true
+    }
+    doTextTest("""
+      record A(String s
+        ) {}
+    """.trimIndent(), """
+      record A(
+              String s
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderLparenNotOnNewLine() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+    }
+    settings.KEEP_LINE_BREAKS = false
+    doTextTest("""
+      record A(String s
+        ) {}
+    """.trimIndent(), """
+      record A(String s) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderRparenOnNewLine() {
+    javaSettings.apply {
+      RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = true
+    }
+    doTextTest("""
+      record A(String s,
+            String a) {}
+    """.trimIndent(), """
+      record A(String s,
+               String a
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderRparenNotOnNewLine() {
+    javaSettings.apply {
+      RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = false
+    }
+    settings.KEEP_LINE_BREAKS = false
+    doTextTest("""
+      record A(
+            String s,
+            String a
+      ) {
+      }
+    """.trimIndent(), """
+        record A(String s,
+                 String a) {
+        }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderMultilineAlign() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+      ALIGN_MULTILINE_RECORDS = true
+    }
+    doTextTest("""
+      record A(String s,
+        String a
+      ) {}
+    """.trimIndent(), """
+      record A(String s,
+               String a
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderNotMultilineAlign() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+      ALIGN_MULTILINE_RECORDS = false
+    }
+    doTextTest("""
+      record A(String s,
+        String a
+      ) {}
+    """.trimIndent(), """
+      record A(String s,
+              String a
+      ) {
+      }
+    """.trimIndent())
+  }
 }

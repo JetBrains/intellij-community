@@ -1220,6 +1220,18 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    if (myType1 != JavaTokenType.LPARENTH || myType2 != JavaTokenType.RPARENTH) {
+      if (myType2 == JavaTokenType.RPARENTH) {
+        createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_RECORD_HEADER, false);
+      }
+      else if (myType1 == JavaTokenType.LPARENTH) {
+        createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, false);
+      }
+    }
+  }
+
   private void createParenthSpace(boolean onNewLine, boolean space) {
     createParenthSpace(onNewLine, space, myParent.getTextRange());
   }

@@ -550,6 +550,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrapToUse);
         child = processParenthesisBlock(result, child, wrapStrategy, mySettings.ALIGN_MULTILINE_PARAMETERS);
       }
+      else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RECORD_HEADER) {
+        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.RECORD_COMPONENTS_WRAP), false);
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
+        child = processParenthesisBlock(result, child, wrapStrategy, myJavaSettings.ALIGN_MULTILINE_RECORDS);
+      }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
         Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
         child = processParenthesisBlock(result, child,
