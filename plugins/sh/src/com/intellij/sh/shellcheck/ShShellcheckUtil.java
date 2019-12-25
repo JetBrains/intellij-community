@@ -175,7 +175,7 @@ class ShShellcheckUtil {
     return null;
   }
 
-  static final Map<String, String> shellCheckCodes = new TreeMap<String, String>(){{
+  public static final Map<String, String> SHELLCHECK_CODES = new TreeMap<String, String>(){{
     put("SC1000", "$ is not used specially and should therefore be escaped.");
     put("SC1001", "This \\o will be a regular 'o' in this context.");
     put("SC1003", "Want to escape a single quote? echo 'This is how it'\\''s done'.");
