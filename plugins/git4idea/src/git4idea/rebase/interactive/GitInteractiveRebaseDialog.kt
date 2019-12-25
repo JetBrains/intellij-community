@@ -92,7 +92,7 @@ internal class GitInteractiveRebaseDialog(
       isOKActionEnabled = true
     }
   }
-  private val modalityState = ModalityState.stateForComponent(window)
+  private val modalityState = window?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
     @CalledInBackground
     @Throws(VcsException::class)
