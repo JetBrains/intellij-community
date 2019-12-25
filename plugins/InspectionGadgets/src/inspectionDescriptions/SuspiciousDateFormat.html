@@ -1,0 +1,22 @@
+<html>
+<body>
+Reports likely suspicious date format patterns. Usages of the following patters are reported:
+<ul>
+  <li>Upper-cased "Y", unless "w" appears nearby because it's a "Week year" that almost always 
+    the same as normal "Year" (lower-cased "y" pattern), but may point to the next year
+    at the end of December.</li>
+  <li>Upper-cased "M" (month) close to "H", "K", "h", or "k" (hour). It's likely that lower-cased "m" (minute) was intended</li>
+  <li>Lower-cased "m" (minute) close to "y" (year) or "d" (day in month). It's likely that upper-cased "M" (month) was intended</li>
+  <li>Upper-cased "D" (day in year) close to "M", or "L" (month). It's likely that lower-cased "d" (day in month) was intended</li>
+  <li>Upper-cased "S" (milliseconds) close to "m" (minutes). It's likely that lower-cased "s" (seconds) was intended</li>
+</ul>
+<p>
+  Examples:<br>
+  <code>new SimpleDateFormat("YYYY-MM-dd")</code>: likely <code>"yyyy-MM-dd"</code> was intended.<br>
+  <code>new SimpleDateFormat("yyyy-MM-DD")</code>: likely <code>"yyyy-MM-dd"</code> was intended.<br>
+  <code>new SimpleDateFormat("HH:MM")</code>: likely <code>"HH:mm"</code> was intended.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2020.1</small></p>
+</body>
+</html>
