@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
@@ -9,7 +10,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrd
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -194,9 +194,33 @@ fun PsiClassType.erasure(): PsiClassType {
   }
 }
 
+private fun getContainingClassesMutable(element: PsiClass?): MutableList<PsiClass> {
+  element ?: return mutableListOf()
+  val enclosingClass = element.containingClass ?: return mutableListOf(element)
+  return getContainingClassesMutable(enclosingClass).apply { add(element) }
+}
+
+private fun buildVirtualEnvironmentForMethod(method: GrMethod): Pair<String, Int> {
+  val text = method.containingFile.text
+  val enclosingClasses = getContainingClassesMutable(method.containingClass)
+  val list = mutableListOf<TextRange>()
+  for (i in enclosingClasses.indices) {
+    val enclosingClass = enclosingClasses[i]
+    val range = enclosingClass.textRange
+    val lBraceOffset = enclosingClass.lBrace?.textOffset
+    val trueLBraceOffset = lBraceOffset ?: range.startOffset
+    list.add(TextRange(range.startOffset, trueLBraceOffset))
+  }
+  val header = list.joinToString("") { it.substring(text) + " { " }
+  val footer = (0 until (enclosingClasses.size)).joinToString("") { " } " }
+  return header + method.text + footer to (header.length + 1)
+}
+
 fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterList? = null): GrMethod? {
-  val virtualFile = method.containingFile.copy() as? GroovyFile ?: return null
-  val newMethod = virtualFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>() ?: return null
+  val (env, offset) = buildVirtualEnvironmentForMethod(method)
+  val factory = GroovyPsiElementFactory.getInstance(method.project)
+  val newFile = factory.createGroovyFile(env, false, method)
+  val newMethod = newFile.findElementAt(offset)?.parentOfType<GrMethod>() ?: return null
   if (newMethod.hasTypeParameters()) {
     if (typeParameterList != null) {
       newMethod.typeParameterList!!.replace(typeParameterList)
@@ -207,7 +231,7 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
       newMethod.addAfter(typeParameterList, newMethod.firstChild)
     }
     else {
-      newMethod.addAfter(GroovyPsiElementFactory.getInstance(virtualFile.project).createTypeParameterList(), newMethod.firstChild)
+      newMethod.addAfter(factory.createTypeParameterList(), newMethod.firstChild)
     }
   }
   return newMethod
@@ -281,8 +305,7 @@ fun compress(types: List<PsiType>?): PsiType? {
 }
 
 fun allOuterTypeParameters(method: PsiMethod): List<PsiTypeParameter> =
-  method.typeParameters.asList() + (method.containingClass?.run { listOf(this) + supers }?.flatMap { it.typeParameters.asList() }
-                                    ?: emptyList())
+  method.typeParameters.asList() + (getContainingClassesMutable(method.containingClass).flatMap { it.typeParameters.asList() })
 
 fun createVirtualToActualSubstitutor(virtualMethod: GrMethod, originalMethod: GrMethod): PsiSubstitutor {
   val virtualTypeParameters = allOuterTypeParameters(virtualMethod)
