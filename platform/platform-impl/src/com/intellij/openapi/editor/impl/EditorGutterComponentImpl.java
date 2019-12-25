@@ -301,7 +301,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void paintComponent(Graphics g_) {
     Rectangle clip = g_.getClipBounds();
-    if (clip.height < 0) return;
 
     Graphics2D g = (Graphics2D)getComponentGraphics(g_);
     AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
@@ -324,7 +323,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Segment focusModeRange = myEditor.getFocusModeRange();
     if (focusModeRange == null) {
       startVisualLine = myEditor.yToVisualLine(clip.y);
-      endVisualLine = myEditor.yToVisualLine(clip.y + clip.height);
+      endVisualLine = myEditor.yToVisualLine(clip.y + clip.height - 1);
 
       firstVisibleOffset = myEditor.visualLineStartOffset(startVisualLine);
       lastVisibleOffset = myEditor.visualLineStartOffset(endVisualLine + 1);
