@@ -11,9 +11,10 @@ import com.intellij.openapi.externalSystem.model.*
 import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
+import libraries.coroutines.extra.*
 import runtime.reactive.*
 
-class CircletAutomationListener(val project: Project): LifetimedComponent by SimpleLifetimedComponent() {
+class CircletAutomationListener(val lifetime : Lifetime, val project: Project) {
 
     fun listen(viewModel: ScriptWindowViewModel) {
         val application = ApplicationManager.getApplication()
@@ -33,10 +34,10 @@ class CircletAutomationListener(val project: Project): LifetimedComponent by Sim
                 val result = Ref<BuildProgressListener>()
                 ApplicationManager.getApplication().invokeAndWait { result.set(ServiceManager.getService(project, SyncDslViewManager::class.java)) }
                 val view = result.get()
-                view.onEvent(StartBuildEventImpl(descriptor, "Sync DSL ${project.name}"))
+                view.onEvent(this, StartBuildEventImpl(descriptor, "Sync DSL ${project.name}"))
                 viewModel.modelBuildIsRunning.forEach(lt) {buildIsRunning ->
                     if (!buildIsRunning) {
-                        view.onEvent(FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", SuccessResultImpl(false)))
+                        view.onEvent(this, FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", SuccessResultImpl(false)))
                         //view.onEvent(FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", FailureResultImpl(emptyList())))
                     }
                 }
@@ -45,7 +46,7 @@ class CircletAutomationListener(val project: Project): LifetimedComponent by Sim
                     //todo reimplement work with getting new message
                     val message = data.messages[it.index]
                     val detailedMessage = if (message.length > 50) message else null
-                    view.onEvent(MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
+                    view.onEvent(this, MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
                 }
             }
         }

@@ -12,10 +12,10 @@ import libraries.klogging.*
 @Service
 class CircletModelStore(val project: Project): LifetimedComponent by SimpleLifetimedComponent(), KLogging() {
     val viewModel = ScriptWindowViewModel(lifetime, project)
+
     init {
-        val listener = CircletAutomationListener(project)
+        val listener = CircletAutomationListener(lifetime, project)
         listener.listen(viewModel)
-        lifetime.add { listener.disposeComponent() }
 
         fun refreshScript() {
             ApplicationManager.getApplication().runReadAction {
