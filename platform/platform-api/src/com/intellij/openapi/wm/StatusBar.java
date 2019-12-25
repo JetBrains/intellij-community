@@ -8,6 +8,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   void updateWidget(@NotNull String id);
 
   @Nullable
-  StatusBarWidget getWidget(String id);
+  StatusBarWidget getWidget(@NonNls String id);
 
   void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 

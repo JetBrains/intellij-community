@@ -116,7 +116,7 @@ public abstract class Logger {
    * Log a message with 'trace' level which finer-grained than 'debug' level. Use this method instead of {@link #debug(String)} for internal
    * events of a subsystem to avoid overwhelming the log if 'debug' level is enabled.
    */
-  public void trace(String message) {
+  public void trace(@NonNls String message) {
     debug(message);
   }
 
@@ -151,11 +151,11 @@ public abstract class Logger {
 
   static final Function<Attachment, String> ATTACHMENT_TO_STRING = attachment -> attachment.getPath() + "\n" + attachment.getDisplayText();
 
-  public void error(String message, @NotNull Attachment... attachments) {
+  public void error(@NonNls String message, @NotNull Attachment... attachments) {
     error(message, null, attachments);
   }
 
-  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
     error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
   }
 
@@ -171,7 +171,7 @@ public abstract class Logger {
     error(t.getMessage(), t, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  public abstract void error(String message, @Nullable Throwable t, @NotNull String... details);
+  public abstract void error(@NonNls String message, @Nullable Throwable t, @NotNull String... details);
 
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value, @Nullable Object message) {

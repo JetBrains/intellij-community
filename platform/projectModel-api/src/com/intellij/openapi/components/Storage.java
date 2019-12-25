@@ -3,6 +3,7 @@ package com.intellij.openapi.components;
 
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -29,6 +30,7 @@ public @interface Storage {
    *
    * @see StoragePathMacros
    */
+  @NonNls
   String value() default "";
 
   /**

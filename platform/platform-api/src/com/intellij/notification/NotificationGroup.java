@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,17 +32,17 @@ public final class NotificationGroup {
     this(displayId, defaultDisplayType, logByDefault, null);
   }
 
-  public NotificationGroup(@NotNull String displayId,
+  public NotificationGroup(@NonNls @NotNull String displayId,
                            @NotNull NotificationDisplayType defaultDisplayType,
                            boolean logByDefault,
-                           @Nullable String toolWindowId) {
+                           @NonNls @Nullable String toolWindowId) {
     this(displayId, defaultDisplayType, logByDefault, toolWindowId, null);
   }
 
-  public NotificationGroup(@NotNull String displayId,
+  public NotificationGroup(@NonNls @NotNull String displayId,
                            @NotNull NotificationDisplayType defaultDisplayType,
                            boolean logByDefault,
-                           @Nullable String toolWindowId,
+                           @NonNls @Nullable String toolWindowId,
                            @Nullable Icon icon) {
     myDisplayId = displayId;
     myDisplayType = defaultDisplayType;
@@ -70,22 +57,22 @@ public final class NotificationGroup {
   }
 
   @NotNull
-  public static NotificationGroup balloonGroup(@NotNull String displayId) {
+  public static NotificationGroup balloonGroup(@NonNls @NotNull String displayId) {
     return new NotificationGroup(displayId, NotificationDisplayType.BALLOON, true);
   }
 
   @NotNull
-  public static NotificationGroup logOnlyGroup(@NotNull String displayId) {
+  public static NotificationGroup logOnlyGroup(@NonNls @NotNull String displayId) {
     return new NotificationGroup(displayId, NotificationDisplayType.NONE, true);
   }
 
   @NotNull
-  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId, final boolean logByDefault) {
+  public static NotificationGroup toolWindowGroup(@NonNls @NotNull String displayId, @NonNls @NotNull String toolWindowId, final boolean logByDefault) {
     return new NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId);
   }
 
   @NotNull
-  public static NotificationGroup toolWindowGroup(@NotNull String displayId, @NotNull String toolWindowId) {
+  public static NotificationGroup toolWindowGroup(@NonNls @NotNull String displayId, @NonNls @NotNull String toolWindowId) {
     return toolWindowGroup(displayId, toolWindowId, true);
   }
 
@@ -99,18 +86,18 @@ public final class NotificationGroup {
     return myIcon;
   }
 
-  public Notification createNotification(@NotNull final String content, @NotNull final MessageType type) {
+  public Notification createNotification(@NotNull @NonNls final String content, @NotNull final MessageType type) {
     return createNotification(content, type.toNotificationType());
   }
 
   @NotNull
-  public Notification createNotification(@NotNull final String content, @NotNull final NotificationType type) {
+  public Notification createNotification(@NotNull @NonNls final String content, @NotNull final NotificationType type) {
     return createNotification("", content, type, null);
   }
 
   @NotNull
-  public Notification createNotification(@NotNull final String title,
-                                         @NotNull final String content,
+  public Notification createNotification(@NotNull @NonNls final String title,
+                                         @NotNull @NonNls final String content,
                                          @NotNull final NotificationType type,
                                          @Nullable NotificationListener listener) {
     return new Notification(myDisplayId, title, content, type, listener);
@@ -127,17 +114,17 @@ public final class NotificationGroup {
   }
 
   @NotNull
-  public Notification createNotification(@Nullable String title,
-                                         @Nullable String subtitle,
-                                         @Nullable String content,
+  public Notification createNotification(@Nullable @NonNls String title,
+                                         @Nullable @NonNls String subtitle,
+                                         @Nullable @NonNls String content,
                                          @NotNull NotificationType type) {
     return createNotification(title, subtitle, content, type, null);
   }
 
   @NotNull
-  public Notification createNotification(@Nullable String title,
-                                         @Nullable String subtitle,
-                                         @Nullable String content,
+  public Notification createNotification(@Nullable @NonNls String title,
+                                         @Nullable @NonNls String subtitle,
+                                         @Nullable @NonNls String content,
                                          @NotNull NotificationType type,
                                          @Nullable NotificationListener listener) {
 //    LOG.assertTrue(myIcon != null);

@@ -136,7 +136,7 @@ public final class EnvironmentUtil {
    * @see #getEnvironmentMap()
    */
   @Nullable
-  public static String getValue(@NotNull String name) {
+  public static String getValue(@NonNls @NotNull String name) {
     return getEnvironmentMap().get(name);
   }
 

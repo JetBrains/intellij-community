@@ -44,7 +44,7 @@ public class IElementType {
   private static short size; // guarded by lock
   @NotNull
   private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @NonNls @SuppressWarnings("RedundantStringConstructorCall")
+  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
   private static final Object lock = new String("registry lock");
 
   static {
@@ -74,6 +74,7 @@ public class IElementType {
   }
 
   private final short myIndex;
+  @NonNls
   @NotNull
   private final String myDebugName;
   @NotNull
@@ -85,7 +86,7 @@ public class IElementType {
    * @param debugName the name of the element type, used for debugging purposes.
    * @param language  the language with which the element type is associated.
    */
-  public IElementType(@NotNull String debugName, @Nullable Language language) {
+  public IElementType(@NonNls @NotNull String debugName, @Nullable Language language) {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
@@ -98,7 +99,7 @@ public class IElementType {
    * This is not default behavior and not recommended. A lot of other functionality (e.g. {@link TokenSet}) won't work with such element types.
    * Please use {@link #IElementType(String, Language)} unless you know what you're doing.
    */
-  protected IElementType(@NotNull String debugName, @Nullable Language language, boolean register) {
+  protected IElementType(@NonNls @NotNull String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {

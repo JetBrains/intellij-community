@@ -49,7 +49,7 @@ public class Key<T> {
   }
 
   @NotNull
-  public static <T> Key<T> create(@NotNull String name) {
+  public static <T> Key<T> create(@NonNls @NotNull String name) {
     return new Key<>(name);
   }
 

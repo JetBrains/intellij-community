@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public abstract class SearchableOptionProcessor {
   public abstract void addOptions(@NotNull String text,
                                   @Nullable String path,
                                   @Nullable String hit,
-                                  @NotNull final String configurableId,
+                                  @NonNls @NotNull final String configurableId,
                                   @Nullable final String configurableDisplayName,
                                   boolean applyStemming);
 }

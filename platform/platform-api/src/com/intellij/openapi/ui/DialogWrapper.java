@@ -44,6 +44,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1553,6 +1554,7 @@ public abstract class DialogWrapper {
   }
 
   /** Returns the help identifier, or {@code null} if no help is available. */
+  @NonNls
   @Nullable
   protected String getHelpId() {
     return null;
