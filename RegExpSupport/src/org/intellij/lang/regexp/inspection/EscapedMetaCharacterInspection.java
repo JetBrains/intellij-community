@@ -64,7 +64,7 @@ public class EscapedMetaCharacterInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", '[' + myC + ']');
+      return CommonQuickFixBundle.message("fix.replace.with.x", "[" + myC + ']');
     }
 
     @Nls
