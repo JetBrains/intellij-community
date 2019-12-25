@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,25 @@ public class LightEditService implements Disposable, LightEditorListener, Persis
   }
 
   public void openFile(@NotNull VirtualFile file) {
+    doWhenActionManagerInitialized(() -> {
+      doOpenFile(file);
+    });
+  }
+
+  private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {
+    ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (created == null) {
+      NonUrgentExecutor.getInstance().execute(() -> {
+        ActionManager.getInstance();
+        ApplicationManager.getApplication().invokeLater(callback);
+      });
+    }
+    else {
+      callback.run();
+    }
+  }
+
+  private void doOpenFile(@NotNull VirtualFile file) {
     showEditorWindow();
     LightEditorInfo openEditorInfo = myEditorManager.findOpen(file);
     if (openEditorInfo == null) {
