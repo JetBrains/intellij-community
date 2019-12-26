@@ -2,11 +2,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,24 +13,22 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     super(TYPE_TEST_PATTERN);
   }
 
-
+  @NotNull
   @Override
   public PsiTypeElement getCheckType() {
-    return PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
+    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiTypeElement) return (PsiTypeElement)child;
+      if (child instanceof PsiPatternVariable) return ((PsiPatternVariable)child).getTypeElement();
+    }
+    throw new IllegalStateException(this.toString());
   }
 
-  @Override
-  public PsiIdentifier setName(@NotNull String name) throws IncorrectOperationException {
-    PsiIdentifier identifier = getNameIdentifier();
-    if (identifier == null) throw new IncorrectOperationException();
-    return (PsiIdentifier)PsiImplUtil.setName(identifier, name);
-  }
-
-  @Override
   @Nullable
-  public PsiIdentifier getNameIdentifier() {
-    return PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
+  @Override
+  public PsiPatternVariable getPatternVariable() {
+    return PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class);
   }
+
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -46,21 +42,7 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("PsiTypeTestPattern");
-    String name = getName();
-    if (name != null) {
-      sb.append(':');
-      sb.append(getText());
-    }
-    return sb.toString();
-  }
-
-  @Override
-  public String getName() {
-    PsiIdentifier identifier = getNameIdentifier();
-    if (identifier == null) return null;
-    return identifier.getText();
+    return "PsiTypeTestPattern";
   }
 }
 

@@ -34,11 +34,13 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     def expression = (file.classes[0].methods[0].body.statements[0] as PsiExpressionStatement).expression as PsiInstanceOfExpression
     def pattern = expression.pattern
     assert pattern instanceof PsiTypeTestPattern
-    def typeTestPattern = pattern as PsiTypeTestPattern
-    assert typeTestPattern.name == "x"
+    PsiTypeTestPattern typeTestPattern = pattern as PsiTypeTestPattern
+    def variable = pattern.getPatternVariable()
+    assert variable != null
+    assert variable.name == "x"
     assert typeTestPattern.checkType.text == "B"
     WriteCommandAction.runWriteCommandAction(project, {
-      typeTestPattern.setName("bar")
+      variable.setName("bar")
       assert expression.text == "a instanceof B bar"
     })
   }

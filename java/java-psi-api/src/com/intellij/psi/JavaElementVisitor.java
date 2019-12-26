@@ -431,4 +431,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
     visitPattern(pattern);
   }
+
+  public void visitPatternVariable(PsiPatternVariable variable) {
+    visitVariable(variable);
+  }
 }

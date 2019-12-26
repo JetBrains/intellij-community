@@ -182,12 +182,18 @@ public class ExpressionParser {
   @Nullable
   private PsiBuilder.Marker parsePattern(final PsiBuilder builder) {
     PsiBuilder.Marker pattern = builder.mark();
+    PsiBuilder.Marker patternVariable = builder.mark();
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     if (type == null) {
+      patternVariable.drop();
       pattern.drop();
       return null;
     }
-    expect(builder, JavaTokenType.IDENTIFIER);
+    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+      patternVariable.drop();
+    } else {
+      patternVariable.done(JavaElementType.PATTERN_VARIABLE);
+    }
     pattern.done(JavaElementType.TYPE_TEST_PATTERN);
     return pattern;
   }
