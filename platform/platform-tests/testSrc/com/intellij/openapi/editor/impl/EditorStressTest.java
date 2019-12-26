@@ -27,24 +27,25 @@ public class EditorStressTest extends AbstractEditorTest {
   }};
   private long mySeed;
 
+  private static final String CHARS_TO_USE = "a\r\n\t" + SURROGATE_PAIR;
+  private static final int MAX_CHARS_TO_ADD = 10;
+  private static final int MAX_CHARS_TO_REMOVE = 5;
+
   public void testRandomActions() {
-    List<? extends Action> actions = Arrays.asList(new AddText("a"),
-                                                     new AddText("\r"),
-                                                     new AddText("\n"),
-                                                     new AddText("\t"),
-                                                     new AddText(HIGH_SURROGATE),
-                                                     new AddText(LOW_SURROGATE),
-                                                     new RemoveCharacter(),
-                                                     new MoveCharacter(),
-                                                     new AddFoldRegion(),
-                                                     new RemoveFoldRegion(),
-                                                     new ExpandOrCollapseFoldRegions(),
-                                                     new ClearFoldRegions(),
-                                                     new ChangeBulkModeState(),
-                                                     new ChangeEditorVisibility(),
-                                                     new AddInlay(),
-                                                     new RemoveInlay(),
-                                                     new MoveCaret());
+    List<? extends Action> actions = Arrays.asList(
+            new AddText(),
+            new RemoveText(),
+            new MoveText(),
+            new AddFoldRegion(),
+            new RemoveFoldRegion(),
+            new ExpandOrCollapseFoldRegions(),
+            new ClearFoldRegions(),
+            new ChangeBulkModeState(),
+            new ChangeEditorVisibility(),
+            new AddInlay(),
+            new RemoveInlay(),
+            new MoveCaret()
+    );
     LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
@@ -75,42 +76,42 @@ public class EditorStressTest extends AbstractEditorTest {
   }
 
   private class AddText implements Action {
-    private final String myText;
-
-    AddText(String text) {
-      myText = text;
-    }
-
     @Override
     public void perform(EditorEx editor, Random random) {
+      StringBuilder text = new StringBuilder();
+      int count = 1 + random.nextInt(MAX_CHARS_TO_ADD);
+      for (int i = 0; i < count; i++) {
+        text.append(CHARS_TO_USE.charAt(random.nextInt(CHARS_TO_USE.length())));
+      }
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, myText));
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, text.toString()));
     }
   }
 
-  private class RemoveCharacter implements Action {
+  private class RemoveText implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
-      int offset = random.nextInt(textLength);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + 1));
+      int count = 1 + random.nextInt(Math.min(MAX_CHARS_TO_REMOVE, textLength));
+      int offset = random.nextInt(textLength - count + 1);
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + count));
     }
   }
 
-  private class MoveCharacter implements Action {
+  private class MoveText implements Action {
     @Override
     public void perform(EditorEx editor, Random random) {
       DocumentEx document = editor.getDocument();
       int textLength = document.getTextLength();
-      if (textLength <= 0) return;
-      int offset = random.nextInt(textLength);
-      int targetOffset = random.nextInt(textLength + 1);
-      if (targetOffset < offset || targetOffset > offset + 1) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(offset, offset + 1, targetOffset));
-      }
+      if (textLength <= 1) return;
+      int count = 1 + random.nextInt(textLength - 1);
+      int srcStart = random.nextInt(textLength - count + 1);
+      int targetPos = random.nextInt(textLength - count);
+      int targetOffset = targetPos < srcStart ? targetPos : targetPos + count + 1;
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(srcStart, srcStart + count, targetOffset));
     }
   }
 
