@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +57,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     Set<MetricEvent> usages = new HashSet<>();
     if (currentScheme instanceof AbstractColorsScheme) {
       String schemeName = currentScheme.getName();
-      if (schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      if (schemeName.startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
         EditorColorsScheme original = ((AbstractColorsScheme)currentScheme).getOriginal();
         if (original != null) {
           schemeName = original.getName();

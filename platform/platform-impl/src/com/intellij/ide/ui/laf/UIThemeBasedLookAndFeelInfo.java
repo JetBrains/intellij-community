@@ -79,7 +79,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
           EditorColorsManager cm = EditorColorsManager.getInstance();
           PropertiesComponent properties = PropertiesComponent.getInstance();
 
-          if (!properties.getBoolean(RELAUNCH_PROPERTY) && !SchemeManager.getDisplayName(cm.getGlobalScheme()).equals(themeName)) {
+          if (!properties.getBoolean(RELAUNCH_PROPERTY) && !SchemeManager.getBaseName(cm.getGlobalScheme()).equals(themeName)) {
             EditorColorsScheme scheme = cm.getScheme(themeName);
             if (scheme != null) {
               cm.setGlobalScheme(scheme);

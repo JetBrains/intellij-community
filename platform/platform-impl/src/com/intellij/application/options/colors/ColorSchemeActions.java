@@ -121,7 +121,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       List<ColorSchemeItem> fileList = new ArrayList<>(schemeFiles.size());
       for (VirtualFile file : schemeFiles) {
         Element root = SchemeImportUtil.loadSchemeDom(file);
-        String name = StringUtil.trimStart(ColorSchemeImporter.getSchemeName(root), SchemeManager.EDITABLE_COPY_PREFIX);
+        String name = StringUtil.trimStart(ColorSchemeImporter.getSchemeName(root), Scheme.EDITABLE_COPY_PREFIX);
         fileList.add(new ColorSchemeItem(name, file));
       }
       ImportSchemeChooserDialog dialog = new ImportSchemeChooserDialog(mySchemesPanel, componentAbove, fileList);
@@ -192,7 +192,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       }
     }
     schemeToExport = (EditorColorsScheme)schemeToExport.clone();
-    schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
+    schemeToExport.setName(schemeToExport.getDisplayName());
     super.exportScheme(project, schemeToExport, exporterName);
   }
 

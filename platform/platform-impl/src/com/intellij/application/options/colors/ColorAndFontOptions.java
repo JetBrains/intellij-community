@@ -162,7 +162,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
     return
       !isReadOnly(scheme) &&
-      scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
+      scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX) &&
       originalScheme instanceof ReadOnlyColorsScheme;
   }
 
@@ -184,13 +184,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public boolean containsScheme(@NotNull String name, boolean projectScheme) {
     assert !projectScheme;
-    return mySchemes.get(name) != null || mySchemes.get(SchemeManager.EDITABLE_COPY_PREFIX + name) != null;
+    return mySchemes.get(name) != null || mySchemes.get(Scheme.EDITABLE_COPY_PREFIX + name) != null;
   }
 
   @Override
   public boolean differsFromDefault(@NotNull EditorColorsScheme scheme) {
-    if (scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
-      String displayName = SchemeManager.getDisplayName(scheme);
+    if (scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
+      String displayName = SchemeManager.getBaseName(scheme);
       EditorColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getScheme(displayName);
       if (defaultScheme == null) {
         defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
@@ -129,12 +130,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
       @Override
       public boolean isSchemeEqualToBundled(@NotNull EditorColorsSchemeImpl scheme) {
-        if (!scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+        if (!scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
           return false;
         }
 
         AbstractColorsScheme bundledScheme =
-          (AbstractColorsScheme)mySchemeManager.findSchemeByName(scheme.getName().substring(SchemeManager.EDITABLE_COPY_PREFIX.length()));
+          (AbstractColorsScheme)mySchemeManager.findSchemeByName(scheme.getName().substring(Scheme.EDITABLE_COPY_PREFIX.length()));
         if (bundledScheme == null) {
           return false;
         }
@@ -233,7 +234,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private void initEditableBundledSchemesCopies() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
-        createEditableCopy((BundledScheme)scheme, SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName());
+        createEditableCopy((BundledScheme)scheme, Scheme.EDITABLE_COPY_PREFIX + scheme.getName());
       }
     }
   }
@@ -449,7 +450,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
     }
     else if (scheme instanceof BundledScheme) {
-      editableCopyName = SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName();
+      editableCopyName = Scheme.EDITABLE_COPY_PREFIX + scheme.getName();
     }
     return editableCopyName;
   }

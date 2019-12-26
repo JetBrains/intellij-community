@@ -14,6 +14,7 @@ import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
+  @NonNls String DEFAULT_SCHEME_ALIAS = "Classic Light";
 
   void setName(String name);
 

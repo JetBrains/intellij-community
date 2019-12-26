@@ -209,6 +209,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       getGlobal().setName(name);
     }
 
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return getGlobal().getDisplayName();
+    }
+
     @Override
     public TextAttributes getAttributes(TextAttributesKey key) {
       if (myOwnAttributes.containsKey(key)) return myOwnAttributes.get(key);

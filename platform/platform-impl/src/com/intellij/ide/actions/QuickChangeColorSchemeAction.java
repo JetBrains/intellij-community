@@ -43,8 +43,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(SchemeManager.getDisplayName(scheme), "", scheme == current ? AllIcons.Actions.Forward
-                                                                                              : ourNotCurrentAction) {
+    group.add(new DumbAwareAction(scheme.getDisplayName(), "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
@@ -66,7 +65,7 @@ public class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction {
     boolean isDarkEditorTheme = ColorUtil.isDark(scheme.getDefaultBackground());
 
     UIManager.LookAndFeelInfo suitableLaf = null;
-    String schemeName = SchemeManager.getDisplayName(scheme);
+    String schemeName = SchemeManager.getBaseName(scheme);
     for (UIManager.LookAndFeelInfo laf : lafManager.getInstalledLookAndFeels()) {
       if (laf instanceof UIThemeBasedLookAndFeelInfo &&
                schemeName.equals(((UIThemeBasedLookAndFeelInfo)laf).getTheme().getEditorSchemeName())) {

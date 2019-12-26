@@ -16,6 +16,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
@@ -136,6 +137,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public String getName() {
     return mySchemeName;
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    String name = StringUtil.trimStart(getName(), EDITABLE_COPY_PREFIX);
+    return DEFAULT_SCHEME_NAME.equals(name) ? DEFAULT_SCHEME_ALIAS : name;
   }
 
   @Override
