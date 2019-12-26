@@ -314,8 +314,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/transport") {
       fileset(dir: "$root/bazel-bin/tools/base/transport/android")
     }
-    buildContext.ant.copy(todir: "$androidPluginLib/../resources/transport/agent") {
-      fileset(dir: "$root/bazel-bin/tools/base/transport/agent/android")
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/transport/native/agent") {
+      fileset(dir: "$root/bazel-bin/tools/base/transport/native/agent/android")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
       fileset(dir: "$root/prebuilts/tools/common/simpleperf") {

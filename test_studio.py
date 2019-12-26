@@ -97,7 +97,7 @@ class StudioTests(unittest.TestCase):
           "plugins/android/resources/perfetto/%s/traced_probes" % abi,
           "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
           "plugins/android/resources/transport/%s/transport" % abi,
-          "plugins/android/resources/transport/agent/%s/libjvmtiagent.so" % abi,
+          "plugins/android/resources/transport/native/agent/%s/libjvmtiagent.so" % abi,
       ]
 
     name = os.path.join(dist_dir, self.artifact_prefix() + build + ".win.zip")
