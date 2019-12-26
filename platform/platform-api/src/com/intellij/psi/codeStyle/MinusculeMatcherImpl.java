@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.CharBuffer;
 import java.util.Arrays;
 
 /**
@@ -238,7 +237,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   @Nullable
   private FList<TextRange> matchBySubstring(@NotNull String name) {
     boolean infix = isPatternChar(0, '*');
-    char[] patternWithoutWildChar = filterChar(myPattern, '*');
+    char[] patternWithoutWildChar = filterWildcard(myPattern);
     if (name.length() < patternWithoutWildChar.length) {
       return null;
     }
@@ -255,11 +254,11 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     return null;
   }
 
-  private static char[] filterChar(char[] source, char filteredChar) {
+  private static char[] filterWildcard(char[] source) {
     char[] buffer = new char[source.length];
     int i = 0;
     for (char c : source) {
-      if (c != filteredChar) buffer[i++] = c;
+      if (c != '*') buffer[i++] = c;
     }
 
     return Arrays.copyOf(buffer, i);
