@@ -47,3 +47,8 @@ record NotInitializedField(int <error descr="Record component 'x' might not be i
     this.z = z;
   }
 }
+record ImplicitCanonicalConstructor(String s) {
+  static void test() {
+    new ImplicitCanonicalConstructor("Asdasd");
+  }
+}

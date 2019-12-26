@@ -67,20 +67,12 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
                                                    @NotNull PsiRecordHeader recordHeader) {
     String className = aClass.getName();
     if (className == null) return null;
-    PsiRecordComponent[] recordComponents = recordHeader.getRecordComponents();
     for (PsiMethod method : ownMethods) {
       if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isCanonicalConstructor(method)) return null;
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
-    StringBuilder sb = new StringBuilder();
-    sb.append("public ").append(className).append(recordHeader.getText()).append("{ ");
-    for (PsiRecordComponent component : recordComponents) {
-      String name = component.getName();
-      if (name == null) return null;
-      sb.append("this.").append(name).append("=").append(name).append(";");
-    }
-    sb.append(" }");
-    PsiMethod nonPhysical = factory.createMethodFromText(sb.toString(), recordHeader.getContainingClass());
+    String sb = "public " + className + recordHeader.getText() + "{}";
+    PsiMethod nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
     return new LightRecordCanonicalConstructor(nonPhysical, aClass);
   }
 
