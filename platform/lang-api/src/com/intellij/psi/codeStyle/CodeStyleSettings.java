@@ -1422,4 +1422,19 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
     myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
   }
+
+  @ApiStatus.Internal
+  public void removeSettings(@NotNull CodeStyleSettingsProvider provider) {
+    CustomCodeStyleSettings customSettings = provider.createCustomSettings(this);
+    if (customSettings != null) {
+      synchronized (myCustomSettings) {
+        myCustomSettings.remove(customSettings.getClass());
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public void registerSettings(@NotNull CodeStyleSettingsProvider provider) {
+    addCustomSettings(provider.createCustomSettings(this));
+  }
 }

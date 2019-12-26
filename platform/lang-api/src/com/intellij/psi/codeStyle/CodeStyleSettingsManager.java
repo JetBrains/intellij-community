@@ -102,6 +102,21 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
         }
       }, disposable
     );
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
+      new ExtensionPointListener<CodeStyleSettingsProvider>() {
+        @Override
+        public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
+          registerCustomSettings(enumSettings(), extension);
+        }
+
+        @Override
+        public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
+          unregisterCustomSettings(enumSettings(), extension);
+        }
+      }, disposable
+    );
   }
 
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
@@ -131,6 +146,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   @ApiStatus.Internal
   public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
                                                @NotNull LanguageCodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.removeSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void registerCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                           @NotNull CodeStyleSettingsProvider provider) {
+    allSettings.forEach(settings -> settings.registerSettings(provider));
+    notifyCodeStyleSettingsChanged();
+  }
+
+  @ApiStatus.Internal
+  public final void unregisterCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
+                                             @NotNull CodeStyleSettingsProvider provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
