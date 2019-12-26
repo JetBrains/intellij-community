@@ -545,7 +545,7 @@ public class EditorWindow {
       }
       myOwner.setCurrentWindow(this, false);
     }
-    if (!myOwner.isInsideChange()) myOwner.validate();
+    myOwner.validate();
   }
 
   protected void onBeforeSetEditor(VirtualFile file) {
