@@ -24,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
@@ -31,7 +32,9 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
@@ -49,6 +52,8 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.event.AdjustmentListener
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
@@ -78,9 +83,14 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
+    val detailsReloader = DetailsReloader(dataProvider, disposable)
     fun handleDetails() {
       dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
-        if (pr != null) detailsModel.value = pr
+        if (pr != null) {
+          detailsModel.value = pr
+          if (pr.mergeable == GHPullRequestMergeableState.UNKNOWN) detailsReloader.start()
+          else detailsReloader.stop()
+        }
       }
     }
     dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
@@ -230,4 +240,32 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
   override fun getEditorTypeId(): String = "GHPR"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+  private inner class DetailsReloader(private val dataProvider: GHPRDataProvider,
+                                      private val disposable: Disposable) {
+
+    private var scheduler: ScheduledFuture<*>? = null
+
+    init {
+      Disposer.register(disposable, Disposable {
+        stop()
+      })
+    }
+
+    @CalledInAwt
+    fun start() {
+      if (Disposer.isDisposed(disposable)) error("Already disposed")
+
+      if (scheduler == null) {
+        scheduler = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay({ dataProvider.reloadDetails() },
+                                                                                     3, 3, TimeUnit.SECONDS)
+      }
+    }
+
+    @CalledInAwt
+    fun stop() {
+      scheduler?.cancel(true)
+      scheduler = null
+    }
+  }
 }
