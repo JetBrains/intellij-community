@@ -9,10 +9,7 @@ abstract class SchemeManager<T> {
     const val EDITABLE_COPY_PREFIX = "_@user_"
 
     @JvmStatic
-    fun getDisplayName(scheme: Scheme):String {
-      val name = scheme.name.removePrefix(EDITABLE_COPY_PREFIX)
-      return if (name == "Default") "Classic Light" else name
-    }
+    fun getDisplayName(scheme: Scheme) = scheme.name.removePrefix(EDITABLE_COPY_PREFIX)
   }
 
   abstract val allSchemes: List<T>
