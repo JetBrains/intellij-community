@@ -1248,9 +1248,9 @@
     <name>Go Template</name>
     <depends>com.intellij.modules.lang</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.reactor/META-INF/plugin.xml">
-    <id>-com-intellij-frameworks-reactor-</id>
-    <name>Reactor</name>
+  <idea-plugin url="file://out/intellij.reactivestreams.core/META-INF/plugin.xml">
+    <id>-com-intellij-frameworks-reactivestreams-</id>
+    <name>Reactive Streams (Reactor, RxJava)</name>
     <depends>com.intellij.modules.java</depends>
     <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
