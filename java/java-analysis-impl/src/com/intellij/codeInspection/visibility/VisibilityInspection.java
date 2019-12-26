@@ -45,11 +45,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
   public boolean SUGGEST_FOR_CONSTANTS = true;
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
-  private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
-  private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
-  private static final String CAN_BE_PACKAGE_LOCAL = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
-  private static final String CAN_BE_PROTECTED = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
 
   private class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
@@ -247,16 +243,16 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       final String message;
       String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
       if (access.equals(PsiModifier.PRIVATE)) {
-        message = CAN_BE_PRIVATE;
+        message = getCAN_BE_PRIVATE();
         quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
       }
       else {
         if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-          message = CAN_BE_PACKAGE_LOCAL;
+          message = getCAN_BE_PACKAGE_LOCAL();
           quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
         }
         else {
-          message = CAN_BE_PROTECTED;
+          message = getCAN_BE_PROTECTED();
           quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
         }
       }
@@ -693,5 +689,17 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         }
       }
     }
+  }
+
+  private static String getCAN_BE_PRIVATE() {
+    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
+  }
+
+  private static String getCAN_BE_PACKAGE_LOCAL() {
+    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
+  }
+
+  private static String getCAN_BE_PROTECTED() {
+    return InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

@@ -29,10 +29,6 @@ public class LightEditUtil {
 
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
 
-  private static final String CLOSE_SAVE = ApplicationBundle.message("light.edit.close.save");
-  private static final String CLOSE_DISCARD = ApplicationBundle.message("light.edit.close.discard");
-  private static final String CLOSE_CANCEL = ApplicationBundle.message("light.edit.close.cancel");
-
   public static boolean openFile(@NotNull VirtualFile file) {
     if (Registry.is(ENABLED_FILE_OPEN_KEY)) {
       LightEditService.getInstance().openFile(file);
@@ -56,13 +52,13 @@ public class LightEditUtil {
   static boolean confirmClose(@NotNull String message,
                               @NotNull String title,
                               @NotNull Runnable saveRunnable) {
-    final String[] options = {CLOSE_SAVE, CLOSE_DISCARD, CLOSE_CANCEL};
+    final String[] options = {getCLOSE_SAVE(), getCLOSE_DISCARD(), getCLOSE_CANCEL()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
-      if (CLOSE_CANCEL.equals(options[result])) {
+      if (getCLOSE_CANCEL().equals(options[result])) {
         return false;
       }
-      else if (CLOSE_SAVE.equals(options[result])) {
+      else if (getCLOSE_SAVE().equals(options[result])) {
         saveRunnable.run();
       }
       return true;
@@ -94,4 +90,15 @@ public class LightEditUtil {
           .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
   }
 
+  private static String getCLOSE_SAVE() {
+    return ApplicationBundle.message("light.edit.close.save");
+  }
+
+  private static String getCLOSE_DISCARD() {
+    return ApplicationBundle.message("light.edit.close.discard");
+  }
+
+  private static String getCLOSE_CANCEL() {
+    return ApplicationBundle.message("light.edit.close.cancel");
+  }
 }

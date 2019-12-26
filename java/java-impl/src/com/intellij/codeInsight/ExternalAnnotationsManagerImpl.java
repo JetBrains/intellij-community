@@ -939,18 +939,16 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
     private final Project myProject;
-    private static final String ADD_IN_CODE = ProjectBundle.message("external.annotations.in.code.option");
-    private static final String MESSAGE = ProjectBundle.message("external.annotations.suggestion.message");
 
     MyExternalPromptDialog(final Project project) {
-      super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
+      super(project, getMESSAGE(), ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
     }
 
     @Override
     protected String getOkActionName() {
-      return ADD_IN_CODE;
+      return getADD_IN_CODE();
     }
 
     @Override
@@ -963,7 +961,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @NotNull
     protected Action[] createActions() {
       final Action okAction = getOKAction();
-      assignMnemonic(ADD_IN_CODE, okAction);
+      assignMnemonic(getADD_IN_CODE(), okAction);
       final String externalName = ProjectBundle.message("external.annotations.external.option");
       return new Action[]{okAction, new AbstractAction(externalName) {
         {
@@ -994,13 +992,21 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     @Override
     protected JComponent createNorthPanel() {
       final JPanel northPanel = (JPanel)super.createNorthPanel();
-      northPanel.add(new JLabel(MESSAGE), BorderLayout.CENTER);
+      northPanel.add(new JLabel(getMESSAGE()), BorderLayout.CENTER);
       return northPanel;
     }
 
     @Override
     protected boolean shouldSaveOptionsOnCancel() {
       return true;
+    }
+
+    private static String getADD_IN_CODE() {
+      return ProjectBundle.message("external.annotations.in.code.option");
+    }
+
+    private static String getMESSAGE() {
+      return ProjectBundle.message("external.annotations.suggestion.message");
     }
   }
 

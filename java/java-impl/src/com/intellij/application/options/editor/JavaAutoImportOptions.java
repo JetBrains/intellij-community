@@ -29,10 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class JavaAutoImportOptions implements AutoImportOptionsProvider {
-  private static final String INSERT_IMPORTS_ALWAYS = ApplicationBundle.message("combobox.insert.imports.all");
-  private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
-  private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
-
   private JComboBox<String> mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
@@ -46,9 +42,9 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   public JavaAutoImportOptions(Project project) {
     myProject = project;
 
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
-    mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
+    mySmartPasteCombo.addItem(getINSERT_IMPORTS_ALWAYS());
+    mySmartPasteCombo.addItem(getINSERT_IMPORTS_ASK());
+    mySmartPasteCombo.addItem(getINSERT_IMPORTS_NONE());
 
     myExcludePackagesTable = new ExcludeTable(project);
     myExcludeFromImportAndCompletionPanel.add(myExcludePackagesTable.getComponent(), BorderLayout.CENTER);
@@ -65,15 +61,15 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     switch (codeInsightSettings.ADD_IMPORTS_ON_PASTE) {
       case CodeInsightSettings.YES:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ALWAYS);
+        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_ALWAYS());
         break;
 
       case CodeInsightSettings.NO:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_NONE);
+        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_NONE());
         break;
 
       case CodeInsightSettings.ASK:
-        mySmartPasteCombo.setSelectedItem(INSERT_IMPORTS_ASK);
+        mySmartPasteCombo.setSelectedItem(getINSERT_IMPORTS_ASK());
         break;
     }
 
@@ -127,10 +123,10 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private int getSmartPasteValue() {
     Object selectedItem = mySmartPasteCombo.getSelectedItem();
-    if (INSERT_IMPORTS_ALWAYS.equals(selectedItem)) {
+    if (getINSERT_IMPORTS_ALWAYS().equals(selectedItem)) {
       return CodeInsightSettings.YES;
     }
-    else if (INSERT_IMPORTS_NONE.equals(selectedItem)) {
+    else if (getINSERT_IMPORTS_NONE().equals(selectedItem)) {
       return CodeInsightSettings.NO;
     }
     else {
@@ -140,5 +136,17 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
+  }
+
+  private static String getINSERT_IMPORTS_ALWAYS() {
+    return ApplicationBundle.message("combobox.insert.imports.all");
+  }
+
+  private static String getINSERT_IMPORTS_ASK() {
+    return ApplicationBundle.message("combobox.insert.imports.ask");
+  }
+
+  private static String getINSERT_IMPORTS_NONE() {
+    return ApplicationBundle.message("combobox.insert.imports.none");
   }
 }

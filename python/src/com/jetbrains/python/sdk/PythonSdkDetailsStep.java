@@ -30,9 +30,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<? super Sdk> mySdkAddedCallback;
 
-  private static final String ADD = PyBundle.message("sdk.details.step.add");
-  private static final String ALL = PyBundle.message("sdk.details.step.show.all");
-
   public static void show(@Nullable final Project project,
                           @Nullable final Module module,
                           @NotNull final Sdk[] existingSdks,
@@ -60,9 +57,9 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private static List<String> getAvailableOptions(boolean showAll) {
     final List<String> options = new ArrayList<>();
-    options.add(ADD);
+    options.add(getADD());
     if (showAll) {
-      options.add(ALL);
+      options.add(getALL());
     }
     return options;
   }
@@ -70,13 +67,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable
   @Override
   public ListSeparator getSeparatorAbove(String value) {
-    return ALL.equals(value) ? new ListSeparator() : null;
+    return getALL().equals(value) ? new ListSeparator() : null;
   }
 
   private void optionSelected(final String selectedValue) {
-    if (!ALL.equals(selectedValue) && myShowAll != null)
+    if (!getALL().equals(selectedValue) && myShowAll != null)
       Disposer.dispose(myShowAll.getDisposable());
-    if (ADD.equals(selectedValue)) {
+    if (getADD().equals(selectedValue)) {
       PyAddSdkDialog.show(myProject, myModule, Arrays.asList(myExistingSdks), sdk -> mySdkAddedCallback.consume(sdk));
     }
     else if (myShowAll != null) {
@@ -93,5 +90,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Override
   public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
     return doFinalStep(() -> optionSelected(selectedValue));
+  }
+
+  private static String getADD() {
+    return PyBundle.message("sdk.details.step.add");
+  }
+
+  private static String getALL() {
+    return PyBundle.message("sdk.details.step.show.all");
   }
 }
