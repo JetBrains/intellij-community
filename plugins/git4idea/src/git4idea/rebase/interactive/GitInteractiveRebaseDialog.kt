@@ -2,12 +2,14 @@
 package git4idea.rebase.interactive
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
@@ -83,7 +85,7 @@ internal class GitInteractiveRebaseDialog(
       null
     )
   }
-  private val commitsTable = object : CommitsTable(project, commitsTableModel) {
+  private val commitsTable = object : CommitsTable(project, commitsTableModel, disposable) {
     override fun onEditorCreate() {
       isOKActionEnabled = false
     }
@@ -257,7 +259,7 @@ private class CommitsTableModel(initialEntries: List<GitRebaseEntryWithEditedMes
   }
 }
 
-private open class CommitsTable(val project: Project, val model: CommitsTableModel) : JBTable(model) {
+private open class CommitsTable(val project: Project, val model: CommitsTableModel, private val disposable: Disposable) : JBTable(model) {
   companion object {
     private const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
   }
@@ -367,7 +369,7 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
       }
     }
 
-    subjectColumn.cellEditor = CommitMessageCellEditor(project, this)
+    subjectColumn.cellEditor = CommitMessageCellEditor(project, this, disposable)
   }
 
   private fun shouldDrawNode(row: Int): Boolean {
@@ -376,7 +378,11 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
            entryWithEditedMessage.entry.action != GitRebaseEntry.Action.DROP
   }
 
-  private class CommitMessageCellEditor(project: Project, private val table: CommitsTable) : AbstractCellEditor(), TableCellEditor {
+  private class CommitMessageCellEditor(
+    project: Project,
+    private val table: CommitsTable,
+    disposable: Disposable
+  ) : AbstractCellEditor(), TableCellEditor {
     private val closeEditorAction = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
         stopCellEditing()
@@ -392,6 +398,10 @@ private open class CommitsTable(val project: Project, val model: CommitsTableMod
         registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
       }
       editorField.setCaretPosition(0)
+    }
+
+    init {
+      Disposer.register(disposable, commitMessageField)
     }
 
     private fun registerCloseEditorShortcut(editor: EditorEx, shortcut: KeyStroke) {
