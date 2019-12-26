@@ -113,6 +113,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (element instanceof PsiJavaModule) {
       return LangBundle.message("java.terms.module");
     }
+    if (element instanceof PsiRecordComponent) {
+      return LangBundle.message("java.terms.record.component");
+    }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
     if (name != null) {
