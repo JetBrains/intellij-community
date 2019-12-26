@@ -372,7 +372,7 @@ public final class IdeEventQueue extends EventQueue {
     EventsWatcher eventsWatcher = obtainEventsWatcher();
     try {
       if (performanceWatcher != null) {
-        performanceWatcher.edtEventStarted(startedAt);
+        performanceWatcher.edtEventStarted();
       }
       if (eventsWatcher != null) {
         eventsWatcher.edtEventStarted(e);

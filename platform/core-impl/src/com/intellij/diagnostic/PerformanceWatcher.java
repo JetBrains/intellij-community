@@ -244,7 +244,8 @@ public final class PerformanceWatcher implements Disposable {
     FileUtil.delete(new File(dir, DURATION_FILE_NAME));
   }
 
-  public void edtEventStarted(long start) {
+  public void edtEventStarted() {
+    long start = System.nanoTime();
     myActiveEvents++;
     if (SHOULD_WATCH) {
       finishTracking();
@@ -256,7 +257,7 @@ public final class PerformanceWatcher implements Disposable {
     myActiveEvents--;
     finishTracking();
     if (SHOULD_WATCH && myActiveEvents > 0) {
-      startTracking(System.currentTimeMillis());
+      startTracking(System.nanoTime());
     }
   }
 
@@ -303,7 +304,8 @@ public final class PerformanceWatcher implements Disposable {
     try {
       FileUtil.writeToFile(file, threadDump.getRawDump());
       if (task != null) {
-        FileUtil.writeToFile(new File(dir, DURATION_FILE_NAME), String.valueOf((now - task.myFreezeStart) / 1000));
+        FileUtil.writeToFile(new File(dir, DURATION_FILE_NAME),
+                             String.valueOf(TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - task.myFreezeStart)));
 
         getPublisher().dumpedThreads(file, threadDump);
       }
@@ -399,7 +401,7 @@ public final class PerformanceWatcher implements Disposable {
       if (myFuture == null) return;
       myFuture.cancel(false);
       if (myState.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
-        long end = System.currentTimeMillis();
+        long end = System.nanoTime();
         stopDumping(); // stop sampling as early as possible
         try {
           myExecutor.submit(() -> edtResponds(end)).get();
@@ -411,8 +413,9 @@ public final class PerformanceWatcher implements Disposable {
     }
 
     private void edtFrozen() {
-      myFreezeFolder =
-        THREAD_DUMPS_PREFIX + (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") + formatTime(myFreezeStart) + "-" + buildName();
+      myFreezeFolder = THREAD_DUMPS_PREFIX +
+                       (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") +
+                       formatTime(System.currentTimeMillis()) + "-" + buildName();
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         //TODO always true for some reason
         //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
@@ -431,10 +434,10 @@ public final class PerformanceWatcher implements Disposable {
       }
     }
 
-    private void edtResponds(long currentMillis) {
+    private void edtResponds(long current) {
       stopDumping();
 
-      long durationMs = currentMillis - myFreezeStart;
+      long durationMs = TimeUnit.NANOSECONDS.toMillis(current - myFreezeStart);
       File dir = new File(myLogDir, myFreezeFolder);
       File reportDir = null;
       if (dir.exists()) {
