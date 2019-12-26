@@ -55,6 +55,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
         SerializationManager.getInstance().initSerializers();
         StubIndexEx.initExtensions();
       });
+      ((StubIndexEx)StubIndex.getInstance()).ensureLoaded();
       myEnsuredStubElementTypesLoaded = true;
     }
     int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);

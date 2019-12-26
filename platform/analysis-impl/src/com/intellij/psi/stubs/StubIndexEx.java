@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,4 +34,7 @@ public abstract class StubIndexEx extends StubIndex {
 
   @NotNull
   abstract <K> TObjectHashingStrategy<K> getKeyHashingStrategy(StubIndexKey<K, ?> stubIndexKey);
+
+  @ApiStatus.Internal
+  abstract void ensureLoaded();
 }
