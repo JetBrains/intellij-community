@@ -32,20 +32,17 @@ class SmokeTest : HeavyPlatformTestCase() {
     // dsl exists on start
     fun testBuildModelWhenDslExistsFromBeginning() {
         addSpaceKts()
-
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
-
-        var script = viewModel.script.value
+        val modelBuilder = project.service<SpaceKtsModelBuilder>()
+        var script = modelBuilder.script.value
         assertNotNull(script, "script should be not null at init")
         assertTrue(script.isScriptEmpty(), "script should be empty at init")
-        assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
+        assertFalse(modelBuilder.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
-        val view = CircletScriptsViewFactory().createView(testLifetime, project, viewModel)
+        val view = CircletToolWindowService(project).createView()
 
         assertNotNull(view, "view should not be null")
-        assertFalse(viewModel.modelBuildIsRunning.value, "test run in sync mode. so model build should be finished")
-        val newScript = viewModel.script.value
+        assertFalse(modelBuilder.modelBuildIsRunning.value, "test run in sync mode. so model build should be finished")
+        val newScript = modelBuilder.script.value
         assertNotNull(newScript, "script should be not null after build")
         assertNotSame(script, newScript, "new instance of script should be created")
         script = newScript
@@ -57,15 +54,14 @@ class SmokeTest : HeavyPlatformTestCase() {
     // dsl doesnt exist on start and added later
     @Test
     fun testBuildModelWhenDslDoesnotExistFromBeginning() {
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
+        val modelBuilder = project.service<SpaceKtsModelBuilder>()
 
-        var script = viewModel.script.value
+        var script = modelBuilder.script.value
         assertNull(script, "script should be null without dsl file")
-        assertFalse(viewModel.modelBuildIsRunning.value, "model build should not be started until view is shown")
+        assertFalse(modelBuilder.modelBuildIsRunning.value, "model build should not be started until view is shown")
 
         addSpaceKts()
-        val newScript = viewModel.script.value
+        val newScript = modelBuilder.script.value
         assertNotSame(script, newScript, "new instance of script should be created")
         script = newScript
         assertNotNull(script, "script should be not null after added dsl")

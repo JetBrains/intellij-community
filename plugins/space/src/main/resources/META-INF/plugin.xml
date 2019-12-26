@@ -41,9 +41,11 @@
                     canCloseContents="true"
                     factoryClass="circlet.tools.CircletToolWindowFactory"/>
 
-        <projectService serviceImplementation="circlet.plugins.pipelines.services.CircletModelStore"/>
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.SpaceKtsFileDetector"/>
+        <projectService serviceImplementation="circlet.plugins.pipelines.services.SpaceKtsModelBuilder"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.SyncDslViewManager"/>
         <projectService serviceImplementation="circlet.plugins.pipelines.services.execution.CircletTaskRunner"/>
+        <projectService serviceImplementation="circlet.plugins.pipelines.ui.CircletToolWindowService"/>
         <projectService serviceImplementation="circlet.vcs.CircletProjectContext"/>
         <runLineMarkerContributor
             language="kotlin"

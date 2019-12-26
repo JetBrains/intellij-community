@@ -9,6 +9,7 @@ import circlet.platform.workspaces.*
 import circlet.settings.*
 import circlet.utils.*
 import circlet.workspaces.*
+import com.intellij.openapi.components.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
@@ -20,7 +21,7 @@ val circletWorkspace get() = application.getComponent<CircletWorkspaceComponent>
 private val log = logger<CircletWorkspaceComponent>()
 
 // monitors CircletConfigurable state, creates and exposed instance of Workspace, provides various state properties and callbacks.
-class CircletWorkspaceComponent : WorkspaceManagerHost(), LifetimedComponent by SimpleLifetimedComponent() {
+class CircletWorkspaceComponent : WorkspaceManagerHost(), BaseComponent, LifetimedDisposable by LifetimedDisposableImpl() {
 
     private val ideaClientPersistenceConfiguration = PersistenceConfiguration(
         FeatureFlagsVmPersistenceKey,

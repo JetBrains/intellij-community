@@ -16,12 +16,14 @@ class CircletTaskRunner(val project: Project) {
 
     companion object : KLogging()
 
-    fun run(lifetime: Lifetime, taskName: String): ProcessHandler {
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        val viewModel = circletModelStore.viewModel
+    fun run(taskName: String): ProcessHandler {
+
+        val script = project.service<SpaceKtsModelBuilder>().script.value
         val logData = LogData("")
-        viewModel.logRunData.value = logData
-        val script = viewModel.script.value
+
+        // todo: better lifetime.
+        publishBuildLog(Lifetime.Eternal, project, logData)
+
         if (script == null) {
             //logData.add("Script is null")
             throw com.intellij.execution.ExecutionException("Script is null")
@@ -57,7 +59,10 @@ class CircletTaskRunner(val project: Project) {
 
         val storage = CircletIdeaExecutionProviderStorage(task)
         val orgInfo = OrgInfo("jetbrains.team")
-        val provider = CircletIdeaStepExecutionProvider(lifetime, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
+
+        // todo: better lifetime
+        val provider = CircletIdeaStepExecutionProvider(Lifetime.Eternal, { text -> processHandler.println(text) }, { code -> processHandler.destroyProcess()}, storage)
+
         val tracer = CircletIdeaAutomationTracer()
         val automationGraphEngineCommon = AutomationGraphEngineImpl(
             provider,
@@ -66,6 +71,7 @@ class CircletTaskRunner(val project: Project) {
             SystemTimeTicker(),
             tracer,
             listOf(provider))
+
         val automationStarterCommon = AutomationGraphManagerImpl(
             orgInfo,
             storage,
@@ -78,7 +84,10 @@ class CircletTaskRunner(val project: Project) {
         val branch = "myBranch"
         val commit = "myCommit"
 
-        async(lifetime, Ui) {
+        // todo: start asynchronous task. what is multi-threading policy?
+        // todo: better lifetime
+        // todo: why?
+        async(Lifetime.Eternal, Ui) {
             val graphId = automationStarterCommon.createGraph(0L, repositoryData, branch, commit, task)
             automationStarterCommon.startGraph(graphId)
         }.invokeOnCompletion {
@@ -87,10 +96,9 @@ class CircletTaskRunner(val project: Project) {
             }
         }
 
-        viewModel.taskIsRunning.value = true
         logData.add("Run task $taskName")
         processHandler.println("Run task $taskName")
-        viewModel.taskIsRunning.value = false
+
         return processHandler
     }
 

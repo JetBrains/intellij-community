@@ -1,38 +1,19 @@
 package circlet.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.*
-import com.intellij.openapi.project.*
+import circlet.plugins.pipelines.services.*
 import libraries.coroutines.extra.*
 import runtime.reactive.*
 import java.util.*
 import javax.swing.tree.*
 
-class ScriptWindowViewModel(private val lifetime: Lifetime, private val project: Project) {
-    val scriptLifetimes = SequentialLifetimes(lifetime)
-    val modelBuildIsRunning = mutableProperty(false)
-    val taskIsRunning = mutableProperty(false)
-    val script = mutableProperty<ScriptViewModel?>(null)
-    val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
-    val extendedViewModeEnabled = mutableProperty<Boolean>(true)
-    val logBuildData = mutableProperty<LogData?>(null)
-    val logRunData = mutableProperty<LogData?>(null)
-
-    init {
-        selectedNode.forEach(lifetime) {
-            logRunData.value = if (it != null && it.isRunnable) LogData("todo: log of task `${it.userObject}` run") else null
-        }
-    }
-}
-
-
 class ScriptViewModel internal constructor(
     val id: String,
-    val lifetime: Lifetime,
     val config: ScriptConfig) {
 }
 
 object ScriptViewModelFactory {
-    fun create(lifetime: Lifetime, config: ScriptConfig) = ScriptViewModel(UUID.randomUUID().toString(), lifetime, config)
+    fun create(config: ScriptConfig) = ScriptViewModel(UUID.randomUUID().toString(), config)
 
 }
 
@@ -44,9 +25,8 @@ class LogData(val dummy: String) {
 }
 
 
-fun createEmptyScriptViewModel(lifetime: Lifetime) : ScriptViewModel {
-    return ScriptViewModelFactory.create(lifetime, ScriptConfig(emptyList(), emptyList(), emptyList()))
-
+fun createEmptyScriptViewModel() : ScriptViewModel {
+    return ScriptViewModelFactory.create(ScriptConfig(emptyList(), emptyList(), emptyList()))
 }
 
 

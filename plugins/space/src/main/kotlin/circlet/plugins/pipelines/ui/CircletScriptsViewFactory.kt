@@ -6,59 +6,80 @@ import circlet.pipelines.config.api.*
 import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.services.run.*
 import circlet.plugins.pipelines.viewmodel.*
+import circlet.utils.*
 import com.intellij.execution.*
 import com.intellij.icons.*
 import com.intellij.ide.*
 import com.intellij.ide.util.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.wm.*
 import com.intellij.ui.*
+import com.intellij.ui.components.*
 import com.intellij.ui.components.labels.*
+import com.intellij.ui.content.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.*
 import com.intellij.util.ui.tree.*
 import libraries.coroutines.extra.*
 import libraries.klogging.*
 import runtime.*
+import runtime.reactive.*
 import java.awt.*
 import javax.swing.*
 import javax.swing.BoxLayout
 import javax.swing.tree.*
 
+class CircletToolWindowViewModel(val lifetime: Lifetime) {
+    val taskIsRunning = mutableProperty(false)
+    val selectedNode = mutableProperty<CircletModelTreeNode?>(null)
+    val extendedViewModeEnabled = mutableProperty(true)
+}
 
-class CircletScriptsViewFactory : KLogging() {
-    fun createView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
+class CircletToolWindowService(val project: Project) : LifetimedDisposable by LifetimedDisposableImpl(), KLogging() {
 
+    val modelBuilder = project.service<SpaceKtsModelBuilder>()
+    val viewModel = CircletToolWindowViewModel(lifetime)
+
+    fun createToolWindowContent(toolWindow: ToolWindow) {
+
+        val panel = Panel(title = null).apply {
+            add(createView())
+        }
+
+        val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false).apply {
+            isCloseable = false
+        }
+
+        toolWindow.contentManager.addContent(content)
+    }
+
+    fun createView(): JComponent {
         logger.debug("createView. begin")
         val layout = CardLayout()
         val panel = JPanel(layout)
         val treeCompName = "tree"
         val missedDslCompName = "empty"
-        val treeView = createModelTreeView(lifetime, project, viewModel)
+        val treeView = createModelTreeView(lifetime, project)
         panel.add(treeView, treeCompName)
         panel.add(createViewForMissedDsl(project), missedDslCompName)
-        var shouldBuild = true
-        viewModel.script.forEach(lifetime) { script ->
+        modelBuilder.script.forEach(lifetime) { script ->
             logger.debug("createView. view viewModel. $script")
             if (script == null) {
                 layout.show(panel, missedDslCompName)
-                shouldBuild = true
             }
             else {
                 layout.show(panel, treeCompName)
-                if (shouldBuild) {
-                    ScriptModelBuilder.updateModel(project, viewModel)
-                }
-                shouldBuild = false
             }
         }
         logger.debug("createView. end")
         return panel
     }
 
-    private fun createModelTreeView(lifetime: Lifetime, project: Project, viewModel: ScriptWindowViewModel) : JComponent {
+    private fun createModelTreeView(lifetime: Lifetime, project: Project): JComponent {
         val tree = Tree()
         tree.selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         val root = tree.model.root as DefaultMutableTreeNode
@@ -67,20 +88,19 @@ class CircletScriptsViewFactory : KLogging() {
             viewModel.selectedNode.value = if (selectedNode is CircletModelTreeNode) selectedNode else null
 
         }
-        resetNodes(root, viewModel.script.value, viewModel.extendedViewModeEnabled.value)
+        resetNodes(root, modelBuilder.script.value, viewModel.extendedViewModeEnabled.value)
         TreeUtil.expandAll(tree)
         tree.isRootVisible = false
 
         fun recalcTree() {
-            val model = viewModel.script.value
+            val model = modelBuilder.script.value
             resetNodes(root, model, viewModel.extendedViewModeEnabled.value)
             (tree.model as DefaultTreeModel).reload()
         }
-        
-        viewModel.script.forEach(lifetime) {
+
+        modelBuilder.script.forEach(lifetime) {
             launch(lifetime, Ui) {
                 recalcTree()
-                viewModel.modelBuildIsRunning.value = false
             }
         }
 
@@ -92,17 +112,17 @@ class CircletScriptsViewFactory : KLogging() {
 
         val refreshAction = object : DumbAwareActionButton(IdeBundle.message("action.refresh"), AllIcons.Actions.Refresh) {
             override fun actionPerformed(e: AnActionEvent) {
-                ScriptModelBuilder.updateModel(project, viewModel)
+                modelBuilder.rebuildModel()
             }
         }
 
         val runAction = object : DumbAwareActionButton(ExecutionBundle.message("run.configurable.display.name"), AllIcons.RunConfigurations.TestState.Run) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (viewModel.modelBuildIsRunning.value) {
+                if (modelBuilder.modelBuildIsRunning.value) {
                     return
                 }
                 val selectedNode = viewModel.selectedNode.value ?: return
-                if (!selectedNode.isRunnable){
+                if (!selectedNode.isRunnable) {
                     return
                 }
                 val taskName = selectedNode.userObject
@@ -112,7 +132,7 @@ class CircletScriptsViewFactory : KLogging() {
 
         val expandAllAction = object : DumbAwareActionButton(IdeBundle.message("action.expand.all"), AllIcons.Actions.Expandall) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (viewModel.modelBuildIsRunning.value) {
+                if (modelBuilder.modelBuildIsRunning.value) {
                     return
                 }
 
@@ -122,7 +142,7 @@ class CircletScriptsViewFactory : KLogging() {
 
         val collapseAllAction = object : DumbAwareActionButton(IdeBundle.message("action.collapse.all"), AllIcons.Actions.Collapseall) {
             override fun actionPerformed(e: AnActionEvent) {
-                if (viewModel.modelBuildIsRunning.value) {
+                if (modelBuilder.modelBuildIsRunning.value) {
                     return
                 }
 
@@ -141,22 +161,20 @@ class CircletScriptsViewFactory : KLogging() {
         }
 
         fun updateActionsIsEnabledStates() {
-            val smthIsRunning = viewModel.modelBuildIsRunning.value || viewModel.taskIsRunning.value
+            val smthIsRunning = modelBuilder.modelBuildIsRunning.value || viewModel.taskIsRunning.value
             val isSelectedNodeRunnable = viewModel.selectedNode.value?.isRunnable ?: false
             refreshAction.isEnabled = !smthIsRunning
             runAction.isEnabled = !smthIsRunning && isSelectedNodeRunnable
         }
 
-        viewModel.apply {
-            selectedNode.forEach(lifetime) {
-                updateActionsIsEnabledStates()
-            }
-            modelBuildIsRunning.forEach(lifetime) {
-                updateActionsIsEnabledStates()
-            }
-            taskIsRunning.forEach(lifetime) {
-                updateActionsIsEnabledStates()
-            }
+        viewModel.selectedNode.forEach(lifetime) {
+            updateActionsIsEnabledStates()
+        }
+        modelBuilder.modelBuildIsRunning.forEach(lifetime) {
+            updateActionsIsEnabledStates()
+        }
+        viewModel.taskIsRunning.forEach(lifetime) {
+            updateActionsIsEnabledStates()
         }
 
         val panel = ToolbarDecorator
@@ -287,7 +305,7 @@ class CircletScriptsViewFactory : KLogging() {
     }
 }
 
-fun ScriptStep.traverseJobs() : CircletModelTreeNode {
+fun ScriptStep.traverseJobs(): CircletModelTreeNode {
     when (val job = this) {
         is ScriptStep.CompositeStep -> {
             val res = CircletModelTreeNode(job::class.java.simpleName)
@@ -323,6 +341,6 @@ fun ScriptStep.traverseJobs() : CircletModelTreeNode {
     }
 }
 
-private fun List<String>.presentArgs() : String {
+private fun List<String>.presentArgs(): String {
     return if (this.any()) ". args: ${this.joinToString()}" else ""
 }

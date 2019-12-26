@@ -1,43 +1,22 @@
 package circlet.tools
 
-import circlet.plugins.pipelines.services.*
 import circlet.plugins.pipelines.ui.*
 import circlet.utils.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.registry.*
 import com.intellij.openapi.wm.*
-import com.intellij.openapi.wm.ex.*
-import com.intellij.ui.components.*
-import com.intellij.ui.content.*
 import platform.common.*
 
-class CircletToolWindowFactory : ToolWindowFactory, DumbAware, LifetimedComponent by SimpleLifetimedComponent() {
+class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
+
     override fun shouldBeAvailable(project: Project): Boolean {
         return Registry.`is`("space.automation.enabled")
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val panel = Panel(title = null)
-        val circletModelStore = ServiceManager.getService(project, CircletModelStore::class.java)
-        panel.add(CircletScriptsViewFactory().createView(lifetime, project, circletModelStore.viewModel))
-
-        val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
-
-        content.isCloseable = false
-
-        val toolWindowVisible = toolWindow.isVisible
-
-        project.toolWindowManagerEx.addToolWindowManagerListener(object : ToolWindowManagerAdapter() {
-            override fun stateChanged() {
-
-            }
-        })
-
-        toolWindow.contentManager.addContent(content)
-
-        if (toolWindowVisible) {
-        }
+        val service = project.service<CircletToolWindowService>()
+        service.createToolWindowContent(toolWindow)
     }
 
     companion object {

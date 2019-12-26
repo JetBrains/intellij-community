@@ -13,32 +13,16 @@ import platform.common.*
 val application: Application
     get() = ApplicationManager.getApplication()
 
-interface LifetimedComponent : Lifetimed, BaseComponent
+interface LifetimedDisposable : Disposable, Lifetimed
 
-class SimpleLifetimedComponent : SimpleLifetimed(), LifetimedComponent {
-    override fun disposeComponent() {
-        terminateLifetimeSource()
-    }
-}
+class LifetimedDisposableImpl : Lifetimed, LifetimedDisposable {
 
-open class SimpleLifetimed : Lifetimed {
     private val lifetimeSource = LifetimeSource()
 
-    final override val lifetime: Lifetime get() = lifetimeSource
-
-    protected fun terminateLifetimeSource() {
-        lifetimeSource.terminate()
-    }
-}
-
-class DisposableOnLifetime(lifetime: Lifetime) : Disposable {
-    init {
-        lifetime.add {
-            Disposer.dispose(this)
-        }
-    }
+    override val lifetime: Lifetime get() = lifetimeSource
 
     override fun dispose() {
+        lifetimeSource.terminate()
     }
 }
 
