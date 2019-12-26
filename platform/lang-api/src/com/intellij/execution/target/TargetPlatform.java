@@ -4,42 +4,28 @@ package com.intellij.execution.target;
 import com.intellij.execution.Platform;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TargetPlatform {
-  public static final TargetPlatform CURRENT = new TargetPlatform(SystemInfo.OS_NAME, SystemInfo.OS_VERSION, SystemInfo.OS_ARCH);
+  public enum Arch {x32bit, x64bit}
 
-  @Nullable
-  private final String myOs;
-  @Nullable
-  private final String myOsVersion;
-  @Nullable
-  private final String myArch;
+  public static final TargetPlatform CURRENT = new TargetPlatform(Platform.current(), SystemInfo.is64Bit ? Arch.x64bit : Arch.x32bit);
 
-  public TargetPlatform(@Nullable String os, @Nullable String osVersion, @Nullable String arch) {
-    myOs = os;
-    myOsVersion = osVersion;
+  @NotNull private final Platform myPlatform;
+  @NotNull private final Arch myArch;
+
+  public TargetPlatform(@NotNull Platform platform, @NotNull Arch arch) {
+    myPlatform = platform;
     myArch = arch;
-  }
-
-  @Nullable
-  public String getOs() {
-    return myOs;
-  }
-
-  @Nullable
-  public String getOsVersion() {
-    return myOsVersion;
-  }
-
-  @Nullable
-  public String getArch() {
-    return myArch;
   }
 
   @NotNull
   public Platform getPlatform() {
-    return myOs != null && myOs.startsWith("windows") ? Platform.WINDOWS : Platform.UNIX;
+    return myPlatform;
+  }
+
+  @NotNull
+  public Arch getArch() {
+    return myArch;
   }
 }
 
