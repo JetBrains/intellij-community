@@ -24,6 +24,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.AppUIUtil
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
+import java.nio.file.Files
+import java.nio.file.Paths
 
 /**
  * @author vlan
@@ -92,7 +94,9 @@ class PythonSdkConfigurator {
   private fun configureSdk(project: Project, indicator: ProgressIndicator) {
     indicator.isIndeterminate = true
 
-    if (project.isDefault || project.pythonSdk != null) return
+    if (project.isDefault ||
+        project.pythonSdk != null ||
+        project.basePath.let { it != null && Files.exists(Paths.get(it, Project.DIRECTORY_STORE_FOLDER)) }) return
 
     val context = UserDataHolderBase()
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
