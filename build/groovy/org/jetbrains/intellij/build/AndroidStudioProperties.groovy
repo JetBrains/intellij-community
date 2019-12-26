@@ -189,6 +189,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("assistant", "android.jar")
       withModule("connection-assistant", "android.jar")
       withModule("whats-new-assistant", "android.jar")
+      withModule("intellij.lint", "lint-ide.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       withModule("android.sdktools.repository")

@@ -635,6 +635,8 @@
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-java-tests/intellij.jvm.analysis.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-kotlin-tests/intellij.jvm.analysis.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/jvm/jvm-analysis-tests-api/intellij.jvm.analysis.tests.iml" filepath="$PROJECT_DIR$/jvm/jvm-analysis-tests-api/intellij.jvm.analysis.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/lint/intellij.lint.iml" filepath="$PROJECT_DIR$/../adt/idea/lint/intellij.lint.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/lint/tests/intellij.lint.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/lint/tests/intellij.lint.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/intellij.maven.iml" filepath="$PROJECT_DIR$/plugins/maven/intellij.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" />

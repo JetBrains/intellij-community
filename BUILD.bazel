@@ -139,6 +139,8 @@ iml_project(
         "//tools/adt/idea/layoutlib-loader:intellij.android.layoutlib-loader.tests",
         "//tools/adt/idea/layoutlib-native:intellij.android.layoutlib-native",
         "//tools/adt/idea/layoutlib:intellij.android.layoutlib",
+        "//tools/adt/idea/lint:intellij.lint",
+        "//tools/adt/idea/lint:intellij.lint.tests",
         "//tools/adt/idea/mlkit:intellij.android.mlkit",
         "//tools/adt/idea/mlkit:intellij.android.mlkit.tests",
         "//tools/adt/idea/native-symbolizer",
