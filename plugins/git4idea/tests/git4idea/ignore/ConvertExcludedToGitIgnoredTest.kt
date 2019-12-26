@@ -142,7 +142,7 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private fun refreshChanges() {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
     if (gitIgnore.exists()) {
-      (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).createWaiter().waitFor()
+      (repo.ignoredFilesHolder as VcsRepositoryIgnoredFilesHolderBase<*>).startRescanAndWait()
     }
     changeListManager.ensureUpToDate()
     val exception = changeListManager.updateException

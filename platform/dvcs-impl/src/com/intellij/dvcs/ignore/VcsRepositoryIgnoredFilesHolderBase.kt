@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.ComparableObject
 import com.intellij.util.ui.update.Update
 import com.intellij.vcsUtil.VcsFileUtilKt.isUnder
@@ -22,6 +23,7 @@ import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -240,6 +242,13 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       awaitLatch.await()
       listeners.removeListener(this)
     }
+  }
+
+  @TestOnly
+  fun startRescanAndWait() {
+    val createWaiter = createWaiter()
+    AppExecutorUtil.getAppScheduledExecutorService().schedule({ startRescan() }, 5, TimeUnit.SECONDS)
+    createWaiter.waitFor()
   }
 
   @TestOnly
