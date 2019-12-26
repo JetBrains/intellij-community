@@ -13,6 +13,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import libraries.coroutines.extra.*
 import libraries.io.random.*
+import runtime.reactive.*
 
 fun publishBuildLog(lifetime: Lifetime, project : Project,  data: LogData) {
     val buildId = Random.nextUID()
@@ -33,11 +34,18 @@ fun publishBuildLog(lifetime: Lifetime, project : Project,  data: LogData) {
             view.onEvent(buildId, FinishBuildEventImpl(descriptor.id, null, System.currentTimeMillis(), "finished", SuccessResultImpl(false)))
         }
 
-        data.messages.change.forEach(lifetime) {
-            //todo: reimplement work with getting new message
-            val message = data.messages[it.index]
-            val detailedMessage = if (message.length > 50) message else null
-            view.onEvent(buildId, MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
+        data.messages.change.forEach(lifetime) { change ->
+            when (change) {
+                is ObservableList.Change.Add<String> -> {
+                    val message = change.newValue
+                    val detailedMessage = if (message.length > 50) message else null
+                    view.onEvent(buildId, MessageEventImpl(descriptor.id, MessageEvent.Kind.SIMPLE, "log", message, detailedMessage))
+                }
+                else -> {
+                    //
+                }
+            }
+
         }
     }
 }

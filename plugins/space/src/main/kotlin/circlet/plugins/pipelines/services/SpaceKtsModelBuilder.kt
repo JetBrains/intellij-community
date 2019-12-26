@@ -57,7 +57,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
                 }
 
                 try {
-                    val data = LogData("")
+                    val data = LogData()
                     logBuildData.value = data
                     val model = build(project, data)
                     _script.value = model

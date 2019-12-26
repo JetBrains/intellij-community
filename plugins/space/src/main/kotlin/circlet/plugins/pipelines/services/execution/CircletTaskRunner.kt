@@ -19,7 +19,7 @@ class CircletTaskRunner(val project: Project) {
     fun run(taskName: String): ProcessHandler {
 
         val script = project.service<SpaceKtsModelBuilder>().script.value
-        val logData = LogData("")
+        val logData = LogData()
 
         // todo: better lifetime.
         publishBuildLog(Lifetime.Eternal, project, logData)
@@ -32,6 +32,7 @@ class CircletTaskRunner(val project: Project) {
         val config = script.config
         val task = script.config.jobs.firstOrNull { x -> x.name == taskName }
         if (task == null) {
+            // todo: provide logging.
             //logData.add("Task $taskName doesn't exist")
             throw com.intellij.execution.ExecutionException("Task $taskName doesn't exist")
         }

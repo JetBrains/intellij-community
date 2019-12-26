@@ -17,7 +17,7 @@ object ScriptViewModelFactory {
 
 }
 
-class LogData(val dummy: String) {
+class LogData {
     val messages = ObservableList.mutable<String>()
     fun add(message: String) {
         messages.add(message)
