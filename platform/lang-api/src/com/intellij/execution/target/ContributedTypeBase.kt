@@ -16,9 +16,9 @@ import javax.swing.Icon
  * Concrete subclasses of this class corresponds to extensions of this extension point, which conform to protocol but extends the set
  * of the configuration options.
  *
- * E.g, an abstract [RemoteTargetType] corresponds to "com.intellij.executionTargetType" extension point, and defines the protocol by
- * [RemoteTargetType.createRunner] and the common configuration options by [TargetEnvironmentConfiguration].
- * Concrete subclass of [RemoteTargetType] would represent a plugin extension, e.g, for Docker-based targets.
+ * E.g, an abstract [TargetEnvironmentType] corresponds to "com.intellij.executionTargetType" extension point, and defines the protocol by
+ * [TargetEnvironmentType.createEnvironmentFactory] and the common configuration options by [TargetEnvironmentConfiguration].
+ * Concrete subclass of [TargetEnvironmentType] would represent a plugin extension, e.g, for Docker-based targets.
  */
 abstract class ContributedTypeBase<C : ContributedConfigurationBase>(val id: String) {
 

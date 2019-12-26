@@ -5,12 +5,14 @@ import com.intellij.execution.target.ContributedConfigurationBase.Companion.getT
 import com.intellij.openapi.project.Project
 
 /**
- * Base class for configuration instances contributed by the ["com.intellij.executionTargetType"][RemoteTargetType.EXTENSION_NAME] extension point.
+ * Base class for configuration instances contributed by the ["com.intellij.executionTargetType"][TargetEnvironmentType.EXTENSION_NAME] extension point.
  *
  * To be useful, target configuration should normally include at least one language runtime configuration, either introspected
  * or explicitly edited by the user.
+ *
+ * All available target configurations can be retrieved via [com.intellij.execution.target.TargetEnvironmentsManager]
  */
-abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfigurationBase(typeId, RemoteTargetType.EXTENSION_NAME) {
+abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfigurationBase(typeId, TargetEnvironmentType.EXTENSION_NAME) {
 
   val runtimes = ContributedConfigurationsList(LanguageRuntimeType.EXTENSION_NAME)
 
@@ -18,7 +20,7 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
 
   fun removeLanguageRuntime(runtime: LanguageRuntimeConfiguration) = runtimes.removeConfig(runtime)
 
-  fun createRunner(project: Project): TargetEnvironmentFactory = getTargetType().createRunner(project, this)
+  fun createEnvironmentFactory(project: Project): TargetEnvironmentFactory = getTargetType().createEnvironmentFactory(project, this)
 }
 
-fun <C : TargetEnvironmentConfiguration, T : RemoteTargetType<C>> C.getTargetType(): T = this.getTypeImpl()
+fun <C : TargetEnvironmentConfiguration, T : TargetEnvironmentType<C>> C.getTargetType(): T = this.getTypeImpl()

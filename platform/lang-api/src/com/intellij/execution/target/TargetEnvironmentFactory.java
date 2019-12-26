@@ -2,6 +2,7 @@
 package com.intellij.execution.target;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,12 +11,18 @@ import org.jetbrains.annotations.Nullable;
  * A factory for creating target environment ({@link TargetEnvironment}) for given
  * target configuration ({@link TargetEnvironmentConfiguration}.
  * <p>
- * The creating happens in two phases:
+ * A factory of a particular {@link TargetEnvironmentType} can be obtained
+ * with {@link TargetEnvironmentType#createEnvironmentFactory(Project, TargetEnvironmentConfiguration)} method.
+ * As a shortcut for retrieving factory of environment with particular configuration {@link TargetEnvironmentConfiguration#createEnvironmentFactory(Project)}
+ * can be used
+ * <p>
+ * The creating of an environment happens in two phases:
  * 1. first, environment request should be created and fulfilled – {@link this#createRequest()};
  * 2. then fulfilled request should be used for preparing target environment.
  * <p>
  * Usually, the client will look like this:
  * <code>
+ * val factory = config.createEnvironmentFactory(project)
  * val request = factory.createRequest()
  * val commandLine = new TargetedCommandLine()
  * commandLine.setExePath("/bin/cat")

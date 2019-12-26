@@ -276,7 +276,7 @@
     <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="executionTargetType"
-                    interface="com.intellij.execution.target.RemoteTargetType" dynamic="true"/>
+                    interface="com.intellij.execution.target.TargetEnvironmentType" dynamic="true"/>
     <extensionPoint name="executionTargetLanguageRuntimeType"
                     interface="com.intellij.execution.target.LanguageRuntimeType" dynamic="true"/>
 

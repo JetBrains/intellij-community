@@ -149,7 +149,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
         if (config == null) {
           throw new ExecutionException("Cannot find target " + targetName);
         }
-        return myRemoteRunner = config.createRunner(environment.getProject());
+        return myRemoteRunner = config.createEnvironmentFactory(environment.getProject());
       }
     }
     return myRemoteRunner = new LocalTargetEnvironmentFactory();

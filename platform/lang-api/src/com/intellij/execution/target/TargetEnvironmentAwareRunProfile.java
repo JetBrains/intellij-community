@@ -26,7 +26,7 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
    * That language runtime type will be used while creating {@link TargetEnvironmentConfiguration} using
    * wizard from {@link com.intellij.execution.RunOnTargetComboBox}
    *
-   * @see RemoteTargetType#createStepsForNewWizard
+   * @see TargetEnvironmentType#createStepsForNewWizard
    */
   @Nullable
   LanguageRuntimeType<?> getDefaultLanguageRuntimeType();
